@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Rust (OOP-style) — Printable Cheat Sheet (A3)</title>
+<style>
+  @page { size: A3; margin: 12mm; }
+  html, body { background:#fff; color:#111; font-family:"Segoe UI",Arial,Helvetica,sans-serif; font-size:11.5pt; line-height:1.4; margin:0; padding:0; }
+  .wrap { max-width:1650px; margin:0 auto; padding:14px 18px 40px; }
+  h1 { font-size:26pt; margin:4px 0 2px; border-bottom:3px solid #111; padding-bottom:6px; }
+  h1 .sub { font-size:12pt; font-weight:normal; color:#444; margin-left:10px; }
+  h2 { font-size:16pt; margin:22px 0 6px; padding:6px 10px; background:#f2f2f2; border-left:6px solid #111; page-break-after:avoid; }
+  h3 { font-size:12.5pt; margin:14px 0 4px; color:#222; page-break-after:avoid; }
+  h4 { font-size:11.5pt; margin:10px 0 2px; color:#333; page-break-after:avoid; }
+  p, li { margin:4px 0; }
+  code { font-family:Consolas,"Courier New",monospace; font-size:10.25pt; background:#f6f6f6; border:1px solid #e2e2e2; border-radius:3px; padding:1px 5px; color:#222; }
+  pre {
+    font-family:Consolas,"Courier New",monospace; font-size:10.25pt; line-height:1.5;
+    background:#ffffff; color:#24292e; border:1px solid #d0d7de; border-radius:4px;
+    padding:10px 12px; overflow-x:auto; white-space:pre-wrap; page-break-inside:avoid;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  pre .kw  { color:#cf222e; font-weight:600; }   /* keywords */
+  pre .typ { color:#953800; }                    /* types / structs / enums */
+  pre .str { color:#0a3069; }                    /* strings */
+  pre .num { color:#0550ae; }                    /* numbers */
+  pre .cmt { color:#6e7781; font-style:italic; } /* comments */
+  pre .mac { color:#8250df; font-weight:600; }   /* macro calls: println! */
+  pre .attr{ color:#116329; font-weight:600; }   /* attributes #[...] */
+  pre .lt  { color:#b08100; font-style:italic; } /* lifetimes 'a */
+  pre .self{ color:#953800; font-style:italic; } /* self / Self */
+  table { border-collapse:collapse; width:100%; margin:6px 0 10px; page-break-inside:avoid; }
+  th, td { border:1px solid #333; padding:6px 8px; vertical-align:top; text-align:left; }
+  th { background:#eaeaea; font-weight:600; }
+  table.compare th:nth-child(1) { width:22%; }
+  table.compare th:nth-child(2) { width:39%; background:#fbe8e8; color:#7a0000; }
+  table.compare th:nth-child(3) { width:39%; background:#e5f7e8; color:#0b5d16; }
+  table.compare td:nth-child(2) { background:#fff6f6; }
+  table.compare td:nth-child(3) { background:#f4fbf5; }
+  .tips { border:1px dashed #888; background:#fffdf4; padding:8px 12px; margin:6px 0 10px; border-radius:4px; page-break-inside:avoid; }
+  .tips b { color:#6a4a00; }
+  .warn { border:1px dashed #a40000; background:#fff2f2; padding:8px 12px; margin:6px 0 10px; border-radius:4px; page-break-inside:avoid; }
+  .warn b { color:#7a0000; }
+  .tricky { border:1px solid #333; background:#fafaff; padding:10px 12px; margin:10px 0 16px; border-radius:4px; page-break-inside:avoid; }
+  .tricky .q { font-weight:600; margin-bottom:4px; }
+  details > summary { cursor:pointer; color:#005a9e; font-weight:600; margin-top:4px; }
+  details[open] > summary { color:#111; }
+  details .hint { margin-top:4px; padding:6px 8px; background:#eef3ff; border-left:4px solid #005a9e; border-radius:3px; }
+  .pill { display:inline-block; padding:1px 7px; border-radius:10px; font-size:9.5pt; font-weight:600; margin-right:4px; }
+  .pill.bad { background:#a40000; color:#fff; }
+  .pill.good { background:#116611; color:#fff; }
+  .pill.tip { background:#b08100; color:#fff; }
+  @media print {
+    details { page-break-inside:avoid; }
+    details > summary { list-style:none; color:#111; }
+    details > summary::-webkit-details-marker { display:none; }
+    details:not([open]) > *:not(summary) { display:block !important; }
+    details > summary::after { content:" (hint revealed for print)"; font-weight:normal; color:#555; font-size:9.5pt; }
+  }
+  .toc { display:grid; grid-template-columns:repeat(4,1fr); gap:4px 14px; font-size:10.5pt; margin:6px 0 0; }
+  .toc a { color:#005a9e; text-decoration:none; }
+  .toc a:hover { text-decoration:underline; }
+  .legend { font-size:10pt; margin:6px 0 10px; }
+  .small { font-size:9.5pt; color:#555; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Rust — "OOP-style" Cheat Sheet<span class="sub">Traits · Ownership · Patterns · Tricky Qs (A3 print)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Won't Compile</span>
+  <span class="pill good">Idiomatic / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Rust isn't a classical OOP language — no inheritance, no classes. This sheet maps each Java OOP pillar to its idiomatic Rust realization.</span>
+</div>
+
+<div class="toc">
+  <a href="#s0">0. Primitive Types</a>
+  <a href="#s1">1. OOP Pillars in Rust</a>
+  <a href="#s2">2. struct = data record</a>
+  <a href="#s3">3. "Constructors" &amp; Drop</a>
+  <a href="#s4">4. Visibility (pub)</a>
+  <a href="#s5">5. Encapsulation (module privacy)</a>
+  <a href="#s6">6. "Inheritance" — there is none</a>
+  <a href="#s7">7. Polymorphism — traits &amp; dyn</a>
+  <a href="#s8">8. Abstraction (trait objects)</a>
+  <a href="#s9">9. Traits vs generics</a>
+  <a href="#s10">10. Overloading via traits</a>
+  <a href="#s11">11. static &amp; associated fns</a>
+  <a href="#s12">12. const, static, mut</a>
+  <a href="#s13">13. self, &amp;self, &amp;mut self</a>
+  <a href="#s14">14. Nested types &amp; closures</a>
+  <a href="#s15">15. Derivable traits (Eq, Hash…)</a>
+  <a href="#s16">16. Composition over inheritance</a>
+  <a href="#s16b">16b. Is-a vs Has-a Deep Dive</a>
+  <a href="#s17">17. Downcasting (Any)</a>
+  <a href="#s18">18. Immutability by default</a>
+  <a href="#s19">19. Errors (Result, ?)</a>
+  <a href="#s20">20. SOLID in Rust</a>
+  <a href="#s21">21. Ownership / Borrowing / Lifetimes</a>
+  <a href="#s22">22. Generics, bounds, associated types</a>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. Primitive Types &amp; Conversions</h2>
+
+<p>Rust's primitives are explicit about size and signedness. There's no autoboxing. Every value has a compile-time-known type.</p>
+
+<h3>Core scalar types</h3>
+<table>
+  <thead><tr><th>Type</th><th>Size</th><th>Range / notes</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td><code>bool</code></td><td>1 byte</td><td><code>true</code>/<code>false</code>. No implicit int conversion.</td><td><code>false</code> (via <code>Default</code>)</td></tr>
+    <tr><td><code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, <code>i128</code></td><td>exact</td><td>Signed. <code>i32</code> is inference default.</td><td>0</td></tr>
+    <tr><td><code>u8</code>, <code>u16</code>, <code>u32</code>, <code>u64</code>, <code>u128</code></td><td>exact</td><td>Unsigned. <code>u8</code> is the "byte".</td><td>0</td></tr>
+    <tr><td><code>isize</code>, <code>usize</code></td><td>word</td><td>Pointer-sized. <code>usize</code> is the index type.</td><td>0</td></tr>
+    <tr><td><code>f32</code>, <code>f64</code></td><td>4 / 8</td><td>IEEE-754. <code>f64</code> is the default for float literals.</td><td>0.0</td></tr>
+    <tr><td><code>char</code></td><td>4 bytes</td><td><b>A Unicode scalar value</b>, not a byte. <code>'A'</code>, <code>'🦀'</code>.</td><td><code>'\0'</code></td></tr>
+    <tr><td><code>()</code></td><td>0 bytes</td><td>Unit — "no value". Return type of functions that return "nothing".</td><td><code>()</code></td></tr>
+    <tr><td><code>str</code>, <code>&amp;str</code></td><td>—</td><td>UTF-8 string slice. <code>&amp;str</code> is a pointer + length.</td><td>—</td></tr>
+    <tr><td><code>String</code></td><td>—</td><td>Heap-allocated, growable UTF-8.</td><td>empty</td></tr>
+    <tr><td>Tuple <code>(T, U)</code></td><td>—</td><td>Heterogeneous, fixed size.</td><td><code>(T::default(), U::default())</code></td></tr>
+    <tr><td>Array <code>[T; N]</code></td><td>N · size(T)</td><td>Fixed length, on the stack.</td><td>—</td></tr>
+    <tr><td>Slice <code>&amp;[T]</code></td><td>fat pointer</td><td>Borrow view into contiguous memory.</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Remember:</b> <code>char</code> in Rust is 4 bytes (a Unicode scalar). Bytes are <code>u8</code>. Never confuse the two when indexing strings.</div>
+
+<h3>Parsing &amp; conversion</h3>
+<table>
+  <thead><tr><th>Task</th><th>API</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>&amp;str → number</td><td><code>"42".parse::&lt;i32&gt;()?</code></td><td>Returns <code>Result</code>. Propagate with <code>?</code>.</td></tr>
+    <tr><td>number → String</td><td><code>x.to_string()</code>, <code>format!("{x}")</code></td><td><code>format!</code> is the fmt-macro workhorse.</td></tr>
+    <tr><td>String ↔ &amp;str</td><td><code>&amp;s</code> (deref coercion), <code>s.as_str()</code></td><td>Free — no allocation.</td></tr>
+    <tr><td>&amp;str → String</td><td><code>s.to_owned()</code>, <code>s.to_string()</code>, <code>String::from(s)</code></td><td>Allocates.</td></tr>
+    <tr><td>Narrowing / widening</td><td><code>x as i32</code></td><td>Truncates without error. Use <code>TryFrom::try_from</code> for checked conversions.</td></tr>
+    <tr><td>Infallible convert</td><td><code>From</code> / <code>Into</code></td><td>Always succeeds: <code>let s: String = x.into();</code>.</td></tr>
+    <tr><td>Fallible convert</td><td><code>TryFrom</code> / <code>TryInto</code></td><td>Returns <code>Result</code>.</td></tr>
+  </tbody>
+</table>
+
+<h3>Wrong vs Right</h3>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Uninitialized variable</td><td><code>let x: i32; println!("{x}");</code> — compile error.</td><td>Rust forbids use-before-init. Always initialize, or use <code>Option</code>.</td></tr>
+    <tr><td>Implicit numeric widening</td><td><code>let a: i64 = 10_i32;</code> — compile error.</td><td>Explicit: <code>10_i32 as i64</code> or <code>i64::from(10_i32)</code>.</td></tr>
+    <tr><td>Signed/unsigned compare</td><td>Rust makes you cast — no silent promotion.</td><td>Good. Fewer bugs.</td></tr>
+    <tr><td>Float equality</td><td><code>if a == b</code> on <code>f64</code>.</td><td>Compile warning via <code>float_cmp</code> lints; use <code>(a-b).abs() &lt; EPS</code>.</td></tr>
+    <tr><td>Overflow</td><td>Debug: panics. Release: wraps (unless built with overflow checks).</td><td>Use <code>checked_add</code>, <code>saturating_add</code>, <code>wrapping_add</code>, <code>overflowing_add</code> for explicit intent.</td></tr>
+    <tr><td>Index past length</td><td><code>s[i]</code> on an out-of-range index — panic.</td><td><code>s.get(i)</code> returns <code>Option&lt;&amp;T&gt;</code>.</td></tr>
+    <tr><td>Money in float</td><td><code>0.1 + 0.2 != 0.3</code></td><td>Integer cents (<code>i64</code>) or <code>rust_decimal::Decimal</code> crate.</td></tr>
+    <tr><td>String indexing by int</td><td><code>s[0]</code> — compile error on <code>String</code>.</td><td>Rust refuses — a byte isn't a character. Use <code>.chars()</code> or <code>.bytes()</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q1. Why does <code>let c = s.chars().nth(5);</code> have type <code>Option&lt;char&gt;</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">UTF-8 strings may be shorter than 5 chars, or a given byte offset may not align to a char boundary. Rust forces you to handle "no such char".</div>
+  </details>
+</div>
+<div class="tricky">
+  <div class="q">Q2. <code>let x = 200u8 + 100u8;</code> — what happens?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Debug build: panics (overflow). Release build: wraps to 44. Use <code>.checked_add()</code>, <code>.wrapping_add()</code>, or <code>.saturating_add()</code> to state your intent.</div>
+  </details>
+</div>
+<div class="tricky">
+  <div class="q">Q3. What's the difference between <code>&amp;str</code> and <code>String</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint"><code>String</code> owns its buffer (heap-allocated, growable). <code>&amp;str</code> is a borrowed view — a pointer + length. A <code>String</code> automatically derefs to <code>&amp;str</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. OOP Pillars in Rust</h2>
+<table>
+  <thead><tr><th>Pillar</th><th>Java hook</th><th>Rust realization</th></tr></thead>
+  <tbody>
+    <tr><td><b>Encapsulation</b></td><td><code>private</code> fields</td><td>Fields are module-private by default. <code>pub</code> to expose. Module = privacy boundary.</td></tr>
+    <tr><td><b>Inheritance</b></td><td><code>extends</code></td><td><b>Does not exist.</b> Use composition + traits + default methods.</td></tr>
+    <tr><td><b>Polymorphism</b></td><td><code>virtual</code></td><td><b>Traits</b>. Static dispatch via generics (<code>T: Trait</code>); dynamic dispatch via <code>&amp;dyn Trait</code> / <code>Box&lt;dyn Trait&gt;</code>.</td></tr>
+    <tr><td><b>Abstraction</b></td><td>Interfaces</td><td><b>Traits</b>. Define capabilities; types opt in.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Rust's twist:</b> no class hierarchy, no null, no exceptions. The type system catches what Java's runtime catches — ownership, mutability, and variants are all compile-time.</div>
+
+<div class="tricky">
+  <div class="q">Q. Rust has no inheritance. How do you share implementation between types?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Traits with default method bodies, plus composition (embed the shared type as a field). Prefer this even in languages that do have inheritance.</div>
+  </details>
+</div>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. <code>struct</code> — the "Class with Data"</h2>
+
+<pre><span class="attr">#[derive(Debug, Clone)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Point</span> {
+    <span class="kw">pub</span> x: <span class="typ">f64</span>,
+    <span class="kw">pub</span> y: <span class="typ">f64</span>,
+}
+
+<span class="kw">impl</span> <span class="typ">Point</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">new</span>(x: <span class="typ">f64</span>, y: <span class="typ">f64</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> { x, y }                 <span class="cmt">// field init shorthand</span>
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">distance</span>(&amp;<span class="self">self</span>, other: &amp;<span class="self">Self</span>) -&gt; <span class="typ">f64</span> {
+        <span class="kw">let</span> dx = <span class="self">self</span>.x - other.x;
+        <span class="kw">let</span> dy = <span class="self">self</span>.y - other.y;
+        (dx*dx + dy*dy).<span class="typ">sqrt</span>()
+    }
+}</pre>
+
+<h3>Three flavors of struct</h3>
+<table>
+  <thead><tr><th>Flavor</th><th>Example</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td>Named-field</td><td><code>struct Point { x: f64, y: f64 }</code></td><td>Most common.</td></tr>
+    <tr><td>Tuple</td><td><code>struct Meters(f64);</code></td><td>Newtypes / simple wrappers.</td></tr>
+    <tr><td>Unit</td><td><code>struct Sentinel;</code></td><td>Marker types; zero size.</td></tr>
+  </tbody>
+</table>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Partial mutation</td><td><code>let p = Point {..}; p.x = 3.0;</code></td><td><code>let mut p = Point {..}; p.x = 3.0;</code></td></tr>
+    <tr><td>Default</td><td>Hand-writing empty ctors.</td><td><code>#[derive(Default)]</code> when all fields have defaults.</td></tr>
+    <tr><td>Update syntax</td><td>Copying field by field.</td><td><code>Point { x: 1.0, ..old }</code> — fill remaining from <code>old</code>.</td></tr>
+    <tr><td>Field init shorthand</td><td><code>Point { x: x, y: y }</code></td><td><code>Point { x, y }</code> when local name matches field.</td></tr>
+    <tr><td>Visibility</td><td>All fields public by reflex.</td><td>Default private. Expose via accessors or selective <code>pub</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. What does <code>#[derive(Clone, Debug, PartialEq)]</code> do?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Generates trait implementations. <code>Clone</code> → <code>.clone()</code>; <code>Debug</code> → <code>"{:?}"</code> printing; <code>PartialEq</code> → <code>==</code>. Each requires all fields to implement the same trait.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. "Constructors" &amp; <code>Drop</code></h2>
+
+<p>Rust has no constructor keyword — use associated functions by convention named <code>new</code>. Destruction is automatic via the <code>Drop</code> trait when a value goes out of scope.</p>
+
+<pre><span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">File</span> {
+    handle: <span class="typ">std</span>::<span class="typ">fs</span>::<span class="typ">File</span>,
+}
+
+<span class="kw">impl</span> <span class="typ">File</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">open</span>(path: &amp;<span class="typ">str</span>) -&gt; <span class="typ">std</span>::<span class="typ">io</span>::<span class="typ">Result</span>&lt;<span class="self">Self</span>&gt; {
+        <span class="typ">Ok</span>(<span class="self">Self</span> { handle: <span class="typ">std</span>::<span class="typ">fs</span>::<span class="typ">File</span>::<span class="typ">open</span>(path)? })
+    }
+}
+
+<span class="kw">impl</span> <span class="typ">Drop</span> <span class="kw">for</span> <span class="typ">File</span> {
+    <span class="kw">fn</span> <span class="typ">drop</span>(&amp;<span class="kw">mut</span> <span class="self">self</span>) {
+        <span class="cmt">// automatic cleanup — run when the value leaves scope</span>
+    }
+}</pre>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Fallible "ctor"</td><td>Panicking on bad input.</td><td>Return <code>Result&lt;Self, Err&gt;</code> from <code>new</code> or <code>try_new</code>.</td></tr>
+    <tr><td>Multiple constructors</td><td>Overloading <code>new</code>.</td><td>Give descriptive names: <code>Date::today()</code>, <code>Date::from_iso(s)</code>, <code>Date::new(y, m, d)</code>.</td></tr>
+    <tr><td>Running init logic</td><td>Forgetting to implement <code>Drop</code> for a handle.</td><td>Wrap raw resources and implement <code>Drop</code> so cleanup happens automatically.</td></tr>
+    <tr><td>Partial moves</td><td>Moving one field out of a struct, then using the struct.</td><td>Move everything, clone, or use <code>mem::replace</code>.</td></tr>
+    <tr><td>Manual drop</td><td>Calling <code>.drop()</code> directly.</td><td>Use <code>std::mem::drop(x)</code> to drop early — you can't call <code>Drop::drop</code> yourself.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Can you call <code>MyType::drop(x)</code> directly?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. That would let you destroy an object twice. Use <code>std::mem::drop(x)</code> to trigger drop early; the compiler enforces single-drop.</div>
+  </details>
+</div>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Visibility — <code>pub</code> everywhere</h2>
+<table>
+  <thead><tr><th>Item</th><th>Default</th><th>Expose</th></tr></thead>
+  <tbody>
+    <tr><td>Module</td><td>private</td><td><code>pub mod m;</code></td></tr>
+    <tr><td>Struct / enum</td><td>private</td><td><code>pub struct Foo</code></td></tr>
+    <tr><td>Fields</td><td>private <i>even if struct is <code>pub</code></i></td><td><code>pub x: i32</code> per field</td></tr>
+    <tr><td>Function</td><td>private</td><td><code>pub fn foo()</code></td></tr>
+    <tr><td>Trait method</td><td>visibility of trait</td><td>—</td></tr>
+    <tr><td>Restricted visibility</td><td>n/a</td><td><code>pub(crate)</code>, <code>pub(super)</code>, <code>pub(in path)</code></td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Tip — <code>pub(crate)</code> is gold.</b> "Public inside this crate, invisible outside." Keeps the public API surface small and intentional.</div>
+
+<div class="tricky">
+  <div class="q">Q. <code>pub struct Foo { x: i32 }</code> — can external code read <code>x</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. The struct is public but the field isn't. You need <code>pub x: i32</code> for that.</div>
+  </details>
+</div>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Encapsulation via Module Privacy</h2>
+<pre><span class="kw">pub</span> <span class="kw">mod</span> <span class="typ">account</span> {
+    <span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Account</span> {
+        balance: <span class="typ">f64</span>,                 <span class="cmt">// private field</span>
+    }
+
+    <span class="kw">impl</span> <span class="typ">Account</span> {
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">new</span>(initial: <span class="typ">f64</span>) -&gt; <span class="typ">Result</span>&lt;<span class="self">Self</span>, <span class="typ">String</span>&gt; {
+            <span class="kw">if</span> initial &lt; <span class="num">0.0</span> { <span class="kw">return</span> <span class="typ">Err</span>(<span class="str">"negative".into()</span>); }
+            <span class="typ">Ok</span>(<span class="self">Self</span> { balance: initial })
+        }
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">balance</span>(&amp;<span class="self">self</span>) -&gt; <span class="typ">f64</span> { <span class="self">self</span>.balance }
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">deposit</span>(&amp;<span class="kw">mut</span> <span class="self">self</span>, amount: <span class="typ">f64</span>) -&gt; <span class="typ">Result</span>&lt;(), <span class="typ">String</span>&gt; {
+            <span class="kw">if</span> amount &lt; <span class="num">0.0</span> { <span class="kw">return</span> <span class="typ">Err</span>(<span class="str">"negative".into()</span>); }
+            <span class="self">self</span>.balance += amount;
+            <span class="typ">Ok</span>(())
+        }
+    }
+}</pre>
+
+<div class="tips"><b>Rule of thumb:</b> your invariants live inside <code>impl</code> blocks. Because fields default to private, external callers <i>must</i> go through your methods. Unlike Java's <code>private</code>, this is enforced by the module system, not just field-by-field.</div>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. "Inheritance" — there isn't any</h2>
+
+<p>Rust deliberately omits inheritance. The tools you use instead:</p>
+<table>
+  <thead><tr><th>Goal</th><th>Rust tool</th></tr></thead>
+  <tbody>
+    <tr><td>Share method bodies</td><td>Trait with <b>default method implementations</b>.</td></tr>
+    <tr><td>"is-a" substitutability</td><td>Use a trait; <code>&amp;dyn Trait</code> everywhere both can appear.</td></tr>
+    <tr><td>"has-a" for reuse</td><td>Plain composition — embed the struct as a field.</td></tr>
+    <tr><td>Forward methods</td><td>Implement <code>Deref</code> / <code>AsRef</code> — used cautiously.</td></tr>
+    <tr><td>Extension methods</td><td>Define a new trait + blanket impl.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="kw">pub</span> <span class="kw">trait</span> <span class="typ">Greet</span> {
+    <span class="kw">fn</span> <span class="typ">name</span>(&amp;<span class="self">self</span>) -&gt; &amp;<span class="typ">str</span>;
+    <span class="cmt">// default implementation</span>
+    <span class="kw">fn</span> <span class="typ">hello</span>(&amp;<span class="self">self</span>) -&gt; <span class="typ">String</span> {
+        <span class="mac">format!</span>(<span class="str">"hi {}"</span>, <span class="self">self</span>.<span class="typ">name</span>())
+    }
+}
+
+<span class="kw">struct</span> <span class="typ">Dog</span> { name: <span class="typ">String</span> }
+<span class="kw">impl</span> <span class="typ">Greet</span> <span class="kw">for</span> <span class="typ">Dog</span> {
+    <span class="kw">fn</span> <span class="typ">name</span>(&amp;<span class="self">self</span>) -&gt; &amp;<span class="typ">str</span> { &amp;<span class="self">self</span>.name }
+    <span class="cmt">// hello() inherited automatically</span>
+}</pre>
+
+<div class="tricky">
+  <div class="q">Q. I want "Cat IS-A Animal with extra stuff". Do I subclass Animal?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">You don't. Define <code>trait Animal</code> with the behavior you care about. Make <code>Cat</code> and <code>Dog</code> each implement it. Use <code>&amp;dyn Animal</code> or <code>impl Animal</code> as the base type.</div>
+  </details>
+</div>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Polymorphism — Traits &amp; <code>dyn</code></h2>
+
+<h3>Static dispatch (monomorphization)</h3>
+<pre><span class="kw">fn</span> <span class="typ">shout</span>&lt;<span class="typ">T</span>: <span class="typ">Greet</span>&gt;(x: &amp;<span class="typ">T</span>) { <span class="mac">println!</span>(<span class="str">"{}!"</span>, x.<span class="typ">hello</span>()); }
+<span class="cmt">// OR equivalently (impl Trait):</span>
+<span class="kw">fn</span> <span class="typ">shout2</span>(x: &amp;<span class="kw">impl</span> <span class="typ">Greet</span>) { <span class="mac">println!</span>(<span class="str">"{}!"</span>, x.<span class="typ">hello</span>()); }</pre>
+
+<h3>Dynamic dispatch (trait object)</h3>
+<pre><span class="kw">fn</span> <span class="typ">shout_dyn</span>(x: &amp;<span class="kw">dyn</span> <span class="typ">Greet</span>) { <span class="mac">println!</span>(<span class="str">"{}!"</span>, x.<span class="typ">hello</span>()); }
+
+<span class="kw">let</span> items: <span class="typ">Vec</span>&lt;<span class="typ">Box</span>&lt;<span class="kw">dyn</span> <span class="typ">Greet</span>&gt;&gt; = <span class="kw">vec</span>![
+    <span class="typ">Box</span>::<span class="typ">new</span>(<span class="typ">Dog</span>{ name: <span class="str">"Rex".into()</span> }),
+    <span class="typ">Box</span>::<span class="typ">new</span>(<span class="typ">Cat</span>{ name: <span class="str">"Ada".into()</span> }),
+];
+<span class="kw">for</span> it <span class="kw">in</span> &amp;items { <span class="typ">shout_dyn</span>(it.<span class="typ">as_ref</span>()); }</pre>
+
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Static dispatch (<code>impl Trait</code>, generics)</th><th>Dynamic dispatch (<code>dyn Trait</code>)</th></tr></thead>
+  <tbody>
+    <tr><td>How</td><td>Compiler generates a copy per concrete type (monomorphization).</td><td>Runtime vtable lookup via fat pointer.</td></tr>
+    <tr><td>Speed</td><td>Inline-friendly; fastest.</td><td>Indirect call; small cost.</td></tr>
+    <tr><td>Binary size</td><td>Can grow with type combinations.</td><td>Compact.</td></tr>
+    <tr><td>Heterogeneous collection</td><td>Not possible — all elements same type.</td><td>Perfect fit: <code>Vec&lt;Box&lt;dyn Trait&gt;&gt;</code>.</td></tr>
+    <tr><td>Object safety</td><td>Doesn't matter.</td><td>Trait must be <b>object-safe</b>: no generic methods, no <code>Self</code> by value in return.</td></tr>
+  </tbody>
+</table>
+
+<div class="warn"><b>Watch — object safety:</b> <code>fn clone(&amp;self) -&gt; Self</code> makes a trait <b>not</b> object-safe (return type is <code>Self</code>). You can't make <code>Box&lt;dyn Clone&gt;</code>. Workaround: <code>dyn_clone</code> crate or separate method returning <code>Box&lt;dyn Trait&gt;</code>.</div>
+
+<div class="tricky">
+  <div class="q">Q. I want fast dispatch and still want the speed of generics. Static or dynamic?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Static (<code>impl Trait</code> / <code>T: Trait</code>). Compiler generates specialized code per concrete type. Use <code>dyn</code> when you need heterogeneous containers or to reduce binary size.</div>
+  </details>
+</div>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Abstraction via Trait Objects</h2>
+
+<pre><span class="kw">pub</span> <span class="kw">trait</span> <span class="typ">Shape</span> {
+    <span class="kw">fn</span> <span class="typ">area</span>(&amp;<span class="self">self</span>) -&gt; <span class="typ">f64</span>;
+    <span class="kw">fn</span> <span class="typ">name</span>(&amp;<span class="self">self</span>) -&gt; &amp;<span class="typ">str</span>;
+}
+
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Circle</span> { <span class="kw">pub</span> r: <span class="typ">f64</span> }
+<span class="kw">impl</span> <span class="typ">Shape</span> <span class="kw">for</span> <span class="typ">Circle</span> {
+    <span class="kw">fn</span> <span class="typ">area</span>(&amp;<span class="self">self</span>) -&gt; <span class="typ">f64</span> { <span class="typ">std</span>::<span class="typ">f64</span>::<span class="typ">consts</span>::<span class="typ">PI</span> * <span class="self">self</span>.r.<span class="typ">powi</span>(<span class="num">2</span>) }
+    <span class="kw">fn</span> <span class="typ">name</span>(&amp;<span class="self">self</span>) -&gt; &amp;<span class="typ">str</span> { <span class="str">"circle"</span> }
+}</pre>
+
+<div class="tips"><b>Tip — default methods:</b> put shared logic into the trait itself with <code>fn foo(&amp;self) { … }</code>. That's Rust's "template method" pattern.</div>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Traits vs Generics — where they meet</h2>
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Trait alone</th><th>Generic with bound</th></tr></thead>
+  <tbody>
+    <tr><td>Syntax</td><td><code>fn f(x: &amp;dyn T)</code></td><td><code>fn f&lt;X: T&gt;(x: &amp;X)</code> or <code>fn f(x: &amp;impl T)</code></td></tr>
+    <tr><td>Dispatch</td><td>Dynamic.</td><td>Static (monomorphized).</td></tr>
+    <tr><td>Collection of mixed types</td><td>Easy with <code>Vec&lt;Box&lt;dyn T&gt;&gt;</code>.</td><td>Needs enum or trait objects at the boundary.</td></tr>
+    <tr><td>Multiple bounds</td><td><code>&amp;(dyn T + Send + Sync)</code></td><td><code>&lt;X: T + Send + Sync&gt;</code></td></tr>
+    <tr><td>Associated types</td><td>Only via generic parameter on the trait object.</td><td>Idiomatic: <code>trait Iterator { type Item; }</code>.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Overloading — via traits, not signatures</h2>
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Rust</th><th>Workaround</th></tr></thead>
+  <tbody>
+    <tr><td>By parameter list</td><td>Not supported.</td><td>Distinct function names.</td></tr>
+    <tr><td>By type</td><td>Implement a trait like <code>From</code> for multiple types.</td><td><code>impl From&lt;i32&gt; for MyT {...}</code>, <code>impl From&lt;&amp;str&gt; for MyT {...}</code>.</td></tr>
+    <tr><td>Default arguments</td><td>Not supported.</td><td>Builder pattern, or take an <code>Options</code> struct.</td></tr>
+    <tr><td>Variadic</td><td>Macros only (<code>println!</code>, <code>vec!</code>).</td><td>Slice: <code>fn f(xs: &amp;[T])</code>.</td></tr>
+    <tr><td>Override</td><td>Traits' default methods can be overridden per impl.</td><td>Just redefine the method in the <code>impl</code> block.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="kw">impl</span> <span class="typ">From</span>&lt;<span class="typ">i32</span>&gt; <span class="kw">for</span> <span class="typ">Cents</span> { <span class="kw">fn</span> <span class="typ">from</span>(x: <span class="typ">i32</span>) -&gt; <span class="self">Self</span> { <span class="typ">Cents</span>(x <span class="kw">as</span> <span class="typ">i64</span>) } }
+<span class="kw">impl</span> <span class="typ">From</span>&lt;&amp;<span class="typ">str</span>&gt; <span class="kw">for</span> <span class="typ">Cents</span> { <span class="kw">fn</span> <span class="typ">from</span>(s: &amp;<span class="typ">str</span>) -&gt; <span class="self">Self</span> { <span class="typ">Cents</span>(s.<span class="typ">parse</span>().<span class="typ">unwrap</span>()) } }
+
+<span class="kw">let</span> a: <span class="typ">Cents</span> = <span class="num">42</span>.<span class="typ">into</span>();       <span class="cmt">// picks i32 impl</span>
+<span class="kw">let</span> b: <span class="typ">Cents</span> = <span class="str">"100".into()</span>;    <span class="cmt">// picks &amp;str impl</span></pre>
+
+<div class="tricky">
+  <div class="q">Q. Two <code>fn new(x: i32)</code> and <code>fn new(x: &amp;str)</code> in the same <code>impl</code> — does it compile?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No, duplicate name. Use different names, or a generic <code>fn new&lt;T: Into&lt;X&gt;&gt;(x: T)</code>, or implement <code>From</code>.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. Associated Functions &amp; <code>static</code></h2>
+<table>
+  <thead><tr><th>Kind</th><th>Signature</th><th>Called as</th><th>Like Java…</th></tr></thead>
+  <tbody>
+    <tr><td>Associated function</td><td><code>fn new(x: i32) -&gt; Self</code></td><td><code>MyType::new(5)</code></td><td><code>static</code> method.</td></tr>
+    <tr><td>Method</td><td><code>fn foo(&amp;self)</code> / <code>&amp;mut self</code> / <code>self</code></td><td><code>obj.foo()</code></td><td>Instance method.</td></tr>
+    <tr><td>Associated constant</td><td><code>const PI: f64 = 3.14;</code> inside <code>impl</code> or <code>trait</code></td><td><code>MyType::PI</code></td><td><code>static final</code> field.</td></tr>
+    <tr><td><code>static</code> item</td><td><code>static SHARED: i32 = 42;</code></td><td>Read directly.</td><td>Global constant (must be <code>Sync</code> if mutated).</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Counter</span> {}
+<span class="kw">impl</span> <span class="typ">Counter</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="typ">MAX</span>: <span class="typ">i32</span> = <span class="num">1000</span>;
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">default_threshold</span>() -&gt; <span class="typ">i32</span> { <span class="num">42</span> }
+}
+
+<span class="kw">static</span> <span class="typ">APP_NAME</span>: &amp;<span class="typ">str</span> = <span class="str">"myapp"</span>;
+<span class="kw">const</span> <span class="typ">MAX_ITEMS</span>: <span class="typ">usize</span> = <span class="num">128</span>;</pre>
+
+<div class="tricky">
+  <div class="q">Q. Difference between <code>const</code> and <code>static</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint"><code>const</code> is inlined at each use site (no fixed address). <code>static</code> has a single address and lifetime <code>'static</code>. Mutable <code>static</code>s require <code>unsafe</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 12 ============================= -->
+<h2 id="s12">12. <code>const</code>, <code>static</code>, <code>mut</code></h2>
+<table>
+  <thead><tr><th>Item</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>let x = 5;</code></td><td>Immutable binding.</td></tr>
+    <tr><td><code>let mut x = 5;</code></td><td>Mutable binding.</td></tr>
+    <tr><td><code>const PI: f64 = 3.14;</code></td><td>Compile-time constant; inlined at use sites.</td></tr>
+    <tr><td><code>static APP: &amp;str = "x";</code></td><td>Single-address global, lifetime <code>'static</code>.</td></tr>
+    <tr><td><code>static mut COUNTER: i32 = 0;</code></td><td>Mutable global — access requires <code>unsafe</code>. Avoid.</td></tr>
+    <tr><td>Interior mutability</td><td><code>Cell</code>, <code>RefCell</code>, <code>Mutex</code>, <code>RwLock</code>, <code>AtomicUsize</code> — mutate through <code>&amp;</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Trick — replace <code>static mut</code>:</b> use <code>OnceLock&lt;T&gt;</code> or <code>std::sync::LazyLock</code> (stable in 1.80+), or <code>AtomicI32</code> / <code>Mutex</code>.</div>
+
+<!-- ============================= 13 ============================= -->
+<h2 id="s13">13. <code>self</code>, <code>&amp;self</code>, <code>&amp;mut self</code></h2>
+<table>
+  <thead><tr><th>Receiver</th><th>What you get</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td><code>fn f(self)</code></td><td>Takes ownership; object is consumed.</td><td>Builder consumer, conversion methods (<code>into_*</code>).</td></tr>
+    <tr><td><code>fn f(&amp;self)</code></td><td>Immutable borrow.</td><td>Reading data; most "getters".</td></tr>
+    <tr><td><code>fn f(&amp;mut self)</code></td><td>Exclusive mutable borrow.</td><td>Modifying state.</td></tr>
+    <tr><td><code>fn f(self: Box&lt;Self&gt;)</code></td><td>Takes ownership via heap pointer.</td><td>Custom wrapper methods.</td></tr>
+    <tr><td><code>fn f(self: Rc&lt;Self&gt;)</code></td><td>Takes a shared ref-counted receiver.</td><td>Graph algorithms, reference-counted ownership.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Why doesn't Rust need <code>super</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No inheritance. When you call a trait's default implementation from your own impl, that's still just calling a trait method — qualified with <code>Trait::method(&amp;self)</code> if needed.</div>
+  </details>
+</div>
+
+<!-- ============================= 14 ============================= -->
+<h2 id="s14">14. Nested types &amp; closures</h2>
+<pre><span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Timer</span> {
+    fired_at: <span class="typ">std</span>::<span class="typ">time</span>::<span class="typ">Instant</span>,
+    callback: <span class="typ">Box</span>&lt;<span class="kw">dyn</span> <span class="typ">Fn</span>() + <span class="typ">Send</span> + <span class="typ">'static</span>&gt;,
+}
+
+<span class="kw">impl</span> <span class="typ">Timer</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="typ">new</span>&lt;<span class="typ">F</span>: <span class="typ">Fn</span>() + <span class="typ">Send</span> + <span class="typ">'static</span>&gt;(cb: <span class="typ">F</span>) -&gt; <span class="self">Self</span> {
+        <span class="self">Self</span> { fired_at: <span class="typ">std</span>::<span class="typ">time</span>::<span class="typ">Instant</span>::<span class="typ">now</span>(), callback: <span class="typ">Box</span>::<span class="typ">new</span>(cb) }
+    }
+}</pre>
+
+<table>
+  <thead><tr><th>Closure trait</th><th>Captures</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><code>Fn</code></td><td>By shared ref.</td><td>Callable many times without mutation.</td></tr>
+    <tr><td><code>FnMut</code></td><td>By mutable ref.</td><td>Closure needs to mutate captured state.</td></tr>
+    <tr><td><code>FnOnce</code></td><td>By value (can consume).</td><td>Callable at most once.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= 15 ============================= -->
+<h2 id="s15">15. Derivable Traits (Rust's "Object methods")</h2>
+<table>
+  <thead><tr><th>Trait</th><th>What it gives you</th><th>Equivalent of</th></tr></thead>
+  <tbody>
+    <tr><td><code>Clone</code></td><td><code>.clone()</code></td><td>Java <code>clone()</code>.</td></tr>
+    <tr><td><code>Copy</code></td><td>Bitwise copy on move.</td><td>Value-like small types; only for <code>Clone</code>-able, no <code>Drop</code>.</td></tr>
+    <tr><td><code>Debug</code></td><td><code>"{:?}"</code> printing.</td><td>Java <code>toString()</code> for devs.</td></tr>
+    <tr><td><code>Display</code></td><td><code>"{}"</code> printing — must be implemented manually.</td><td>Java <code>toString()</code> for users.</td></tr>
+    <tr><td><code>PartialEq</code> / <code>Eq</code></td><td><code>==</code>.</td><td>Java <code>equals()</code>.</td></tr>
+    <tr><td><code>Hash</code></td><td>Used by <code>HashMap</code>, <code>HashSet</code>.</td><td>Java <code>hashCode()</code>.</td></tr>
+    <tr><td><code>PartialOrd</code> / <code>Ord</code></td><td><code>&lt;</code>, <code>&gt;</code>, <code>cmp</code>.</td><td>Java <code>Comparable</code>.</td></tr>
+    <tr><td><code>Default</code></td><td><code>Default::default()</code>.</td><td>No-arg constructor.</td></tr>
+    <tr><td><code>Drop</code></td><td>Cleanup when value leaves scope.</td><td>Dtor / finalizer done right.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Point</span> { <span class="kw">pub</span> x: <span class="typ">i64</span>, <span class="kw">pub</span> y: <span class="typ">i64</span> }</pre>
+
+<div class="warn"><b>Watch:</b> <code>PartialEq</code> + <code>Hash</code> must be consistent (equal values must hash the same). Use <code>#[derive]</code> together, not one then custom.</div>
+
+<!-- ============================= 16 ============================= -->
+<h2 id="s16">16. Composition over Inheritance</h2>
+<table class="compare">
+  <thead><tr><th>Goal</th><th>In Java</th><th>In Rust</th></tr></thead>
+  <tbody>
+    <tr><td>Share method bodies</td><td>Inheritance.</td><td>Trait + default methods.</td></tr>
+    <tr><td>Add a capability</td><td>Extend class, override.</td><td>Implement trait for your type.</td></tr>
+    <tr><td>"Is-a" polymorphism</td><td>Subclass + virtual.</td><td><code>&amp;dyn Trait</code> or generic <code>T: Trait</code>.</td></tr>
+    <tr><td>"Has-a"</td><td>Field of type X.</td><td>Field of type X. Same idea.</td></tr>
+    <tr><td>Decorator</td><td>Subclass with a field of base.</td><td>Newtype pattern + trait impl that delegates.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= 16b ============================= -->
+<h2 id="s16b">16b. Is-a vs Has-a — Deep Dive (Rust examples)</h2>
+
+<p>Rust folds both ideas into traits + composition:
+<br>• <b>is-a</b> → "X implements trait Y" (and can be used wherever a <code>&amp;dyn Y</code> / <code>impl Y</code> is expected).
+<br>• <b>has-a</b> → "X has a field of type Y".
+<br>There's no "subclass" relationship at all; composition is the only structural reuse mechanism.</p>
+
+<h3>Same-domain contrasts</h3>
+<table class="compare">
+  <thead><tr><th>Scenario</th><th>Wrong ("wants subclass")</th><th>Right (Rust way)</th></tr></thead>
+  <tbody>
+    <tr><td>Stack of ints</td><td>Expecting to "extend <code>Vec</code>".</td><td><code>struct IntStack { data: Vec&lt;i32&gt; }</code> — forward only the methods you want.</td></tr>
+    <tr><td>Logged set</td><td>"Class that extends HashSet".</td><td><code>struct Logged&lt;T&gt; { inner: HashSet&lt;T&gt;, log: Logger }</code> — composition + explicit logging.</td></tr>
+    <tr><td>Square / Rectangle</td><td>Square extends Rectangle.</td><td>Both implement <code>trait Shape</code>; no parent-child.</td></tr>
+    <tr><td>Car / Engine</td><td>Car extends Engine.</td><td><code>struct Car { engine: Engine, wheels: [Wheel; 4] }</code>.</td></tr>
+    <tr><td>User / Logger</td><td>User extends Logger to call <code>log()</code>.</td><td><code>struct User&lt;L: Logger&gt; { log: L }</code> — dependency injection via generics.</td></tr>
+    <tr><td>Order / list of items</td><td>Order extends Vec.</td><td><code>struct Order { items: Vec&lt;Item&gt; }</code>.</td></tr>
+    <tr><td>Manager / Employee</td><td>Manager extends Employee.</td><td><code>struct Person { roles: Vec&lt;Role&gt; }</code> — role as data.</td></tr>
+  </tbody>
+</table>
+
+<h3>Pair drill</h3>
+<table>
+  <thead><tr><th>Pair</th><th>Relationship</th><th>Rust expression</th></tr></thead>
+  <tbody>
+    <tr><td>Dog ↔ Animal</td><td>is-a</td><td><code>impl Animal for Dog</code>.</td></tr>
+    <tr><td>Car ↔ Engine</td><td>has-a</td><td><code>Engine</code> field.</td></tr>
+    <tr><td>Car ↔ Wheels ×4</td><td>has-a</td><td><code>[Wheel; 4]</code> field.</td></tr>
+    <tr><td>Circle ↔ Shape</td><td>is-a</td><td><code>impl Shape for Circle</code>.</td></tr>
+    <tr><td>House ↔ Rooms</td><td>has-a</td><td><code>Vec&lt;Room&gt;</code>.</td></tr>
+    <tr><td>Library ↔ Books</td><td>has-a (aggregation)</td><td><code>Vec&lt;Rc&lt;Book&gt;&gt;</code> if shared.</td></tr>
+    <tr><td>Order ↔ LineItems</td><td>has-a (composition)</td><td><code>Vec&lt;LineItem&gt;</code>.</td></tr>
+    <tr><td>BankAccount ↔ Transactions</td><td>has-a</td><td><code>VecDeque&lt;Transaction&gt;</code>.</td></tr>
+    <tr><td>SavingsAccount ↔ BankAccount</td><td>is-a (trait)</td><td>Both implement <code>Account</code>.</td></tr>
+    <tr><td>Bird ↔ Flyable</td><td>is-a via trait</td><td><code>trait Flyable</code> implemented only by birds that fly.</td></tr>
+    <tr><td>Employee ↔ Salary</td><td>has-a</td><td><code>Decimal</code> field.</td></tr>
+    <tr><td>Employee ↔ Department</td><td>has-a (aggregation)</td><td><code>Rc&lt;Department&gt;</code> if shared.</td></tr>
+    <tr><td>Computer ↔ CPU/RAM/Disk</td><td>has-a (composition)</td><td>Owned fields.</td></tr>
+    <tr><td>ElectricCar ↔ Car</td><td>is-a via trait</td><td>Both implement <code>Vehicle</code>; <code>ElectricCar</code> has a <code>Battery</code>.</td></tr>
+    <tr><td>Tree ↔ BinaryTree</td><td>is-a (traits)</td><td><code>trait Tree</code> implemented by <code>BinaryTree</code>.</td></tr>
+    <tr><td>BinaryTree ↔ Node</td><td>has-a</td><td><code>Option&lt;Box&lt;Node&gt;&gt;</code> root.</td></tr>
+    <tr><td>HttpServer ↔ Handler</td><td>has-a</td><td><code>Box&lt;dyn Handler&gt;</code> or generic bound.</td></tr>
+    <tr><td>Service ↔ Repository</td><td>has-a (DI)</td><td><code>struct Svc&lt;R: Repo&gt; { repo: R }</code>.</td></tr>
+    <tr><td>Pizza ↔ Toppings</td><td>has-a</td><td><code>Vec&lt;Topping&gt;</code>.</td></tr>
+  </tbody>
+</table>
+
+<h4>Snippets — the right way</h4>
+<pre><span class="cmt">// IS-A via trait: Circle and Square share the Shape capability</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="typ">Shape</span> { <span class="kw">fn</span> <span class="typ">area</span>(&amp;<span class="self">self</span>) -&gt; <span class="typ">f64</span>; }
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Circle</span> { <span class="kw">pub</span> r: <span class="typ">f64</span> }
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Square</span> { <span class="kw">pub</span> side: <span class="typ">f64</span> }
+<span class="kw">impl</span> <span class="typ">Shape</span> <span class="kw">for</span> <span class="typ">Circle</span> { <span class="kw">fn</span> <span class="typ">area</span>(&amp;<span class="self">self</span>) -&gt; <span class="typ">f64</span> { <span class="typ">std</span>::<span class="typ">f64</span>::<span class="typ">consts</span>::<span class="typ">PI</span> * <span class="self">self</span>.r.<span class="typ">powi</span>(<span class="num">2</span>) } }
+<span class="kw">impl</span> <span class="typ">Shape</span> <span class="kw">for</span> <span class="typ">Square</span> { <span class="kw">fn</span> <span class="typ">area</span>(&amp;<span class="self">self</span>) -&gt; <span class="typ">f64</span> { <span class="self">self</span>.side.<span class="typ">powi</span>(<span class="num">2</span>) } }</pre>
+
+<pre><span class="cmt">// HAS-A composition: Car owns Engine + Wheels, borrows Logger</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">Car</span>&lt;<span class="lt">'a</span>&gt; {
+    <span class="kw">pub</span> engine: <span class="typ">Engine</span>,
+    <span class="kw">pub</span> wheels: [<span class="typ">Wheel</span>; <span class="num">4</span>],
+    <span class="kw">pub</span> log:    &amp;<span class="lt">'a</span> <span class="kw">dyn</span> <span class="typ">Logger</span>,
+}</pre>
+
+<pre><span class="cmt">// Decorator: new struct wraps another and forwards trait methods</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="typ">BufferedWriter</span>&lt;<span class="typ">W</span>: <span class="typ">Write</span>&gt; { inner: <span class="typ">W</span>, buf: <span class="typ">Vec</span>&lt;<span class="typ">u8</span>&gt; }
+<span class="kw">impl</span>&lt;<span class="typ">W</span>: <span class="typ">Write</span>&gt; <span class="typ">Write</span> <span class="kw">for</span> <span class="typ">BufferedWriter</span>&lt;<span class="typ">W</span>&gt; { <span class="cmt">/* flushes buffered data to self.inner */</span> }</pre>
+
+<h3>Red flags ("I think I want subclass")</h3>
+<ul>
+  <li>You want to "extend" a struct to add a method — use a trait with a blanket impl or a free function.</li>
+  <li>You want method override — define a trait with a default method, implement it differently per type.</li>
+  <li>You want "common fields" — embed them as fields in every struct, or use composition.</li>
+  <li>You want heterogeneous collection — <code>Vec&lt;Box&lt;dyn Trait&gt;&gt;</code> or <code>enum</code> variants.</li>
+</ul>
+
+<div class="tricky">
+  <div class="q">Q. How do you share <i>behavior</i> without inheritance?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Traits with default method bodies. Any type implementing the trait inherits the default unless it overrides — this is like Java's default interface methods, just at the language core.</div>
+  </details>
+</div>
+
+<!-- ============================= 17 ============================= -->
+<h2 id="s17">17. Downcasting — <code>Any</code></h2>
+
+<p>Rust has no RTTI by default. To downcast a trait object you need <code>std::any::Any</code>.</p>
+
+<pre><span class="kw">use</span> <span class="typ">std</span>::<span class="typ">any</span>::<span class="typ">Any</span>;
+
+<span class="kw">fn</span> <span class="typ">inspect</span>(v: &amp;<span class="kw">dyn</span> <span class="typ">Any</span>) {
+    <span class="kw">if</span> <span class="kw">let</span> <span class="typ">Some</span>(s) = v.<span class="typ">downcast_ref</span>::&lt;<span class="typ">String</span>&gt;() {
+        <span class="mac">println!</span>(<span class="str">"string: {s}"</span>);
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="typ">Some</span>(n) = v.<span class="typ">downcast_ref</span>::&lt;<span class="typ">i32</span>&gt;() {
+        <span class="mac">println!</span>(<span class="str">"int: {n}"</span>);
+    }
+}</pre>
+
+<div class="warn"><b>Watch:</b> <code>Any</code> requires <code>'static</code>. You cannot downcast borrowed data with non-static lifetimes.</div>
+
+<div class="tricky">
+  <div class="q">Q. Why does idiomatic Rust rarely reach for <code>Any</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Long <code>downcast</code> ladders are an anti-pattern. Prefer an <code>enum</code> of variants (closed set) or add a trait method that distinguishes cases polymorphically.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 18 ============================= -->
+<h2 id="s18">18. Immutability by Default</h2>
+<table>
+  <thead><tr><th>Requirement</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Variables immutable</td><td>Default. <code>let x = 5;</code> can't be reassigned.</td></tr>
+    <tr><td>Struct fields immutable</td><td>Bindings decide. If <code>let p = Point{..};</code>, you can't mutate <code>p.x</code> through <code>p</code>.</td></tr>
+    <tr><td>Interior mutability</td><td><code>Cell&lt;T&gt;</code>, <code>RefCell&lt;T&gt;</code>, <code>Mutex&lt;T&gt;</code>, <code>RwLock&lt;T&gt;</code>, <code>AtomicI32</code>. Mutate through <code>&amp;</code>.</td></tr>
+    <tr><td>Frozen records</td><td>Expose only getters; no <code>&amp;mut self</code> methods.</td></tr>
+    <tr><td>Deep immutability</td><td>Use <code>Arc&lt;T&gt;</code> for shared-read, not <code>Arc&lt;Mutex&lt;T&gt;&gt;</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Why use <code>RefCell</code> if the compiler already enforces borrowing?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">It moves the borrow check to <i>runtime</i>. Useful when the compile-time check is too restrictive (e.g., graph structures, callbacks). Panics if you break the rules.</div>
+  </details>
+</div>
+
+<!-- ============================= 19 ============================= -->
+<h2 id="s19">19. Errors — <code>Result</code> &amp; <code>?</code></h2>
+<table>
+  <thead><tr><th>Tool</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>Result&lt;T, E&gt;</code></td><td>Either <code>Ok(T)</code> or <code>Err(E)</code> — no exceptions.</td></tr>
+    <tr><td><code>Option&lt;T&gt;</code></td><td><code>Some(T)</code> or <code>None</code> — Rust's null.</td></tr>
+    <tr><td><code>?</code> operator</td><td>Early-return on <code>Err</code> / <code>None</code>. Must match the function's return type.</td></tr>
+    <tr><td><code>thiserror</code> / <code>anyhow</code></td><td>Crates: <code>thiserror</code> for library errors, <code>anyhow</code> for application boundaries.</td></tr>
+    <tr><td><code>panic!</code></td><td>Unrecoverable errors; terminates the thread.</td></tr>
+    <tr><td><code>From</code> blanket impl</td><td>Lets <code>?</code> auto-convert error types.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="kw">fn</span> <span class="typ">read_config</span>(path: &amp;<span class="typ">str</span>) -&gt; <span class="typ">Result</span>&lt;<span class="typ">Config</span>, <span class="typ">MyError</span>&gt; {
+    <span class="kw">let</span> text = <span class="typ">std</span>::<span class="typ">fs</span>::<span class="typ">read_to_string</span>(path)?;     <span class="cmt">// io::Error → MyError via From</span>
+    <span class="kw">let</span> cfg  = <span class="typ">serde_json</span>::<span class="typ">from_str</span>(&amp;text)?;         <span class="cmt">// serde_json::Error → MyError</span>
+    <span class="typ">Ok</span>(cfg)
+}</pre>
+
+<div class="tips"><b>Tip:</b> prefer <code>?</code> and <code>Result</code> throughout. Save <code>.unwrap()</code> / <code>.expect()</code> for prototypes and tests; they panic.</div>
+
+<div class="tricky">
+  <div class="q">Q. Can Rust "throw" and "catch"?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Not exceptions in the Java sense. <code>panic!</code> unwinds the stack (can be caught with <code>catch_unwind</code> at a boundary), but normal error flow uses <code>Result</code> + <code>?</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 20 ============================= -->
+<h2 id="s20">20. SOLID in Rust</h2>
+<table>
+  <thead><tr><th>Letter</th><th>Rust expression</th></tr></thead>
+  <tbody>
+    <tr><td><b>S</b> Single Responsibility</td><td>One module per concept; small focused structs &amp; traits.</td></tr>
+    <tr><td><b>O</b> Open/Closed</td><td>Extend by implementing traits for new types; or provide new strategies via generics.</td></tr>
+    <tr><td><b>L</b> Liskov Substitution</td><td>Any <code>dyn Trait</code> implementor must honor the trait's contract. (Compiler can't enforce invariants beyond signatures.)</td></tr>
+    <tr><td><b>I</b> Interface Segregation</td><td>Many small traits (<code>Read</code>, <code>Write</code>, <code>Seek</code>) beat one big one.</td></tr>
+    <tr><td><b>D</b> Dependency Inversion</td><td>Take <code>impl Trait</code> / <code>&amp;dyn Trait</code> parameters, not concrete types. Works naturally with generics + bounds.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. You added a <code>print_pdf</code> method to <code>Report</code> for every new format — which SOLID letter cries?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">O (Open/Closed). Introduce <code>trait Formatter</code> and let each format be its own struct implementing it.</div>
+  </details>
+</div>
+
+<!-- ============================= 21 ============================= -->
+<h2 id="s21">21. Ownership / Borrowing / Lifetimes — the "C++ RAII" done right</h2>
+<table>
+  <thead><tr><th>Rule</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Single owner</td><td>Every value has exactly one owner. When the owner drops, the value drops.</td></tr>
+    <tr><td>Move by default</td><td>Assigning or passing a non-<code>Copy</code> value <b>moves</b> it — the source is invalidated.</td></tr>
+    <tr><td>Borrow rules</td><td>Many <code>&amp;T</code> OR one <code>&amp;mut T</code> — never both.</td></tr>
+    <tr><td>Lifetimes</td><td>Compiler tracks how long references are valid. Explicit in signatures when ambiguous.</td></tr>
+    <tr><td>Smart pointers</td><td><code>Box&lt;T&gt;</code> heap; <code>Rc&lt;T&gt;</code> shared single-threaded; <code>Arc&lt;T&gt;</code> shared across threads; <code>Weak&lt;T&gt;</code> non-owning.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="kw">fn</span> <span class="typ">longest</span>&lt;<span class="lt">'a</span>&gt;(a: &amp;<span class="lt">'a</span> <span class="typ">str</span>, b: &amp;<span class="lt">'a</span> <span class="typ">str</span>) -&gt; &amp;<span class="lt">'a</span> <span class="typ">str</span> {
+    <span class="kw">if</span> a.<span class="typ">len</span>() &gt;= b.<span class="typ">len</span>() { a } <span class="kw">else</span> { b }
+}</pre>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Dangling reference</td><td>Returning a <code>&amp;T</code> to a local.</td><td>Return the value, or take it as a borrowed input and return the borrow.</td></tr>
+    <tr><td>Aliased mutation</td><td>Two <code>&amp;mut</code> to the same value.</td><td>Compiler refuses — restructure, or use <code>RefCell</code>/<code>Mutex</code>.</td></tr>
+    <tr><td>Cycle in <code>Rc</code></td><td><code>Rc</code>-reachable cycle.</td><td>Break with <code>Weak&lt;T&gt;</code> — <code>Rc</code>/<code>Arc</code> don't detect cycles.</td></tr>
+    <tr><td>Self-referential struct</td><td>Holding a <code>&amp;</code> to own field.</td><td>Use an index, <code>Rc</code>, or <code>Pin</code> + careful unsafe.</td></tr>
+    <tr><td>Clone-as-cop-out</td><td><code>.clone()</code> everywhere to silence the borrow checker.</td><td>First try to restructure; clone when ownership really is needed.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Why does Rust panic on an <code>Rc</code> cycle instead of silently leaking?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">It doesn't panic — <code>Rc</code> cycles leak memory silently. Prevent by downgrading one side to <code>Weak&lt;T&gt;</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 22 ============================= -->
+<h2 id="s22">22. Generics, Bounds &amp; Associated Types</h2>
+<pre><span class="kw">fn</span> <span class="typ">largest</span>&lt;<span class="typ">T</span>: <span class="typ">PartialOrd</span> + <span class="typ">Copy</span>&gt;(xs: &amp;[<span class="typ">T</span>]) -&gt; <span class="typ">T</span> {
+    <span class="kw">let</span> <span class="kw">mut</span> big = xs[<span class="num">0</span>];
+    <span class="kw">for</span> &amp;x <span class="kw">in</span> &amp;xs[<span class="num">1</span>..] {
+        <span class="kw">if</span> x &gt; big { big = x; }
+    }
+    big
+}
+
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="typ">Iterator</span> {
+    <span class="kw">type</span> <span class="typ">Item</span>;                                <span class="cmt">// associated type</span>
+    <span class="kw">fn</span> <span class="typ">next</span>(&amp;<span class="kw">mut</span> <span class="self">self</span>) -&gt; <span class="typ">Option</span>&lt;<span class="self">Self</span>::<span class="typ">Item</span>&gt;;
+}</pre>
+
+<table>
+  <thead><tr><th>Feature</th><th>Sample</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td>Trait bound</td><td><code>fn f&lt;T: Display&gt;(x: T)</code></td><td>Require capabilities.</td></tr>
+    <tr><td><code>where</code> clause</td><td><code>where T: A + B, U: C</code></td><td>Cleaner for many bounds.</td></tr>
+    <tr><td>Associated type</td><td><code>type Item;</code> inside a trait</td><td>One type per impl; cleaner than generic param.</td></tr>
+    <tr><td>GAT (Generic Associated Types)</td><td><code>type Item&lt;'a&gt;;</code></td><td>When the associated type itself needs lifetime params.</td></tr>
+    <tr><td>Blanket impl</td><td><code>impl&lt;T: A&gt; B for T { ... }</code></td><td>Auto-adds capability to every type satisfying A.</td></tr>
+    <tr><td>Turbofish</td><td><code>"42".parse::&lt;i32&gt;()</code></td><td>When type inference needs a nudge.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Tip — prefer <code>impl Trait</code> in arg position</b> (<code>fn f(x: impl Iterator&lt;Item=i32&gt;)</code>) for simple cases; switch to explicit generics when you need multiple type parameters or <code>where</code> clauses.</div>
+
+<!-- ============================= END ============================= -->
+<h2 id="end">Quick Interview Gotchas</h2>
+<table>
+  <thead><tr><th>#</th><th>Gotcha</th><th>Answer</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Does Rust have inheritance?</td><td>No. Traits + default methods + composition.</td></tr>
+    <tr><td>2</td><td>Does Rust have exceptions?</td><td>No. <code>Result&lt;T, E&gt;</code> + <code>?</code>. <code>panic!</code> is for unrecoverable bugs.</td></tr>
+    <tr><td>3</td><td>What is <code>Self</code> vs <code>self</code>?</td><td><code>Self</code> (capital) is the current type. <code>self</code> is the instance parameter.</td></tr>
+    <tr><td>4</td><td>Why does <code>Vec&lt;dyn Trait&gt;</code> not compile?</td><td>Trait objects are unsized. Use <code>Vec&lt;Box&lt;dyn Trait&gt;&gt;</code> or <code>Vec&lt;&amp;dyn Trait&gt;</code>.</td></tr>
+    <tr><td>5</td><td>Can a closure live longer than captured references?</td><td>Only if you <code>move</code> the captures. Otherwise lifetimes will keep it short.</td></tr>
+    <tr><td>6</td><td>Does <code>Copy</code> imply <code>Clone</code>?</td><td>Yes — <code>Copy</code> requires <code>Clone</code>. <code>Copy</code> is bitwise, <code>Clone</code> can be arbitrary.</td></tr>
+    <tr><td>7</td><td>Can you extend a struct from another crate?</td><td>Not by inheritance. Define a trait (in your crate) and <code>impl</code> it for the foreign struct (<b>orphan rule</b>: one of the trait or the type must be yours).</td></tr>
+    <tr><td>8</td><td>Why can't I have <code>static mut</code> without unsafe?</td><td>Unsynchronized global mutation is a data-race risk. Use <code>Mutex</code>, <code>RwLock</code>, or atomics.</td></tr>
+    <tr><td>9</td><td>What is object safety?</td><td>A trait is object-safe (usable as <code>dyn Trait</code>) if no method takes <code>Self</code> by value or has generic type parameters.</td></tr>
+    <tr><td>10</td><td>What's the "orphan rule"?</td><td>To implement <code>Trait</code> for <code>Type</code>, at least one of them must be defined in your crate. Prevents conflicting impls.</td></tr>
+  </tbody>
+</table>
+
+<p class="small" style="margin-top:18px">
+  Printing tip: Ctrl+P → Paper: A3 → Background graphics: ON. Hints auto-expand in print.
+</p>
+
+</div>
+
+<script>
+// --- Simple Rust syntax highlighter for all <pre> blocks ---
+(function () {
+  const KEYWORDS = new Set([
+    "as","async","await","break","const","continue","crate","dyn","else","enum","extern","false",
+    "fn","for","if","impl","in","let","loop","match","mod","move","mut","pub","ref","return","self",
+    "Self","static","struct","super","trait","true","type","unsafe","use","where","while","box",
+    "macro_rules"
+  ]);
+  const TYPES = /^([A-Z][A-Za-z0-9_]*|i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|isize|usize|f32|f64|bool|char|str|String)$/;
+
+  function escape(s){ return s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+  function highlight(src) {
+    // Order matters: comments, strings, chars, attrs, lifetimes, numbers, macro calls, idents
+    const tokenRe = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*"|b"(?:\\.|[^"\\\n])*"|r#*"[\s\S]*?"#*)|('(?:\\.|[^'\\\n])')|(#!?\[[^\]]*\])|('[a-zA-Z_][a-zA-Z0-9_]*)|(\b\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?(?:_?(?:i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|isize|usize|f32|f64))?\b|\b0x[\da-fA-F_]+(?:_?(?:i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|isize|usize))?\b|\b0b[01_]+(?:_?(?:i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|isize|usize))?\b)|([A-Za-z_][A-Za-z0-9_]*!)|([A-Za-z_][A-Za-z0-9_]*)/g;
+    let out = "";
+    let last = 0;
+    let m;
+    while ((m = tokenRe.exec(src)) !== null) {
+      out += escape(src.slice(last, m.index));
+      if (m[1]) out += '<span class="cmt">' + escape(m[1]) + '</span>';
+      else if (m[2]) out += '<span class="str">' + escape(m[2]) + '</span>';
+      else if (m[3]) out += '<span class="str">' + escape(m[3]) + '</span>';
+      else if (m[4]) out += '<span class="attr">' + escape(m[4]) + '</span>';
+      else if (m[5]) out += '<span class="lt">' + escape(m[5]) + '</span>';
+      else if (m[6]) out += '<span class="num">' + escape(m[6]) + '</span>';
+      else if (m[7]) out += '<span class="mac">' + escape(m[7]) + '</span>';
+      else if (m[8]) {
+        const w = m[8];
+        if (w === "self" || w === "Self")
+                                  out += '<span class="self">' + w + '</span>';
+        else if (KEYWORDS.has(w)) out += '<span class="kw">' + w + '</span>';
+        else if (TYPES.test(w))   out += '<span class="typ">' + w + '</span>';
+        else                      out += escape(w);
+      }
+      last = tokenRe.lastIndex;
+    }
+    out += escape(src.slice(last));
+    return out;
+  }
+
+  document.querySelectorAll("pre").forEach(pre => {
+    if (pre.dataset.hl === "1") return;
+    const raw = pre.textContent;
+    pre.innerHTML = highlight(raw);
+    pre.dataset.hl = "1";
+  });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  /* =========================================================
+     Kiro Dim Dark Mode -- soft slate palette, not pitch-black.
+     Activated only when <html> has class "kiro-dark".
+     Designed so coloured pastel callouts stay LIGHT but their
+     text becomes dark+readable; everything else flips to dim.
+     ========================================================= */
+  html.kiro-dark{
+    --kd-bg:        #1c2128;   /* page bg, slate, not black */
+    --kd-bg-2:      #242a33;   /* panels, h2 bands */
+    --kd-bg-3:      #2c333d;   /* hover / table header */
+    --kd-text:      #e8edf2;   /* main text on dark */
+    --kd-text-mute: #a8b1bd;
+    --kd-border:    #3a414d;
+    --kd-accent:    #8c7bff;
+    --kd-link:      #8cc6ff;
+    --kd-good:      #4ddbb0;
+    --kd-bad:       #ff9d9d;
+    --kd-warn:      #ffd166;
+    --kd-info:      #6ec5ff;
+    --kd-code-bg:   #1f2530;
+    --kd-pre-bg:    #1a1f29;
+    /* Used for elements that keep their original light pastel bg.
+       We force a near-black text colour so they remain readable. */
+    --kd-on-pastel: #15171c;
+    color-scheme: dark;
+    background:#1c2128 !important;
+    color:#e8edf2 !important;
+  }
+
+  /* ----- Base text & layout ----- */
+  html.kiro-dark body{
+    background: var(--kd-bg) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1,
+  html.kiro-dark h3,
+  html.kiro-dark h4,
+  html.kiro-dark h5,
+  html.kiro-dark h6{
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark h1{ border-bottom-color: var(--kd-border) !important; }
+  html.kiro-dark h2{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1 .sub,
+  html.kiro-dark .small,
+  html.kiro-dark .legend,
+  html.kiro-dark .sub,
+  html.kiro-dark .muted{ color: var(--kd-text-mute) !important; }
+
+  html.kiro-dark a{ color: var(--kd-link) !important; }
+  html.kiro-dark a:hover{ color: #c8e1ff !important; }
+  html.kiro-dark hr{ border-color: var(--kd-border) !important; }
+
+  /* ----- Code & pre ----- */
+  html.kiro-dark code,
+  html.kiro-dark code.inline,
+  html.kiro-dark td code,
+  html.kiro-dark th code,
+  html.kiro-dark p code,
+  html.kiro-dark li code,
+  html.kiro-dark span code{
+    background: #2c333d !important;
+    color: #f5e8b8 !important;
+    border: 1px solid #3a414d !important;
+    border-radius: 3px;
+    padding: 0 4px;
+  }
+  html.kiro-dark pre,
+  html.kiro-dark pre.code{
+    background: var(--kd-pre-bg) !important;
+    color: #d6deeb !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark pre code{
+    background: transparent !important;
+    color: inherit !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  html.kiro-dark pre .kw,
+  html.kiro-dark .kw   { color: #ff8489 !important; }
+  html.kiro-dark pre .typ,
+  html.kiro-dark .typ  { color: #ffb070 !important; }
+  html.kiro-dark pre .str,
+  html.kiro-dark .str  { color: #b8dbff !important; }
+  html.kiro-dark pre .num,
+  html.kiro-dark .num  { color: #8cc6ff !important; }
+  html.kiro-dark pre .cmt,
+  html.kiro-dark .cmt  { color: #9aa3b0 !important; }
+  html.kiro-dark pre .ann,
+  html.kiro-dark .ann  { color: #8ee99a !important; }
+  html.kiro-dark pre .fn,
+  html.kiro-dark .fn   { color: #d2b3ff !important; }
+  html.kiro-dark pre .op,
+  html.kiro-dark .op   { color: #d6deeb !important; }
+  html.kiro-dark pre .var,
+  html.kiro-dark .var  { color: #ffb070 !important; }
+
+  /* ----- Tables ----- */
+  html.kiro-dark table{
+    background: transparent !important;
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark th,
+  html.kiro-dark td{
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+    background-color: transparent;
+  }
+  html.kiro-dark th{
+    background: var(--kd-bg-3) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark tr:nth-child(even) td{ background: rgba(255,255,255,.025); }
+
+  html.kiro-dark .right,
+  html.kiro-dark .good,
+  html.kiro-dark tr.right td,
+  html.kiro-dark tr.good td{
+    background: rgba(77,219,176,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .wrong,
+  html.kiro-dark .bad,
+  html.kiro-dark tr.wrong td,
+  html.kiro-dark tr.bad td{
+    background: rgba(255,157,157,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .col-right{ color: var(--kd-good) !important; }
+  html.kiro-dark .col-wrong{ color: var(--kd-bad) !important; }
+
+  html.kiro-dark table.compare th:nth-child(2){
+    background: rgba(255,157,157,.18) !important; color: #ffc4c4 !important;
+  }
+  html.kiro-dark table.compare th:nth-child(3){
+    background: rgba(77,219,176,.18) !important; color: #b0f0d8 !important;
+  }
+  html.kiro-dark table.compare td:nth-child(2){ background: rgba(255,157,157,.06) !important; }
+  html.kiro-dark table.compare td:nth-child(3){ background: rgba(77,219,176,.06) !important; }
+
+  /* ----- Generic tip / note / tricky callouts ----- */
+  html.kiro-dark .tips,
+  html.kiro-dark .tip,
+  html.kiro-dark .note{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .tips b,
+  html.kiro-dark .tip b{ color: var(--kd-warn) !important; }
+
+  html.kiro-dark .tricky{
+    background: rgba(140,123,255,.10) !important;
+    border-color: rgba(140,123,255,.5) !important;
+    color: var(--kd-text) !important;
+  }
+
+  html.kiro-dark .callout,
+  html.kiro-dark .info,
+  html.kiro-dark .panel,
+  html.kiro-dark .box{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .callout.green,
+  html.kiro-dark .callout.success{
+    background: rgba(77,219,176,.10) !important;
+    border-color: rgba(77,219,176,.5) !important;
+  }
+  html.kiro-dark .callout.cyan{
+    background: rgba(110,197,255,.10) !important;
+    border-color: rgba(110,197,255,.5) !important;
+  }
+  html.kiro-dark .callout.red,
+  html.kiro-dark .callout.error,
+  html.kiro-dark .warning{
+    background: rgba(255,157,157,.10) !important;
+    border-color: rgba(255,157,157,.5) !important;
+  }
+  html.kiro-dark .callout.yellow,
+  html.kiro-dark .callout.warning{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+  }
+
+  /* ----- Q-blocks used in Graph_Algorithms_Java cheatsheet:
+           .obj / .why / .how / .theo / .cx (all light pastels).
+           Re-tone them to dim variants with readable text. ----- */
+  html.kiro-dark .block,
+  html.kiro-dark .obj,
+  html.kiro-dark .why,
+  html.kiro-dark .how,
+  html.kiro-dark .theo,
+  html.kiro-dark .cx{
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .block *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .obj *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .why *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .how *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .theo *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .cx *:not(.label):not(code):not(pre):not(b):not(strong){
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .block b,
+  html.kiro-dark .obj b, html.kiro-dark .why b, html.kiro-dark .how b,
+  html.kiro-dark .theo b, html.kiro-dark .cx b,
+  html.kiro-dark .block strong,
+  html.kiro-dark .obj strong, html.kiro-dark .why strong, html.kiro-dark .how strong,
+  html.kiro-dark .theo strong, html.kiro-dark .cx strong{
+    color: #fff !important;
+  }
+  html.kiro-dark .obj  { background: rgba(76,179,255,.16) !important; border-color: #4cb3ff !important; }
+  html.kiro-dark .why  { background: rgba(255,177,73,.16) !important; border-color: #ffb149 !important; }
+  html.kiro-dark .how  { background: rgba(77,219,176,.16) !important; border-color: #4ddbb0 !important; }
+  html.kiro-dark .theo { background: rgba(176,138,255,.16) !important; border-color: #b08aff !important; }
+  html.kiro-dark .cx   { background: rgba(255,138,193,.16) !important; border-color: #ff8ac1 !important; }
+  /* Their pill-style labels stay coloured (white text already) -- leave as-is. */
+
+  /* h2.cat-* coloured section bands -- repaint to muted versions */
+  html.kiro-dark h2.cat-term  { background: rgba(176,184,196,.12) !important; border-left-color: #b0b8c4 !important; }
+  html.kiro-dark h2.cat-rep   { background: rgba(124,138,232,.15) !important; border-left-color: #7c8ae8 !important; }
+  html.kiro-dark h2.cat-trav  { background: rgba(77,219,176,.15) !important; border-left-color: #4ddbb0 !important; }
+  html.kiro-dark h2.cat-topo  { background: rgba(110,197,255,.15) !important; border-left-color: #6ec5ff !important; }
+  html.kiro-dark h2.cat-sp    { background: rgba(76,179,255,.15) !important; border-left-color: #4cb3ff !important; }
+  html.kiro-dark h2.cat-tree  { background: rgba(176,138,255,.15) !important; border-left-color: #b08aff !important; }
+  html.kiro-dark h2.cat-mst   { background: rgba(255,177,73,.15) !important; border-left-color: #ffb149 !important; }
+  html.kiro-dark h2.cat-euler { background: rgba(255,138,193,.15) !important; border-left-color: #ff8ac1 !important; }
+  html.kiro-dark h2.cat-conn  { background: rgba(255,127,127,.15) !important; border-left-color: #ff7f7f !important; }
+  html.kiro-dark h2.cat-color { background: rgba(176,138,255,.15) !important; border-left-color: #b08aff !important; }
+  html.kiro-dark h2.cat-tsp   { background: rgba(176,160,140,.15) !important; border-left-color: #b0a08c !important; }
+  html.kiro-dark h2.cat-flow  { background: rgba(77,219,176,.15) !important; border-left-color: #4ddbb0 !important; }
+
+  /* category chips -- repaint to muted dim with light text */
+  html.kiro-dark .chip-term  { background: rgba(176,184,196,.18) !important; color: #d6dde6 !important; }
+  html.kiro-dark .chip-rep   { background: rgba(124,138,232,.20) !important; color: #c8d1ff !important; }
+  html.kiro-dark .chip-trav  { background: rgba(77,219,176,.20) !important; color: #b8f0d8 !important; }
+  html.kiro-dark .chip-topo  { background: rgba(110,197,255,.20) !important; color: #c0e3ff !important; }
+  html.kiro-dark .chip-sp    { background: rgba(76,179,255,.20) !important; color: #c0deff !important; }
+  html.kiro-dark .chip-tree  { background: rgba(176,138,255,.20) !important; color: #ddc8ff !important; }
+  html.kiro-dark .chip-mst   { background: rgba(255,177,73,.20) !important; color: #ffd9a8 !important; }
+  html.kiro-dark .chip-euler { background: rgba(255,138,193,.20) !important; color: #ffc8e0 !important; }
+  html.kiro-dark .chip-conn  { background: rgba(255,127,127,.20) !important; color: #ffc8c8 !important; }
+  html.kiro-dark .chip-color { background: rgba(176,138,255,.20) !important; color: #ddc8ff !important; }
+  html.kiro-dark .chip-tsp   { background: rgba(176,160,140,.20) !important; color: #e0d4c5 !important; }
+  html.kiro-dark .chip-flow  { background: rgba(77,219,176,.20) !important; color: #b8f0d8 !important; }
+
+  /* Generic chip used in Leetcode_Patterns_Java */
+  html.kiro-dark .chip{
+    background: var(--kd-bg-2) !important;
+    color: var(--kd-text-mute) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark .chip b{ color: var(--kd-text) !important; }
+
+  /* Specific named callouts in Graph_Algorithms cheatsheet */
+  html.kiro-dark .trick{
+    background: rgba(76,179,255,.10) !important;
+    border-color: rgba(76,179,255,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .trick b{ color: var(--kd-info) !important; }
+  html.kiro-dark .hint-box{
+    background: rgba(77,219,176,.10) !important;
+    border-color: rgba(77,219,176,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .hint-box b{ color: var(--kd-good) !important; }
+  html.kiro-dark .warn{
+    background: rgba(255,157,157,.10) !important;
+    border-color: rgba(255,157,157,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .warn b{ color: var(--kd-bad) !important; }
+
+  /* ----- Pills (incl. easy/med/hard from leetcode files) ----- */
+  html.kiro-dark .pill{ color: #fff !important; }
+  html.kiro-dark .pill.bad,
+  html.kiro-dark .pill.hard{ background: #b3434a !important; }
+  html.kiro-dark .pill.good,
+  html.kiro-dark .pill.easy{ background: #1f8a64 !important; }
+  html.kiro-dark .pill.tip,
+  html.kiro-dark .pill.med { background: #8a6a00 !important; }
+  html.kiro-dark .pill.trk { background: #1f5fa0 !important; }
+
+  /* ----- Details / summary ----- */
+  html.kiro-dark details > summary{ color: var(--kd-link) !important; }
+  html.kiro-dark details[open] > summary{ color: var(--kd-text) !important; }
+  html.kiro-dark details .hint{
+    background: rgba(110,197,255,.12) !important;
+    border-left-color: var(--kd-info) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* TOC, blockquote */
+  html.kiro-dark .toc{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark .toc a{ color: var(--kd-link) !important; }
+  html.kiro-dark blockquote{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* ----- Universal safety net: only kicks in for elements whose
+           background is STILL light AFTER the dark theme has been
+           applied. Tagged at runtime via data-kd-pastel. ----- */
+  html.kiro-dark [data-kd-pastel]{
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] *:not(.label):not(.pill):not(code):not(pre):not(b):not(strong){
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] b,
+  html.kiro-dark [data-kd-pastel] strong{
+    color: #000 !important;
+  }
+  html.kiro-dark [data-kd-pastel] code{
+    background: rgba(0,0,0,.10) !important;
+    color: #15171c !important;
+    border-color: rgba(0,0,0,.18) !important;
+  }
+  html.kiro-dark [data-kd-pastel] a{ color: #1a4f8a !important; }
+
+  /* Toggle button itself */
+  .kiro-dark-toggle{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#1c2128;
+    color:#ffd166;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer;
+    font-size:22px;line-height:1;
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{
+    background:#ffd166;
+    color:#1c2128;
+    border-color:#1c2128;
+  }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+
+  /* ---------- pastel safety net (post-dark) ----------
+     Scan AFTER dark mode is applied and tag only elements whose
+     computed background is still light. We exclude elements whose
+     class names overlap with our explicit dark styles, plus any
+     inline <code>/<pre>, so we never re-darken text we've already
+     styled. */
+  var EXCLUDE_TAGS = {CODE:1, PRE:1, BUTTON:1, INPUT:1, TEXTAREA:1, SELECT:1, OPTION:1, SCRIPT:1, STYLE:1, SVG:1, PATH:1, IMG:1};
+  var EXCLUDE_CLASSES = [
+    'kiro-dark-toggle','kiro-home-btn',
+    'tips','tip','note','tricky','callout','panel','box','warning','warn','trick','hint-box','info',
+    'obj','why','how','theo','cx','block','label',
+    'pill','chip','cat-chip','tag',
+    'right','wrong','good','bad','col-right','col-wrong',
+    'compare','toc','blockquote','muted','sub','small','legend',
+    'chip-term','chip-rep','chip-trav','chip-topo','chip-sp','chip-tree',
+    'chip-mst','chip-euler','chip-conn','chip-color','chip-tsp','chip-flow'
+  ];
+  function hasExcludedClass(el){
+    if(!el.classList || !el.classList.length) return false;
+    for(var i=0;i<EXCLUDE_CLASSES.length;i++){
+      if(el.classList.contains(EXCLUDE_CLASSES[i])) return true;
+    }
+    return false;
+  }
+
+  function untagAll(){
+    var tagged = document.querySelectorAll('[data-kd-pastel]');
+    for(var i=0;i<tagged.length;i++) tagged[i].removeAttribute('data-kd-pastel');
+  }
+
+  function tagPastels(){
+    if(!document.body) return;
+    untagAll();
+    var els = document.body.getElementsByTagName('*');
+    for(var i=0;i<els.length;i++){
+      var el = els[i];
+      if(EXCLUDE_TAGS[el.tagName]) continue;
+      if(hasExcludedClass(el)) continue;
+      /* Skip h2/h2.cat-* -- already themed */
+      if(el.tagName === 'H2') continue;
+      /* Skip table cells inside themed compare/right/wrong rows */
+      if(el.tagName === 'TD' || el.tagName === 'TH'){
+        var tr = el.parentElement;
+        if(tr && (tr.classList.contains('right')||tr.classList.contains('wrong')||tr.classList.contains('good')||tr.classList.contains('bad'))) continue;
+      }
+      var cs = window.getComputedStyle(el);
+      var bg = cs.backgroundColor;
+      var m = bg.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+      if(!m) continue;
+      var r=+m[1], g=+m[2], b=+m[3], a=m[4]===undefined?1:+m[4];
+      if(a < 0.55) continue;
+      var minC = Math.min(r,g,b);
+      /* Pastel/light: every channel >= 220 AND not pure white */
+      if(minC >= 220 && !(r===255 && g===255 && b===255)){
+        el.setAttribute('data-kd-pastel','1');
+      }
+    }
+  }
+
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+      /* Tag after dark CSS is in effect so we only catch genuine misses. */
+      if(typeof requestAnimationFrame === 'function'){
+        requestAnimationFrame(function(){ requestAnimationFrame(tagPastels); });
+      } else { setTimeout(tagPastels, 0); }
+    } else {
+      html.classList.remove('kiro-dark');
+      untagAll();
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>

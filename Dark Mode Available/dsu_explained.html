@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSU — Disjoint Set Union</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@400;700;800&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3d;
+    --text: #e8e8f0;
+    --muted: #7a7a99;
+    --accent1: #7c6af7; /* purple */
+    --accent2: #f97316; /* orange */
+    --accent3: #22d3ee; /* cyan */
+    --accent4: #4ade80; /* green */
+    --accent5: #f43f5e; /* red */
+
+    --lvl1: #4ade80;
+    --lvl2: #22d3ee;
+    --lvl3: #a78bfa;
+    --lvl4: #f97316;
+    --lvl5: #f43f5e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,106,247,0.15) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .badge {
+    display: inline-block;
+    background: rgba(124,106,247,0.15);
+    border: 1px solid rgba(124,106,247,0.4);
+    color: var(--accent1);
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.4rem, 7vw, 5rem);
+    line-height: 1.1;
+    letter-spacing: -2px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  h1 span { color: var(--accent1); }
+
+  .hero-sub {
+    margin-top: 20px;
+    color: var(--muted);
+    font-size: 1.1rem;
+    max-width: 520px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .scroll-hint {
+    margin-top: 48px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: fadeUp 0.6s 0.4s ease both;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .scroll-hint::after {
+    content: '';
+    display: block;
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--muted), transparent);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  /* ── Nav Pills ── */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav a {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.72rem;
+    text-decoration: none;
+    padding: 5px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav a:hover { color: var(--text); border-color: var(--accent1); }
+  .nav a.l1 { color: var(--lvl1); border-color: rgba(74,222,128,0.3); }
+  .nav a.l2 { color: var(--lvl2); border-color: rgba(34,211,238,0.3); }
+  .nav a.l3 { color: var(--lvl3); border-color: rgba(167,139,250,0.3); }
+  .nav a.l4 { color: var(--lvl4); border-color: rgba(249,115,22,0.3); }
+  .nav a.l5 { color: var(--lvl5); border-color: rgba(244,63,94,0.3); }
+
+  /* ── Section ── */
+  .section {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    scroll-margin-top: 60px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .level-tag {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .section h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    letter-spacing: -1px;
+  }
+
+  /* ── Callout box ── */
+  .callout {
+    border-left: 3px solid var(--accent1);
+    background: rgba(124,106,247,0.07);
+    padding: 18px 24px;
+    border-radius: 0 8px 8px 0;
+    margin: 28px 0;
+    font-size: 0.95rem;
+  }
+
+  .callout.orange { border-color: var(--accent2); background: rgba(249,115,22,0.07); }
+  .callout.cyan   { border-color: var(--accent3); background: rgba(34,211,238,0.07); }
+  .callout.green  { border-color: var(--accent4); background: rgba(74,222,128,0.07); }
+  .callout.red    { border-color: var(--accent5); background: rgba(244,63,94,0.07); }
+
+  .callout strong { display: block; margin-bottom: 6px; font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; }
+
+  /* ── Code block ── */
+  .code-wrap {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 28px 0;
+    font-size: 0.88rem;
+  }
+
+  .code-title {
+    background: var(--surface);
+    padding: 10px 18px;
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code-title::before {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent4);
+  }
+
+  pre {
+    padding: 22px 24px;
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+
+  code {
+    font-family: 'Syne Mono', monospace;
+    color: #c9d1d9;
+  }
+
+  /* syntax highlights */
+  .kw  { color: #7c6af7; }   /* keyword */
+  .ty  { color: #22d3ee; }   /* type */
+  .fn  { color: #4ade80; }   /* function */
+  .cm  { color: #5a5a7a; font-style: italic; }  /* comment */
+  .nu  { color: #f97316; }   /* number */
+  .st  { color: #fb923c; }   /* string */
+
+  /* ── Visual demo (trees) ── */
+  .tree-demo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    margin: 28px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    overflow-x: auto;
+  }
+
+  .tree-demo svg { width: 100%; max-width: 560px; height: auto; }
+
+  /* ── Step list ── */
+  .steps { list-style: none; counter-reset: step; margin: 20px 0; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 14px 16px 14px 56px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent1);
+    background: rgba(124,106,247,0.12);
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Complexity badge ── */
+  .complexity {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 12px 0;
+  }
+
+  .complexity span { color: var(--accent3); }
+
+  /* ── Divider ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 24px;
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-family: 'Syne Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50%       { opacity: 1; }
+  }
+
+  p { margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* level line accent */
+  .l1-line { border-top: 2px solid var(--lvl1); }
+  .l2-line { border-top: 2px solid var(--lvl2); }
+  .l3-line { border-top: 2px solid var(--lvl3); }
+  .l4-line { border-top: 2px solid var(--lvl4); }
+  .l5-line { border-top: 2px solid var(--lvl5); }
+
+  .section-header .level-tag.l1 { background: rgba(74,222,128,0.12); color: var(--lvl1); }
+  .section-header .level-tag.l2 { background: rgba(34,211,238,0.12); color: var(--lvl2); }
+  .section-header .level-tag.l3 { background: rgba(167,139,250,0.12); color: var(--lvl3); }
+  .section-header .level-tag.l4 { background: rgba(249,115,22,0.12);  color: var(--lvl4); }
+  .section-header .level-tag.l5 { background: rgba(244,63,94,0.12);   color: var(--lvl5); }
+
+  .section h2 .l1c { color: var(--lvl1); }
+  .section h2 .l2c { color: var(--lvl2); }
+  .section h2 .l3c { color: var(--lvl3); }
+  .section h2 .l4c { color: var(--lvl4); }
+  .section h2 .l5c { color: var(--lvl5); }
+
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+  th { background: var(--surface); padding: 10px 14px; text-align: left; font-family: 'Syne Mono', monospace; font-size: 0.75rem; color: var(--muted); border: 1px solid var(--border); }
+  td { padding: 10px 14px; border: 1px solid var(--border); }
+  tr:hover td { background: var(--surface); }
+</style>
+</head>
+<body>
+
+<!-- ─── HERO ─────────────────────────────── -->
+<section class="hero">
+  <div class="badge">Data Structures · Algorithms</div>
+  <h1>Disjoint Set<br><span>Union</span></h1>
+  <p class="hero-sub">From "what even is this?" to cracking competitive programming — explained for a 15-year-old with Java examples.</p>
+  <div class="scroll-hint">scroll to begin</div>
+</section>
+
+<!-- ─── NAV ──────────────────────────────── -->
+<nav class="nav">
+  <a href="#very-easy" class="l1">⬤ Very Easy</a>
+  <a href="#easy" class="l2">⬤ Easy</a>
+  <a href="#medium-easy" class="l3">⬤ Very Medium</a>
+  <a href="#medium" class="l4">⬤ Medium</a>
+  <a href="#hard" class="l5">⬤ Hard</a>
+</nav>
+
+
+<!-- ══════════════════════════════════════════
+     LEVEL 1 — VERY EASY
+═══════════════════════════════════════════ -->
+<hr class="divider l1-line" id="very-easy">
+<section class="section">
+  <div class="section-header">
+    <span class="level-tag l1">Level 1</span>
+    <h2><span class="l1c">Very Easy</span> — The Friend Group Idea</h2>
+  </div>
+
+  <p>Imagine your school. There are 6 students: <strong>0, 1, 2, 3, 4, 5</strong>. At the start of the year nobody knows each other — they're all in their own little bubble.</p>
+
+  <div class="callout green">
+    <strong>🎯 Core Idea</strong>
+    DSU (Disjoint Set Union) answers ONE question super fast:<br>
+    <em>"Are these two people in the same friend group?"</em>
+  </div>
+
+  <p>It can also merge two groups together: <em>"0 and 1 just became friends — join their groups!"</em></p>
+
+  <div class="tree-demo">
+    <svg viewBox="0 0 560 120" xmlns="http://www.w3.org/2000/svg">
+      <!-- 6 isolated nodes -->
+      <g font-family="Syne Mono, monospace" font-size="13" fill="#e8e8f0">
+        <circle cx="46" cy="60" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+        <text x="46" y="65" text-anchor="middle">0</text>
+        <circle cx="136" cy="60" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+        <text x="136" y="65" text-anchor="middle">1</text>
+        <circle cx="226" cy="60" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+        <text x="226" y="65" text-anchor="middle">2</text>
+        <circle cx="316" cy="60" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+        <text x="316" y="65" text-anchor="middle">3</text>
+        <circle cx="406" cy="60" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+        <text x="406" y="65" text-anchor="middle">4</text>
+        <circle cx="496" cy="60" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+        <text x="496" y="65" text-anchor="middle">5</text>
+      </g>
+      <text x="280" y="110" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#5a5a7a">Start: everyone is their own group</text>
+    </svg>
+  </div>
+
+  <p>DSU tracks two operations:</p>
+  <ol class="steps">
+    <li><strong>find(x)</strong> — find the "boss" (representative) of x's group</li>
+    <li><strong>union(x, y)</strong> — merge the groups of x and y</li>
+  </ol>
+
+  <div class="code-wrap">
+    <div class="code-title">DSU.java — Simplest version (array of parents)</div>
+    <pre><code><span class="kw">int</span>[] parent = <span class="kw">new</span> <span class="ty">int</span>[<span class="nu">6</span>]; <span class="cm">// 6 students: 0..5</span>
+
+<span class="cm">// At start everyone is their OWN parent (own group)</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; <span class="nu">6</span>; i++) {
+    parent[i] = i;
+}
+<span class="cm">// parent = [0, 1, 2, 3, 4, 5]</span>
+<span class="cm">//          ↑  ↑  ↑  ↑  ↑  ↑</span>
+<span class="cm">//       each is their own boss!</span></code></pre>
+  </div>
+
+  <div class="callout green">
+    <strong>💡 Think of it like this</strong>
+    If <code>parent[x] == x</code>, then x is the boss (root) of their group.
+    Otherwise, x's boss is <code>parent[x]</code>.
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     LEVEL 2 — EASY
+═══════════════════════════════════════════ -->
+<hr class="divider l2-line" id="easy">
+<section class="section">
+  <div class="section-header">
+    <span class="level-tag l2">Level 2</span>
+    <h2><span class="l2c">Easy</span> — find() and union()</h2>
+  </div>
+
+  <p>Now let's write the two core functions.</p>
+
+  <p><strong>find(x)</strong> — keeps following parent pointers until it reaches the root:</p>
+
+  <div class="code-wrap">
+    <div class="code-title">DSU.java — find() function</div>
+    <pre><code><span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span>[] parent, <span class="kw">int</span> x) {
+    <span class="kw">if</span> (parent[x] == x) {
+        <span class="kw">return</span> x; <span class="cm">// x is the boss! stop here.</span>
+    }
+    <span class="kw">return</span> <span class="fn">find</span>(parent, parent[x]); <span class="cm">// go up the chain</span>
+}</code></pre>
+  </div>
+
+  <p><strong>union(x, y)</strong> — makes one group's boss point to the other's boss:</p>
+
+  <div class="code-wrap">
+    <div class="code-title">DSU.java — union() function</div>
+    <pre><code><span class="kw">void</span> <span class="fn">union</span>(<span class="kw">int</span>[] parent, <span class="kw">int</span> x, <span class="kw">int</span> y) {
+    <span class="kw">int</span> bossX = <span class="fn">find</span>(parent, x);
+    <span class="kw">int</span> bossY = <span class="fn">find</span>(parent, y);
+    parent[bossX] = bossY; <span class="cm">// bossX now reports to bossY</span>
+}
+
+<span class="cm">// Check if same group:</span>
+<span class="kw">boolean</span> <span class="fn">connected</span>(<span class="kw">int</span>[] parent, <span class="kw">int</span> x, <span class="kw">int</span> y) {
+    <span class="kw">return</span> <span class="fn">find</span>(parent, x) == <span class="fn">find</span>(parent, y);
+}</code></pre>
+  </div>
+
+  <div class="tree-demo">
+    <svg viewBox="0 0 560 180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#22d3ee"/>
+        </marker>
+      </defs>
+
+      <!-- After union(0,1) and union(1,2) -->
+      <!-- Group A: 0->1, 2->1 -->
+      <circle cx="100" cy="50" r="22" fill="#1a1a24" stroke="#22d3ee" stroke-width="2"/>
+      <text x="100" y="55" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">0</text>
+      <circle cx="190" cy="50" r="22" fill="#1a1a24" stroke="#22d3ee" stroke-width="2"/>
+      <text x="190" y="55" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">1</text>
+      <circle cx="280" cy="50" r="22" fill="#1a1a24" stroke="#22d3ee" stroke-width="2"/>
+      <text x="280" y="55" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">2</text>
+
+      <!-- arrows: 0→1, 2→1 -->
+      <line x1="122" y1="50" x2="165" y2="50" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <line x1="258" y1="50" x2="215" y2="50" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- Boss crown on 1 -->
+      <text x="190" y="30" text-anchor="middle" font-size="14">👑</text>
+      <text x="190" y="95" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#5a5a7a">boss</text>
+
+      <!-- Group B: 3,4,5 separate -->
+      <circle cx="380" cy="50" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+      <text x="380" y="55" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">3</text>
+      <circle cx="460" cy="50" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+      <text x="460" y="55" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">4</text>
+      <circle cx="540" cy="50" r="22" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+      <text x="540" y="55" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">5</text>
+
+      <text x="190" y="140" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#22d3ee">Group A: {0,1,2}</text>
+      <text x="460" y="140" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#4ade80">Group B: {3} {4} {5}</text>
+
+      <text x="280" y="170" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#5a5a7a">After union(0,1) and union(1,2)</text>
+    </svg>
+  </div>
+
+  <div class="callout cyan">
+    <strong>🔁 Example walkthrough</strong>
+    <code>union(0,1)</code> → find boss of 0 = 0, find boss of 1 = 1 → set parent[0] = 1<br>
+    <code>union(1,2)</code> → find boss of 1 = 1, find boss of 2 = 2 → set parent[1] = 2<br>
+    <code>connected(0,2)</code> → find(0) follows 0→1→2 = 2, find(2) = 2 → <strong>YES, same group ✅</strong>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     LEVEL 3 — VERY MEDIUM
+═══════════════════════════════════════════ -->
+<hr class="divider l3-line" id="medium-easy">
+<section class="section">
+  <div class="section-header">
+    <span class="level-tag l3">Level 3</span>
+    <h2><span class="l3c">Very Medium</span> — Making it Fast</h2>
+  </div>
+
+  <p>The naive DSU can be SLOW. Imagine a chain: 0→1→2→3→4→5. Finding the boss of 0 takes 5 steps. If we had 10,000 nodes, that's painful.</p>
+
+  <p>We fix this with <strong>two clever tricks</strong>:</p>
+
+  <h3 style="margin: 24px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl3);">Trick 1 — Path Compression 🗜️</h3>
+
+  <p>After finding the root, make EVERY node on the path point <em>directly</em> to the root. Next time it's O(1)!</p>
+
+  <div class="code-wrap">
+    <div class="code-title">DSU.java — find() with Path Compression</div>
+    <pre><code><span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span>[] parent, <span class="kw">int</span> x) {
+    <span class="kw">if</span> (parent[x] != x) {
+        <span class="cm">// 🔥 The magic line — point directly to root</span>
+        parent[x] = <span class="fn">find</span>(parent, parent[x]);
+    }
+    <span class="kw">return</span> parent[x];
+}</code></pre>
+  </div>
+
+  <div class="tree-demo">
+    <svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/>
+        </marker>
+        <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#4ade80"/>
+        </marker>
+      </defs>
+
+      <!-- BEFORE: chain -->
+      <text x="130" y="22" text-anchor="middle" font-family="Space Grotesk" font-size="12" fill="#a78bfa">BEFORE find(0)</text>
+      <circle cx="50"  cy="60" r="20" fill="#1a1a24" stroke="#a78bfa" stroke-width="2"/>
+      <text x="50"  y="65" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">0</text>
+      <circle cx="120" cy="60" r="20" fill="#1a1a24" stroke="#a78bfa" stroke-width="2"/>
+      <text x="120" y="65" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">1</text>
+      <circle cx="190" cy="60" r="20" fill="#1a1a24" stroke="#a78bfa" stroke-width="2"/>
+      <text x="190" y="65" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">2</text>
+      <circle cx="210" cy="130" r="20" fill="#1a1a24" stroke="#a78bfa" stroke-width="2"/>
+      <text x="210" y="135" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">ROOT</text>
+      <line x1="70"  y1="60" x2="97"  y2="60" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="140" y1="60" x2="167" y2="60" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="192" y1="80" x2="205" y2="110" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- AFTER: star -->
+      <text x="420" y="22" text-anchor="middle" font-family="Space Grotesk" font-size="12" fill="#4ade80">AFTER find(0) — path compressed</text>
+      <circle cx="420" cy="110" r="20" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+      <text x="420" y="115" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">ROOT</text>
+      <circle cx="340" cy="55" r="20" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+      <text x="340" y="60" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">0</text>
+      <circle cx="420" cy="45" r="20" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+      <text x="420" y="50" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">1</text>
+      <circle cx="500" cy="55" r="20" fill="#1a1a24" stroke="#4ade80" stroke-width="2"/>
+      <text x="500" y="60" text-anchor="middle" font-family="Syne Mono" font-size="13" fill="#e8e8f0">2</text>
+      <line x1="353" y1="74" x2="408" y2="100" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="420" y1="65" x2="420" y2="88" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="487" y1="74" x2="432" y2="100" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+      <text x="280" y="185" text-anchor="middle" font-family="Space Grotesk" font-size="11" fill="#5a5a7a">All nodes point directly to root — O(1) next time!</text>
+    </svg>
+  </div>
+
+  <h3 style="margin: 24px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl3);">Trick 2 — Union by Rank 🏋️</h3>
+
+  <p>When merging two groups, always attach the shorter tree under the taller one. This keeps trees flat.</p>
+
+  <div class="code-wrap">
+    <div class="code-title">DSU.java — Complete DSU with both optimizations</div>
+    <pre><code><span class="kw">class</span> <span class="ty">DSU</span> {
+    <span class="kw">int</span>[] parent, rank;
+
+    <span class="ty">DSU</span>(<span class="kw">int</span> n) {
+        parent = <span class="kw">new</span> <span class="ty">int</span>[n];
+        rank   = <span class="kw">new</span> <span class="ty">int</span>[n];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++) parent[i] = i;
+        <span class="cm">// rank[] starts all 0 (height = 0)</span>
+    }
+
+    <span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span> x) {
+        <span class="kw">if</span> (parent[x] != x)
+            parent[x] = <span class="fn">find</span>(parent[x]); <span class="cm">// path compression</span>
+        <span class="kw">return</span> parent[x];
+    }
+
+    <span class="kw">void</span> <span class="fn">union</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+        <span class="kw">int</span> rx = <span class="fn">find</span>(x), ry = <span class="fn">find</span>(y);
+        <span class="kw">if</span> (rx == ry) <span class="kw">return</span>; <span class="cm">// already same group!</span>
+
+        <span class="cm">// Attach smaller rank under bigger rank</span>
+        <span class="kw">if</span>      (rank[rx] &lt; rank[ry]) parent[rx] = ry;
+        <span class="kw">else if</span> (rank[rx] &gt; rank[ry]) parent[ry] = rx;
+        <span class="kw">else</span> {
+            parent[ry] = rx;
+            rank[rx]++;  <span class="cm">// same height → one grows by 1</span>
+        }
+    }
+
+    <span class="kw">boolean</span> <span class="fn">connected</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+        <span class="kw">return</span> <span class="fn">find</span>(x) == <span class="fn">find</span>(y);
+    }
+}</code></pre>
+  </div>
+
+  <div class="complexity">Time per operation: <span>≈ O(α(n))</span> — that's practically O(1), the fastest possible!</div>
+
+  <div class="callout">
+    <strong>🤓 What is α(n)?</strong>
+    It's the inverse Ackermann function. For ANY real-world input (even n = 10^80), α(n) ≤ 4. So we call it "effectively constant."
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     LEVEL 4 — MEDIUM
+═══════════════════════════════════════════ -->
+<hr class="divider l4-line" id="medium">
+<section class="section">
+  <div class="section-header">
+    <span class="level-tag l4">Level 4</span>
+    <h2><span class="l4c">Medium</span> — Classic Problems</h2>
+  </div>
+
+  <p>Now let's use DSU to solve real problems!</p>
+
+  <h3 style="margin: 24px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl4);">Problem 1 — Number of Connected Components</h3>
+  <p>Given n nodes and a list of edges, how many separate groups (components) exist?</p>
+
+  <div class="code-wrap">
+    <div class="code-title">NumberOfComponents.java — LeetCode #323 style</div>
+    <pre><code><span class="kw">int</span> <span class="fn">countComponents</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] edges) {
+    <span class="ty">DSU</span> dsu = <span class="kw">new</span> <span class="ty">DSU</span>(n);
+    <span class="kw">int</span> components = n; <span class="cm">// Start: everyone is separate</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span>[] edge : edges) {
+        <span class="kw">int</span> u = edge[<span class="nu">0</span>], v = edge[<span class="nu">1</span>];
+        <span class="kw">if</span> (!dsu.<span class="fn">connected</span>(u, v)) {
+            dsu.<span class="fn">union</span>(u, v);
+            components--; <span class="cm">// Two groups merged → one less</span>
+        }
+    }
+    <span class="kw">return</span> components;
+}
+
+<span class="cm">// Example:</span>
+<span class="cm">// n=5, edges = [[0,1],[1,2],[3,4]]</span>
+<span class="cm">// Result: 2  ({0,1,2} and {3,4})</span></code></pre>
+  </div>
+
+  <h3 style="margin: 32px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl4);">Problem 2 — Detect Cycle in Undirected Graph</h3>
+  <p>If we try to union two nodes that are ALREADY in the same group, that means there's a cycle!</p>
+
+  <div class="code-wrap">
+    <div class="code-title">CycleDetection.java</div>
+    <pre><code><span class="kw">boolean</span> <span class="fn">hasCycle</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] edges) {
+    <span class="ty">DSU</span> dsu = <span class="kw">new</span> <span class="ty">DSU</span>(n);
+
+    <span class="kw">for</span> (<span class="kw">int</span>[] edge : edges) {
+        <span class="kw">int</span> u = edge[<span class="nu">0</span>], v = edge[<span class="nu">1</span>];
+        <span class="kw">if</span> (dsu.<span class="fn">connected</span>(u, v)) {
+            <span class="kw">return true</span>; <span class="cm">// 🚨 Already same group → CYCLE!</span>
+        }
+        dsu.<span class="fn">union</span>(u, v);
+    }
+    <span class="kw">return false</span>;
+}
+
+<span class="cm">// Why does this work?</span>
+<span class="cm">// An edge between two already-connected nodes</span>
+<span class="cm">// creates a second path → that's a cycle!</span></code></pre>
+  </div>
+
+  <h3 style="margin: 32px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl4);">Problem 3 — Kruskal's MST (Minimum Spanning Tree)</h3>
+  <p>Find the cheapest set of edges to connect all nodes. DSU is the backbone of Kruskal's algorithm!</p>
+
+  <div class="code-wrap">
+    <div class="code-title">KruskalMST.java</div>
+    <pre><code><span class="kw">int</span> <span class="fn">minimumSpanningTree</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] edges) {
+    <span class="cm">// edges[i] = {cost, u, v}</span>
+    <span class="ty">Arrays</span>.<span class="fn">sort</span>(edges, (a, b) -&gt; a[<span class="nu">0</span>] - b[<span class="nu">0</span>]); <span class="cm">// sort by cost</span>
+    <span class="ty">DSU</span> dsu = <span class="kw">new</span> <span class="ty">DSU</span>(n);
+    <span class="kw">int</span> totalCost = <span class="nu">0</span>, edgesUsed = <span class="nu">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+        <span class="kw">int</span> cost = e[<span class="nu">0</span>], u = e[<span class="nu">1</span>], v = e[<span class="nu">2</span>];
+        <span class="kw">if</span> (!dsu.<span class="fn">connected</span>(u, v)) {  <span class="cm">// don't create cycle</span>
+            dsu.<span class="fn">union</span>(u, v);
+            totalCost += cost;
+            edgesUsed++;
+        }
+        <span class="kw">if</span> (edgesUsed == n - <span class="nu">1</span>) <span class="kw">break</span>; <span class="cm">// MST complete</span>
+    }
+    <span class="kw">return</span> totalCost;
+}</code></pre>
+  </div>
+
+  <div class="callout orange">
+    <strong>🌟 Greedy idea</strong>
+    Always pick the cheapest edge that doesn't create a cycle. DSU detects cycles in ~O(1) — perfect for this!
+  </div>
+
+  <table>
+    <tr>
+      <th>Problem</th>
+      <th>DSU role</th>
+      <th>Time</th>
+    </tr>
+    <tr><td>Count components</td><td>Track merges, count decrements</td><td>O(E·α(N))</td></tr>
+    <tr><td>Detect cycle</td><td>Check before union</td><td>O(E·α(N))</td></tr>
+    <tr><td>MST (Kruskal)</td><td>Cycle check on sorted edges</td><td>O(E log E)</td></tr>
+  </table>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     LEVEL 5 — HARD
+═══════════════════════════════════════════ -->
+<hr class="divider l5-line" id="hard">
+<section class="section">
+  <div class="section-header">
+    <span class="level-tag l5">Level 5</span>
+    <h2><span class="l5c">Hard</span> — Advanced DSU Tricks</h2>
+  </div>
+
+  <p>This is where DSU gets really clever. These techniques appear in competitive programming and tough interviews.</p>
+
+  <h3 style="margin: 24px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl5);">Trick 1 — Weighted DSU (store extra info)</h3>
+  <p>We can store a <strong>weight/offset</strong> for each node relative to its parent. Useful for problems like: "A is 3 heavier than B. B is 2 heavier than C. How much heavier is A than C?"</p>
+
+  <div class="code-wrap">
+    <div class="code-title">WeightedDSU.java — relative weights</div>
+    <pre><code><span class="kw">class</span> <span class="ty">WeightedDSU</span> {
+    <span class="kw">int</span>[] parent;
+    <span class="kw">long</span>[] weight; <span class="cm">// weight[x] = difference from x to parent[x]</span>
+
+    <span class="ty">WeightedDSU</span>(<span class="kw">int</span> n) {
+        parent = <span class="kw">new</span> <span class="ty">int</span>[n];
+        weight = <span class="kw">new</span> <span class="ty">long</span>[n];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++) parent[i] = i;
+    }
+
+    <span class="cm">// Returns {root, accumulated weight from x to root}</span>
+    <span class="kw">long</span> <span class="fn">find</span>(<span class="kw">int</span> x) {
+        <span class="kw">if</span> (parent[x] == x) <span class="kw">return</span> <span class="nu">0</span>;
+        <span class="kw">long</span> w = <span class="fn">find</span>(parent[x]);
+        parent[x] = parent[parent[x]]; <span class="cm">// path compression</span>
+        weight[x] += w;
+        <span class="kw">return</span> weight[x];
+    }
+
+    <span class="cm">// Union with: value[x] - value[y] = diff</span>
+    <span class="kw">void</span> <span class="fn">union</span>(<span class="kw">int</span> x, <span class="kw">int</span> y, <span class="kw">long</span> diff) {
+        <span class="kw">long</span> wx = <span class="fn">find</span>(x), wy = <span class="fn">find</span>(y);
+        <span class="kw">int</span> rx = parent[x], ry = parent[y];
+        <span class="kw">if</span> (rx == ry) <span class="kw">return</span>;
+        parent[rx] = ry;
+        weight[rx] = wy - wx + diff;
+    }
+}</code></pre>
+  </div>
+
+  <h3 style="margin: 32px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl5);">Trick 2 — Rollback DSU (undo operations)</h3>
+  <p>Sometimes you need to <em>undo</em> a union — e.g., divide-and-conquer on graphs or offline queries. We give up path compression but keep union by rank, and use a stack to record changes.</p>
+
+  <div class="code-wrap">
+    <div class="code-title">RollbackDSU.java — undo-able unions</div>
+    <pre><code><span class="kw">class</span> <span class="ty">RollbackDSU</span> {
+    <span class="kw">int</span>[] parent, rank;
+    <span class="ty">Deque</span>&lt;<span class="ty">int</span>[]&gt; history = <span class="kw">new</span> <span class="ty">ArrayDeque</span>&lt;&gt;();
+
+    <span class="ty">RollbackDSU</span>(<span class="kw">int</span> n) {
+        parent = <span class="kw">new</span> <span class="ty">int</span>[n]; rank = <span class="kw">new</span> <span class="ty">int</span>[n];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; n; i++) parent[i] = i;
+    }
+
+    <span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span> x) { <span class="cm">// NO path compression (needed for rollback)</span>
+        <span class="kw">return</span> parent[x] == x ? x : <span class="fn">find</span>(parent[x]);
+    }
+
+    <span class="kw">void</span> <span class="fn">union</span>(<span class="kw">int</span> x, <span class="kw">int</span> y) {
+        <span class="kw">int</span> rx = <span class="fn">find</span>(x), ry = <span class="fn">find</span>(y);
+        <span class="kw">if</span> (rx == ry) { history.<span class="fn">push</span>(<span class="kw">new</span> <span class="ty">int</span>[]{-<span class="nu">1</span>,-<span class="nu">1</span>,-<span class="nu">1</span>,-<span class="nu">1</span>}); <span class="kw">return</span>; }
+        <span class="kw">if</span> (rank[rx] &lt; rank[ry]) { <span class="kw">int</span> t=rx; rx=ry; ry=t; }
+        <span class="cm">// Save old state before changing</span>
+        history.<span class="fn">push</span>(<span class="kw">new</span> <span class="ty">int</span>[]{ry, parent[ry], rx, rank[rx]});
+        parent[ry] = rx;
+        <span class="kw">if</span> (rank[rx] == rank[ry]) rank[rx]++;
+    }
+
+    <span class="kw">void</span> <span class="fn">rollback</span>() { <span class="cm">// undo last union</span>
+        <span class="kw">int</span>[] snap = history.<span class="fn">pop</span>();
+        <span class="kw">if</span> (snap[<span class="nu">0</span>] == -<span class="nu">1</span>) <span class="kw">return</span>; <span class="cm">// was a no-op</span>
+        parent[snap[<span class="nu">0</span>]] = snap[<span class="nu">1</span>]; <span class="cm">// restore parent</span>
+        rank[snap[<span class="nu">2</span>]]   = snap[<span class="nu">3</span>]; <span class="cm">// restore rank</span>
+    }
+}</code></pre>
+  </div>
+
+  <h3 style="margin: 32px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl5);">Trick 3 — Offline Dynamic Connectivity</h3>
+  <p>When edges can be added AND deleted (not just added), we use a segment-tree-on-time + Rollback DSU combo. Each edge "exists" from time L to time R — we insert it into the segment tree, then DFS the segment tree running union/rollback:</p>
+
+  <div class="code-wrap">
+    <div class="code-title">DynamicConnectivity.java — concept skeleton</div>
+    <pre><code><span class="cm">// Segment tree over time slots 0..Q-1</span>
+<span class="ty">List</span>&lt;<span class="ty">int</span>[]&gt;[] segtree = <span class="kw">new</span> <span class="ty">List</span>[<span class="nu">4</span> * Q];
+
+<span class="kw">void</span> <span class="fn">add</span>(<span class="kw">int</span> node, <span class="kw">int</span> l, <span class="kw">int</span> r, <span class="kw">int</span> ql, <span class="kw">int</span> qr, <span class="kw">int</span>[] edge) {
+    <span class="kw">if</span> (ql &gt; r || qr &lt; l) <span class="kw">return</span>;
+    <span class="kw">if</span> (ql &lt;= l &amp;&amp; r &lt;= qr) { segtree[node].<span class="fn">add</span>(edge); <span class="kw">return</span>; }
+    <span class="kw">int</span> mid = (l + r) / <span class="nu">2</span>;
+    <span class="fn">add</span>(node*<span class="nu">2</span>, l, mid, ql, qr, edge);
+    <span class="fn">add</span>(node*<span class="nu">2</span>+<span class="nu">1</span>, mid+<span class="nu">1</span>, r, ql, qr, edge);
+}
+
+<span class="kw">void</span> <span class="fn">solve</span>(<span class="kw">int</span> node, <span class="kw">int</span> l, <span class="kw">int</span> r) {
+    <span class="cm">// Union all edges at this node</span>
+    <span class="kw">for</span> (<span class="kw">int</span>[] e : segtree[node]) dsu.<span class="fn">union</span>(e[<span class="nu">0</span>], e[<span class="nu">1</span>]);
+
+    <span class="kw">if</span> (l == r) {
+        answer[l] = dsu.<span class="fn">connected</span>(query[l][<span class="nu">0</span>], query[l][<span class="nu">1</span>]);
+    } <span class="kw">else</span> {
+        <span class="kw">int</span> mid = (l + r) / <span class="nu">2</span>;
+        <span class="fn">solve</span>(node*<span class="nu">2</span>, l, mid);
+        <span class="fn">solve</span>(node*<span class="nu">2</span>+<span class="nu">1</span>, mid+<span class="nu">1</span>, r);
+    }
+
+    <span class="cm">// Rollback all unions at this node</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; segtree[node].<span class="fn">size</span>(); i++) dsu.<span class="fn">rollback</span>();
+}</code></pre>
+  </div>
+
+  <div class="callout red">
+    <strong>⚡ Complexity</strong>
+    This handles Q queries with edge additions and deletions in <strong>O(Q log Q · α(N))</strong> — much better than re-running BFS/DFS for each query which would be O(Q · N)!
+  </div>
+
+  <h3 style="margin: 32px 0 12px; font-family: 'Syne', sans-serif; color: var(--lvl5);">Summary Table</h3>
+  <table>
+    <tr>
+      <th>Level</th><th>Technique</th><th>Use case</th><th>Complexity</th>
+    </tr>
+    <tr><td style="color:var(--lvl1)">Very Easy</td><td>Naive parent array</td><td>Grouping basics</td><td>O(N) per op</td></tr>
+    <tr><td style="color:var(--lvl2)">Easy</td><td>find + union</td><td>Connectivity</td><td>O(log N)</td></tr>
+    <tr><td style="color:var(--lvl3)">Very Medium</td><td>Path compression + rank</td><td>Competitive programming</td><td>O(α(N)) ≈ O(1)</td></tr>
+    <tr><td style="color:var(--lvl4)">Medium</td><td>Classic problems</td><td>MST, cycle, components</td><td>O(E·α(N))</td></tr>
+    <tr><td style="color:var(--lvl5)">Hard</td><td>Weighted, Rollback, Dynamic</td><td>ICPC / hard LeetCode</td><td>O(Q log Q·α(N))</td></tr>
+  </table>
+</section>
+
+<footer>
+  DSU — Disjoint Set Union &nbsp;·&nbsp; Java Examples &nbsp;·&nbsp; 5 levels
+</footer>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bit Manipulation — Cheatsheet, Tricks & Java Snippets</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  /* HAMBURGER + TOC SIDEBAR */
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* HERO + TABS */
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 {
+    margin: 0 0 6px; font-size: 20px;
+  }
+  .topbar p {
+    margin: 0 0 10px; color: var(--muted); font-size: 13.5px;
+  }
+  .tabs {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  /* MAIN */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p {
+    margin: 8px 0;
+    font-size: 15px;
+  }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips {
+    margin: 6px 0 6px 4px;
+    padding: 0 0 0 22px;
+  }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  /* CHEATSHEET TABLE */
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #eef2ff;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: var(--code-bg);
+    white-space: nowrap;
+    color: var(--num);
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  /* CODE */
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  /* PREV/NEXT BAR */
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  /* THEME TOGGLE BUTTON (top-right) */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* ===================== DARK MODE ===================== */
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: var(--num); }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Bit Manipulation — Cheatsheet, Tricks & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Bit Manipulation Cheatsheet (read this first)", diff: "veasy",
+  problem: "Bit manipulation problems treat an integer not as a number but as a bag of 32 (or 64) flags. The basic operators run in O(1) and unlock huge gains in speed and memory: subset enumeration, deduplication via XOR, set membership via bitmasks, fast division by powers of two, and dozens of LeetCode classics that look hard until you see the bit picture.",
+  intuition: "Every int in Java is a fixed-width 32-bit two's-complement integer. Read it from right (bit 0) to left (bit 31). The four operators that matter are AND (intersect bits), OR (union bits), XOR (symmetric difference / parity), and NOT (flip all bits). Combine those with the shifts << and >> (and >>>), throw in the two magical idioms `n & (n-1)` and `n & -n`, and you can solve almost any bit problem mechanically. Memorize the table below — every other recipe in this guide is built from it.",
+  hints: [
+    "All listed operations are O(1). Java int = 32 bits, long = 64 bits.",
+    "Translate the problem into 'which bits matter?' first, THEN pick operators.",
+    "Sign matters: prefer `>>>` (logical) over `>>` (arithmetic) when treating an int as raw bits.",
+    "When you need bit 31 as a 1 without the sign trap, write `1L << 31` or work in long.",
+    "Two's complement gives you `-n == (~n) + 1`, which is why `n & -n` isolates the lowest set bit."
+  ],
+  tips: [
+    "`n & (n-1)`: drops the lowest set bit. Loop while n != 0 to count set bits in O(popcount).",
+    "`n & -n`: isolates the lowest set bit (a power of two value).",
+    "Subset enumeration of mask m: `for (int s = m; s > 0; s = (s - 1) & m)` walks every non-empty submask. Add `s == 0` once to include the empty submask.",
+    "XOR is its own inverse and is commutative & associative — that's why XOR-ing a list cancels duplicates.",
+    "Avoid `Math.pow` for powers of 2. Use `1 << k` (or `1L << k`) — exact and fast."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Operation</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>n &amp; 1</td><td>Check if n is odd (last bit)</td></tr>
+        <tr><td>n &gt;&gt; 1</td><td>Divide by 2 (arithmetic right shift, sign-preserving)</td></tr>
+        <tr><td>n &lt;&lt; 1</td><td>Multiply by 2 (left shift)</td></tr>
+        <tr><td>n &amp; (n - 1)</td><td>Clear the lowest set bit</td></tr>
+        <tr><td>n &amp; (-n)</td><td>Isolate the lowest set bit</td></tr>
+        <tr><td>n ^ n</td><td>Always 0 — XOR cancels duplicates</td></tr>
+        <tr><td>n ^ 0</td><td>Always n — XOR with 0 is identity</td></tr>
+        <tr><td>~n</td><td>Bitwise NOT (flip every bit). Equals -(n+1) in two's complement.</td></tr>
+        <tr><td>n | (1 &lt;&lt; i)</td><td>Set bit i</td></tr>
+        <tr><td>n &amp; ~(1 &lt;&lt; i)</td><td>Clear bit i</td></tr>
+        <tr><td>n ^ (1 &lt;&lt; i)</td><td>Toggle bit i</td></tr>
+        <tr><td>(n &gt;&gt; i) &amp; 1</td><td>Read bit i (returns 0 or 1)</td></tr>
+        <tr><td>(n &amp; (n - 1)) == 0</td><td>n is a power of 2 (and n &gt; 0)</td></tr>
+        <tr><td>Integer.bitCount(n)</td><td>Count set bits (popcount)</td></tr>
+        <tr><td>Integer.highestOneBit(n)</td><td>Highest set bit value (a power of 2)</td></tr>
+        <tr><td>Integer.numberOfTrailingZeros(n)</td><td>Index of the lowest set bit</td></tr>
+        <tr><td>Integer.reverse(n)</td><td>Reverse all 32 bits</td></tr>
+      </tbody>
+    </table>
+    <p><b>Java gotchas to internalize:</b></p>
+    <ul class="hints">
+      <li><b>&gt;&gt; vs &gt;&gt;&gt;</b> &mdash; <code>&gt;&gt;</code> is arithmetic and preserves the sign bit (fills with 1 for negatives). <code>&gt;&gt;&gt;</code> is logical and always fills with 0. Use <code>&gt;&gt;&gt;</code> when treating an int as unsigned bits (e.g. LC 190 Reverse Bits).</li>
+      <li><b>1 &lt;&lt; 31 overflows</b> &mdash; that expression is <code>Integer.MIN_VALUE</code> (negative). Use <code>1L &lt;&lt; 31</code> or work in long when you need bit 31 as a flag.</li>
+      <li><b>Negative numbers</b> &mdash; Java uses two's complement. <code>-1</code> is all 1s in 32 bits, <code>Integer.MIN_VALUE</code> is <code>10000...0</code>, and <code>~n == -(n+1)</code> always.</li>
+      <li><b>int vs long</b> &mdash; if a problem says "treat as unsigned 32-bit", convert via <code>n &amp; 0xFFFFFFFFL</code> first to avoid sign extension.</li>
+    </ul>
+  `,
+  code: `/*
+ * The seven idioms you'll reach for in 90% of bit problems.
+ * Memorize each line — every other technique is just a combination of these.
+ */
+
+// ---- 1. SET / CLEAR / TOGGLE / READ a single bit ---------------------
+int set    (int n, int i) { return n |  (1 << i); }
+int clear  (int n, int i) { return n & ~(1 << i); }
+int toggle (int n, int i) { return n ^  (1 << i); }
+int read   (int n, int i) { return (n >> i) & 1; }     // returns 0 or 1
+
+// ---- 2. POPCOUNT (count set bits) — Brian Kernighan's trick ---------
+int popcount(int n) {
+    int count = 0;
+    while (n != 0) {
+        n &= (n - 1);                  // drops the lowest set bit
+        count++;
+    }
+    return count;
+    // (Or just call Integer.bitCount(n).)
+}
+
+// ---- 3. ISOLATE LOWEST / DROP LOWEST set bit -------------------------
+int lowestBit  (int n) { return n & -n;        }   // value of lowest set bit
+int dropLowest (int n) { return n & (n - 1);   }   // n with lowest set bit cleared
+
+// ---- 4. POWER-OF-TWO check -------------------------------------------
+boolean isPowerOfTwo(int n) {
+    return n > 0 && (n & (n - 1)) == 0;
+}
+
+// ---- 5. ENUMERATE EVERY SUBMASK of mask m ----------------------------
+void forEachSubmask(int m) {
+    // Walks all non-empty submasks of m in decreasing order.
+    // Total iterations across all m is O(3^n) — Sum of Subsets Theorem.
+    for (int s = m; s > 0; s = (s - 1) & m) {
+        // ... use submask 's' ...
+    }
+    // The empty submask 0 is excluded by s > 0; handle it separately if needed.
+}
+
+// ---- 6. XOR — two LeetCode-favorite identities -----------------------
+//   a ^ a == 0   (XOR cancels duplicates)
+//   a ^ 0 == a   (XOR with 0 is identity)
+// Therefore, XOR-ing every value in [a, a, b, b, c] returns c.
+
+// ---- 7. SAFE 32-BIT BUILDS — avoid the 1<<31 trap --------------------
+long bit31Flag = 1L << 31;             // 2147483648, NOT Integer.MIN_VALUE
+long unsignedView(int n) {
+    return n & 0xFFFFFFFFL;            // promote to non-negative long
+}`,
+  complexity: "Every operation above is O(1). Submask enumeration over all masks costs O(3^n). The whole guide is built from these primitives — when you see a new bit problem, ask which of these idioms can be glued together to solve it."
+});
+
+
+/* ===================== VERY EASY (DRILLS) ===================== */
+
+PROBLEMS.push({
+  num: 191, title: "Number of 1 Bits (Hamming Weight)", diff: "veasy",
+  problem: "Given an unsigned 32-bit integer n, return how many bits are set to 1.",
+  intuition: "Two equally good answers. The naive way is to walk all 32 bits with `(n >> i) & 1`. The cute way is Brian Kernighan's trick: `n &= (n - 1)` drops the lowest set bit, so the loop runs exactly popcount times instead of 32.",
+  hints: [
+    "Iterate while n != 0 to use Kernighan; iterate i from 0..31 for the bit-by-bit version.",
+    "Use `>>>` (logical shift), not `>>`, since the input is conceptually unsigned.",
+    "Java's built-in `Integer.bitCount(n)` does this for you in O(1) intrinsic-friendly code."
+  ],
+  tips: [
+    "Kernighan is faster on sparse inputs. For dense inputs both are essentially identical.",
+    "If you need popcount on a `long`, use `Long.bitCount(n)`.",
+    "Beware: a plain `n >> 1` will sign-extend for negative inputs and you'll loop forever."
+  ],
+  code: `/*
+ * Hamming Weight via Brian Kernighan: n &= (n - 1) drops the lowest set bit.
+ * The loop body runs exactly popcount(n) times — never the full 32.
+ */
+int hammingWeight(int n) {
+    int count = 0;
+    while (n != 0) {
+        n &= (n - 1);                   // drop the lowest 1
+        count++;
+    }
+    return count;
+}
+
+// One-liner equivalent:
+//   return Integer.bitCount(n);`,
+  complexity: "Time O(popcount(n)), at most 32 iterations. Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 231, title: "Power of Two", diff: "veasy",
+  problem: "Given an integer n, return true if it is a power of two.",
+  intuition: "A power of two has EXACTLY one bit set. Subtracting 1 from such a number turns that bit off and turns every lower bit on, so `n & (n-1)` becomes 0. Negative inputs and zero must be excluded since they'd both pass the AND check otherwise.",
+  hints: [
+    "Guard with `n > 0` first — `0 & -1` would falsely pass.",
+    "Then check `(n & (n - 1)) == 0`.",
+    "An equivalent test is `n == Integer.highestOneBit(n)`."
+  ],
+  tips: [
+    "The same trick generalizes: `n` is a power of 2 iff popcount(n) == 1.",
+    "For 'power of 4' problems, additionally require the set bit to be at an even index: `(n & 0x55555555) != 0`."
+  ],
+  code: `/*
+ * Power of Two: exactly one bit set AND the value is positive.
+ *   n & (n - 1) clears the lowest set bit. If n had exactly one
+ *   bit set, the result is 0.
+ */
+boolean isPowerOfTwo(int n) {
+    return n > 0 && (n & (n - 1)) == 0;
+}`,
+  complexity: "Time O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 136, title: "Single Number", diff: "veasy",
+  problem: "Every element in the array appears twice except for one. Find the one that appears once. Constant extra space, linear time.",
+  intuition: "XOR is associative, commutative, and self-inverse: `a ^ a == 0` and `a ^ 0 == a`. XOR every element together and the duplicates cancel out, leaving only the singleton.",
+  hints: [
+    "Initialize `int x = 0`.",
+    "Loop and `x ^= nums[i]`.",
+    "At the end, x is the unique value."
+  ],
+  tips: [
+    "Order doesn't matter — XOR is commutative.",
+    "Same trick spots a missing number in [0..n] when paired with XOR-ing the index range.",
+    "Doesn't generalize to 'every element three times except one' — see LC 137 for the bitwise-counter approach."
+  ],
+  code: `/*
+ * Single Number. XOR every value; duplicates cancel pairwise.
+ *   a ^ a = 0 and 0 ^ x = x, so the singleton is what remains.
+ */
+int singleNumber(int[] nums) {
+    int x = 0;
+    for (int v : nums) x ^= v;          // duplicates self-cancel
+    return x;
+}`,
+  complexity: "Time O(n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 268, title: "Missing Number", diff: "veasy",
+  problem: "Given an array of n distinct integers in the range [0, n], return the single number that's missing.",
+  intuition: "XOR with the full range [0..n] so that every present index/value pair cancels out, leaving the missing one. (You could also use sum subtraction, but XOR avoids overflow concerns and is the canonical bit-trick answer.)",
+  hints: [
+    "Initialize `x = n` (the value that's not naturally hit by the index loop).",
+    "For each i in 0..n-1, do `x ^= i ^ nums[i]`.",
+    "Each value/index pair that matches cancels itself, leaving the missing number."
+  ],
+  tips: [
+    "Sum approach: `n*(n+1)/2 - sum(nums)`. Cleaner but watch for overflow on giant n.",
+    "Same XOR pattern works whenever you need 'one element missing from a known set'."
+  ],
+  code: `/*
+ * Missing Number via XOR. Pair every index i with nums[i]; matching
+ * values cancel. Seed x with n because the index loop only reaches n-1.
+ */
+int missingNumber(int[] nums) {
+    int n = nums.length;
+    int x = n;                          // n itself is in the range but never indexed
+    for (int i = 0; i < n; i++) {
+        x ^= i ^ nums[i];               // each matching pair cancels to 0
+    }
+    return x;
+}`,
+  complexity: "Time O(n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 461, title: "Hamming Distance", diff: "veasy",
+  problem: "Given two integers x and y, return the number of bit positions where they differ.",
+  intuition: "XOR turns differences into 1s and matches into 0s, so the answer is just popcount(x ^ y).",
+  hints: [
+    "Compute `int d = x ^ y;`",
+    "Return `Integer.bitCount(d)` (or use Kernighan)."
+  ],
+  tips: [
+    "Generalizes to LC 477 'Total Hamming Distance' — sum over all pairs is bit-by-bit countable in O(n · 32).",
+    "If you'd rather drill the loop yourself, this is the cleanest place to practice Kernighan."
+  ],
+  code: `/*
+ * Hamming Distance. XOR exposes differing bits; popcount counts them.
+ */
+int hammingDistance(int x, int y) {
+    return Integer.bitCount(x ^ y);
+}`,
+  complexity: "Time O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 190, title: "Reverse Bits", diff: "veasy",
+  problem: "Reverse the bits of a 32-bit unsigned integer. The most-significant bit of the input becomes the least-significant of the output.",
+  intuition: "Pull bits off the right of n and push them onto the right of result, but result is shifted left first to make room. Use `>>>` (logical) so the sign bit doesn't sneak in 1s.",
+  hints: [
+    "Loop exactly 32 times — the width matters.",
+    "Each iteration: `result = (result << 1) | (n & 1); n >>>= 1;`.",
+    "Java bonus: `Integer.reverse(n)` does it in one call."
+  ],
+  tips: [
+    "If you must do many calls, cache 8-bit reversals in a 256-entry table and reverse 4 bytes at a time.",
+    "Mistake to avoid: using `>>` lets the sign bit leak in for negative inputs and the result is garbage."
+  ],
+  code: `/*
+ * Reverse the 32 bits of n. Pull from the right of n; push onto the
+ * right of result (after shifting result left to make room).
+ * Use >>> (LOGICAL right shift) so negative inputs don't sign-extend.
+ */
+int reverseBits(int n) {
+    int result = 0;
+    for (int i = 0; i < 32; i++) {      // exactly 32 iterations
+        result = (result << 1) | (n & 1);
+        n >>>= 1;                       // logical shift — must use >>>
+    }
+    return result;
+
+    // One-liner: return Integer.reverse(n);
+}`,
+  complexity: "Time O(32) = O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 338, title: "Counting Bits", diff: "veasy",
+  problem: "Return an array `ans` of length n+1 where `ans[i]` is the number of 1 bits in i.",
+  intuition: "Use the recurrence `bits[i] = bits[i >> 1] + (i & 1)`. Equivalently `bits[i] = bits[i & (i-1)] + 1`. Either way, every value reuses an already-computed smaller value, so the table fills in O(n).",
+  hints: [
+    "Allocate `int[] ans = new int[n + 1]`.",
+    "For i from 1 to n: `ans[i] = ans[i >> 1] + (i & 1);`.",
+    "Returns include i = 0 (which is 0)."
+  ],
+  tips: [
+    "The `i & (i - 1)` form drops the lowest set bit, which is also a valid recurrence.",
+    "Calling `Integer.bitCount` n+1 times is also O(n) but the recurrence avoids redundant work and is the textbook DP example."
+  ],
+  code: `/*
+ * Counting Bits. DP recurrence:
+ *   bits[i] = bits[i >> 1] + (i & 1)
+ * Every value reuses a smaller already-computed answer.
+ */
+int[] countBits(int n) {
+    int[] ans = new int[n + 1];
+    for (int i = 1; i <= n; i++) {
+        ans[i] = ans[i >> 1] + (i & 1);
+    }
+    return ans;
+}`,
+  complexity: "Time O(n). Space O(n) for the output."
+});
+
+PROBLEMS.push({
+  num: 762, title: "Prime Number of Set Bits", diff: "veasy",
+  problem: "Count integers in `[left, right]` whose number of set bits is a prime number.",
+  intuition: "For 32-bit ints the popcount is at most 32, so the only popcounts that can be prime are 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31. Stash those in a small bitmask of primes and check membership in O(1).",
+  hints: [
+    "Build `int primes = (1<<2)|(1<<3)|(1<<5)|(1<<7)|(1<<11)|(1<<13)|(1<<17)|(1<<19)|(1<<23)|(1<<29)|(1<<31);` — careful with that last bit.",
+    "For each i in [left, right], check `(primes >>> Integer.bitCount(i)) & 1`.",
+    "Watch the Integer.MIN_VALUE pitfall: `1 << 31` is negative. Use long or move the prime check to a small set."
+  ],
+  tips: [
+    "Using a bitmask as a tiny lookup table for 'is x in this small set' is a recurring trick.",
+    "Don't run a full primality test — popcount has only 32 possible values."
+  ],
+  code: `/*
+ * Prime popcounts within the int range are { 2,3,5,7,11,13,17,19,23,29,31 }.
+ * Encode that small set in a single 64-bit mask so membership is O(1).
+ */
+int countPrimeSetBits(int left, int right) {
+    long primeMask = 0L;
+    for (int p : new int[]{2,3,5,7,11,13,17,19,23,29,31}) {
+        primeMask |= 1L << p;
+    }
+
+    int answer = 0;
+    for (int i = left; i <= right; i++) {
+        int bits = Integer.bitCount(i);
+        if (((primeMask >> bits) & 1L) == 1L) answer++;
+    }
+    return answer;
+}`,
+  complexity: "Time O((right - left) · 1). Space O(1)."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 78, title: "Subsets via Bitmask", diff: "easy",
+  problem: "Given an array of n distinct integers, return all 2^n possible subsets using bit enumeration (no recursion).",
+  intuition: "Each subset corresponds to a binary mask of length n. If bit i of the mask is 1, include nums[i]. Loop the mask from 0 to (1<<n)-1 and that's it.",
+  hints: [
+    "Outer loop: `for (int mask = 0; mask < (1 << n); mask++)`.",
+    "Inner loop: `for (int i = 0; i < n; i++) if ((mask >> i) & 1) sub.add(nums[i]);`.",
+    "Append the assembled list to the result."
+  ],
+  tips: [
+    "Iterating just the SET BITS via `int b = mask; while (b != 0) { int i = Integer.numberOfTrailingZeros(b); b &= b - 1; }` is faster on sparse masks.",
+    "n must be at most 31 for `int`; for larger n, use `long` and cap at 63."
+  ],
+  code: `/*
+ * Subsets via bitmask enumeration. Each mask in [0, 2^n) is one subset.
+ *   bit i of mask == 1  ⇒  nums[i] is in the subset.
+ */
+List<List<Integer>> subsets(int[] nums) {
+
+    int n = nums.length;
+    List<List<Integer>> res = new ArrayList<>();
+
+    for (int mask = 0; mask < (1 << n); mask++) {
+
+        List<Integer> sub = new ArrayList<>();
+        // Walk through every bit of the mask; pick nums[i] if bit i is on.
+        for (int i = 0; i < n; i++) {
+            if (((mask >> i) & 1) == 1) sub.add(nums[i]);
+        }
+        res.add(sub);
+    }
+    return res;
+}`,
+  complexity: "Time O(n · 2^n). Space O(n · 2^n) for the output."
+});
+
+PROBLEMS.push({
+  num: 342, title: "Power of Four", diff: "easy",
+  problem: "Given an integer n, return true if it is a power of four.",
+  intuition: "A power of four has exactly one set bit AND that bit lives at an even index (0, 2, 4, ...). Mask off the odd-indexed bits and check that the only remaining bit was the original.",
+  hints: [
+    "First require positivity and 'exactly one bit set' — the same as power of two.",
+    "Then require the bit to land at an even index by checking `(n & 0x55555555) != 0`.",
+    "0x55555555 = 0b01010101010101010101010101010101 = even-indexed bits."
+  ],
+  tips: [
+    "An equivalent test is `(n - 1) % 3 == 0` for n > 0 with one bit set.",
+    "Generalizes to other bases of the form 2^k by picking the right mask."
+  ],
+  code: `/*
+ * Power of Four. Two conditions:
+ *   1) exactly one set bit (same as power of two)
+ *   2) that bit is at an EVEN index — masked by 0x55555555
+ *      (binary 0101...0101, the even-position bits)
+ */
+boolean isPowerOfFour(int n) {
+    return n > 0
+        && (n & (n - 1)) == 0           // exactly one bit set
+        && (n & 0x55555555) != 0;       // and it's at an even index
+}`,
+  complexity: "Time O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 389, title: "Find the Difference", diff: "easy",
+  problem: "Strings s and t differ by exactly one extra character (t = shuffle(s) + extra). Return the extra character.",
+  intuition: "Same idea as Single Number: XOR all characters of s and t. Every character in s appears in t too and pairs cancel; the extra character survives.",
+  hints: [
+    "Initialize `int x = 0`.",
+    "XOR every char from s and every char from t into x.",
+    "Return `(char) x`."
+  ],
+  tips: [
+    "Works because chars are just small ints — XOR is bit-level, not arithmetic.",
+    "Frequency-counter approaches use O(26) memory; the XOR trick uses O(1)."
+  ],
+  code: `/*
+ * Find the Difference. XOR every char in s and t together; the matching
+ * pairs cancel and only the extra char survives.
+ */
+char findTheDifference(String s, String t) {
+    int x = 0;
+    for (char c : s.toCharArray()) x ^= c;
+    for (char c : t.toCharArray()) x ^= c;
+    return (char) x;
+}`,
+  complexity: "Time O(n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 405, title: "Convert a Number to Hexadecimal", diff: "easy",
+  problem: "Convert a 32-bit signed integer to its lowercase hexadecimal string. No leading zeros; for negatives use two's complement (no '-' sign).",
+  intuition: "Hex is just base 16, and 16 = 2^4, so each hex digit is exactly 4 bits. Peel 4 bits at a time off the bottom of the number using `n & 0xF`, then logical-shift right by 4. Use `>>>` (not `>>`) so negatives are read as their unsigned bit pattern.",
+  hints: [
+    "Use a char map `\"0123456789abcdef\"`.",
+    "Loop while n != 0: prepend `map[n & 0xF]`, then `n >>>= 4`.",
+    "Don't forget the `n == 0` edge case (return \"0\")."
+  ],
+  tips: [
+    "Building the answer right-to-left in a `StringBuilder` and reversing at the end is cheaper than `insert(0, ...)`.",
+    "`Integer.toHexString(n)` does this for you, but writing it manually trains the bit reflexes."
+  ],
+  code: `/*
+ * Number → lowercase hex. Each hex digit = 4 bits. Use >>> so negative
+ * inputs are read as their two's-complement (unsigned) bit pattern.
+ */
+String toHex(int num) {
+    if (num == 0) return "0";
+    char[] map = "0123456789abcdef".toCharArray();
+    StringBuilder sb = new StringBuilder();
+
+    while (num != 0) {
+        sb.append(map[num & 0xF]);      // last 4 bits = next hex digit
+        num >>>= 4;                     // logical shift, NOT arithmetic
+    }
+    return sb.reverse().toString();
+}`,
+  complexity: "Time O(8) = O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 693, title: "Binary Number with Alternating Bits", diff: "easy",
+  problem: "Return true if the binary representation of n has strictly alternating bits (no two adjacent bits equal).",
+  intuition: "If bits alternate, XOR-ing n with `n >> 1` produces a run of all 1s (e.g., 0b1010 ^ 0b0101 = 0b1111). A run of all 1s is one less than a power of two, so the classic check `(x & (x+1)) == 0` finishes it.",
+  hints: [
+    "Compute `int x = n ^ (n >> 1);` — alternating bits give all 1s.",
+    "Then `return (x & (x + 1)) == 0;` — true iff x is of the form 2^k - 1.",
+    "Use `>>>` if you want to be paranoid about sign — n is positive in this problem so `>>` is fine."
+  ],
+  tips: [
+    "`x & (x + 1) == 0` is the dual of `x & (x - 1) == 0`: the first checks 'all 1s up to some point', the second checks 'a single 1'.",
+    "This pattern shows up any time you need to check 'is this bit run unbroken?'."
+  ],
+  code: `/*
+ * Alternating Bits. Trick:
+ *   if bits of n alternate, n ^ (n >> 1) is a run of 1s.
+ *   x is a run of 1s  ⇔  x + 1 is a power of 2  ⇔  x & (x+1) == 0.
+ */
+boolean hasAlternatingBits(int n) {
+    int x = n ^ (n >> 1);               // alternating ⇒ all 1s
+    return (x & (x + 1)) == 0;          // 0b011...1 + 1 = 0b100...0
+}`,
+  complexity: "Time O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 868, title: "Binary Gap", diff: "easy",
+  problem: "Given a positive integer n, return the longest distance between any two consecutive 1 bits in its binary representation. Return 0 if there are fewer than two.",
+  intuition: "Walk the bits from the bottom; every time you see a 1, remember its index. The gap is `currentIndex - lastIndex`. Track the maximum.",
+  hints: [
+    "Initialize `last = -1`, `best = 0`, `i = 0`.",
+    "While n != 0: if (n & 1) == 1, update best with `i - last` if last >= 0, then set last = i. Then `n >>>= 1; i++;`.",
+    "You can also iterate `Integer.numberOfTrailingZeros(n)` and `n &= n - 1` for a popcount-time loop."
+  ],
+  tips: [
+    "Using `n & -n` gives the value of the lowest set bit; `Integer.numberOfTrailingZeros` gives its index.",
+    "If you only need the count of 1s ever to be at least 2, popcount(n) >= 2 is the gate."
+  ],
+  code: `/*
+ * Binary Gap. Walk the bits; remember the index of the last 1 seen
+ * and update best with the running distance.
+ */
+int binaryGap(int n) {
+
+    int last = -1, best = 0, i = 0;
+
+    while (n != 0) {
+        if ((n & 1) == 1) {
+            if (last >= 0) best = Math.max(best, i - last);
+            last = i;
+        }
+        n >>>= 1;
+        i++;
+    }
+    return best;
+}`,
+  complexity: "Time O(log n) — at most 32 iterations. Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 67, title: "Add Binary", diff: "easy",
+  problem: "Given two binary strings a and b, return their sum as a binary string.",
+  intuition: "Schoolbook addition with a carry. Walk both strings from the right, adding `(digit_a + digit_b + carry)` at each step, taking `% 2` for the digit and `/ 2` (or `>> 1`) for the next carry.",
+  hints: [
+    "Two index pointers `i = a.length()-1`, `j = b.length()-1`, plus an int `carry`.",
+    "Loop while `i >= 0 || j >= 0 || carry > 0`.",
+    "Append `sum % 2` to a StringBuilder; set `carry = sum / 2`. Reverse at the end."
+  ],
+  tips: [
+    "If the strings fit in a long you could use `Long.parseLong(s, 2)` but interviewers want the manual carry.",
+    "The bit operators here are conceptual — actual chars are '0' or '1', so subtract '0' to get an int."
+  ],
+  code: `/*
+ * Add Binary. School arithmetic with a carry; build right-to-left.
+ */
+String addBinary(String a, String b) {
+
+    StringBuilder sb = new StringBuilder();
+    int i = a.length() - 1, j = b.length() - 1, carry = 0;
+
+    while (i >= 0 || j >= 0 || carry > 0) {
+        int sum = carry;
+        if (i >= 0) sum += a.charAt(i--) - '0';
+        if (j >= 0) sum += b.charAt(j--) - '0';
+        sb.append(sum & 1);             // current binary digit
+        carry = sum >> 1;               // either 0 or 1
+    }
+    return sb.reverse().toString();
+}`,
+  complexity: "Time O(max(m, n)). Space O(max(m, n))."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 137, title: "Single Number II", diff: "med",
+  problem: "Every element in nums appears exactly THREE times except one element that appears once. Return the singleton in O(n) time and O(1) extra space.",
+  intuition: "The plain XOR trick fails because triples don't cancel. Build a tiny mod-3 counter for each bit position using two ints, `ones` and `twos`. After processing all numbers, `ones` holds bits that appeared 1 mod 3 times — exactly the bits of the answer.",
+  hints: [
+    "For each value v: `ones = (ones ^ v) & ~twos;` then `twos = (twos ^ v) & ~ones;`.",
+    "Think of (twos, ones) as a 2-bit base-3 counter: 00 → 01 → 10 → 00.",
+    "Bit-parallelism: 32 independent counters update in two int operations."
+  ],
+  tips: [
+    "Generalizes to 'every value appears k times except one (appears m times)' with a finite-state machine over the bits.",
+    "Easier to remember than to derive — write out the truth table once and trust it."
+  ],
+  code: `/*
+ * Single Number II. Maintain two ints, ones and twos, that together act
+ * as a per-bit mod-3 counter:
+ *
+ *      bit value seen (mod 3)     twos  ones
+ *      0                          0     0
+ *      1                          0     1
+ *      2                          1     0
+ *
+ * After processing every number, ones holds the bits of the singleton.
+ */
+int singleNumber(int[] nums) {
+
+    int ones = 0, twos = 0;
+    for (int v : nums) {
+        ones = (ones ^ v) & ~twos;       // add v if it'd land on count 1
+        twos = (twos ^ v) & ~ones;       // promote anything that hit count 2
+    }
+    return ones;
+}`,
+  complexity: "Time O(n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 260, title: "Single Number III", diff: "med",
+  problem: "Exactly two elements appear once; everything else appears twice. Return the two singletons in O(n) time and O(1) space.",
+  intuition: "XOR everything to get `xor = a ^ b`, where a and b are the two singletons. Since a != b, xor has at least one set bit. Pick ANY set bit (the lowest is convenient) — that bit must come from exactly one of {a, b}. Partition the array by that bit and XOR each side independently to recover both singletons.",
+  hints: [
+    "Step 1: `int xor = 0; for (int v : nums) xor ^= v;`.",
+    "Step 2: `int diff = xor & -xor;` — isolate the lowest set bit.",
+    "Step 3: XOR the elements where `(v & diff) != 0` into a; XOR the rest into b.",
+    "Return new int[]{a, b}."
+  ],
+  tips: [
+    "`xor & -xor` is the standard 'isolate the lowest set bit' idiom.",
+    "Doesn't matter which split bit you pick as long as it's set in xor."
+  ],
+  code: `/*
+ * Single Number III. XOR-then-partition.
+ *   1) XOR everything → xor = a ^ b
+ *   2) Pick any bit set in xor; it differs between a and b
+ *   3) Partition nums by that bit; XOR each side independently
+ */
+int[] singleNumber(int[] nums) {
+
+    // Step 1 — combined XOR
+    int xor = 0;
+    for (int v : nums) xor ^= v;
+
+    // Step 2 — lowest differing bit
+    int diff = xor & -xor;
+
+    // Step 3 — partition and XOR each side
+    int a = 0, b = 0;
+    for (int v : nums) {
+        if ((v & diff) != 0) a ^= v;
+        else                 b ^= v;
+    }
+    return new int[]{a, b};
+}`,
+  complexity: "Time O(n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 201, title: "Bitwise AND of Numbers Range", diff: "med",
+  problem: "Given two integers left and right (left <= right), return the bitwise AND of all integers in [left, right].",
+  intuition: "Any bit that's 0 in some number within the range will be 0 in the AND. As you move from left to right, the lowest bits flip rapidly; only the COMMON HIGH-ORDER PREFIX of left and right will survive. So the answer is the common prefix of left and right, padded with zeros.",
+  hints: [
+    "Shift both left and right right by one, counting how many shifts, until they're equal.",
+    "Shift the result back left by the same amount.",
+    "Equivalent: while (right > left) right &= right - 1;"
+  ],
+  tips: [
+    "The 'drop the lowest set bit of right while right > left' version is one line and easy to remember.",
+    "Bit gymnastics aside, the takeaway is: 'AND of a range = the part the range can't change'."
+  ],
+  code: `/*
+ * Bitwise AND of Numbers Range. The answer is the common high-order
+ * prefix of left and right. Strip lowest set bits from right until
+ * right <= left — equivalent to keeping just the unchanged prefix.
+ */
+int rangeBitwiseAnd(int left, int right) {
+
+    while (right > left) {
+        right &= right - 1;             // drop the lowest set bit of right
+    }
+    return right;
+}
+
+// Equivalent shift-based version:
+// int shifts = 0;
+// while (left != right) { left >>= 1; right >>= 1; shifts++; }
+// return left << shifts;`,
+  complexity: "Time O(log right). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 371, title: "Sum of Two Integers", diff: "med",
+  problem: "Compute the sum of two integers a and b without using + or -.",
+  intuition: "Decompose addition into XOR (sum without carry) plus AND-shifted-left (the carry). Loop until the carry is zero. Java's int already wraps in two's complement, so this works for negatives too.",
+  hints: [
+    "While b != 0: `int carry = (a & b) << 1; a = a ^ b; b = carry;`.",
+    "After the loop, a holds the sum.",
+    "For subtraction: a - b = a + (-b) = a + (~b + 1)."
+  ],
+  tips: [
+    "Each iteration shrinks the carry — termination is guaranteed within ~32 rounds.",
+    "Don't use long for intermediate steps; the int wraparound is exactly what gives correct two's-complement arithmetic."
+  ],
+  code: `/*
+ * Sum of Two Integers without + or -. Two ideas:
+ *   a ^ b   = bitwise sum WITHOUT carry
+ *   a & b   = bits that produce a carry; shift left by 1 to apply it
+ * Loop until carry is zero.
+ */
+int getSum(int a, int b) {
+    while (b != 0) {
+        int carry = (a & b) << 1;       // where carries go
+        a = a ^ b;                      // sum without carry
+        b = carry;                      // re-apply the carry next round
+    }
+    return a;
+}`,
+  complexity: "Time O(32) = O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 287, title: "Single Number Variations — Bitwise Counter Template", diff: "med",
+  problem: "Pattern: every element appears k times except one that appears once (or m != k times). Return the singleton.",
+  intuition: "Generalize the LC 137 idea: track each bit's count modulo k using ceil(log2(k)) integer slots. After processing the whole array, the slot pattern that matches a 'count of 1' (for k=3) or whatever m gives you, ANDed with the appropriate slots, yields the answer.",
+  hints: [
+    "For each bit, you can compute `sum_of_that_bit_across_array % k`. If the singleton appears m times, the leftover is m % k at each bit set in the singleton.",
+    "Per-bit loop: O(32 · n). Per-bit-state-machine version (ones/twos/threes...) is O(n) bit-parallel.",
+    "When m % k != 0 and gcd(m, k) is sensible, the leftover bits reconstruct the singleton."
+  ],
+  tips: [
+    "If you can't recall the bit-counter version, the per-bit summation works and is much easier to write under stress.",
+    "This is the 'big hammer' template that subsumes LC 136, 137, 260, and many follow-ups."
+  ],
+  code: `/*
+ * Bitwise Counter Template — works for ANY 'every element appears k times
+ * except one that appears m times' problem. Linear time, O(1) space, no
+ * sorting, no hash map.
+ *
+ * Per-bit summation version (easier to remember, slightly slower):
+ */
+int singleNumberK(int[] nums, int k) {
+
+    int answer = 0;
+    for (int bit = 0; bit < 32; bit++) {
+        int sum = 0;
+        for (int v : nums) sum += (v >> bit) & 1;
+        // bits that don't form complete groups of k belong to the singleton
+        if (sum % k != 0) answer |= (1 << bit);
+    }
+    return answer;
+}
+
+// For k = 3 specifically, the bit-parallel version (LC 137) is faster:
+//   ones = (ones ^ v) & ~twos;
+//   twos = (twos ^ v) & ~ones;`,
+  complexity: "Time O(32 · n) per-bit version, O(n) for the bit-parallel finite-state-machine version. Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 318, title: "Maximum Product of Word Lengths", diff: "med",
+  problem: "Given an array of lowercase words, return the max value of `len(words[i]) * len(words[j])` such that the two words share NO common letters.",
+  intuition: "Encode each word as a 26-bit mask where bit i is set if letter ('a' + i) appears in the word. Two words share no letters iff their masks AND to 0. Now the problem reduces to a quadratic scan over precomputed ints.",
+  hints: [
+    "Build `int[] mask = new int[words.length];` where `mask[i] |= 1 << (c - 'a')` for each char c in words[i].",
+    "Double loop over i < j; if `(mask[i] & mask[j]) == 0`, update best with `len[i] * len[j]`.",
+    "Cache `int[] len = new int[words.length]` to avoid repeated `.length()` calls."
+  ],
+  tips: [
+    "Encoding sets as int masks is THE recurring bit trick for small-alphabet problems.",
+    "If two words have identical masks, prefer keeping only the longer one — minor speedup."
+  ],
+  code: `/*
+ * Max Product of Word Lengths. Encode each word's letters as a 26-bit
+ * mask; two words share no letters iff (mask[i] & mask[j]) == 0.
+ */
+int maxProduct(String[] words) {
+
+    int n = words.length;
+    int[] mask = new int[n];
+    int[] len  = new int[n];
+
+    // Build the per-word masks
+    for (int i = 0; i < n; i++) {
+        len[i] = words[i].length();
+        for (char c : words[i].toCharArray()) {
+            mask[i] |= 1 << (c - 'a');
+        }
+    }
+
+    int best = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if ((mask[i] & mask[j]) == 0) {
+                best = Math.max(best, len[i] * len[j]);
+            }
+        }
+    }
+    return best;
+}`,
+  complexity: "Time O(L + n^2) where L = total characters. Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 421, title: "Maximum XOR of Two Numbers in an Array", diff: "med",
+  problem: "Given a non-empty integer array, return the maximum value of `nums[i] ^ nums[j]` over all pairs.",
+  intuition: "Greedy bit-by-bit, from the highest bit to the lowest. At each step, ASSUME the next answer bit can be 1, build the prefix mask of all numbers' high bits, and check whether two prefixes in the array XOR to the assumed answer. If yes, keep the 1; otherwise, leave it 0 and continue.",
+  hints: [
+    "Iterate bit from 30 down to 0 (avoid the sign bit unless inputs are unsigned).",
+    "At each step, build a HashSet of `(num >> bit) & mask` for all nums.",
+    "If `set.contains(candidate ^ prefix)` exists for any prefix in the set, mark this bit as achievable."
+  ],
+  tips: [
+    "Trie-of-bits is the more general structure (and what follow-ups like LC 1707 demand).",
+    "The set-of-prefixes version is concise and runs in O(32 · n)."
+  ],
+  code: `/*
+ * Maximum XOR of two numbers. Greedy bit-by-bit: starting from the top,
+ * try to set each bit of the answer to 1.
+ *
+ * 'mask' holds the prefix we've fixed so far. For each number x, store
+ * its prefix p = x & mask. The current bit can be 1 iff there exist
+ * two prefixes whose XOR equals (best | currentBit) — equivalently,
+ * for some p in the set, (target ^ p) is also in the set.
+ */
+int findMaximumXOR(int[] nums) {
+
+    int best = 0, mask = 0;
+    for (int bit = 30; bit >= 0; bit--) {
+
+        mask |= (1 << bit);                       // include this bit in prefix
+        int target = best | (1 << bit);           // hope to extend best with a 1
+
+        Set<Integer> prefixes = new HashSet<>();
+        for (int x : nums) prefixes.add(x & mask);
+
+        // For some p in prefixes, is (target ^ p) also there?
+        for (int p : prefixes) {
+            if (prefixes.contains(target ^ p)) {
+                best = target;                    // commit the 1
+                break;
+            }
+        }
+    }
+    return best;
+}`,
+  complexity: "Time O(32 · n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 1318, title: "Minimum Flips to Make a OR b Equal to c", diff: "med",
+  problem: "Given three integers a, b, c, return the minimum number of bit flips on a or b so that `a | b == c`.",
+  intuition: "Walk all 32 bits. For each bit position, look at (a_bit, b_bit, c_bit). If c_bit is 1, you need at least one of a_bit or b_bit to be 1 — if neither is, that's 1 flip. If c_bit is 0, both a_bit and b_bit must be 0 — count any 1s among them.",
+  hints: [
+    "For each i in 0..31, extract `ai = (a >> i) & 1`, `bi`, `ci`.",
+    "If ci == 1: flips += (ai | bi) == 0 ? 1 : 0.",
+    "If ci == 0: flips += ai + bi.",
+    "Loop while any of a, b, c is non-zero — saves work on small inputs."
+  ],
+  tips: [
+    "Branchless: `flips += Integer.bitCount((a | b) ^ c) + Integer.bitCount(a & b & ~c);` — the first term covers c=1 mismatches, the second double-counts the 'two 1s where c is 0' case minus what's already in the first.",
+    "Per-bit reasoning is easier to derive on the spot under interview pressure."
+  ],
+  code: `/*
+ * Minimum Flips to Make a OR b == c. Per-bit case analysis.
+ *
+ *   c_bit = 1: need at least one of a_bit, b_bit to be 1
+ *              → if both are 0, that's 1 flip
+ *   c_bit = 0: need both a_bit and b_bit to be 0
+ *              → count any 1s among them
+ */
+int minFlips(int a, int b, int c) {
+
+    int flips = 0;
+    for (int i = 0; i < 32; i++) {
+
+        int ai = (a >> i) & 1;
+        int bi = (b >> i) & 1;
+        int ci = (c >> i) & 1;
+
+        if (ci == 1) {
+            if ((ai | bi) == 0) flips++;          // need to turn at least one on
+        } else {
+            flips += ai + bi;                     // turn off whatever is on
+        }
+    }
+    return flips;
+}`,
+  complexity: "Time O(32) = O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 1457, title: "Maximize XOR after Subset Build (Submask Enumeration)", diff: "med",
+  problem: "Pattern: given a mask m, evaluate some property over every submask of m. Examples: bitmask DP for partitioning, weighted set cover, assignment problems.",
+  intuition: "The SOS (Sum over Subsets) idiom `for (int s = m; s > 0; s = (s - 1) & m)` enumerates all non-empty submasks in O(submask count) per outer mask. Across all m in [0, 2^n), the total work is O(3^n), not O(4^n), thanks to the binomial identity.",
+  hints: [
+    "Outer loop: iterate every relevant mask m.",
+    "Inner loop: `for (int s = m; s > 0; s = (s - 1) & m)` — the trick uses the fact that subtracting 1 then ANDing with m walks every submask in decreasing order.",
+    "If you need the empty submask, handle s == 0 separately at the end."
+  ],
+  tips: [
+    "If you also want supermasks (the dual), iterate `for (int s = m; s < (1<<n); s = (s + 1) | m)`.",
+    "Cap n at 20-22 in practice — 2^22 is already 4M masks."
+  ],
+  code: `/*
+ * Submask Enumeration Template. The total work over ALL masks is O(3^n).
+ * Sketch with a generic dp[] you fill bottom-up.
+ */
+int[] dp = new int[1 << n];
+
+for (int m = 1; m < (1 << n); m++) {
+
+    // Iterate every NON-EMPTY submask s of m, in strictly decreasing order.
+    for (int s = m; s > 0; s = (s - 1) & m) {
+
+        // Example transition: dp[m] = best over all splits (s, m^s)
+        // dp[m] = Math.max(dp[m], cost(s) + cost(m ^ s));
+    }
+
+    // Optional: handle the empty submask separately.
+    // dp[m] = Math.max(dp[m], cost(0) + cost(m));
+}`,
+  complexity: "Time O(3^n) over all masks. Space depends on the DP — typically O(2^n)."
+});
+
+PROBLEMS.push({
+  num: 477, title: "Total Hamming Distance", diff: "med",
+  problem: "Return the sum of the Hamming distance between EVERY pair of integers in the array.",
+  intuition: "Compute the contribution bit by bit. For bit i, count how many numbers have it set (call it `ones`). Every pair where one has bit i set and the other doesn't contributes 1 to the total. That's `ones * (n - ones)` pairs at this bit. Sum over all 32 bits.",
+  hints: [
+    "Outer loop bit from 0 to 31.",
+    "Inner loop counts how many nums have that bit set.",
+    "Add `ones * (n - ones)` to the running total."
+  ],
+  tips: [
+    "Naive O(n^2 · 32) gets TLE on large inputs; the per-bit decomposition turns it into O(n · 32).",
+    "Same trick — 'count contributions per bit' — solves many otherwise-quadratic XOR/AND problems."
+  ],
+  code: `/*
+ * Total Hamming Distance. Contribute per bit:
+ *   For bit i, let ones = #nums with that bit set.
+ *   Pairs that disagree at bit i = ones * (n - ones).
+ * Sum across all 32 bits.
+ */
+int totalHammingDistance(int[] nums) {
+
+    int n = nums.length, total = 0;
+
+    for (int bit = 0; bit < 32; bit++) {
+        int ones = 0;
+        for (int v : nums) ones += (v >> bit) & 1;
+        total += ones * (n - ones);
+    }
+    return total;
+}`,
+  complexity: "Time O(n · 32). Space O(1)."
+});
+
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 1125, title: "Smallest Sufficient Team (Bitmask DP)", diff: "hard",
+  problem: "Given a list of required skills and a list of people (each with a subset of skills), return the smallest team that covers every required skill.",
+  intuition: "Encode each required-skill set as a bit in a mask. State = mask of skills covered so far. dp[mask] = smallest list of people who together cover `mask`. Transition: for every (mask, person) pair, try extending dp[mask] with that person to reach `mask | person.skillMask`.",
+  hints: [
+    "Map required skills to indices 0..k-1; encode each person's skills as an int mask.",
+    "dp[0] = empty team. For every mask in [0, 1<<k), for every person p, candidate = mask | p; if dp[candidate] is null or longer than dp[mask] + 1, replace it.",
+    "Final answer is dp[(1 << k) - 1]."
+  ],
+  tips: [
+    "If two people have the same mask, only keep one (the one used most recently is fine).",
+    "k is small (≤ 16 in the constraints), so 2^k states are fine; people count can be large but each transition is O(1) per person per state."
+  ],
+  code: `/*
+ * Smallest Sufficient Team. Bitmask DP.
+ *   k = #required skills, mask in [0, 1<<k)
+ *   dp[mask] = list of people who together cover 'mask' (or null)
+ */
+int[] smallestSufficientTeam(String[] req_skills, List<List<String>> people) {
+
+    int k = req_skills.length;
+    Map<String, Integer> skillIdx = new HashMap<>();
+    for (int i = 0; i < k; i++) skillIdx.put(req_skills[i], i);
+
+    int n = people.size();
+    int[] pmask = new int[n];
+    for (int i = 0; i < n; i++) {
+        for (String s : people.get(i)) {
+            pmask[i] |= 1 << skillIdx.get(s);
+        }
+    }
+
+    int FULL = (1 << k) - 1;
+    List<Integer>[] dp = new List[1 << k];
+    dp[0] = new ArrayList<>();
+
+    for (int mask = 0; mask < (1 << k); mask++) {
+        if (dp[mask] == null) continue;
+        for (int i = 0; i < n; i++) {
+            int next = mask | pmask[i];
+            if (next == mask) continue;            // person adds nothing
+            if (dp[next] == null || dp[next].size() > dp[mask].size() + 1) {
+                List<Integer> team = new ArrayList<>(dp[mask]);
+                team.add(i);
+                dp[next] = team;
+            }
+        }
+    }
+
+    int[] ans = new int[dp[FULL].size()];
+    for (int i = 0; i < ans.length; i++) ans[i] = dp[FULL].get(i);
+    return ans;
+}`,
+  complexity: "Time O(2^k · n). Space O(2^k · k) for the team lists."
+});
+
+PROBLEMS.push({
+  num: 1349, title: "Maximum Students Taking Exam (Bitmask DP per Row)", diff: "hard",
+  problem: "Given an m x n classroom where some seats are broken, place as many students as possible so that no student can copy from a neighbor (left, right, upper-left, upper-right).",
+  intuition: "Process rows left-to-right; for each row, enumerate all valid seating bitmasks (no two adjacent students AND no student on a broken seat). Transition between consecutive rows requires that each new student is not diagonally adjacent to a student in the previous row.",
+  hints: [
+    "Encode each row's broken seats as a mask; a candidate seating is valid for a row iff `(seating & broken) == 0` and `(seating & (seating << 1)) == 0`.",
+    "Cross-row check: `(prev & (curr << 1)) == 0 && (prev & (curr >> 1)) == 0`.",
+    "dp[row][mask] = max students seated up to row with that row's seating."
+  ],
+  tips: [
+    "Precompute the list of valid masks for each row to avoid re-validating in the inner loop.",
+    "n is small (≤ 8), so 2^n masks are perfectly fine."
+  ],
+  code: `/*
+ * Max Students Taking Exam. Row-by-row bitmask DP.
+ * Valid row masks: no two adjacent students AND no student on a broken seat.
+ * Cross-row constraint: no diagonal cheating.
+ */
+int maxStudents(char[][] seats) {
+
+    int m = seats.length, n = seats[0].length, FULL = 1 << n;
+
+    // Encode each row's broken-seat mask.
+    int[] broken = new int[m];
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            if (seats[i][j] == '#') broken[i] |= (1 << j);
+        }
+    }
+
+    int[][] dp = new int[m][FULL];
+    for (int[] row : dp) Arrays.fill(row, -1);
+
+    for (int mask = 0; mask < FULL; mask++) {
+        if ((mask & broken[0]) != 0) continue;
+        if ((mask & (mask << 1)) != 0) continue;
+        dp[0][mask] = Integer.bitCount(mask);
+    }
+
+    for (int i = 1; i < m; i++) {
+        for (int mask = 0; mask < FULL; mask++) {
+            if ((mask & broken[i]) != 0) continue;
+            if ((mask & (mask << 1)) != 0) continue;
+
+            for (int prev = 0; prev < FULL; prev++) {
+                if (dp[i - 1][prev] < 0) continue;
+                if ((prev & (mask << 1)) != 0) continue;
+                if ((prev & (mask >> 1)) != 0) continue;
+
+                dp[i][mask] = Math.max(dp[i][mask],
+                                       dp[i - 1][prev] + Integer.bitCount(mask));
+            }
+        }
+    }
+
+    int best = 0;
+    for (int v : dp[m - 1]) best = Math.max(best, v);
+    return best;
+}`,
+  complexity: "Time O(m · 4^n). Space O(m · 2^n)."
+});
+
+PROBLEMS.push({
+  num: 982, title: "Triples with Bitwise AND Equal to Zero", diff: "hard",
+  problem: "Given an integer array A, count the number of triples (i, j, k) such that `A[i] & A[j] & A[k] == 0`.",
+  intuition: "Values are at most 2^16, so first build a frequency array `cnt2[x]` of how many `(i, j)` pairs have `A[i] & A[j] == x`. That's O(n^2) on the inner key. Then for each k, accumulate `cnt2[x]` over every x with `(x & A[k]) == 0`. Iterating those x is exactly submask enumeration of `~A[k]` masked to 16 bits — the SOS trick.",
+  hints: [
+    "Step 1: count2[A[i] & A[j]]++ for all i, j (O(n^2)).",
+    "Step 2: for each A[k], let comp = (~A[k]) & 0xFFFF; iterate every submask of comp and add count2[submask].",
+    "Total submask work is O(n · 3^16 / something) — fast enough for n up to a few thousand."
+  ],
+  tips: [
+    "Submask enumeration via `for (int s = comp; ; s = (s - 1) & comp) { ...; if (s == 0) break; }` includes 0.",
+    "If you skip the SOS step you'll TLE — naive triple loops are O(n^3)."
+  ],
+  code: `/*
+ * Triples with Bitwise AND Zero.
+ *   1) cnt2[x] = #pairs (i, j) with A[i] & A[j] == x   ... O(n^2)
+ *   2) For each A[k], we need the sum of cnt2[x] over all x that AND
+ *      with A[k] to 0 — i.e., x is a submask of ~A[k].
+ */
+int countTriplets(int[] A) {
+
+    final int BITS = 16, FULL = 1 << BITS;
+
+    int[] cnt2 = new int[FULL];
+    for (int a : A) {
+        for (int b : A) {
+            cnt2[a & b]++;
+        }
+    }
+
+    int total = 0;
+    for (int c : A) {
+        int comp = (~c) & (FULL - 1);             // x must be submask of comp
+        int s = comp;
+        while (true) {
+            total += cnt2[s];
+            if (s == 0) break;
+            s = (s - 1) & comp;                   // submask enumeration
+        }
+    }
+    return total;
+}`,
+  complexity: "Time O(n^2 + n · S) where S is the average submask count (≤ 3^16 worst case). Space O(2^16)."
+});
+
+PROBLEMS.push({
+  num: 1178, title: "Number of Valid Words for Each Puzzle", diff: "hard",
+  problem: "Each puzzle and word use letters a-z. A word is valid for a puzzle if (1) it contains the puzzle's first letter and (2) every word letter appears in the puzzle. For each puzzle, return how many words are valid.",
+  intuition: "Encode every word and puzzle as a 26-bit mask. Condition becomes: `(wordMask & puzzleMask) == wordMask` (word is a subset of puzzle) AND `(wordMask >> firstLetter) & 1 == 1`. Brute force is O(W·P). The trick: puzzles are exactly 7 letters (per constraint), so each puzzle has only 2^7 = 128 submasks. Group words by their mask, and for each puzzle iterate every submask containing the first letter.",
+  hints: [
+    "Step 1: build `Map<Integer, Integer> wordCount` keyed by word mask.",
+    "Step 2: for each puzzle P with first letter F, fix F in every submask of P that we test.",
+    "Step 3: enumerate submasks of P that include F (a 'forced bit' submask trick).",
+    "Sum wordCount.getOrDefault(submask, 0)."
+  ],
+  tips: [
+    "Forced-bit submask iteration: enumerate submasks of `P ^ (1<<F)`, then OR each with `(1<<F)`.",
+    "Each puzzle does 64 lookups, not 128 — only those that include the required first letter."
+  ],
+  code: `/*
+ * Number of Valid Words for Each Puzzle.
+ *   Each puzzle has exactly 7 distinct letters → at most 2^7 = 128 submasks,
+ *   half of which include the first letter. Group words by their mask
+ *   and, for each puzzle, sum counts over the 64 forced submasks.
+ */
+List<Integer> findNumOfValidWords(String[] words, String[] puzzles) {
+
+    Map<Integer, Integer> wordCount = new HashMap<>();
+    for (String w : words) {
+        int mask = 0;
+        for (char c : w.toCharArray()) mask |= 1 << (c - 'a');
+        wordCount.merge(mask, 1, Integer::sum);
+    }
+
+    List<Integer> result = new ArrayList<>();
+    for (String p : puzzles) {
+
+        int pMask = 0;
+        for (char c : p.toCharArray()) pMask |= 1 << (c - 'a');
+        int firstBit = 1 << (p.charAt(0) - 'a');
+        int rest = pMask ^ firstBit;              // submask base WITHOUT first letter
+
+        int valid = 0;
+        // Walk every submask of 'rest', then force-add the first letter.
+        int s = rest;
+        while (true) {
+            int candidate = s | firstBit;
+            valid += wordCount.getOrDefault(candidate, 0);
+            if (s == 0) break;
+            s = (s - 1) & rest;
+        }
+        result.add(valid);
+    }
+    return result;
+}`,
+  complexity: "Time O(W + 64 · P) given the constant 7-letter puzzle constraint. Space O(W)."
+});
+
+PROBLEMS.push({
+  num: 1799, title: "Maximize Score After N Operations (Bitmask DP + GCD)", diff: "hard",
+  problem: "Given a 2n-element array, on the i-th operation pick any two remaining numbers x, y, gain `i * gcd(x, y)`, and remove them. Maximize the total score.",
+  intuition: "State = bitmask of which numbers are still available; dp[mask] = best score achievable from that mask. The number of removed elements is `2n - popcount(mask)`, which tells you the operation index. For each pair of set bits, recurse with both bits cleared.",
+  hints: [
+    "dp[(1<<2n) - 1] = 0 (base: nothing removed yet — but we measure 'used').",
+    "Bottom-up by mask popcount, or top-down memoized DFS.",
+    "Operation index = popcount(removedMask) / 2 + 1."
+  ],
+  tips: [
+    "Precompute pair gcds once: `gcd[i][j] = Math.gcd(nums[i], nums[j])`.",
+    "n ≤ 7 → 2n ≤ 14 → 2^14 = 16384 states. Transitions O(n^2) per state."
+  ],
+  code: `/*
+ * Maximize Score After N Operations. Bitmask DP.
+ *   mask = set of elements ALREADY USED
+ *   op   = popcount(mask) / 2 + 1  → which operation we're filling
+ *   dp[mask] = max total score reachable from this mask onward
+ *
+ * Top-down memoization is cleanest.
+ */
+int[] memo;
+int[][] gcd;
+int N;
+
+int maxScore(int[] nums) {
+    N = nums.length;
+    memo = new int[1 << N];
+    Arrays.fill(memo, -1);
+    gcd = new int[N][N];
+    for (int i = 0; i < N; i++)
+        for (int j = i + 1; j < N; j++)
+            gcd[i][j] = bigGcd(nums[i], nums[j]);
+    return dfs(0);
+}
+
+int dfs(int used) {
+    if (memo[used] != -1) return memo[used];
+    int op = Integer.bitCount(used) / 2 + 1;
+    if (op > N / 2) return 0;
+
+    int best = 0;
+    for (int i = 0; i < N; i++) {
+        if (((used >> i) & 1) == 1) continue;
+        for (int j = i + 1; j < N; j++) {
+            if (((used >> j) & 1) == 1) continue;
+            int score = op * gcd[i][j] + dfs(used | (1 << i) | (1 << j));
+            best = Math.max(best, score);
+        }
+    }
+    return memo[used] = best;
+}
+
+int bigGcd(int a, int b) { return b == 0 ? a : bigGcd(b, a % b); }`,
+  complexity: "Time O(2^(2n) · n^2). Space O(2^(2n))."
+});
+
+PROBLEMS.push({
+  num: 691, title: "Stickers to Spell Word (Memoized Bitmask DFS)", diff: "hard",
+  problem: "Given an array of stickers (each a string) and a target string, return the minimum number of stickers needed to compose target. Each sticker can be used unlimited times. Return -1 if impossible.",
+  intuition: "State = bitmask over which characters of `target` are still uncovered. From a state, try each sticker; for each sticker, fill as many target letters as possible greedily by checking sticker character counts; the new mask has those bits cleared. Memoize on the mask.",
+  hints: [
+    "Encode target characters as 0..target.length-1 → bitmask of length up to 15.",
+    "Precompute each sticker's character count.",
+    "DFS(mask): if mask == 0 return 0; for each sticker, simulate covering target letters and recurse."
+  ],
+  tips: [
+    "Skip stickers that don't contain `target.charAt(lowestUncoveredIndex)` — heuristic that prunes the tree dramatically.",
+    "target.length ≤ 15 ⇒ 2^15 = 32768 states, very tractable."
+  ],
+  code: `/*
+ * Stickers to Spell Word. Memoized bitmask DFS over 'which target chars
+ * are still needed'.
+ */
+Map<Integer, Integer> memo;
+int[][] stickCnt;
+String target;
+
+int minStickers(String[] stickers, String target) {
+
+    this.target = target;
+    int n = stickers.length;
+    stickCnt = new int[n][26];
+    for (int i = 0; i < n; i++)
+        for (char c : stickers[i].toCharArray())
+            stickCnt[i][c - 'a']++;
+
+    memo = new HashMap<>();
+    int ans = dfs((1 << target.length()) - 1);
+    return ans == Integer.MAX_VALUE / 2 ? -1 : ans;
+}
+
+int dfs(int mask) {
+
+    if (mask == 0) return 0;
+    if (memo.containsKey(mask)) return memo.get(mask);
+
+    int best = Integer.MAX_VALUE / 2;
+
+    // PRUNE: pick the LOWEST uncovered char and only consider stickers
+    // that contain it — this avoids permutation-style duplicate work.
+    int firstNeeded = Integer.numberOfTrailingZeros(mask);
+    char firstChar = target.charAt(firstNeeded);
+
+    for (int s = 0; s < stickCnt.length; s++) {
+        if (stickCnt[s][firstChar - 'a'] == 0) continue;
+
+        int[] remaining = stickCnt[s].clone();
+        int newMask = mask;
+        for (int i = 0; i < target.length(); i++) {
+            if (((newMask >> i) & 1) == 0) continue;
+            int idx = target.charAt(i) - 'a';
+            if (remaining[idx] > 0) {
+                remaining[idx]--;
+                newMask &= ~(1 << i);
+            }
+        }
+        best = Math.min(best, 1 + dfs(newMask));
+    }
+
+    memo.put(mask, best);
+    return best;
+}`,
+  complexity: "Time O(2^L · S · L) where L = target length and S = sticker count. Space O(2^L)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Java syntax highlighter — same scheme as the Backtracking guide. */
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  // line comments
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // block comments
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // double-quoted strings
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  // char literals
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','Random','Collections','Arrays','Math','Comparator','Objects'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  // numbers (with optional L suffix; 0x hex literals included)
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const main = document.getElementById('main');
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+/* theme toggle */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

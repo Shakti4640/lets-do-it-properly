@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>DFS Backtracking — Animated Lesson (Subsets / Permutations / Combinations)</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a22; --ink:#e6edf3; --muted:#8b949e;
+    --accent:#58a6ff; --good:#3fb950; --warn:#d29922; --bad:#f85149;
+    --line-hi:#264f78; --edge:#30363d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Inter,Segoe UI,system-ui,Arial;}
+  header{padding:14px 20px;border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;font-weight:600}
+  header .sub{color:var(--muted);font-size:13px}
+  .wrap{display:grid;grid-template-columns: 1.1fr 1fr 1fr;gap:12px;padding:12px;height:calc(100vh - 60px)}
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+  .panel h2{font-size:13px;margin:0;padding:10px 12px;border-bottom:1px solid var(--edge);background:#1b212c;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{background:#21262d;color:var(--ink);border:1px solid var(--edge);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:#0b0f14;border-color:var(--accent);font-weight:600}
+  button.active{background:#264f78;border-color:var(--accent)}
+  input[type=range]{accent-color:var(--accent)}
+  .pill{padding:3px 8px;border-radius:999px;background:#21262d;border:1px solid var(--edge);font-size:12px;color:var(--muted)}
+  /* tree canvas */
+  #treeWrap{flex:1;overflow:auto;position:relative}
+  svg.tree{display:block;min-width:100%;min-height:100%}
+  .node circle{fill:#1b212c;stroke:var(--edge);stroke-width:1.5}
+  .node.active circle{fill:#264f78;stroke:var(--accent);stroke-width:2.5}
+  .node.done circle{fill:#0f3a1d;stroke:var(--good)}
+  .node.leaf circle{stroke:var(--good)}
+  .node.pruned circle{stroke:var(--bad);stroke-dasharray:3 3}
+  .node text{fill:var(--ink);font-family:JetBrains Mono,Consolas,monospace;font-size:12px;text-anchor:middle;pointer-events:none}
+  .edge{stroke:var(--edge);stroke-width:1.5;fill:none}
+  .edge.active{stroke:var(--accent);stroke-width:2.5}
+  .edge.done{stroke:var(--good)}
+  /* code panel */
+  .code{flex:1;overflow:auto;font-family:JetBrains Mono,Consolas,monospace;font-size:13px;line-height:1.55}
+  .code pre{margin:0;padding:10px 0}
+  .ln{display:flex;padding:0 12px}
+  .ln .num{color:#5b6470;width:32px;text-align:right;padding-right:10px;user-select:none;flex-shrink:0}
+  .ln .src{white-space:pre}
+  .ln.hi{background:var(--line-hi)}
+  .kw{color:#ff7b72}
+  .fn{color:#d2a8ff}
+  .str{color:#a5d6ff}
+  .num2{color:#79c0ff}
+  .com{color:#8b949e;font-style:italic}
+  /* state strip */
+  .state{padding:10px 12px;border-top:1px solid var(--edge);background:#1b212c;font-family:JetBrains Mono,Consolas,monospace;font-size:13px}
+  .state .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .chip{background:#0f1115;border:1px solid var(--edge);padding:2px 8px;border-radius:6px}
+  .chip.path{border-color:var(--accent);color:#a5d6ff}
+  .chip.added{border-color:var(--good);color:#7ee787}
+  .narrate{color:var(--muted);font-size:12px;padding:6px 12px;border-top:1px dashed var(--edge);min-height:34px}
+  .toolbar{padding:10px 12px;border-bottom:1px solid var(--edge);background:#1b212c;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .input-mini{background:#0f1115;color:var(--ink);border:1px solid var(--edge);border-radius:6px;padding:4px 8px;width:90px;font-family:inherit}
+  @media (max-width:1200px){ .wrap{grid-template-columns:1fr 1fr;grid-auto-rows:minmax(360px,auto);height:auto} }
+  @media (max-width:760px){ .wrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌳 DFS Backtracking — Animated</h1>
+  <span class="sub">Watch the recursion tree grow, then read the same logic in Python and Java.</span>
+  <span style="flex:1"></span>
+  <span class="pill" id="modePill">mode: subsets</span>
+  <span class="pill" id="speedPill">speed: 1x</span>
+</header>
+
+<div class="wrap">
+
+  <!-- LEFT: TREE -->
+  <div class="panel">
+    <h2>Recursion Tree</h2>
+    <div class="toolbar">
+      <button data-mode="subsets" class="modeBtn active">Subsets</button>
+      <button data-mode="permutations" class="modeBtn">Permutations</button>
+      <button data-mode="combinations" class="modeBtn">Combinations (k)</button>
+      <span class="pill">nums =</span>
+      <input id="numsInput" class="input-mini" value="1,2,3" />
+      <span class="pill" id="kWrap" style="display:none">k = <input id="kInput" class="input-mini" style="width:40px" value="2" /></span>
+      <button id="buildBtn">Build</button>
+      <span style="flex:1"></span>
+      <button id="prevBtn">⟨ Step</button>
+      <button id="playBtn" class="primary">▶ Play</button>
+      <button id="nextBtn">Step ⟩</button>
+      <button id="resetBtn">↺ Reset</button>
+      <input id="speed" type="range" min="1" max="10" value="5" />
+    </div>
+    <div id="treeWrap">
+      <svg class="tree" id="treeSvg"></svg>
+    </div>
+    <div class="state">
+      <div class="row"><span class="chip">path =</span><span id="pathChips"></span></div>
+      <div class="row"><span class="chip">result =</span><span id="resChips"></span></div>
+      <div class="row"><span class="chip">step</span><span class="chip" id="stepCounter">0 / 0</span></div>
+    </div>
+    <div class="narrate" id="narrate">Press ▶ Play to walk the DFS.</div>
+  </div>
+
+  <!-- MIDDLE: PYTHON -->
+  <div class="panel">
+    <h2>Python (the “pseudocode”)</h2>
+    <div class="code" id="pyCode"></div>
+  </div>
+
+  <!-- RIGHT: JAVA -->
+  <div class="panel">
+    <h2>Java (same shape, different syntax)</h2>
+    <div class="code" id="javaCode"></div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   1) The three backtracking algorithms — each instrumented to emit EVENTS.
+      Every event carries: a tree-node id, the line tag to highlight in code,
+      the current `path`, optional `result` snapshot, and a narration string.
+   ========================================================================= */
+
+// helpers
+const clone = a => a.slice();
+let NID = 0;
+function nextId(){ return 'n'+(NID++); }
+
+/* ---------- SUBSETS ---------- */
+// Classic "include/exclude is implicit via for-loop + start index".
+// Every node IS a subset (we record on entry).
+function traceSubsets(nums){
+  NID = 0;
+  const events = [];
+  const result = [];
+  const rootId = nextId();
+
+  events.push({type:'enter', id:rootId, parent:null, edgeLabel:null,
+    path:[], line:'add',
+    note:`enter dfs(start=0, path=[]) — record subset []`});
+  result.push([]);
+  events.push({type:'record', id:rootId, path:[], result:clone(result).map(clone),
+    line:'add', note:`result.append([])  →  result has ${result.length} subset(s)`});
+
+  function dfs(start, path, parentId){
+    for(let i=start;i<nums.length;i++){
+      const childId = nextId();
+      events.push({type:'enter', id:childId, parent:parentId, edgeLabel:`+${nums[i]}`,
+        path:clone(path).concat(nums[i]), line:'for',
+        note:`for i=${i}: choose ${nums[i]} → push to path`});
+      path.push(nums[i]);
+      events.push({type:'record', id:childId, path:clone(path), result:null,
+        line:'add', note:`record subset ${JSON.stringify(path)}`});
+      result.push(clone(path));
+      events.push({type:'snapshot', id:childId, path:clone(path),
+        result:clone(result).map(clone), line:'add',
+        note:`result now has ${result.length} subsets`});
+      dfs(i+1, path, childId);
+      path.pop();
+      events.push({type:'leave', id:childId, path:clone(path), line:'pop',
+        note:`backtrack: pop ${nums[i]} → path=${JSON.stringify(path)}`});
+    }
+    events.push({type:'return', id:parentId, path:clone(path), line:'return',
+      note:`return from dfs(start=${start})`});
+  }
+  dfs(0, [], rootId);
+  return {events, finalResult: result};
+}
+
+/* ---------- PERMUTATIONS ---------- */
+// Use a `used[]` boolean array. Leaves (path.length === n) are recorded.
+function tracePermutations(nums){
+  NID = 0;
+  const events = [];
+  const result = [];
+  const used = new Array(nums.length).fill(false);
+  const rootId = nextId();
+
+  events.push({type:'enter', id:rootId, parent:null, edgeLabel:null,
+    path:[], line:'def', note:`enter dfs(path=[]) used=${JSON.stringify(used)}`});
+
+  function dfs(path, parentId){
+    if(path.length === nums.length){
+      events.push({type:'record', id:parentId, path:clone(path), result:null,
+        line:'leaf', note:`leaf reached → record permutation ${JSON.stringify(path)}`});
+      result.push(clone(path));
+      events.push({type:'snapshot', id:parentId, path:clone(path),
+        result:clone(result).map(clone), line:'leaf',
+        note:`result now has ${result.length} permutation(s)`, leaf:true});
+      return;
+    }
+    for(let i=0;i<nums.length;i++){
+      if(used[i]){
+        const prunedId = nextId();
+        events.push({type:'pruned', id:prunedId, parent:parentId, edgeLabel:`${nums[i]}✗`,
+          path:clone(path), line:'skip',
+          note:`skip ${nums[i]} (already used)`});
+        continue;
+      }
+      const childId = nextId();
+      events.push({type:'enter', id:childId, parent:parentId, edgeLabel:`+${nums[i]}`,
+        path:clone(path).concat(nums[i]), line:'for',
+        note:`choose ${nums[i]} → mark used[${i}]=true`});
+      used[i]=true; path.push(nums[i]);
+      dfs(path, childId);
+      path.pop(); used[i]=false;
+      events.push({type:'leave', id:childId, path:clone(path), line:'pop',
+        note:`backtrack: unchoose ${nums[i]} → used[${i}]=false`});
+    }
+    events.push({type:'return', id:parentId, path:clone(path), line:'return',
+      note:`return from dfs(path=${JSON.stringify(path)})`});
+  }
+  dfs([], rootId);
+  return {events, finalResult: result};
+}
+
+/* ---------- COMBINATIONS C(n,k) ---------- */
+// Pick k elements from nums, in order. Leaves are paths of length k.
+function traceCombinations(nums, k){
+  NID = 0;
+  const events = [];
+  const result = [];
+  const rootId = nextId();
+
+  events.push({type:'enter', id:rootId, parent:null, edgeLabel:null,
+    path:[], line:'def', note:`enter dfs(start=0, path=[]) — need ${k} picks`});
+
+  function dfs(start, path, parentId){
+    if(path.length === k){
+      events.push({type:'record', id:parentId, path:clone(path), result:null,
+        line:'leaf', note:`path size==k → record ${JSON.stringify(path)}`});
+      result.push(clone(path));
+      events.push({type:'snapshot', id:parentId, path:clone(path),
+        result:clone(result).map(clone), line:'leaf',
+        note:`result now has ${result.length} combination(s)`, leaf:true});
+      return;
+    }
+    // Optional pruning: not enough remaining
+    const need = k - path.length;
+    for(let i=start;i<nums.length;i++){
+      if(nums.length - i < need){
+        const prunedId = nextId();
+        events.push({type:'pruned', id:prunedId, parent:parentId, edgeLabel:`prune`,
+          path:clone(path), line:'prune',
+          note:`prune: only ${nums.length-i} left but need ${need}`});
+        break;
+      }
+      const childId = nextId();
+      events.push({type:'enter', id:childId, parent:parentId, edgeLabel:`+${nums[i]}`,
+        path:clone(path).concat(nums[i]), line:'for',
+        note:`pick ${nums[i]} (i=${i})`});
+      path.push(nums[i]);
+      dfs(i+1, path, childId);
+      path.pop();
+      events.push({type:'leave', id:childId, path:clone(path), line:'pop',
+        note:`backtrack: drop ${nums[i]}`});
+    }
+    events.push({type:'return', id:parentId, path:clone(path), line:'return',
+      note:`return from dfs(start=${start})`});
+  }
+  dfs(0, [], rootId);
+  return {events, finalResult: result};
+}
+
+/* =========================================================================
+   2) Code panels — Python + Java for each mode, with line tags that match
+      the events emitted above.
+   ========================================================================= */
+
+const CODE = {
+  subsets: {
+    py: [
+      ['def','def subsets(nums):'],
+      ['',  '    result = []'],
+      ['def','    def dfs(start, path):'],
+      ['add','        result.append(path[:])           # every node is a subset'],
+      ['for','        for i in range(start, len(nums)):'],
+      ['',  '            path.append(nums[i])          # CHOOSE'],
+      ['',  '            dfs(i + 1, path)              # EXPLORE'],
+      ['pop','            path.pop()                    # UN-CHOOSE (backtrack)'],
+      ['return','    dfs(0, [])'],
+      ['',  '    return result'],
+    ],
+    java: [
+      ['def','public List<List<Integer>> subsets(int[] nums) {'],
+      ['',  '    List<List<Integer>> result = new ArrayList<>();'],
+      ['',  '    dfs(nums, 0, new ArrayList<>(), result);'],
+      ['',  '    return result;'],
+      ['',  '}'],
+      ['def','private void dfs(int[] nums, int start, List<Integer> path, List<List<Integer>> result) {'],
+      ['add','    result.add(new ArrayList<>(path));        // record current subset'],
+      ['for','    for (int i = start; i < nums.length; i++) {'],
+      ['',  '        path.add(nums[i]);                     // CHOOSE'],
+      ['',  '        dfs(nums, i + 1, path, result);        // EXPLORE'],
+      ['pop','        path.remove(path.size() - 1);          // UN-CHOOSE'],
+      ['',  '    }'],
+      ['return','}'],
+    ],
+  },
+
+  permutations: {
+    py: [
+      ['def','def permute(nums):'],
+      ['',  '    result, used = [], [False]*len(nums)'],
+      ['def','    def dfs(path):'],
+      ['leaf','        if len(path) == len(nums):'],
+      ['leaf','            result.append(path[:]); return'],
+      ['for','        for i in range(len(nums)):'],
+      ['skip','            if used[i]: continue           # already in path'],
+      ['',  '            used[i] = True; path.append(nums[i])    # CHOOSE'],
+      ['',  '            dfs(path)                                # EXPLORE'],
+      ['pop','            path.pop(); used[i] = False              # UN-CHOOSE'],
+      ['return','    dfs([])'],
+      ['',  '    return result'],
+    ],
+    java: [
+      ['def','public List<List<Integer>> permute(int[] nums) {'],
+      ['',  '    List<List<Integer>> result = new ArrayList<>();'],
+      ['',  '    boolean[] used = new boolean[nums.length];'],
+      ['',  '    dfs(nums, used, new ArrayList<>(), result);'],
+      ['',  '    return result;'],
+      ['',  '}'],
+      ['def','private void dfs(int[] nums, boolean[] used, List<Integer> path, List<List<Integer>> result) {'],
+      ['leaf','    if (path.size() == nums.length) {'],
+      ['leaf','        result.add(new ArrayList<>(path)); return;'],
+      ['',  '    }'],
+      ['for','    for (int i = 0; i < nums.length; i++) {'],
+      ['skip','        if (used[i]) continue;'],
+      ['',  '        used[i] = true; path.add(nums[i]);      // CHOOSE'],
+      ['',  '        dfs(nums, used, path, result);          // EXPLORE'],
+      ['pop','        path.remove(path.size()-1); used[i] = false; // UN-CHOOSE'],
+      ['',  '    }'],
+      ['return','}'],
+    ],
+  },
+
+  combinations: {
+    py: [
+      ['def','def combine(nums, k):'],
+      ['',  '    result = []'],
+      ['def','    def dfs(start, path):'],
+      ['leaf','        if len(path) == k:'],
+      ['leaf','            result.append(path[:]); return'],
+      ['for','        for i in range(start, len(nums)):'],
+      ['prune','            if len(nums) - i < k - len(path): break  # not enough left'],
+      ['',  '            path.append(nums[i])                       # CHOOSE'],
+      ['',  '            dfs(i + 1, path)                           # EXPLORE'],
+      ['pop','            path.pop()                                  # UN-CHOOSE'],
+      ['return','    dfs(0, [])'],
+      ['',  '    return result'],
+    ],
+    java: [
+      ['def','public List<List<Integer>> combine(int[] nums, int k) {'],
+      ['',  '    List<List<Integer>> result = new ArrayList<>();'],
+      ['',  '    dfs(nums, k, 0, new ArrayList<>(), result);'],
+      ['',  '    return result;'],
+      ['',  '}'],
+      ['def','private void dfs(int[] nums, int k, int start, List<Integer> path, List<List<Integer>> result) {'],
+      ['leaf','    if (path.size() == k) {'],
+      ['leaf','        result.add(new ArrayList<>(path)); return;'],
+      ['',  '    }'],
+      ['for','    for (int i = start; i < nums.length; i++) {'],
+      ['prune','        if (nums.length - i < k - path.size()) break;  // pruning'],
+      ['',  '        path.add(nums[i]);                              // CHOOSE'],
+      ['',  '        dfs(nums, k, i + 1, path, result);              // EXPLORE'],
+      ['pop','        path.remove(path.size() - 1);                   // UN-CHOOSE'],
+      ['',  '    }'],
+      ['return','}'],
+    ],
+  },
+};
+
+/* simple syntax highlighting */
+function hi(src, lang){
+  let s = src.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // comments
+  s = s.replace(/(#.*$)/g,'<span class="com">$1</span>');
+  s = s.replace(/(\/\/.*$)/g,'<span class="com">$1</span>');
+  // strings
+  s = s.replace(/("[^"]*")/g,'<span class="str">$1</span>');
+  // keywords
+  const kws = lang==='py'
+    ? /\b(def|return|for|in|if|else|elif|continue|break|range|len|True|False|append|pop)\b/g
+    : /\b(public|private|void|int|new|return|for|if|else|continue|break|boolean|class|List|ArrayList|Integer|true|false)\b/g;
+  s = s.replace(kws,'<span class="kw">$1</span>');
+  // numbers
+  s = s.replace(/\b(\d+)\b/g,'<span class="num2">$1</span>');
+  return s;
+}
+
+function renderCode(panelEl, lines, lang){
+  panelEl.innerHTML = '<pre>' + lines.map((row,idx)=>{
+    const [tag, src] = row;
+    return `<div class="ln" data-tag="${tag}" data-idx="${idx}"><span class="num">${idx+1}</span><span class="src">${hi(src,lang)}</span></div>`;
+  }).join('') + '</pre>';
+}
+
+function highlightLine(panelEl, tag){
+  panelEl.querySelectorAll('.ln.hi').forEach(n=>n.classList.remove('hi'));
+  if(!tag) return;
+  // highlight first matching tag (most relevant top-of-block line)
+  const all = panelEl.querySelectorAll(`.ln[data-tag="${tag}"]`);
+  all.forEach(n=>n.classList.add('hi'));
+  if(all.length){
+    all[0].scrollIntoView({block:'nearest', behavior:'smooth'});
+  }
+}
+
+/* =========================================================================
+   3) Tree rendering — incremental layout as nodes appear.
+   ========================================================================= */
+
+const svg = document.getElementById('treeSvg');
+const NS = 'http://www.w3.org/2000/svg';
+
+let nodesById = {};   // id -> {id, parent, depth, label, edgeLabel, x, y, el, edgeEl}
+let activeNodeId = null;
+
+function clearTree(){
+  svg.innerHTML = '';
+  nodesById = {};
+  activeNodeId = null;
+}
+
+const LEVEL_H = 80;
+const NODE_R = 22;
+
+function relayout(){
+  // group by depth
+  const byDepth = {};
+  Object.values(nodesById).forEach(n=>{
+    (byDepth[n.depth] = byDepth[n.depth] || []).push(n);
+  });
+  const maxDepth = Math.max(0, ...Object.keys(byDepth).map(Number));
+  // give each node x slot per depth in the order they appear
+  const widthPerLevel = {};
+  Object.entries(byDepth).forEach(([d,arr])=>{
+    arr.sort((a,b)=>a.order-b.order);
+    arr.forEach((n,i)=> n.slot = i);
+    widthPerLevel[d] = arr.length;
+  });
+  const maxCount = Math.max(...Object.values(widthPerLevel), 1);
+  const W = Math.max(720, maxCount * 90 + 80);
+  const H = (maxDepth+1) * LEVEL_H + 60;
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  Object.values(nodesById).forEach(n=>{
+    const arr = byDepth[n.depth];
+    const step = W / (arr.length + 1);
+    n.x = step * (n.slot + 1);
+    n.y = 30 + n.depth * LEVEL_H;
+  });
+
+  // redraw edges + reposition nodes
+  Object.values(nodesById).forEach(n=>{
+    if(n.edgeEl && n.parent && nodesById[n.parent]){
+      const p = nodesById[n.parent];
+      n.edgeEl.setAttribute('d', `M ${p.x} ${p.y+NODE_R} C ${p.x} ${(p.y+n.y)/2}, ${n.x} ${(p.y+n.y)/2}, ${n.x} ${n.y-NODE_R}`);
+      if(n.edgeLabelEl){
+        n.edgeLabelEl.setAttribute('x', (p.x+n.x)/2);
+        n.edgeLabelEl.setAttribute('y', (p.y+n.y)/2);
+      }
+    }
+    if(n.gEl){
+      n.gEl.setAttribute('transform', `translate(${n.x},${n.y})`);
+    }
+  });
+}
+
+let nodeOrderCounter = 0;
+
+function addNode(id, parent, depth, label, edgeLabel, pruned=false){
+  if(nodesById[id]) return nodesById[id];
+  // edge first (so it draws under the node)
+  let edgeEl=null, edgeLabelEl=null;
+  if(parent){
+    edgeEl = document.createElementNS(NS,'path');
+    edgeEl.setAttribute('class','edge');
+    svg.appendChild(edgeEl);
+    if(edgeLabel){
+      edgeLabelEl = document.createElementNS(NS,'text');
+      edgeLabelEl.setAttribute('class','edge-label');
+      edgeLabelEl.setAttribute('fill','#8b949e');
+      edgeLabelEl.setAttribute('font-size','11');
+      edgeLabelEl.setAttribute('text-anchor','middle');
+      edgeLabelEl.textContent = edgeLabel;
+      svg.appendChild(edgeLabelEl);
+    }
+  }
+  const g = document.createElementNS(NS,'g');
+  g.setAttribute('class','node' + (pruned?' pruned':''));
+  const c = document.createElementNS(NS,'circle');
+  c.setAttribute('r', NODE_R);
+  g.appendChild(c);
+  const t = document.createElementNS(NS,'text');
+  t.setAttribute('dy','4');
+  t.textContent = label;
+  g.appendChild(t);
+  svg.appendChild(g);
+
+  const node = {id, parent, depth, label, edgeLabel,
+    el:c, gEl:g, edgeEl, edgeLabelEl, pruned,
+    order: nodeOrderCounter++};
+  nodesById[id] = node;
+  relayout();
+  return node;
+}
+
+function setActive(id){
+  if(activeNodeId && nodesById[activeNodeId]){
+    nodesById[activeNodeId].gEl.classList.remove('active');
+    if(nodesById[activeNodeId].edgeEl)
+      nodesById[activeNodeId].edgeEl.classList.remove('active');
+  }
+  activeNodeId = id;
+  if(id && nodesById[id]){
+    nodesById[id].gEl.classList.add('active');
+    if(nodesById[id].edgeEl)
+      nodesById[id].edgeEl.classList.add('active');
+  }
+}
+
+function markDone(id){
+  const n = nodesById[id]; if(!n) return;
+  n.gEl.classList.add('done');
+  if(n.edgeEl) n.edgeEl.classList.add('done');
+}
+function markLeaf(id){
+  const n = nodesById[id]; if(!n) return;
+  n.gEl.classList.add('leaf');
+}
+function setLabel(id, label){
+  const n = nodesById[id]; if(!n) return;
+  n.gEl.querySelector('text').textContent = label;
+}
+
+/* =========================================================================
+   4) Driver — playback engine
+   ========================================================================= */
+
+let MODE = 'subsets';
+let TRACE = null;       // {events, finalResult}
+let STEP = 0;
+let TIMER = null;
+let BASE_DELAY = 700;   // ms
+
+const pyPanel = document.getElementById('pyCode');
+const javaPanel = document.getElementById('javaCode');
+const treeSvg = document.getElementById('treeSvg');
+const pathChips = document.getElementById('pathChips');
+const resChips = document.getElementById('resChips');
+const stepCounter = document.getElementById('stepCounter');
+const narrate = document.getElementById('narrate');
+const modePill = document.getElementById('modePill');
+const speedPill = document.getElementById('speedPill');
+
+function rebuild(){
+  const nums = document.getElementById('numsInput').value
+    .split(',').map(s=>s.trim()).filter(Boolean).map(s=>{
+      const n = Number(s); return Number.isNaN(n) ? s : n;
+    });
+  const k = Number(document.getElementById('kInput').value)||2;
+  modePill.textContent = 'mode: ' + MODE;
+  document.getElementById('kWrap').style.display = MODE==='combinations' ? '' : 'none';
+  if(MODE==='subsets')      TRACE = traceSubsets(nums);
+  else if(MODE==='permutations') TRACE = tracePermutations(nums);
+  else                       TRACE = traceCombinations(nums, k);
+
+  renderCode(pyPanel, CODE[MODE].py, 'py');
+  renderCode(javaPanel, CODE[MODE].java, 'java');
+
+  clearTree();
+  nodeOrderCounter = 0;
+  STEP = 0;
+  pathChips.innerHTML = '';
+  resChips.innerHTML = '';
+  stepCounter.textContent = `0 / ${TRACE.events.length}`;
+  narrate.textContent = `Loaded ${TRACE.events.length} steps for ${MODE}([${nums.join(',')}])${MODE==='combinations'?', k='+k:''}. Press ▶ Play.`;
+  // Pre-create the root so the canvas isn't empty
+  applyEvent(TRACE.events[0]);
+  STEP = 1;
+  stepCounter.textContent = `${STEP} / ${TRACE.events.length}`;
+}
+
+function depthOf(id){
+  let n = nodesById[id], d=0;
+  while(n && n.parent){ n = nodesById[n.parent]; d++; }
+  return d;
+}
+
+function applyEvent(ev){
+  if(!ev) return;
+  switch(ev.type){
+    case 'enter': {
+      const depth = ev.parent ? (depthOf(ev.parent)+1) : 0;
+      const label = ev.path && ev.path.length ? `[${ev.path.join(',')}]` : '[]';
+      addNode(ev.id, ev.parent, depth, label, ev.edgeLabel||'');
+      setActive(ev.id);
+      break;
+    }
+    case 'pruned': {
+      const depth = ev.parent ? (depthOf(ev.parent)+1) : 0;
+      addNode(ev.id, ev.parent, depth, '✗', ev.edgeLabel||'', true);
+      break;
+    }
+    case 'record': {
+      // visual cue: pulse the active node
+      if(nodesById[ev.id]){
+        nodesById[ev.id].gEl.classList.add('leaf');
+      }
+      break;
+    }
+    case 'snapshot': {
+      // result was just updated — show in chips
+      if(ev.result){
+        resChips.innerHTML = ev.result.map(r =>
+          `<span class="chip added">[${r.join(',')}]</span>`).join('');
+      }
+      break;
+    }
+    case 'leave': {
+      markDone(ev.id);
+      // active goes back to parent
+      const n = nodesById[ev.id];
+      if(n && n.parent) setActive(n.parent);
+      break;
+    }
+    case 'return': {
+      markDone(ev.id);
+      break;
+    }
+  }
+  // path display
+  if(ev.path){
+    pathChips.innerHTML = ev.path.length
+      ? ev.path.map(v=>`<span class="chip path">${v}</span>`).join('')
+      : '<span class="chip">∅</span>';
+  }
+  // code highlight
+  if(ev.line){
+    highlightLine(pyPanel, ev.line);
+    highlightLine(javaPanel, ev.line);
+  }
+  if(ev.note) narrate.textContent = ev.note;
+}
+
+function step(forward=true){
+  if(!TRACE) return;
+  if(forward){
+    if(STEP >= TRACE.events.length) return;
+    applyEvent(TRACE.events[STEP]);
+    STEP++;
+  } else {
+    // rebuilding backwards is expensive — we simply replay from 0.
+    if(STEP<=1) return;
+    const target = STEP-2;
+    clearTree(); nodeOrderCounter=0;
+    pathChips.innerHTML=''; resChips.innerHTML='';
+    for(let i=0;i<=target;i++) applyEvent(TRACE.events[i]);
+    STEP = target+1;
+  }
+  stepCounter.textContent = `${STEP} / ${TRACE.events.length}`;
+}
+
+function play(){
+  if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; return; }
+  document.getElementById('playBtn').textContent='⏸ Pause';
+  TIMER = setInterval(()=>{
+    if(STEP >= TRACE.events.length){
+      clearInterval(TIMER); TIMER=null;
+      document.getElementById('playBtn').textContent='▶ Play';
+      narrate.textContent = `✅ Done. Found ${TRACE.finalResult.length} ${MODE}.`;
+      return;
+    }
+    step(true);
+  }, BASE_DELAY);
+}
+
+/* wire UI */
+document.querySelectorAll('.modeBtn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.modeBtn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    MODE = b.dataset.mode;
+    if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; }
+    rebuild();
+  });
+});
+document.getElementById('buildBtn').addEventListener('click', ()=>{
+  if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; }
+  rebuild();
+});
+document.getElementById('playBtn').addEventListener('click', play);
+document.getElementById('nextBtn').addEventListener('click', ()=>step(true));
+document.getElementById('prevBtn').addEventListener('click', ()=>step(false));
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; }
+  rebuild();
+});
+document.getElementById('speed').addEventListener('input', e=>{
+  const v = Number(e.target.value);
+  // map slider 1..10 → 1500ms .. 80ms
+  BASE_DELAY = Math.round(1600 - v*150);
+  speedPill.textContent = `speed: ${v}x`;
+  if(TIMER){ clearInterval(TIMER); TIMER=null; play(); }
+});
+
+/* boot */
+rebuild();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

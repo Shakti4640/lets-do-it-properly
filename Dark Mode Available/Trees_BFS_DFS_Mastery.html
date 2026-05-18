@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Trees, BFS & DFS — Mastery in a Day (Java)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#0f1419; --panel:#161b22; --panel2:#1c2230; --ink:#e6edf3; --muted:#8b949e;
+    --accent:#58a6ff; --good:#3fb950; --warn:#d29922; --bad:#f85149; --code:#0b0f14;
+    --line:#30363d; --easy:#3fb950; --vEasy:#7ee787; --medium:#d29922; --hard:#f85149;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:16px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px}
+  header.hero{padding:40px 24px;background:linear-gradient(135deg,#1f6feb22,#3fb95022);border-bottom:1px solid var(--line)}
+  header.hero h1{margin:0 0 8px;font-size:2.2rem}
+  header.hero p{margin:0;color:var(--muted);font-size:1.05rem}
+  nav.toc{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 24px;z-index:10;overflow-x:auto;white-space:nowrap}
+  nav.toc a{margin-right:14px;font-size:.92rem;color:var(--muted)}
+  nav.toc a:hover{color:var(--ink)}
+  h2{margin-top:48px;padding-bottom:8px;border-bottom:2px solid var(--line);font-size:1.7rem}
+  h3{margin-top:32px;font-size:1.25rem;color:var(--ink)}
+  h4{margin-top:24px;font-size:1.05rem;color:var(--accent)}
+  p{margin:10px 0}
+  .badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:700;color:#0b0f14;margin-right:8px;vertical-align:middle}
+  .b-veasy{background:var(--vEasy)}
+  .b-easy{background:var(--easy)}
+  .b-medium{background:var(--medium)}
+  .b-hard{background:var(--hard)}
+  .b-info{background:var(--accent)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;font-size:.92rem;line-height:1.5}
+  code{font-family:"JetBrains Mono","Fira Code",Consolas,monospace}
+  pre code{background:transparent;padding:0}
+  :not(pre) > code{background:#1f2937;color:#fbbf24;padding:1px 6px;border-radius:4px;font-size:.88em}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin:14px 0}
+  .panel.tip{border-left:4px solid var(--accent)}
+  .panel.warn{border-left:4px solid var(--warn)}
+  .panel.win{border-left:4px solid var(--good)}
+  .ascii{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-family:"JetBrains Mono",Consolas,monospace;white-space:pre;color:#a6e3a1;font-size:.95rem;overflow-x:auto}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:6px 14px;margin:8px 0}
+  .kv b{color:var(--muted);font-weight:600}
+  details{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--accent)}
+  /* simple Java syntax tinting via classes */
+  .kw{color:#ff7b72}    /* keywords */
+  .ty{color:#ffa657}    /* types */
+  .st{color:#a5d6ff}    /* strings */
+  .nm{color:#79c0ff}    /* numbers */
+  .cm{color:#8b949e;font-style:italic} /* comments */
+  .fn{color:#d2a8ff}    /* func names */
+  hr{border:none;border-top:1px solid var(--line);margin:30px 0}
+  .pill{display:inline-block;padding:2px 8px;border-radius:6px;background:#1f2937;color:#9ecbff;font-size:.78rem;margin-right:6px}
+  .lc{font-size:.78rem;color:var(--muted)}
+  ul{padding-left:22px}
+  li{margin:4px 0}
+  .small{font-size:.9rem;color:var(--muted)}
+  .center{text-align:center}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>🌳 Trees, BFS &amp; DFS — Mastery in a Day</h1>
+    <p>Java edition. Written for a curious 15‑year‑old. Read top to bottom, code along, and by tonight you can solve almost any tree problem.</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#intro">① Intro</a>
+    <a href="#node">② TreeNode</a>
+    <a href="#build">③ Build a Tree</a>
+    <a href="#traverse">④ Traversals</a>
+    <a href="#bfs">⑤ BFS Track</a>
+    <a href="#dfs">⑥ DFS Track</a>
+    <a href="#cheats">⑦ Cheat Sheet</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ============================================================== -->
+<h2 id="intro">① What is a Tree? (Imagine a family tree, upside-down)</h2>
+
+<p>A <b>tree</b> is just a bunch of boxes (called <b>nodes</b>) connected by lines.
+The top box is called the <b>root</b>. Every box can point to <b>children</b> below it.
+A box with <i>no</i> children is called a <b>leaf</b> — like a real leaf at the tip of a branch.</p>
+
+<div class="ascii">         1            ← root
+        / \
+       2   3
+      / \   \
+     4   5   6        ← 4, 5, 6 are leaves
+</div>
+
+<p>A <b>Binary Tree</b> means every box has at most <b>2</b> children: a <code>left</code> and a <code>right</code>.
+That's the kind we'll work with 99% of the time.</p>
+
+<div class="panel tip">
+  <b>Why trees?</b> Folders on your computer, the HTML on this page, family genealogy, Git commits, decision flowcharts — all trees. Mastering them unlocks a huge category of interview problems.
+</div>
+
+<h3>Tree vocabulary you must know</h3>
+<div class="kv">
+  <b>Root</b><span>The single top node. Has no parent.</span>
+  <b>Parent / Child</b><span>If A points down to B, A is the parent of B.</span>
+  <b>Leaf</b><span>A node with no children (both <code>left</code> and <code>right</code> are <code>null</code>).</span>
+  <b>Depth of a node</b><span>How many edges from the <i>root</i> down to it. Root depth = 0.</span>
+  <b>Height of a node</b><span>How many edges from the node down to its deepest leaf.</span>
+  <b>Subtree</b><span>Any node + everything below it forms its own little tree.</span>
+  <b>Level</b><span>All nodes at the same depth. Level 0 = root, level 1 = root's kids, etc.</span>
+</div>
+
+<!-- ============================================================== -->
+<h2 id="node">② The <code>TreeNode</code> class — our building block</h2>
+
+<p>Almost every Java tree problem on LeetCode uses this exact class. Memorize it:</p>
+
+<pre><code><span class="kw">public class</span> <span class="ty">TreeNode</span> {
+    <span class="kw">int</span> val;            <span class="cm">// the number stored in this box</span>
+    <span class="ty">TreeNode</span> left;      <span class="cm">// pointer to the left child (or null)</span>
+    <span class="ty">TreeNode</span> right;     <span class="cm">// pointer to the right child (or null)</span>
+
+    <span class="fn">TreeNode</span>() {}
+    <span class="fn">TreeNode</span>(<span class="kw">int</span> val) { <span class="kw">this</span>.val = val; }
+    <span class="fn">TreeNode</span>(<span class="kw">int</span> val, <span class="ty">TreeNode</span> left, <span class="ty">TreeNode</span> right) {
+        <span class="kw">this</span>.val = val;
+        <span class="kw">this</span>.left = left;
+        <span class="kw">this</span>.right = right;
+    }
+}
+</code></pre>
+
+<p>Think of each <code>TreeNode</code> as a <b>Lego brick</b> with three slots: a number, a left socket, and a right socket. You snap bricks together by setting <code>left</code> and <code>right</code> to other bricks.</p>
+
+<!-- ============================================================== -->
+<h2 id="build">③ Building a Tree by hand</h2>
+
+<p>Let's build this exact tree in Java:</p>
+
+<div class="ascii">         1
+        / \
+       2   3
+      / \
+     4   5
+</div>
+
+<pre><code><span class="ty">TreeNode</span> root = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="nm">1</span>);
+root.left  = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="nm">2</span>);
+root.right = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="nm">3</span>);
+root.left.left  = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="nm">4</span>);
+root.left.right = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="nm">5</span>);
+</code></pre>
+
+<p>That's it. <code>root</code> now holds the entire tree because every node chains to the next via <code>left</code>/<code>right</code>.</p>
+
+<details>
+  <summary>Bonus: Build a tree from a level‑order array (LeetCode style)</summary>
+<pre><code><span class="cm">// Input like [1,2,3,4,5,null,6] — same way LeetCode shows trees</span>
+<span class="kw">public static</span> <span class="ty">TreeNode</span> <span class="fn">build</span>(<span class="ty">Integer</span>[] arr){
+    <span class="kw">if</span> (arr.length == <span class="nm">0</span> || arr[<span class="nm">0</span>] == <span class="kw">null</span>) <span class="kw">return null</span>;
+    <span class="ty">TreeNode</span> root = <span class="kw">new</span> <span class="fn">TreeNode</span>(arr[<span class="nm">0</span>]);
+    <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">int</span> i = <span class="nm">1</span>;
+    <span class="kw">while</span> (!q.isEmpty() &amp;&amp; i &lt; arr.length){
+        <span class="ty">TreeNode</span> cur = q.poll();
+        <span class="kw">if</span> (i &lt; arr.length &amp;&amp; arr[i] != <span class="kw">null</span>){
+            cur.left = <span class="kw">new</span> <span class="fn">TreeNode</span>(arr[i]); q.add(cur.left);
+        }
+        i++;
+        <span class="kw">if</span> (i &lt; arr.length &amp;&amp; arr[i] != <span class="kw">null</span>){
+            cur.right = <span class="kw">new</span> <span class="fn">TreeNode</span>(arr[i]); q.add(cur.right);
+        }
+        i++;
+    }
+    <span class="kw">return</span> root;
+}
+</code></pre>
+</details>
+
+<!-- ============================================================== -->
+<h2 id="traverse">④ The 4 traversals (the ABCs of trees)</h2>
+
+<p>"Traversal" just means <i>visit every node once, in some order</i>. There are 4 famous ones. Three of them are <b>DFS</b> (deep-first), one is <b>BFS</b> (level-by-level).</p>
+
+<div class="ascii">         1
+        / \
+       2   3
+      / \
+     4   5
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <b>Preorder DFS</b> &nbsp;<span class="pill">Root → Left → Right</span><br>
+    Visit order: <b>1 → 2 → 4 → 5 → 3</b>
+  </div>
+  <div class="panel">
+    <b>Inorder DFS</b> &nbsp;<span class="pill">Left → Root → Right</span><br>
+    Visit order: <b>4 → 2 → 5 → 1 → 3</b>
+    <div class="small">In a BST this gives sorted output ✨</div>
+  </div>
+  <div class="panel">
+    <b>Postorder DFS</b> &nbsp;<span class="pill">Left → Right → Root</span><br>
+    Visit order: <b>4 → 5 → 2 → 3 → 1</b>
+    <div class="small">Great when you need info from children before deciding the parent.</div>
+  </div>
+  <div class="panel">
+    <b>Level Order BFS</b> &nbsp;<span class="pill">Top → Bottom, Left → Right</span><br>
+    Visit order: <b>1 → 2 → 3 → 4 → 5</b>
+  </div>
+</div>
+
+<h3>The DFS template (recursion = magic)</h3>
+
+<pre><code><span class="kw">void</span> <span class="fn">dfs</span>(<span class="ty">TreeNode</span> node){
+    <span class="kw">if</span> (node == <span class="kw">null</span>) <span class="kw">return</span>;     <span class="cm">// 🛑 base case — fell off the tree</span>
+    <span class="cm">// preorder: do work HERE</span>
+    <span class="fn">dfs</span>(node.left);
+    <span class="cm">// inorder:  do work HERE</span>
+    <span class="fn">dfs</span>(node.right);
+    <span class="cm">// postorder: do work HERE</span>
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Mental model:</b> Recursion is just <i>"trust your future self"</i>. You assume the recursive call already does the right thing for the subtree, and you just figure out what to do at the current node.
+</div>
+
+<h3>The BFS template (queue = waiting line)</h3>
+
+<pre><code><span class="kw">void</span> <span class="fn">bfs</span>(<span class="ty">TreeNode</span> root){
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span>;
+    <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();           <span class="cm">// freeze how many are at THIS level</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; size; i++){
+            <span class="ty">TreeNode</span> cur = q.poll();
+            <span class="cm">// do work with cur</span>
+            <span class="kw">if</span> (cur.left  != <span class="kw">null</span>) q.add(cur.left);
+            <span class="kw">if</span> (cur.right != <span class="kw">null</span>) q.add(cur.right);
+        }
+    }
+}
+</code></pre>
+
+<p>The <code>size</code> trick is gold: it lets you process the tree <b>level by level</b>. Remember it — most BFS problems use it.</p>
+
+<hr/>
+
+<!-- ============================================================== -->
+<!-- BFS TRACK -->
+<!-- ============================================================== -->
+<h2 id="bfs">⑤ BFS Track 🚂 — Very Easy → Hard</h2>
+
+<p>BFS = "explore the tree in <b>layers</b>, like ripples in a pond." Always reach for a <b>Queue</b>.
+Whenever a problem mentions <i>level</i>, <i>row</i>, <i>shortest</i>, <i>nearest</i>, or <i>view</i>, BFS is usually the move.</p>
+
+<!-- ===== B1 ===== -->
+<h3><span class="badge b-veasy">VERY EASY</span> B1. Level Order Traversal <span class="lc">(LC 102)</span></h3>
+
+<p><b>Problem:</b> Return a list of lists. Each inner list = nodes on that level, left to right.</p>
+<div class="ascii">      3
+     / \
+    9  20
+       / \
+      15  7
+</div>
+<p><b>Output:</b> <code>[[3],[9,20],[15,7]]</code></p>
+
+<h4>Intuition</h4>
+<p>Use the queue trick. At each round of the <code>while</code> loop, every node in the queue is on the same level — so empty all of them, collect their values, and push their kids in.</p>
+
+<h4>Java</h4>
+<pre><code><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; <span class="fn">levelOrder</span>(<span class="ty">TreeNode</span> root) {
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; ans = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span> ans;
+    <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; level = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="ty">TreeNode</span> cur = q.poll();
+            level.add(cur.val);
+            <span class="kw">if</span> (cur.left  != <span class="kw">null</span>) q.add(cur.left);
+            <span class="kw">if</span> (cur.right != <span class="kw">null</span>) q.add(cur.right);
+        }
+        ans.add(level);
+    }
+    <span class="kw">return</span> ans;
+}
+</code></pre>
+
+<div class="kv">
+  <b>Time</b><span>O(n) — visit every node once.</span>
+  <b>Space</b><span>O(n) — queue holds at most one full level (~n/2 in a balanced tree).</span>
+</div>
+
+<!-- ===== B2 ===== -->
+<h3><span class="badge b-easy">EASY</span> B2. Average of Levels <span class="lc">(LC 637)</span></h3>
+
+<p><b>Problem:</b> Return the average value of the nodes on each level.</p>
+<p><b>Twist on B1:</b> Instead of collecting values into a list, sum them and divide by <code>size</code>.</p>
+
+<pre><code><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Double</span>&gt; <span class="fn">averageOfLevels</span>(<span class="ty">TreeNode</span> root) {
+    <span class="ty">List</span>&lt;<span class="ty">Double</span>&gt; ans = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="kw">double</span> sum = <span class="nm">0</span>;          <span class="cm">// use double — sum can overflow int!</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="ty">TreeNode</span> c = q.poll();
+            sum += c.val;
+            <span class="kw">if</span> (c.left  != <span class="kw">null</span>) q.add(c.left);
+            <span class="kw">if</span> (c.right != <span class="kw">null</span>) q.add(c.right);
+        }
+        ans.add(sum / size);
+    }
+    <span class="kw">return</span> ans;
+}
+</code></pre>
+
+<div class="panel warn">
+  <b>Trap:</b> If you use <code>int sum</code>, two huge nodes (e.g. <code>Integer.MAX_VALUE</code>) overflow. Always <code>double</code> or <code>long</code> for sums in tree problems.
+</div>
+
+<!-- ===== B3 ===== -->
+<h3><span class="badge b-easy">EASY</span> B3. Find Bottom-Left Tree Value <span class="lc">(LC 513)</span></h3>
+
+<p><b>Problem:</b> Return the value of the leftmost node on the deepest level.</p>
+
+<h4>Intuition</h4>
+<p>BFS shines here. The <i>first</i> node you pop on each level is the leftmost node of that level. So just keep updating an <code>answer</code> with the first node of each level — when BFS ends, <code>answer</code> is the leftmost on the deepest level.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">findBottomLeftValue</span>(<span class="ty">TreeNode</span> root) {
+    <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">int</span> ans = root.val;
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="ty">TreeNode</span> c = q.poll();
+            <span class="kw">if</span> (i == <span class="nm">0</span>) ans = c.val;     <span class="cm">// first of this level</span>
+            <span class="kw">if</span> (c.left  != <span class="kw">null</span>) q.add(c.left);
+            <span class="kw">if</span> (c.right != <span class="kw">null</span>) q.add(c.right);
+        }
+    }
+    <span class="kw">return</span> ans;
+}
+</code></pre>
+
+<details><summary>🧠 Even slicker trick</summary>
+<p>Push <b>right</b> child <i>before</i> left, and the very last node you pop is automatically the bottom-left! No size loop needed.</p>
+</details>
+
+<!-- ===== B4 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> B4. Binary Tree Right Side View <span class="lc">(LC 199)</span></h3>
+
+<p><b>Problem:</b> Imagine standing on the right side of the tree. Return the values you see from top to bottom — i.e., the rightmost node of every level.</p>
+
+<div class="ascii">      1   ← see 1
+     / \
+    2   3 ← see 3
+     \   \
+      5   4 ← see 4
+</div>
+<p><b>Output:</b> <code>[1,3,4]</code></p>
+
+<h4>Intuition</h4>
+<p>BFS level by level. On each level, take the <b>last</b> node (i.e., when <code>i == size-1</code>).</p>
+
+<pre><code><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; <span class="fn">rightSideView</span>(<span class="ty">TreeNode</span> root) {
+    <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; ans = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span> ans;
+    <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="ty">TreeNode</span> c = q.poll();
+            <span class="kw">if</span> (i == size - <span class="nm">1</span>) ans.add(c.val);
+            <span class="kw">if</span> (c.left  != <span class="kw">null</span>) q.add(c.left);
+            <span class="kw">if</span> (c.right != <span class="kw">null</span>) q.add(c.right);
+        }
+    }
+    <span class="kw">return</span> ans;
+}
+</code></pre>
+
+<!-- ===== B5 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> B5. Zigzag Level Order <span class="lc">(LC 103)</span></h3>
+
+<p><b>Problem:</b> Like B1, but reverse direction every other level: L→R, then R→L, then L→R...</p>
+<p><b>Output for the earlier tree:</b> <code>[[3],[20,9],[15,7]]</code></p>
+
+<h4>Intuition</h4>
+<p>Do regular BFS. On "reverse" levels, just <b>reverse the list</b> before adding to the answer. Tracking with a boolean <code>leftToRight</code> is cleanest.</p>
+
+<pre><code><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; <span class="fn">zigzagLevelOrder</span>(<span class="ty">TreeNode</span> root) {
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; ans = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span> ans;
+    <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">boolean</span> leftToRight = <span class="kw">true</span>;
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="ty">LinkedList</span>&lt;<span class="ty">Integer</span>&gt; level = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="ty">TreeNode</span> c = q.poll();
+            <span class="kw">if</span> (leftToRight) level.addLast(c.val);
+            <span class="kw">else</span>             level.addFirst(c.val);   <span class="cm">// O(1) — that's why LinkedList</span>
+            <span class="kw">if</span> (c.left  != <span class="kw">null</span>) q.add(c.left);
+            <span class="kw">if</span> (c.right != <span class="kw">null</span>) q.add(c.right);
+        }
+        ans.add(level);
+        leftToRight = !leftToRight;
+    }
+    <span class="kw">return</span> ans;
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Why <code>LinkedList</code>?</b> <code>addFirst</code> is O(1) on a LinkedList; on an ArrayList it would be O(n). Tiny detail, big speedup.
+</div>
+
+<!-- ===== B6 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> B6. Populate Next Right Pointers <span class="lc">(LC 116)</span></h3>
+
+<p><b>Problem:</b> You're given a <b>perfect</b> binary tree. Each node has a <code>next</code> pointer. Connect each node to the node immediately right of it on the same level. Last node of each level points to <code>null</code>.</p>
+
+<h4>Intuition</h4>
+<p>BFS level by level. Within a level, just chain <code>prev.next = current</code> as you pop nodes.</p>
+
+<pre><code><span class="kw">public</span> <span class="ty">Node</span> <span class="fn">connect</span>(<span class="ty">Node</span> root) {
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return null</span>;
+    <span class="ty">Queue</span>&lt;<span class="ty">Node</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(root);
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="ty">Node</span> prev = <span class="kw">null</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="ty">Node</span> c = q.poll();
+            <span class="kw">if</span> (prev != <span class="kw">null</span>) prev.next = c;
+            prev = c;
+            <span class="kw">if</span> (c.left  != <span class="kw">null</span>) q.add(c.left);
+            <span class="kw">if</span> (c.right != <span class="kw">null</span>) q.add(c.right);
+        }
+        <span class="cm">// prev is the last node of the level — its .next stays null ✅</span>
+    }
+    <span class="kw">return</span> root;
+}
+</code></pre>
+
+<!-- ===== B7 ===== -->
+<h3><span class="badge b-hard">HARD</span> B7. Serialize and Deserialize Binary Tree <span class="lc">(LC 297)</span></h3>
+
+<p><b>Problem:</b> Convert a tree → a String, and back. So we can save trees to disk or send over a network.</p>
+
+<h4>Intuition</h4>
+<p>Use BFS. Walk the tree level-order, writing each value separated by a comma. Use the placeholder <code>"#"</code> for <code>null</code>. To rebuild, do BFS again: read tokens in pairs, snapping each pair under the next node from the queue.</p>
+
+<pre><code><span class="kw">public class</span> <span class="ty">Codec</span> {
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">serialize</span>(<span class="ty">TreeNode</span> root){
+        <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span> <span class="st">""</span>;
+        <span class="ty">StringBuilder</span> sb = <span class="kw">new</span> <span class="fn">StringBuilder</span>();
+        <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+        q.add(root);
+        <span class="kw">while</span>(!q.isEmpty()){
+            <span class="ty">TreeNode</span> c = q.poll();
+            <span class="kw">if</span> (c == <span class="kw">null</span>){ sb.append(<span class="st">"#,"</span>); <span class="kw">continue</span>; }
+            sb.append(c.val).append(<span class="st">','</span>);
+            q.add(c.left);   <span class="cm">// null is fine — we encode it as "#"</span>
+            q.add(c.right);
+        }
+        <span class="kw">return</span> sb.toString();
+    }
+
+    <span class="kw">public</span> <span class="ty">TreeNode</span> <span class="fn">deserialize</span>(<span class="ty">String</span> data){
+        <span class="kw">if</span> (data.isEmpty()) <span class="kw">return null</span>;
+        <span class="ty">String</span>[] t = data.split(<span class="st">","</span>);
+        <span class="ty">TreeNode</span> root = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="ty">Integer</span>.parseInt(t[<span class="nm">0</span>]));
+        <span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+        q.add(root);
+        <span class="kw">int</span> i = <span class="nm">1</span>;
+        <span class="kw">while</span> (!q.isEmpty() &amp;&amp; i &lt; t.length){
+            <span class="ty">TreeNode</span> p = q.poll();
+            <span class="kw">if</span> (!t[i].equals(<span class="st">"#"</span>)){
+                p.left = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="ty">Integer</span>.parseInt(t[i]));
+                q.add(p.left);
+            }
+            i++;
+            <span class="kw">if</span> (i &lt; t.length &amp;&amp; !t[i].equals(<span class="st">"#"</span>)){
+                p.right = <span class="kw">new</span> <span class="fn">TreeNode</span>(<span class="ty">Integer</span>.parseInt(t[i]));
+                q.add(p.right);
+            }
+            i++;
+        }
+        <span class="kw">return</span> root;
+    }
+}
+</code></pre>
+
+<div class="panel win">
+  <b>Why this matters:</b> Serializing trees is the foundation for things like sending JSON across the internet, saving game states, or how databases store B‑Trees on disk.
+</div>
+
+<!-- ===== B8 ===== -->
+<h3><span class="badge b-hard">HARD</span> B8. Vertical Order Traversal <span class="lc">(LC 987)</span></h3>
+
+<p><b>Problem:</b> Group nodes by their <i>x‑coordinate</i> (column). Root is at col 0, left child is col-1, right child is col+1. Return columns in order. Within a column, sort by row, then by value.</p>
+
+<h4>Intuition</h4>
+<p>BFS while carrying <code>(node, row, col)</code>. Group by <code>col</code> in a <code>TreeMap</code> so columns auto-sort. Within a column, sort entries by <code>row</code>, then <code>value</code>.</p>
+
+<pre><code><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; <span class="fn">verticalTraversal</span>(<span class="ty">TreeNode</span> root) {
+    <span class="cm">// col -&gt; list of (row, val)</span>
+    <span class="ty">TreeMap</span>&lt;<span class="ty">Integer</span>, <span class="ty">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; map = <span class="kw">new</span> <span class="fn">TreeMap</span>&lt;&gt;();
+    <span class="ty">Queue</span>&lt;<span class="ty">Object</span>[]&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(<span class="kw">new</span> <span class="ty">Object</span>[]{root, <span class="nm">0</span>, <span class="nm">0</span>});       <span class="cm">// node, row, col</span>
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="ty">Object</span>[] cur = q.poll();
+        <span class="ty">TreeNode</span> n = (<span class="ty">TreeNode</span>) cur[<span class="nm">0</span>];
+        <span class="kw">int</span> r = (<span class="kw">int</span>) cur[<span class="nm">1</span>], c = (<span class="kw">int</span>) cur[<span class="nm">2</span>];
+        map.computeIfAbsent(c, k -&gt; <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;()).add(<span class="kw">new int</span>[]{r, n.val});
+        <span class="kw">if</span> (n.left  != <span class="kw">null</span>) q.add(<span class="kw">new</span> <span class="ty">Object</span>[]{n.left,  r+<span class="nm">1</span>, c-<span class="nm">1</span>});
+        <span class="kw">if</span> (n.right != <span class="kw">null</span>) q.add(<span class="kw">new</span> <span class="ty">Object</span>[]{n.right, r+<span class="nm">1</span>, c+<span class="nm">1</span>});
+    }
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; ans = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="ty">List</span>&lt;<span class="kw">int</span>[]&gt; col : map.values()){
+        col.sort((a,b) -&gt; a[<span class="nm">0</span>] != b[<span class="nm">0</span>] ? a[<span class="nm">0</span>]-b[<span class="nm">0</span>] : a[<span class="nm">1</span>]-b[<span class="nm">1</span>]);
+        <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; vals = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : col) vals.add(e[<span class="nm">1</span>]);
+        ans.add(vals);
+    }
+    <span class="kw">return</span> ans;
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Pattern to remember:</b> "Carry extra info along with the node in the queue" — coordinates, depth, parent pointer, you name it. The queue can hold tuples, not just nodes.
+</div>
+
+<hr/>
+
+<!-- ============================================================== -->
+<!-- DFS TRACK -->
+<!-- ============================================================== -->
+<h2 id="dfs">⑥ DFS Track 🪂 — Very Easy → Hard</h2>
+
+<p>DFS = "go as <b>deep</b> as you can, then back up." It's basically recursion. Whenever a problem says
+<i>height</i>, <i>diameter</i>, <i>path</i>, <i>same as another tree</i>, <i>balanced</i>, <i>BST property</i>, <i>LCA</i>, or asks something about a subtree — DFS is the move.</p>
+
+<!-- ===== D1 ===== -->
+<h3><span class="badge b-veasy">VERY EASY</span> D1. Maximum Depth of Binary Tree <span class="lc">(LC 104)</span></h3>
+
+<p><b>Problem:</b> Return the height of the tree (number of nodes from root to deepest leaf).</p>
+
+<h4>Intuition</h4>
+<p>"What's the height of this tree?" = "1 + the height of my taller child." Postorder: get child answers first, then combine.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">maxDepth</span>(<span class="ty">TreeNode</span> root){
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="kw">int</span> l = <span class="fn">maxDepth</span>(root.left);
+    <span class="kw">int</span> r = <span class="fn">maxDepth</span>(root.right);
+    <span class="kw">return</span> <span class="nm">1</span> + <span class="ty">Math</span>.max(l, r);
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>This 4-line pattern</b> (base case → recurse left → recurse right → combine) is the skeleton of <i>most</i> DFS tree problems. Tattoo it on your brain.
+</div>
+
+<!-- ===== D2 ===== -->
+<h3><span class="badge b-veasy">VERY EASY</span> D2. Same Tree <span class="lc">(LC 100)</span></h3>
+
+<p><b>Problem:</b> Return <code>true</code> if two trees are structurally identical AND have equal values.</p>
+
+<pre><code><span class="kw">public boolean</span> <span class="fn">isSameTree</span>(<span class="ty">TreeNode</span> p, <span class="ty">TreeNode</span> q){
+    <span class="kw">if</span> (p == <span class="kw">null</span> &amp;&amp; q == <span class="kw">null</span>) <span class="kw">return true</span>;     <span class="cm">// both empty ✅</span>
+    <span class="kw">if</span> (p == <span class="kw">null</span> || q == <span class="kw">null</span>) <span class="kw">return false</span>;    <span class="cm">// one empty, other not ❌</span>
+    <span class="kw">if</span> (p.val != q.val) <span class="kw">return false</span>;
+    <span class="kw">return</span> <span class="fn">isSameTree</span>(p.left, q.left) &amp;&amp; <span class="fn">isSameTree</span>(p.right, q.right);
+}
+</code></pre>
+
+<!-- ===== D3 ===== -->
+<h3><span class="badge b-easy">EASY</span> D3. Invert Binary Tree <span class="lc">(LC 226)</span></h3>
+
+<p><b>Problem:</b> Mirror the tree — for every node, swap its left and right children.</p>
+
+<pre><code><span class="kw">public</span> <span class="ty">TreeNode</span> <span class="fn">invertTree</span>(<span class="ty">TreeNode</span> root){
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return null</span>;
+    <span class="ty">TreeNode</span> tmp = root.left;
+    root.left  = <span class="fn">invertTree</span>(root.right);
+    root.right = <span class="fn">invertTree</span>(tmp);
+    <span class="kw">return</span> root;
+}
+</code></pre>
+
+<p>Famous because Max Howell (creator of Homebrew) tweeted that Google rejected him for not being able to invert a binary tree on a whiteboard. Now you can.</p>
+
+<!-- ===== D4 ===== -->
+<h3><span class="badge b-easy">EASY</span> D4. Symmetric Tree <span class="lc">(LC 101)</span></h3>
+
+<p><b>Problem:</b> Is the tree a mirror image of itself around the center?</p>
+
+<h4>Intuition</h4>
+<p>Use a helper that compares two nodes — one walks left, the other walks right. They should always have equal values, and their kids should mirror each other.</p>
+
+<pre><code><span class="kw">public boolean</span> <span class="fn">isSymmetric</span>(<span class="ty">TreeNode</span> root){
+    <span class="kw">return</span> <span class="fn">mirror</span>(root.left, root.right);
+}
+<span class="kw">private boolean</span> <span class="fn">mirror</span>(<span class="ty">TreeNode</span> a, <span class="ty">TreeNode</span> b){
+    <span class="kw">if</span> (a == <span class="kw">null</span> &amp;&amp; b == <span class="kw">null</span>) <span class="kw">return true</span>;
+    <span class="kw">if</span> (a == <span class="kw">null</span> || b == <span class="kw">null</span>) <span class="kw">return false</span>;
+    <span class="kw">return</span> a.val == b.val
+        &amp;&amp; <span class="fn">mirror</span>(a.left,  b.right)    <span class="cm">// outside vs outside</span>
+        &amp;&amp; <span class="fn">mirror</span>(a.right, b.left);    <span class="cm">// inside vs inside</span>
+}
+</code></pre>
+
+<!-- ===== D5 ===== -->
+<h3><span class="badge b-easy">EASY</span> D5. Path Sum <span class="lc">(LC 112)</span></h3>
+
+<p><b>Problem:</b> Does any root‑to‑leaf path sum equal <code>target</code>?</p>
+
+<h4>Intuition</h4>
+<p>Subtract as you go. By the time you hit a leaf, ask: <i>does the remaining target equal this leaf's value?</i></p>
+
+<pre><code><span class="kw">public boolean</span> <span class="fn">hasPathSum</span>(<span class="ty">TreeNode</span> root, <span class="kw">int</span> target){
+    <span class="kw">if</span> (root == <span class="kw">null</span>) <span class="kw">return false</span>;
+    <span class="kw">if</span> (root.left == <span class="kw">null</span> &amp;&amp; root.right == <span class="kw">null</span>)   <span class="cm">// leaf!</span>
+        <span class="kw">return</span> target == root.val;
+    <span class="kw">return</span> <span class="fn">hasPathSum</span>(root.left,  target - root.val)
+        || <span class="fn">hasPathSum</span>(root.right, target - root.val);
+}
+</code></pre>
+
+<div class="panel warn">
+  <b>Trap:</b> A "leaf" means <i>both</i> children are <code>null</code>. Don't accept a node that has one missing child as a valid endpoint.
+</div>
+
+<!-- ===== D6 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> D6. Diameter of Binary Tree <span class="lc">(LC 543)</span></h3>
+
+<p><b>Problem:</b> Length of the longest path between <i>any</i> two nodes (counted in edges). The path doesn't need to pass through the root.</p>
+
+<h4>Intuition</h4>
+<p>For any node, the longest path that <b>passes through it</b> = <code>height(left) + height(right)</code>. So while computing heights, also track the global max of <code>L + R</code>.</p>
+
+<pre><code><span class="kw">int</span> best = <span class="nm">0</span>;
+<span class="kw">public int</span> <span class="fn">diameterOfBinaryTree</span>(<span class="ty">TreeNode</span> root){
+    <span class="fn">depth</span>(root);
+    <span class="kw">return</span> best;
+}
+<span class="kw">private int</span> <span class="fn">depth</span>(<span class="ty">TreeNode</span> n){
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="kw">int</span> l = <span class="fn">depth</span>(n.left);
+    <span class="kw">int</span> r = <span class="fn">depth</span>(n.right);
+    best = <span class="ty">Math</span>.max(best, l + r);    <span class="cm">// longest path THROUGH n</span>
+    <span class="kw">return</span> <span class="nm">1</span> + <span class="ty">Math</span>.max(l, r);     <span class="cm">// height returned to parent</span>
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>The "two-jobs" pattern:</b> Recursion <i>returns</i> one thing (height) but also <i>updates a global</i> for another thing (diameter). You'll see this everywhere — diameter, max path sum, longest univalue path, etc.
+</div>
+
+<!-- ===== D7 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> D7. Lowest Common Ancestor <span class="lc">(LC 236)</span></h3>
+
+<p><b>Problem:</b> Given two nodes <code>p</code> and <code>q</code>, find the deepest node that is an ancestor of both.</p>
+
+<h4>Intuition (the "ping" idea)</h4>
+<p>Recurse. At each node:</p>
+<ul>
+  <li>If <code>node == p || node == q</code>, return <code>node</code> (we found one).</li>
+  <li>Recurse left and right.</li>
+  <li>If both sides come back non-null, <i>this</i> node is the split point — it's the LCA.</li>
+  <li>Otherwise, propagate whichever side is non-null up.</li>
+</ul>
+
+<pre><code><span class="kw">public</span> <span class="ty">TreeNode</span> <span class="fn">lowestCommonAncestor</span>(<span class="ty">TreeNode</span> root, <span class="ty">TreeNode</span> p, <span class="ty">TreeNode</span> q){
+    <span class="kw">if</span> (root == <span class="kw">null</span> || root == p || root == q) <span class="kw">return</span> root;
+    <span class="ty">TreeNode</span> l = <span class="fn">lowestCommonAncestor</span>(root.left,  p, q);
+    <span class="ty">TreeNode</span> r = <span class="fn">lowestCommonAncestor</span>(root.right, p, q);
+    <span class="kw">if</span> (l != <span class="kw">null</span> &amp;&amp; r != <span class="kw">null</span>) <span class="kw">return</span> root;   <span class="cm">// p and q split here</span>
+    <span class="kw">return</span> l != <span class="kw">null</span> ? l : r;                    <span class="cm">// pass it up</span>
+}
+</code></pre>
+
+<!-- ===== D8 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> D8. Validate Binary Search Tree <span class="lc">(LC 98)</span></h3>
+
+<p><b>BST rule:</b> For every node, all values in its left subtree are <i>less</i>, all values in its right subtree are <i>greater</i>. Recursively true.</p>
+
+<h4>Naive bug</h4>
+<p>Beginners check only <code>node.left.val &lt; node.val &lt; node.right.val</code>. That fails on:</p>
+<div class="ascii">    5
+   / \
+  4   6
+     / \
+    3   7        ← 3 is in 5's RIGHT subtree but 3 &lt; 5  ❌
+</div>
+
+<h4>Right fix: pass valid range down</h4>
+
+<pre><code><span class="kw">public boolean</span> <span class="fn">isValidBST</span>(<span class="ty">TreeNode</span> root){
+    <span class="kw">return</span> <span class="fn">valid</span>(root, <span class="kw">null</span>, <span class="kw">null</span>);
+}
+<span class="kw">private boolean</span> <span class="fn">valid</span>(<span class="ty">TreeNode</span> n, <span class="ty">Integer</span> low, <span class="ty">Integer</span> high){
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">return true</span>;
+    <span class="kw">if</span> (low  != <span class="kw">null</span> &amp;&amp; n.val &lt;= low)  <span class="kw">return false</span>;
+    <span class="kw">if</span> (high != <span class="kw">null</span> &amp;&amp; n.val &gt;= high) <span class="kw">return false</span>;
+    <span class="kw">return</span> <span class="fn">valid</span>(n.left,  low,  n.val)
+        &amp;&amp; <span class="fn">valid</span>(n.right, n.val, high);
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Why <code>Integer</code> instead of <code>int</code>?</b> Because the boundary can legitimately be <code>Integer.MIN_VALUE</code> or <code>MAX_VALUE</code>. Using a nullable <code>Integer</code> lets us say "no bound".
+</div>
+
+<!-- ===== D9 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> D9. All Root-to-Leaf Paths <span class="lc">(LC 257)</span></h3>
+
+<p><b>Problem:</b> Return all root‑to‑leaf paths as strings like <code>"1->2->5"</code>.</p>
+
+<h4>Intuition</h4>
+<p>Backtracking! Carry a list of values down the recursion. When you hit a leaf, snapshot the path.</p>
+
+<pre><code><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; <span class="fn">binaryTreePaths</span>(<span class="ty">TreeNode</span> root){
+    <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; ans = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">if</span> (root != <span class="kw">null</span>) <span class="fn">go</span>(root, <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;(), ans);
+    <span class="kw">return</span> ans;
+}
+<span class="kw">private void</span> <span class="fn">go</span>(<span class="ty">TreeNode</span> n, <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; path, <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; ans){
+    path.add(n.val);
+    <span class="kw">if</span> (n.left == <span class="kw">null</span> &amp;&amp; n.right == <span class="kw">null</span>){
+        <span class="ty">StringBuilder</span> sb = <span class="kw">new</span> <span class="fn">StringBuilder</span>();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;path.size(); i++){
+            <span class="kw">if</span> (i &gt; <span class="nm">0</span>) sb.append(<span class="st">"-&gt;"</span>);
+            sb.append(path.get(i));
+        }
+        ans.add(sb.toString());
+    } <span class="kw">else</span> {
+        <span class="kw">if</span> (n.left  != <span class="kw">null</span>) <span class="fn">go</span>(n.left,  path, ans);
+        <span class="kw">if</span> (n.right != <span class="kw">null</span>) <span class="fn">go</span>(n.right, path, ans);
+    }
+    path.remove(path.size() - <span class="nm">1</span>);   <span class="cm">// 🔑 backtrack</span>
+}
+</code></pre>
+
+<div class="panel warn">
+  <b>The single most common DFS bug:</b> forgetting to <code>remove</code> the last element on the way back up. Without it, the same path keeps growing across siblings.
+</div>
+
+<!-- ===== D10 ===== -->
+<h3><span class="badge b-hard">HARD</span> D10. Binary Tree Maximum Path Sum <span class="lc">(LC 124)</span></h3>
+
+<p><b>Problem:</b> A "path" is any sequence of nodes connected by parent-child edges. Find the path with the maximum value sum. The path doesn't need to start/end at root or leaf.</p>
+
+<h4>Intuition (the diameter pattern, leveled up)</h4>
+<p>For any node, the best path <i>through</i> it = <code>node.val + max(0, leftGain) + max(0, rightGain)</code>. (We <code>max(0, ...)</code> because if a side gives negative gain, we skip it.) The function returns the best <i>one-sided</i> gain to the parent (only one side can extend upward).</p>
+
+<pre><code><span class="kw">int</span> best = <span class="ty">Integer</span>.MIN_VALUE;
+<span class="kw">public int</span> <span class="fn">maxPathSum</span>(<span class="ty">TreeNode</span> root){
+    <span class="fn">gain</span>(root);
+    <span class="kw">return</span> best;
+}
+<span class="kw">private int</span> <span class="fn">gain</span>(<span class="ty">TreeNode</span> n){
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="kw">int</span> l = <span class="ty">Math</span>.max(<span class="nm">0</span>, <span class="fn">gain</span>(n.left));   <span class="cm">// drop negatives</span>
+    <span class="kw">int</span> r = <span class="ty">Math</span>.max(<span class="nm">0</span>, <span class="fn">gain</span>(n.right));
+    best = <span class="ty">Math</span>.max(best, n.val + l + r);  <span class="cm">// path THROUGH n</span>
+    <span class="kw">return</span> n.val + <span class="ty">Math</span>.max(l, r);          <span class="cm">// extend ONE side upward</span>
+}
+</code></pre>
+
+<!-- ===== D11 ===== -->
+<h3><span class="badge b-hard">HARD</span> D11. Construct Tree from Preorder + Inorder <span class="lc">(LC 105)</span></h3>
+
+<p><b>Problem:</b> You're given the preorder and inorder arrays of a unique-valued tree. Rebuild the tree.</p>
+
+<h4>Intuition</h4>
+<ol>
+  <li>The <b>first</b> element of preorder is always the current root.</li>
+  <li>Find that root's index in inorder. Everything left of it = left subtree's inorder. Everything right = right subtree's inorder.</li>
+  <li>Recurse. Keep a moving pointer over preorder.</li>
+</ol>
+
+<pre><code><span class="ty">Map</span>&lt;<span class="ty">Integer</span>, <span class="ty">Integer</span>&gt; idx;     <span class="cm">// inorder value -&gt; index</span>
+<span class="kw">int</span> pre = <span class="nm">0</span>;
+<span class="kw">int</span>[] preorder;
+
+<span class="kw">public</span> <span class="ty">TreeNode</span> <span class="fn">buildTree</span>(<span class="kw">int</span>[] preorder, <span class="kw">int</span>[] inorder){
+    <span class="kw">this</span>.preorder = preorder;
+    idx = <span class="kw">new</span> <span class="fn">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;inorder.length; i++) idx.put(inorder[i], i);
+    <span class="kw">return</span> <span class="fn">build</span>(<span class="nm">0</span>, inorder.length - <span class="nm">1</span>);
+}
+<span class="kw">private</span> <span class="ty">TreeNode</span> <span class="fn">build</span>(<span class="kw">int</span> inLeft, <span class="kw">int</span> inRight){
+    <span class="kw">if</span> (inLeft &gt; inRight) <span class="kw">return null</span>;
+    <span class="kw">int</span> rootVal = preorder[pre++];
+    <span class="ty">TreeNode</span> root = <span class="kw">new</span> <span class="fn">TreeNode</span>(rootVal);
+    <span class="kw">int</span> mid = idx.get(rootVal);
+    root.left  = <span class="fn">build</span>(inLeft, mid - <span class="nm">1</span>);
+    root.right = <span class="fn">build</span>(mid + <span class="nm">1</span>, inRight);
+    <span class="kw">return</span> root;
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Why the HashMap?</b> Without it, finding the root's index in inorder is O(n) per call → O(n²) total. The map makes it O(1) → O(n) total.
+</div>
+
+<!-- ===== D12 ===== -->
+<h3><span class="badge b-hard">HARD</span> D12. House Robber III <span class="lc">(LC 337)</span></h3>
+
+<p><b>Problem:</b> Houses arranged in a tree. If you rob a house, you can't rob its direct parent or direct children. Return the max money you can grab.</p>
+
+<h4>Intuition (DP on trees)</h4>
+<p>For each node, return a 2-element array <code>[notRob, rob]</code>:</p>
+<ul>
+  <li><code>rob</code> = take this house's money + <code>notRob</code> from both children.</li>
+  <li><code>notRob</code> = best of either choice from each child (you're free either way).</li>
+</ul>
+
+<pre><code><span class="kw">public int</span> <span class="fn">rob</span>(<span class="ty">TreeNode</span> root){
+    <span class="kw">int</span>[] r = <span class="fn">dp</span>(root);
+    <span class="kw">return</span> <span class="ty">Math</span>.max(r[<span class="nm">0</span>], r[<span class="nm">1</span>]);
+}
+<span class="kw">private int</span>[] <span class="fn">dp</span>(<span class="ty">TreeNode</span> n){
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">return new int</span>[]{<span class="nm">0</span>, <span class="nm">0</span>};
+    <span class="kw">int</span>[] l = <span class="fn">dp</span>(n.left);
+    <span class="kw">int</span>[] r = <span class="fn">dp</span>(n.right);
+    <span class="kw">int</span> notRob = <span class="ty">Math</span>.max(l[<span class="nm">0</span>], l[<span class="nm">1</span>]) + <span class="ty">Math</span>.max(r[<span class="nm">0</span>], r[<span class="nm">1</span>]);
+    <span class="kw">int</span> rob    = n.val + l[<span class="nm">0</span>] + r[<span class="nm">0</span>];
+    <span class="kw">return new int</span>[]{notRob, rob};
+}
+</code></pre>
+
+<div class="panel win">
+  <b>Why this is the boss fight:</b> It combines DFS + dynamic programming. If you understand this one, you can extend the same "return a tuple of states" trick to almost any tree DP problem.
+</div>
+
+<hr/>
+
+<!-- ============================================================== -->
+<h2 id="cheats">⑦ Cheat Sheet — print this and tape it to your monitor</h2>
+
+<h3>How to pick BFS vs DFS in 5 seconds</h3>
+<table style="width:100%;border-collapse:collapse;margin:10px 0">
+  <thead>
+    <tr style="background:var(--panel)">
+      <th style="text-align:left;padding:10px;border:1px solid var(--line)">If the problem mentions...</th>
+      <th style="text-align:left;padding:10px;border:1px solid var(--line)">Reach for...</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:8px;border:1px solid var(--line)">level, row, layer, "view from side", shortest path in unweighted</td><td style="padding:8px;border:1px solid var(--line)"><b>BFS</b> + Queue</td></tr>
+    <tr><td style="padding:8px;border:1px solid var(--line)">height, depth, diameter, balanced</td><td style="padding:8px;border:1px solid var(--line)"><b>DFS</b> postorder</td></tr>
+    <tr><td style="padding:8px;border:1px solid var(--line)">root‑to‑leaf path, path sum, all paths</td><td style="padding:8px;border:1px solid var(--line)"><b>DFS</b> + backtracking</td></tr>
+    <tr><td style="padding:8px;border:1px solid var(--line)">BST, validate, kth smallest</td><td style="padding:8px;border:1px solid var(--line)"><b>DFS</b> inorder</td></tr>
+    <tr><td style="padding:8px;border:1px solid var(--line)">LCA, ancestor</td><td style="padding:8px;border:1px solid var(--line)"><b>DFS</b> postorder ("ping" up)</td></tr>
+    <tr><td style="padding:8px;border:1px solid var(--line)">serialize, deserialize</td><td style="padding:8px;border:1px solid var(--line)">Either — BFS is most natural</td></tr>
+    <tr><td style="padding:8px;border:1px solid var(--line)">"max sum of any path", "longest path", tree DP</td><td style="padding:8px;border:1px solid var(--line)"><b>DFS</b> with two‑jobs pattern</td></tr>
+  </tbody>
+</table>
+
+<h3>The 3 patterns that solve 80% of tree problems</h3>
+
+<details open><summary>① The classic recursive shape</summary>
+<pre><code><span class="ty">Type</span> <span class="fn">solve</span>(<span class="ty">TreeNode</span> n){
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">return</span> base;
+    <span class="ty">Type</span> l = <span class="fn">solve</span>(n.left);
+    <span class="ty">Type</span> r = <span class="fn">solve</span>(n.right);
+    <span class="kw">return</span> combine(n, l, r);
+}
+</code></pre>
+</details>
+
+<details><summary>② BFS with the size trick</summary>
+<pre><code><span class="ty">Queue</span>&lt;<span class="ty">TreeNode</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+q.add(root);
+<span class="kw">while</span> (!q.isEmpty()){
+    <span class="kw">int</span> size = q.size();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+        <span class="ty">TreeNode</span> c = q.poll();
+        <span class="cm">// per-node work</span>
+        <span class="kw">if</span> (c.left  != <span class="kw">null</span>) q.add(c.left);
+        <span class="kw">if</span> (c.right != <span class="kw">null</span>) q.add(c.right);
+    }
+    <span class="cm">// per-level work</span>
+}
+</code></pre>
+</details>
+
+<details><summary>③ Two-jobs DFS (return + global)</summary>
+<pre><code><span class="kw">int</span> globalAns = <span class="nm">0</span>;
+<span class="kw">int</span> <span class="fn">dfs</span>(<span class="ty">TreeNode</span> n){
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="kw">int</span> l = <span class="fn">dfs</span>(n.left);
+    <span class="kw">int</span> r = <span class="fn">dfs</span>(n.right);
+    globalAns = <span class="ty">Math</span>.max(globalAns, /* using both l and r */);
+    <span class="kw">return</span> /* a single value to give the parent */;
+}
+</code></pre>
+</details>
+
+<h3>Final mindset checklist before you write any tree code</h3>
+<ol>
+  <li><b>What's the base case?</b> Almost always <code>if (root == null) return …</code></li>
+  <li><b>What does each recursive call promise to return?</b> Decide this <i>first</i>. (a height? a boolean? a path list?)</li>
+  <li><b>How do I combine left + right + current?</b> That's the body of your function.</li>
+  <li><b>Do I need a global / passed‑in accumulator?</b> Yes for diameter, max-path-sum, paths, etc.</li>
+  <li><b>Test on a 1-node tree, then a left-only chain, then a balanced one.</b> 90% of bugs hide in these 3.</li>
+</ol>
+
+<div class="panel win center">
+  <b>You did it. 🌟</b><br>
+  Twelve problems, two algorithms, one solid mental model. Re‑solve each problem on a blank file <i>without</i> peeking — that's the read where it actually sticks.
+</div>
+
+<p class="small center">Built with care for one curious learner. Read it twice. Code it once. Then pick three problems and re‑solve from scratch — that's the moment you've truly learned it.</p>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

@@ -1,0 +1,4459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Backtracking — Hints, Tricks & Java Snippets</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;        /* LIGHT code background */
+    --code-fg: #24292f;
+    --kw: #cf222e;             /* keywords - red */
+    --typ: #6f42c1;            /* types - purple */
+    --str: #0a7d4d;            /* strings - green */
+    --cmt: #6a737d;            /* comments - gray italic */
+    --num: #0550ae;            /* numbers - blue */
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  /* HAMBURGER + TOC SIDEBAR */
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* HERO + TABS */
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 {
+    margin: 0 0 6px; font-size: 20px;
+  }
+  .topbar p {
+    margin: 0 0 10px; color: var(--muted); font-size: 13.5px;
+  }
+  .tabs {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  /* MAIN */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p {
+    margin: 8px 0;
+    font-size: 15px;
+  }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips {
+    margin: 6px 0 6px 4px;
+    padding: 0 0 0 22px;
+  }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  /* CODE */
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  /* PREV/NEXT BAR */
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  /* INTRO CARD */
+  .intro {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 24px;
+  }
+  .intro h2 { margin-top: 0; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  /* THEME TOGGLE BUTTON (top-right) */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* ===================== DARK MODE ===================== */
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Backtracking — Step by Step Hints, Tricks & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">←</span> <span class="kbd">→</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- Render target -->
+</main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">← Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next →</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Backtracking Template (read this first)", diff: "veasy",
+  problem: "Backtracking is a systematic, controlled brute-force technique. You build a candidate solution one decision at a time, and the moment a partial candidate is shown to be hopeless, you abandon it (\"backtrack\") and try a different decision. It powers permutations, combinations, subsets, sudoku, n-queens, maze paths, expression building — virtually every \"explore all valid configurations\" problem.",
+  intuition: "Picture every possible solution as a node in a giant decision tree. The root is the empty solution; each edge represents one decision; each leaf is a complete candidate. Backtracking is just Depth-First Search on this tree, with two superpowers: (1) you PRUNE entire subtrees the instant you can prove they can't lead to a valid answer, and (2) on the way back up, you UNDO whatever you changed, so the next branch starts from a clean slate. The 'back' in backtracking is literally that undo step.",
+  hints: [
+    "STATE = what changes during recursion (current path, current index, running sum, visited mask…). CHOICES = what you branch on at each node (which number to add, which color to use, which cell to step into).",
+    "BASE CASE: when is the partial solution complete? That's where you record an answer and return. Without a clear base case, recursion never ends.",
+    "RECURSIVE STEP: loop over the available choices. For each one, validate → apply → recurse → undo. The four words choose, explore, un-choose are the heartbeat of the pattern.",
+    "PRUNE BEFORE you recurse, never after. A check that comes after the recursive call has already paid the exponential cost.",
+    "If you reach the same state through many different paths AND the answer from that state doesn't depend on how you got there → MEMOIZE the state. Backtracking + memo = top-down DP."
+  ],
+  tips: [
+    "Combinations vs Permutations: combinations don't care about order, so pass a `start` index and never look backward. Permutations do care about order, so use a `boolean[] used` array and loop from 0 each time.",
+    "Duplicate inputs: SORT the array first, then at every recursion depth, skip a value if it's equal to its left neighbor and that neighbor is unused (or, equivalently, `i > start && nums[i] == nums[i-1]`).",
+    "If you mutate a shared object (an array, a grid cell, a map), you MUST restore it on the way back. The single most common backtracking bug is forgetting the undo.",
+    "Use StringBuilder.setLength() to undo string appends in O(1). Avoid passing a fresh String down each recursion — that's O(n) garbage per call.",
+    "When the answer is a count and not a list of solutions, ask yourself if DP or bitmask DP would be faster. For order-matters counting problems, DP usually wins."
+  ],
+  code: `/*
+ * The five anatomical pieces every backtracking function has.
+ * Read it once, then map every problem you meet onto these slots.
+ */
+void backtrack(State state, Choices remaining) {
+
+    // ---- 1. BASE CASE -----------------------------------------------------
+    // Stop recursing when the partial solution is complete (or invalid).
+    // Record the answer here, then return. No base case = infinite recursion.
+    if (isGoal(state)) {
+        record(state);                     // save a COPY of the current state
+        return;
+    }
+
+    // ---- 2. ENUMERATE CHOICES --------------------------------------------
+    // Loop over every decision available from the current state.
+    // For combinations: usually a 'start' index. For permutations: every unused element.
+    for (Choice c : choicesFrom(state, remaining)) {
+
+        // ---- 3. PRUNE ---------------------------------------------------
+        // Cheap, local check that throws out any choice that cannot possibly
+        // lead to a valid solution. Doing this BEFORE the recursive call is
+        // what turns a 2^n search into something tractable.
+        if (!isValid(state, c)) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        apply(state, c);                   // 4a. choose: mutate the state
+        backtrack(state, remaining);       // 4b. explore: recurse deeper
+        undo(state, c);                    // 4c. un-choose: restore the state
+
+        // After undo() the state is exactly what it was before apply(),
+        // so the next iteration of the loop starts from a clean slate.
+    }
+}
+
+/*
+ * Tiny worked example — generating all subsets of {1,2,3}.
+ * Maps directly onto the template:
+ *   STATE      = (start index, current path)
+ *   CHOICES    = pick nums[i] for i in [start..n)
+ *   BASE CASE  = none extra; we record the path at every node
+ *   PRUNE      = none for plain subsets
+ *   CHOOSE     = path.add(nums[i])
+ *   UN-CHOOSE  = path.remove(last)
+ */
+void subsets(int[] nums, int start, List<Integer> path, List<List<Integer>> res) {
+    res.add(new ArrayList<>(path));        // every node in the tree is a subset
+    for (int i = start; i < nums.length; i++) {
+        path.add(nums[i]);                 // choose
+        subsets(nums, i + 1, path, res);   // explore (i+1 keeps it a combination)
+        path.remove(path.size() - 1);      // un-choose
+    }
+}`,
+  complexity: "Worst-case time is the size of the decision tree (often 2^n, n!, or k^n). Pruning is what brings it down to something usable. If recursive states overlap and the answer from a state is path-independent, memoize it and you've turned the algorithm into top-down dynamic programming."
+});
+
+/* ===================== VERY EASY (PATTERN BUILDING) ===================== */
+
+PROBLEMS.push({
+  num: 71, title: "Generate Subsets", diff: "veasy",
+  problem: "Given an array of distinct integers, return all 2^n possible subsets (the power set).",
+  intuition: "Every element has two fates: in the subset, or not. That's a binary tree of height n with 2^n leaves. But subsets are not just leaves — every NODE is a valid subset on its own.",
+  hints: [
+    "Recursive function takes a `start` index and the current `path`.",
+    "Add `path` to the answer at the START of the function (every visit = one subset).",
+    "Loop `i` from `start` to `n-1`: pick nums[i], recurse with `i+1`, un-pick.",
+    "Using `start` (and not `0`) is what prevents duplicates like {1,2} and {2,1}."
+  ],
+  tips: [
+    "Want it iterative? Each subset corresponds to a bitmask 0..2^n-1. The recursion is just a DFS traversal of those masks.",
+    "Cloning the path is necessary when adding to the result list — otherwise all entries point to the same mutable list."
+  ],
+  code: `/*
+ * Generate all 2^n subsets via DFS.
+ * STATE      = (start index, current path)
+ * CHOICES    = pick any element with index >= start
+ * BASE CASE  = none extra; every node visited IS a subset
+ */
+void dfs(int[] nums, int start, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. RECORD CURRENT NODE -----------------------------------------
+    // Add a COPY of path. Without copying, all entries point to the same
+    // mutable list and you'd see the final list repeated everywhere.
+    res.add(new ArrayList<>(path));
+
+    // ---- 2. ENUMERATE CHOICES -------------------------------------------
+    // Loop from 'start', not 0, so we never look back. This is what
+    // prevents duplicate subsets like {1,2} and {2,1}.
+    for (int i = start; i < nums.length; i++) {
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        path.add(nums[i]);                        // 3a. choose nums[i]
+        dfs(nums, i + 1, path, res);              // 3b. explore deeper (i+1)
+        path.remove(path.size() - 1);             // 3c. un-choose (backtrack)
+    }
+}`,
+  complexity: "Time O(n · 2^n) — 2^n subsets, each up to length n to copy. Space O(n) recursion."
+});
+
+PROBLEMS.push({
+  num: 72, title: "Generate Permutations", diff: "veasy",
+  problem: "Given an array of distinct integers, return all n! orderings of its elements.",
+  intuition: "Order matters here, so you cannot use a `start` index — you must be allowed to revisit positions. Instead, mark each element as 'used' so you don't pick it twice within one permutation.",
+  hints: [
+    "Maintain a boolean `used[i]` parallel to `nums`.",
+    "Base case: `path.size() == nums.length` → add a copy to result.",
+    "At every level, try EVERY unused element (not just those after some index).",
+    "Set `used[i]=true` before recursing, then `used[i]=false` after."
+  ],
+  tips: [
+    "Don't use `path.contains(...)` to test usage — it's O(n) per check. Use the boolean array.",
+    "If you only need ONE permutation (e.g., next permutation), this is overkill — there's a O(n) algorithm."
+  ],
+  code: `/*
+ * Generate all n! permutations via DFS.
+ * STATE      = (path so far, used[] array)
+ * CHOICES    = every UNUSED element (order matters → no 'start' index)
+ * BASE CASE  = path length equals input length
+ */
+void dfs(int[] nums, boolean[] used, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    // We've placed every element → record a snapshot of the permutation.
+    if (path.size() == nums.length) {
+        res.add(new ArrayList<>(path));
+        return;
+    }
+
+    // ---- 2. ENUMERATE CHOICES -------------------------------------------
+    // Try EVERY index — order matters, so we revisit positions we've passed.
+    for (int i = 0; i < nums.length; i++) {
+
+        if (used[i]) continue;                    // skip already-placed elements
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        used[i] = true;                           // 3a. mark used
+        path.add(nums[i]);                        //     append to path
+        dfs(nums, used, path, res);               // 3b. explore
+        used[i] = false;                          // 3c. un-mark
+        path.remove(path.size() - 1);             //     pop from path
+    }
+}`,
+  complexity: "Time O(n · n!). Space O(n) recursion + O(n) used array."
+});
+
+PROBLEMS.push({
+  num: 73, title: "Subsets with Duplicates", diff: "veasy",
+  problem: "Same as Generate Subsets, but the input may contain duplicates. Return only unique subsets.",
+  intuition: "If the input has [1,2,2], the subset {1,2} can be built two ways (using either 2). After sorting, we make a rule: at the SAME recursion depth, we only let the FIRST occurrence of a duplicate value start a branch. Equal values within one path are fine; equal values as siblings are not.",
+  hints: [
+    "Step 1: sort the array so duplicates sit next to each other.",
+    "Step 2: use the standard subsets DFS with a `start` index.",
+    "Step 3: inside the loop, skip any `i > start && nums[i] == nums[i-1]`.",
+    "The `i > start` part is key: it allows duplicates inside one path but blocks them as siblings."
+  ],
+  tips: [
+    "Memorize this dedup rule — it appears in Permutations II, Combination Sum II, Palindrome Partitioning, and many more.",
+    "Forgetting to sort first is the #1 bug here."
+  ],
+  code: `/*
+ * Subsets where input may contain duplicates → return only unique subsets.
+ * KEY TRICK : sort first, then skip "duplicate siblings" inside the loop.
+ *             Equal values within ONE path are fine; equal SIBLING choices
+ *             at the same recursion depth would create duplicate subsets.
+ */
+Arrays.sort(nums);                                // duplicates now adjacent
+void dfs(int[] nums, int start, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. RECORD CURRENT NODE -----------------------------------------
+    res.add(new ArrayList<>(path));
+
+    // ---- 2. ENUMERATE CHOICES -------------------------------------------
+    for (int i = start; i < nums.length; i++) {
+
+        // ---- 3. DEDUP RULE ---------------------------------------------
+        // i > start  -> we are not the first sibling at this depth
+        // nums[i] == nums[i-1] -> our left twin already started a branch
+        // ⇒ skip; that branch produced the same subset already.
+        if (i > start && nums[i] == nums[i - 1]) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        path.add(nums[i]);                        // choose
+        dfs(nums, i + 1, path, res);              // explore (i+1 = combination)
+        path.remove(path.size() - 1);             // un-choose
+    }
+}`,
+  complexity: "Time O(n · 2^n) worst case. Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 7, title: "Combinations C(n,k)", diff: "veasy",
+  problem: "Return all possible k-element combinations chosen from the integers 1..n.",
+  intuition: "Same shape as Generate Subsets, but instead of recording every node, only record nodes whose path length equals k. We can also stop the loop early when there aren't enough numbers left to fill k slots.",
+  hints: [
+    "Use a `start` index — combinations are unordered.",
+    "Base case: `path.size() == k` → record.",
+    "Pruning: if you still need `need = k - path.size()` more numbers, stop the loop at `i = n - need + 1`."
+  ],
+  tips: [
+    "Without the pruning bound, this still works but is much slower for small k and large n.",
+    "Same template scales to combinations from any list, not just 1..n."
+  ],
+  code: `/*
+ * Combinations C(n, k): pick k distinct numbers from 1..n.
+ * Same shape as Subsets; only collect when path length is exactly k.
+ * PRUNE: if 'need' more numbers must come, stop once not enough remain.
+ */
+void dfs(int n, int k, int start, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    // Path is full → snapshot and return.
+    if (path.size() == k) {
+        res.add(new ArrayList<>(path));
+        return;
+    }
+
+    // ---- 2. ENUMERATE CHOICES (with prune) ------------------------------
+    int need = k - path.size();                   // numbers still required
+    // Upper bound i <= n - need + 1 ensures at least 'need' numbers remain
+    // in [i..n], so the branch can still complete.
+    for (int i = start; i <= n - need + 1; i++) {
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        path.add(i);
+        dfs(n, k, i + 1, path, res);              // i+1: each value used once
+        path.remove(path.size() - 1);
+    }
+}`,
+  complexity: "Time O(k · C(n,k)). Space O(k)."
+});
+
+PROBLEMS.push({
+  num: 14, title: "Generate Parentheses", diff: "veasy",
+  problem: "Given n, generate all well-formed strings of n pairs of parentheses, e.g., n=3 → \"((()))\", \"(()())\", \"(())()\", \"()(())\", \"()()()\".",
+  intuition: "Build the string left to right, character by character. Validity is a counting fact: at every prefix, the number of '(' is at least the number of ')'. Track those counts and a string is valid by construction — no need for any final validation.",
+  hints: [
+    "Two counters: `open` (count of '(' placed) and `close` (count of ')' placed).",
+    "Place '(' only if `open < n`.",
+    "Place ')' only if `close < open` (otherwise we'd unbalance).",
+    "Stop when length equals 2n."
+  ],
+  tips: [
+    "Use StringBuilder, not String concatenation, to avoid O(n^2) garbage.",
+    "Always remember to delete the last char on the way back."
+  ],
+  code: `/*
+ * Generate Parentheses. Validity is enforced by COUNTING, not by checking.
+ * INVARIANT: at every prefix #open >= #close. So:
+ *   - place '(' only if open < n
+ *   - place ')' only if close < open
+ * Two simple inequalities + StringBuilder = guaranteed-valid output.
+ */
+void dfs(StringBuilder sb, int open, int close, int n, List<String> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    // Length 2n means we've placed n '(' and n ')'. Snapshot and return.
+    if (sb.length() == 2 * n) {
+        res.add(sb.toString());
+        return;
+    }
+
+    // ---- 2. CHOICE A: place '(' if any '(' left to place ----------------
+    if (open < n) {
+        sb.append('(');                           // choose
+        dfs(sb, open + 1, close, n, res);         // explore
+        sb.deleteCharAt(sb.length() - 1);         // un-choose
+    }
+
+    // ---- 3. CHOICE B: place ')' only if it won't break the invariant ----
+    if (close < open) {
+        sb.append(')');
+        dfs(sb, open, close + 1, n, res);
+        sb.deleteCharAt(sb.length() - 1);
+    }
+}`,
+  complexity: "Time O(4^n / sqrt(n)) (Catalan number). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 65, title: "Letter Case Permutation", diff: "veasy",
+  problem: "Given a string, return every string formed by changing the case of any subset of its letters; digits stay as-is.",
+  intuition: "Walk left to right. At each position you have a binary choice IF the character is a letter (lowercase or uppercase); for digits there's no choice. The recursion tree has at most 2^L leaves where L = number of letters.",
+  hints: [
+    "Use a char[] so you can mutate in place.",
+    "If `s[i]` is a letter: try both cases at position i, then recurse to i+1.",
+    "If `s[i]` is a digit: just recurse to i+1.",
+    "Base case: i == s.length → add `new String(s)`."
+  ],
+  tips: [
+    "You don't need to undo the case if you set it explicitly to upper then lower — the second branch overwrites the first.",
+    "Bit-tricks work too: i-th letter's case can be decided by the i-th bit of a counter 0..2^L."
+  ],
+  code: `/*
+ * Letter Case Permutation: at each letter try BOTH cases; digits pass through.
+ * Mutating a char[] in place avoids copying the string at every level.
+ */
+void dfs(char[] s, int i, List<String> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (i == s.length) {
+        res.add(new String(s));                   // snapshot the char[]
+        return;
+    }
+
+    // ---- 2. BRANCH ON CHARACTER TYPE ------------------------------------
+    if (Character.isLetter(s[i])) {
+        // letter → two branches
+        s[i] = Character.toLowerCase(s[i]);       // branch A: lowercase
+        dfs(s, i + 1, res);
+        s[i] = Character.toUpperCase(s[i]);       // branch B: uppercase
+        dfs(s, i + 1, res);                       // (overwrite acts as undo)
+    } else {
+        // digit → single branch, no choice to make
+        dfs(s, i + 1, res);
+    }
+}`,
+  complexity: "Time O(2^L · n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 15, title: "Letter Combinations of a Phone Number", diff: "veasy",
+  problem: "Given a digit string like \"23\", return all letter combinations using the classic phone keypad mapping (2→abc, 3→def, ...).",
+  intuition: "Each digit independently contributes one letter to the answer. This is a Cartesian product: for `k` digits, the number of results is the product of letter counts. DFS one digit per level, picking each candidate letter at that level.",
+  hints: [
+    "Build a `String[]` map for digits 0..9.",
+    "Base case: index equals digits length → record the StringBuilder.",
+    "For each character of `map[digits[i]]`, append, recurse, pop."
+  ],
+  tips: [
+    "Watch the empty-input edge case — return an empty list, not a list containing one empty string.",
+    "Iterative BFS works too: keep a list of partial answers and expand by one digit at a time."
+  ],
+  code: `/*
+ * Phone keypad letter combinations. One digit per recursion level.
+ * Each digit picks one letter from its mapping → Cartesian product DFS.
+ */
+String[] map = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+void dfs(String d, int i, StringBuilder sb, List<String> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (i == d.length()) {
+        if (sb.length() > 0) res.add(sb.toString());   // skip empty input
+        return;
+    }
+
+    // ---- 2. ENUMERATE LETTERS FOR THIS DIGIT ----------------------------
+    for (char c : map[d.charAt(i) - '0'].toCharArray()) {
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        sb.append(c);                             // choose this letter
+        dfs(d, i + 1, sb, res);                   // explore next digit
+        sb.deleteCharAt(sb.length() - 1);         // un-choose
+    }
+}`,
+  complexity: "Time O(4^n · n) worst case (digit 7 or 9 has 4 letters)."
+});
+
+PROBLEMS.push({
+  num: 61, title: "Binary Tree Paths", diff: "veasy",
+  problem: "Return all root-to-leaf paths in a binary tree as strings like \"1->2->5\".",
+  intuition: "Plain DFS on the tree. The 'backtracking' here is simply truncating a shared StringBuilder back to its previous length when returning up the recursion.",
+  hints: [
+    "Carry a StringBuilder. Save its length at the function's entry.",
+    "Append '->' + node.val (omit the arrow for the root).",
+    "If both children are null → it's a leaf → record the string.",
+    "Otherwise recurse into left and right.",
+    "Before returning, restore the StringBuilder to the saved length."
+  ],
+  tips: [
+    "Using StringBuilder + setLength is much faster than passing String objects (which would copy on every call)."
+  ],
+  code: `/*
+ * Binary Tree Paths. The "backtrack" here is just truncating a shared
+ * StringBuilder back to its previous length on the way up.
+ */
+void dfs(TreeNode n, StringBuilder sb, List<String> res) {
+
+    if (n == null) return;                        // null guard
+
+    // ---- 1. SAVE PRE-MUTATION STATE -------------------------------------
+    int len = sb.length();                        // remember to restore
+
+    // ---- 2. APPEND THIS NODE --------------------------------------------
+    if (len > 0) sb.append("->");                 // arrow for non-root
+    sb.append(n.val);
+
+    // ---- 3. LEAF? RECORD : RECURSE --------------------------------------
+    if (n.left == null && n.right == null) {
+        res.add(sb.toString());                   // root-to-leaf path
+    } else {
+        dfs(n.left,  sb, res);
+        dfs(n.right, sb, res);
+    }
+
+    // ---- 4. UN-CHOOSE: pop everything we appended this call -------------
+    sb.setLength(len);
+}`,
+  complexity: "Time O(n · h). Space O(h) recursion."
+});
+
+PROBLEMS.push({
+  num: 51, title: "Kth Symbol in Grammar", diff: "veasy",
+  problem: "Row 1 is \"0\". Each next row replaces every 0→01 and every 1→10. Return the k-th symbol (1-indexed) in row n without building the row.",
+  intuition: "Row n has 2^(n-1) symbols. The first half of row n is exactly row n-1. The second half is row n-1 with every bit flipped. So you can recurse, halving k each time.",
+  hints: [
+    "If k is in the first half (k ≤ half), answer = kth(n-1, k).",
+    "If k is in the second half, answer = 1 - kth(n-1, k - half).",
+    "half = 2^(n-2). Base: n == 1 → 0."
+  ],
+  tips: [
+    "Iterative version using k's binary representation also works — count the 1-bits in (k-1)."
+  ],
+  code: `/*
+ * Kth Symbol in Grammar — recurse on the parent's HALF, never build the row.
+ * Row n has 2^(n-1) symbols. First half == row n-1. Second half == flipped row n-1.
+ */
+int kthGrammar(int n, int k) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (n == 1) return 0;                         // row 1 is just "0"
+
+    // ---- 2. WHICH HALF DOES k FALL INTO? --------------------------------
+    int half = 1 << (n - 2);                      // 2^(n-2) = size of each half
+
+    if (k <= half) {
+        // First half is identical to row n-1.
+        return kthGrammar(n - 1, k);
+    } else {
+        // Second half is row n-1 with every bit flipped.
+        return 1 - kthGrammar(n - 1, k - half);
+    }
+}`,
+  complexity: "Time O(n). Space O(n) recursion."
+});
+
+PROBLEMS.push({
+  num: 39, title: "Sequential Digits", diff: "veasy",
+  problem: "Return all integers in [low, high] whose digits are sequentially increasing by 1, like 123, 234, 1234.",
+  intuition: "There aren't many of these (just 36 total under 10^9). Build them: pick a starting digit 1..9, then keep appending last+1 until you exceed 9.",
+  hints: [
+    "Outer loop: starting digit s from 1 to 9.",
+    "Recursive step: take current number, append (last+1) to form a new candidate.",
+    "Stop when last == 9 or candidate > high.",
+    "Collect any candidate within [low, high]."
+  ],
+  tips: [
+    "Result is naturally sorted if you iterate length first — but the simple DFS returns them in order anyway because of how the search tree is shaped."
+  ],
+  code: `/*
+ * Sequential Digits — append last+1 to the current number until 9 or > high.
+ * Driver loops the starting digit; the recursion has at most one branch.
+ */
+void dfs(int cur, int low, int high, List<Integer> res) {
+
+    // ---- 1. PRUNE: out of range ----------------------------------------
+    if (cur > high) return;
+
+    // ---- 2. RECORD if within window ------------------------------------
+    if (cur >= low) res.add(cur);
+
+    // ---- 3. EXTEND with last+1 (only if last digit isn't 9) ------------
+    int last = cur % 10;
+    if (last == 9) return;                        // can't go higher
+    dfs(cur * 10 + last + 1, low, high, res);
+}
+
+// driver: try every starting digit 1..9
+// for (int s = 1; s <= 9; s++) dfs(s, low, high, res);`,
+  complexity: "O(36) candidates max — effectively constant."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 6, title: "Permutations II (with duplicates)", diff: "easy",
+  problem: "Like Permutations, but the input array may have duplicates. Return only unique permutations.",
+  intuition: "Sort first so duplicate values are adjacent. The cleanest dedup rule: if the previous equal value is unused at this point, skip the current one. This forces the algorithm to always use the leftmost duplicate first, eliminating mirror permutations.",
+  hints: [
+    "Sort nums.",
+    "Standard permutation DFS with a `used[]` array.",
+    "Inside the loop: if `used[i]` skip; if `i > 0 && nums[i] == nums[i-1] && !used[i-1]` skip."
+  ],
+  tips: [
+    "The condition `!used[i-1]` is correct — using `used[i-1]` instead is a common bug that produces NO duplicates AND drops valid answers.",
+    "Why it works: imagine two equal values A and B (A is left of B). Forcing A before B ensures we never produce \"B then A\" as a different permutation."
+  ],
+  code: `/*
+ * Permutations II: input may have duplicates → return only UNIQUE permutations.
+ * KEY DEDUP RULE: !used[i-1] forces left-to-right usage of equal values, so
+ * "duplicate B then duplicate A" can never appear (A always comes before B).
+ */
+Arrays.sort(nums);                                // duplicates now adjacent
+
+void dfs(int[] nums, boolean[] used, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (path.size() == nums.length) {
+        res.add(new ArrayList<>(path));
+        return;
+    }
+
+    // ---- 2. ENUMERATE CHOICES -------------------------------------------
+    for (int i = 0; i < nums.length; i++) {
+
+        if (used[i]) continue;                    // already in path
+
+        // ---- 3. DEDUP: skip a duplicate that hasn't been "served first" -
+        // If the equal twin to my left is currently UNUSED, then using me
+        // first would create a permutation that the twin will (or did)
+        // produce. So skip me — let my twin go first.
+        if (i > 0 && nums[i] == nums[i - 1] && !used[i - 1]) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        used[i] = true;
+        path.add(nums[i]);
+        dfs(nums, used, path, res);
+        used[i] = false;
+        path.remove(path.size() - 1);
+    }
+}`,
+  complexity: "Time O(n · n!) worst case."
+});
+
+PROBLEMS.push({
+  num: 5, title: "Subset Sum", diff: "easy",
+  problem: "Given an array of positive integers and a target T, decide whether some subset sums to T.",
+  intuition: "Classic pick-or-skip recursion. The recursion tree has 2^n leaves, but we can prune any branch whose remaining target goes negative, and stop as soon as we find one match.",
+  hints: [
+    "State: index `i` and remaining target.",
+    "Base: target == 0 → true; i == n or target < 0 → false.",
+    "Two recursive calls: pick a[i] (target - a[i]) OR skip (target unchanged).",
+    "Return their OR."
+  ],
+  tips: [
+    "Sort descending to fail faster on impossible branches.",
+    "Add memoization on (i, target) to convert to top-down DP and handle larger inputs."
+  ],
+  code: `/*
+ * Subset Sum (decision problem). Pick or skip the current element.
+ * Without memo: O(2^n). With memo on (i, target): pseudo-poly DP.
+ */
+boolean dfs(int[] a, int i, int target) {
+
+    // ---- 1. SUCCESS BASE CASE -------------------------------------------
+    if (target == 0) return true;                 // exact hit
+
+    // ---- 2. FAILURE BASE CASES ------------------------------------------
+    if (i == a.length || target < 0) return false;
+
+    // ---- 3. TWO BRANCHES: PICK or SKIP ----------------------------------
+    return dfs(a, i + 1, target - a[i])           // branch A: include a[i]
+        || dfs(a, i + 1, target);                 // branch B: skip a[i]
+}`,
+  complexity: "Time O(2^n) without memo; O(n · T) with memo."
+});
+
+PROBLEMS.push({
+  num: 11, title: "Combination Sum (unlimited reuse)", diff: "easy",
+  problem: "Given a set of distinct positive integers and a target T, return all unique multisets that sum to T. Each candidate may be used unlimited times.",
+  intuition: "Standard combinations DFS. The only twist is reuse: when you pick `cand[i]`, recurse with the SAME `i` (not i+1), so you can pick the same value again. This still avoids duplicates because we never look back to indices < `start`.",
+  hints: [
+    "Pass a `start` index.",
+    "Loop i from `start`. Pick cand[i], recurse with the SAME i to allow reuse.",
+    "Prune: skip `cand[i] > rem` (or sort and break)."
+  ],
+  tips: [
+    "Sort the candidates first → you can `break` instead of `continue` once `cand[i] > rem`.",
+    "Pure backtracking is fine here; DP would only be needed if you needed counts."
+  ],
+  code: `/*
+ * Combination Sum: each candidate may be reused unlimited times.
+ * The reuse trick: recurse with the SAME index 'i' (not i+1).
+ * Sorting + early break makes pruning crisp.
+ */
+Arrays.sort(cand);                                // enables clean break-out
+
+void dfs(int[] cand, int start, int rem, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. BASE CASE: hit the target ----------------------------------
+    if (rem == 0) {
+        res.add(new ArrayList<>(path));
+        return;
+    }
+
+    // ---- 2. ENUMERATE CHOICES ------------------------------------------
+    for (int i = start; i < cand.length; i++) {
+
+        if (cand[i] > rem) break;                 // sorted ⇒ no later fit
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        path.add(cand[i]);
+        dfs(cand, i, rem - cand[i], path, res);   // KEY: 'i' allows reuse
+        path.remove(path.size() - 1);
+    }
+}`,
+  complexity: "Exponential in the worst case; very fast in practice with sorted pruning."
+});
+
+PROBLEMS.push({
+  num: 30, title: "Combination Sum II (each used once, dups in input)", diff: "easy",
+  problem: "Like Combination Sum, but each candidate may be used at most once, and the input may contain duplicates. Return only unique combinations.",
+  intuition: "Two changes from Combination Sum: (1) recurse with `i+1` (no reuse). (2) sort and apply the dedup-skip rule for siblings.",
+  hints: [
+    "Sort cand.",
+    "Loop with `start`; recurse with i+1.",
+    "Skip `i > start && cand[i] == cand[i-1]`.",
+    "Break when `cand[i] > rem`."
+  ],
+  tips: [
+    "If you forget the dedup-skip you'll get duplicates that you'd have to filter with a HashSet — much slower.",
+    "Always confirm: sort? `start`-skip rule? `i+1` recursion? Those three are the recipe."
+  ],
+  code: `/*
+ * Combination Sum II: each candidate used at most ONCE; input may have dups.
+ * Two changes from Combination Sum:
+ *   (a) recurse with i+1  (no reuse)
+ *   (b) skip "duplicate siblings" via i > start && cand[i]==cand[i-1]
+ */
+Arrays.sort(cand);                                // duplicates now adjacent
+
+void dfs(int[] cand, int start, int rem, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (rem == 0) {
+        res.add(new ArrayList<>(path));
+        return;
+    }
+
+    // ---- 2. ENUMERATE CHOICES ------------------------------------------
+    for (int i = start; i < cand.length; i++) {
+
+        if (cand[i] > rem) break;                 // sorted prune
+
+        // ---- 3. DEDUP: only the FIRST sibling at this depth proceeds ----
+        if (i > start && cand[i] == cand[i - 1]) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        path.add(cand[i]);
+        dfs(cand, i + 1, rem - cand[i], path, res);   // i+1: each used once
+        path.remove(path.size() - 1);
+    }
+}`,
+  complexity: "O(2^n) worst-case search space, heavily pruned in practice."
+});
+
+PROBLEMS.push({
+  num: 31, title: "Combination Sum III (k from 1..9)", diff: "easy",
+  problem: "Find all combinations of k distinct numbers from 1..9 that sum to n.",
+  intuition: "It's just Combinations C(9, k) with an extra sum filter. Walk the digits 1..9 in order, recurse with i+1, accumulate the sum, and only collect when both `path.size() == k` and `rem == 0`.",
+  hints: [
+    "Pass `start`, current `rem`, and `path`.",
+    "Base: `path.size() == k` → add if `rem == 0`.",
+    "Loop i from start to 9; break when `i > rem`."
+  ],
+  tips: [
+    "Optional double-prune: break when `path.size() + (9 - i + 1) < k` (not enough digits left)."
+  ],
+  code: `/*
+ * Combination Sum III: pick exactly k DIFFERENT digits from 1..9 summing to n.
+ * Plain combinations DFS over the fixed range 1..9 with two filters at the
+ * base case (size == k AND rem == 0).
+ */
+void dfs(int start, int k, int rem, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (path.size() == k) {
+        if (rem == 0) res.add(new ArrayList<>(path));
+        return;
+    }
+
+    // ---- 2. ENUMERATE CHOICES (1..9) -----------------------------------
+    for (int i = start; i <= 9; i++) {
+
+        if (i > rem) break;                       // sorted by nature ⇒ break
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE --------------------------
+        path.add(i);
+        dfs(i + 1, k, rem - i, path, res);        // i+1: each digit at most once
+        path.remove(path.size() - 1);
+    }
+}`,
+  complexity: "Bounded — at most C(9,k) combinations to consider."
+});
+
+PROBLEMS.push({
+  num: 32, title: "Combination Sum IV (count, order matters)", diff: "easy",
+  problem: "Given an array of distinct positive integers and a target, count how many ORDERED sequences sum to target.",
+  intuition: "Despite the name, this is NOT a backtracking problem in disguise — it's pure 1D DP. ‘Order matters' transforms it into the classic ‘number of ways to climb stairs' pattern: dp[t] = sum over each n in nums of dp[t - n].",
+  hints: [
+    "1D dp[0..target]; dp[0] = 1.",
+    "For each t from 1 to target: for each n in nums, if n <= t add dp[t-n].",
+    "Return dp[target]."
+  ],
+  tips: [
+    "Backtracking enumerates all sequences and TLEs on large inputs. DP runs in O(target · n).",
+    "Beware: integer overflow may happen for some inputs — use `long` if needed."
+  ],
+  code: `/*
+ * Combination Sum IV (count, ORDER MATTERS) → 1-D DP, not backtracking.
+ * dp[t] = number of ordered sequences from nums summing to t.
+ * Recurrence: dp[t] = sum_{n in nums, n<=t} dp[t-n].
+ */
+int combinationSum4(int[] nums, int target) {
+
+    // ---- 1. dp ARRAY ----------------------------------------------------
+    int[] dp = new int[target + 1];
+    dp[0] = 1;                                    // 1 way to make 0: empty seq
+
+    // ---- 2. FILL BOTTOM-UP, target FIRST then nums ---------------------
+    // Order of loops matters: target outside ⇒ counts ORDERED sequences.
+    for (int t = 1; t <= target; t++) {
+        for (int n : nums) {
+            if (n <= t) dp[t] += dp[t - n];
+        }
+    }
+
+    // ---- 3. ANSWER ------------------------------------------------------
+    return dp[target];
+}`,
+  complexity: "Time O(target · n). Space O(target)."
+});
+
+PROBLEMS.push({
+  num: 21, title: "All Paths from Source to Target (DAG)", diff: "easy",
+  problem: "In a directed acyclic graph (0 is the source, n-1 is the sink), return all paths from 0 to n-1.",
+  intuition: "Plain DFS that records the current path and adds a copy when reaching the sink. Because the graph is a DAG, you cannot revisit nodes within a single path — no visited array is required.",
+  hints: [
+    "On entry: push the current node onto `path`.",
+    "If it's the target: add a copy of `path` to result.",
+    "Else: recurse on each successor.",
+    "On exit: pop the node from `path`."
+  ],
+  tips: [
+    "Adjacency list is given as an int[][] where g[u] are u's neighbors — perfect for DFS.",
+    "If the graph had cycles, you'd need a visited check; not needed here."
+  ],
+  code: `/*
+ * All Paths in DAG. No visited[] needed because the graph is acyclic, but
+ * we still backtrack the path so each result is independent.
+ */
+void dfs(int[][] g, int u, int target, List<Integer> path, List<List<Integer>> res) {
+
+    // ---- 1. PUSH current node onto the path ----------------------------
+    path.add(u);
+
+    // ---- 2. RECORD or RECURSE ------------------------------------------
+    if (u == target) {
+        res.add(new ArrayList<>(path));           // reached sink → snapshot
+    } else {
+        for (int v : g[u]) dfs(g, v, target, path, res);
+    }
+
+    // ---- 3. POP — restore the path for the caller ----------------------
+    path.remove(path.size() - 1);
+}`,
+  complexity: "Time O(2^n · n) worst case (number of paths can be exponential)."
+});
+
+PROBLEMS.push({
+  num: 29, title: "Beautiful Arrangement", diff: "easy",
+  problem: "Count permutations of 1..n where for every position p (1-indexed), either p divides perm[p] or perm[p] divides p.",
+  intuition: "Permutation DFS with one extra constraint per slot. Iterate position from 1 to n; for each unused number, check divisibility before placing.",
+  hints: [
+    "Maintain `used[1..n]` and a `pos` counter starting at 1.",
+    "Base case: pos > n → count++.",
+    "Loop i from 1 to n; if !used[i] and (i % pos == 0 || pos % i == 0), place and recurse."
+  ],
+  tips: [
+    "Iterate position outward, not number — easier to apply the divisibility check.",
+    "Bitmask DP gives O(n · 2^n) and is much faster for n up to 15."
+  ],
+  code: `/*
+ * Beautiful Arrangement: count permutations of 1..n where for each position p
+ *   p % v == 0  OR  v % p == 0.
+ * Iterate position outward; use boolean[] used like a regular permutation DFS.
+ */
+int count = 0;
+
+void dfs(boolean[] used, int pos, int n) {
+
+    // ---- 1. BASE CASE: filled all positions -----------------------------
+    if (pos > n) { count++; return; }
+
+    // ---- 2. ENUMERATE CHOICES (numbers 1..n) ---------------------------
+    for (int i = 1; i <= n; i++) {
+
+        if (used[i]) continue;                    // already placed
+
+        // ---- 3. POSITION CONSTRAINT ------------------------------------
+        if (i % pos != 0 && pos % i != 0) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        used[i] = true;
+        dfs(used, pos + 1, n);
+        used[i] = false;
+    }
+}`,
+  complexity: "Time O(n!) worst-case backtracking; better with bitmask DP."
+});
+
+PROBLEMS.push({
+  num: 40, title: "Numbers with Same Consecutive Differences", diff: "easy",
+  problem: "Return all n-digit non-negative integers such that the absolute difference between every pair of adjacent digits equals k.",
+  intuition: "Build digit by digit. Once you fix the last digit, the next digit can only be `last + k` or `last - k` (and must be in [0, 9]). When k == 0 the two options collapse — careful not to double-count.",
+  hints: [
+    "Outer loop: starting digit 1..9.",
+    "Recursive step: append last+k if ≤ 9, append last-k if ≥ 0.",
+    "Skip the second option when k == 0."
+  ],
+  tips: [
+    "Since n is small (n ≤ 9), the search tree is tiny.",
+    "If you build numbers as ints (not strings), watch for n=1 — must return 0..9 inclusive."
+  ],
+  code: `/*
+ * Numbers with Same Consecutive Differences. After fixing the last digit d,
+ * the next digit can only be d+k or d-k. So the recursion has at most 2
+ * branches per level (1 if k == 0).
+ */
+void dfs(int cur, int len, int n, int k, List<Integer> res) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (len == n) { res.add(cur); return; }
+
+    int last = cur % 10;
+
+    // ---- 2. BRANCH A: append last + k -----------------------------------
+    if (last + k <= 9) {
+        dfs(cur * 10 + last + k, len + 1, n, k, res);
+    }
+
+    // ---- 3. BRANCH B: append last - k (skip if k==0 to avoid duplicate) -
+    if (k != 0 && last - k >= 0) {
+        dfs(cur * 10 + last - k, len + 1, n, k, res);
+    }
+}
+
+// driver: try every starting digit 1..9
+// for (int s = 1; s <= 9; s++) dfs(s, 1, n, k, res);`,
+  complexity: "Bounded: at most 2 branches per digit, n ≤ 9 → tiny."
+});
+
+PROBLEMS.push({
+  num: 43, title: "Flip Game II (game theory)", diff: "easy",
+  problem: "Given a string of '+' and '-', two players alternate turning any \"++\" into \"--\". The first player who cannot move loses. Return whether the starting player can force a win.",
+  intuition: "Classic minimax. The current player wins if there exists ANY move such that the resulting position is a LOSS for the opponent (recursive call returns false).",
+  hints: [
+    "Iterate i, look for s[i]=='+' && s[i+1]=='+'.",
+    "Flip them, recurse on the new string, then unflip.",
+    "If any opponent-call returns false, return true."
+  ],
+  tips: [
+    "Memoize by the string state (Map<String,Boolean>) for big speedups.",
+    "Sprague–Grundy theory gives a polynomial solution but is far heavier."
+  ],
+  code: `/*
+ * Flip Game II. Minimax: I win iff there exists a move leaving opponent
+ * in a position where they cannot win.
+ */
+boolean canWin(String s) {
+
+    char[] c = s.toCharArray();
+
+    // ---- 1. ENUMERATE EVERY VALID MOVE ----------------------------------
+    for (int i = 0; i + 1 < c.length; i++) {
+        if (c[i] == '+' && c[i + 1] == '+') {
+
+            // ---- 2. APPLY THE MOVE --------------------------------------
+            c[i] = c[i + 1] = '-';
+
+            // ---- 3. RECURSE: can opponent win from here? ----------------
+            boolean opp = canWin(new String(c));
+
+            // ---- 4. UNDO THE MOVE ---------------------------------------
+            c[i] = c[i + 1] = '+';
+
+            // ---- 5. IF OPPONENT CAN'T WIN, I WIN BY MAKING THIS MOVE ----
+            if (!opp) return true;
+        }
+    }
+
+    // ---- 6. NO WINNING MOVE FOUND ---------------------------------------
+    return false;
+}`,
+  complexity: "Exponential without memo; polynomial with memo."
+});
+
+PROBLEMS.push({
+  num: 45, title: "Letter Tile Possibilities", diff: "easy",
+  problem: "Given a string of letters (with possible duplicates), count the number of distinct non-empty sequences you can form using any subset of the tiles.",
+  intuition: "Think of it as: at each step, pick any unused letter. To handle duplicates without enumerating duplicates, use a frequency array — at each level you ‘pick a letter type', not ‘a specific tile'. Decrement the count, recurse, increment back.",
+  hints: [
+    "Build int[26] frequency.",
+    "DFS: for each letter with count > 0, count this pick (total++), decrement, recurse, increment.",
+    "Return total."
+  ],
+  tips: [
+    "Count happens BEFORE the recursive call, because every prefix you've built so far is itself a valid sequence."
+  ],
+  code: `/*
+ * Letter Tile Possibilities. Use a frequency array; at each step pick a
+ * letter type (not a tile). Decrement → recurse → restore.
+ * The increment of 'total' BEFORE the recursive call counts each prefix.
+ */
+int dfs(int[] cnt) {
+
+    int total = 0;
+
+    // ---- 1. ENUMERATE LETTER TYPES (a..z) -------------------------------
+    for (int i = 0; i < 26; i++) {
+
+        if (cnt[i] == 0) continue;                // none left of this letter
+
+        // ---- 2. COUNT this prefix as a sequence ------------------------
+        total++;
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        cnt[i]--;
+        total += dfs(cnt);
+        cnt[i]++;
+    }
+
+    return total;
+}`,
+  complexity: "Bounded by sum of factorials of subset sizes — small for short strings."
+});
+
+PROBLEMS.push({
+  num: 54, title: "Find Unique Binary String", diff: "easy",
+  problem: "Given n binary strings each of length n, return any binary string of length n NOT in the list.",
+  intuition: "Cantor's diagonal trick. For the i-th input string, flip its i-th bit. The resulting string differs from input i at position i, so it cannot equal any of them.",
+  hints: [
+    "Loop i from 0 to n-1.",
+    "Append (s[i].charAt(i) == '0' ? '1' : '0') to the answer.",
+    "Done."
+  ],
+  tips: [
+    "Backtracking would also work: try strings in order until one is missing — but it's needlessly heavy. The diagonal is O(n)."
+  ],
+  code: `/*
+ * Find Unique Binary String — Cantor's diagonal.
+ * For each i, flip the i-th bit of the i-th input. The result differs from
+ * input i at position i, so it can't equal any of them.
+ */
+String findDifferentBinaryString(String[] nums) {
+
+    StringBuilder sb = new StringBuilder();
+
+    // ---- DIAGONAL FLIP --------------------------------------------------
+    for (int i = 0; i < nums.length; i++) {
+        sb.append(nums[i].charAt(i) == '0' ? '1' : '0');
+    }
+
+    return sb.toString();
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 26, title: "Generalized Abbreviation", diff: "easy",
+  problem: "Given a word, return all generalized abbreviations: each character can be either kept or replaced by a count of contiguous abbreviated characters.",
+  intuition: "At every character, two choices: keep it (flushing any pending count first) or extend the running count by 1. Recurse, undo on the way back.",
+  hints: [
+    "State: index i, current count of abbreviated chars, StringBuilder.",
+    "Choice 1: abbreviate this char → increment count, recurse.",
+    "Choice 2: keep this char → if count > 0 append count, then append the char, recurse with count = 0.",
+    "On the way back, restore the StringBuilder."
+  ],
+  tips: [
+    "Save sb.length() at function entry, restore via setLength on exit — avoids juggling two appends.",
+    "If any recursive flow flushes a count, it must be handled at the base case too."
+  ],
+  code: `/*
+ * Generalized Abbreviation. At each char two choices: abbreviate (extend
+ * the running count) OR keep (flush the count first, then append the char).
+ * Save sb.length() at entry and restore on exit for clean undo.
+ */
+void dfs(String w, int i, int count, StringBuilder sb, List<String> res) {
+
+    int len = sb.length();                        // remember to restore
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (i == w.length()) {
+        if (count > 0) sb.append(count);          // flush trailing count
+        res.add(sb.toString());
+        sb.setLength(len);                        // restore
+        return;
+    }
+
+    // ---- 2. CHOICE A: abbreviate this char (extend the run-length) ------
+    dfs(w, i + 1, count + 1, sb, res);
+
+    // ---- 3. CHOICE B: keep this char (flush count, then append) ---------
+    if (count > 0) sb.append(count);
+    sb.append(w.charAt(i));
+    dfs(w, i + 1, 0, sb, res);                    // count resets to 0
+
+    // ---- 4. RESTORE for the caller --------------------------------------
+    sb.setLength(len);
+}`,
+  complexity: "Time O(n · 2^n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 62, title: "Path Sum III", diff: "easy",
+  problem: "In a binary tree, count the number of downward paths (any node to any descendant) whose values sum to a target.",
+  intuition: "Two solutions. Brute force: for every node, DFS downward summing values. Smarter: prefix-sum hashmap — at each node remember running sum from root; the number of valid paths ending here = count of (running - target) seen on the current root-to-node chain.",
+  hints: [
+    "Prefix-sum approach: a HashMap<Long, Integer> from prefix-sum to count.",
+    "On entering a node: curr += node.val; ans += map.get(curr - target).",
+    "Increment map[curr] before recursing.",
+    "Decrement map[curr] when leaving (this is the backtrack step!)."
+  ],
+  tips: [
+    "Initialize map with {0: 1} so a path starting from the root is counted.",
+    "Use long to avoid overflow for adversarial inputs."
+  ],
+  code: `/*
+ * Path Sum III via prefix-sum HashMap. The "backtrack" step is the
+ * decrement of the map AFTER recursion — keeps the map scoped to the
+ * current root-to-node chain.
+ */
+int ans;
+
+void dfs(TreeNode n, long curr, long target, Map<Long, Integer> m) {
+
+    if (n == null) return;
+
+    // ---- 1. EXTEND running prefix sum -----------------------------------
+    curr += n.val;
+
+    // ---- 2. COUNT paths ending here -------------------------------------
+    // Number of valid paths = number of earlier prefixes equal to curr-target.
+    ans += m.getOrDefault(curr - target, 0);
+
+    // ---- 3. PUSH curr into the map (scope: this DFS subtree) ------------
+    m.merge(curr, 1, Integer::sum);
+
+    // ---- 4. RECURSE -----------------------------------------------------
+    dfs(n.left,  curr, target, m);
+    dfs(n.right, curr, target, m);
+
+    // ---- 5. POP — undo the push so siblings don't see this prefix -------
+    m.merge(curr, -1, Integer::sum);
+}`,
+  complexity: "Time O(n). Space O(h)."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 1, title: "N-Queens", diff: "med",
+  problem: "Place N queens on an N×N chessboard so that no two attack each other. Return all valid configurations.",
+  intuition: "Place exactly one queen per row — that automatically eliminates all row conflicts. Now you only need to avoid same-column and same-diagonal placements. Both diagonals can be encoded as numbers: cells with the same r+c are on one diagonal; cells with the same r-c are on the other.",
+  hints: [
+    "Recurse row by row from row=0.",
+    "Maintain three boolean arrays: cols[N], diag1[2N-1] indexed by r+c, diag2[2N-1] indexed by r-c+N-1.",
+    "For each column c, if all three are free, set them, recurse to row+1, then unset.",
+    "Base case row == N → record the board."
+  ],
+  tips: [
+    "Bitmask version (using three ints for cols/diag1/diag2) is dramatically faster — fits the entire state in CPU registers.",
+    "If you only need the COUNT (problem N-Queens II), the bitmask trick `int avail = ~(cols | d1 | d2) & ((1<<N)-1)` then `avail & -avail` to pop one queen at a time runs N=15 in well under a second."
+  ],
+  code: `/*
+ * N-Queens. One queen per row → no row conflicts. Track three sets:
+ *   col[c]      → column c occupied
+ *   d1[r+c]     → "/" diagonal occupied
+ *   d2[r-c+n-1] → "\\" diagonal occupied (offset to keep non-negative)
+ */
+void solveNQueens(int n, List<List<String>> res) {
+    int[] q = new int[n];                         // q[r] = column of queen on row r
+    boolean[] col = new boolean[n];
+    boolean[] d1 = new boolean[2 * n];            // r+c ranges in [0..2n-2]
+    boolean[] d2 = new boolean[2 * n];            // r-c+n-1 ranges in [0..2n-2]
+    dfs(0, n, col, d1, d2, q, res);
+}
+
+void dfs(int r, int n, boolean[] col, boolean[] d1, boolean[] d2,
+         int[] q, List<List<String>> res) {
+
+    // ---- 1. BASE CASE: filled every row --------------------------------
+    if (r == n) {
+        res.add(buildBoard(q, n));
+        return;
+    }
+
+    // ---- 2. TRY EACH COLUMN IN THIS ROW --------------------------------
+    for (int c = 0; c < n; c++) {
+
+        int i1 = r + c;
+        int i2 = r - c + n - 1;
+
+        // ---- 3. PRUNE: any of the 3 conflict sets occupied? ------------
+        if (col[c] || d1[i1] || d2[i2]) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        col[c] = d1[i1] = d2[i2] = true;
+        q[r] = c;
+        dfs(r + 1, n, col, d1, d2, q, res);
+        col[c] = d1[i1] = d2[i2] = false;
+    }
+}`,
+  complexity: "Time O(N!) with massive pruning. Space O(N)."
+});
+
+PROBLEMS.push({
+  num: 2, title: "Sudoku Solver", diff: "med",
+  problem: "Solve a partially-filled 9×9 Sudoku in place. Each row, column, and 3×3 box must contain digits 1–9 exactly once.",
+  intuition: "Find the next empty cell. Try digits 1–9; check three constraints (row, column, 3×3 box). If a digit fits, place it and recurse. If recursion fails, undo and try the next digit. If no digit fits, return false to trigger backtracking up the call stack.",
+  hints: [
+    "Maintain three int[9] bitmasks: rows, cols, boxes — each bit d represents digit d.",
+    "Box index for cell (r,c) is `(r/3)*3 + c/3`.",
+    "Validity: `(rows[r] | cols[c] | boxes[k]) & (1<<d) == 0`.",
+    "When placing: OR the bit in. When undoing: XOR it out."
+  ],
+  tips: [
+    "MRV heuristic: instead of scanning row-by-row, always pick the empty cell with the FEWEST candidates. Drastic speedup for hard puzzles.",
+    "Once you find a solution and the problem says ‘there is a unique solution', return true to short-circuit out of the recursion."
+  ],
+  code: `/*
+ * Sudoku Solver. Three int[9] bitmasks track digit usage in each row,
+ * column, and 3x3 box. A cell's box index is (r/3)*3 + c/3.
+ * Returning false from the loop triggers backtracking up the call stack.
+ */
+boolean solve(char[][] b, int[] rows, int[] cols, int[] boxes) {
+
+    for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) {
+
+        if (b[r][c] != '.') continue;             // skip filled cells
+
+        int k = (r / 3) * 3 + c / 3;              // box index for (r, c)
+
+        // ---- 1. TRY DIGITS 1..9 ----------------------------------------
+        for (int d = 1; d <= 9; d++) {
+            int bit = 1 << d;
+
+            // ---- 2. PRUNE: digit already used in this row/col/box ------
+            if (((rows[r] | cols[c] | boxes[k]) & bit) != 0) continue;
+
+            // ---- 3. CHOOSE -------------------------------------------
+            b[r][c] = (char) ('0' + d);
+            rows[r] |= bit;  cols[c] |= bit;  boxes[k] |= bit;
+
+            // ---- 4. EXPLORE -----------------------------------------
+            if (solve(b, rows, cols, boxes)) return true;   // done!
+
+            // ---- 5. UN-CHOOSE ---------------------------------------
+            b[r][c] = '.';
+            rows[r] ^= bit;  cols[c] ^= bit;  boxes[k] ^= bit;
+        }
+
+        // No digit fit this empty cell → propagate failure up.
+        return false;
+    }
+
+    // Every cell filled → board solved.
+    return true;
+}`,
+  complexity: "Worst-case exponential, but pruning + MRV solves real puzzles in milliseconds."
+});
+
+PROBLEMS.push({
+  num: 55, title: "Valid Sudoku", diff: "med",
+  problem: "Determine if a partially-filled 9×9 board is a valid Sudoku state (no rule violations among the placed digits).",
+  intuition: "No backtracking needed — this is a single pass. Walk every cell and maintain three sets of seen digits per row, column, and box. If any digit repeats inside the same row/col/box, return false.",
+  hints: [
+    "Use int[9] bitmasks for rows/cols/boxes.",
+    "For each non-'.' cell, compute the bit and check it's not already set.",
+    "Set the bit and continue."
+  ],
+  tips: [
+    "This is sometimes asked as a warm-up before Sudoku Solver — the same indexing logic carries over."
+  ],
+  code: `/*
+ * Valid Sudoku — single pass; no backtracking needed.
+ * Three bitmasks per kind (row/col/box). If any digit's bit is already set
+ * in any of its three sets, the board is invalid.
+ */
+boolean isValidSudoku(char[][] b) {
+
+    int[] rows = new int[9];
+    int[] cols = new int[9];
+    int[] box  = new int[9];
+
+    for (int r = 0; r < 9; r++) for (int c = 0; c < 9; c++) {
+
+        if (b[r][c] == '.') continue;             // empty cell
+
+        int bit = 1 << (b[r][c] - '0');           // bit for this digit
+        int k = (r / 3) * 3 + c / 3;              // box index
+
+        // ---- DUPLICATE CHECK (row OR col OR box) ------------------------
+        if (((rows[r] | cols[c] | box[k]) & bit) != 0) return false;
+
+        // ---- MARK THE DIGIT IN ALL THREE SETS --------------------------
+        rows[r] |= bit;
+        cols[c] |= bit;
+        box[k]  |= bit;
+    }
+
+    return true;
+}`,
+  complexity: "Time O(81). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 9, title: "Rat in a Maze", diff: "med",
+  problem: "Given an N×N maze where 1 = open and 0 = blocked, return all paths from (0,0) to (N-1,N-1) using moves D/R/U/L without revisiting cells.",
+  intuition: "Classic grid DFS with a `visited` matrix. Move in 4 directions; record the move letter in the current path; when reaching the destination, store the path; restore visited state on the way back.",
+  hints: [
+    "Mark visited[r][c] = true before recursing.",
+    "Try each of D, R, U, L (in that order so output is lexicographic).",
+    "On success at (N-1,N-1) add a copy of the path string.",
+    "Always reset visited[r][c] = false on the way back."
+  ],
+  tips: [
+    "Mutating the maze itself (set m[r][c] = 0 / restore) avoids allocating a visited matrix.",
+    "Direction arrays make the code far cleaner than four separate if-blocks."
+  ],
+  code: `/*
+ * Rat in a Maze. Grid DFS with a visited[] matrix. Try moves in lexicographic
+ * order (D, L, R, U) so the output list is naturally sorted.
+ */
+int[][] D = {{1,0}, {0,-1}, {0,1}, {-1,0}};       // D, L, R, U deltas
+char[]  C = {'D',  'L',     'R',    'U'};
+
+void dfs(int[][] m, int r, int c, boolean[][] vis,
+         StringBuilder p, List<String> res) {
+
+    int n = m.length;
+
+    // ---- 1. BASE CASE: reached destination -----------------------------
+    if (r == n - 1 && c == n - 1) {
+        res.add(p.toString());
+        return;
+    }
+
+    // ---- 2. CHOOSE: mark current cell visited --------------------------
+    vis[r][c] = true;
+
+    // ---- 3. TRY EACH OF THE 4 DIRECTIONS -------------------------------
+    for (int d = 0; d < 4; d++) {
+        int nr = r + D[d][0];
+        int nc = c + D[d][1];
+
+        // ---- 4. PRUNE invalid moves ------------------------------------
+        if (nr < 0 || nc < 0 || nr >= n || nc >= n) continue;
+        if (vis[nr][nc] || m[nr][nc] == 0) continue;
+
+        // ---- 5. EXPLORE -> UN-CHOOSE -----------------------------------
+        p.append(C[d]);
+        dfs(m, nr, nc, vis, p, res);
+        p.deleteCharAt(p.length() - 1);
+    }
+
+    // ---- 6. UN-CHOOSE: unmark for sibling branches ---------------------
+    vis[r][c] = false;
+}`,
+  complexity: "Worst-case O(4^(N²))."
+});
+
+PROBLEMS.push({
+  num: 16, title: "Word Search", diff: "med",
+  problem: "Given a board of characters and a word, return true if the word can be constructed from adjacent (horizontally/vertically) cells, where each cell is used at most once.",
+  intuition: "DFS from every starting cell whose character matches word[0]. To track visited without an extra array, temporarily overwrite the cell with a sentinel like '#', then restore it on the way back.",
+  hints: [
+    "Recurse with index i into the word.",
+    "If i == word.length() → success.",
+    "Bounds check + character check first; if any fail, return false.",
+    "Save char, set cell to '#', try 4 neighbors with i+1, restore char."
+  ],
+  tips: [
+    "Short-circuit with `||` chain of 4 calls — quits on the first success.",
+    "For multiple word search (Word Search II) use a Trie + DFS instead of running this for each word."
+  ],
+  code: `/*
+ * Word Search. Try every starting cell that matches word[0]. Use a sentinel
+ * '#' to mark visited cells in place, restoring the original char on the way
+ * back — saves an extra visited[][] allocation.
+ */
+boolean exist(char[][] b, String w) {
+
+    // Try every starting cell.
+    for (int r = 0; r < b.length; r++)
+        for (int c = 0; c < b[0].length; c++)
+            if (dfs(b, r, c, w, 0)) return true;
+    return false;
+}
+
+boolean dfs(char[][] b, int r, int c, String w, int i) {
+
+    // ---- 1. BASE CASE: matched the entire word --------------------------
+    if (i == w.length()) return true;
+
+    // ---- 2. PRUNE: out of bounds or wrong character ---------------------
+    if (r < 0 || c < 0 || r >= b.length || c >= b[0].length) return false;
+    if (b[r][c] != w.charAt(i)) return false;
+
+    // ---- 3. CHOOSE: stamp sentinel so we don't reuse this cell ---------
+    char tmp = b[r][c];
+    b[r][c] = '#';
+
+    // ---- 4. EXPLORE in 4 directions; short-circuit on success ----------
+    boolean ok = dfs(b, r + 1, c, w, i + 1)
+              || dfs(b, r - 1, c, w, i + 1)
+              || dfs(b, r, c + 1, w, i + 1)
+              || dfs(b, r, c - 1, w, i + 1);
+
+    // ---- 5. UN-CHOOSE: restore the cell --------------------------------
+    b[r][c] = tmp;
+    return ok;
+}`,
+  complexity: "O(M·N · 4^L) where L is word length."
+});
+
+PROBLEMS.push({
+  num: 10, title: "Word Break II (return all sentences)", diff: "med",
+  problem: "Given a string s and a dictionary, return all possible sentences (space-separated words) such that every word is in the dictionary.",
+  intuition: "DFS on starting index. For each split point j > i, if s[i..j) is a dictionary word, recurse from j. The naive recursion has overlapping subproblems (the suffix starting at i is solved once but may be reached many ways), so memoize by index.",
+  hints: [
+    "Memo: Map<Integer, List<String>>. Key = start index. Value = all sentences for the suffix s[i..].",
+    "Base: if i == s.length, return [\"\"] (one empty sentence).",
+    "For each j: if s.substring(i, j) is in dict, prepend it to every sentence from dfs(j)."
+  ],
+  tips: [
+    "Without memoization, this TLEs on adversarial inputs (e.g., \"aaaa...aab\" with words {a, aa, aaa,...}).",
+    "Convert dict to HashSet for O(1) lookup."
+  ],
+  code: `/*
+ * Word Break II. DFS by start index, MEMOIZED on the index.
+ * memo.get(i) caches every sentence buildable from suffix s[i..].
+ * Without memo, repeated work explodes (e.g., "aaaa...aab" + dict {a, aa,...}).
+ */
+Map<Integer, List<String>> memo = new HashMap<>();
+
+List<String> dfs(String s, int i, Set<String> dict) {
+
+    // ---- 1. MEMO HIT ----------------------------------------------------
+    if (memo.containsKey(i)) return memo.get(i);
+
+    List<String> out = new ArrayList<>();
+
+    // ---- 2. BASE CASE: end of string yields one empty sentence ---------
+    if (i == s.length()) {
+        out.add("");
+        memo.put(i, out);
+        return out;
+    }
+
+    // ---- 3. TRY EVERY PREFIX [i..j) -----------------------------------
+    for (int j = i + 1; j <= s.length(); j++) {
+
+        String w = s.substring(i, j);
+        if (!dict.contains(w)) continue;          // not a word → skip
+
+        // ---- 4. RECURSE on the suffix; prepend w to each tail ---------
+        for (String tail : dfs(s, j, dict)) {
+            out.add(w + (tail.isEmpty() ? "" : " " + tail));
+        }
+    }
+
+    memo.put(i, out);
+    return out;
+}`,
+  complexity: "Time O(n^2 · # of sentences). Output is the dominating term."
+});
+
+PROBLEMS.push({
+  num: 13, title: "Palindrome Partitioning", diff: "med",
+  problem: "Partition string s such that every substring of the partition is a palindrome. Return all possible partitionings.",
+  intuition: "Make a cut after some position. Whatever's between the previous cut and this one must be a palindrome. Recurse on the suffix.",
+  hints: [
+    "DFS with index i. For j from i to n-1, if s[i..j] is a palindrome, push it to path and recurse from j+1.",
+    "Base case: i == n → record a copy of the path.",
+    "Pop the last entry on the way back."
+  ],
+  tips: [
+    "Precompute pal[i][j] in O(n²) DP for instant palindrome checks during DFS.",
+    "isPalindrome with two pointers is fine for typical inputs."
+  ],
+  code: `/*
+ * Palindrome Partitioning. Cut at every index where the prefix is a
+ * palindrome, then recurse on the rest of the string.
+ */
+void dfs(String s, int i, List<String> path, List<List<String>> res) {
+
+    // ---- 1. BASE CASE: consumed the whole string -----------------------
+    if (i == s.length()) {
+        res.add(new ArrayList<>(path));
+        return;
+    }
+
+    // ---- 2. TRY EVERY CUT POINT j (substring s[i..j]) ------------------
+    for (int j = i; j < s.length(); j++) {
+
+        // ---- 3. PRUNE: only keep palindrome prefixes -------------------
+        if (!isPal(s, i, j)) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        path.add(s.substring(i, j + 1));
+        dfs(s, j + 1, path, res);
+        path.remove(path.size() - 1);
+    }
+}
+
+// Two-pointer palindrome check.
+boolean isPal(String s, int l, int r) {
+    while (l < r) if (s.charAt(l++) != s.charAt(r--)) return false;
+    return true;
+}`,
+  complexity: "Time O(n · 2^n) worst case."
+});
+
+PROBLEMS.push({
+  num: 17, title: "Restore IP Addresses", diff: "med",
+  problem: "Given a string of digits, return all valid IPv4 addresses you can form by inserting three dots.",
+  intuition: "Place 3 dots, producing 4 segments. Each segment: 1–3 characters, ≤ 255, no leading zero unless the segment is exactly \"0\". DFS over segment count and current index.",
+  hints: [
+    "State: index i, segments placed so far.",
+    "Loop length len in {1,2,3}; build segment s[i..i+len).",
+    "Skip leading-zero violations: if length>1 and starts with '0' → break (longer lengths also invalid).",
+    "Skip > 255.",
+    "After 4 segments, check we used the whole string."
+  ],
+  tips: [
+    "Use StringBuilder; remember its length to undo.",
+    "Trim a trailing '.' off the final result before adding."
+  ],
+  code: `/*
+ * Restore IP Addresses. We must place exactly 3 dots, producing 4 segments.
+ * Each segment: 1..3 chars, value <= 255, no leading zero (except "0" alone).
+ */
+void dfs(String s, int i, int parts, StringBuilder sb, List<String> res) {
+
+    // ---- 1. BASE CASE: 4 segments placed -------------------------------
+    if (parts == 4) {
+        if (i == s.length()) {
+            // strip trailing '.' from the last segment we appended
+            res.add(sb.substring(0, sb.length() - 1));
+        }
+        return;
+    }
+
+    // ---- 2. TRY SEGMENT LENGTHS 1, 2, 3 --------------------------------
+    for (int len = 1; len <= 3 && i + len <= s.length(); len++) {
+
+        String seg = s.substring(i, i + len);
+
+        // ---- 3. PRUNE: leading zero violations -------------------------
+        if (seg.length() > 1 && seg.charAt(0) == '0') break;
+
+        // ---- 4. PRUNE: value out of range ------------------------------
+        if (Integer.parseInt(seg) > 255) break;
+
+        // ---- 5. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        int prev = sb.length();
+        sb.append(seg).append('.');
+        dfs(s, i + len, parts + 1, sb, res);
+        sb.setLength(prev);                       // restore
+    }
+}`,
+  complexity: "Bounded — at most 3^4 = 81 partitions to check."
+});
+
+PROBLEMS.push({
+  num: 18, title: "Split Array into Fibonacci Sequence", diff: "med",
+  problem: "Given a string of digits, split it into a sequence of integers such that each (after the first two) equals the sum of the previous two; each integer fits in a 32-bit signed int. Return any valid sequence of length ≥ 3 (or empty if none).",
+  intuition: "Once you choose the first two numbers, every subsequent number is determined — you just check whether the string continues with the right value. DFS over the choice of the first two numbers.",
+  hints: [
+    "Loop the lengths of the first two numbers; if they parse correctly, attempt to extend.",
+    "From index i with the two most recent values a, b, the next must be a+b. Try matching that exact sequence of digits.",
+    "Reject leading-zero numbers (\"0\" is OK, \"01\" is not).",
+    "Reject numbers > Integer.MAX_VALUE."
+  ],
+  tips: [
+    "Pruning: if the current parsed prefix already exceeds a+b, break the inner loop — no longer prefix will work."
+  ],
+  code: `/*
+ * Split into Fibonacci Sequence. Once first two numbers are fixed, every
+ * subsequent number is forced to equal the sum of the previous two.
+ * We only branch over the first two numbers (effectively).
+ */
+boolean dfs(String s, int i, List<Integer> out) {
+
+    // ---- 1. BASE CASE: end of string; valid iff >=3 numbers --------------
+    if (i == s.length()) return out.size() >= 3;
+
+    long num = 0;
+
+    // ---- 2. EXTEND THE CURRENT NUMBER ONE DIGIT AT A TIME ---------------
+    for (int j = i; j < s.length(); j++) {
+
+        // No leading zero (unless the number is just "0").
+        if (j > i && s.charAt(i) == '0') break;
+
+        num = num * 10 + s.charAt(j) - '0';
+
+        // 32-bit signed overflow guard.
+        if (num > Integer.MAX_VALUE) break;
+
+        int n = out.size();
+
+        // ---- 3. PRUNE: too big to be the next Fibonacci value ---------
+        if (n >= 2 && num > (long) out.get(n - 1) + out.get(n - 2)) break;
+
+        // ---- 4. ACCEPT THIS NUMBER (or always for first 2) -------------
+        if (n < 2 || num == (long) out.get(n - 1) + out.get(n - 2)) {
+
+            // ---- 5. CHOOSE -> EXPLORE -> UN-CHOOSE ---------------------
+            out.add((int) num);
+            if (dfs(s, j + 1, out)) return true;
+            out.remove(out.size() - 1);
+        }
+    }
+    return false;
+}`,
+  complexity: "Effectively O(n^3) with pruning."
+});
+
+PROBLEMS.push({
+  num: 19, title: "Matchsticks to Square", diff: "med",
+  problem: "Given an array of matchstick lengths, decide whether you can use ALL of them to form a square (4 sides of equal length).",
+  intuition: "If sum % 4 != 0, impossible. Otherwise the target side is sum/4. We have 4 buckets and need to place every stick in a bucket without exceeding target. Sort descending so we fail fast on big sticks. Apply ‘equal-sum siblings' pruning to avoid symmetric branches.",
+  hints: [
+    "Quick reject: sum%4 != 0 or any stick > target.",
+    "Sort descending.",
+    "DFS with sides[4]. For each stick i, try each side s; skip if sides[s]+m[i] > target.",
+    "If a previous side has the SAME current sum, skip — would explore an equivalent branch."
+  ],
+  tips: [
+    "Without the equal-sum-siblings prune you'll TLE on adversarial inputs.",
+    "Same trick generalizes to k-buckets (Partition to K Equal Sum Subsets)."
+  ],
+  code: `/*
+ * Matchsticks to Square. Sort descending → fail fast on big sticks.
+ * EQUAL-SUM SIBLING SKIP: if two sides currently have equal sum, placing
+ * the stick in either is symmetric — try only one.
+ */
+boolean makesquare(int[] m) {
+
+    // ---- 1. QUICK REJECTS ----------------------------------------------
+    int sum = 0; for (int x : m) sum += x;
+    if (sum == 0 || sum % 4 != 0) return false;
+
+    // Sort descending so the biggest sticks are placed first.
+    Arrays.sort(m);
+    for (int l = 0, r = m.length - 1; l < r; l++, r--) {
+        int t = m[l]; m[l] = m[r]; m[r] = t;
+    }
+
+    return dfs(m, 0, new int[4], sum / 4);
+}
+
+boolean dfs(int[] m, int i, int[] sides, int target) {
+
+    // ---- 2. BASE CASE: all sticks placed -------------------------------
+    if (i == m.length) {
+        return sides[0] == target && sides[1] == target && sides[2] == target;
+        // sides[3] follows because total sum == 4*target.
+    }
+
+    // ---- 3. TRY EACH OF THE 4 SIDES ------------------------------------
+    for (int s = 0; s < 4; s++) {
+
+        if (sides[s] + m[i] > target) continue;   // can't fit
+
+        // ---- 4. EQUAL-SUM SIBLING SKIP ---------------------------------
+        boolean dup = false;
+        for (int k = 0; k < s; k++) if (sides[k] == sides[s]) { dup = true; break; }
+        if (dup) continue;
+
+        // ---- 5. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        sides[s] += m[i];
+        if (dfs(m, i + 1, sides, target)) return true;
+        sides[s] -= m[i];
+    }
+    return false;
+}`,
+  complexity: "Worst-case O(4^n) but in practice tiny with pruning."
+});
+
+PROBLEMS.push({
+  num: 20, title: "Fair Distribution of Cookies", diff: "med",
+  problem: "Distribute every cookie to one of k children. Minimize the unfairness, defined as the maximum total any single child receives.",
+  intuition: "Same shape as Matchsticks but the goal changes: minimize the max bucket. DFS over cookies, assigning each one to some kid. Track the running best to prune branches where some kid already exceeds best.",
+  hints: [
+    "kid[k] holds running total per child.",
+    "DFS over cookie index; for each, try each child.",
+    "Symmetry prune: when a kid's current sum is 0, only ONE empty kid needs trying — break after.",
+    "Bound: if any kid already ≥ best, return — no improvement possible."
+  ],
+  tips: [
+    "Sort cookies descending → big cookies placed first → tighter early bounds → more pruning."
+  ],
+  code: `/*
+ * Fair Distribution of Cookies. Same shape as Matchsticks; goal is to
+ * minimize the maximum bucket. Strong pruning: cut any branch that already
+ * exceeds the running 'best'.
+ */
+int best;
+
+int distributeCookies(int[] cookies, int k) {
+
+    // Sort descending so big cookies anchor each kid early.
+    Arrays.sort(cookies);
+    for (int l = 0, r = cookies.length - 1; l < r; l++, r--) {
+        int t = cookies[l]; cookies[l] = cookies[r]; cookies[r] = t;
+    }
+
+    best = Integer.MAX_VALUE;
+    dfs(cookies, 0, new int[k]);
+    return best;
+}
+
+void dfs(int[] cookies, int i, int[] kid) {
+
+    // ---- 1. BASE CASE: all cookies placed ------------------------------
+    if (i == cookies.length) {
+        int m = 0; for (int x : kid) m = Math.max(m, x);
+        best = Math.min(best, m);
+        return;
+    }
+
+    // ---- 2. TRY EACH KID -----------------------------------------------
+    for (int j = 0; j < kid.length; j++) {
+
+        // ---- 3. PRUNE: this kid would meet/exceed best -----------------
+        if (kid[j] + cookies[i] >= best) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        kid[j] += cookies[i];
+        dfs(cookies, i + 1, kid);
+        kid[j] -= cookies[i];
+
+        // ---- 5. SYMMETRY PRUNE -----------------------------------------
+        // If this kid was empty, all other empty kids are equivalent.
+        if (kid[j] == 0) break;
+    }
+}`,
+  complexity: "Exponential in n, but very fast in practice."
+});
+
+PROBLEMS.push({
+  num: 22, title: "Unique Paths III", diff: "med",
+  problem: "On a grid where 1 = start, 2 = end, 0 = empty walkable, -1 = blocked, count distinct paths from 1 to 2 that walk on EVERY non-blocked cell exactly once.",
+  intuition: "A grid DFS with a single twist: it's not enough to reach the destination — you must have visited every walkable cell. Count walkable cells up front; tick it down as you enter cells; only count a path when reaching the target with zero left.",
+  hints: [
+    "Count empty cells (treat start and target as empty for the count).",
+    "DFS from start. Mark visited cells with -1 (sentinel). Decrement remaining.",
+    "When at target: count++ only if remaining == 0.",
+    "On the way back, restore the cell value and increment remaining."
+  ],
+  tips: [
+    "Use bitmask DP for grids up to ~20 cells if you want polynomial in cells but exponential in cells — same complexity, cleaner state."
+  ],
+  code: `/*
+ * Unique Paths III. Walk every empty cell exactly once.
+ * Count walkable cells beforehand. Use sentinel -1 to mark visited cells.
+ * 'left' tracks how many walkable cells remain to be stepped on.
+ */
+int sr, sc, er, ec, ans;
+
+int uniquePathsIII(int[][] g) {
+
+    // ---- 1. PRE-PASS: count walkable cells, find start/end -------------
+    int empties = 0;
+    for (int r = 0; r < g.length; r++) for (int c = 0; c < g[0].length; c++) {
+        if (g[r][c] == 0)      empties++;
+        else if (g[r][c] == 1) { sr = r; sc = c; empties++; }
+        else if (g[r][c] == 2) { er = r; ec = c; empties++; }
+    }
+
+    ans = 0;
+    dfs(g, sr, sc, empties);                      // 'left' starts at empties
+    return ans;
+}
+
+void dfs(int[][] g, int r, int c, int left) {
+
+    // ---- 2. PRUNE: out of bounds or blocked ----------------------------
+    if (r < 0 || c < 0 || r >= g.length || c >= g[0].length || g[r][c] == -1) return;
+
+    // ---- 3. REACHED TARGET? ONLY COUNT IF EVERY EMPTY VISITED ----------
+    if (r == er && c == ec) {
+        if (left == 1) ans++;                     // 1 means: this is the last
+        return;
+    }
+
+    // ---- 4. CHOOSE: mark visited via sentinel --------------------------
+    int save = g[r][c];
+    g[r][c] = -1;
+
+    // ---- 5. EXPLORE 4 directions ---------------------------------------
+    dfs(g, r + 1, c, left - 1);
+    dfs(g, r - 1, c, left - 1);
+    dfs(g, r, c + 1, left - 1);
+    dfs(g, r, c - 1, left - 1);
+
+    // ---- 6. UN-CHOOSE: restore the cell --------------------------------
+    g[r][c] = save;
+}`,
+  complexity: "Exponential in grid size; fine for small grids."
+});
+
+PROBLEMS.push({
+  num: 12, title: "Partition Equal Subset Sum", diff: "med",
+  problem: "Given a non-empty array, decide whether you can partition it into two subsets with equal sum.",
+  intuition: "If total sum is odd → impossible. Else target = total/2; the question is ‘exists a subset summing to target?'. Plain backtracking exists but DP is canonical: 1D bitset / boolean array.",
+  hints: [
+    "Compute sum. Reject if odd. Target = sum/2.",
+    "boolean[] dp of size target+1; dp[0] = true.",
+    "For each x in nums: iterate j from target down to x; dp[j] |= dp[j - x].",
+    "Iterate j top-down so we don't reuse x within one iteration."
+  ],
+  tips: [
+    "Pure backtracking with subset-sum recursion + memoization works too, with the same time complexity.",
+    "BitSet in Java is even faster than a boolean[]."
+  ],
+  code: `/*
+ * Partition Equal Subset Sum → 1-D bitset DP.
+ * dp[j] = can we form sum j with some subset?
+ * Iterate j top-down so each x is used at most once.
+ */
+boolean canPartition(int[] nums) {
+
+    // ---- 1. ODD SUM CAN'T BE SPLIT EVENLY ------------------------------
+    int sum = 0; for (int x : nums) sum += x;
+    if ((sum & 1) != 0) return false;
+
+    int t = sum / 2;
+
+    // ---- 2. dp[j] = "j is reachable" -----------------------------------
+    boolean[] dp = new boolean[t + 1];
+    dp[0] = true;                                 // sum 0 always reachable
+
+    // ---- 3. CLASSIC 0/1 KNAPSACK FILL ----------------------------------
+    // top-down inner loop prevents using the same x twice
+    for (int x : nums) {
+        for (int j = t; j >= x; j--) {
+            dp[j] |= dp[j - x];
+        }
+    }
+    return dp[t];
+}`,
+  complexity: "Time O(n · sum). Space O(sum)."
+});
+
+PROBLEMS.push({
+  num: 44, title: "Partition to K Equal Sum Subsets", diff: "med",
+  problem: "Decide whether nums can be partitioned into k subsets with equal sum.",
+  intuition: "Identical structure to Matchsticks (which is k=4). Sort descending, assign each number to one of k buckets, prune aggressively.",
+  hints: [
+    "Reject if sum%k != 0 or max(nums) > target.",
+    "Sort nums descending.",
+    "DFS over index i, trying each bucket s.",
+    "Equal-bucket sibling skip (`sides[s] == sides[s-1]` continue).",
+    "Empty-bucket symmetry skip (`if (sides[s]+nums[i]==target after place) ... else if (sides[s]==0) break after fail`)."
+  ],
+  tips: [
+    "Most failing branches happen because of misordered nums — sort descending is non-negotiable.",
+    "An alternative bitmask DP O(n · 2^n) handles slightly different constraints."
+  ],
+  code: `/*
+ * Partition to K Equal Sum Subsets. Bucket-fill exactly like Matchsticks.
+ * Sort, then place numbers from largest down. Apply equal-bucket and
+ * empty-bucket pruning to crush the search space.
+ */
+boolean canPartitionKSubsets(int[] nums, int k) {
+
+    // ---- 1. QUICK REJECTS ----------------------------------------------
+    int sum = 0; for (int x : nums) sum += x;
+    if (sum % k != 0) return false;
+    int target = sum / k;
+
+    Arrays.sort(nums);
+    if (nums[nums.length - 1] > target) return false;
+
+    int[] sides = new int[k];
+    return dfs(nums, nums.length - 1, sides, target);   // start from the largest
+}
+
+boolean dfs(int[] nums, int i, int[] sides, int target) {
+
+    // ---- 2. BASE CASE: all numbers placed ------------------------------
+    if (i < 0) return true;
+
+    // ---- 3. TRY EACH BUCKET --------------------------------------------
+    for (int s = 0; s < sides.length; s++) {
+
+        if (sides[s] + nums[i] > target) continue;
+
+        // EQUAL-BUCKET DEDUP: skip a bucket equal to its left neighbor
+        if (s > 0 && sides[s] == sides[s - 1]) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        sides[s] += nums[i];
+        if (dfs(nums, i - 1, sides, target)) return true;
+        sides[s] -= nums[i];
+
+        // EMPTY-BUCKET PRUNE: if this bucket was empty before placing and
+        // the recursion failed, no other empty bucket will succeed either.
+        if (sides[s] == 0) break;
+    }
+    return false;
+}`,
+  complexity: "Exponential worst-case, very fast typically."
+});
+
+PROBLEMS.push({
+  num: 27, title: "Strobogrammatic Number II", diff: "med",
+  problem: "Return all strobogrammatic numbers of length n (numbers that look the same upside down: 0,1,8,6↔9).",
+  intuition: "Build from outside-in. Each pair on the outside must mirror: (0,0), (1,1), (8,8), (6,9), (9,6). The innermost ‘pair' is either a single character (n odd: 0/1/8) or empty (n even). Outer pair cannot be (0,0) because of leading zero — UNLESS we are inside a larger frame.",
+  hints: [
+    "Recurse on n decreasing by 2 each step.",
+    "Base: n=0 → [\"\"], n=1 → [\"0\",\"1\",\"8\"].",
+    "For each inner string s, prepend/append each pair. Skip (0,0) on the outermost call only.",
+    "Pass the original total length so you know when you're outermost."
+  ],
+  tips: [
+    "Iterative DP works too — fill pair by pair."
+  ],
+  code: `/*
+ * Strobogrammatic Numbers. Build outside-in. Each layer adds a mirror pair.
+ * Innermost layer is single-char (n odd) or empty (n even).
+ * (0,0) is forbidden as the OUTERMOST pair (leading zero).
+ */
+List<String> strobogrammaticNumber(int n) { return build(n, n); }
+
+List<String> build(int n, int total) {
+
+    // ---- 1. BASE CASES --------------------------------------------------
+    if (n == 0) return new ArrayList<>(List.of(""));
+    if (n == 1) return new ArrayList<>(List.of("0", "1", "8"));
+
+    // ---- 2. RECURSE on the inner string (length n-2) -------------------
+    List<String> inner = build(n - 2, total);
+    List<String> res = new ArrayList<>();
+
+    // ---- 3. WRAP each inner with each valid mirror pair ----------------
+    for (String s : inner) {
+        if (n != total) res.add("0" + s + "0");   // (0,0) only when not outermost
+        res.add("1" + s + "1");
+        res.add("6" + s + "9");
+        res.add("8" + s + "8");
+        res.add("9" + s + "6");
+    }
+    return res;
+}`,
+  complexity: "Output size is the dominant term; ~O(5^(n/2))."
+});
+
+PROBLEMS.push({
+  num: 28, title: "Confusing Number II", diff: "med",
+  problem: "Count integers in [1, N] that, when rotated 180°, become a different valid number. Allowed digits: 0,1,6,8,9 with rotations 0↔0, 1↔1, 8↔8, 6↔9, 9↔6.",
+  intuition: "Generate every number ≤ N built from {0,1,6,8,9} (no leading zero). For each, compute the rotation. Count it if rotation != original.",
+  hints: [
+    "DFS appending one of {0,1,6,8,9} per level.",
+    "Skip a leading 0 — handle by passing ‘has any digit yet?' or by starting the loop at 1 for the first digit.",
+    "Compute rotation by digit-reversal with the rotation map.",
+    "Stop a branch once cur > N."
+  ],
+  tips: [
+    "Use long when multiplying by 10 to avoid overflow on edge cases."
+  ],
+  code: `/*
+ * Confusing Number II. Generate every number <= N built from {0,1,6,8,9}
+ * and count those whose 180-degree rotation differs from the original.
+ */
+int[] digits = {0, 1, 6, 8, 9};
+Map<Integer, Integer> rot = Map.of(0, 0, 1, 1, 6, 9, 8, 8, 9, 6);
+int count;
+
+int confusingNumberII(int n) { count = 0; dfs(0L, n); return count; }
+
+void dfs(long cur, long n) {
+
+    // ---- 1. PRUNE: out of range ----------------------------------------
+    if (cur > n) return;
+
+    // ---- 2. COUNT current number if rotation differs -------------------
+    if (cur != 0 && rotate(cur) != cur) count++;
+
+    // ---- 3. EXTEND by appending each allowed digit ---------------------
+    for (int d : digits) {
+        if (cur == 0 && d == 0) continue;         // skip leading zero
+        dfs(cur * 10 + d, n);
+    }
+}
+
+// Rotate by reading digits LSB→MSB through the rotation map.
+long rotate(long x) {
+    long r = 0;
+    while (x > 0) {
+        r = r * 10 + rot.get((int) (x % 10));
+        x /= 10;
+    }
+    return r;
+}`,
+  complexity: "Bounded by 5^digits(N)."
+});
+
+PROBLEMS.push({
+  num: 33, title: "Factor Combinations", diff: "med",
+  problem: "Given an integer n > 1, return all combinations of its factors (each factor ≥ 2). Each combination should not be a permutation of another.",
+  intuition: "Try divisors from `start` upward. For each divisor i where i divides n, push (i, n/i) as a candidate combination, then recurse into the deeper factorization of n/i (with `start = i` to keep things sorted and dedup'd).",
+  hints: [
+    "Loop i from `start` while i*i ≤ n.",
+    "If n % i != 0 skip.",
+    "Add [i, n/i] as a result; then recurse on n/i with start = i to extend the path.",
+    "Don't forget to pop both items on the way back when you peeked one combo."
+  ],
+  tips: [
+    "i*i ≤ n bound keeps things sorted and avoids checking past sqrt(n)."
+  ],
+  code: `/*
+ * Factor Combinations. Try divisors i from 'start' upward while i*i <= n.
+ * Each (i, n/i) is a factorization; we also recurse on n/i to factor further.
+ */
+void dfs(int n, int start, List<Integer> path, List<List<Integer>> res) {
+
+    for (int i = start; i * i <= n; i++) {
+
+        if (n % i != 0) continue;                 // not a factor
+
+        // ---- 1. RECORD CURRENT FACTORIZATION (i, n/i) ------------------
+        path.add(i);
+        path.add(n / i);
+        res.add(new ArrayList<>(path));
+        path.remove(path.size() - 1);             // pop n/i (we'll recurse)
+
+        // ---- 2. RECURSE: factor n/i further, starting from i -----------
+        dfs(n / i, i, path, res);
+
+        // ---- 3. UN-CHOOSE: pop i ---------------------------------------
+        path.remove(path.size() - 1);
+    }
+}`,
+  complexity: "Roughly O(sqrt(n) · # of factorizations)."
+});
+
+PROBLEMS.push({
+  num: 34, title: "Android Unlock Patterns", diff: "med",
+  problem: "Count Android unlock patterns of length in [m, n] on a 3×3 keypad. A pattern visits each key at most once. Skipping a key (e.g., 1→3) requires the key in between (2) to be already used.",
+  intuition: "DFS from each starting key. The trick: precompute a `skip[a][b]` table holding the key that must be visited between a and b (0 if none).",
+  hints: [
+    "Precompute skip[10][10] for the diagonals/edges (skip[1][3]=2, [1][7]=4, [1][9]=5, [3][9]=6, [7][9]=8, [2][8]=5, [4][6]=5).",
+    "DFS(cur, remain): if remain==0 return 1.",
+    "For each next 1..9: if !visited and (skip[cur][next]==0 or visited[skip[cur][next]]) recurse."
+  ],
+  tips: [
+    "Symmetry trick: 1,3,7,9 corners are equivalent; 2,4,6,8 edges equivalent; 5 unique. Compute once for 1, once for 2, once for 5; combine as 4·c1 + 4·c2 + 1·c5.",
+    "The skip table really is the only thing that distinguishes this from a generic permutation count."
+  ],
+  code: `/*
+ * Android Unlock Patterns.
+ * skip[a][b] = the key that must be visited BEFORE jumping from a to b
+ *              (e.g., skip[1][3] = 2). 0 means no such key.
+ * Symmetry: corners (1,3,7,9), edges (2,4,6,8), center (5) → multiply by 4/4/1.
+ */
+int[][] skip = new int[10][10];
+
+int numberOfPatterns(int m, int n) {
+
+    // ---- 1. POPULATE 'skip' TABLE --------------------------------------
+    skip[1][3] = skip[3][1] = 2;                  // horizontal corners
+    skip[1][7] = skip[7][1] = 4;                  // vertical corners
+    skip[3][9] = skip[9][3] = 6;
+    skip[7][9] = skip[9][7] = 8;
+    // center (5) bridges all diagonal/edge skips
+    skip[1][9] = skip[9][1] = skip[3][7] = skip[7][3] =
+    skip[2][8] = skip[8][2] = skip[4][6] = skip[6][4] = 5;
+
+    boolean[] vis = new boolean[10];
+    int total = 0;
+
+    // ---- 2. SUM OVER LENGTHS [m..n], EXPLOITING SYMMETRY ---------------
+    for (int len = m; len <= n; len++) {
+        total += dfs(vis, 1, len - 1) * 4;        // any of 4 corners
+        total += dfs(vis, 2, len - 1) * 4;        // any of 4 edges
+        total += dfs(vis, 5, len - 1);            // single center
+    }
+    return total;
+}
+
+int dfs(boolean[] vis, int cur, int remain) {
+
+    // ---- 3. BASE CASE: pattern long enough -----------------------------
+    if (remain == 0) return 1;
+
+    int total = 0;
+    vis[cur] = true;
+
+    // ---- 4. TRY EVERY NEXT KEY -----------------------------------------
+    for (int next = 1; next <= 9; next++) {
+
+        if (vis[next]) continue;
+
+        // ---- 5. JUMP RULE: if there's a midpoint, it must be visited ---
+        int mid = skip[cur][next];
+        if (mid == 0 || vis[mid]) {
+            total += dfs(vis, next, remain - 1);
+        }
+    }
+
+    vis[cur] = false;                             // un-choose
+    return total;
+}`,
+  complexity: "Bounded by length 9 patterns; very fast."
+});
+
+PROBLEMS.push({
+  num: 35, title: "Path with Maximum Gold", diff: "med",
+  problem: "On a grid where each cell has gold (or 0 = blocked), start in any non-zero cell, walk 4-directionally without revisiting, and maximize total gold collected.",
+  intuition: "Try every starting cell. From each, DFS marking visited cells; on the way back unmark them. Maintain a running max.",
+  hints: [
+    "Mutate g[r][c] = 0 to mark visited, then restore.",
+    "Try all 4 directions; take the max return.",
+    "Add the cell's value to whichever direction's result you return."
+  ],
+  tips: [
+    "Constraints are small (≤ 25 cells), so even pure DFS without aggressive pruning is fine."
+  ],
+  code: `/*
+ * Path with Maximum Gold. Try every starting cell. From each, walk 4 ways,
+ * mutating the cell to 0 (visited sentinel), restoring on the way back.
+ */
+int getMaximumGold(int[][] g) {
+
+    int best = 0;
+    for (int r = 0; r < g.length; r++)
+        for (int c = 0; c < g[0].length; c++)
+            best = Math.max(best, dfs(g, r, c));
+    return best;
+}
+
+int dfs(int[][] g, int r, int c) {
+
+    // ---- 1. PRUNE: out of bounds or 0-gold cell ------------------------
+    if (r < 0 || c < 0 || r >= g.length || c >= g[0].length || g[r][c] == 0)
+        return 0;
+
+    // ---- 2. CHOOSE: take this cell's gold and mark visited -------------
+    int v = g[r][c];
+    g[r][c] = 0;
+
+    // ---- 3. EXPLORE 4 directions; pick best onward path ----------------
+    int best = v + Math.max(
+        Math.max(dfs(g, r + 1, c), dfs(g, r - 1, c)),
+        Math.max(dfs(g, r, c + 1), dfs(g, r, c - 1))
+    );
+
+    // ---- 4. UN-CHOOSE: restore the gold for other starting paths -------
+    g[r][c] = v;
+    return best;
+}`,
+  complexity: "Bounded by O(cells · 4^cells) worst case; fine for ≤ 25 cells."
+});
+
+PROBLEMS.push({
+  num: 37, title: "Word Squares", diff: "med",
+  problem: "Given a list of equal-length words, return all word squares (k×k arrays of letters where rows and columns spell the same set of words).",
+  intuition: "Build the square row by row. After placing rows 0..k-1, the start of row k must equal the k-th column of the rows already placed. So we look up all words sharing that prefix.",
+  hints: [
+    "Preprocess: for every prefix of every word, store the list of words that have that prefix (HashMap<String, List<String>>).",
+    "DFS placing one row at a time.",
+    "When placing row idx, build the required prefix from chars at column idx of rows 0..idx-1.",
+    "Iterate candidates, push, recurse, pop."
+  ],
+  tips: [
+    "A Trie works just as well and is more memory-friendly for huge dictionaries."
+  ],
+  code: `/*
+ * Word Squares. Build the square row by row. Row k must start with the
+ * k-th column of rows 0..k-1, so we look up all words sharing that prefix.
+ */
+Map<String, List<String>> pre = new HashMap<>();
+
+// Pre-index: every prefix of every word -> list of words with that prefix.
+void buildIndex(String[] words) {
+    for (String w : words)
+        for (int i = 0; i <= w.length(); i++)
+            pre.computeIfAbsent(w.substring(0, i), x -> new ArrayList<>()).add(w);
+}
+
+void dfs(int n, List<String> sq, List<List<String>> res) {
+
+    // ---- 1. BASE CASE: square complete ---------------------------------
+    if (sq.size() == n) {
+        res.add(new ArrayList<>(sq));
+        return;
+    }
+
+    // ---- 2. COMPUTE REQUIRED PREFIX FOR THE NEXT ROW -------------------
+    int idx = sq.size();
+    StringBuilder p = new StringBuilder();
+    for (String w : sq) p.append(w.charAt(idx));  // collect column 'idx'
+
+    // ---- 3. TRY EACH WORD SHARING THAT PREFIX --------------------------
+    for (String w : pre.getOrDefault(p.toString(), List.of())) {
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        sq.add(w);
+        dfs(n, sq, res);
+        sq.remove(sq.size() - 1);
+    }
+}`,
+  complexity: "Depends on prefix branching; far better than brute force."
+});
+
+PROBLEMS.push({
+  num: 38, title: "Additive Number", diff: "med",
+  problem: "Given a string of digits, decide whether it can be split into a sequence of ≥ 3 numbers where each number from the third onward is the sum of the previous two.",
+  intuition: "Try every choice for the first two numbers. Once those are fixed, every subsequent number is determined. Walk forward, attempting to match each computed sum exactly against the remaining digits.",
+  hints: [
+    "Outer loops choose lengths (or end indices) for the first two numbers.",
+    "Validate no leading zeros.",
+    "Recursive check: at index i with last two values a,b, the next must equal a+b.",
+    "If string consumed and at least 3 numbers parsed → true."
+  ],
+  tips: [
+    "Use long to avoid overflow when summing two large numbers."
+  ],
+  code: `/*
+ * Additive Number. Pick lengths for the first two numbers; everything else
+ * is determined as their running sum. Match the next sum's digits exactly
+ * against the remaining string.
+ */
+boolean isAdditiveNumber(String s) {
+
+    int n = s.length();
+
+    // ---- 1. CHOOSE LENGTH OF FIRST NUMBER ------------------------------
+    for (int i = 1; i <= n / 2; i++) {
+
+        // No leading zero (unless first number is "0" alone).
+        if (s.charAt(0) == '0' && i > 1) break;
+
+        long a = Long.parseLong(s.substring(0, i));
+
+        // ---- 2. CHOOSE LENGTH OF SECOND NUMBER -------------------------
+        // Need at least max(i, j-i) chars left for the running sum to fit.
+        for (int j = i + 1; n - j >= Math.max(i, j - i); j++) {
+
+            if (s.charAt(i) == '0' && j - i > 1) break;
+
+            long b = Long.parseLong(s.substring(i, j));
+
+            // ---- 3. EXTEND BY FORCED a+b VALUES ------------------------
+            if (check(s, j, a, b)) return true;
+        }
+    }
+    return false;
+}
+
+boolean check(String s, int i, long a, long b) {
+    if (i == s.length()) return true;             // success
+    long c = a + b;
+    String cs = String.valueOf(c);
+    if (!s.startsWith(cs, i)) return false;       // forced match failed
+    return check(s, i + cs.length(), b, c);       // slide the window
+}`,
+  complexity: "O(n^3) effective."
+});
+
+PROBLEMS.push({
+  num: 41, title: "All Possible Full Binary Trees", diff: "med",
+  problem: "A full binary tree has each node with 0 or 2 children. Return all such trees with exactly N nodes (each node value = 0).",
+  intuition: "If N is even there are zero such trees (full binary trees always have an odd number of nodes). For odd N, the root takes 1 node, leaving N-1 to split as L + R where both L and R are odd. Recurse on each split, combine left × right.",
+  hints: [
+    "Memo: Map<Integer, List<TreeNode>>.",
+    "If n == 1 return [single node].",
+    "For l = 1, 3, 5, ..., n-2: r = n-1-l. For each L in build(l), R in build(r): make a new root with L,R.",
+    "Memoize by n."
+  ],
+  tips: [
+    "Be sure to create a NEW root each time; sharing roots between trees produces tangled outputs."
+  ],
+  code: `/*
+ * All Possible Full Binary Trees. A full binary tree of n nodes splits as
+ * 1 (root) + l (left subtree) + r (right subtree), with l and r both odd.
+ * Memoize the list per n.
+ */
+Map<Integer, List<TreeNode>> memo = new HashMap<>();
+
+List<TreeNode> allPossibleFBT(int n) {
+
+    // ---- 1. MEMO HIT ----------------------------------------------------
+    if (memo.containsKey(n)) return memo.get(n);
+
+    List<TreeNode> out = new ArrayList<>();
+
+    // ---- 2. BASE CASE: single leaf -------------------------------------
+    if (n == 1) {
+        out.add(new TreeNode(0));
+        memo.put(n, out);
+        return out;
+    }
+
+    // ---- 3. SPLIT n-1 INTO ODD (l, r) AND COMBINE ALL TREES -----------
+    for (int l = 1; l < n; l += 2) {
+        int r = n - 1 - l;
+
+        for (TreeNode L : allPossibleFBT(l)) {
+            for (TreeNode R : allPossibleFBT(r)) {
+
+                // Build a NEW root each time (don't share roots between trees).
+                TreeNode root = new TreeNode(0);
+                root.left = L;
+                root.right = R;
+                out.add(root);
+            }
+        }
+    }
+
+    memo.put(n, out);
+    return out;
+}`,
+  complexity: "Catalan-number growth; output size dominates."
+});
+
+PROBLEMS.push({
+  num: 42, title: "Brace Expansion", diff: "med",
+  problem: "Expand strings like \"a{b,c}d{e,f}\" into all concatenations: ade, adf, ace, acf.",
+  intuition: "Tokenize the string into groups (a single char, or a {a,b,c} list). Then DFS the Cartesian product of those groups.",
+  hints: [
+    "Walk the string. If you see '{', read until '}', split by ',' into a group; else single char.",
+    "DFS over groups; for each char in group[i], append, recurse, pop.",
+    "Sort the result if the problem requires it."
+  ],
+  tips: [
+    "Brace Expansion II adds nesting and unions — much harder; uses recursive descent parsing."
+  ],
+  code: `/*
+ * Brace Expansion (the simple, non-nested variant).
+ * Step 1: parse the input into a sequence of "groups", each group being
+ *         a list of letters (a single literal letter is a 1-element group).
+ * Step 2: DFS the Cartesian product across groups.
+ */
+String[] expand(String s) {
+
+    List<List<Character>> groups = parse(s);      // tokenizer not shown
+    Set<String> out = new TreeSet<>();            // sorted, unique
+    dfs(groups, 0, new StringBuilder(), out);
+    return out.toArray(new String[0]);
+}
+
+void dfs(List<List<Character>> groups, int i, StringBuilder sb, Set<String> out) {
+
+    // ---- 1. BASE CASE: visited every group -----------------------------
+    if (i == groups.size()) {
+        out.add(sb.toString());
+        return;
+    }
+
+    // ---- 2. CARTESIAN PRODUCT: pick one char from this group -----------
+    for (char c : groups.get(i)) {
+
+        // ---- 3. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        sb.append(c);
+        dfs(groups, i + 1, sb, out);
+        sb.deleteCharAt(sb.length() - 1);
+    }
+}`,
+  complexity: "Output is the dominant cost."
+});
+
+PROBLEMS.push({
+  num: 46, title: "Reconstruct Itinerary", diff: "med",
+  problem: "Given a list of airline tickets [from, to], reconstruct the itinerary starting from JFK using ALL tickets exactly once. If multiple are valid, return the lexicographically smallest.",
+  intuition: "This is finding an Eulerian path. Hierholzer's algorithm: from each node, recursively traverse its outgoing edges (smallest first via min-heap). Append the node to the answer AFTER its recursion completes (post-order). Reverse the answer at the end.",
+  hints: [
+    "Build Map<String, PriorityQueue<String>> graph.",
+    "visit(u): while graph[u] nonempty, visit(graph[u].poll()).",
+    "After the while loop, prepend u to the route.",
+    "Call visit(\"JFK\")."
+  ],
+  tips: [
+    "Why post-order? It naturally handles dead-end branches: any time we get stuck, the dead-end becomes the END of the itinerary.",
+    "Using LinkedList.addFirst is O(1) and keeps the natural order."
+  ],
+  code: `/*
+ * Reconstruct Itinerary — Hierholzer's algorithm for an Eulerian path.
+ * Use a min-heap per node to always explore lexicographically smallest edge first.
+ * Append the node to the route AFTER its recursion returns (post-order),
+ * then reverse at the end. Dead ends naturally land at the END.
+ */
+Map<String, PriorityQueue<String>> g = new HashMap<>();
+LinkedList<String> route = new LinkedList<>();
+
+List<String> findItinerary(List<List<String>> tickets) {
+
+    // ---- 1. BUILD ADJACENCY: each destination list is a min-heap -------
+    for (List<String> t : tickets) {
+        g.computeIfAbsent(t.get(0), k -> new PriorityQueue<>()).offer(t.get(1));
+    }
+
+    // ---- 2. RUN HIERHOLZER FROM JFK ------------------------------------
+    visit("JFK");
+
+    // route was built post-order, addFirst keeps natural order
+    return route;
+}
+
+void visit(String u) {
+
+    PriorityQueue<String> pq = g.get(u);
+
+    // ---- 3. CONSUME EVERY OUTGOING EDGE BEFORE RECORDING u -------------
+    while (pq != null && !pq.isEmpty()) {
+        visit(pq.poll());                         // poll = remove edge
+    }
+
+    // ---- 4. POST-ORDER APPEND: u goes to the FRONT of the route -------
+    route.addFirst(u);
+}`,
+  complexity: "Time O(E log E)."
+});
+
+PROBLEMS.push({
+  num: 57, title: "Number of Squareful Arrays", diff: "med",
+  problem: "Count the permutations of an array such that every adjacent pair sums to a perfect square.",
+  intuition: "Permutation DFS with a per-step constraint (the new element + previous element must be a perfect square). Apply the standard duplicate-permutation skip rule.",
+  hints: [
+    "Sort. Use boolean[] used. Track previous value `prev`.",
+    "If len > 0 and !isSquare(prev + nums[i]) skip.",
+    "Skip duplicates: i > 0 && nums[i] == nums[i-1] && !used[i-1]."
+  ],
+  tips: [
+    "Could also model as Hamiltonian-path counting on a graph where edges are squareful pairs — bitmask DP on small n."
+  ],
+  code: `/*
+ * Number of Squareful Arrays. Permutation DFS where adjacent elements must
+ * sum to a perfect square. Apply standard duplicate-permutation skip rule.
+ */
+int squarefulPerms(int[] a) {
+    Arrays.sort(a);                               // for dedup rule
+    int[] count = {0};
+    dfs(a, new boolean[a.length], 0, 0, count);
+    return count[0];
+}
+
+void dfs(int[] a, boolean[] used, int prev, int len, int[] count) {
+
+    // ---- 1. BASE CASE ---------------------------------------------------
+    if (len == a.length) { count[0]++; return; }
+
+    // ---- 2. ENUMERATE CHOICES -------------------------------------------
+    for (int i = 0; i < a.length; i++) {
+
+        if (used[i]) continue;
+
+        // ---- 3. DEDUP DUPLICATE SIBLINGS -------------------------------
+        if (i > 0 && a[i] == a[i - 1] && !used[i - 1]) continue;
+
+        // ---- 4. ADJACENCY CONSTRAINT: prev + a[i] must be a square -----
+        if (len > 0 && !isSq(prev + a[i])) continue;
+
+        // ---- 5. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        used[i] = true;
+        dfs(a, used, a[i], len + 1, count);
+        used[i] = false;
+    }
+}
+
+boolean isSq(int n) {
+    int r = (int) Math.sqrt(n);
+    return r * r == n;
+}`,
+  complexity: "Worst-case O(n!), pruned heavily."
+});
+
+PROBLEMS.push({
+  num: 74, title: "Coin Change", diff: "med",
+  problem: "Given an array of coin denominations and an amount, return the fewest coins needed to make that amount, or -1 if impossible.",
+  intuition: "Standard unbounded knapsack DP. dp[a] = min coins to make amount a. dp[0] = 0; for every a, try every coin c with c ≤ a and take 1 + dp[a-c].",
+  hints: [
+    "dp = int[amount+1] filled with amount+1 (sentinel for impossible).",
+    "dp[0] = 0.",
+    "Outer loop a from 1 to amount; inner loop coins.",
+    "Return dp[amount] or -1 if dp[amount] > amount."
+  ],
+  tips: [
+    "Backtracking exists (greedy + DFS with bound) but DP wins on standard inputs.",
+    "BFS over amounts reaching the goal also yields optimal coin count."
+  ],
+  code: `/*
+ * Coin Change — bottom-up unbounded knapsack DP.
+ * dp[a] = fewest coins making amount a (using sentinel amount+1 for "impossible").
+ */
+int coinChange(int[] coins, int amount) {
+
+    // ---- 1. INITIALIZE dp WITH AN "IMPOSSIBLE" SENTINEL ---------------
+    int[] dp = new int[amount + 1];
+    Arrays.fill(dp, amount + 1);                  // larger than any real answer
+    dp[0] = 0;                                    // 0 amount needs 0 coins
+
+    // ---- 2. FILL FOR EVERY AMOUNT FROM 1..amount ----------------------
+    for (int a = 1; a <= amount; a++) {
+        for (int c : coins) {
+            if (c <= a) {
+                dp[a] = Math.min(dp[a], dp[a - c] + 1);
+            }
+        }
+    }
+
+    // ---- 3. SENTINEL CHECK: dp[amount] still > amount means unreachable -
+    return dp[amount] > amount ? -1 : dp[amount];
+}`,
+  complexity: "Time O(amount · n). Space O(amount)."
+});
+
+PROBLEMS.push({
+  num: 50, title: "Longest Increasing Path in a Matrix", diff: "med",
+  problem: "Find the length of the longest path in a matrix where each step goes to an adjacent cell with a strictly greater value.",
+  intuition: "DFS from each cell, taking the longest among 4 directions. Because we can only go to STRICTLY GREATER cells, paths can't form cycles → no visited array needed. Memoize per cell since the same cell's longest-path-from-here doesn't depend on history.",
+  hints: [
+    "memo[r][c] caches the longest increasing path STARTING at (r,c).",
+    "If already computed, return it.",
+    "Otherwise try all 4 neighbors with greater values; result = 1 + max(neighbor results).",
+    "Default best = 1 (the cell itself)."
+  ],
+  tips: [
+    "A topological-sort approach (peel cells in increasing-value order) gives the same complexity without recursion."
+  ],
+  code: `/*
+ * Longest Increasing Path. DFS from every cell, taking the longest among
+ * 4 strictly-greater neighbors. No visited[][] needed (strict increase ⇒
+ * acyclic). Memoize the result per cell — answer is path-independent.
+ */
+int longestIncreasingPath(int[][] m) {
+
+    int rows = m.length, cols = m[0].length, best = 0;
+    int[][] memo = new int[rows][cols];
+
+    // ---- 1. TRY EVERY CELL AS A STARTING POINT --------------------------
+    for (int r = 0; r < rows; r++)
+        for (int c = 0; c < cols; c++)
+            best = Math.max(best, dfs(m, r, c, memo));
+
+    return best;
+}
+
+int dfs(int[][] m, int r, int c, int[][] memo) {
+
+    // ---- 2. MEMO HIT ---------------------------------------------------
+    if (memo[r][c] != 0) return memo[r][c];
+
+    int best = 1;                                 // at minimum, the cell itself
+    int[][] D = {{1,0},{-1,0},{0,1},{0,-1}};
+
+    // ---- 3. EXPLORE STRICTLY INCREASING NEIGHBORS ----------------------
+    for (int[] d : D) {
+        int nr = r + d[0], nc = c + d[1];
+        if (nr < 0 || nc < 0 || nr >= m.length || nc >= m[0].length) continue;
+        if (m[nr][nc] <= m[r][c]) continue;       // must be strictly greater
+        best = Math.max(best, 1 + dfs(m, nr, nc, memo));
+    }
+
+    return memo[r][c] = best;                     // cache and return
+}`,
+  complexity: "Time O(M·N). Space O(M·N)."
+});
+
+PROBLEMS.push({
+  num: 69, title: "Word Pattern II", diff: "med",
+  problem: "Given a pattern (e.g., \"abab\") and a string s, decide whether there is a bijection from pattern letters to non-empty substrings of s that produces s by concatenation.",
+  intuition: "Try every binding of pattern[i] to a substring of s. Maintain a Map<Character,String> and a Set<String> of used substrings to enforce bijection. When a letter is already mapped, the next chunk of s must match exactly.",
+  hints: [
+    "Two indices: pi into pattern, si into s.",
+    "Base: both at end → true.",
+    "If pi already mapped: check s.startsWith(map[pi], si) and recurse with si + map[pi].length.",
+    "Else for j > si, take s.substring(si, j); skip if used; tentatively bind, recurse, unbind."
+  ],
+  tips: [
+    "Don't forget to remove from BOTH map and set on backtrack.",
+    "Tighter bound: stop trying longer substrings once remaining s is too short for the rest of the pattern."
+  ],
+  code: `/*
+ * Word Pattern II. Bidirectional binding: pattern char ↔ substring.
+ * map  : current bindings
+ * used : set of substrings already bound to some other pattern char
+ *        (enforces bijection: no two pattern chars share a substring)
+ */
+boolean wordPatternMatch(String p, String s) {
+    return dfs(p, 0, s, 0, new HashMap<>(), new HashSet<>());
+}
+
+boolean dfs(String p, int pi, String s, int si,
+            Map<Character, String> map, Set<String> used) {
+
+    // ---- 1. BASE CASES --------------------------------------------------
+    if (pi == p.length() && si == s.length()) return true;
+    if (pi == p.length() || si == s.length()) return false;
+
+    char ch = p.charAt(pi);
+
+    // ---- 2. CHAR ALREADY BOUND: must match exactly ---------------------
+    if (map.containsKey(ch)) {
+        String w = map.get(ch);
+        if (!s.startsWith(w, si)) return false;
+        return dfs(p, pi + 1, s, si + w.length(), map, used);
+    }
+
+    // ---- 3. TRY EVERY POSSIBLE NEW BINDING -----------------------------
+    for (int j = si + 1; j <= s.length(); j++) {
+
+        String w = s.substring(si, j);
+
+        if (used.contains(w)) continue;           // bijection: skip taken
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        map.put(ch, w);
+        used.add(w);
+        if (dfs(p, pi + 1, s, j, map, used)) return true;
+        map.remove(ch);
+        used.remove(w);
+    }
+    return false;
+}`,
+  complexity: "Exponential worst-case; pruned in practice."
+});
+
+PROBLEMS.push({
+  num: 70, title: "Solve the Equation", diff: "med",
+  problem: "Given a linear equation in x like \"2x+3=4x-7\", return its solution as \"x=N\", or report \"No solution\" / \"Infinite solutions\".",
+  intuition: "Parsing problem, not really backtracking. Walk both sides collecting x-coefficient and constant. After computing (xL - xR) and (cR - cL), solve x = constSum / xCoef, with edge cases for zero coefficient.",
+  hints: [
+    "Helper that parses a side: walks chars, tracks sign and number, distinguishes x-terms (number followed by 'x') from constants.",
+    "Final: A = xL - xR, B = cR - cL. If A == 0: B == 0 → infinite, else no solution. Else x = B / A."
+  ],
+  tips: [
+    "Edge cases: \"x=x\" (infinite), \"2x=3x\" (zero), no implicit '+' for the leading term."
+  ],
+  code: `/*
+ * Solve the Equation. Pure parse: collect coefficient of x and the constant
+ * from each side, then solve A*x = B.
+ */
+String solveEquation(String eq) {
+
+    String[] sides = eq.split("=");
+    int[] L = parse(sides[0]);                    // {xCoef, const} on LHS
+    int[] R = parse(sides[1]);                    // {xCoef, const} on RHS
+
+    // Move x to LHS, constants to RHS:  (L.x - R.x) * x = R.const - L.const
+    int A = L[0] - R[0];
+    int B = R[1] - L[1];
+
+    // ---- SPECIAL CASES --------------------------------------------------
+    if (A == 0) return B == 0 ? "Infinite solutions" : "No solution";
+
+    return "x=" + (B / A);
+}
+
+// Returns {x-coefficient, constant} for one side of the equation.
+int[] parse(String s) {
+
+    int x = 0, c = 0;                             // running totals
+    int sign = 1;                                 // current term's sign
+    int i = 0, n = s.length();
+
+    while (i < n) {
+
+        // ---- 1. SIGN TOKENS ---------------------------------------------
+        if (s.charAt(i) == '+') { sign =  1; i++; }
+        else if (s.charAt(i) == '-') { sign = -1; i++; }
+        else {
+            // ---- 2. READ A NUMBER (may be empty before 'x') -----------
+            int num = 0;
+            boolean hasDigit = false;
+            while (i < n && Character.isDigit(s.charAt(i))) {
+                num = num * 10 + s.charAt(i) - '0';
+                i++;
+                hasDigit = true;
+            }
+
+            // ---- 3. IS IT AN x-TERM OR A CONSTANT? --------------------
+            if (i < n && s.charAt(i) == 'x') {
+                x += sign * (hasDigit ? num : 1); // "x" alone = 1*x
+                i++;
+            } else {
+                c += sign * num;
+            }
+        }
+    }
+    return new int[]{x, c};
+}`,
+  complexity: "Time O(n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 63, title: "Out of Boundary Paths", diff: "med",
+  problem: "From cell (sr, sc) on an m×n grid you can take at most maxMove moves (4-directional). Return the number of distinct paths that exit the grid, mod 1e9+7.",
+  intuition: "DFS with memoization on (r, c, movesLeft). Without memo this explodes — a single cell can be reached by many move-paths but its remaining count from there only depends on the state.",
+  hints: [
+    "If out of bounds → return 1 (one way to escape: you've already left).",
+    "If movesLeft == 0 → 0.",
+    "Sum the four neighbors with movesLeft-1.",
+    "Take mod each time."
+  ],
+  tips: [
+    "Bottom-up DP also works: dp[k][r][c] = ways with exactly k moves; iterate k upward."
+  ],
+  code: `/*
+ * Out of Boundary Paths. Memoized DFS on (r, c, movesLeft).
+ * Going OUT of the grid counts as 1 escape; running out of moves inside
+ * the grid counts as 0.
+ */
+static final int MOD = 1_000_000_007;
+
+int findPaths(int m, int n, int maxMove, int sr, int sc) {
+    Integer[][][] memo = new Integer[m][n][maxMove + 1];
+    return dfs(m, n, sr, sc, maxMove, memo);
+}
+
+int dfs(int m, int n, int r, int c, int k, Integer[][][] memo) {
+
+    // ---- 1. ESCAPED — one valid path -----------------------------------
+    if (r < 0 || c < 0 || r >= m || c >= n) return 1;
+
+    // ---- 2. RAN OUT OF MOVES -------------------------------------------
+    if (k == 0) return 0;
+
+    // ---- 3. MEMO HIT ---------------------------------------------------
+    if (memo[r][c][k] != null) return memo[r][c][k];
+
+    // ---- 4. SUM 4 NEIGHBORS WITH ONE FEWER MOVE ------------------------
+    long s = 0;
+    s += dfs(m, n, r + 1, c, k - 1, memo);
+    s += dfs(m, n, r - 1, c, k - 1, memo);
+    s += dfs(m, n, r, c + 1, k - 1, memo);
+    s += dfs(m, n, r, c - 1, k - 1, memo);
+
+    return memo[r][c][k] = (int) (s % MOD);       // mod to avoid overflow
+}`,
+  complexity: "Time O(m·n·maxMove). Space O(m·n·maxMove)."
+});
+
+PROBLEMS.push({
+  num: 60, title: "All Nodes Distance K in Binary Tree", diff: "med",
+  problem: "In a binary tree, return all nodes that are exactly K edges away from a given target node.",
+  intuition: "A binary tree's parent links aren't given, so first DFS to build parent pointers. Then BFS from the target — at each step you can go to left, right, or parent. Stop when distance == K.",
+  hints: [
+    "DFS to fill Map<TreeNode, TreeNode> parent.",
+    "BFS from target; track Set<TreeNode> visited so you don't bounce back to where you came from.",
+    "When BFS depth equals K, the current layer's contents are the answer."
+  ],
+  tips: [
+    "Alternative: a single DFS that returns the depth at which `target` is found, then reuse the recursion to fan out distance K from each ancestor — clever but tricky."
+  ],
+  code: `/*
+ * All Nodes Distance K. Build parent pointers via DFS, then BFS from target
+ * outward. From any node you can go to left, right, OR parent.
+ */
+Map<TreeNode, TreeNode> par = new HashMap<>();
+
+List<Integer> distanceK(TreeNode root, TreeNode target, int K) {
+
+    // ---- 1. BUILD PARENT POINTERS --------------------------------------
+    buildParents(root, null);
+
+    // ---- 2. BFS FROM TARGET --------------------------------------------
+    Set<TreeNode> seen = new HashSet<>();
+    seen.add(target);
+    Queue<TreeNode> q = new ArrayDeque<>();
+    q.offer(target);
+
+    int dist = 0;
+
+    while (!q.isEmpty()) {
+
+        // ---- 3. AT DEPTH K → CURRENT QUEUE IS THE ANSWER ---------------
+        if (dist == K) {
+            List<Integer> out = new ArrayList<>();
+            for (TreeNode n : q) out.add(n.val);
+            return out;
+        }
+
+        // ---- 4. EXPAND ONE LAYER ---------------------------------------
+        int sz = q.size();
+        for (int i = 0; i < sz; i++) {
+            TreeNode n = q.poll();
+            for (TreeNode nb : new TreeNode[]{n.left, n.right, par.get(n)}) {
+                if (nb != null && seen.add(nb)) q.offer(nb);
+            }
+        }
+        dist++;
+    }
+    return new ArrayList<>();
+}
+
+void buildParents(TreeNode n, TreeNode p) {
+    if (n == null) return;
+    par.put(n, p);
+    buildParents(n.left, n);
+    buildParents(n.right, n);
+}`,
+  complexity: "Time O(n)."
+});
+
+PROBLEMS.push({
+  num: 58, title: "Soup Servings", diff: "med",
+  problem: "Return the probability that soup A is empty before soup B, plus half the probability they finish together. Four serving operations of equal probability 0.25.",
+  intuition: "Probability DFS with memoization on (a, b). The trick: as N grows, soup A empties first with probability → 1. Empirically, for N ≥ 4800 the answer is essentially 1; return 1 to avoid TLE/precision issues.",
+  hints: [
+    "Cap: if N > 4800 return 1.0.",
+    "Scale: replace N by ceil(N / 25) so every operation moves at least 1 unit.",
+    "Memoize over (a, b).",
+    "Base: both ≤ 0 → 0.5; A ≤ 0 → 1.0; B ≤ 0 → 0.0.",
+    "Recurrence: 0.25 · sum of 4 transitions."
+  ],
+  tips: [
+    "Without the cap, recursion depth and state space blow up. The cap is the whole trick."
+  ],
+  code: `/*
+ * Soup Servings. Probability DFS + memo on (a, b).
+ * KEY INSIGHT: For large N the answer → 1 (soup A always empties first).
+ *              Cap N at 4800 and return 1 to dodge TLE/precision.
+ */
+double[][] memo;
+
+double soupServings(int n) {
+
+    // ---- 1. CAP: large N → essentially 1 -------------------------------
+    if (n > 4800) return 1.0;
+
+    // ---- 2. SCALE: smallest serve is 25 mL → group N into "units" ------
+    int N = (n + 24) / 25;
+    memo = new double[N + 1][N + 1];
+    return dfs(N, N);
+}
+
+double dfs(int a, int b) {
+
+    // ---- 3. BASE CASES (probability terms) -----------------------------
+    if (a <= 0 && b <= 0) return 0.5;             // both run out together
+    if (a <= 0) return 1.0;                       // A empties first
+    if (b <= 0) return 0.0;                       // B empties first
+
+    // ---- 4. MEMO HIT ---------------------------------------------------
+    if (memo[a][b] > 0) return memo[a][b];
+
+    // ---- 5. WEIGHTED SUM OF THE 4 SERVING OPERATIONS -------------------
+    return memo[a][b] = 0.25 * (
+              dfs(a - 4, b)                       // (100, 0)
+            + dfs(a - 3, b - 1)                   // (75, 25)
+            + dfs(a - 2, b - 2)                   // (50, 50)
+            + dfs(a - 1, b - 3));                 // (25, 75)
+}`,
+  complexity: "Time O(N^2). Space O(N^2)."
+});
+
+PROBLEMS.push({
+  num: 64, title: "Different Ways to Add Parentheses", diff: "med",
+  problem: "Given a string of digits and operators (+, -, *), return all possible results from inserting parentheses.",
+  intuition: "Divide and conquer: at every operator, split the expression into LEFT and RIGHT. Recurse on each side, combine all (l, r) pairs with the operator. Memoize per substring.",
+  hints: [
+    "For each operator at index i: ways(left) × ways(right) combined with op.",
+    "If no operator in s, parse as a single integer.",
+    "Memoize Map<String, List<Integer>>."
+  ],
+  tips: [
+    "Without memo, repeated substrings recompute — memo cuts time dramatically."
+  ],
+  code: `/*
+ * Different Ways to Add Parentheses. Divide and conquer at every operator:
+ * left side ways × right side ways, combined by the operator. Memoize per
+ * substring to avoid recomputing the same chunk.
+ */
+Map<String, List<Integer>> memo = new HashMap<>();
+
+List<Integer> diffWaysToCompute(String s) {
+
+    // ---- 1. MEMO HIT ----------------------------------------------------
+    if (memo.containsKey(s)) return memo.get(s);
+
+    List<Integer> res = new ArrayList<>();
+
+    // ---- 2. SPLIT AT EVERY OPERATOR ------------------------------------
+    for (int i = 0; i < s.length(); i++) {
+
+        char op = s.charAt(i);
+        if (op != '+' && op != '-' && op != '*') continue;
+
+        // ---- 3. RECURSE ON BOTH SIDES, COMBINE ALL PAIRS ---------------
+        for (int l : diffWaysToCompute(s.substring(0, i))) {
+            for (int r : diffWaysToCompute(s.substring(i + 1))) {
+
+                if      (op == '+') res.add(l + r);
+                else if (op == '-') res.add(l - r);
+                else                res.add(l * r);
+            }
+        }
+    }
+
+    // ---- 4. NO OPERATOR → s IS A PURE NUMBER ---------------------------
+    if (res.isEmpty()) res.add(Integer.parseInt(s));
+
+    memo.put(s, res);
+    return res;
+}`,
+  complexity: "Catalan-bounded number of expressions."
+});
+
+PROBLEMS.push({
+  num: 66, title: "Generate Random Maze (Recursive Backtracker)", diff: "med",
+  problem: "Generate a maze of size (2n+1)×(2m+1) using the recursive backtracker algorithm, producing a perfect maze (exactly one path between any two cells).",
+  intuition: "Treat odd-coordinate cells as ‘rooms' and even-coordinate cells as walls. Start at a room, pick an unvisited room TWO cells away in a random direction, knock down the wall between them, recurse from there. When stuck, return — the recursion stack is the backtracking.",
+  hints: [
+    "Initialize the grid as all walls (1).",
+    "carve(r, c): set grid[r][c] = 0; shuffle directions [(-2,0),(2,0),(0,-2),(0,2)].",
+    "For each (dr, dc): nr,nc = r+dr, c+dc. If nr,nc in bounds and grid[nr][nc]==1 → set grid[r+dr/2][c+dc/2]=0 (knock wall), recurse.",
+    "Run from any odd-coordinate cell."
+  ],
+  tips: [
+    "Other algorithms (Prim's, Wilson's) give different aesthetic styles. Recursive backtracker tends to produce long winding corridors."
+  ],
+  code: `/*
+ * Recursive Backtracker maze generator.
+ * Cells at ODD coordinates are "rooms"; even coordinates are walls.
+ * From a room, pick a random unvisited room two cells away; knock down the
+ * wall between them; recurse. The recursion stack IS the backtracking.
+ */
+void carve(int[][] g, int r, int c, Random rng) {
+
+    // ---- 1. MARK CURRENT CELL AS A PATH (room) -------------------------
+    g[r][c] = 0;
+
+    // ---- 2. RANDOMIZE THE 4 DIRECTIONS ---------------------------------
+    int[][] D = {{-2, 0}, {2, 0}, {0, -2}, {0, 2}};
+    List<int[]> dirs = new ArrayList<>(Arrays.asList(D));
+    Collections.shuffle(dirs, rng);
+
+    // ---- 3. TRY EACH DIRECTION -----------------------------------------
+    for (int[] d : dirs) {
+        int nr = r + d[0], nc = c + d[1];
+
+        // ---- 4. SKIP if out-of-bounds or already a path ----------------
+        if (nr < 1 || nc < 1 || nr >= g.length - 1 || nc >= g[0].length - 1) continue;
+        if (g[nr][nc] == 0) continue;
+
+        // ---- 5. KNOCK DOWN THE WALL between (r,c) and (nr,nc) ---------
+        g[r + d[0] / 2][c + d[1] / 2] = 0;
+
+        // ---- 6. RECURSE INTO THE NEW CELL ------------------------------
+        carve(g, nr, nc, rng);
+    }
+}`,
+  complexity: "O(rooms) — every room visited once."
+});
+
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 3, title: "Graph Coloring (m-coloring)", diff: "hard",
+  problem: "Given an undirected graph and m colors, decide whether each vertex can be colored with one of the m colors such that no two adjacent vertices share a color.",
+  intuition: "Color vertices in some order, one at a time. For each vertex, try colors 1..m; reject any color already used by a neighbor. Recurse to the next vertex; if no color works, backtrack.",
+  hints: [
+    "color[v] = 0 means uncolored.",
+    "DFS by vertex index v.",
+    "For c = 1..m: if no neighbor has color c → set color[v]=c, recurse, on failure unset.",
+    "If v == n we've colored everything → success."
+  ],
+  tips: [
+    "Welsh–Powell heuristic: order vertices by descending degree → fail fast on hard vertices.",
+    "Constraint propagation (forward checking) eliminates impossible colors from neighbors as you go — far stronger pruning.",
+    "For huge graphs use specialized solvers (DSATUR)."
+  ],
+  code: `/*
+ * Graph m-Coloring. Color vertices in order; for each, try every color and
+ * verify no neighbor already uses it. Recurse to the next vertex.
+ */
+boolean canColor(boolean[][] adj, int n, int m) {
+    int[] color = new int[n];                     // 0 = uncolored
+    return dfs(0, n, m, color, adj);
+}
+
+boolean dfs(int v, int n, int m, int[] color, boolean[][] adj) {
+
+    // ---- 1. BASE CASE: every vertex colored ----------------------------
+    if (v == n) return true;
+
+    // ---- 2. TRY EACH COLOR 1..m ----------------------------------------
+    for (int c = 1; c <= m; c++) {
+
+        // ---- 3. PRUNE: skip color if any neighbor already has it -------
+        if (!safe(v, c, color, adj)) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        color[v] = c;
+        if (dfs(v + 1, n, m, color, adj)) return true;
+        color[v] = 0;                             // un-color on failure
+    }
+
+    return false;                                 // no color worked
+}
+
+// Color c is safe for vertex v iff no adjacent vertex already wears it.
+boolean safe(int v, int c, int[] color, boolean[][] adj) {
+    for (int u = 0; u < adj.length; u++)
+        if (adj[v][u] && color[u] == c) return false;
+    return true;
+}`,
+  complexity: "Time O(m^n) worst case, drastically reduced by pruning."
+});
+
+PROBLEMS.push({
+  num: 4, title: "Hamiltonian Cycle", diff: "hard",
+  problem: "Decide whether an undirected graph contains a Hamiltonian cycle: a closed loop visiting every vertex exactly once.",
+  intuition: "Fix vertex 0 as the start (any HC contains vertex 0 and is rotation-equivalent). Try to build a path of length n by extending to unvisited neighbors; succeed if at the end there's an edge back to 0.",
+  hints: [
+    "path[0] = 0; used[0] = true.",
+    "DFS placing vertices at positions 1..n-1.",
+    "From the last placed vertex, try every unvisited neighbor.",
+    "Final check: at position n, edge (path[n-1], path[0]) must exist."
+  ],
+  tips: [
+    "Order neighbors by degree ascending — go to ‘rare' vertices first.",
+    "Pre-test: if any vertex has degree < 2, no HC.",
+    "Modern instances use bitmask DP (Held–Karp) for n ≤ ~20."
+  ],
+  code: `/*
+ * Hamiltonian Cycle. Fix vertex 0 at position 0 (any HC contains vertex 0
+ * and rotations are equivalent). Extend the path; close the cycle at the end.
+ */
+boolean hamCycle(boolean[][] adj) {
+
+    int n = adj.length;
+    int[] path = new int[n];
+    boolean[] used = new boolean[n];
+
+    // ---- 1. START WITH VERTEX 0 AT POSITION 0 --------------------------
+    path[0] = 0;
+    used[0] = true;
+
+    return dfs(1, n, path, adj, used);            // place positions 1..n-1
+}
+
+boolean dfs(int pos, int n, int[] path, boolean[][] adj, boolean[] used) {
+
+    // ---- 2. BASE CASE: path full → check the closing edge --------------
+    if (pos == n) return adj[path[pos - 1]][path[0]];
+
+    // ---- 3. TRY EACH UNUSED VERTEX ADJACENT TO path[pos-1] -------------
+    for (int v = 1; v < n; v++) {
+
+        if (used[v] || !adj[path[pos - 1]][v]) continue;
+
+        // ---- 4. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        path[pos] = v;
+        used[v] = true;
+        if (dfs(pos + 1, n, path, adj, used)) return true;
+        used[v] = false;
+    }
+    return false;
+}`,
+  complexity: "O(n!) worst case; pruning helps a lot."
+});
+
+PROBLEMS.push({
+  num: 8, title: "Knight's Tour", diff: "hard",
+  problem: "Place a knight on an N×N board and find a sequence of moves visiting every square exactly once.",
+  intuition: "Brute backtracking is far too slow even for N=8. Warnsdorff's rule: at every step, move to the square from which the FEWEST onward moves remain. This empirical heuristic frequently reaches a complete tour without any backtracking on standard boards.",
+  hints: [
+    "Maintain board[r][c] = step number (0 = unvisited).",
+    "8 knight moves stored in an int[][] M.",
+    "Sort the next-move candidates by their ‘onward degree' (count of legal moves from that candidate).",
+    "Recurse; if a branch fails, restore the cell and try the next candidate."
+  ],
+  tips: [
+    "Without Warnsdorff's rule, you'll wait forever even on 8×8.",
+    "If the rule produces ties, breaking by going to the closer-to-edge square is a common refinement."
+  ],
+  code: `/*
+ * Knight's Tour with WARNSDORFF'S HEURISTIC.
+ * At every step move to the square with the FEWEST onward legal moves.
+ * This rarely backtracks on standard boards; without it, brute backtracking
+ * is hopeless even for 8x8.
+ */
+int[][] M = { {2, 1}, {1, 2}, {-1, 2}, {-2, 1},
+              {-2,-1}, {-1,-2},{1,-2}, {2,-1} };
+
+boolean tour(int[][] b, int r, int c, int step) {
+
+    // ---- 1. PLACE THE KNIGHT --------------------------------------------
+    b[r][c] = step;
+
+    // ---- 2. BASE CASE: every cell visited -------------------------------
+    if (step == b.length * b[0].length) return true;
+
+    // ---- 3. SORT 8 MOVES BY ONWARD-DEGREE (Warnsdorff) ------------------
+    Integer[] order = {0, 1, 2, 3, 4, 5, 6, 7};
+    Arrays.sort(order, (a, x) ->
+        degree(b, r + M[a][0], c + M[a][1]) - degree(b, r + M[x][0], c + M[x][1]));
+
+    // ---- 4. TRY EACH MOVE IN ORDER --------------------------------------
+    for (int k : order) {
+        int nr = r + M[k][0], nc = c + M[k][1];
+        if (valid(b, nr, nc) && tour(b, nr, nc, step + 1)) return true;
+    }
+
+    // ---- 5. UN-CHOOSE: clear and propagate failure ----------------------
+    b[r][c] = 0;
+    return false;
+}
+
+// Onward-move count from (r, c). Out-of-board returns 9 to push it last.
+int degree(int[][] b, int r, int c) {
+    if (!valid(b, r, c)) return 9;
+    int d = 0;
+    for (int[] m : M) if (valid(b, r + m[0], c + m[1])) d++;
+    return d;
+}
+
+boolean valid(int[][] b, int r, int c) {
+    return r >= 0 && c >= 0 && r < b.length && c < b[0].length && b[r][c] == 0;
+}`,
+  complexity: "Theoretical exponential; near-linear in practice with Warnsdorff."
+});
+
+PROBLEMS.push({
+  num: 23, title: "Word Ladder II", diff: "hard",
+  problem: "Given begin, end, and a dictionary, return ALL shortest transformation sequences from begin to end where each step changes one letter and the new word is in the dictionary.",
+  intuition: "Two phases. Phase 1 (BFS): explore level by level from begin, building a parent map. We only allow edges from the previous level — guarantees only shortest-path predecessors are linked. Phase 2 (DFS): walk the parent map backward from end to begin, enumerating all shortest paths.",
+  hints: [
+    "Phase 1: BFS, layer by layer; for each word generate neighbors by changing one letter.",
+    "Maintain Map<String, List<String>> parents — for each newly seen word, list its predecessors from the previous layer.",
+    "Stop BFS as soon as `end` is reached at some layer.",
+    "Phase 2: DFS from end through parents, prepending each step. Reverse path before adding to result."
+  ],
+  tips: [
+    "Avoid linking words across the same BFS layer (would create non-shortest paths).",
+    "Bidirectional BFS speeds Phase 1 considerably for large dictionaries."
+  ],
+  code: `/*
+ * Word Ladder II — sketch of phase 2 (path enumeration through parents map).
+ * Phase 1 (BFS, not shown) records each word's predecessors at the previous
+ * BFS layer. We then DFS backward from 'end' through the parents map.
+ */
+void dfs(String w, String begin, Map<String, List<String>> par,
+         List<String> path, List<List<String>> res) {
+
+    // ---- 1. BASE CASE: walked back to start ----------------------------
+    if (w.equals(begin)) {
+        // Build a fresh list, append begin, reverse → start..end ordering.
+        List<String> p = new ArrayList<>(path);
+        p.add(begin);
+        Collections.reverse(p);
+        res.add(p);
+        return;
+    }
+
+    // ---- 2. PUSH current word; recurse on each predecessor ------------
+    path.add(w);
+    for (String pr : par.getOrDefault(w, List.of())) {
+        dfs(pr, begin, par, path, res);
+    }
+
+    // ---- 3. POP — restore path for sibling branches -------------------
+    path.remove(path.size() - 1);
+}`,
+  complexity: "Output-bounded; worst case exponential in path count."
+});
+
+PROBLEMS.push({
+  num: 24, title: "Expression Add Operators", diff: "hard",
+  problem: "Given a string of digits and a target, return all ways to insert '+', '-', or '*' between digits so the expression evaluates to the target.",
+  intuition: "DFS over operator placements at each position. The hard part is operator precedence with '*': we need to know the LAST term we added so we can rewind it and insert the multiplied result. So track `prev`, the contribution of the previous additive term.",
+  hints: [
+    "State: index i, current evaluated `cur`, last term `prev`, current expression sb.",
+    "First operand: just place num, `cur = prev = num`.",
+    "'+': cur += num, prev = num.",
+    "'-': cur -= num, prev = -num.",
+    "'*': cur = cur - prev + prev*num, prev = prev*num.",
+    "No leading zeros in numbers other than the literal \"0\"."
+  ],
+  tips: [
+    "Use long arithmetic — partial sums and products can overflow int.",
+    "Save/restore sb.length() for cheap undo."
+  ],
+  code: `/*
+ * Expression Add Operators. The trick for '*' precedence: track 'prev' =
+ * contribution of the LAST additive term. To insert '*N', undo prev from
+ * cur, then add prev*N as the new term: cur = cur - prev + prev*N.
+ */
+void dfs(String num, int i, long target, long cur, long prev,
+         StringBuilder sb, List<String> res) {
+
+    // ---- 1. BASE CASE: consumed the digit string -----------------------
+    if (i == num.length()) {
+        if (cur == target) res.add(sb.toString());
+        return;
+    }
+
+    int len = sb.length();
+
+    // ---- 2. TRY EVERY OPERAND ENDING AT j ------------------------------
+    for (int j = i; j < num.length(); j++) {
+
+        // No leading-zero operand (unless it's exactly "0").
+        if (j > i && num.charAt(i) == '0') break;
+
+        long n = Long.parseLong(num.substring(i, j + 1));
+
+        if (i == 0) {
+            // ---- 3a. FIRST OPERAND: no preceding operator -------------
+            sb.append(n);
+            dfs(num, j + 1, target, n, n, sb, res);
+            sb.setLength(len);
+        } else {
+            // ---- 3b. '+' branch ---------------------------------------
+            sb.append('+').append(n);
+            dfs(num, j + 1, target, cur + n, n, sb, res);
+            sb.setLength(len);
+
+            // ---- 3c. '-' branch (negate prev so future '*' chains right) -
+            sb.append('-').append(n);
+            dfs(num, j + 1, target, cur - n, -n, sb, res);
+            sb.setLength(len);
+
+            // ---- 3d. '*' branch: undo prev, multiply, replace prev ----
+            sb.append('*').append(n);
+            dfs(num, j + 1, target, cur - prev + prev * n, prev * n, sb, res);
+            sb.setLength(len);
+        }
+    }
+}`,
+  complexity: "Worst-case O(4^n)."
+});
+
+PROBLEMS.push({
+  num: 25, title: "Remove Invalid Parentheses", diff: "hard",
+  problem: "Given a string with letters and parentheses, remove the MINIMUM number of parentheses to make it valid. Return all distinct results.",
+  intuition: "First pass computes the minimum number of '(' and ')' that must be removed. Then DFS removing exactly those many of each, deduping by skipping consecutive identical removable characters.",
+  hints: [
+    "Pass 1: walk s; track unmatched ')' (rightRem) and after the pass also unmatched '(' (leftRem).",
+    "Pass 2 (DFS): at each char, two options — remove it (if it's the right type AND removal counter > 0) or keep it.",
+    "Track current open count; never let it go below 0.",
+    "End condition: index at end, leftRem == rightRem == 0, open == 0 → valid."
+  ],
+  tips: [
+    "Dedup trick: when REMOVING, skip identical consecutive characters — only the first occurrence in a run matters.",
+    "Use a HashSet<String> for results to defensively dedupe."
+  ],
+  code: `/*
+ * Remove Invalid Parentheses.
+ * Pre-pass computes EXACTLY how many '(' (lRem) and ')' (rRem) must be removed.
+ * Then DFS removes only that many. Every char has 2 options (remove or keep);
+ * track 'open' to never let ')' outpace '('. Use a Set to dedupe.
+ */
+List<String> removeInvalidParentheses(String s) {
+
+    // ---- 1. PRE-PASS: minimum removals on each side --------------------
+    int leftRem = 0, rightRem = 0;
+    for (char c : s.toCharArray()) {
+        if (c == '(') leftRem++;
+        else if (c == ')') {
+            if (leftRem > 0) leftRem--;           // matches a previous '('
+            else rightRem++;                      // unmatched ')' must be removed
+        }
+    }
+
+    // leftRem now also counts unmatched '(' that need removal at end.
+    Set<String> res = new HashSet<>();
+    dfs(s, 0, leftRem, rightRem, 0, new StringBuilder(), res);
+    return new ArrayList<>(res);
+}
+
+void dfs(String s, int i, int lRem, int rRem, int open,
+         StringBuilder sb, Set<String> res) {
+
+    // ---- 2. BASE CASE --------------------------------------------------
+    if (i == s.length()) {
+        if (lRem == 0 && rRem == 0 && open == 0) res.add(sb.toString());
+        return;
+    }
+
+    char c = s.charAt(i);
+    int len = sb.length();
+
+    // ---- 3. OPTION A: REMOVE THIS CHAR ---------------------------------
+    if (c == '(' && lRem > 0) dfs(s, i + 1, lRem - 1, rRem, open, sb, res);
+    if (c == ')' && rRem > 0) dfs(s, i + 1, lRem, rRem - 1, open, sb, res);
+
+    // ---- 4. OPTION B: KEEP THIS CHAR -----------------------------------
+    sb.append(c);
+    if (c != '(' && c != ')')      dfs(s, i + 1, lRem, rRem, open, sb, res);
+    else if (c == '(')             dfs(s, i + 1, lRem, rRem, open + 1, sb, res);
+    else if (open > 0)             dfs(s, i + 1, lRem, rRem, open - 1, sb, res);
+    sb.setLength(len);                            // restore
+}`,
+  complexity: "Exponential, but the minimum-removal precomputation keeps work tight."
+});
+
+PROBLEMS.push({
+  num: 36, title: "Tiling a Rectangle with the Fewest Squares", diff: "hard",
+  problem: "Given an n×m rectangle, find the minimum number of integer-sided squares that tile it exactly.",
+  intuition: "Maintain a height profile — for each column, how high it's been filled so far. At every step, find the lowest column (leftmost on ties); place a square there, of any side length that fits without exceeding column heights or rectangle bounds. Recurse with updated heights and a count, pruning by the global best.",
+  hints: [
+    "h[0..n-1] = current fill height per column.",
+    "Find min height m and leftmost index idx of m.",
+    "Determine the maximum square side that fits at idx (limited by horizontal run of equal height and remaining vertical room).",
+    "Try sizes from large to small (better prune); update h, recurse, undo."
+  ],
+  tips: [
+    "Initialize best = n*m (worst-case using 1×1 squares).",
+    "This is one of the rare problems where there's no nice polynomial algorithm — heuristics + branch-and-bound dominate."
+  ],
+  code: `/*
+ * Tile a Rectangle with Fewest Squares — branch and bound on a height profile.
+ * h[i] = current fill height of column i. Always tile at the lowest column
+ * (leftmost on ties) to reduce symmetric branches.
+ */
+int best;
+
+int tilingRectangle(int n, int m) {
+    best = n * m;                                 // worst-case: all 1x1 squares
+    dfs(n, m, new int[n], 0);
+    return best;
+}
+
+void dfs(int n, int m, int[] h, int count) {
+
+    // ---- 1. PRUNE: already worse than best ------------------------------
+    if (count >= best) return;
+
+    // ---- 2. FIND LOWEST COLUMN (leftmost on tie) ------------------------
+    int min = Integer.MAX_VALUE, idx = -1;
+    for (int i = 0; i < n; i++) {
+        if (h[i] < min) { min = h[i]; idx = i; }
+    }
+
+    // ---- 3. ALL COLUMNS REACHED CEILING m → done ------------------------
+    if (min == m) {
+        best = Math.min(best, count);
+        return;
+    }
+
+    // ---- 4. FIND THE WIDEST FLAT RUN STARTING AT idx --------------------
+    int end = idx;
+    while (end + 1 < n && h[end + 1] == h[idx] && (end + 1 - idx + 1) + min <= m) {
+        end++;
+    }
+
+    // ---- 5. TRY EVERY SQUARE SIZE FROM LARGEST TO 1 ---------------------
+    for (int sz = end - idx + 1; sz >= 1; sz--) {
+
+        // CHOOSE: lift those columns by sz
+        for (int i = idx; i < idx + sz; i++) h[i] += sz;
+        dfs(n, m, h, count + 1);
+        // UN-CHOOSE: drop them back
+        for (int i = idx; i < idx + sz; i++) h[i] -= sz;
+    }
+}`,
+  complexity: "Exponential, manageable for ≤ 13×13."
+});
+
+PROBLEMS.push({
+  num: 47, title: "String Compression II", diff: "hard",
+  problem: "Given a string s and an integer k, return the minimum length of the run-length encoded version of s after deleting at most k characters.",
+  intuition: "DP / memoized backtracking on (i, k, prevChar, prevCount). At every position we either DELETE the current char (k--) or KEEP it (extending the current run, possibly increasing the encoding length).",
+  hints: [
+    "Encoding-length cost rule: when extending a run, the count adds 1 char only when the run reaches 1, 10, or 100 (digit-boundaries).",
+    "State (i, k, prev, run): length of remaining encoding minimal cost.",
+    "Two options at each step: skip (k-1) or keep (extend run if same char else start new run length 1)."
+  ],
+  tips: [
+    "Cap run by 100 — the encoding cost stops changing past 100.",
+    "Memoize aggressively; without it, this is exponential."
+  ],
+  code: `/*
+ * String Compression II. Memoized DFS on (i, k, prevChar, prevRun).
+ * RLE cost rule: extending a run only adds an output char when crossing
+ * a run-length boundary (1 → 2 digit, 9 → 10, 99 → 100).
+ */
+Integer[][][][] memo;
+
+int getLengthOfOptimalCompression(String s, int k) {
+    // states: i ∈ [0..n], k ∈ [0..k], prev ∈ {none + 26 letters}, run ∈ [0..100]
+    memo = new Integer[s.length()][k + 1][27][101];
+    return dfs(s, 0, k, '#', 0);
+}
+
+int dfs(String s, int i, int k, char prev, int run) {
+
+    // ---- 1. INVALID STATE: out of deletions ----------------------------
+    if (k < 0) return 1_000_000;                  // sentinel infinity
+
+    // ---- 2. BASE CASE: end of string -----------------------------------
+    if (i == s.length()) return 0;
+
+    int p = prev == '#' ? 0 : prev - 'a' + 1;     // index for prev char
+    if (memo[i][k][p][run] != null) return memo[i][k][p][run];
+
+    // ---- 3. OPTION A: DELETE THIS CHAR (k--) ---------------------------
+    int del = dfs(s, i + 1, k - 1, prev, run);
+
+    // ---- 4. OPTION B: KEEP THIS CHAR -----------------------------------
+    int keep;
+    if (s.charAt(i) == prev) {
+        // Extend the existing run; pay 1 if run length crosses 1, 9, or 99.
+        int extra = (run == 1 || run == 9 || run == 99) ? 1 : 0;
+        keep = extra + dfs(s, i + 1, k, prev, Math.min(run + 1, 100));
+    } else {
+        // Start a new run: 1 char of output (the letter itself).
+        keep = 1 + dfs(s, i + 1, k, s.charAt(i), 1);
+    }
+
+    return memo[i][k][p][run] = Math.min(del, keep);
+}`,
+  complexity: "Time O(n · k · 26 · 100). Space same."
+});
+
+PROBLEMS.push({
+  num: 48, title: "Minimum Unique Word Abbreviation", diff: "hard",
+  problem: "Given a target word and a dictionary, find the shortest valid abbreviation of the target that does not match any dictionary word of equal length.",
+  intuition: "Filter dictionary to same-length words. For each, compute a bitmask of positions where it differs from the target. An abbreviation pattern (bitmask of which positions are KEPT) is valid iff it intersects every dict word's mismatch mask. Search masks in increasing ‘abbreviation length' order.",
+  hints: [
+    "Equal length filtering kills 90% of candidates.",
+    "For each kept-mask, compute its ‘abbreviation length' (consecutive runs of zeros count as one number; ones count as a letter each).",
+    "Iterate masks ordered by that length; return the first valid mask.",
+    "Validation: kept & dictMask != 0 for each."
+  ],
+  tips: [
+    "Bit tricks make validation O(words) per mask, very fast.",
+    "Backtracking by abbreviation length using a priority queue is also possible."
+  ],
+  code: `/*
+ * Minimum Unique Word Abbreviation — bitmask sketch.
+ *
+ * For each dictionary word with length == target.length(), compute a
+ * "mismatch mask" = positions where it DIFFERS from target.
+ *
+ * A "kept-mask" (bit i = 1 means character i is REVEALED, 0 means abbreviated)
+ * is valid iff (keptMask & mismatchMask_w) != 0  for every dict word w.
+ * (i.e., we reveal at least one position where the word disagrees.)
+ *
+ * Search masks in increasing "abbreviation length" order and return the
+ * first valid one. Outline only — full implementation also formats the result.
+ */
+// Pseudocode skeleton:
+// 1. for each dict word w of equal length, build mismatchMask[w]
+// 2. for keptMask in masks_sorted_by_abbreviation_length:
+//        if (forEach mm: (keptMask & mm) != 0)  return formatAbbrev(keptMask, target);`,
+  complexity: "Time O(2^n · |dict|) worst case; very fast for typical words."
+});
+
+PROBLEMS.push({
+  num: 49, title: "Crack the Safe (de Bruijn sequence)", diff: "hard",
+  problem: "Build the shortest string over a k-symbol alphabet such that every n-length sequence of symbols appears in it (as a contiguous substring). Total length is k^n + n - 1.",
+  intuition: "This is a de Bruijn sequence. Construct via greedy DFS: start with n-1 zeros; at each step, try appending the largest unseen symbol that creates a new n-length substring. Continue until all k^n substrings have appeared.",
+  hints: [
+    "Track seen substrings in a HashSet.",
+    "From the current end, take the last n-1 chars as prefix; for each digit d in 0..k-1, candidate = prefix + d.",
+    "If candidate not in set, add it, append d, recurse.",
+    "Stop when set size reaches k^n."
+  ],
+  tips: [
+    "Iterating digits in DESC order tends to find a valid suffix quicker (greedy DFS).",
+    "Hierholzer's algorithm on the de Bruijn graph is the classical formulation."
+  ],
+  code: `/*
+ * Crack the Safe — greedy DFS construction of a de Bruijn sequence.
+ * Length is k^n + n - 1: covers every length-n string over alphabet of size k.
+ * Start with n-1 zeros; at each step append the largest unseen extension.
+ */
+StringBuilder sb;
+Set<String> seen;
+int N, K;
+
+String crackSafe(int n, int k) {
+    N = n; K = k;
+
+    // ---- 1. SEED with n-1 leading zeros --------------------------------
+    sb = new StringBuilder("0".repeat(n - 1));
+    seen = new HashSet<>();
+
+    // ---- 2. DFS until every length-n substring has appeared ------------
+    dfs((int) Math.pow(k, n));
+    return sb.toString();
+}
+
+boolean dfs(int total) {
+
+    // ---- 3. BASE CASE: every n-tuple covered ---------------------------
+    if (seen.size() == total) return true;
+
+    // Last n-1 chars form the prefix of any new substring.
+    String pre = sb.substring(sb.length() - N + 1);
+
+    // ---- 4. TRY EACH DIGIT 0..k-1 --------------------------------------
+    for (int d = 0; d < K; d++) {
+
+        String node = pre + d;                    // candidate n-tuple
+        if (seen.contains(node)) continue;        // already covered
+
+        // ---- 5. CHOOSE -> EXPLORE -> UN-CHOOSE -------------------------
+        seen.add(node);
+        sb.append(d);
+        if (dfs(total)) return true;
+        seen.remove(node);
+        sb.deleteCharAt(sb.length() - 1);
+    }
+    return false;
+}`,
+  complexity: "Time O(k · k^n)."
+});
+
+PROBLEMS.push({
+  num: 52, title: "Smallest Sufficient Team", diff: "hard",
+  problem: "Given a list of required skills and a list of people each with their skills, return the smallest team that covers every required skill.",
+  intuition: "Skills become a bitmask over up to 16 bits. dp[mask] = bitmask of the smallest team covering the skill set `mask`. For each person, OR their skills into existing dp entries to update larger masks.",
+  hints: [
+    "Map skill string → index; build personMask[p].",
+    "dp[0] = 0 (empty team). All others initialized as ‘unknown'.",
+    "For each person p, for each mask covered: newMask = mask | personMask[p]; candidate = dp[mask] | (1L<<p). Keep if it has fewer bits than the current dp[newMask].",
+    "Convert dp[full] back into a list of indices."
+  ],
+  tips: [
+    "Skills count ≤ 16 → mask fits in int. People ≤ 60 → team mask must use long.",
+    "Skip people with mask 0 (no useful skills) — they can never improve the team."
+  ],
+  code: `/*
+ * Smallest Sufficient Team. Skills bitmask DP.
+ *   dp[mask] = bitmask of the smallest team that COVERS the skill set 'mask'
+ * (-1 means "not yet reachable"). For each person p, OR their skills into
+ * every previously-known mask, and keep the team with the fewest people.
+ */
+int[] smallestSufficientTeam(String[] req, List<List<String>> people) {
+
+    int n = req.length, full = (1 << n) - 1;
+
+    // ---- 1. INDEX SKILLS INTO BIT POSITIONS ----------------------------
+    Map<String, Integer> idx = new HashMap<>();
+    for (int i = 0; i < n; i++) idx.put(req[i], i);
+
+    // dp[mask] is a TEAM bitmask (over people, up to ~60 → use long).
+    long[] dp = new long[full + 1];
+    Arrays.fill(dp, -1L);
+    dp[0] = 0L;                                   // empty mask: empty team
+
+    // ---- 2. RELAX OVER EACH PERSON -------------------------------------
+    for (int p = 0; p < people.size(); p++) {
+
+        // Build this person's skill mask.
+        int sk = 0;
+        for (String s : people.get(p)) {
+            if (idx.containsKey(s)) sk |= 1 << idx.get(s);
+        }
+        if (sk == 0) continue;                    // useless person
+
+        for (int m = 0; m <= full; m++) {
+
+            if (dp[m] == -1) continue;            // unreachable mask
+
+            int nm = m | sk;                      // mask after hiring p
+            long cand = dp[m] | (1L << p);        // candidate team
+
+            if (dp[nm] == -1 || Long.bitCount(cand) < Long.bitCount(dp[nm])) {
+                dp[nm] = cand;
+            }
+        }
+    }
+
+    // ---- 3. UNPACK TEAM BITMASK INTO INDEX LIST -----------------------
+    long mask = dp[full];
+    List<Integer> out = new ArrayList<>();
+    for (int i = 0; i < people.size(); i++) {
+        if ((mask & (1L << i)) != 0) out.add(i);
+    }
+    return out.stream().mapToInt(Integer::intValue).toArray();
+}`,
+  complexity: "Time O(P · 2^N) where N = required skills count."
+});
+
+PROBLEMS.push({
+  num: 53, title: "Shortest Path in Grid with Obstacles Elimination", diff: "hard",
+  problem: "On an m×n grid (0 = empty, 1 = obstacle), find the shortest path from (0,0) to (m-1,n-1) given you can eliminate up to k obstacles.",
+  intuition: "Plain BFS doesn't work — the cost on a cell depends on remaining eliminations. State must include (r, c, k_left). BFS over this 3D state finds the shortest path in steps.",
+  hints: [
+    "If k ≥ m+n-2, no obstacle blocks you → return m+n-2.",
+    "Visited array of dimensions [m][n][k+1].",
+    "BFS queue stores (r, c, eliminationsLeft, steps).",
+    "Decrement eliminations when crossing an obstacle; reject if it goes negative."
+  ],
+  tips: [
+    "Could also be done as A* with heuristic = Manhattan distance for further speedup."
+  ],
+  code: `/*
+ * Shortest Path with K Eliminations. State must include eliminations left
+ * because the same cell with more eliminations available is a stronger state.
+ * BFS finds shortest path in steps; visited keyed on (r, c, k_left).
+ */
+int shortestPath(int[][] g, int K) {
+
+    int m = g.length, n = g[0].length;
+
+    // ---- 1. SHORT-CIRCUIT: enough eliminations to break any path -------
+    if (K >= m + n - 2) return m + n - 2;
+
+    // ---- 2. 3-D VISITED, BFS QUEUE -------------------------------------
+    boolean[][][] vis = new boolean[m][n][K + 1];
+    Deque<int[]> q = new ArrayDeque<>();
+    q.offer(new int[]{0, 0, K, 0});               // (r, c, kLeft, steps)
+    vis[0][0][K] = true;
+
+    int[][] D = {{1,0},{-1,0},{0,1},{0,-1}};
+
+    while (!q.isEmpty()) {
+
+        int[] s = q.poll();
+
+        // ---- 3. REACHED THE TARGET → answer is steps ------------------
+        if (s[0] == m - 1 && s[1] == n - 1) return s[3];
+
+        // ---- 4. EXPAND 4 NEIGHBORS ------------------------------------
+        for (int[] d : D) {
+            int nr = s[0] + d[0], nc = s[1] + d[1];
+            if (nr < 0 || nc < 0 || nr >= m || nc >= n) continue;
+
+            int nk = s[2] - g[nr][nc];            // crossing obstacle costs 1
+            if (nk < 0 || vis[nr][nc][nk]) continue;
+
+            vis[nr][nc][nk] = true;
+            q.offer(new int[]{nr, nc, nk, s[3] + 1});
+        }
+    }
+    return -1;
+}`,
+  complexity: "Time O(m·n·k)."
+});
+
+PROBLEMS.push({
+  num: 56, title: "Robot Room Cleaner", diff: "hard",
+  problem: "A robot in an unknown grid can move(), turnLeft/Right(), and clean(). It does not know the grid; it can only sense walls by attempting move(). Clean every reachable cell.",
+  intuition: "Standard DFS but the robot occupies the only ‘cursor' — there's no random access. To backtrack, you must physically drive the robot back to its previous cell and direction (turn 180, move, turn 180).",
+  hints: [
+    "Track the robot's relative coordinates (x, y) and facing direction (0..3).",
+    "Use Set<String> visited keyed by (x, y).",
+    "For each of 4 directions (relative to current facing), if next cell unvisited and r.move() returns true → recurse, then physically backtrack.",
+    "After each direction, turn right to scan the next direction."
+  ],
+  tips: [
+    "Always clean() at the start of each cell visit.",
+    "A common bug: failing to TURN RIGHT after each direction → you'd only ever try one direction."
+  ],
+  code: `/*
+ * Robot Room Cleaner. The robot is the only "cursor" — to backtrack, you
+ * physically drive it back to the previous cell (turn 180, move, turn 180).
+ * Track relative coordinates and facing direction.
+ */
+int[][] D = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} }; // up, right, down, left
+Set<String> vis = new HashSet<>();
+
+void clean(Robot r) { dfs(r, 0, 0, 0); }
+
+void dfs(Robot r, int x, int y, int dir) {
+
+    // ---- 1. ALWAYS clean and mark the cell -----------------------------
+    r.clean();
+    vis.add(x + "," + y);
+
+    // ---- 2. TRY ALL 4 ABSOLUTE DIRECTIONS, but RELATIVE to current facing
+    for (int i = 0; i < 4; i++) {
+
+        int nd = (dir + i) % 4;
+        int nx = x + D[nd][0], ny = y + D[nd][1];
+
+        // ---- 3. ENTER if unvisited AND robot can move ------------------
+        if (!vis.contains(nx + "," + ny) && r.move()) {
+
+            dfs(r, nx, ny, nd);
+
+            // ---- 4. BACKTRACK PHYSICALLY: 180, move, 180 ---------------
+            r.turnRight(); r.turnRight();
+            r.move();
+            r.turnRight(); r.turnRight();
+        }
+
+        // ---- 5. TURN to scan the next direction ------------------------
+        r.turnRight();
+    }
+}`,
+  complexity: "Time O(N) where N is the number of accessible cells."
+});
+
+PROBLEMS.push({
+  num: 59, title: "Longest Happy Prefix", diff: "hard",
+  problem: "Given a string, return its longest non-empty prefix that is also a suffix (excluding the string itself).",
+  intuition: "Compute the KMP failure function. f[n-1] gives the length of the longest proper prefix-suffix; the answer is s.substring(0, f[n-1]).",
+  hints: [
+    "Standard KMP failure-function build.",
+    "Two pointers i (scanning) and k (length of current match).",
+    "When mismatch, k = f[k-1]; when match, k++.",
+    "Answer = s.substring(0, f[n-1])."
+  ],
+  tips: [
+    "Polynomial hashing also works (rolling hash + verification) but KMP is canonical.",
+    "Not really backtracking — listed for completeness."
+  ],
+  code: `/*
+ * Longest Happy Prefix — KMP failure function.
+ * f[i] = length of the longest proper prefix of s[0..i] that is also a suffix.
+ * Answer = s.substring(0, f[n-1]).
+ */
+String longestPrefix(String s) {
+
+    int n = s.length();
+    int[] f = new int[n];
+
+    // ---- BUILD THE FAILURE FUNCTION ------------------------------------
+    for (int i = 1, k = 0; i < n; i++) {
+
+        // Roll back k while there's a mismatch.
+        while (k > 0 && s.charAt(i) != s.charAt(k)) k = f[k - 1];
+
+        // Extend match length on character match.
+        if (s.charAt(i) == s.charAt(k)) k++;
+
+        f[i] = k;
+    }
+
+    // f[n-1] is the longest proper prefix that is also a suffix.
+    return s.substring(0, f[n - 1]);
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 67, title: "Regular Expression Matching", diff: "hard",
+  problem: "Implement regex matching with '.' (any char) and '*' (zero or more of the previous element). Match must cover the ENTIRE string.",
+  intuition: "Memoized DFS on (i, j) — index into s and p. The trick is '*': it can match ZERO of the preceding char (skip past p[j..j+1]) or ONE+ (advance i if first chars match, keep j).",
+  hints: [
+    "Base case: j == p.length → i must equal s.length.",
+    "If next char in p is '*': true if dfs(i, j+2) (zero matches) OR (firstMatch AND dfs(i+1, j)) (consume one, stay).",
+    "Else: firstMatch AND dfs(i+1, j+1)."
+  ],
+  tips: [
+    "firstMatch = i < s.length && (s.charAt(i) == p.charAt(j) || p.charAt(j) == '.').",
+    "Memo keyed on (i, j) — quadratic states, makes it O(m·n)."
+  ],
+  code: `/*
+ * Regular Expression Matching with '.' and '*'. Memoized DFS on (i, j).
+ * '*' is the tricky one: it can match ZERO of the previous char, OR
+ * one+ (consume one s char, keep j the same so we can match more).
+ */
+Boolean[][] memo;
+
+boolean isMatch(String s, String p) {
+    memo = new Boolean[s.length() + 1][p.length() + 1];
+    return dfs(s, p, 0, 0);
+}
+
+boolean dfs(String s, String p, int i, int j) {
+
+    // ---- 1. MEMO HIT ---------------------------------------------------
+    if (memo[i][j] != null) return memo[i][j];
+
+    boolean ans;
+
+    // ---- 2. PATTERN EXHAUSTED → string must be exhausted too -----------
+    if (j == p.length()) {
+        ans = i == s.length();
+    } else {
+
+        // Does s[i] match p[j] (literal or '.')?
+        boolean firstMatch = i < s.length() &&
+            (s.charAt(i) == p.charAt(j) || p.charAt(j) == '.');
+
+        // ---- 3. NEXT CHAR IS '*' → ZERO or ONE+ branches ---------------
+        if (j + 1 < p.length() && p.charAt(j + 1) == '*') {
+            ans = dfs(s, p, i, j + 2)             // match ZERO occurrences
+               || (firstMatch && dfs(s, p, i + 1, j));  // match ONE+, stay at j
+        } else {
+            // ---- 4. ORDINARY: must match this single char --------------
+            ans = firstMatch && dfs(s, p, i + 1, j + 1);
+        }
+    }
+
+    return memo[i][j] = ans;
+}`,
+  complexity: "Time O(m·n). Space O(m·n)."
+});
+
+PROBLEMS.push({
+  num: 68, title: "Wildcard Matching", diff: "hard",
+  problem: "Match s against pattern p where '?' matches any single character and '*' matches any sequence (including empty).",
+  intuition: "DP on (i, j). dp[i][j] = true iff s[0..i-1] matches p[0..j-1]. Transitions: '*' covers empty (dp[i][j-1]) or extends a previous match (dp[i-1][j]); '?' or literal: dp[i-1][j-1] when characters match.",
+  hints: [
+    "Initialize dp[0][0] = true.",
+    "Initialize dp[0][j] = true while p[j-1] == '*' (a leading '*' can match the empty string).",
+    "Two-pointer greedy version exists in O(m+n) but DP is the cleaner first version."
+  ],
+  tips: [
+    "Greedy: scan with two pointers; on '*' record positions to fall back to. Worst-case O(m+n) and constant memory but trickier to get right.",
+    "This is also a classic place where memoized recursion = bottom-up DP."
+  ],
+  code: `/*
+ * Wildcard Matching. Bottom-up 2-D DP.
+ *   dp[i][j] = true iff s[0..i-1] matches p[0..j-1]
+ *
+ * Transitions:
+ *   '*' → dp[i][j] = dp[i][j-1]     (match empty sequence)
+ *                  | dp[i-1][j]     (extend an existing match)
+ *   '?' or literal → dp[i-1][j-1] when characters agree
+ */
+boolean isMatch(String s, String p) {
+
+    int m = s.length(), n = p.length();
+    boolean[][] dp = new boolean[m + 1][n + 1];
+
+    // ---- 1. INITIAL STATE ----------------------------------------------
+    dp[0][0] = true;                              // empty matches empty
+
+    // Leading '*'s in p can match the empty string.
+    for (int j = 1; j <= n && p.charAt(j - 1) == '*'; j++) dp[0][j] = true;
+
+    // ---- 2. FILL TABLE -------------------------------------------------
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+
+            char c = p.charAt(j - 1);
+
+            if (c == '*') {
+                dp[i][j] = dp[i][j - 1]           // '*' = empty
+                        || dp[i - 1][j];          // '*' = extend
+            } else {
+                dp[i][j] = (c == '?' || c == s.charAt(i - 1))
+                        && dp[i - 1][j - 1];
+            }
+        }
+    }
+
+    return dp[m][n];
+}`,
+  complexity: "Time O(m·n). Space O(m·n)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Java syntax highlighter. Order matters:
+   1) escape HTML
+   2) protect comments and strings (replace with placeholders)
+   3) highlight types and keywords
+   4) restore comments and strings */
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  // Placeholder uses letter-padded form so the number regex (which requires \b
+  // word boundaries) cannot match the embedded index. e.g. \x01zZ12Zz\x01
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  // line comments
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // block comments
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // double-quoted strings
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  // char literals
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  // types (capitalized identifiers + common ones).
+  // We stash the resulting span so subsequent passes (keywords, numbers)
+  // cannot accidentally re-match text INSIDE a span attribute, e.g. matching
+  // the word "class" inside class="typ".
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','Robot','Random','Collections','Arrays','Math','Comparator','Objects',
+    'State','Choice','Choices'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  // keywords — also stash so the number pass can't touch tagged content.
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  // numbers (placeholders are letter-padded so \b can't match digits inside)
+  s = s.replace(/\b(\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  // restore stashed (loop until no more placeholders, since stashed spans
+  // may themselves contain placeholder text — defensive)
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff);
+}
+
+/* state: current diff tab + index inside that tab */
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  // wire clicks
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+    t.addEventListener('click', () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    }, { once: true });   // re-attach on each render below to keep handler simple
+  });
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const main = document.getElementById('main');
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  // update tabs active class
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  // update prev/next
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  // update active TOC link
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* navigation */
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+/* sidebar */
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+/* theme toggle */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+/* boot */
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

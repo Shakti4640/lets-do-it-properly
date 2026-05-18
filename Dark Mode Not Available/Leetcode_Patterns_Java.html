@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LeetCode Patterns &amp; Java Collections Cheat Sheet</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#ffffff; --ink:#111827; --muted:#4b5563;
+    --accent:#4f46e5; --accent2:#0891b2;
+    --row:#ffffff; --row2:#f3f4f6; --border:#d1d5db;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px;background:#ffffff;color:var(--ink);
+    font:13.5px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif}
+  h1{margin:0 0 6px;font-size:24px;letter-spacing:.2px;color:#000}
+  h2{margin:26px 0 10px;font-size:17px;color:#000;border-left:4px solid var(--accent);padding-left:10px}
+  .sub{color:var(--muted);margin-bottom:16px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}
+  .chip{padding:3px 9px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:#f9fafb;color:var(--muted)}
+  .chip b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;background:#ffffff;
+    border:1px solid var(--border);margin-bottom:20px}
+  th,td{padding:8px 10px;vertical-align:top;border:1px solid var(--border);text-align:left}
+  th{background:#e5e7eb;color:#111827;font-weight:700;font-size:12.5px}
+  tr:nth-child(even) td{background:#f9fafb}
+  tr:nth-child(odd) td{background:#ffffff}
+  code,kbd{background:#f3f4f6;color:#1f2937;padding:1px 5px;border-radius:4px;border:1px solid #e5e7eb;
+    font:12px/1.3 ui-monospace,Consolas,Monaco,monospace}
+  .tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;margin:1px 3px 1px 0;font-weight:600}
+  .t-easy{background:#dcfce7;color:#166534;border:1px solid #86efac}
+  .t-med{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+  .t-hard{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+  .hint{color:#166534;font-weight:600}
+  .trick{color:#92400e;font-weight:600}
+  .pitfall{color:#991b1b;font-weight:600}
+  .muted{color:var(--muted)}
+  details{background:#f9fafb;border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600;color:#111827}
+  pre{background:#f3f4f6;border:1px solid #e5e7eb;padding:10px;border-radius:6px;overflow-x:auto;
+    font:12px/1.45 ui-monospace,Consolas,Monaco,monospace;color:#1f2937;margin:8px 0 0}
+  pre code{background:transparent;border:0;padding:0}
+  .note{background:#f0f9ff;border-left:3px solid var(--accent2);padding:10px 12px;border-radius:4px;margin:10px 0;color:#0c4a6e}
+  ul.mini{margin:4px 0 0 16px;padding:0}
+  ul.mini li{margin:2px 0}
+  a{color:#1d4ed8}
+
+  @media print{
+    body{padding:12px;font-size:11.5px}
+    h1{font-size:20px}
+    h2{font-size:14px;margin:16px 0 8px;page-break-after:avoid}
+    table{page-break-inside:auto;font-size:10.5px}
+    tr{page-break-inside:avoid;page-break-after:auto}
+    thead{display:table-header-group}
+    th,td{padding:5px 7px}
+    details{page-break-inside:avoid}
+    details[open]{background:#fff}
+    pre{font-size:10px;background:#fff;border-color:#ccc}
+    .chip,.legend{display:none}
+    a{color:#000;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+
+<h1>LeetCode Patterns &amp; Java Collections Cheat Sheet</h1>
+<div class="sub">Pattern recognition · which Java collection to reach for · tips, tricks &amp; gotchas that save you minutes in interviews.</div>
+
+<div class="legend">
+  <span class="chip"><b>Cue</b> = the phrasing in the problem that should trigger this pattern</span>
+  <span class="chip"><b>Go-to collection</b> = the fastest Java structure for the job</span>
+  <span class="chip"><b>Complexity</b> = typical time / space</span>
+  <span class="tag t-easy">Easy</span>
+  <span class="tag t-med">Medium</span>
+  <span class="tag t-hard">Hard</span>
+</div>
+
+<h2>1. Core Patterns Overview</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:14%">Pattern</th>
+      <th style="width:18%">Problem Cue / When to Use</th>
+      <th style="width:18%">Go-to Java Collection / API</th>
+      <th style="width:12%">Complexity</th>
+      <th>Intuition · Tips · Tricks · Pitfalls</th>
+    </tr>
+  </thead>
+  <tbody>
+
+<tr><td><b>Two Pointers</b> <span class="tag t-easy">E</span><span class="tag t-med">M</span></td>
+<td>Sorted array, pair/triplet sum, remove duplicates, palindrome, merge sorted.</td>
+<td><code>int[]</code>, <code>char[]</code>, <code>String.toCharArray()</code></td>
+<td>O(n) / O(1)</td>
+<td><span class="hint">Tip:</span> sort first if order doesn't matter. <span class="trick">Trick:</span> skip duplicates with <code>while(l&lt;r &amp;&amp; a[l]==a[l+1]) l++;</code>. <span class="pitfall">Pitfall:</span> off-by-one when <code>l==r</code>.</td></tr>
+
+<tr><td><b>Sliding Window</b> <span class="tag t-med">M</span></td>
+<td>"Longest/shortest substring/subarray with …", "at most K", "exactly K" (= atMost(K) − atMost(K−1)).</td>
+<td><code>HashMap&lt;Character,Integer&gt;</code>, <code>int[26]</code>/<code>int[128]</code> freq, <code>Deque</code> for monotonic.</td>
+<td>O(n) / O(k)</td>
+<td><span class="hint">Template:</span> expand <code>right</code>, shrink <code>left</code> while invalid. <span class="trick">Trick:</span> for char-set windows prefer <code>int[128]</code> over HashMap (5–10× faster). <span class="pitfall">Pitfall:</span> forgetting to update answer after shrinking.</td></tr>
+
+<tr><td><b>Fast &amp; Slow Pointers</b> <span class="tag t-easy">E</span></td>
+<td>Linked list cycle, middle of list, happy number, palindrome LL.</td>
+<td><code>ListNode</code> refs, no extra collection.</td>
+<td>O(n) / O(1)</td>
+<td><span class="hint">Tip:</span> <code>slow=slow.next; fast=fast.next.next;</code> always null-check <code>fast</code> AND <code>fast.next</code>. <span class="trick">Trick:</span> Floyd's — reset slow to head to find cycle start.</td></tr>
+
+<tr><td><b>Prefix Sum</b> <span class="tag t-easy">E</span><span class="tag t-med">M</span></td>
+<td>Range sum queries, subarray sum = K, equal 0/1 arrays.</td>
+<td><code>long[] prefix</code>, <code>HashMap&lt;Long,Integer&gt;</code> for count of prefix seen.</td>
+<td>O(n) / O(n)</td>
+<td><span class="hint">Tip:</span> seed map with <code>{0:1}</code> to count subarrays starting at index 0. <span class="pitfall">Pitfall:</span> use <code>long</code> to avoid overflow.</td></tr>
+
+<tr><td><b>Difference Array</b> <span class="tag t-med">M</span></td>
+<td>Many range updates then one query (e.g., car pooling, range addition).</td>
+<td><code>int[] diff</code> of size n+1.</td>
+<td>O(n+u) / O(n)</td>
+<td><span class="trick">Trick:</span> <code>diff[l]+=v; diff[r+1]-=v;</code> then prefix-sum.</td></tr>
+
+<tr><td><b>Hash Map / Set</b> <span class="tag t-easy">E</span></td>
+<td>Two-sum, anagrams, de-dup, lookup O(1), frequency.</td>
+<td><code>HashMap</code>, <code>HashSet</code>, <code>LinkedHashMap</code> (LRU-ish), <code>getOrDefault</code>, <code>merge</code>.</td>
+<td>O(n) / O(n)</td>
+<td><span class="hint">Tip:</span> <code>map.merge(k,1,Integer::sum)</code> is the cleanest counter. <span class="pitfall">Pitfall:</span> autoboxing — avoid in hot loops with <code>int[]</code>.</td></tr>
+
+<tr><td><b>Sorting + Greedy</b> <span class="tag t-med">M</span></td>
+<td>Interval merge, meeting rooms, activity selection, min platforms.</td>
+<td><code>Arrays.sort(a,(x,y)-&gt;x[0]-y[0])</code>, <code>PriorityQueue</code> for active set.</td>
+<td>O(n log n)</td>
+<td><span class="pitfall">Pitfall:</span> never use <code>x[0]-y[0]</code> for long/large ints (overflow); use <code>Integer.compare</code>. <span class="trick">Trick:</span> sort by end-time for max-nonoverlapping intervals.</td></tr>
+
+<tr><td><b>Binary Search</b> <span class="tag t-med">M</span></td>
+<td>Sorted array, "find minimum X such that…", rotated array, monotonic predicate.</td>
+<td><code>Arrays.binarySearch</code> (exact), custom <code>lo/hi</code> for "search on answer".</td>
+<td>O(log n)</td>
+<td><span class="hint">Template:</span> <code>while(lo&lt;hi){mid=lo+(hi-lo)/2; if(ok(mid)) hi=mid; else lo=mid+1;}</code>. <span class="pitfall">Pitfall:</span> <code>(lo+hi)/2</code> overflows — always use <code>lo+(hi-lo)/2</code>.</td></tr>
+
+<tr><td><b>Binary Search on Answer</b> <span class="tag t-hard">H</span></td>
+<td>"Minimum capacity", "split array largest sum", Koko eats bananas.</td>
+<td><code>long lo, hi</code>; write <code>boolean feasible(mid)</code>.</td>
+<td>O(n log range)</td>
+<td><span class="trick">Trick:</span> if predicate flips monotonically from false→true, pick leftmost true.</td></tr>
+
+<tr><td><b>Monotonic Stack</b> <span class="tag t-med">M</span></td>
+<td>Next greater/smaller, largest rectangle, daily temperatures, stock span.</td>
+<td><code>Deque&lt;Integer&gt; st = new ArrayDeque&lt;&gt;();</code> (never <code>Stack</code>).</td>
+<td>O(n) / O(n)</td>
+<td><span class="hint">Tip:</span> push indices, not values. <span class="trick">Trick:</span> append a sentinel (e.g., 0 or ∞) to flush stack at end. <span class="pitfall">Pitfall:</span> <code>Stack</code> class is legacy &amp; synchronized — slow.</td></tr>
+
+<tr><td><b>Monotonic Deque</b> <span class="tag t-hard">H</span></td>
+<td>Sliding window max/min, shortest subarray sum ≥ K.</td>
+<td><code>ArrayDeque&lt;Integer&gt;</code> of indices.</td>
+<td>O(n)</td>
+<td><span class="hint">Tip:</span> pop from back while <code>a[back] ≤ a[i]</code> (for max), pop from front when out of window.</td></tr>
+
+<tr><td><b>Heap / Priority Queue</b> <span class="tag t-med">M</span></td>
+<td>Top-K, K-th largest/smallest, merge K lists, median stream, task scheduler.</td>
+<td><code>PriorityQueue</code> (min-heap default); max-heap via <code>Collections.reverseOrder()</code> or <code>(a,b)-&gt;b-a</code>.</td>
+<td>O(n log k)</td>
+<td><span class="trick">Trick:</span> keep size = K, poll when exceeding ⇒ top-K in O(n log k). <span class="hint">Median:</span> two heaps, keep <code>low.size() ∈ {hi.size(), hi.size()+1}</code>.</td></tr>
+
+<tr><td><b>Intervals (Sweep Line)</b> <span class="tag t-med">M</span></td>
+<td>Meeting rooms II, skyline, calendar booking.</td>
+<td><code>PriorityQueue</code> of end-times, or <code>TreeMap&lt;Integer,Integer&gt;</code> for event counts.</td>
+<td>O(n log n)</td>
+<td><span class="trick">Trick:</span> +1 on start, −1 on end, sort events, running max = answer.</td></tr>
+
+<tr><td><b>BFS (Graph/Grid)</b> <span class="tag t-med">M</span></td>
+<td>Shortest path in unweighted graph, level order, min steps, rotten oranges.</td>
+<td><code>ArrayDeque&lt;int[]&gt;</code> queue, <code>boolean[][] visited</code>.</td>
+<td>O(V+E)</td>
+<td><span class="hint">Tip:</span> process by levels with size snapshot. <span class="trick">Trick:</span> multi-source BFS — push all sources first.</td></tr>
+
+<tr><td><b>DFS / Backtracking</b> <span class="tag t-med">M</span><span class="tag t-hard">H</span></td>
+<td>Permutations, combinations, subsets, N-Queens, word search, Sudoku.</td>
+<td><code>List&lt;List&lt;Integer&gt;&gt;</code> result, <code>Deque</code> as path, <code>boolean[] used</code>.</td>
+<td>O(branch^depth)</td>
+<td><span class="hint">Template:</span> choose → recurse → un-choose. <span class="trick">Trick:</span> sort then <code>if(i&gt;start &amp;&amp; a[i]==a[i-1]) continue;</code> to skip dup subsets. <span class="pitfall">Pitfall:</span> forgetting to copy the path: <code>new ArrayList&lt;&gt;(path)</code>.</td></tr>
+
+<tr><td><b>Union-Find (DSU)</b> <span class="tag t-med">M</span><span class="tag t-hard">H</span></td>
+<td>Connected components, redundant connection, accounts merge, Kruskal's MST.</td>
+<td><code>int[] parent, rank</code>; path compression + union by rank.</td>
+<td>O(α(n)) ≈ O(1)</td>
+<td><span class="hint">Tip:</span> always compress: <code>parent[x]=find(parent[x]);</code>. <span class="trick">Trick:</span> encode 2D grid cells as <code>r*cols+c</code>.</td></tr>
+
+<tr><td><b>Topological Sort</b> <span class="tag t-med">M</span></td>
+<td>Course schedule, build order, task deps.</td>
+<td>Kahn's BFS: <code>int[] indeg</code> + <code>ArrayDeque</code>; or DFS with post-order &amp; stack.</td>
+<td>O(V+E)</td>
+<td><span class="pitfall">Pitfall:</span> if result size &lt; V ⇒ cycle. <span class="trick">Trick:</span> use <code>List&lt;List&lt;Integer&gt;&gt;</code> adjacency for sparse graphs.</td></tr>
+
+<tr><td><b>Dijkstra</b> <span class="tag t-med">M</span></td>
+<td>Shortest path, non-negative weights, network delay time, cheapest flights.</td>
+<td><code>PriorityQueue&lt;int[]&gt;</code> of <code>{dist,node}</code>, <code>int[] dist</code>.</td>
+<td>O(E log V)</td>
+<td><span class="hint">Tip:</span> lazy — skip if popped dist &gt; dist[node]. <span class="pitfall">Pitfall:</span> negative edges ⇒ use Bellman-Ford / SPFA.</td></tr>
+
+<tr><td><b>Bellman-Ford</b> <span class="tag t-hard">H</span></td>
+<td>Negative edges, detect negative cycle, k-stop shortest path.</td>
+<td><code>int[] dist</code>, relax V−1 times.</td>
+<td>O(V·E)</td>
+<td><span class="trick">Trick:</span> for "at most k stops" relax exactly k+1 times on a copy of <code>dist</code>.</td></tr>
+
+<tr><td><b>Floyd-Warshall</b> <span class="tag t-med">M</span></td>
+<td>All-pairs shortest path, transitive closure, small V (≤ 400).</td>
+<td><code>int[][] d</code>.</td>
+<td>O(V³)</td>
+<td><span class="hint">Tip:</span> loop order must be <code>k,i,j</code>.</td></tr>
+
+<tr><td><b>Trie</b> <span class="tag t-med">M</span><span class="tag t-hard">H</span></td>
+<td>Prefix search, word break, autocomplete, XOR max pair.</td>
+<td>Custom <code>Node{Node[] ch=new Node[26]; boolean end;}</code>.</td>
+<td>O(L) per op</td>
+<td><span class="trick">Trick:</span> store word at terminal node for word-search II. <span class="pitfall">Pitfall:</span> avoid <code>HashMap</code> children unless alphabet is huge — arrays are 5× faster.</td></tr>
+
+<tr><td><b>Segment Tree / BIT</b> <span class="tag t-hard">H</span></td>
+<td>Range sum/min/max with point updates, count of smaller after self.</td>
+<td><code>int[] bit</code> (Fenwick) or <code>long[] seg</code>.</td>
+<td>O(log n) per op</td>
+<td><span class="hint">BIT:</span> <code>for(;i&lt;=n;i+=i&amp;-i)</code> update; <code>for(;i&gt;0;i-=i&amp;-i)</code> query.</td></tr>
+
+<tr><td><b>Dynamic Programming</b> <span class="tag t-med">M</span><span class="tag t-hard">H</span></td>
+<td>"Max/min/count ways", overlapping subproblems, optimal substructure.</td>
+<td><code>int[]</code>, <code>int[][]</code>, sometimes <code>HashMap</code> for memo.</td>
+<td>varies</td>
+<td><span class="hint">Recipe:</span> state → transition → base → order. <span class="trick">Trick:</span> space-compress row DP to 1D (knapsack loop right→left). <span class="pitfall">Pitfall:</span> forgetting base case for empty input.</td></tr>
+
+<tr><td><b>Bitmask DP</b> <span class="tag t-hard">H</span></td>
+<td>TSP, assignment problem, n ≤ 20 subset iteration.</td>
+<td><code>int[] dp = new int[1&lt;&lt;n]</code>.</td>
+<td>O(2ⁿ · n)</td>
+<td><span class="trick">Trick:</span> iterate submasks: <code>for(int s=mask; s&gt;0; s=(s-1)&amp;mask)</code>.</td></tr>
+
+<tr><td><b>Greedy</b> <span class="tag t-med">M</span></td>
+<td>Jump game, gas station, candy, task scheduler, partition labels.</td>
+<td>Usually just arrays + a PQ or HashMap.</td>
+<td>O(n) / O(n log n)</td>
+<td><span class="hint">Tip:</span> prove exchange argument mentally before committing. <span class="pitfall">Pitfall:</span> greedy ≠ optimal — DP if in doubt.</td></tr>
+
+<tr><td><b>Matrix Traversal</b> <span class="tag t-easy">E</span><span class="tag t-med">M</span></td>
+<td>Islands, flood fill, spiral, rotate, word search.</td>
+<td>2D <code>int[][]</code>, dir array <code>{{1,0},{-1,0},{0,1},{0,-1}}</code>.</td>
+<td>O(m·n)</td>
+<td><span class="trick">Trick:</span> mark visited in-place (flip '1'→'0') to save space. <span class="pitfall">Pitfall:</span> bounds check before recursion.</td></tr>
+
+<tr><td><b>LinkedList Manipulation</b> <span class="tag t-easy">E</span><span class="tag t-med">M</span></td>
+<td>Reverse, reorder, merge, partition, detect cycle.</td>
+<td><code>ListNode</code> with dummy head.</td>
+<td>O(n)</td>
+<td><span class="trick">Trick:</span> always use a <code>dummy</code> node — eliminates edge cases on head.</td></tr>
+
+<tr><td><b>Tree DFS (pre/in/post)</b> <span class="tag t-easy">E</span><span class="tag t-med">M</span></td>
+<td>Path sum, diameter, LCA, validate BST, serialize.</td>
+<td>Recursion + <code>int[]</code> or global field for answers.</td>
+<td>O(n)</td>
+<td><span class="trick">Trick:</span> return a tuple via <code>int[]</code> for (height, something) per node. <span class="pitfall">Pitfall:</span> stack overflow on skewed trees — iterative with <code>Deque</code>.</td></tr>
+
+<tr><td><b>Tree BFS</b> <span class="tag t-easy">E</span></td>
+<td>Level order, right view, zigzag, min depth.</td>
+<td><code>ArrayDeque&lt;TreeNode&gt;</code>.</td>
+<td>O(n)</td>
+<td><span class="hint">Tip:</span> snapshot level size at the start of each level.</td></tr>
+
+<tr><td><b>LCA / Binary Lifting</b> <span class="tag t-hard">H</span></td>
+<td>Tree ancestor queries, kth ancestor, path queries.</td>
+<td><code>int[][] up = new int[LOG][n];</code></td>
+<td>O((n+q) log n)</td>
+<td><span class="trick">Trick:</span> precompute <code>up[k][v] = up[k-1][ up[k-1][v] ]</code>.</td></tr>
+
+<tr><td><b>Kadane's</b> <span class="tag t-easy">E</span></td>
+<td>Max subarray sum, circular variant, product.</td>
+<td>Single pass, two ints.</td>
+<td>O(n)</td>
+<td><span class="trick">Trick:</span> circular = max(kadane, total − minKadane) (handle all-negative case).</td></tr>
+
+<tr><td><b>Reservoir Sampling</b> <span class="tag t-med">M</span></td>
+<td>Random node in LL, linked list with stream.</td>
+<td><code>Random</code>, single variable.</td>
+<td>O(n) / O(1)</td>
+<td><span class="trick">Trick:</span> replace answer with prob <code>1/i</code> at the i-th element.</td></tr>
+
+<tr><td><b>Design (LRU/LFU/etc.)</b> <span class="tag t-med">M</span><span class="tag t-hard">H</span></td>
+<td>LRU cache, LFU, insert/delete/random O(1), Twitter.</td>
+<td><code>LinkedHashMap</code> (LRU in 5 lines), doubly-linked list + HashMap for hand-rolled LFU.</td>
+<td>O(1) per op</td>
+<td><span class="trick">Trick:</span> <code>new LinkedHashMap&lt;&gt;(cap,0.75f,true)</code> + override <code>removeEldestEntry</code>.</td></tr>
+
+  </tbody>
+</table>
+
+<h2>2. Java Collections — Which One &amp; Why</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:16%">Collection</th>
+      <th style="width:20%">Use When</th>
+      <th style="width:18%">Don't Use When</th>
+      <th style="width:14%">Key Ops (avg)</th>
+      <th>Tricks &amp; Gotchas</th>
+    </tr>
+  </thead>
+  <tbody>
+
+<tr><td><code>ArrayList&lt;E&gt;</code></td>
+<td>Dynamic array, index access, backtracking path, result list.</td>
+<td>Frequent insert/delete at front or middle (O(n)).</td>
+<td>get/set O(1), add-end amortized O(1)</td>
+<td>Use <code>list.subList(a,b)</code> as a view; wrap in <code>new ArrayList&lt;&gt;(...)</code> to copy. Prefer <code>Arrays.asList</code> only for fixed-size.</td></tr>
+
+<tr><td><code>ArrayDeque&lt;E&gt;</code></td>
+<td>Stack, queue, deque, BFS, monotonic. Always prefer over <code>Stack</code> / <code>LinkedList</code>.</td>
+<td>Need thread safety or random-access by index.</td>
+<td>push/pop/peek O(1)</td>
+<td><code>offer/poll/peek</code> for queue, <code>push/pop/peek</code> for stack. Does NOT allow <code>null</code>.</td></tr>
+
+<tr><td><code>LinkedList&lt;E&gt;</code></td>
+<td>Almost never in practice — only if you need list+deque semantics with iterator removal.</td>
+<td>Anything else — use <code>ArrayDeque</code> or <code>ArrayList</code>.</td>
+<td>get O(n)</td>
+<td>2× memory of ArrayDeque; poor cache locality.</td></tr>
+
+<tr><td><code>HashMap&lt;K,V&gt;</code></td>
+<td>Unordered key→value lookup, counters, memoization.</td>
+<td>Need order, need range queries.</td>
+<td>put/get O(1) avg</td>
+<td><code>merge(k,1,Integer::sum)</code> for counters; <code>computeIfAbsent(k, x-&gt;new ArrayList&lt;&gt;()).add(v)</code> for grouping.</td></tr>
+
+<tr><td><code>LinkedHashMap&lt;K,V&gt;</code></td>
+<td>Preserve insertion order, LRU cache (access-order constructor).</td>
+<td>Hot-path where every ns matters (slightly slower than HashMap).</td>
+<td>O(1) avg</td>
+<td>Pass <code>true</code> as 3rd arg for access-order → natural LRU.</td></tr>
+
+<tr><td><code>TreeMap&lt;K,V&gt;</code></td>
+<td>Sorted keys, floor/ceiling/higher/lower, range queries, calendar problems.</td>
+<td>Plain counters (HashMap is faster).</td>
+<td>O(log n)</td>
+<td><code>floorKey</code>, <code>ceilingKey</code>, <code>subMap(lo,hi)</code> are the secret weapons. Red-black tree under the hood.</td></tr>
+
+<tr><td><code>HashSet&lt;E&gt;</code></td>
+<td>Dedup, membership, visited.</td>
+<td>Need sorted iteration.</td>
+<td>O(1) avg</td>
+<td>For visited-in-grid prefer <code>boolean[][]</code> — no boxing.</td></tr>
+
+<tr><td><code>TreeSet&lt;E&gt;</code></td>
+<td>Sorted unique set, closest value queries.</td>
+<td>Plain dedup.</td>
+<td>O(log n)</td>
+<td><code>ceiling/floor</code> for nearest-neighbor in sliding window (e.g., contains-duplicate III).</td></tr>
+
+<tr><td><code>PriorityQueue&lt;E&gt;</code></td>
+<td>Heap: top-K, Dijkstra, merge K sorted.</td>
+<td>Need random access or sorted iteration (it's NOT sorted on iterate!).</td>
+<td>offer/poll O(log n)</td>
+<td>Default = min-heap. Max-heap: <code>new PriorityQueue&lt;&gt;(Comparator.reverseOrder())</code>.</td></tr>
+
+<tr><td><code>int[]</code> / <code>int[][]</code></td>
+<td>Performance-critical DP, grids, freq counters over fixed alphabet.</td>
+<td>Dynamic resizing needed.</td>
+<td>O(1)</td>
+<td>Always beats boxed <code>Integer[]</code>. Use <code>Arrays.fill</code>, <code>Arrays.copyOf</code>.</td></tr>
+
+<tr><td><code>StringBuilder</code></td>
+<td>String concatenation in loops, building output.</td>
+<td>Short concat of 2-3 strings (just use <code>+</code>).</td>
+<td>append O(1) amortized</td>
+<td>Pre-size with <code>new StringBuilder(n)</code> when n known. <code>reverse()</code> is O(n).</td></tr>
+
+<tr><td><code>String</code></td>
+<td>Immutable text.</td>
+<td>Many concatenations in loop (quadratic).</td>
+<td>charAt O(1)</td>
+<td><code>toCharArray()</code> once, then index — faster than repeated <code>charAt</code> in hot loops.</td></tr>
+
+<tr><td><code>BitSet</code></td>
+<td>Sieve of Eratosthenes, visited flags for huge N, bitmask ops.</td>
+<td>Small N — just use <code>long</code>.</td>
+<td>O(1) per bit</td>
+<td>64× memory savings vs <code>boolean[]</code>; has <code>and/or/xor/cardinality</code>.</td></tr>
+
+<tr><td><code>Deque&lt;Integer&gt;</code> (monotonic)</td>
+<td>Sliding window max/min, next greater element.</td>
+<td>Need random access.</td>
+<td>O(1) amortized</td>
+<td>Store indices, not values, so you can check window bounds.</td></tr>
+
+<tr><td><code>Map.Entry&lt;K,V&gt;</code></td>
+<td>Passing pairs around without a custom class.</td>
+<td>When you need mutability of both sides (prefer <code>int[]</code>).</td>
+<td>—</td>
+<td><code>Map.entry(k,v)</code> (Java 9+) is immutable. For mutable pair, use <code>int[]{a,b}</code>.</td></tr>
+
+  </tbody>
+</table>
+
+<h2>3. Pattern → Problem → Collection Quick Match</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Problem Sounds Like…</th>
+      <th>Probable Pattern</th>
+      <th>Reach For</th>
+      <th>One-Line Hint</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>"Longest substring without repeating"</td><td>Sliding Window</td><td><code>int[128]</code> freq + two ptrs</td><td>Shrink left when count &gt; 1.</td></tr>
+    <tr><td>"Two numbers that sum to target"</td><td>Hash Map</td><td><code>HashMap&lt;Integer,Integer&gt;</code></td><td>Check <code>target-x</code> before inserting <code>x</code>.</td></tr>
+    <tr><td>"K-th largest"</td><td>Heap / Quickselect</td><td><code>PriorityQueue</code> size K</td><td>Keep min-heap of size K; top = answer.</td></tr>
+    <tr><td>"Merge N sorted lists"</td><td>Heap</td><td>Min-heap of head nodes</td><td>Poll smallest, push its <code>.next</code>.</td></tr>
+    <tr><td>"Shortest path, unweighted"</td><td>BFS</td><td><code>ArrayDeque</code> + <code>visited</code></td><td>Level by level; first hit is shortest.</td></tr>
+    <tr><td>"Shortest path, weighted ≥ 0"</td><td>Dijkstra</td><td><code>PriorityQueue&lt;int[]&gt;</code></td><td>Skip stale entries.</td></tr>
+    <tr><td>"Can you reach / schedule courses?"</td><td>Topo / Cycle</td><td>Kahn's w/ <code>indeg[]</code></td><td>Size of result == V means acyclic.</td></tr>
+    <tr><td>"Number of islands / regions"</td><td>DFS-BFS or DSU</td><td>Grid + <code>visited</code> or <code>int[] parent</code></td><td>Mark visited by overwriting cell.</td></tr>
+    <tr><td>"Next greater element"</td><td>Monotonic Stack</td><td><code>ArrayDeque&lt;Integer&gt;</code></td><td>Pop while top ≤ current.</td></tr>
+    <tr><td>"Max in every window of K"</td><td>Monotonic Deque</td><td><code>ArrayDeque&lt;Integer&gt;</code> (indices)</td><td>Pop back while smaller; front = answer.</td></tr>
+    <tr><td>"Min/max/count ways"</td><td>DP</td><td><code>int[]</code> / <code>int[][]</code></td><td>Define state, transition, base.</td></tr>
+    <tr><td>"All subsets / permutations"</td><td>Backtracking</td><td><code>List</code> + <code>Deque</code> path</td><td>Choose, recurse, un-choose.</td></tr>
+    <tr><td>"Prefix autocomplete / word dictionary"</td><td>Trie</td><td>Custom node, <code>Node[26]</code></td><td>Storing words at end simplifies search-II.</td></tr>
+    <tr><td>"Range sum + updates"</td><td>BIT / Seg Tree</td><td><code>int[] bit</code></td><td>Convert to 1-indexed.</td></tr>
+    <tr><td>"Detect cycle (graph)"</td><td>DFS w/ color OR DSU</td><td><code>int[] color</code> 0/1/2</td><td>Gray→Gray = back edge.</td></tr>
+    <tr><td>"Palindrome substring / LPS"</td><td>DP or Expand-Around-Center</td><td><code>boolean[][]</code> dp</td><td>Expand is O(n²) time, O(1) space — cleaner.</td></tr>
+    <tr><td>"Capacity / min days / threshold"</td><td>Binary Search on Answer</td><td><code>long lo,hi + feasible()</code></td><td>Write feasibility, then binary search.</td></tr>
+    <tr><td>"LRU / LFU cache"</td><td>Design</td><td><code>LinkedHashMap</code> or DLL+HashMap</td><td>Access-order LinkedHashMap is the cheapest LRU.</td></tr>
+  </tbody>
+</table>
+
+<h2>4. Snippets You'll Reuse (Copy-paste)</h2>
+
+<details open><summary>Counter with HashMap</summary>
+<pre><code>Map&lt;Character,Integer&gt; cnt = new HashMap&lt;&gt;();
+for (char c : s.toCharArray()) cnt.merge(c, 1, Integer::sum);
+</code></pre>
+</details>
+
+<details><summary>Max-heap of pairs</summary>
+<pre><code>PriorityQueue&lt;int[]&gt; pq = new PriorityQueue&lt;&gt;((a,b) -&gt; Integer.compare(b[0], a[0]));
+</code></pre>
+</details>
+
+<details><summary>Binary search (leftmost true)</summary>
+<pre><code>int lo = 0, hi = n;
+while (lo &lt; hi) {
+    int mid = lo + (hi - lo) / 2;
+    if (ok(mid)) hi = mid;
+    else         lo = mid + 1;
+}
+return lo; // smallest index where ok==true
+</code></pre>
+</details>
+
+<details><summary>DSU with path compression + union by rank</summary>
+<pre><code>int[] p, r;
+int find(int x){ while (p[x]!=x){ p[x]=p[p[x]]; x=p[x]; } return x; }
+boolean union(int a, int b){
+    a=find(a); b=find(b);
+    if (a==b) return false;
+    if (r[a]&lt;r[b]) { int t=a; a=b; b=t; }
+    p[b]=a;
+    if (r[a]==r[b]) r[a]++;
+    return true;
+}
+</code></pre>
+</details>
+
+<details><summary>Topological sort (Kahn's)</summary>
+<pre><code>int[] indeg = new int[n];
+List&lt;List&lt;Integer&gt;&gt; g = new ArrayList&lt;&gt;();
+for (int i=0;i&lt;n;i++) g.add(new ArrayList&lt;&gt;());
+for (int[] e : edges){ g.get(e[0]).add(e[1]); indeg[e[1]]++; }
+Deque&lt;Integer&gt; q = new ArrayDeque&lt;&gt;();
+for (int i=0;i&lt;n;i++) if (indeg[i]==0) q.offer(i);
+List&lt;Integer&gt; order = new ArrayList&lt;&gt;();
+while (!q.isEmpty()){
+    int u = q.poll(); order.add(u);
+    for (int v : g.get(u)) if (--indeg[v]==0) q.offer(v);
+}
+if (order.size() != n) { /* cycle */ }
+</code></pre>
+</details>
+
+<details><summary>LRU cache in 8 lines</summary>
+<pre><code>class LRU&lt;K,V&gt; extends LinkedHashMap&lt;K,V&gt; {
+    private final int cap;
+    LRU(int cap){ super(cap, 0.75f, true); this.cap = cap; }
+    @Override protected boolean removeEldestEntry(Map.Entry&lt;K,V&gt; e){ return size() &gt; cap; }
+}
+</code></pre>
+</details>
+
+<details><summary>Sliding window template</summary>
+<pre><code>int l = 0, best = 0;
+int[] freq = new int[128];
+for (int r = 0; r &lt; s.length(); r++){
+    freq[s.charAt(r)]++;
+    while (/* invalid */) {
+        freq[s.charAt(l)]--;
+        l++;
+    }
+    best = Math.max(best, r - l + 1);
+}
+</code></pre>
+</details>
+
+<details><summary>Dijkstra</summary>
+<pre><code>int[] dist = new int[n];
+Arrays.fill(dist, Integer.MAX_VALUE);
+dist[src] = 0;
+PriorityQueue&lt;int[]&gt; pq = new PriorityQueue&lt;&gt;((a,b) -&gt; a[0]-b[0]);
+pq.offer(new int[]{0, src});
+while (!pq.isEmpty()){
+    int[] cur = pq.poll();
+    int d = cur[0], u = cur[1];
+    if (d &gt; dist[u]) continue;
+    for (int[] nb : g.get(u)){
+        int v = nb[0], w = nb[1];
+        if (d + w &lt; dist[v]){ dist[v] = d + w; pq.offer(new int[]{dist[v], v}); }
+    }
+}
+</code></pre>
+</details>
+
+<h2>5. Interview Gotchas (fast list)</h2>
+<div class="note">
+<ul class="mini">
+<li><b>Overflow:</b> sum of two ints can overflow — use <code>long</code> or <code>Math.addExact</code>.</li>
+<li><b>Comparator:</b> never <code>return a-b</code> for longs or possibly-huge ints — use <code>Long.compare</code>.</li>
+<li><b>PriorityQueue iteration:</b> iterator is NOT sorted; only <code>poll()</code> is.</li>
+<li><b>Autoboxing:</b> <code>Map&lt;Integer,Integer&gt;</code> is 6–10× slower than <code>int[]</code> in hot loops.</li>
+<li><b>HashMap capacity:</b> pre-size with <code>new HashMap&lt;&gt;(n*4/3 + 1)</code> to avoid resize churn.</li>
+<li><b>String equality:</b> use <code>.equals</code>, never <code>==</code> (except for interned literals).</li>
+<li><b>Recursion depth:</b> JVM default ~10k — iterative for skewed trees / big grids.</li>
+<li><b>Modulo:</b> in Java <code>%</code> can be negative — normalize with <code>((x % m) + m) % m</code>.</li>
+<li><b>Array clone:</b> <code>arr.clone()</code> is shallow; for 2D use <code>Arrays.stream(a).map(int[]::clone).toArray(int[][]::new)</code>.</li>
+<li><b>Char ↔ int:</b> <code>c - '0'</code> for digits, <code>c - 'a'</code> for lowercase index.</li>
+</ul>
+</div>
+
+<h2>6. Practice Problems — 10 per Pattern (Elaborated, No Solutions)</h2>
+<p class="muted">Read the problem, then pattern-match it yourself before checking the pattern label. Difficulty in the tag.</p>
+
+<h3 style="margin-top:18px">6.1 Two Pointers</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Pair With Target Sum <span class="tag t-easy">E</span></td><td>Given a <b>sorted</b> array and a target, return indices of two numbers that add up to the target. Exactly one solution exists. Do it in O(n) time without a hash map.</td></tr>
+<tr><td>2</td><td>Remove Duplicates In-Place <span class="tag t-easy">E</span></td><td>Given a sorted array, remove duplicates in place so each element appears only once. Return the new length. Do not allocate extra space.</td></tr>
+<tr><td>3</td><td>Squares of a Sorted Array <span class="tag t-easy">E</span></td><td>Given a sorted array that may contain negatives, return a new array of the squares of each number, also sorted. Target O(n), not O(n log n).</td></tr>
+<tr><td>4</td><td>Triplet Sum to Zero (3Sum) <span class="tag t-med">M</span></td><td>Find all unique triplets <code>(a,b,c)</code> in an unsorted array where <code>a+b+c=0</code>. Avoid duplicate triplets in output.</td></tr>
+<tr><td>5</td><td>Triplet Sum Close to Target <span class="tag t-med">M</span></td><td>Given an array and target T, find the triplet whose sum is closest to T. Return that sum.</td></tr>
+<tr><td>6</td><td>Triplets With Smaller Sum <span class="tag t-med">M</span></td><td>Count triplets <code>(i,j,k)</code> with <code>i&lt;j&lt;k</code> whose sum is less than a given target.</td></tr>
+<tr><td>7</td><td>Subarrays With Product Less Than K <span class="tag t-med">M</span></td><td>Given positive integers, count contiguous subarrays whose product is strictly less than K. Classic sliding-two-pointer combo.</td></tr>
+<tr><td>8</td><td>Dutch National Flag (Sort 0/1/2) <span class="tag t-med">M</span></td><td>Sort an array containing only 0s, 1s, and 2s in a single pass with O(1) extra space.</td></tr>
+<tr><td>9</td><td>Container With Most Water <span class="tag t-med">M</span></td><td>Given heights of vertical lines on an x-axis, pick two lines that form a container holding the most water. Return that max area.</td></tr>
+<tr><td>10</td><td>Trapping Rain Water <span class="tag t-hard">H</span></td><td>Given bar heights, compute the total water trapped between them after raining. Solve in O(n) time and O(1) space with two pointers.</td></tr>
+</tbody></table>
+
+<h3>6.2 Sliding Window</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Maximum Sum Subarray of Size K <span class="tag t-easy">E</span></td><td>Given an array and a window size K, find the maximum sum of any K consecutive elements.</td></tr>
+<tr><td>2</td><td>Smallest Subarray With Sum ≥ S <span class="tag t-easy">E</span></td><td>Find the length of the smallest contiguous subarray whose sum is at least S. Return 0 if none.</td></tr>
+<tr><td>3</td><td>Longest Substring With K Distinct <span class="tag t-med">M</span></td><td>Length of the longest substring containing at most K distinct characters.</td></tr>
+<tr><td>4</td><td>Fruits Into Baskets <span class="tag t-med">M</span></td><td>Pick fruits from a row of trees into two baskets (each basket holds one fruit type). Max fruits you can pick from a contiguous window.</td></tr>
+<tr><td>5</td><td>Longest Substring Without Repeating <span class="tag t-med">M</span></td><td>Find the length of the longest substring with all distinct characters.</td></tr>
+<tr><td>6</td><td>Longest Repeating Character Replacement <span class="tag t-med">M</span></td><td>Given a string and integer K, replace at most K characters so all characters in the longest substring are the same. Return that length.</td></tr>
+<tr><td>7</td><td>Permutation in a String <span class="tag t-med">M</span></td><td>Given strings s1 and s2, return true if s2 contains any permutation of s1 as a substring.</td></tr>
+<tr><td>8</td><td>Find All Anagrams in a String <span class="tag t-med">M</span></td><td>Return all start indices of substrings in s that are anagrams of pattern p.</td></tr>
+<tr><td>9</td><td>Minimum Window Substring <span class="tag t-hard">H</span></td><td>Given strings s and t, return the shortest substring of s that contains every character of t (with multiplicity).</td></tr>
+<tr><td>10</td><td>Substring With Concatenation of All Words <span class="tag t-hard">H</span></td><td>Given a string and a list of equal-length words, find all starting indices where a concatenation of every word (any order, exact once each) appears.</td></tr>
+</tbody></table>
+
+<h3>6.3 Fast &amp; Slow Pointers</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Linked List Cycle <span class="tag t-easy">E</span></td><td>Detect whether a singly linked list has a cycle. O(1) extra space.</td></tr>
+<tr><td>2</td><td>Start of Linked List Cycle <span class="tag t-med">M</span></td><td>If there is a cycle, return the node where it begins, else null.</td></tr>
+<tr><td>3</td><td>Happy Number <span class="tag t-easy">E</span></td><td>Repeatedly replace n with the sum of squares of its digits. Return true iff it eventually reaches 1.</td></tr>
+<tr><td>4</td><td>Middle of Linked List <span class="tag t-easy">E</span></td><td>Return the middle node. For even length, return the second middle.</td></tr>
+<tr><td>5</td><td>Palindrome Linked List <span class="tag t-easy">E</span></td><td>Check if a singly linked list reads the same forwards and backwards. O(1) extra space.</td></tr>
+<tr><td>6</td><td>Reorder List <span class="tag t-med">M</span></td><td>Given <code>L0→L1→…→Ln-1→Ln</code>, reorder to <code>L0→Ln→L1→Ln-1→…</code> in place.</td></tr>
+<tr><td>7</td><td>Find the Duplicate Number <span class="tag t-med">M</span></td><td>Array of n+1 ints in [1,n] has exactly one duplicate. Find it in O(n) time, O(1) space, without modifying the array.</td></tr>
+<tr><td>8</td><td>Circular Array Loop <span class="tag t-med">M</span></td><td>Each element tells you how many steps to move (positive = forward, negative = backward). Determine if there is a cycle of length &gt; 1 with a consistent direction.</td></tr>
+<tr><td>9</td><td>Cycle Length in Linked List <span class="tag t-med">M</span></td><td>If a cycle exists, return its length.</td></tr>
+<tr><td>10</td><td>Intersection of Two Linked Lists <span class="tag t-easy">E</span></td><td>Given two singly linked lists, return the node where they intersect (shared tail), or null. O(1) extra space.</td></tr>
+</tbody></table>
+
+<h3>6.4 Prefix Sum &amp; Difference Array</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Range Sum Query — Immutable <span class="tag t-easy">E</span></td><td>Preprocess an array so you can answer sum of any <code>[l,r]</code> in O(1).</td></tr>
+<tr><td>2</td><td>Subarray Sum Equals K <span class="tag t-med">M</span></td><td>Count the number of contiguous subarrays whose sum equals K. Array may contain negatives.</td></tr>
+<tr><td>3</td><td>Contiguous Array (equal 0s &amp; 1s) <span class="tag t-med">M</span></td><td>Given a binary array, find the length of the longest contiguous subarray with equal 0s and 1s.</td></tr>
+<tr><td>4</td><td>Subarray Sums Divisible by K <span class="tag t-med">M</span></td><td>Count non-empty subarrays whose sum is divisible by K.</td></tr>
+<tr><td>5</td><td>Continuous Subarray Sum <span class="tag t-med">M</span></td><td>Return true if there is a subarray of length ≥ 2 whose sum is a multiple of K.</td></tr>
+<tr><td>6</td><td>Product of Array Except Self <span class="tag t-med">M</span></td><td>Return an array where <code>out[i]</code> is the product of all elements except <code>nums[i]</code>, without using division and in O(n).</td></tr>
+<tr><td>7</td><td>Range Addition (Diff Array) <span class="tag t-med">M</span></td><td>Given a length-n zero array and many <code>(l,r,val)</code> update triplets, return the final array after all updates.</td></tr>
+<tr><td>8</td><td>Car Pooling <span class="tag t-med">M</span></td><td>A list of trips <code>(passengers, from, to)</code>. Given car capacity, return whether you can complete all trips without exceeding capacity at any time.</td></tr>
+<tr><td>9</td><td>Corporate Flight Bookings <span class="tag t-med">M</span></td><td>Given n flights and a list of bookings <code>(first, last, seats)</code>, return total seats reserved per flight.</td></tr>
+<tr><td>10</td><td>Matrix Block Sum / 2D Prefix Sum <span class="tag t-med">M</span></td><td>Given a matrix and integer K, for every cell return the sum of all cells within a (2K+1)×(2K+1) block centered on it.</td></tr>
+</tbody></table>
+
+<h3>6.5 Hash Map / Hash Set</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Two Sum <span class="tag t-easy">E</span></td><td>Return indices of the two numbers that add up to target. Exactly one solution, can't reuse the same index.</td></tr>
+<tr><td>2</td><td>Group Anagrams <span class="tag t-med">M</span></td><td>Group a list of strings so anagrams are in the same group. Return a list of groups.</td></tr>
+<tr><td>3</td><td>Valid Anagram <span class="tag t-easy">E</span></td><td>Check if string t is an anagram of string s.</td></tr>
+<tr><td>4</td><td>Longest Consecutive Sequence <span class="tag t-med">M</span></td><td>Given an unsorted array, return the length of the longest sequence of consecutive integers. Must run in O(n).</td></tr>
+<tr><td>5</td><td>Four Sum Count <span class="tag t-med">M</span></td><td>Given four int arrays A,B,C,D, count tuples <code>(i,j,k,l)</code> with <code>A[i]+B[j]+C[k]+D[l]=0</code>.</td></tr>
+<tr><td>6</td><td>Isomorphic Strings <span class="tag t-easy">E</span></td><td>Check if characters of s can be replaced to obtain t, with a consistent one-to-one mapping.</td></tr>
+<tr><td>7</td><td>Word Pattern <span class="tag t-easy">E</span></td><td>Given pattern "abba" and string "dog cat cat dog", check if the mapping is consistent both ways.</td></tr>
+<tr><td>8</td><td>Top K Frequent Elements <span class="tag t-med">M</span></td><td>Return the K most frequent elements in an array. Bucket sort by frequency for O(n).</td></tr>
+<tr><td>9</td><td>First Unique Character <span class="tag t-easy">E</span></td><td>Return the index of the first non-repeating character in a string, or -1.</td></tr>
+<tr><td>10</td><td>Longest Substring With Exactly K Distinct <span class="tag t-med">M</span></td><td>Length of the longest substring with exactly K distinct characters. (Hash map of counts.)</td></tr>
+</tbody></table>
+
+<h3>6.6 Sorting + Greedy / Intervals</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Merge Intervals <span class="tag t-med">M</span></td><td>Merge all overlapping intervals and return the merged list.</td></tr>
+<tr><td>2</td><td>Insert Interval <span class="tag t-med">M</span></td><td>Given non-overlapping sorted intervals, insert a new one and merge if necessary.</td></tr>
+<tr><td>3</td><td>Non-Overlapping Intervals <span class="tag t-med">M</span></td><td>Minimum number of intervals to remove so that the rest don't overlap. (Classic end-time greedy.)</td></tr>
+<tr><td>4</td><td>Meeting Rooms II <span class="tag t-med">M</span></td><td>Given meeting intervals, find the minimum number of conference rooms required.</td></tr>
+<tr><td>5</td><td>Minimum Arrows to Burst Balloons <span class="tag t-med">M</span></td><td>Each balloon is an interval <code>[x_start,x_end]</code>. A vertical arrow at x pops all balloons containing x. Find the minimum arrows.</td></tr>
+<tr><td>6</td><td>Task Scheduler <span class="tag t-med">M</span></td><td>Given task types and cooldown N (same task can't repeat within N slots), find the minimum total time (including idles).</td></tr>
+<tr><td>7</td><td>Jump Game II <span class="tag t-med">M</span></td><td>Each element is a max jump length. Return the minimum jumps to reach the last index.</td></tr>
+<tr><td>8</td><td>Gas Station <span class="tag t-med">M</span></td><td>Circular route of gas stations with gas[i] and cost[i]. Find the starting station to complete a full loop, or -1.</td></tr>
+<tr><td>9</td><td>Candy <span class="tag t-hard">H</span></td><td>Each child has a rating; higher-rated neighbors must receive more candy. Minimum total candies.</td></tr>
+<tr><td>10</td><td>Partition Labels <span class="tag t-med">M</span></td><td>Partition a string so each letter appears in at most one part. Return sizes of the parts.</td></tr>
+</tbody></table>
+
+<h3>6.7 Binary Search (incl. on Answer)</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Classic Binary Search <span class="tag t-easy">E</span></td><td>Return the index of target in a sorted array or -1.</td></tr>
+<tr><td>2</td><td>First &amp; Last Position of Target <span class="tag t-med">M</span></td><td>In a sorted array with duplicates, return the first and last index of the target (or [-1,-1]).</td></tr>
+<tr><td>3</td><td>Search in Rotated Sorted Array <span class="tag t-med">M</span></td><td>A sorted array is rotated at some pivot. Find a target in O(log n).</td></tr>
+<tr><td>4</td><td>Find Minimum in Rotated Sorted Array <span class="tag t-med">M</span></td><td>Return the minimum of a rotated sorted array with distinct elements.</td></tr>
+<tr><td>5</td><td>Peak Element <span class="tag t-med">M</span></td><td>An element is a peak if it's strictly greater than neighbors. Find any peak in O(log n).</td></tr>
+<tr><td>6</td><td>Koko Eating Bananas <span class="tag t-med">M</span></td><td>Find the minimum eating speed (bananas/hour) so Koko finishes all piles within H hours.</td></tr>
+<tr><td>7</td><td>Capacity to Ship Packages in D Days <span class="tag t-med">M</span></td><td>Find the minimum ship capacity such that all packages (in order) can be shipped within D days.</td></tr>
+<tr><td>8</td><td>Split Array Largest Sum <span class="tag t-hard">H</span></td><td>Split an array into M non-empty contiguous parts minimizing the largest subarray sum.</td></tr>
+<tr><td>9</td><td>Median of Two Sorted Arrays <span class="tag t-hard">H</span></td><td>Find the median of two sorted arrays combined, in O(log(min(m,n))).</td></tr>
+<tr><td>10</td><td>Find K-th Smallest in Sorted Matrix <span class="tag t-med">M</span></td><td>Given an n×n matrix where each row and column is sorted ascending, find the K-th smallest element.</td></tr>
+</tbody></table>
+
+<h3>6.8 Monotonic Stack / Deque</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Next Greater Element I <span class="tag t-easy">E</span></td><td>For each element in nums1, find the next greater in nums2 (a subset), or -1.</td></tr>
+<tr><td>2</td><td>Daily Temperatures <span class="tag t-med">M</span></td><td>For each day, how many days until a warmer temperature? 0 if none.</td></tr>
+<tr><td>3</td><td>Next Greater Element II (circular) <span class="tag t-med">M</span></td><td>Same as NGE but the array wraps around.</td></tr>
+<tr><td>4</td><td>Stock Span <span class="tag t-med">M</span></td><td>For each day price, how many consecutive previous days (including today) had price ≤ today's.</td></tr>
+<tr><td>5</td><td>Largest Rectangle in Histogram <span class="tag t-hard">H</span></td><td>Given bar heights, find the largest rectangle that fits under the histogram.</td></tr>
+<tr><td>6</td><td>Maximal Rectangle in Binary Matrix <span class="tag t-hard">H</span></td><td>Largest rectangle of all 1s in a 0/1 matrix.</td></tr>
+<tr><td>7</td><td>Remove K Digits <span class="tag t-med">M</span></td><td>Given a numeric string, remove K digits to form the smallest possible number.</td></tr>
+<tr><td>8</td><td>Sliding Window Maximum <span class="tag t-hard">H</span></td><td>Return the max in every window of size K. Expected O(n) with a deque.</td></tr>
+<tr><td>9</td><td>Shortest Subarray With Sum ≥ K <span class="tag t-hard">H</span></td><td>Given an array that may have negatives, find the shortest contiguous subarray with sum ≥ K.</td></tr>
+<tr><td>10</td><td>Sum of Subarray Minimums <span class="tag t-med">M</span></td><td>Sum over all contiguous subarrays of their minimum. Answer modulo 1e9+7.</td></tr>
+</tbody></table>
+
+<h3>6.9 Heap / Priority Queue</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>K-th Largest Element in Array <span class="tag t-med">M</span></td><td>Return the K-th largest (not K-th distinct) element.</td></tr>
+<tr><td>2</td><td>K Closest Points to Origin <span class="tag t-med">M</span></td><td>Given 2D points, return the K closest to the origin by Euclidean distance.</td></tr>
+<tr><td>3</td><td>Merge K Sorted Lists <span class="tag t-hard">H</span></td><td>Merge K sorted linked lists into one sorted list.</td></tr>
+<tr><td>4</td><td>Find Median From Data Stream <span class="tag t-hard">H</span></td><td>Support <code>addNum</code> and <code>findMedian</code> on a growing stream.</td></tr>
+<tr><td>5</td><td>Top K Frequent Words <span class="tag t-med">M</span></td><td>Return K most frequent words. Tie-break by lexicographic order.</td></tr>
+<tr><td>6</td><td>Reorganize String <span class="tag t-med">M</span></td><td>Rearrange a string so that no two adjacent characters are the same, or return "" if impossible.</td></tr>
+<tr><td>7</td><td>Task Scheduler With Cooldown <span class="tag t-med">M</span></td><td>Same task can't run within N units; minimize total time.</td></tr>
+<tr><td>8</td><td>Smallest Range Covering K Lists <span class="tag t-hard">H</span></td><td>Given K sorted lists, find the smallest range that contains at least one number from each list.</td></tr>
+<tr><td>9</td><td>Furthest Building You Can Reach <span class="tag t-med">M</span></td><td>Given building heights, bricks, and ladders, choose where to use each to maximize the furthest building reached.</td></tr>
+<tr><td>10</td><td>Find K Pairs With Smallest Sums <span class="tag t-med">M</span></td><td>Given two sorted arrays, return K pairs <code>(u,v)</code> one from each with the smallest sums.</td></tr>
+</tbody></table>
+
+<h3>6.10 BFS (Graph &amp; Grid)</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Binary Tree Level Order Traversal <span class="tag t-med">M</span></td><td>Return node values grouped by level.</td></tr>
+<tr><td>2</td><td>Binary Tree Zigzag Level Order <span class="tag t-med">M</span></td><td>Level order but alternating left-to-right and right-to-left.</td></tr>
+<tr><td>3</td><td>Right Side View <span class="tag t-med">M</span></td><td>Return values of the rightmost node at each level of a binary tree.</td></tr>
+<tr><td>4</td><td>Rotting Oranges <span class="tag t-med">M</span></td><td>In a grid, fresh oranges rot if a neighbor is rotten; each minute spreads. Return minutes until all rot, or -1.</td></tr>
+<tr><td>5</td><td>Shortest Path in Binary Matrix <span class="tag t-med">M</span></td><td>From (0,0) to (n-1,n-1) moving 8-directionally through 0-cells. Return path length or -1.</td></tr>
+<tr><td>6</td><td>Word Ladder <span class="tag t-hard">H</span></td><td>Transform beginWord into endWord one letter at a time, each intermediate in the word list. Return shortest length or 0.</td></tr>
+<tr><td>7</td><td>Open the Lock <span class="tag t-med">M</span></td><td>Four rotating wheels 0-9. Avoid deadends, reach target with min moves.</td></tr>
+<tr><td>8</td><td>01 Matrix <span class="tag t-med">M</span></td><td>For each cell in a 0/1 matrix, return the distance to the nearest 0. Multi-source BFS.</td></tr>
+<tr><td>9</td><td>Walls and Gates <span class="tag t-med">M</span></td><td>Fill each empty room with distance to its nearest gate.</td></tr>
+<tr><td>10</td><td>Minimum Knight Moves <span class="tag t-med">M</span></td><td>Minimum moves for a knight on an infinite chessboard from (0,0) to (x,y).</td></tr>
+</tbody></table>
+
+<h3>6.11 DFS / Backtracking</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Subsets <span class="tag t-med">M</span></td><td>Return all subsets of a distinct-integer array (the power set).</td></tr>
+<tr><td>2</td><td>Subsets II (with duplicates) <span class="tag t-med">M</span></td><td>Array may contain duplicates; return all unique subsets.</td></tr>
+<tr><td>3</td><td>Permutations <span class="tag t-med">M</span></td><td>All permutations of a distinct-integer array.</td></tr>
+<tr><td>4</td><td>Permutations II <span class="tag t-med">M</span></td><td>Array has duplicates; return unique permutations.</td></tr>
+<tr><td>5</td><td>Combination Sum <span class="tag t-med">M</span></td><td>Given candidates (unique) and target, return all unique combinations summing to target (reuse allowed).</td></tr>
+<tr><td>6</td><td>Combination Sum II <span class="tag t-med">M</span></td><td>Candidates may have duplicates; each used at most once; combinations must be unique.</td></tr>
+<tr><td>7</td><td>Word Search <span class="tag t-med">M</span></td><td>Given a 2D board, check whether a word can be constructed from adjacent cells without reusing a cell.</td></tr>
+<tr><td>8</td><td>Palindrome Partitioning <span class="tag t-med">M</span></td><td>Partition a string so every substring is a palindrome. Return all possible partitions.</td></tr>
+<tr><td>9</td><td>N-Queens <span class="tag t-hard">H</span></td><td>Place N queens on an N×N board so none attack each other; return all configurations.</td></tr>
+<tr><td>10</td><td>Sudoku Solver <span class="tag t-hard">H</span></td><td>Fill a partially filled 9×9 Sudoku board so it's valid. Solution is unique.</td></tr>
+</tbody></table>
+
+<h3>6.12 Union-Find (DSU)</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Number of Connected Components <span class="tag t-med">M</span></td><td>Given n nodes and an edge list, count connected components.</td></tr>
+<tr><td>2</td><td>Graph Valid Tree <span class="tag t-med">M</span></td><td>Given n nodes and edges, check if they form a valid tree (connected + acyclic).</td></tr>
+<tr><td>3</td><td>Redundant Connection <span class="tag t-med">M</span></td><td>Given n edges forming a tree + one extra edge, return the extra edge to remove (last one that creates a cycle).</td></tr>
+<tr><td>4</td><td>Accounts Merge <span class="tag t-med">M</span></td><td>Merge accounts that share any email; output groups with unique sorted emails under a single name.</td></tr>
+<tr><td>5</td><td>Number of Islands II <span class="tag t-hard">H</span></td><td>Given a grid and a stream of "turn this land cell into 1" updates, return the number of islands after each update.</td></tr>
+<tr><td>6</td><td>Satisfiability of Equality Equations <span class="tag t-med">M</span></td><td>Given equations like <code>a==b</code> and <code>a!=c</code>, return whether all can be satisfied.</td></tr>
+<tr><td>7</td><td>Smallest String With Swaps <span class="tag t-med">M</span></td><td>Given pairs of indices you can swap any number of times, return the lexicographically smallest string achievable.</td></tr>
+<tr><td>8</td><td>Kruskal's MST <span class="tag t-med">M</span></td><td>Given a weighted undirected graph, compute the minimum spanning tree weight.</td></tr>
+<tr><td>9</td><td>Most Stones Removed With Same Row/Col <span class="tag t-med">M</span></td><td>Stones sharing a row or column are connected; remove as many as possible leaving one per component. Return count removed.</td></tr>
+<tr><td>10</td><td>Regions Cut By Slashes <span class="tag t-med">M</span></td><td>An n×n grid of '/','\',' '. Each cell is split into 4 triangles; count connected regions.</td></tr>
+</tbody></table>
+
+<h3>6.13 Topological Sort</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Course Schedule <span class="tag t-med">M</span></td><td>Given prerequisites, can all courses be finished? (Detect cycle.)</td></tr>
+<tr><td>2</td><td>Course Schedule II <span class="tag t-med">M</span></td><td>Return any valid course ordering or empty array if impossible.</td></tr>
+<tr><td>3</td><td>Alien Dictionary <span class="tag t-hard">H</span></td><td>Given a sorted list of words in an unknown alphabet, return a valid character order.</td></tr>
+<tr><td>4</td><td>Minimum Height Trees <span class="tag t-med">M</span></td><td>For an undirected tree, return all roots that minimize tree height (1 or 2 centers).</td></tr>
+<tr><td>5</td><td>Sequence Reconstruction <span class="tag t-med">M</span></td><td>Given original sequence and a list of subsequences, check if the original is the unique topological sort.</td></tr>
+<tr><td>6</td><td>Parallel Courses <span class="tag t-med">M</span></td><td>In each semester you can take any courses whose prereqs are done. Minimum semesters to finish all.</td></tr>
+<tr><td>7</td><td>Largest Color Value in a DAG <span class="tag t-hard">H</span></td><td>Each node has a color; find the path with maximum count of any single color. Return -1 if there's a cycle.</td></tr>
+<tr><td>8</td><td>Find Eventual Safe States <span class="tag t-med">M</span></td><td>A node is safe if every path from it leads to a terminal node. Return all safe nodes in ascending order.</td></tr>
+<tr><td>9</td><td>All Ancestors of a Node in a DAG <span class="tag t-med">M</span></td><td>For each node return all ancestors sorted ascending.</td></tr>
+<tr><td>10</td><td>Build Order (Task Dependencies) <span class="tag t-med">M</span></td><td>Given tasks and dependency pairs, produce a valid build order or detect a circular dependency.</td></tr>
+</tbody></table>
+
+<h3>6.14 Shortest Path (Dijkstra / Bellman-Ford / BFS-01)</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Network Delay Time <span class="tag t-med">M</span></td><td>Send a signal from node K along weighted edges; return the time it takes to reach all nodes, or -1.</td></tr>
+<tr><td>2</td><td>Cheapest Flights Within K Stops <span class="tag t-med">M</span></td><td>Find the cheapest price from src to dst using at most K stops.</td></tr>
+<tr><td>3</td><td>Path With Minimum Effort <span class="tag t-med">M</span></td><td>Grid of heights; effort of a path = max absolute diff between adjacent cells. Minimize effort from top-left to bottom-right.</td></tr>
+<tr><td>4</td><td>Swim in Rising Water <span class="tag t-hard">H</span></td><td>You can enter a cell only when time ≥ its elevation. Min time to reach bottom-right.</td></tr>
+<tr><td>5</td><td>Path With Max Probability <span class="tag t-med">M</span></td><td>Given edge success probabilities, maximize end-to-end success probability.</td></tr>
+<tr><td>6</td><td>Minimum Cost to Reach Destination in Time <span class="tag t-hard">H</span></td><td>Weighted edges with time + node fees; find min fee with total time ≤ maxTime.</td></tr>
+<tr><td>7</td><td>Number of Ways to Arrive at Destination <span class="tag t-med">M</span></td><td>Count shortest paths from 0 to n-1 in a weighted undirected graph (mod 1e9+7).</td></tr>
+<tr><td>8</td><td>01 BFS — Shortest Path in Binary Weight Graph <span class="tag t-med">M</span></td><td>Edges have weight 0 or 1; find shortest path using a deque (no heap).</td></tr>
+<tr><td>9</td><td>Bellman-Ford — Detect Negative Cycle <span class="tag t-med">M</span></td><td>Given a weighted directed graph, detect whether a negative cycle is reachable from source.</td></tr>
+<tr><td>10</td><td>Floyd-Warshall — City With Fewest Reachable <span class="tag t-med">M</span></td><td>Return the city with the smallest number of neighbors reachable within a distance threshold. Tie-break by largest city index.</td></tr>
+</tbody></table>
+
+<h3>6.15 Trie</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Implement Trie (Prefix Tree) <span class="tag t-med">M</span></td><td>Support <code>insert</code>, <code>search</code>, <code>startsWith</code> on lowercase strings.</td></tr>
+<tr><td>2</td><td>Add and Search Word (with '.') <span class="tag t-med">M</span></td><td>Trie that supports <code>'.'</code> as a wildcard matching any single char on search.</td></tr>
+<tr><td>3</td><td>Word Search II <span class="tag t-hard">H</span></td><td>Given a board and a word list, return all words found on the board (reuse of cell in same word not allowed).</td></tr>
+<tr><td>4</td><td>Replace Words <span class="tag t-med">M</span></td><td>Given a dictionary of roots, replace each word in a sentence with the shortest root that is its prefix.</td></tr>
+<tr><td>5</td><td>Longest Word in Dictionary <span class="tag t-easy">E</span></td><td>Return the longest word that can be built one char at a time by other words in the list. Tie-break lexicographically.</td></tr>
+<tr><td>6</td><td>Maximum XOR of Two Numbers in Array <span class="tag t-med">M</span></td><td>Find the maximum XOR value between any two numbers in the array using a binary trie.</td></tr>
+<tr><td>7</td><td>Stream of Characters <span class="tag t-hard">H</span></td><td>Stream chars one by one; return true when any dictionary word matches the suffix so far.</td></tr>
+<tr><td>8</td><td>Concatenated Words <span class="tag t-hard">H</span></td><td>Return all words in a list that can be formed by concatenating at least two shorter words from the list.</td></tr>
+<tr><td>9</td><td>Search Suggestions System <span class="tag t-med">M</span></td><td>After each typed char of searchWord, return up to 3 lexicographically smallest product names with that prefix.</td></tr>
+<tr><td>10</td><td>Map Sum Pairs <span class="tag t-med">M</span></td><td>Support <code>insert(key,val)</code> and <code>sum(prefix)</code> = sum of all values whose key has this prefix.</td></tr>
+</tbody></table>
+
+<h3>6.16 Dynamic Programming — 1D</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Climbing Stairs <span class="tag t-easy">E</span></td><td>Ways to climb n stairs taking 1 or 2 steps at a time.</td></tr>
+<tr><td>2</td><td>House Robber <span class="tag t-med">M</span></td><td>Non-adjacent maximum sum. Can't rob two adjacent houses.</td></tr>
+<tr><td>3</td><td>House Robber II (circular) <span class="tag t-med">M</span></td><td>Houses are in a circle — first and last are adjacent.</td></tr>
+<tr><td>4</td><td>Decode Ways <span class="tag t-med">M</span></td><td>Number of ways to decode a digit string where 'A'=1 … 'Z'=26.</td></tr>
+<tr><td>5</td><td>Coin Change <span class="tag t-med">M</span></td><td>Min coins to make amount; -1 if impossible.</td></tr>
+<tr><td>6</td><td>Coin Change II (count ways) <span class="tag t-med">M</span></td><td>Number of distinct ways to make amount using unlimited coins.</td></tr>
+<tr><td>7</td><td>Word Break <span class="tag t-med">M</span></td><td>Can a string be segmented into space-separated words from a dictionary?</td></tr>
+<tr><td>8</td><td>Longest Increasing Subsequence <span class="tag t-med">M</span></td><td>Length of the longest strictly increasing subsequence. O(n log n) preferred.</td></tr>
+<tr><td>9</td><td>Maximum Product Subarray <span class="tag t-med">M</span></td><td>Max product of a contiguous subarray (array may contain negatives).</td></tr>
+<tr><td>10</td><td>Perfect Squares <span class="tag t-med">M</span></td><td>Minimum number of perfect squares that sum to n.</td></tr>
+</tbody></table>
+
+<h3>6.17 Dynamic Programming — 2D / Grid / String</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Unique Paths <span class="tag t-med">M</span></td><td>Robot on m×n grid moves only right/down. Count unique paths from top-left to bottom-right.</td></tr>
+<tr><td>2</td><td>Unique Paths II (obstacles) <span class="tag t-med">M</span></td><td>Same as above but some cells are blocked.</td></tr>
+<tr><td>3</td><td>Minimum Path Sum <span class="tag t-med">M</span></td><td>Grid of non-negative weights; minimize path sum from top-left to bottom-right, moving right/down only.</td></tr>
+<tr><td>4</td><td>Longest Common Subsequence <span class="tag t-med">M</span></td><td>Length of the longest subsequence common to two strings.</td></tr>
+<tr><td>5</td><td>Edit Distance <span class="tag t-hard">H</span></td><td>Minimum operations (insert, delete, replace) to transform one string into another.</td></tr>
+<tr><td>6</td><td>Distinct Subsequences <span class="tag t-hard">H</span></td><td>Count distinct subsequences of s that equal t.</td></tr>
+<tr><td>7</td><td>Longest Palindromic Substring <span class="tag t-med">M</span></td><td>Return the longest palindrome substring (one of them if multiple).</td></tr>
+<tr><td>8</td><td>Palindromic Substrings Count <span class="tag t-med">M</span></td><td>Count all palindromic substrings (including single chars).</td></tr>
+<tr><td>9</td><td>Interleaving String <span class="tag t-med">M</span></td><td>Determine whether s3 is formed by interleaving s1 and s2 preserving character order.</td></tr>
+<tr><td>10</td><td>Regular Expression Matching <span class="tag t-hard">H</span></td><td>Implement regex matching with <code>.</code> (any char) and <code>*</code> (zero or more of the preceding element).</td></tr>
+</tbody></table>
+
+<h3>6.18 Knapsack / Subset-Sum DP</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>0/1 Knapsack <span class="tag t-med">M</span></td><td>Given weights and values and capacity W, maximize value with each item used at most once.</td></tr>
+<tr><td>2</td><td>Partition Equal Subset Sum <span class="tag t-med">M</span></td><td>Can an array be partitioned into two subsets with equal sum?</td></tr>
+<tr><td>3</td><td>Subset Sum <span class="tag t-med">M</span></td><td>Does a subset exist whose sum equals a target?</td></tr>
+<tr><td>4</td><td>Minimum Subset Sum Difference <span class="tag t-med">M</span></td><td>Partition the array into two subsets minimizing the absolute difference of sums.</td></tr>
+<tr><td>5</td><td>Count Subsets With Given Sum <span class="tag t-med">M</span></td><td>Count the number of subsets summing to a target.</td></tr>
+<tr><td>6</td><td>Target Sum <span class="tag t-med">M</span></td><td>Assign + or - to each element; count assignments that yield a target sum.</td></tr>
+<tr><td>7</td><td>Unbounded Knapsack <span class="tag t-med">M</span></td><td>Items can be reused any number of times; maximize value within capacity.</td></tr>
+<tr><td>8</td><td>Rod Cutting <span class="tag t-med">M</span></td><td>Given prices for rod lengths 1..n, maximize profit by cutting a length-n rod.</td></tr>
+<tr><td>9</td><td>Coin Change — Min Coins <span class="tag t-med">M</span></td><td>Unbounded coins; minimize coins to make amount.</td></tr>
+<tr><td>10</td><td>Ones and Zeroes <span class="tag t-med">M</span></td><td>Given strings of 0s/1s and limits m zeros and n ones, pick the max number of strings within the limits.</td></tr>
+</tbody></table>
+
+<h3>6.19 Bitmask / Bit Manipulation</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Single Number <span class="tag t-easy">E</span></td><td>Every element appears twice except one; find it in O(n) time O(1) space.</td></tr>
+<tr><td>2</td><td>Single Number II <span class="tag t-med">M</span></td><td>Every element appears three times except one; find it in O(1) extra space.</td></tr>
+<tr><td>3</td><td>Single Number III <span class="tag t-med">M</span></td><td>Exactly two elements appear once; the rest twice. Find both.</td></tr>
+<tr><td>4</td><td>Counting Bits <span class="tag t-easy">E</span></td><td>For i in 0..n, return the number of 1-bits in i. DP on bits.</td></tr>
+<tr><td>5</td><td>Number of 1 Bits <span class="tag t-easy">E</span></td><td>Population count of an unsigned integer.</td></tr>
+<tr><td>6</td><td>Reverse Bits <span class="tag t-easy">E</span></td><td>Reverse the bits of a 32-bit unsigned integer.</td></tr>
+<tr><td>7</td><td>Sum of Two Integers (no + / -) <span class="tag t-med">M</span></td><td>Return the sum using only bitwise ops.</td></tr>
+<tr><td>8</td><td>Shortest Path Visiting All Nodes <span class="tag t-hard">H</span></td><td>Given an undirected connected graph with ≤12 nodes, find the shortest path visiting every node (bitmask BFS).</td></tr>
+<tr><td>9</td><td>Travelling Salesman (Bitmask DP) <span class="tag t-hard">H</span></td><td>Minimum Hamiltonian cycle cost with up to ~20 cities.</td></tr>
+<tr><td>10</td><td>Maximum Compatibility Score Sum <span class="tag t-med">M</span></td><td>Match students to mentors 1-1 to maximize total compatibility (bitmask over mentors).</td></tr>
+</tbody></table>
+
+<h3>6.20 Matrix Traversal</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Number of Islands <span class="tag t-med">M</span></td><td>Count connected groups of '1' cells in a 2D grid (4-directional).</td></tr>
+<tr><td>2</td><td>Max Area of Island <span class="tag t-med">M</span></td><td>Return the size of the largest connected island.</td></tr>
+<tr><td>3</td><td>Surrounded Regions <span class="tag t-med">M</span></td><td>Flip every 'O' region NOT connected to the border into 'X'.</td></tr>
+<tr><td>4</td><td>Pacific Atlantic Water Flow <span class="tag t-med">M</span></td><td>Given a heightmap, return cells where water can reach both oceans (top/left = Pacific, bottom/right = Atlantic).</td></tr>
+<tr><td>5</td><td>Spiral Matrix <span class="tag t-med">M</span></td><td>Return all elements of an m×n matrix in spiral order.</td></tr>
+<tr><td>6</td><td>Rotate Image <span class="tag t-med">M</span></td><td>Rotate an n×n matrix 90° clockwise in place.</td></tr>
+<tr><td>7</td><td>Set Matrix Zeroes <span class="tag t-med">M</span></td><td>If any cell is 0, set its entire row and column to 0. Do it in place, O(1) extra space.</td></tr>
+<tr><td>8</td><td>Game of Life <span class="tag t-med">M</span></td><td>Apply Conway's Game of Life rules in place using state encoding.</td></tr>
+<tr><td>9</td><td>Word Search <span class="tag t-med">M</span></td><td>Check whether a word can be traced on a board by adjacent unique cells.</td></tr>
+<tr><td>10</td><td>Diagonal Traverse <span class="tag t-med">M</span></td><td>Traverse a matrix in diagonal zig-zag order and return as a 1D array.</td></tr>
+</tbody></table>
+
+<h3>6.21 Linked List</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Reverse Linked List <span class="tag t-easy">E</span></td><td>Reverse a singly linked list iteratively and recursively.</td></tr>
+<tr><td>2</td><td>Reverse Linked List II (range) <span class="tag t-med">M</span></td><td>Reverse nodes from position left to right in one pass.</td></tr>
+<tr><td>3</td><td>Merge Two Sorted Lists <span class="tag t-easy">E</span></td><td>Merge two sorted singly linked lists into one sorted list.</td></tr>
+<tr><td>4</td><td>Add Two Numbers <span class="tag t-med">M</span></td><td>Two numbers are stored in reverse as linked lists; return their sum as a list.</td></tr>
+<tr><td>5</td><td>Remove Nth Node From End <span class="tag t-med">M</span></td><td>Remove the N-th node from the end of the list in one pass.</td></tr>
+<tr><td>6</td><td>Copy List With Random Pointer <span class="tag t-med">M</span></td><td>Deep-copy a linked list where each node has a <code>random</code> pointer to any node.</td></tr>
+<tr><td>7</td><td>LRU Cache <span class="tag t-med">M</span></td><td>Design a least-recently-used cache with O(1) get/put.</td></tr>
+<tr><td>8</td><td>Sort List <span class="tag t-med">M</span></td><td>Sort a linked list in O(n log n) time and O(1) or O(log n) space (merge sort).</td></tr>
+<tr><td>9</td><td>Reverse Nodes in K-Group <span class="tag t-hard">H</span></td><td>Reverse the list in groups of K. Keep leftover (&lt;K) untouched at the end.</td></tr>
+<tr><td>10</td><td>Flatten a Multilevel Doubly Linked List <span class="tag t-med">M</span></td><td>Each node may have a <code>child</code> list; flatten into a single-level doubly linked list in DFS order.</td></tr>
+</tbody></table>
+
+<h3>6.22 Binary Trees</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Maximum Depth of Binary Tree <span class="tag t-easy">E</span></td><td>Return the max depth of a binary tree.</td></tr>
+<tr><td>2</td><td>Same Tree / Symmetric Tree <span class="tag t-easy">E</span></td><td>Check structural equality / mirror symmetry.</td></tr>
+<tr><td>3</td><td>Invert Binary Tree <span class="tag t-easy">E</span></td><td>Mirror a binary tree in place.</td></tr>
+<tr><td>4</td><td>Diameter of Binary Tree <span class="tag t-easy">E</span></td><td>Length (in edges) of the longest path between any two nodes.</td></tr>
+<tr><td>5</td><td>Binary Tree Maximum Path Sum <span class="tag t-hard">H</span></td><td>Max sum over any path (can start/end anywhere) in a binary tree.</td></tr>
+<tr><td>6</td><td>Lowest Common Ancestor (Binary Tree) <span class="tag t-med">M</span></td><td>Find the LCA of two nodes in a generic binary tree.</td></tr>
+<tr><td>7</td><td>Construct Tree From Preorder &amp; Inorder <span class="tag t-med">M</span></td><td>Rebuild a binary tree from its preorder and inorder traversals.</td></tr>
+<tr><td>8</td><td>Serialize and Deserialize Binary Tree <span class="tag t-hard">H</span></td><td>Design functions to serialize a tree to string and rebuild it back.</td></tr>
+<tr><td>9</td><td>Path Sum II <span class="tag t-med">M</span></td><td>Return all root-to-leaf paths with a given target sum.</td></tr>
+<tr><td>10</td><td>Flatten Binary Tree to Linked List <span class="tag t-med">M</span></td><td>Flatten the tree to a right-skewed linked list in preorder, in place.</td></tr>
+</tbody></table>
+
+<h3>6.23 BST</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Validate BST <span class="tag t-med">M</span></td><td>Check whether a binary tree is a valid BST (strict inequality).</td></tr>
+<tr><td>2</td><td>Kth Smallest Element in a BST <span class="tag t-med">M</span></td><td>Return the k-th smallest element.</td></tr>
+<tr><td>3</td><td>LCA of BST <span class="tag t-easy">E</span></td><td>Find LCA in a BST in O(h) using the BST property.</td></tr>
+<tr><td>4</td><td>Insert Into BST <span class="tag t-med">M</span></td><td>Insert a value maintaining BST property.</td></tr>
+<tr><td>5</td><td>Delete Node in BST <span class="tag t-med">M</span></td><td>Delete a node with a given key, re-linking children correctly.</td></tr>
+<tr><td>6</td><td>Recover BST <span class="tag t-med">M</span></td><td>Exactly two nodes are swapped; restore the BST without altering structure (O(1) space via Morris traversal).</td></tr>
+<tr><td>7</td><td>Convert Sorted Array to BST <span class="tag t-easy">E</span></td><td>Build a height-balanced BST from a sorted array.</td></tr>
+<tr><td>8</td><td>BST Iterator <span class="tag t-med">M</span></td><td>Implement an iterator with next/hasNext in amortized O(1) time and O(h) memory.</td></tr>
+<tr><td>9</td><td>Range Sum of BST <span class="tag t-easy">E</span></td><td>Sum of node values in [L,R] using the BST property to prune branches.</td></tr>
+<tr><td>10</td><td>Count of Smaller Numbers After Self <span class="tag t-hard">H</span></td><td>For each index i, count elements to the right that are smaller than <code>a[i]</code> (BST / BIT / merge-sort).</td></tr>
+</tbody></table>
+
+<h3>6.24 Segment Tree / BIT</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Range Sum Query — Mutable <span class="tag t-med">M</span></td><td>Support point updates and range sum queries.</td></tr>
+<tr><td>2</td><td>Range Minimum Query (static) <span class="tag t-med">M</span></td><td>Preprocess an array to answer range min in O(log n) or O(1) with sparse table.</td></tr>
+<tr><td>3</td><td>Count of Smaller Numbers After Self <span class="tag t-hard">H</span></td><td>Use BIT over value indices (after coordinate compression).</td></tr>
+<tr><td>4</td><td>Count of Range Sum <span class="tag t-hard">H</span></td><td>Count subarrays whose sum lies in <code>[lower,upper]</code>.</td></tr>
+<tr><td>5</td><td>Reverse Pairs <span class="tag t-hard">H</span></td><td>Count pairs <code>(i,j)</code> with <code>i&lt;j</code> and <code>a[i] &gt; 2·a[j]</code>.</td></tr>
+<tr><td>6</td><td>Longest Increasing Subsequence (BIT) <span class="tag t-med">M</span></td><td>Compute LIS length in O(n log n) using a Fenwick tree over compressed values.</td></tr>
+<tr><td>7</td><td>Range Update + Point Query <span class="tag t-med">M</span></td><td>Difference-BIT pattern for bulk updates and point sum.</td></tr>
+<tr><td>8</td><td>Range Update + Range Query <span class="tag t-hard">H</span></td><td>Lazy propagation segment tree for range add / range sum.</td></tr>
+<tr><td>9</td><td>Falling Squares <span class="tag t-hard">H</span></td><td>Squares fall onto a number line; maintain the max stack height as queries proceed.</td></tr>
+<tr><td>10</td><td>My Calendar III <span class="tag t-hard">H</span></td><td>Track max concurrent bookings as intervals are inserted online. (Segment tree or TreeMap sweep.)</td></tr>
+</tbody></table>
+
+<h3>6.25 Greedy (Misc)</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>Jump Game <span class="tag t-med">M</span></td><td>Can you reach the last index where each element is a max jump length?</td></tr>
+<tr><td>2</td><td>Best Time to Buy/Sell Stock <span class="tag t-easy">E</span></td><td>One transaction; maximize profit.</td></tr>
+<tr><td>3</td><td>Best Time to Buy/Sell Stock II <span class="tag t-med">M</span></td><td>Unlimited transactions; maximize profit.</td></tr>
+<tr><td>4</td><td>Queue Reconstruction by Height <span class="tag t-med">M</span></td><td>Given people as (h,k) meaning k taller-or-equal in front, reconstruct the queue.</td></tr>
+<tr><td>5</td><td>Minimum Number of Taps to Water Garden <span class="tag t-hard">H</span></td><td>Each tap covers an interval around its position; minimum taps to cover <code>[0,n]</code>.</td></tr>
+<tr><td>6</td><td>Video Stitching <span class="tag t-med">M</span></td><td>Minimum clips to cover <code>[0,T]</code>.</td></tr>
+<tr><td>7</td><td>Hand of Straights <span class="tag t-med">M</span></td><td>Can you rearrange cards into groups of W consecutive numbers?</td></tr>
+<tr><td>8</td><td>Broken Calculator <span class="tag t-med">M</span></td><td>From X reach Y using either X-1 or X*2. Minimum ops. (Work backward from Y.)</td></tr>
+<tr><td>9</td><td>Advantage Shuffle <span class="tag t-med">M</span></td><td>Reorder A so that <code>A[i] &gt; B[i]</code> for as many i as possible.</td></tr>
+<tr><td>10</td><td>Minimum Deletions to Make String Balanced <span class="tag t-med">M</span></td><td>Given a string of 'a'/'b', make it have no "ba" substring with min deletions.</td></tr>
+</tbody></table>
+
+<h3>6.26 Design Problems</h3>
+<table><thead><tr><th style="width:4%">#</th><th style="width:22%">Problem</th><th>Description</th></tr></thead><tbody>
+<tr><td>1</td><td>LRU Cache <span class="tag t-med">M</span></td><td>get/put in O(1) using doubly linked list + hash map.</td></tr>
+<tr><td>2</td><td>LFU Cache <span class="tag t-hard">H</span></td><td>get/put in O(1) with least-frequent eviction, break ties by least-recent.</td></tr>
+<tr><td>3</td><td>Min Stack <span class="tag t-easy">E</span></td><td>Support push/pop/top/getMin in O(1).</td></tr>
+<tr><td>4</td><td>Insert Delete GetRandom O(1) <span class="tag t-med">M</span></td><td>Hash map + array trick.</td></tr>
+<tr><td>5</td><td>Design Twitter <span class="tag t-med">M</span></td><td>postTweet / follow / unfollow / getNewsFeed(10 latest). Use heap for merge.</td></tr>
+<tr><td>6</td><td>Design Tic-Tac-Toe <span class="tag t-med">M</span></td><td>Support move and detect winner in O(1) per move.</td></tr>
+<tr><td>7</td><td>Design Hit Counter <span class="tag t-med">M</span></td><td>Track the number of hits in the past 5 minutes; support hit(ts) and getHits(ts).</td></tr>
+<tr><td>8</td><td>Snake Game <span class="tag t-med">M</span></td><td>Simulate snake movement on a grid; detect self-collision in O(1).</td></tr>
+<tr><td>9</td><td>Design File System <span class="tag t-med">M</span></td><td>Create a path hierarchy with createPath / get operations.</td></tr>
+<tr><td>10</td><td>Online Stock Span <span class="tag t-med">M</span></td><td>For each price streamed in, return the stock span (consecutive days with price ≤ today's).</td></tr>
+</tbody></table>
+
+<p class="muted" style="margin-top:28px">Single-file cheat sheet — open in a browser, print-to-PDF if you want a hard copy.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  /* =========================================================
+     Kiro Dim Dark Mode -- soft slate palette, not pitch-black.
+     Activated only when <html> has class "kiro-dark".
+     Designed so coloured pastel callouts stay LIGHT but their
+     text becomes dark+readable; everything else flips to dim.
+     ========================================================= */
+  html.kiro-dark{
+    --kd-bg:        #1c2128;   /* page bg, slate, not black */
+    --kd-bg-2:      #242a33;   /* panels, h2 bands */
+    --kd-bg-3:      #2c333d;   /* hover / table header */
+    --kd-text:      #e8edf2;   /* main text on dark */
+    --kd-text-mute: #a8b1bd;
+    --kd-border:    #3a414d;
+    --kd-accent:    #8c7bff;
+    --kd-link:      #8cc6ff;
+    --kd-good:      #4ddbb0;
+    --kd-bad:       #ff9d9d;
+    --kd-warn:      #ffd166;
+    --kd-info:      #6ec5ff;
+    --kd-code-bg:   #1f2530;
+    --kd-pre-bg:    #1a1f29;
+    /* Used for elements that keep their original light pastel bg.
+       We force a near-black text colour so they remain readable. */
+    --kd-on-pastel: #15171c;
+    color-scheme: dark;
+    background:#1c2128 !important;
+    color:#e8edf2 !important;
+  }
+
+  /* ----- Base text & layout ----- */
+  html.kiro-dark body{
+    background: var(--kd-bg) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1,
+  html.kiro-dark h3,
+  html.kiro-dark h4,
+  html.kiro-dark h5,
+  html.kiro-dark h6{
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark h1{ border-bottom-color: var(--kd-border) !important; }
+  html.kiro-dark h2{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1 .sub,
+  html.kiro-dark .small,
+  html.kiro-dark .legend,
+  html.kiro-dark .sub,
+  html.kiro-dark .muted{ color: var(--kd-text-mute) !important; }
+
+  html.kiro-dark a{ color: var(--kd-link) !important; }
+  html.kiro-dark a:hover{ color: #c8e1ff !important; }
+  html.kiro-dark hr{ border-color: var(--kd-border) !important; }
+
+  /* ----- Code & pre ----- */
+  html.kiro-dark code,
+  html.kiro-dark code.inline,
+  html.kiro-dark td code,
+  html.kiro-dark th code,
+  html.kiro-dark p code,
+  html.kiro-dark li code,
+  html.kiro-dark span code{
+    background: #2c333d !important;
+    color: #f5e8b8 !important;
+    border: 1px solid #3a414d !important;
+    border-radius: 3px;
+    padding: 0 4px;
+  }
+  html.kiro-dark pre,
+  html.kiro-dark pre.code{
+    background: var(--kd-pre-bg) !important;
+    color: #d6deeb !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark pre code{
+    background: transparent !important;
+    color: inherit !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  html.kiro-dark pre .kw,
+  html.kiro-dark .kw   { color: #ff8489 !important; }
+  html.kiro-dark pre .typ,
+  html.kiro-dark .typ  { color: #ffb070 !important; }
+  html.kiro-dark pre .str,
+  html.kiro-dark .str  { color: #b8dbff !important; }
+  html.kiro-dark pre .num,
+  html.kiro-dark .num  { color: #8cc6ff !important; }
+  html.kiro-dark pre .cmt,
+  html.kiro-dark .cmt  { color: #9aa3b0 !important; }
+  html.kiro-dark pre .ann,
+  html.kiro-dark .ann  { color: #8ee99a !important; }
+  html.kiro-dark pre .fn,
+  html.kiro-dark .fn   { color: #d2b3ff !important; }
+  html.kiro-dark pre .op,
+  html.kiro-dark .op   { color: #d6deeb !important; }
+  html.kiro-dark pre .var,
+  html.kiro-dark .var  { color: #ffb070 !important; }
+
+  /* ----- Tables ----- */
+  html.kiro-dark table{
+    background: transparent !important;
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark th,
+  html.kiro-dark td{
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+    background-color: transparent;
+  }
+  html.kiro-dark th{
+    background: var(--kd-bg-3) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark tr:nth-child(even) td{ background: rgba(255,255,255,.025); }
+
+  html.kiro-dark .right,
+  html.kiro-dark .good,
+  html.kiro-dark tr.right td,
+  html.kiro-dark tr.good td{
+    background: rgba(77,219,176,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .wrong,
+  html.kiro-dark .bad,
+  html.kiro-dark tr.wrong td,
+  html.kiro-dark tr.bad td{
+    background: rgba(255,157,157,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .col-right{ color: var(--kd-good) !important; }
+  html.kiro-dark .col-wrong{ color: var(--kd-bad) !important; }
+
+  html.kiro-dark table.compare th:nth-child(2){
+    background: rgba(255,157,157,.18) !important; color: #ffc4c4 !important;
+  }
+  html.kiro-dark table.compare th:nth-child(3){
+    background: rgba(77,219,176,.18) !important; color: #b0f0d8 !important;
+  }
+  html.kiro-dark table.compare td:nth-child(2){ background: rgba(255,157,157,.06) !important; }
+  html.kiro-dark table.compare td:nth-child(3){ background: rgba(77,219,176,.06) !important; }
+
+  /* ----- Generic tip / note / tricky callouts ----- */
+  html.kiro-dark .tips,
+  html.kiro-dark .tip,
+  html.kiro-dark .note{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .tips b,
+  html.kiro-dark .tip b{ color: var(--kd-warn) !important; }
+
+  html.kiro-dark .tricky{
+    background: rgba(140,123,255,.10) !important;
+    border-color: rgba(140,123,255,.5) !important;
+    color: var(--kd-text) !important;
+  }
+
+  html.kiro-dark .callout,
+  html.kiro-dark .info,
+  html.kiro-dark .panel,
+  html.kiro-dark .box{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .callout.green,
+  html.kiro-dark .callout.success{
+    background: rgba(77,219,176,.10) !important;
+    border-color: rgba(77,219,176,.5) !important;
+  }
+  html.kiro-dark .callout.cyan{
+    background: rgba(110,197,255,.10) !important;
+    border-color: rgba(110,197,255,.5) !important;
+  }
+  html.kiro-dark .callout.red,
+  html.kiro-dark .callout.error,
+  html.kiro-dark .warning{
+    background: rgba(255,157,157,.10) !important;
+    border-color: rgba(255,157,157,.5) !important;
+  }
+  html.kiro-dark .callout.yellow,
+  html.kiro-dark .callout.warning{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+  }
+
+  /* ----- Q-blocks used in Graph_Algorithms_Java cheatsheet:
+           .obj / .why / .how / .theo / .cx (all light pastels).
+           Re-tone them to dim variants with readable text. ----- */
+  html.kiro-dark .block,
+  html.kiro-dark .obj,
+  html.kiro-dark .why,
+  html.kiro-dark .how,
+  html.kiro-dark .theo,
+  html.kiro-dark .cx{
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .block *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .obj *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .why *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .how *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .theo *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .cx *:not(.label):not(code):not(pre):not(b):not(strong){
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .block b,
+  html.kiro-dark .obj b, html.kiro-dark .why b, html.kiro-dark .how b,
+  html.kiro-dark .theo b, html.kiro-dark .cx b,
+  html.kiro-dark .block strong,
+  html.kiro-dark .obj strong, html.kiro-dark .why strong, html.kiro-dark .how strong,
+  html.kiro-dark .theo strong, html.kiro-dark .cx strong{
+    color: #fff !important;
+  }
+  html.kiro-dark .obj  { background: rgba(76,179,255,.16) !important; border-color: #4cb3ff !important; }
+  html.kiro-dark .why  { background: rgba(255,177,73,.16) !important; border-color: #ffb149 !important; }
+  html.kiro-dark .how  { background: rgba(77,219,176,.16) !important; border-color: #4ddbb0 !important; }
+  html.kiro-dark .theo { background: rgba(176,138,255,.16) !important; border-color: #b08aff !important; }
+  html.kiro-dark .cx   { background: rgba(255,138,193,.16) !important; border-color: #ff8ac1 !important; }
+  /* Their pill-style labels stay coloured (white text already) -- leave as-is. */
+
+  /* h2.cat-* coloured section bands -- repaint to muted versions */
+  html.kiro-dark h2.cat-term  { background: rgba(176,184,196,.12) !important; border-left-color: #b0b8c4 !important; }
+  html.kiro-dark h2.cat-rep   { background: rgba(124,138,232,.15) !important; border-left-color: #7c8ae8 !important; }
+  html.kiro-dark h2.cat-trav  { background: rgba(77,219,176,.15) !important; border-left-color: #4ddbb0 !important; }
+  html.kiro-dark h2.cat-topo  { background: rgba(110,197,255,.15) !important; border-left-color: #6ec5ff !important; }
+  html.kiro-dark h2.cat-sp    { background: rgba(76,179,255,.15) !important; border-left-color: #4cb3ff !important; }
+  html.kiro-dark h2.cat-tree  { background: rgba(176,138,255,.15) !important; border-left-color: #b08aff !important; }
+  html.kiro-dark h2.cat-mst   { background: rgba(255,177,73,.15) !important; border-left-color: #ffb149 !important; }
+  html.kiro-dark h2.cat-euler { background: rgba(255,138,193,.15) !important; border-left-color: #ff8ac1 !important; }
+  html.kiro-dark h2.cat-conn  { background: rgba(255,127,127,.15) !important; border-left-color: #ff7f7f !important; }
+  html.kiro-dark h2.cat-color { background: rgba(176,138,255,.15) !important; border-left-color: #b08aff !important; }
+  html.kiro-dark h2.cat-tsp   { background: rgba(176,160,140,.15) !important; border-left-color: #b0a08c !important; }
+  html.kiro-dark h2.cat-flow  { background: rgba(77,219,176,.15) !important; border-left-color: #4ddbb0 !important; }
+
+  /* category chips -- repaint to muted dim with light text */
+  html.kiro-dark .chip-term  { background: rgba(176,184,196,.18) !important; color: #d6dde6 !important; }
+  html.kiro-dark .chip-rep   { background: rgba(124,138,232,.20) !important; color: #c8d1ff !important; }
+  html.kiro-dark .chip-trav  { background: rgba(77,219,176,.20) !important; color: #b8f0d8 !important; }
+  html.kiro-dark .chip-topo  { background: rgba(110,197,255,.20) !important; color: #c0e3ff !important; }
+  html.kiro-dark .chip-sp    { background: rgba(76,179,255,.20) !important; color: #c0deff !important; }
+  html.kiro-dark .chip-tree  { background: rgba(176,138,255,.20) !important; color: #ddc8ff !important; }
+  html.kiro-dark .chip-mst   { background: rgba(255,177,73,.20) !important; color: #ffd9a8 !important; }
+  html.kiro-dark .chip-euler { background: rgba(255,138,193,.20) !important; color: #ffc8e0 !important; }
+  html.kiro-dark .chip-conn  { background: rgba(255,127,127,.20) !important; color: #ffc8c8 !important; }
+  html.kiro-dark .chip-color { background: rgba(176,138,255,.20) !important; color: #ddc8ff !important; }
+  html.kiro-dark .chip-tsp   { background: rgba(176,160,140,.20) !important; color: #e0d4c5 !important; }
+  html.kiro-dark .chip-flow  { background: rgba(77,219,176,.20) !important; color: #b8f0d8 !important; }
+
+  /* Generic chip used in Leetcode_Patterns_Java */
+  html.kiro-dark .chip{
+    background: var(--kd-bg-2) !important;
+    color: var(--kd-text-mute) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark .chip b{ color: var(--kd-text) !important; }
+
+  /* Specific named callouts in Graph_Algorithms cheatsheet */
+  html.kiro-dark .trick{
+    background: rgba(76,179,255,.10) !important;
+    border-color: rgba(76,179,255,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .trick b{ color: var(--kd-info) !important; }
+  html.kiro-dark .hint-box{
+    background: rgba(77,219,176,.10) !important;
+    border-color: rgba(77,219,176,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .hint-box b{ color: var(--kd-good) !important; }
+  html.kiro-dark .warn{
+    background: rgba(255,157,157,.10) !important;
+    border-color: rgba(255,157,157,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .warn b{ color: var(--kd-bad) !important; }
+
+  /* ----- Pills (incl. easy/med/hard from leetcode files) ----- */
+  html.kiro-dark .pill{ color: #fff !important; }
+  html.kiro-dark .pill.bad,
+  html.kiro-dark .pill.hard{ background: #b3434a !important; }
+  html.kiro-dark .pill.good,
+  html.kiro-dark .pill.easy{ background: #1f8a64 !important; }
+  html.kiro-dark .pill.tip,
+  html.kiro-dark .pill.med { background: #8a6a00 !important; }
+  html.kiro-dark .pill.trk { background: #1f5fa0 !important; }
+
+  /* ----- Details / summary ----- */
+  html.kiro-dark details > summary{ color: var(--kd-link) !important; }
+  html.kiro-dark details[open] > summary{ color: var(--kd-text) !important; }
+  html.kiro-dark details .hint{
+    background: rgba(110,197,255,.12) !important;
+    border-left-color: var(--kd-info) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* TOC, blockquote */
+  html.kiro-dark .toc{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark .toc a{ color: var(--kd-link) !important; }
+  html.kiro-dark blockquote{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* ----- Universal safety net: only kicks in for elements whose
+           background is STILL light AFTER the dark theme has been
+           applied. Tagged at runtime via data-kd-pastel. ----- */
+  html.kiro-dark [data-kd-pastel]{
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] *:not(.label):not(.pill):not(code):not(pre):not(b):not(strong){
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] b,
+  html.kiro-dark [data-kd-pastel] strong{
+    color: #000 !important;
+  }
+  html.kiro-dark [data-kd-pastel] code{
+    background: rgba(0,0,0,.10) !important;
+    color: #15171c !important;
+    border-color: rgba(0,0,0,.18) !important;
+  }
+  html.kiro-dark [data-kd-pastel] a{ color: #1a4f8a !important; }
+
+  /* Toggle button itself */
+  .kiro-dark-toggle{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#1c2128;
+    color:#ffd166;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer;
+    font-size:22px;line-height:1;
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{
+    background:#ffd166;
+    color:#1c2128;
+    border-color:#1c2128;
+  }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+
+  /* ---------- pastel safety net (post-dark) ----------
+     Scan AFTER dark mode is applied and tag only elements whose
+     computed background is still light. We exclude elements whose
+     class names overlap with our explicit dark styles, plus any
+     inline <code>/<pre>, so we never re-darken text we've already
+     styled. */
+  var EXCLUDE_TAGS = {CODE:1, PRE:1, BUTTON:1, INPUT:1, TEXTAREA:1, SELECT:1, OPTION:1, SCRIPT:1, STYLE:1, SVG:1, PATH:1, IMG:1};
+  var EXCLUDE_CLASSES = [
+    'kiro-dark-toggle','kiro-home-btn',
+    'tips','tip','note','tricky','callout','panel','box','warning','warn','trick','hint-box','info',
+    'obj','why','how','theo','cx','block','label',
+    'pill','chip','cat-chip','tag',
+    'right','wrong','good','bad','col-right','col-wrong',
+    'compare','toc','blockquote','muted','sub','small','legend',
+    'chip-term','chip-rep','chip-trav','chip-topo','chip-sp','chip-tree',
+    'chip-mst','chip-euler','chip-conn','chip-color','chip-tsp','chip-flow'
+  ];
+  function hasExcludedClass(el){
+    if(!el.classList || !el.classList.length) return false;
+    for(var i=0;i<EXCLUDE_CLASSES.length;i++){
+      if(el.classList.contains(EXCLUDE_CLASSES[i])) return true;
+    }
+    return false;
+  }
+
+  function untagAll(){
+    var tagged = document.querySelectorAll('[data-kd-pastel]');
+    for(var i=0;i<tagged.length;i++) tagged[i].removeAttribute('data-kd-pastel');
+  }
+
+  function tagPastels(){
+    if(!document.body) return;
+    untagAll();
+    var els = document.body.getElementsByTagName('*');
+    for(var i=0;i<els.length;i++){
+      var el = els[i];
+      if(EXCLUDE_TAGS[el.tagName]) continue;
+      if(hasExcludedClass(el)) continue;
+      /* Skip h2/h2.cat-* -- already themed */
+      if(el.tagName === 'H2') continue;
+      /* Skip table cells inside themed compare/right/wrong rows */
+      if(el.tagName === 'TD' || el.tagName === 'TH'){
+        var tr = el.parentElement;
+        if(tr && (tr.classList.contains('right')||tr.classList.contains('wrong')||tr.classList.contains('good')||tr.classList.contains('bad'))) continue;
+      }
+      var cs = window.getComputedStyle(el);
+      var bg = cs.backgroundColor;
+      var m = bg.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+      if(!m) continue;
+      var r=+m[1], g=+m[2], b=+m[3], a=m[4]===undefined?1:+m[4];
+      if(a < 0.55) continue;
+      var minC = Math.min(r,g,b);
+      /* Pastel/light: every channel >= 220 AND not pure white */
+      if(minC >= 220 && !(r===255 && g===255 && b===255)){
+        el.setAttribute('data-kd-pastel','1');
+      }
+    }
+  }
+
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+      /* Tag after dark CSS is in effect so we only catch genuine misses. */
+      if(typeof requestAnimationFrame === 'function'){
+        requestAnimationFrame(function(){ requestAnimationFrame(tagPastels); });
+      } else { setTimeout(tagPastels, 0); }
+    } else {
+      html.classList.remove('kiro-dark');
+      untagAll();
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>

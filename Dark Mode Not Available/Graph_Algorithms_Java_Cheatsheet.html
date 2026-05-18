@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Graph Algorithms (Java) — A3 Printable Cheat Sheet</title>
+<style>
+  @page { size: A3; margin: 12mm; }
+  html, body { background:#fff; color:#111; font-family:"Segoe UI",Arial,Helvetica,sans-serif; font-size:11.5pt; line-height:1.4; margin:0; padding:0; }
+  .wrap { max-width:1650px; margin:0 auto; padding:14px 18px 40px; }
+  h1 { font-size:26pt; margin:4px 0 2px; letter-spacing:.3px; border-bottom:3px solid #111; padding-bottom:6px; }
+  h1 .sub { font-size:12pt; font-weight:normal; color:#444; margin-left:10px; }
+
+  /* Color-coded section bands */
+  h2 { font-size:16pt; margin:24px 0 8px; padding:7px 12px; border-left:7px solid #111; background:#f2f2f2; page-break-after:avoid; }
+  h2.cat-term  { border-color:#5c6770; background:#eceff1; }
+  h2.cat-rep   { border-color:#3949ab; background:#e8eaf6; }
+  h2.cat-trav  { border-color:#2e7d32; background:#e8f5e9; }
+  h2.cat-topo  { border-color:#00838f; background:#e0f7fa; }
+  h2.cat-sp    { border-color:#1565c0; background:#e3f2fd; }
+  h2.cat-tree  { border-color:#6a1b9a; background:#f3e5f5; }
+  h2.cat-mst   { border-color:#ef6c00; background:#fff3e0; }
+  h2.cat-euler { border-color:#c2185b; background:#fce4ec; }
+  h2.cat-conn  { border-color:#b71c1c; background:#ffebee; }
+  h2.cat-color { border-color:#7b1fa2; background:#f3e5f5; }
+  h2.cat-tsp   { border-color:#5d4037; background:#efebe9; }
+  h2.cat-flow  { border-color:#00695c; background:#e0f2f1; }
+
+  h3 { font-size:12.5pt; margin:14px 0 4px; color:#222; page-break-after:avoid; }
+  h4 { font-size:11.5pt; margin:10px 0 2px; color:#333; page-break-after:avoid; }
+
+  /* Structured Q-blocks: Objective / Why / How / Theory */
+  .block { margin:6px 0 10px; border-left:4px solid #ccc; padding:6px 10px; border-radius:3px; page-break-inside:avoid; }
+  .block .label { display:inline-block; font-weight:700; font-size:9.5pt; letter-spacing:.5px; padding:1px 7px; border-radius:3px; margin-right:6px; color:#fff; }
+  .obj   { background:#f1f8ff; border-color:#1565c0; } .obj .label   { background:#1565c0; }
+  .why   { background:#fff7e6; border-color:#c77700; } .why .label   { background:#c77700; }
+  .how   { background:#eefaf0; border-color:#2e7d32; } .how .label   { background:#2e7d32; }
+  .theo  { background:#f5eefc; border-color:#6a1b9a; } .theo .label  { background:#6a1b9a; }
+  .cx    { background:#fdf1f5; border-color:#c2185b; } .cx .label    { background:#c2185b; }
+
+  p, li { margin:4px 0; }
+
+  /* Tables */
+  table { border-collapse:collapse; width:100%; margin:6px 0 10px; page-break-inside:avoid; }
+  th, td { border:1px solid #333; padding:6px 8px; vertical-align:top; text-align:left; }
+  th { background:#eaeaea; font-weight:600; }
+  table.compare th:nth-child(1) { width:22%; }
+  table.compare th:nth-child(2) { width:39%; background:#fbe8e8; color:#7a0000; }
+  table.compare th:nth-child(3) { width:39%; background:#e5f7e8; color:#0b5d16; }
+  table.compare td:nth-child(2) { background:#fff6f6; }
+  table.compare td:nth-child(3) { background:#f4fbf5; }
+
+  /* Callouts */
+  .tips   { border:1px dashed #b08100; background:#fffdf4; padding:8px 12px; margin:6px 0 10px; border-radius:4px; page-break-inside:avoid; }
+  .tips b { color:#6a4a00; }
+  .trick  { border:1px dashed #005a9e; background:#eef4fb; padding:8px 12px; margin:6px 0 10px; border-radius:4px; page-break-inside:avoid; }
+  .trick b { color:#003e6b; }
+  .hint-box { border:1px dashed #2e7d32; background:#f0fbf1; padding:8px 12px; margin:6px 0 10px; border-radius:4px; page-break-inside:avoid; }
+  .hint-box b { color:#0b5d16; }
+  .warn   { border:1px dashed #a40000; background:#fff2f2; padding:8px 12px; margin:6px 0 10px; border-radius:4px; page-break-inside:avoid; }
+  .warn b { color:#7a0000; }
+
+  .tricky { border:1px solid #333; background:#fafaff; padding:10px 12px; margin:10px 0 16px; border-radius:4px; page-break-inside:avoid; }
+  .tricky .q { font-weight:600; margin-bottom:4px; }
+  details > summary { cursor:pointer; color:#005a9e; font-weight:600; margin-top:4px; }
+  details[open] > summary { color:#111; }
+  details .hint { margin-top:4px; padding:6px 8px; background:#eef3ff; border-left:4px solid #005a9e; border-radius:3px; }
+
+  /* Syntax-highlighted code blocks — white background, light theme */
+  pre.code {
+    background:#ffffff; color:#24292e;
+    border:1px solid #d0d7de; border-radius:4px;
+    padding:10px 12px; margin:6px 0 10px;
+    font-family:Consolas,"Courier New",monospace; font-size:10.25pt; line-height:1.5;
+    white-space:pre-wrap; overflow-x:auto;
+    page-break-inside:avoid;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  pre.code .kw   { color:#cf222e; font-weight:600; }   /* keywords: class, void, if, for, etc. */
+  pre.code .typ  { color:#953800; }                    /* types: int, String, List, etc. */
+  pre.code .str  { color:#0a3069; }                    /* strings */
+  pre.code .num  { color:#0550ae; }                    /* numbers */
+  pre.code .cmt  { color:#6e7781; font-style:italic; } /* comments */
+  pre.code .fn   { color:#8250df; }                    /* functions / methods */
+  pre.code .op   { color:#0550ae; }                    /* operators */
+  pre.code .var  { color:#116329; }                    /* special variable highlight (optional) */
+  pre.code .ann  { color:#953800; font-style:italic; } /* annotations */
+
+  code.inline { background:#f6f6f6; border:1px solid #e2e2e2; border-radius:3px; padding:1px 5px; font-family:Consolas,"Courier New",monospace; font-size:10.25pt; color:#222; }
+
+  /* Pills / chips */
+  .pill { display:inline-block; padding:1px 7px; border-radius:10px; font-size:9.5pt; font-weight:600; margin-right:4px; }
+  .pill.bad  { background:#a40000; color:#fff; }
+  .pill.good { background:#116611; color:#fff; }
+  .pill.tip  { background:#b08100; color:#fff; }
+  .pill.trk  { background:#005a9e; color:#fff; }
+  .cat-chip { display:inline-block; padding:1px 7px; border-radius:3px; font-size:9.5pt; font-weight:600; margin-right:6px; }
+  .chip-term  { background:#eceff1; color:#263238; }
+  .chip-rep   { background:#e8eaf6; color:#1a237e; }
+  .chip-trav  { background:#e8f5e9; color:#1b5e20; }
+  .chip-topo  { background:#e0f7fa; color:#006064; }
+  .chip-sp    { background:#e3f2fd; color:#0d47a1; }
+  .chip-tree  { background:#f3e5f5; color:#4a148c; }
+  .chip-mst   { background:#fff3e0; color:#e65100; }
+  .chip-euler { background:#fce4ec; color:#880e4f; }
+  .chip-conn  { background:#ffebee; color:#b71c1c; }
+  .chip-color { background:#f3e5f5; color:#6a1b9a; }
+  .chip-tsp   { background:#efebe9; color:#3e2723; }
+  .chip-flow  { background:#e0f2f1; color:#004d40; }
+
+  @media print {
+    details { page-break-inside:avoid; }
+    details > summary { list-style:none; color:#111; }
+    details > summary::-webkit-details-marker { display:none; }
+    details:not([open]) > *:not(summary) { display:block !important; }
+    details > summary::after { content:" (hint revealed for print)"; font-weight:normal; color:#555; font-size:9.5pt; }
+    pre.code { background:#ffffff !important; color:#24292e !important; border:1px solid #d0d7de !important; }
+  }
+
+  .toc { display:grid; grid-template-columns:repeat(4,1fr); gap:4px 14px; font-size:10.5pt; margin:6px 0 0; }
+  .toc a { color:#005a9e; text-decoration:none; }
+  .toc a:hover { text-decoration:underline; }
+  .legend { font-size:10pt; margin:6px 0 10px; }
+  .small { font-size:9.5pt; color:#555; }
+  .swatch { display:inline-block; width:10px; height:10px; border:1px solid #333; border-radius:2px; vertical-align:middle; margin-right:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Graph Algorithms (Java) — Cheat Sheet<span class="sub">Objective · Why · How · Theory · Colored Code · Tips</span></h1>
+
+<div class="legend">
+  <span class="pill tip">Objective</span>
+  <span class="pill trk">Why</span>
+  <span class="pill good">How</span>
+  <span class="pill bad">Theory</span>
+  <span class="small">Every section follows the same structure. Hints auto-expand on print. Dark code blocks print as-is.</span>
+</div>
+
+<div class="toc">
+  <a href="#s1">1. Terminology &amp; Types</a>
+  <a href="#s2">2. Representations</a>
+  <a href="#s3">3. DFS</a>
+  <a href="#s4">4. BFS</a>
+  <a href="#s5">5. Implicit Graphs (Grids)</a>
+  <a href="#s6">6. Topological Sort — DFS</a>
+  <a href="#s7">7. Topological Sort — Kahn</a>
+  <a href="#s8">8. Shortest Path — Overview</a>
+  <a href="#s9">9. BFS Shortest Path</a>
+  <a href="#s10">10. DAG Shortest Path</a>
+  <a href="#s11">11. Dijkstra</a>
+  <a href="#s12">12. Bellman-Ford</a>
+  <a href="#s13">13. Floyd-Warshall</a>
+  <a href="#s14">14. Johnson</a>
+  <a href="#s15">15. A*</a>
+  <a href="#s16">16. Trees &amp; Out-Trees</a>
+  <a href="#s17">17. MST — Prim</a>
+  <a href="#s18">18. MST — Kruskal &amp; Union-Find</a>
+  <a href="#s19">19. Eulerian &amp; Hierholzer</a>
+  <a href="#s20">20. Hamiltonian</a>
+  <a href="#s21">21. SCC — Tarjan</a>
+  <a href="#s22">22. SCC — Kosaraju</a>
+  <a href="#s23">23. Articulation &amp; Bridges</a>
+  <a href="#s24">24. Graph Coloring</a>
+  <a href="#s25">25. TSP</a>
+  <a href="#s26">26. Max Flow</a>
+  <a href="#s27">27. Bipartite Matching</a>
+  <a href="#s28">28. Decision Sheet</a>
+</div>
+
+
+<!-- ============================= 1. Terminology ============================= -->
+<h2 id="s1" class="cat-term"><span class="cat-chip chip-term">Foundations</span> 1. Terminology &amp; Types of Graphs</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Build the vocabulary needed to describe every algorithm that follows, and recognize which graph family a problem belongs to.</div>
+<div class="block why"><span class="label">WHY</span> Half the difficulty of graph problems is translating a story ("courses with prerequisites", "cities with flights") into the right abstract graph. The wrong abstraction forces the wrong algorithm and the wrong complexity.</div>
+<div class="block how"><span class="label">HOW</span> For any input, answer four questions first: <b>directed?</b> <b>weighted?</b> <b>cyclic?</b> <b>connected?</b> These four bits pick the algorithm family before you write a line of code.</div>
+<div class="block theo"><span class="label">THEORY</span>
+<ul>
+  <li><b>Graph</b> <code class="inline">G = (V, E)</code>: V is a finite set of vertices, E ⊆ V×V a set of edges.</li>
+  <li><b>Handshake lemma</b> (undirected): <code class="inline">Σ deg(v) = 2|E|</code> ⇒ the number of odd-degree vertices is always <i>even</i>.</li>
+  <li><b>Tree</b> ⇔ connected and |E| = |V| − 1 ⇔ connected and acyclic ⇔ unique simple path between any two vertices.</li>
+  <li><b>DAG</b>: directed graph with no directed cycle. A DAG always admits a topological order.</li>
+  <li><b>Bipartite</b>: V splits into two sets with every edge crossing ⇔ no odd cycle ⇔ 2-colorable.</li>
+  <li><b>Sparse</b>: E ≈ V; <b>Dense</b>: E ≈ V². Drives representation and algorithm choice.</li>
+</ul>
+</div>
+
+<h3>Graph types you'll meet</h3>
+<table>
+  <thead><tr><th>Type</th><th>Definition</th><th>Where it shows up</th></tr></thead>
+  <tbody>
+    <tr><td><span class="swatch" style="background:#fff"></span>Edgeless</td><td>V vertices, 0 edges.</td><td>Starting canvas for construction algorithms.</td></tr>
+    <tr><td><span class="swatch" style="background:#cfe8ff"></span>Complete K<sub>n</sub></td><td>Every pair connected.</td><td>Worst case for matrix ops; TSP.</td></tr>
+    <tr><td><span class="swatch" style="background:#ffe2c6"></span>Bipartite</td><td>V = A ⊎ B; edges cross only.</td><td>Matching, 2-color check.</td></tr>
+    <tr><td><span class="swatch" style="background:#e4f5d0"></span>Tree</td><td>Connected, acyclic.</td><td>Hierarchies, recursion subject.</td></tr>
+    <tr><td><span class="swatch" style="background:#f8d4d4"></span>DAG</td><td>Directed, no cycles.</td><td>Dependencies, build systems.</td></tr>
+    <tr><td><span class="swatch" style="background:#d6f3f3"></span>Planar</td><td>Drawable without edge crossings.</td><td>Four-color theorem.</td></tr>
+    <tr><td><span class="swatch" style="background:#f0e1ff"></span>Weighted</td><td>Edges carry numeric cost.</td><td>All shortest-path algorithms.</td></tr>
+    <tr><td><span class="swatch" style="background:#f9f9c0"></span>Implicit</td><td>Graph computed on demand (grid, state space).</td><td>Games, puzzles, search.</td></tr>
+  </tbody>
+</table>
+
+<div class="trick"><b>Trick:</b> if the problem says <i>reach</i>, <i>path</i>, <i>cycle</i>, <i>depend</i>, <i>order</i>, <i>match</i>, <i>level</i>, <i>distance</i>, <i>flow</i>, or <i>component</i> — model it as a graph before writing any loop.</div>
+<div class="tips"><b>Tip:</b> "connected" means different things for directed vs undirected. Directed has <b>strong</b> (both ways) and <b>weak</b> (ignoring direction) connectivity.</div>
+<div class="hint-box"><b>Hint:</b> handshake lemma gives you the parity argument you'll need for every Eulerian / bipartite problem.</div>
+<div class="warn"><b>Watch out:</b> self-loops add <i>2</i> to a vertex's undirected degree, not 1.</div>
+
+<div class="tricky">
+  <div class="q">Q. Maximum number of edges in a simple undirected graph on n vertices?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">C(n,2) = n(n−1)/2. This is why adjacency matrices are Θ(V²) worst case.</div>
+  </details>
+</div>
+<div class="tricky">
+  <div class="q">Q. Can a graph have an odd number of odd-degree vertices?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No — handshake lemma forces it to be even.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 2. Representations ============================= -->
+<h2 id="s2" class="cat-rep"><span class="cat-chip chip-rep">Representation</span> 2. Graph Representations in Java</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Store a graph in memory so the algorithm you'll run later is efficient in both space and time.</div>
+<div class="block why"><span class="label">WHY</span> The wrong representation can silently turn O(V+E) into O(V²) — or blow up memory on sparse graphs. The choice is almost always dictated by density (E vs V²) and which queries you run most.</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li><b>Adjacency list</b> (default): <code class="inline">List&lt;List&lt;Integer&gt;&gt;</code> or <code class="inline">List&lt;List&lt;Edge&gt;&gt;</code>. Θ(V + E) space.</li>
+  <li><b>Adjacency matrix</b>: <code class="inline">int[V][V]</code>. Θ(V²) space. Great for dense graphs or when you need O(1) "is edge present?".</li>
+  <li><b>Edge list</b>: <code class="inline">List&lt;int[]&gt;</code> of {u, v, w}. Perfect for Kruskal and Bellman-Ford.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY</span>
+<table>
+  <thead><tr><th>Aspect</th><th>Matrix</th><th>List</th><th>Edge list</th></tr></thead>
+  <tbody>
+    <tr><td>Space</td><td>Θ(V²)</td><td>Θ(V + E)</td><td>Θ(E)</td></tr>
+    <tr><td>Is (u,v) an edge?</td><td>O(1)</td><td>O(deg(u))</td><td>O(E)</td></tr>
+    <tr><td>Iterate neighbors of u</td><td>O(V)</td><td>O(deg(u))</td><td>O(E)</td></tr>
+    <tr><td>Remove edge</td><td>O(1)</td><td>O(deg(u))</td><td>O(E)</td></tr>
+    <tr><td>Best algorithms</td><td>Floyd-Warshall, dense Prim.</td><td>DFS, BFS, Dijkstra.</td><td>Kruskal, Bellman-Ford.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Adjacency list — unweighted</h3>
+<pre class="code"><span class="kw">int</span> n = <span class="num">6</span>;
+<span class="typ">List</span>&lt;<span class="typ">List</span>&lt;<span class="typ">Integer</span>&gt;&gt; adj = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) adj.<span class="fn">add</span>(<span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;());
+
+<span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v) {
+    adj.<span class="fn">get</span>(u).<span class="fn">add</span>(v);
+    adj.<span class="fn">get</span>(v).<span class="fn">add</span>(u);   <span class="cmt">// drop this line for directed graphs</span>
+}</pre>
+
+<h3>Adjacency list — weighted</h3>
+<pre class="code"><span class="kw">record</span> <span class="typ">Edge</span>(<span class="kw">int</span> to, <span class="kw">int</span> w) {}
+
+<span class="typ">List</span>&lt;<span class="typ">List</span>&lt;<span class="typ">Edge</span>&gt;&gt; g = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) g.<span class="fn">add</span>(<span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;());
+
+<span class="kw">void</span> <span class="fn">addW</span>(<span class="kw">int</span> u, <span class="kw">int</span> v, <span class="kw">int</span> w) {
+    g.<span class="fn">get</span>(u).<span class="fn">add</span>(<span class="kw">new</span> <span class="typ">Edge</span>(v, w));
+}</pre>
+
+<h3>Adjacency matrix</h3>
+<pre class="code"><span class="kw">int</span>[][] m = <span class="kw">new</span> <span class="kw">int</span>[n][n];    <span class="cmt">// 0 = no edge, or use INF for weighted</span>
+
+<span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v, <span class="kw">int</span> w) {
+    m[u][v] = w;
+    m[v][u] = w;                <span class="cmt">// undirected only</span>
+}</pre>
+
+<div class="tips"><b>Tip — rule of thumb:</b> if E ≤ V log V, use adjacency list. If E ≈ V², matrix can actually be faster in practice due to cache locality.</div>
+<div class="trick"><b>Trick — 0-indexed vertices:</b> always. Use −1 as the "no parent" sentinel to avoid off-by-ones.</div>
+<div class="warn"><b>Watch out:</b> for undirected graphs, forgetting to add the reverse edge is the #1 bug in BFS/DFS assignments.</div>
+<div class="hint-box"><b>Hint:</b> V=10⁵, E=10⁶ → matrix would need ~40 GB; list needs ~10⁶ entries. Pick list.</div>
+
+<!-- ============================= 3. DFS ============================= -->
+<h2 id="s3" class="cat-trav"><span class="cat-chip chip-trav">Traversal</span> 3. Depth-First Search (DFS)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Visit every reachable vertex from a source by diving as deep as possible before backtracking.</div>
+<div class="block why"><span class="label">WHY</span> DFS exposes structural properties of the graph almost for free: connected components, cycles (back edges), topological order (post-order), articulation points, bridges, SCCs — all fall out of a single traversal with the right bookkeeping.</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li>Maintain a <code class="inline">visited[]</code> array.</li>
+  <li>Recursive (implicit stack) or iterative (explicit <code class="inline">Deque</code>) — iterative version avoids stack-overflow on huge graphs.</li>
+  <li>For undirected graphs pass the parent to skip trivial 2-cycles; for directed graphs use a 3-color scheme to find back edges.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY</span>
+<ul>
+  <li><b>DFS tree</b>: the edges actually traversed. Non-tree edges fall into <b>back</b>, <b>forward</b>, or <b>cross</b> categories.</li>
+  <li><b>Back edge</b> (u → ancestor) ⇔ cycle in the graph.</li>
+  <li><b>Post-order</b>: the order in which DFS finishes vertices. Reversed post-order = topological order on a DAG.</li>
+  <li><b>3-color method</b>: WHITE unvisited, GRAY on current stack, BLACK finished. A GRAY→GRAY edge is a back edge.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Time <b>O(V + E)</b> on adjacency list, <b>O(V²)</b> on matrix. Space <b>O(V)</b> for <code class="inline">visited</code> plus recursion stack (up to O(V)).</div>
+
+<h3>Recursive DFS</h3>
+<pre class="code"><span class="kw">boolean</span>[] visited = <span class="kw">new</span> <span class="kw">boolean</span>[n];
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    visited[u] = <span class="kw">true</span>;
+    <span class="cmt">// pre-order work here</span>
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u))
+        <span class="kw">if</span> (!visited[v]) <span class="fn">dfs</span>(v);
+    <span class="cmt">// post-order work here</span>
+}
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    <span class="kw">if</span> (!visited[i]) <span class="fn">dfs</span>(i);    <span class="cmt">// covers every connected component</span></pre>
+
+<h3>Iterative DFS (safe for huge graphs)</h3>
+<pre class="code"><span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; stack = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+stack.<span class="fn">push</span>(start);
+visited[start] = <span class="kw">true</span>;
+
+<span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>()) {
+    <span class="kw">int</span> u = stack.<span class="fn">pop</span>();
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u))
+        <span class="kw">if</span> (!visited[v]) {
+            visited[v] = <span class="kw">true</span>;
+            stack.<span class="fn">push</span>(v);
+        }
+}</pre>
+
+<h3>Cycle detection in a directed graph (3-color)</h3>
+<pre class="code"><span class="kw">int</span>[] color = <span class="kw">new</span> <span class="kw">int</span>[n];           <span class="cmt">// 0=WHITE, 1=GRAY, 2=BLACK</span>
+<span class="kw">boolean</span> hasCycle = <span class="kw">false</span>;
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    color[u] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u)) {
+        <span class="kw">if</span> (color[v] == <span class="num">1</span>) { hasCycle = <span class="kw">true</span>; <span class="kw">return</span>; }
+        <span class="kw">if</span> (color[v] == <span class="num">0</span>) { <span class="fn">dfs</span>(v); <span class="kw">if</span> (hasCycle) <span class="kw">return</span>; }
+    }
+    color[u] = <span class="num">2</span>;
+}</pre>
+
+<div class="tips"><b>Tip — undirected cycle detection:</b> pass the parent: <code class="inline">dfs(v, u)</code> and skip <code class="inline">v == parent</code>. A visited non-parent neighbor means cycle.</div>
+<div class="trick"><b>Trick — free topological order:</b> append <code class="inline">u</code> to a list in <i>post-order</i>, then reverse. No separate Kahn pass needed.</div>
+<div class="hint-box"><b>Hint — stack safety:</b> Java's default stack is ~512KB. For V &gt; ~10⁵ prefer iterative DFS, or launch it on a <code class="inline">new Thread(null, task, "dfs", 16*1024*1024)</code>.</div>
+<div class="warn"><b>Watch out:</b> on undirected graphs, forgetting the parent check makes every edge look like a cycle.</div>
+
+<div class="tricky">
+  <div class="q">Q. Which DFS traversal order do you push to the topological-sort stack?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Post-order (push when the DFS of the vertex <i>finishes</i>). Reversed post-order is a valid topological ordering of a DAG.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 4. BFS ============================= -->
+<h2 id="s4" class="cat-trav"><span class="cat-chip chip-trav">Traversal</span> 4. Breadth-First Search (BFS)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Explore the graph layer by layer from a source, giving you the minimum number of edges to every reachable vertex.</div>
+<div class="block why"><span class="label">WHY</span> In an <b>unweighted</b> graph, BFS is the shortest-path algorithm. It's also the natural choice for bipartite checks (alternate layer colors), level-order processing, and "distance to nearest X" via multi-source BFS.</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li>FIFO <code class="inline">ArrayDeque</code>.</li>
+  <li>Mark as visited <b>on enqueue</b>, not on dequeue.</li>
+  <li>For paths, keep a <code class="inline">parent[]</code>.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY</span>
+<ul>
+  <li>BFS visits vertices in non-decreasing distance order from the source.</li>
+  <li>The first time a vertex is dequeued, its distance is minimal.</li>
+  <li><b>BFS tree</b>: edges that first reached each vertex — gives one valid shortest-path tree.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Time <b>O(V + E)</b>, space <b>O(V)</b>.</div>
+
+<h3>Template</h3>
+<pre class="code"><span class="kw">int</span>[] dist = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(dist, -<span class="num">1</span>);
+<span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; q = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+q.<span class="fn">offer</span>(src);
+dist[src] = <span class="num">0</span>;
+
+<span class="kw">while</span> (!q.<span class="fn">isEmpty</span>()) {
+    <span class="kw">int</span> u = q.<span class="fn">poll</span>();
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u))
+        <span class="kw">if</span> (dist[v] == -<span class="num">1</span>) {
+            dist[v] = dist[u] + <span class="num">1</span>;
+            q.<span class="fn">offer</span>(v);
+        }
+}</pre>
+
+<h3>Bipartite check</h3>
+<pre class="code"><span class="kw">int</span>[] color = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(color, -<span class="num">1</span>);
+
+<span class="kw">for</span> (<span class="kw">int</span> s = <span class="num">0</span>; s &lt; n; s++) <span class="kw">if</span> (color[s] == -<span class="num">1</span>) {
+    <span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; q = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+    q.<span class="fn">offer</span>(s); color[s] = <span class="num">0</span>;
+    <span class="kw">while</span> (!q.<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span> u = q.<span class="fn">poll</span>();
+        <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u)) {
+            <span class="kw">if</span> (color[v] == -<span class="num">1</span>) { color[v] = <span class="num">1</span> - color[u]; q.<span class="fn">offer</span>(v); }
+            <span class="kw">else if</span> (color[v] == color[u]) <span class="kw">return</span> <span class="kw">false</span>;   <span class="cmt">// odd cycle</span>
+        }
+    }
+}
+<span class="kw">return</span> <span class="kw">true</span>;</pre>
+
+<div class="trick"><b>Trick — Multi-source BFS:</b> seed the queue with every source at distance 0. One pass answers "distance to the nearest source" for every cell. Classic for "rotting oranges", "nearest fire", "walls and gates".</div>
+<div class="trick"><b>Trick — 0/1 BFS:</b> if weights are only 0 or 1, use <code class="inline">ArrayDeque</code>: push-front for 0-weight edges, push-back for 1-weight edges. Still O(V + E) and beats Dijkstra for this case.</div>
+<div class="tips"><b>Tip:</b> mark on <i>enqueue</i>, not dequeue — otherwise the same vertex gets pushed many times and correctness breaks.</div>
+<div class="warn"><b>Watch out:</b> BFS gives shortest paths only when all edge weights are equal. Use Dijkstra otherwise.</div>
+<div class="hint-box"><b>Hint — path reconstruction:</b> keep <code class="inline">parent[v]</code> and walk backwards from <code class="inline">t</code>, then reverse.</div>
+
+<div class="tricky">
+  <div class="q">Q. Why is BFS wrong on a weighted graph with positive weights?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">BFS assumes every edge costs 1. A path with more hops but small weights can be cheaper than a direct heavy-weight edge — Dijkstra needed.</div>
+  </details>
+</div>
+
+<!-- ============================= 5. Implicit grids ============================= -->
+<h2 id="s5" class="cat-trav"><span class="cat-chip chip-trav">Traversal</span> 5. DFS/BFS on Implicit Graphs (Grids)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Run graph algorithms on inputs that aren't stored as a graph — grids, state spaces, puzzles.</div>
+<div class="block why"><span class="label">WHY</span> Building an explicit adjacency list from an m×n grid would waste memory and time. Neighbors are computed on the fly from row/column deltas.</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li>Four delta arrays <code class="inline">DR/DC</code> for up/down/left/right; eight deltas for king moves.</li>
+  <li>Bounds-check first, then content-check (walls, visited).</li>
+  <li>Encode <code class="inline">(r,c)</code> as <code class="inline">r*cols + c</code> when you need HashMap keys or a flat visited array.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY</span> Every cell is a vertex; each valid move is an edge. BFS still gives shortest paths (min moves), DFS still finds components (islands, regions).</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Time <b>O(m · n)</b>, space <b>O(m · n)</b>.</div>
+
+<h3>Grid BFS template</h3>
+<pre class="code"><span class="kw">static</span> <span class="kw">final</span> <span class="kw">int</span>[] DR = { -<span class="num">1</span>, <span class="num">1</span>, <span class="num">0</span>, <span class="num">0</span> };
+<span class="kw">static</span> <span class="kw">final</span> <span class="kw">int</span>[] DC = { <span class="num">0</span>, <span class="num">0</span>, -<span class="num">1</span>, <span class="num">1</span> };
+
+<span class="kw">void</span> <span class="fn">bfs</span>(<span class="kw">int</span>[][] grid, <span class="kw">int</span> sr, <span class="kw">int</span> sc) {
+    <span class="kw">int</span> rows = grid.length, cols = grid[<span class="num">0</span>].length;
+    <span class="kw">boolean</span>[][] seen = <span class="kw">new</span> <span class="kw">boolean</span>[rows][cols];
+
+    <span class="typ">Deque</span>&lt;<span class="kw">int</span>[]&gt; q = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+    q.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">int</span>[] { sr, sc });
+    seen[sr][sc] = <span class="kw">true</span>;
+
+    <span class="kw">while</span> (!q.<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span>[] p = q.<span class="fn">poll</span>();
+        <span class="kw">for</span> (<span class="kw">int</span> d = <span class="num">0</span>; d &lt; <span class="num">4</span>; d++) {
+            <span class="kw">int</span> nr = p[<span class="num">0</span>] + DR[d];
+            <span class="kw">int</span> nc = p[<span class="num">1</span>] + DC[d];
+            <span class="kw">if</span> (nr &lt; <span class="num">0</span> || nr &gt;= rows || nc &lt; <span class="num">0</span> || nc &gt;= cols) <span class="kw">continue</span>;
+            <span class="kw">if</span> (seen[nr][nc] || grid[nr][nc] == WALL) <span class="kw">continue</span>;
+            seen[nr][nc] = <span class="kw">true</span>;
+            q.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">int</span>[] { nr, nc });
+        }
+    }
+}</pre>
+
+<div class="trick"><b>Trick:</b> encode <code class="inline">(r,c)</code> as <code class="inline">r*cols + c</code>. Makes it easy to use with <code class="inline">HashSet&lt;Integer&gt;</code> or <code class="inline">int[]</code>-backed visited.</div>
+<div class="tips"><b>Tip:</b> bounds-check before content-check — the opposite order throws <code class="inline">ArrayIndexOutOfBoundsException</code>.</div>
+<div class="hint-box"><b>Hint:</b> 8-directional moves? Use deltas <code class="inline">{-1,-1,-1,0,0,1,1,1}</code> and <code class="inline">{-1,0,1,-1,1,-1,0,1}</code>. Knight moves? Two delta arrays of length 8 with ±1/±2 pairs.</div>
+<div class="warn"><b>Watch out:</b> recursive flood fill on a 10⁴×10⁴ grid blows the stack. Use BFS or union-find.</div>
+
+<div class="tricky">
+  <div class="q">Q. You need the minimum steps for a knight to reach (r,c). Which traversal?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">BFS (edges are unit weight). Use 8 knight deltas; you get the answer on first dequeue of the target.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 6. Topo - DFS ============================= -->
+<h2 id="s6" class="cat-topo"><span class="cat-chip chip-topo">Topological Sort</span> 6. Topological Sort — DFS based</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Produce a linear ordering of a DAG's vertices such that every edge u→v has u before v.</div>
+<div class="block why"><span class="label">WHY</span> It's the model for dependencies: course prerequisites, build orders, recipe steps, task schedules. Many DAG algorithms (shortest/longest path, DP) need the vertices visited in topological order to work in linear time.</div>
+<div class="block how"><span class="label">HOW</span> Run DFS; when a vertex finishes (post-order), push it on a stack. Reverse the stack — that's a topological order. Use 3-color coloring simultaneously to detect a cycle (no topo order exists on a cyclic graph).</div>
+<div class="block theo"><span class="label">THEORY</span>
+<ul>
+  <li>A topological order exists ⇔ graph is a DAG.</li>
+  <li>In general it's <b>not unique</b> — independent chains have any relative order.</li>
+  <li>Reverse post-order of a DFS on a DAG is always a valid topological order.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Time <b>O(V + E)</b>, space <b>O(V)</b>.</div>
+
+<pre class="code"><span class="typ">List</span>&lt;<span class="typ">Integer</span>&gt; order = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+<span class="kw">int</span>[] color = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="kw">boolean</span> hasCycle = <span class="kw">false</span>;
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    color[u] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u)) {
+        <span class="kw">if</span> (color[v] == <span class="num">1</span>) { hasCycle = <span class="kw">true</span>; <span class="kw">return</span>; }
+        <span class="kw">if</span> (color[v] == <span class="num">0</span>) { <span class="fn">dfs</span>(v); <span class="kw">if</span> (hasCycle) <span class="kw">return</span>; }
+    }
+    color[u] = <span class="num">2</span>;
+    order.<span class="fn">add</span>(u);                       <span class="cmt">// post-order</span>
+}
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+    <span class="kw">if</span> (color[i] == <span class="num">0</span>) <span class="fn">dfs</span>(i);
+
+<span class="typ">Collections</span>.<span class="fn">reverse</span>(order);              <span class="cmt">// topological order</span></pre>
+
+<div class="trick"><b>Trick:</b> cycle detection comes free — a gray neighbor during DFS is a back edge = cycle = no topo order.</div>
+<div class="warn"><b>Watch out:</b> for V &gt; ~10⁵ the DFS may overflow — switch to Kahn's iterative version below.</div>
+
+<!-- ============================= 7. Kahn ============================= -->
+<h2 id="s7" class="cat-topo"><span class="cat-chip chip-topo">Topological Sort</span> 7. Topological Sort — Kahn's (BFS based)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Same output as section 6 but using an iterative queue-driven approach.</div>
+<div class="block why"><span class="label">WHY</span> No recursion, so no stack-overflow risk. Naturally gives you cycle detection if the output doesn't cover all V vertices. Easy to tweak into lex-smallest topo order by swapping the queue for a heap.</div>
+<div class="block how"><span class="label">HOW</span>
+<ol>
+  <li>Compute in-degrees.</li>
+  <li>Enqueue all 0-in-degree vertices.</li>
+  <li>Pop one, append to output, decrement in-degrees of its out-neighbors; enqueue any that hit 0.</li>
+  <li>Cycle iff <code class="inline">order.size() &lt; n</code>.</li>
+</ol>
+</div>
+<div class="block theo"><span class="label">THEORY</span> The algorithm repeatedly removes a "source" (a vertex with no incoming edges) from the DAG. A DAG always has at least one source; running out of sources before exhausting V means the remaining subgraph has a cycle.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Time <b>O(V + E)</b>, space <b>O(V)</b>.</div>
+
+<pre class="code"><span class="kw">int</span>[] in = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="kw">for</span> (<span class="kw">int</span> u = <span class="num">0</span>; u &lt; n; u++)
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u)) in[v]++;
+
+<span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; q = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) <span class="kw">if</span> (in[i] == <span class="num">0</span>) q.<span class="fn">offer</span>(i);
+
+<span class="typ">List</span>&lt;<span class="typ">Integer</span>&gt; order = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+<span class="kw">while</span> (!q.<span class="fn">isEmpty</span>()) {
+    <span class="kw">int</span> u = q.<span class="fn">poll</span>();
+    order.<span class="fn">add</span>(u);
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u))
+        <span class="kw">if</span> (--in[v] == <span class="num">0</span>) q.<span class="fn">offer</span>(v);
+}
+<span class="kw">boolean</span> hasCycle = (order.<span class="fn">size</span>() != n);</pre>
+
+<div class="trick"><b>Trick — lexicographically smallest topo order:</b> replace <code class="inline">ArrayDeque</code> with <code class="inline">PriorityQueue&lt;Integer&gt;</code>. Each pop picks the smallest available vertex.</div>
+<div class="hint-box"><b>Hint — "Find all possible recipes":</b> recipes depend on ingredients. Model ingredients/recipes as a DAG; run Kahn starting from pantry items. Any recipe you dequeue is cookable.</div>
+<div class="tips"><b>Tip:</b> Kahn scales to V = 10⁶ easily, while recursive DFS won't without stack tuning.</div>
+<div class="warn"><b>Watch out:</b> always rebuild <code class="inline">in[]</code> from the <i>full</i> adjacency list before starting.</div>
+
+<div class="tricky">
+  <div class="q">Q. Cycle detection in a directed graph with V = 10⁶ — Kahn or DFS?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Kahn. It's iterative, O(V + E), and flags a cycle when the output misses any vertex.</div>
+  </details>
+</div>
+
+<!-- ============================= 8. SP overview ============================= -->
+<h2 id="s8" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 8. Shortest Path — Overview</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Given a graph and a source, find the minimum-cost path to one or all destinations.</div>
+<div class="block why"><span class="label">WHY</span> This is the single most common graph problem in practice — routing, networking, game AI, logistics. Getting the right algorithm is half the work.</div>
+<div class="block how"><span class="label">HOW</span> Pick by graph properties:</div>
+<table>
+  <thead><tr><th>Variant</th><th>Best algorithm</th><th>Time</th><th>Handles negatives?</th></tr></thead>
+  <tbody>
+    <tr><td>Unweighted, one source</td><td>BFS</td><td>O(V + E)</td><td>n/a</td></tr>
+    <tr><td>Weighted DAG, one source</td><td>Topo sort + relax</td><td>O(V + E)</td><td>Yes</td></tr>
+    <tr><td>Non-negative weights, one source</td><td>Dijkstra</td><td>O((V + E) log V)</td><td>No</td></tr>
+    <tr><td>Any weights, one source</td><td>Bellman-Ford</td><td>O(V · E)</td><td>Yes, detects neg cycles</td></tr>
+    <tr><td>All pairs, dense</td><td>Floyd-Warshall</td><td>O(V³)</td><td>Yes (no neg cycles)</td></tr>
+    <tr><td>All pairs, sparse</td><td>Johnson</td><td>O(V · E + V² log V)</td><td>Yes</td></tr>
+    <tr><td>Heuristic-guided</td><td>A*</td><td>Varies</td><td>No (usually)</td></tr>
+  </tbody>
+</table>
+<div class="block theo"><span class="label">THEORY — Relaxation</span> Every shortest-path algorithm is built on one primitive:
+<pre class="code"><span class="kw">if</span> (dist[u] + w(u, v) &lt; dist[v]) {
+    dist[v] = dist[u] + w(u, v);
+    parent[v] = u;
+}</pre>
+The algorithms differ only in the <b>order</b> in which edges are relaxed.</div>
+
+<div class="tips"><b>Tip — decision tree:</b> unweighted → BFS. DAG → Topo + relax. Non-negative → Dijkstra. Negative edges → Bellman-Ford. All-pairs dense → Floyd. All-pairs sparse → Johnson.</div>
+
+
+
+<!-- ============================= 9. BFS SP ============================= -->
+<h2 id="s9" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 9. BFS Shortest Path (Unweighted Graphs)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Compute shortest-path distances (and paths) in an unweighted graph from a single source.</div>
+<div class="block why"><span class="label">WHY</span> BFS is faster and simpler than Dijkstra when all edges cost the same — no heap needed.</div>
+<div class="block how"><span class="label">HOW</span> Run BFS (Section 4) while maintaining <code class="inline">parent[]</code>; reconstruct the path by walking parents back from the target.</div>
+<div class="block theo"><span class="label">THEORY</span> Since BFS dequeues in non-decreasing distance order, the first time a vertex is reached, that distance is minimal.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V + E)</b> time, <b>O(V)</b> memory.</div>
+
+<pre class="code"><span class="typ">List</span>&lt;<span class="typ">Integer</span>&gt; <span class="fn">reconstructPath</span>(<span class="kw">int</span> s, <span class="kw">int</span> t, <span class="kw">int</span>[] parent) {
+    <span class="kw">if</span> (parent[t] == -<span class="num">1</span> &amp;&amp; s != t) <span class="kw">return</span> <span class="typ">List</span>.<span class="fn">of</span>();
+    <span class="typ">List</span>&lt;<span class="typ">Integer</span>&gt; p = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> v = t; v != -<span class="num">1</span>; v = parent[v]) p.<span class="fn">add</span>(v);
+    <span class="typ">Collections</span>.<span class="fn">reverse</span>(p);
+    <span class="kw">return</span> p;
+}</pre>
+
+<div class="hint-box"><b>Hint:</b> if all edges have the same positive weight w, multiply the BFS layer index by w for the real distance.</div>
+
+<!-- ============================= 10. DAG SP ============================= -->
+<h2 id="s10" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 10. DAG Shortest Path (Topo + Relax)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Compute shortest-path distances from a source in a weighted DAG, including with negative edges.</div>
+<div class="block why"><span class="label">WHY</span> A DAG guarantees no cycles, so each vertex is relaxed exactly once if we process in topological order. Result: linear time, beating Dijkstra, and handling negative weights.</div>
+<div class="block how"><span class="label">HOW</span> Topological sort, then relax all outgoing edges of each vertex in that order.</div>
+<div class="block theo"><span class="label">THEORY</span> In topological order, every predecessor of <code class="inline">u</code> has already had its final distance fixed, so <code class="inline">dist[u]</code> is final when we relax u's out-edges.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V + E)</b>.</div>
+
+<pre class="code"><span class="kw">long</span>[] dist = <span class="kw">new</span> <span class="kw">long</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(dist, <span class="typ">Long</span>.MAX_VALUE);
+dist[src] = <span class="num">0</span>;
+
+<span class="kw">for</span> (<span class="kw">int</span> u : topoOrder) {
+    <span class="kw">if</span> (dist[u] == <span class="typ">Long</span>.MAX_VALUE) <span class="kw">continue</span>;        <span class="cmt">// unreachable, don't relax</span>
+    <span class="kw">for</span> (<span class="typ">Edge</span> e : g.<span class="fn">get</span>(u)) {
+        <span class="kw">if</span> (dist[u] + e.<span class="fn">w</span>() &lt; dist[e.<span class="fn">to</span>()])
+            dist[e.<span class="fn">to</span>()] = dist[u] + e.<span class="fn">w</span>();
+    }
+}</pre>
+
+<div class="trick"><b>Trick — longest path in a DAG:</b> same algorithm with <code class="inline">max</code> instead of <code class="inline">min</code> (or negate weights and run shortest path). Longest path is NP-hard in general but polynomial on DAGs.</div>
+<div class="warn"><b>Watch out:</b> guard <code class="inline">dist[u] == INF</code> before adding a weight — otherwise <code class="inline">INF + w</code> overflows.</div>
+
+<!-- ============================= 11. Dijkstra ============================= -->
+<h2 id="s11" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 11. Dijkstra's Algorithm</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Single-source shortest paths in a graph with <b>non-negative</b> weights.</div>
+<div class="block why"><span class="label">WHY</span> It's the practical answer for road networks, network routing, game maps — anywhere you have positive costs and need fast single-source distances.</div>
+<div class="block how"><span class="label">HOW</span> Greedy: always extract the next vertex with the smallest tentative distance from a priority queue; relax its out-edges; push improved neighbors back in.</div>
+<div class="block theo"><span class="label">THEORY</span>
+<ul>
+  <li>Invariant: when a vertex is extracted from the PQ, <code class="inline">dist[u]</code> is final.</li>
+  <li>Proof rests on <i>non-negativity</i>: any later path cannot undercut <code class="inline">dist[u]</code>.</li>
+  <li>Fails on negative edges because a later relaxation could beat a "settled" distance.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span>
+<table>
+  <thead><tr><th>Priority queue</th><th>Time</th><th>When it wins</th></tr></thead>
+  <tbody>
+    <tr><td>Array / linear scan</td><td>O(V² + E)</td><td>Dense graphs.</td></tr>
+    <tr><td>Binary heap (Java PQ)</td><td>O((V + E) log V)</td><td>Default for sparse graphs.</td></tr>
+    <tr><td>Fibonacci heap</td><td>O(E + V log V)</td><td>Theoretical; rarely worth it in practice.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<pre class="code"><span class="kw">long</span>[] dist = <span class="kw">new</span> <span class="kw">long</span>[n];
+<span class="kw">int</span>[] parent = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(dist, <span class="typ">Long</span>.MAX_VALUE);
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(parent, -<span class="num">1</span>);
+dist[src] = <span class="num">0</span>;
+
+<span class="typ">PriorityQueue</span>&lt;<span class="kw">long</span>[]&gt; pq = <span class="kw">new</span> <span class="typ">PriorityQueue</span>&lt;&gt;(
+    <span class="typ">Comparator</span>.<span class="fn">comparingLong</span>(a -&gt; a[<span class="num">0</span>]));
+pq.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">long</span>[] { <span class="num">0</span>, src });
+
+<span class="kw">while</span> (!pq.<span class="fn">isEmpty</span>()) {
+    <span class="kw">long</span>[] cur = pq.<span class="fn">poll</span>();
+    <span class="kw">long</span> d = cur[<span class="num">0</span>];
+    <span class="kw">int</span> u = (<span class="kw">int</span>) cur[<span class="num">1</span>];
+    <span class="kw">if</span> (d &gt; dist[u]) <span class="kw">continue</span>;                    <span class="cmt">// stale entry</span>
+    <span class="kw">for</span> (<span class="typ">Edge</span> e : g.<span class="fn">get</span>(u)) {
+        <span class="kw">long</span> nd = d + e.<span class="fn">w</span>();
+        <span class="kw">if</span> (nd &lt; dist[e.<span class="fn">to</span>()]) {
+            dist[e.<span class="fn">to</span>()] = nd;
+            parent[e.<span class="fn">to</span>()] = u;
+            pq.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">long</span>[] { nd, e.<span class="fn">to</span>() });
+        }
+    }
+}</pre>
+
+<div class="trick"><b>Trick — lazy deletion:</b> Java's <code class="inline">PriorityQueue</code> has no decrease-key. Just push a new (dist, v) entry; skip outdated ones with <code class="inline">if (d &gt; dist[u]) continue;</code>.</div>
+<div class="trick"><b>Trick — early exit:</b> if you only need <code class="inline">dist[t]</code>, return as soon as <code class="inline">t</code> is popped.</div>
+<div class="tips"><b>Tip:</b> use a <code class="inline">long[]</code> in the PQ instead of a class — fewer allocations, faster in tight loops.</div>
+<div class="warn"><b>Watch out:</b> Dijkstra is <b>silently wrong</b> on negative edges, even without negative cycles.</div>
+<div class="hint-box"><b>Hint:</b> to reconstruct the path, walk <code class="inline">parent[v]</code> back from <code class="inline">t</code>, then reverse.</div>
+
+<div class="tricky">
+  <div class="q">Q. Can you run Dijkstra on a graph where some edges have weight 0 and others weight 5?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Yes, weights just need to be non-negative. Zero is fine.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 12. Bellman-Ford ============================= -->
+<h2 id="s12" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 12. Bellman-Ford Algorithm</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Single-source shortest paths in a graph that may contain negative edges, with negative-cycle detection.</div>
+<div class="block why"><span class="label">WHY</span> When Dijkstra can't help (negative weights), Bellman-Ford is the workhorse. It also <i>detects</i> negative cycles — critical for arbitrage detection, currency conversion, and cost models that allow rebates.</div>
+<div class="block how"><span class="label">HOW</span> Relax every edge V−1 times. After that, the distances are final for any graph without a negative cycle. One more pass: if anything still relaxes, there's a negative cycle.</div>
+<div class="block theo"><span class="label">THEORY — DP formulation</span>
+<ul>
+  <li>Let <code class="inline">dist[i][v]</code> = shortest path from source to v using at most <code class="inline">i</code> edges.</li>
+  <li>Recurrence: <code class="inline">dist[i][v] = min(dist[i-1][v], min over (u,v) of dist[i-1][u] + w(u,v))</code>.</li>
+  <li>Any simple path uses at most V−1 edges, so V−1 passes suffice.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V · E)</b> time, <b>O(V)</b> space (1D rolling array).</div>
+
+<pre class="code"><span class="kw">long</span>[] dist = <span class="kw">new</span> <span class="kw">long</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(dist, <span class="typ">Long</span>.MAX_VALUE);
+dist[src] = <span class="num">0</span>;
+
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n - <span class="num">1</span>; i++) {
+    <span class="kw">boolean</span> changed = <span class="kw">false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {                          <span class="cmt">// {u, v, w}</span>
+        <span class="kw">if</span> (dist[e[<span class="num">0</span>]] == <span class="typ">Long</span>.MAX_VALUE) <span class="kw">continue</span>;
+        <span class="kw">long</span> nd = dist[e[<span class="num">0</span>]] + e[<span class="num">2</span>];
+        <span class="kw">if</span> (nd &lt; dist[e[<span class="num">1</span>]]) { dist[e[<span class="num">1</span>]] = nd; changed = <span class="kw">true</span>; }
+    }
+    <span class="kw">if</span> (!changed) <span class="kw">break</span>;                            <span class="cmt">// early stop trick</span>
+}
+
+<span class="kw">boolean</span> hasNegativeCycle = <span class="kw">false</span>;
+<span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+    <span class="kw">if</span> (dist[e[<span class="num">0</span>]] != <span class="typ">Long</span>.MAX_VALUE
+        &amp;&amp; dist[e[<span class="num">0</span>]] + e[<span class="num">2</span>] &lt; dist[e[<span class="num">1</span>]])
+        hasNegativeCycle = <span class="kw">true</span>;
+}</pre>
+
+<div class="trick"><b>Trick — early stop:</b> if a whole pass relaxes nothing, no later pass will. Saves a lot of time on sparse updates.</div>
+<div class="trick"><b>Trick — which vertices are on a neg cycle?</b> Run V more passes after the initial V−1. Any vertex relaxed is either on, or reachable from, a negative cycle.</div>
+<div class="warn"><b>Watch out:</b> overflow. <code class="inline">INF + w</code> wraps around <code class="inline">int</code>. Use <code class="inline">long</code>, and always gate with <code class="inline">dist[u] != INF</code>.</div>
+<div class="hint-box"><b>Hint — LeetCode "Cheapest flights within K stops":</b> Bellman-Ford is a natural fit — bound the number of passes by K+1 to enforce the hop limit.</div>
+
+<!-- ============================= 13. Floyd-Warshall ============================= -->
+<h2 id="s13" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 13. Floyd-Warshall — All-Pairs Shortest Paths</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Compute shortest distances between every pair of vertices.</div>
+<div class="block why"><span class="label">WHY</span> When the graph is small (V ≤ ~500) and you need many pairwise queries, one Floyd-Warshall run answers them all in O(V³) — simpler and often faster in practice than V Dijkstras. Also handles negative edges.</div>
+<div class="block how"><span class="label">HOW</span> Triple loop over k, i, j: try to improve <code class="inline">d[i][j]</code> via intermediate k.</div>
+<div class="block theo"><span class="label">THEORY — DP over "allowed intermediates"</span>
+<ul>
+  <li><code class="inline">d[k][i][j]</code> = shortest i→j path using only vertices 0..k−1 as intermediates.</li>
+  <li>Recurrence: <code class="inline">d[k][i][j] = min(d[k-1][i][j], d[k-1][i][k-1] + d[k-1][k-1][j])</code>.</li>
+  <li>Rolling the k dimension reduces space to O(V²).</li>
+  <li>Negative cycle iff <code class="inline">d[i][i] &lt; 0</code> for some i after the loop.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V³)</b> time, <b>O(V²)</b> space.</div>
+
+<pre class="code"><span class="kw">long</span>[][] d = <span class="kw">new</span> <span class="kw">long</span>[n][n];
+<span class="kw">for</span> (<span class="kw">long</span>[] row : d) <span class="typ">Arrays</span>.<span class="fn">fill</span>(row, <span class="typ">Long</span>.MAX_VALUE / <span class="num">4</span>);
+<span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v &lt; n; v++) d[v][v] = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span>[] e : edges) d[e[<span class="num">0</span>]][e[<span class="num">1</span>]] = <span class="typ">Math</span>.<span class="fn">min</span>(d[e[<span class="num">0</span>]][e[<span class="num">1</span>]], e[<span class="num">2</span>]);
+
+<span class="kw">for</span> (<span class="kw">int</span> k = <span class="num">0</span>; k &lt; n; k++)
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++)
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; n; j++)
+            <span class="kw">if</span> (d[i][k] + d[k][j] &lt; d[i][j])
+                d[i][j] = d[i][k] + d[k][j];
+
+<span class="cmt">// Negative cycle iff any d[i][i] &lt; 0</span></pre>
+
+<div class="trick"><b>Trick — transitive closure:</b> swap <code class="inline">min</code>/<code class="inline">+</code> for <code class="inline">OR</code>/<code class="inline">AND</code> on a boolean matrix. Same triple loop computes reachability between every pair.</div>
+<div class="tips"><b>Tip — INF:</b> use <code class="inline">Long.MAX_VALUE / 4</code> so that <code class="inline">INF + INF</code> doesn't overflow.</div>
+<div class="hint-box"><b>Hint — path reconstruction:</b> keep <code class="inline">next[i][j]</code> (the first hop on the best i→j path); update whenever you relax.</div>
+
+<!-- ============================= 14. Johnson ============================= -->
+<h2 id="s14" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 14. Johnson's Algorithm (All-Pairs, Sparse)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> All-pairs shortest paths on sparse graphs, possibly with negative edges.</div>
+<div class="block why"><span class="label">WHY</span> Floyd's O(V³) is wasteful when E ≪ V². Johnson runs one Bellman-Ford plus V Dijkstras for O(V·E + V² log V) — big win when the graph is sparse.</div>
+<div class="block how"><span class="label">HOW</span>
+<ol>
+  <li>Add an auxiliary vertex <code class="inline">q</code> with 0-weight edges to every other vertex.</li>
+  <li>Run Bellman-Ford from <code class="inline">q</code> to compute potentials <code class="inline">h[v]</code>. Abort on negative cycle.</li>
+  <li>Reweight every edge: <code class="inline">w'(u,v) = w(u,v) + h[u] − h[v]</code>. Guaranteed non-negative.</li>
+  <li>Run Dijkstra from every vertex on the reweighted graph.</li>
+  <li>Translate back: <code class="inline">d(u,v) = d'(u,v) − h[u] + h[v]</code>.</li>
+</ol>
+</div>
+<div class="block theo"><span class="label">THEORY — Why reweighting preserves shortest paths</span>
+For any path <code class="inline">p = v₀ → v₁ → … → vₖ</code>,
+<code class="inline">Σ w' = Σ w + h[v₀] − h[vₖ]</code>.
+The h-telescope depends only on the endpoints, so all paths from v₀ to vₖ shift by the same constant — the relative ordering is preserved.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V · E + V² log V)</b> with a binary heap.</div>
+
+<div class="hint-box"><b>Hint — when to pick what:</b> Johnson wins when <code class="inline">E</code> is small and <code class="inline">V</code> is big. Floyd wins when <code class="inline">V</code> is small and the graph is dense.</div>
+
+<!-- ============================= 15. A* ============================= -->
+<h2 id="s15" class="cat-sp"><span class="cat-chip chip-sp">Shortest Path</span> 15. A* Algorithm</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Single-pair shortest path with directional "hints" — a goal-biased search.</div>
+<div class="block why"><span class="label">WHY</span> In many real problems (game maps, navigation) you know the geometry and can estimate how close any vertex is to the goal. A* uses that estimate to explore far fewer vertices than Dijkstra.</div>
+<div class="block how"><span class="label">HOW</span> Dijkstra with priority <code class="inline">f(v) = g(v) + h(v)</code>, where <code class="inline">g(v)</code> is the best known distance from the start and <code class="inline">h(v)</code> estimates the remaining cost to the goal.</div>
+<div class="block theo"><span class="label">THEORY — Heuristic properties</span>
+<table>
+  <thead><tr><th>Property</th><th>Meaning</th><th>Consequence</th></tr></thead>
+  <tbody>
+    <tr><td><b>Admissible</b></td><td><code class="inline">h(v) ≤ true cost(v, goal)</code></td><td>Optimal path guaranteed.</td></tr>
+    <tr><td><b>Consistent</b> (monotone)</td><td><code class="inline">h(u) ≤ w(u,v) + h(v)</code> on every edge</td><td>Never re-opens closed nodes.</td></tr>
+    <tr><td><b>h ≡ 0</b></td><td>No guidance at all</td><td>A* degrades gracefully to Dijkstra.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<pre class="code"><span class="typ">PriorityQueue</span>&lt;<span class="kw">long</span>[]&gt; pq = <span class="kw">new</span> <span class="typ">PriorityQueue</span>&lt;&gt;(
+    <span class="typ">Comparator</span>.<span class="fn">comparingLong</span>(a -&gt; a[<span class="num">0</span>]));
+<span class="kw">long</span>[] g = <span class="kw">new</span> <span class="kw">long</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(g, <span class="typ">Long</span>.MAX_VALUE);
+g[src] = <span class="num">0</span>;
+pq.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">long</span>[] { <span class="fn">h</span>(src), src });
+
+<span class="kw">while</span> (!pq.<span class="fn">isEmpty</span>()) {
+    <span class="kw">long</span>[] cur = pq.<span class="fn">poll</span>();
+    <span class="kw">int</span> u = (<span class="kw">int</span>) cur[<span class="num">1</span>];
+    <span class="kw">if</span> (u == goal) <span class="kw">return</span> g[u];
+    <span class="kw">for</span> (<span class="typ">Edge</span> e : graph.<span class="fn">get</span>(u)) {
+        <span class="kw">long</span> ng = g[u] + e.<span class="fn">w</span>();
+        <span class="kw">if</span> (ng &lt; g[e.<span class="fn">to</span>()]) {
+            g[e.<span class="fn">to</span>()] = ng;
+            pq.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">long</span>[] { ng + <span class="fn">h</span>(e.<span class="fn">to</span>()), e.<span class="fn">to</span>() });
+        }
+    }
+}</pre>
+
+<div class="trick"><b>Trick — grid heuristics:</b> 4-directional → <b>Manhattan</b>; 8-directional → <b>Chebyshev</b>; free Euclidean space → <b>Euclidean</b>. All are admissible and consistent for unit-cost moves.</div>
+<div class="warn"><b>Watch out:</b> an overestimating heuristic breaks optimality. If unsure, use <code class="inline">h ≡ 0</code> (Dijkstra) — slower but correct.</div>
+
+
+
+<!-- ============================= 16. Trees ============================= -->
+<h2 id="s16" class="cat-tree"><span class="cat-chip chip-tree">Trees</span> 16. Trees &amp; Out-Trees (Rooted)</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Identify, root, and process trees — a key special case that unlocks linear-time algorithms for many hard problems.</div>
+<div class="block why"><span class="label">WHY</span> Trees are everywhere: file systems, DOMs, hierarchies, parse trees. Because a tree has V−1 edges and no cycles, both DFS and BFS are O(V), and any tree problem decomposes recursively into child subproblems.</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li>Detect a tree: check connected AND |E| = |V| − 1 AND acyclic (any two imply the third).</li>
+  <li>Root it: pick any vertex, DFS from it, record parent/children.</li>
+  <li>Solve tree problems via <b>post-order DP</b>: compute <code class="inline">f(u)</code> from children, then combine.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY — Tree facts</span>
+<ul>
+  <li>Connected AND acyclic AND |E| = |V| − 1 are equivalent (any two imply the third).</li>
+  <li>Exactly one simple path between any two vertices.</li>
+  <li>Removing any edge disconnects the tree (every edge is a bridge).</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> DFS/BFS <b>O(V)</b>; tree DP <b>O(V)</b>.</div>
+
+<pre class="code"><span class="kw">int</span>[] parent = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(parent, -<span class="num">1</span>);
+<span class="typ">List</span>&lt;<span class="typ">List</span>&lt;<span class="typ">Integer</span>&gt;&gt; children = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) children.<span class="fn">add</span>(<span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;());
+
+<span class="kw">void</span> <span class="fn">root</span>(<span class="kw">int</span> u, <span class="kw">int</span> p) {
+    parent[u] = p;
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u))
+        <span class="kw">if</span> (v != p) {
+            children.<span class="fn">get</span>(u).<span class="fn">add</span>(v);
+            <span class="fn">root</span>(v, u);
+        }
+}
+<span class="fn">root</span>(chosenRoot, -<span class="num">1</span>);</pre>
+
+<div class="trick"><b>Trick — tree diameter in two BFSes:</b> BFS from any vertex <i>x</i> to find farthest <i>y</i>; BFS from <i>y</i> to find farthest <i>z</i>. Distance <code class="inline">y↔z</code> = diameter. Total O(V).</div>
+<div class="tips"><b>Tip — "all nodes at distance k":</b> root at the start node, then BFS down k steps. For arbitrary start, use parent pointers and BFS in the undirected tree.</div>
+<div class="hint-box"><b>Hint — tree DP pattern:</b> post-order DFS; combine children results into <code class="inline">f(u)</code> using <code class="inline">max</code>/<code class="inline">sum</code>/etc.</div>
+
+<div class="tricky">
+  <div class="q">Q. V = 10, E = 10 — can it be a tree?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. A tree needs exactly V−1 = 9 edges. One extra edge forces a cycle.</div>
+  </details>
+</div>
+
+<!-- ============================= 17. Prim ============================= -->
+<h2 id="s17" class="cat-mst"><span class="cat-chip chip-mst">MST</span> 17. Minimum Spanning Tree — Prim</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Find a spanning subtree of minimum total weight in a connected weighted undirected graph.</div>
+<div class="block why"><span class="label">WHY</span> MSTs are the backbone of network design (cheapest way to connect all routers / cities / sensors). Prim is the natural choice when the graph is dense or already stored as an adjacency list/matrix.</div>
+<div class="block how"><span class="label">HOW</span> Grow the MST from a start vertex: always add the lightest edge that extends the current tree by one new vertex. Use a <code class="inline">PriorityQueue</code> keyed on edge weight.</div>
+<div class="block theo"><span class="label">THEORY — Cut property</span> For any cut (partition of V into S and V∖S), the lightest crossing edge is in <i>some</i> MST. Prim keeps S = "tree so far" and always adds the lightest edge leaving S.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(E log V)</b> with binary heap; <b>O(V²)</b> with a plain array — the latter wins on dense graphs.</div>
+
+<pre class="code"><span class="kw">boolean</span>[] inMST = <span class="kw">new</span> <span class="kw">boolean</span>[n];
+<span class="typ">PriorityQueue</span>&lt;<span class="kw">int</span>[]&gt; pq = <span class="kw">new</span> <span class="typ">PriorityQueue</span>&lt;&gt;(
+    <span class="typ">Comparator</span>.<span class="fn">comparingInt</span>(a -&gt; a[<span class="num">0</span>]));    <span class="cmt">// {w, to}</span>
+pq.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">int</span>[] { <span class="num">0</span>, <span class="num">0</span> });
+
+<span class="kw">long</span> total = <span class="num">0</span>;
+<span class="kw">int</span> taken = <span class="num">0</span>;
+
+<span class="kw">while</span> (!pq.<span class="fn">isEmpty</span>() &amp;&amp; taken &lt; n) {
+    <span class="kw">int</span>[] cur = pq.<span class="fn">poll</span>();
+    <span class="kw">int</span> w = cur[<span class="num">0</span>], u = cur[<span class="num">1</span>];
+    <span class="kw">if</span> (inMST[u]) <span class="kw">continue</span>;
+    inMST[u] = <span class="kw">true</span>;
+    total += w;
+    taken++;
+    <span class="kw">for</span> (<span class="typ">Edge</span> e : g.<span class="fn">get</span>(u))
+        <span class="kw">if</span> (!inMST[e.<span class="fn">to</span>()])
+            pq.<span class="fn">offer</span>(<span class="kw">new</span> <span class="kw">int</span>[] { e.<span class="fn">w</span>(), e.<span class="fn">to</span>() });
+}</pre>
+
+<div class="trick"><b>Trick:</b> Prim is Dijkstra with a twist — the PQ is keyed on <i>edge weight</i>, not cumulative distance.</div>
+<div class="tips"><b>Tip:</b> on dense graphs (E ≈ V²), the simple O(V²) array-based Prim beats the heap version in practice.</div>
+
+<!-- ============================= 18. Kruskal ============================= -->
+<h2 id="s18" class="cat-mst"><span class="cat-chip chip-mst">MST</span> 18. Minimum Spanning Tree — Kruskal &amp; Union-Find</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Same as Prim but edge-centric: process all edges by weight and add the ones that don't form a cycle.</div>
+<div class="block why"><span class="label">WHY</span> On sparse graphs or when edges come pre-sorted (or via Manhattan distances), Kruskal is usually cleaner and faster. It also doubles as a dynamic-connectivity tool via union-find.</div>
+<div class="block how"><span class="label">HOW</span>
+<ol>
+  <li>Sort all edges by weight ascending.</li>
+  <li>For each edge (u, v, w), if <code class="inline">find(u) ≠ find(v)</code>, union them and take the edge.</li>
+  <li>Stop after V − 1 edges.</li>
+</ol>
+</div>
+<div class="block theo"><span class="label">THEORY — Cycle property</span> Among all edges forming a cycle, the heaviest is <i>never</i> in any MST. Kruskal adds only edges that don't close a cycle — guaranteed minimum.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(E log E)</b> dominated by sorting. Union-find ops are near-constant (<code class="inline">α(n)</code>) amortized.</div>
+
+<h4>Union-Find (path compression + union by rank)</h4>
+<pre class="code"><span class="kw">int</span>[] par, rnk;
+
+<span class="kw">void</span> <span class="fn">init</span>(<span class="kw">int</span> n) {
+    par = <span class="kw">new</span> <span class="kw">int</span>[n];
+    rnk = <span class="kw">new</span> <span class="kw">int</span>[n];
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; n; i++) par[i] = i;
+}
+
+<span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span> x) {
+    <span class="kw">while</span> (par[x] != x) {
+        par[x] = par[par[x]];           <span class="cmt">// path halving</span>
+        x = par[x];
+    }
+    <span class="kw">return</span> x;
+}
+
+<span class="kw">boolean</span> <span class="fn">union</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+    <span class="kw">int</span> ra = <span class="fn">find</span>(a), rb = <span class="fn">find</span>(b);
+    <span class="kw">if</span> (ra == rb) <span class="kw">return</span> <span class="kw">false</span>;
+    <span class="kw">if</span> (rnk[ra] &lt; rnk[rb]) { <span class="kw">int</span> t = ra; ra = rb; rb = t; }
+    par[rb] = ra;
+    <span class="kw">if</span> (rnk[ra] == rnk[rb]) rnk[ra]++;
+    <span class="kw">return</span> <span class="kw">true</span>;
+}</pre>
+
+<h4>Kruskal main loop</h4>
+<pre class="code">edges.<span class="fn">sort</span>(<span class="typ">Comparator</span>.<span class="fn">comparingInt</span>(e -&gt; e[<span class="num">2</span>]));
+<span class="fn">init</span>(n);
+<span class="kw">long</span> total = <span class="num">0</span>;
+<span class="kw">int</span> taken = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+    <span class="kw">if</span> (<span class="fn">union</span>(e[<span class="num">0</span>], e[<span class="num">1</span>])) {
+        total += e[<span class="num">2</span>];
+        <span class="kw">if</span> (++taken == n - <span class="num">1</span>) <span class="kw">break</span>;
+    }
+}</pre>
+
+<div class="trick"><b>Trick — Prim vs Kruskal:</b> Kruskal wins on sparse graphs (edge list + sort). Prim wins on dense graphs (no sort, array-based).</div>
+<div class="hint-box"><b>Hint — "Min cost to connect all points":</b> compute all pairwise Manhattan distances as edges; run Kruskal. With n = 1000 that's ~5×10⁵ edges.</div>
+<div class="tips"><b>Tip — dynamic connectivity:</b> union-find is also the right tool for "Edge length limited paths", "Number of islands II", "Accounts merge".</div>
+<div class="warn"><b>Watch out:</b> MST isn't unique when multiple edges share the same weight — different valid MSTs can share the same total.</div>
+
+
+
+<!-- ============================= 19. Euler ============================= -->
+<h2 id="s19" class="cat-euler"><span class="cat-chip chip-euler">Eulerian</span> 19. Eulerian Paths / Cycles &amp; Hierholzer</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Find a walk that uses every <i>edge</i> exactly once (Eulerian path / cycle), if one exists.</div>
+<div class="block why"><span class="label">WHY</span> Appears in route inspection, DNA sequence assembly (de Bruijn graphs), and classic puzzles ("draw this shape without lifting your pen"). Existence is decidable in O(V + E); construction in O(V + E) via Hierholzer.</div>
+<div class="block how"><span class="label">HOW</span>
+<ol>
+  <li>Check existence with degree conditions (below).</li>
+  <li>Run Hierholzer from the correct start vertex — it greedily walks until stuck, then splices in side-trips when backtracking.</li>
+</ol>
+</div>
+<div class="block theo"><span class="label">THEORY — Existence conditions</span>
+<table>
+  <thead><tr><th>Graph class</th><th>Eulerian <i>cycle</i></th><th>Eulerian <i>path</i></th></tr></thead>
+  <tbody>
+    <tr><td>Undirected (connected)</td><td>All vertices have even degree.</td><td>Exactly 0 or 2 odd-degree vertices. Start at an odd one.</td></tr>
+    <tr><td>Directed (connected when ignoring direction)</td><td>For every v: in-deg = out-deg; all edge-bearing vertices in one SCC.</td><td>Exactly one vertex with out−in = 1 (start), one with in−out = 1 (end); others balanced.</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V + E)</b>.</div>
+
+<pre class="code"><span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; stack = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+<span class="typ">List</span>&lt;<span class="typ">Integer</span>&gt; circuit = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+stack.<span class="fn">push</span>(start);
+
+<span class="kw">while</span> (!stack.<span class="fn">isEmpty</span>()) {
+    <span class="kw">int</span> u = stack.<span class="fn">peek</span>();
+    <span class="kw">if</span> (!adj.<span class="fn">get</span>(u).<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span> v = adj.<span class="fn">get</span>(u).<span class="fn">remove</span>(adj.<span class="fn">get</span>(u).<span class="fn">size</span>() - <span class="num">1</span>);   <span class="cmt">// O(1) tail pop</span>
+        stack.<span class="fn">push</span>(v);
+    } <span class="kw">else</span> {
+        circuit.<span class="fn">add</span>(stack.<span class="fn">pop</span>());
+    }
+}
+<span class="typ">Collections</span>.<span class="fn">reverse</span>(circuit);</pre>
+
+<div class="trick"><b>Trick — lexicographic Euler path ("Reconstruct Itinerary"):</b> store each vertex's outgoing list in a <code class="inline">PriorityQueue&lt;String&gt;</code>; Hierholzer's removal of the smallest produces the smallest lexicographic itinerary.</div>
+<div class="tips"><b>Tip — start vertex:</b> Euler cycle → any vertex. Euler path → start at one of the two "unbalanced" vertices.</div>
+<div class="warn"><b>Watch out:</b> isolated vertices with no edges don't matter for existence but must not break your connectivity check.</div>
+
+<!-- ============================= 20. Hamilton ============================= -->
+<h2 id="s20" class="cat-euler"><span class="cat-chip chip-euler">Hamiltonian</span> 20. Hamiltonian Paths &amp; Cycles</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Find a path that visits every <i>vertex</i> exactly once (Hamiltonian path / cycle).</div>
+<div class="block why"><span class="label">WHY</span> Models TSP-like problems: "visit every city exactly once", "assemble a DNA sequence using every fragment", "schedule every task once".</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li>General graphs: <b>NP-complete</b>. Use backtracking for small n.</li>
+  <li>n ≤ ~20: bitmask DP (Held-Karp) is O(2ⁿ·n²).</li>
+  <li>Heuristics: Ore's theorem provides a sufficient existence check.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY</span>
+<ul>
+  <li><b>Ore:</b> if every pair of non-adjacent vertices u, v satisfies <code class="inline">deg(u) + deg(v) ≥ n</code>, the graph is Hamiltonian.</li>
+  <li><b>Dirac (special case):</b> if every vertex has degree ≥ n/2, Hamiltonian cycle exists.</li>
+  <li>No known polynomial existence test for general graphs.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Backtracking <b>O(n!)</b> worst case; bitmask DP <b>O(2ⁿ·n²)</b>.</div>
+
+<pre class="code"><span class="kw">boolean</span>[] visited = <span class="kw">new</span> <span class="kw">boolean</span>[n];
+<span class="kw">int</span>[] path = <span class="kw">new</span> <span class="kw">int</span>[n];
+
+<span class="kw">boolean</span> <span class="fn">solve</span>(<span class="kw">int</span> pos) {
+    <span class="kw">if</span> (pos == n)
+        <span class="kw">return</span> adj.<span class="fn">get</span>(path[pos - <span class="num">1</span>]).<span class="fn">contains</span>(path[<span class="num">0</span>]); <span class="cmt">// cycle check</span>
+    <span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v &lt; n; v++) {
+        <span class="kw">if</span> (!visited[v] &amp;&amp; adj.<span class="fn">get</span>(path[pos - <span class="num">1</span>]).<span class="fn">contains</span>(v)) {
+            visited[v] = <span class="kw">true</span>;
+            path[pos] = v;
+            <span class="kw">if</span> (<span class="fn">solve</span>(pos + <span class="num">1</span>)) <span class="kw">return</span> <span class="kw">true</span>;
+            visited[v] = <span class="kw">false</span>;
+        }
+    }
+    <span class="kw">return</span> <span class="kw">false</span>;
+}</pre>
+
+<div class="trick"><b>Trick:</b> don't confuse Euler (edges, linear time) with Hamilton (vertices, exponential). Mnemonic: <i>E</i>uler = <i>E</i>dge.</div>
+<div class="hint-box"><b>Hint — Ore's theorem as preflight:</b> check Ore first; if it passes, existence is guaranteed. If not, fall back to backtracking.</div>
+
+<!-- ============================= 21. Tarjan SCC ============================= -->
+<h2 id="s21" class="cat-conn"><span class="cat-chip chip-conn">Connectivity</span> 21. Strongly Connected Components — Tarjan</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Partition a directed graph's vertices into maximal strongly connected components (SCCs) in a single DFS pass.</div>
+<div class="block why"><span class="label">WHY</span> SCCs reveal functional groups in directed networks (websites linking to each other, recursive dependencies, 2-SAT components). The contracted SCC graph is always a DAG — so contract and solve the easier problem.</div>
+<div class="block how"><span class="label">HOW</span> Classic Tarjan bookkeeping:
+<ul>
+  <li><code class="inline">disc[u]</code>: discovery time of u.</li>
+  <li><code class="inline">low[u]</code>: smallest <code class="inline">disc</code> reachable from u's subtree via at most one back edge.</li>
+  <li>Keep a stack of "currently open" vertices.</li>
+  <li>When <code class="inline">low[u] == disc[u]</code>, pop everything down to u — that's one SCC.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY — Why low-link works</span> A vertex u roots an SCC iff no ancestor of u in the DFS tree is reachable from u's subtree via back edges. Equivalently, <code class="inline">low[u] == disc[u]</code>.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V + E)</b>, one DFS, no graph reversal.</div>
+
+<pre class="code"><span class="kw">int</span> timer = <span class="num">0</span>, compId = <span class="num">0</span>;
+<span class="kw">int</span>[] disc, low, comp;
+<span class="kw">boolean</span>[] onStack;
+<span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; st = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u) {
+    disc[u] = low[u] = timer++;
+    st.<span class="fn">push</span>(u); onStack[u] = <span class="kw">true</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u)) {
+        <span class="kw">if</span> (disc[v] == -<span class="num">1</span>) {
+            <span class="fn">dfs</span>(v);
+            low[u] = <span class="typ">Math</span>.<span class="fn">min</span>(low[u], low[v]);
+        } <span class="kw">else if</span> (onStack[v]) {
+            low[u] = <span class="typ">Math</span>.<span class="fn">min</span>(low[u], disc[v]);
+        }
+    }
+
+    <span class="kw">if</span> (low[u] == disc[u]) {              <span class="cmt">// u is an SCC root</span>
+        <span class="kw">while</span> (<span class="kw">true</span>) {
+            <span class="kw">int</span> v = st.<span class="fn">pop</span>();
+            onStack[v] = <span class="kw">false</span>;
+            comp[v] = compId;
+            <span class="kw">if</span> (v == u) <span class="kw">break</span>;
+        }
+        compId++;
+    }
+}</pre>
+
+<div class="trick"><b>Trick — condensation DAG:</b> contract each SCC to a super-vertex. The result is always a DAG. Many hard-looking directed-graph problems reduce to "topo sort + DP" on the condensation.</div>
+<div class="tips"><b>Tip — interpretation of <code class="inline">low[u]</code>:</b> the smallest discovery time reachable from u without leaving its DFS subtree.</div>
+
+<!-- ============================= 22. Kosaraju ============================= -->
+<h2 id="s22" class="cat-conn"><span class="cat-chip chip-conn">Connectivity</span> 22. SCC — Kosaraju</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Same SCC output as Tarjan but via two simple DFS passes, easier to explain.</div>
+<div class="block why"><span class="label">WHY</span> Great for interviews and teaching: the algorithm reads naturally from "DFS finish order + transposed graph". Tarjan is faster in practice; Kosaraju is easier to write correctly the first time.</div>
+<div class="block how"><span class="label">HOW</span>
+<ol>
+  <li>DFS on G; push each vertex on a stack in post-order.</li>
+  <li>Build transpose Gᵀ (reverse every edge).</li>
+  <li>Pop vertices from the stack; each fresh DFS on Gᵀ explores exactly one SCC.</li>
+</ol>
+</div>
+<div class="block theo"><span class="label">THEORY — Post-order intuition</span> The last vertex to finish in the first DFS belongs to a <i>sink</i> SCC of the condensation. Reversing edges flips sinks into sources, so a DFS from there explores exactly that SCC without leaking.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V + E)</b>, two linear passes.</div>
+
+<div class="trick"><b>Trick — which one to pick:</b> Tarjan (one DFS, no reversal) for speed; Kosaraju for clarity on unfamiliar graphs.</div>
+
+<!-- ============================= 23. Articulation / Bridges ============================= -->
+<h2 id="s23" class="cat-conn"><span class="cat-chip chip-conn">Connectivity</span> 23. Articulation Points &amp; Bridges</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Find "critical" vertices and edges whose removal disconnects the undirected graph.</div>
+<div class="block why"><span class="label">WHY</span> Network resilience: which single server/link, if it fails, would break connectivity? In a grid: which cell, if removed, disconnects an island?</div>
+<div class="block how"><span class="label">HOW</span> One DFS with <code class="inline">disc[]</code> / <code class="inline">low[]</code> bookkeeping (same spirit as Tarjan). Use the edge conditions below.</div>
+<div class="block theo"><span class="label">THEORY</span>
+<table>
+  <thead><tr><th>Vertex u</th><th>Is articulation?</th></tr></thead>
+  <tbody>
+    <tr><td>DFS root</td><td>Yes iff it has ≥ 2 DFS children.</td></tr>
+    <tr><td>Non-root</td><td>Yes iff there exists a child v with <code class="inline">low[v] ≥ disc[u]</code>.</td></tr>
+  </tbody>
+</table>
+<p>Edge (u, v) is a <b>bridge</b> iff <code class="inline">low[v] &gt; disc[u]</code> (strict).</p>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(V + E)</b>.</div>
+
+<pre class="code"><span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u, <span class="kw">int</span> parent) {
+    disc[u] = low[u] = timer++;
+    <span class="kw">int</span> children = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u)) {
+        <span class="kw">if</span> (v == parent) <span class="kw">continue</span>;
+        <span class="kw">if</span> (disc[v] == -<span class="num">1</span>) {
+            children++;
+            <span class="fn">dfs</span>(v, u);
+            low[u] = <span class="typ">Math</span>.<span class="fn">min</span>(low[u], low[v]);
+            <span class="kw">if</span> (parent != -<span class="num">1</span> &amp;&amp; low[v] &gt;= disc[u]) isArt[u] = <span class="kw">true</span>;
+            <span class="kw">if</span> (low[v] &gt; disc[u]) bridges.<span class="fn">add</span>(<span class="kw">new</span> <span class="kw">int</span>[] { u, v });
+        } <span class="kw">else</span> {
+            low[u] = <span class="typ">Math</span>.<span class="fn">min</span>(low[u], disc[v]);
+        }
+    }
+    <span class="kw">if</span> (parent == -<span class="num">1</span> &amp;&amp; children &gt; <span class="num">1</span>) isArt[u] = <span class="kw">true</span>;
+}</pre>
+
+<div class="trick"><b>Trick — "Minimum days to disconnect island":</b> count islands; if it's already ≠ 1 → answer is 0. Else find any articulation point → 1. Else → 2 (always possible on a grid, remove two corner cells).</div>
+<div class="warn"><b>Watch out:</b> articulation uses <code class="inline">low[v] ≥ disc[u]</code>; bridge uses strict <code class="inline">&gt;</code>. The DFS root is a special case.</div>
+
+
+
+<!-- ============================= 24. Coloring ============================= -->
+<h2 id="s24" class="cat-color"><span class="cat-chip chip-color">Coloring</span> 24. Graph Coloring</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Assign colors to vertices so no two adjacent vertices share a color, using as few colors as possible.</div>
+<div class="block why"><span class="label">WHY</span> Models scheduling (exam slots, register allocation), frequency assignment, puzzles (Sudoku), and conflict resolution. Optimal coloring is NP-hard, but special cases and heuristics are widely usable.</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li><b>Bipartite (2-color) check:</b> BFS/DFS, alternate colors, fail on a same-color neighbor.</li>
+  <li><b>k-colorability:</b> backtracking (exponential worst case).</li>
+  <li><b>Greedy:</b> walk vertices in some order, assign smallest unused color.</li>
+  <li><b>Welsh-Powell:</b> sort by degree descending; color independent sets one color at a time.</li>
+  <li><b>DSatur:</b> always pick the vertex with the most already-colored neighbors (saturation); break ties by degree.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY — Bounds</span>
+<table>
+  <thead><tr><th>Bound</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>χ(G) ≥ ω(G)</td><td>χ is at least the size of the largest clique.</td></tr>
+    <tr><td>χ(G) ≤ Δ(G) + 1</td><td>Greedy bound (Δ = max degree).</td></tr>
+    <tr><td><b>Brooks</b></td><td>χ ≤ Δ unless G is a complete graph or an odd cycle.</td></tr>
+    <tr><td><b>Four-Color theorem</b></td><td>Every planar graph is 4-colorable.</td></tr>
+    <tr><td>Bipartite ⇔ 2-colorable ⇔ no odd cycle.</td><td>Checkable in linear time.</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Bipartite check <b>O(V + E)</b>. Backtracking k-color <b>O(k<sup>V</sup>)</b> worst case. Greedy / Welsh-Powell / DSatur <b>polynomial</b>, approximate.</div>
+
+<h4>Bipartite check (2-color)</h4>
+<pre class="code"><span class="kw">int</span>[] color = <span class="kw">new</span> <span class="kw">int</span>[n];
+<span class="typ">Arrays</span>.<span class="fn">fill</span>(color, -<span class="num">1</span>);
+
+<span class="kw">for</span> (<span class="kw">int</span> s = <span class="num">0</span>; s &lt; n; s++) <span class="kw">if</span> (color[s] == -<span class="num">1</span>) {
+    <span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; q = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+    q.<span class="fn">offer</span>(s);
+    color[s] = <span class="num">0</span>;
+    <span class="kw">while</span> (!q.<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span> u = q.<span class="fn">poll</span>();
+        <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u)) {
+            <span class="kw">if</span> (color[v] == -<span class="num">1</span>) { color[v] = <span class="num">1</span> - color[u]; q.<span class="fn">offer</span>(v); }
+            <span class="kw">else if</span> (color[v] == color[u]) <span class="kw">return</span> <span class="kw">false</span>;
+        }
+    }
+}
+<span class="kw">return</span> <span class="kw">true</span>;</pre>
+
+<h4>k-colorability via backtracking</h4>
+<pre class="code"><span class="kw">boolean</span> <span class="fn">solve</span>(<span class="kw">int</span> u, <span class="kw">int</span> k, <span class="kw">int</span>[] col) {
+    <span class="kw">if</span> (u == n) <span class="kw">return</span> <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; k; c++) {
+        <span class="kw">if</span> (<span class="fn">safe</span>(u, c, col)) {
+            col[u] = c;
+            <span class="kw">if</span> (<span class="fn">solve</span>(u + <span class="num">1</span>, k, col)) <span class="kw">return</span> <span class="kw">true</span>;
+            col[u] = -<span class="num">1</span>;
+        }
+    }
+    <span class="kw">return</span> <span class="kw">false</span>;
+}
+
+<span class="kw">boolean</span> <span class="fn">safe</span>(<span class="kw">int</span> u, <span class="kw">int</span> c, <span class="kw">int</span>[] col) {
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.<span class="fn">get</span>(u))
+        <span class="kw">if</span> (col[v] == c) <span class="kw">return</span> <span class="kw">false</span>;
+    <span class="kw">return</span> <span class="kw">true</span>;
+}</pre>
+
+<div class="trick"><b>Trick — Sudoku as graph coloring:</b> 81 cells = vertices, edges between cells sharing row/column/3×3 box, 9 colors, pre-filled = fixed colors. Run backtracking with k = 9.</div>
+<div class="tips"><b>Tip — odd-cycle fast check:</b> BFS 2-coloring fails precisely when an odd cycle exists.</div>
+<div class="warn"><b>Watch out:</b> greedy coloring can be as bad as n colors with a pathological order. Welsh-Powell and DSatur reduce (but don't eliminate) the risk.</div>
+
+<div class="tricky">
+  <div class="q">Q. How do you schedule exams with no student conflicts in the fewest slots?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Graph: vertices = exams, edges between exams sharing a student. Answer is χ(G).</div>
+  </details>
+</div>
+
+<!-- ============================= 25. TSP ============================= -->
+<h2 id="s25" class="cat-tsp"><span class="cat-chip chip-tsp">TSP</span> 25. Traveling Salesman Problem</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Find a minimum-cost tour that visits every vertex exactly once and returns to the start.</div>
+<div class="block why"><span class="label">WHY</span> The canonical NP-hard optimization problem. Real instances are solved with smart heuristics (routing, logistics, circuit design). Bitmask DP handles n ≤ 20 optimally; approximations handle everything else.</div>
+<div class="block how"><span class="label">HOW</span>
+<ul>
+  <li><b>Brute force:</b> O(n!). Only n ≤ 10.</li>
+  <li><b>Bitmask DP (Held-Karp):</b> O(2ⁿ·n²). Feasible up to ~20.</li>
+  <li><b>Nearest Neighbor:</b> O(n²), quick but can be arbitrarily bad.</li>
+  <li><b>Christofides:</b> polynomial, guaranteed ≤ 1.5× optimal for <i>metric</i> TSP.</li>
+</ul>
+</div>
+<div class="block theo"><span class="label">THEORY — Held-Karp DP</span>
+<ul>
+  <li><code class="inline">dp[mask][u]</code> = min cost to start at 0, visit the set <code class="inline">mask</code> of vertices (including u), and end at u.</li>
+  <li>Transition: <code class="inline">dp[mask | 1&lt;&lt;v][v] = min(..., dp[mask][u] + d(u,v))</code>.</li>
+  <li>Answer: <code class="inline">min over u of dp[full][u] + d(u, 0)</code>.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> Held-Karp <b>O(2ⁿ·n²)</b> time, <b>O(2ⁿ·n)</b> space.</div>
+
+<pre class="code"><span class="kw">int</span>[][] dp = <span class="kw">new</span> <span class="kw">int</span>[<span class="num">1</span> &lt;&lt; n][n];
+<span class="kw">for</span> (<span class="kw">int</span>[] r : dp) <span class="typ">Arrays</span>.<span class="fn">fill</span>(r, <span class="typ">Integer</span>.MAX_VALUE / <span class="num">2</span>);
+dp[<span class="num">1</span>][<span class="num">0</span>] = <span class="num">0</span>;                                   <span class="cmt">// start at vertex 0</span>
+
+<span class="kw">for</span> (<span class="kw">int</span> mask = <span class="num">1</span>; mask &lt; (<span class="num">1</span> &lt;&lt; n); mask++) {
+    <span class="kw">for</span> (<span class="kw">int</span> u = <span class="num">0</span>; u &lt; n; u++) <span class="kw">if</span> ((mask &amp; (<span class="num">1</span> &lt;&lt; u)) != <span class="num">0</span>) {
+        <span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v &lt; n; v++) <span class="kw">if</span> ((mask &amp; (<span class="num">1</span> &lt;&lt; v)) == <span class="num">0</span>) {
+            <span class="kw">int</span> nm = mask | (<span class="num">1</span> &lt;&lt; v);
+            dp[nm][v] = <span class="typ">Math</span>.<span class="fn">min</span>(dp[nm][v], dp[mask][u] + d[u][v]);
+        }
+    }
+}
+
+<span class="kw">int</span> ans = <span class="typ">Integer</span>.MAX_VALUE;
+<span class="kw">int</span> full = (<span class="num">1</span> &lt;&lt; n) - <span class="num">1</span>;
+<span class="kw">for</span> (<span class="kw">int</span> u = <span class="num">1</span>; u &lt; n; u++)
+    ans = <span class="typ">Math</span>.<span class="fn">min</span>(ans, dp[full][u] + d[u][<span class="num">0</span>]);</pre>
+
+<div class="trick"><b>Trick — Christofides in one sentence:</b> MST → perfect matching on odd-degree vertices → Eulerian circuit on (MST + matching) → shortcut repeats. Triangle inequality keeps shortcuts short.</div>
+<div class="hint-box"><b>Hint — LeetCode #943 "Shortest Superstring":</b> model strings as nodes, edge (i→j) weight = length to append j after i accounting for overlap. Minimum-cost Hamiltonian path = shortest superstring. Bitmask DP solves it.</div>
+
+
+
+<!-- ============================= 26. Max Flow ============================= -->
+<h2 id="s26" class="cat-flow"><span class="cat-chip chip-flow">Max Flow</span> 26. Maximum Flow</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Given a directed capacity graph with source s and sink t, find the maximum amount of "flow" you can push from s to t.</div>
+<div class="block why"><span class="label">WHY</span> The master problem of combinatorial optimization: bipartite matching, min-cut, project selection, image segmentation, scheduling — all reduce to max flow.</div>
+<div class="block how"><span class="label">HOW</span> Repeatedly find an augmenting path in the residual graph (edges with capacity remaining) and push as much flow as possible along it. Different path-finding strategies give different algorithms.</div>
+<div class="block theo"><span class="label">THEORY</span>
+<ul>
+  <li><b>Residual graph:</b> for edge (u,v) with capacity c and flow f, add forward residual <code class="inline">c−f</code> and reverse residual <code class="inline">f</code>.</li>
+  <li><b>Augmenting path:</b> s→t path in residual graph with positive capacity.</li>
+  <li><b>Max-flow min-cut theorem:</b> max flow(s→t) equals the minimum capacity over all s-t cuts.</li>
+</ul>
+</div>
+<div class="block cx"><span class="label">COMPLEXITY</span>
+<table>
+  <thead><tr><th>Algorithm</th><th>Path finder</th><th>Time</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><b>Ford-Fulkerson</b></td><td>Any (DFS)</td><td>O(E · max_flow)</td><td>Only polynomial for integer capacities.</td></tr>
+    <tr><td><b>Edmonds-Karp</b></td><td>BFS (shortest augmenting path)</td><td>O(V · E²)</td><td>First strongly polynomial version.</td></tr>
+    <tr><td><b>Dinic</b></td><td>BFS level graph + blocking flows</td><td>O(V² · E)</td><td>O(E·√V) on unit-capacity / bipartite matching.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Edmonds-Karp skeleton</h4>
+<pre class="code"><span class="kw">int</span>[][] cap;                                    <span class="cmt">// cap[u][v] current residual capacity</span>
+<span class="kw">int</span>[] parent = <span class="kw">new</span> <span class="kw">int</span>[n];
+
+<span class="kw">int</span> <span class="fn">bfs</span>(<span class="kw">int</span> s, <span class="kw">int</span> t) {
+    <span class="typ">Arrays</span>.<span class="fn">fill</span>(parent, -<span class="num">1</span>);
+    parent[s] = s;
+    <span class="kw">int</span>[] inc = <span class="kw">new</span> <span class="kw">int</span>[n];
+    inc[s] = <span class="typ">Integer</span>.MAX_VALUE;
+    <span class="typ">Deque</span>&lt;<span class="typ">Integer</span>&gt; q = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+    q.<span class="fn">offer</span>(s);
+    <span class="kw">while</span> (!q.<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span> u = q.<span class="fn">poll</span>();
+        <span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (parent[v] == -<span class="num">1</span> &amp;&amp; cap[u][v] &gt; <span class="num">0</span>) {
+                parent[v] = u;
+                inc[v] = <span class="typ">Math</span>.<span class="fn">min</span>(inc[u], cap[u][v]);
+                <span class="kw">if</span> (v == t) <span class="kw">return</span> inc[t];
+                q.<span class="fn">offer</span>(v);
+            }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">int</span> <span class="fn">maxFlow</span>(<span class="kw">int</span> s, <span class="kw">int</span> t) {
+    <span class="kw">int</span> flow = <span class="num">0</span>, add;
+    <span class="kw">while</span> ((add = <span class="fn">bfs</span>(s, t)) &gt; <span class="num">0</span>) {
+        flow += add;
+        <span class="kw">for</span> (<span class="kw">int</span> v = t; v != s; v = parent[v]) {
+            cap[parent[v]][v] -= add;
+            cap[v][parent[v]] += add;                <span class="cmt">// reverse edge!</span>
+        }
+    }
+    <span class="kw">return</span> flow;
+}</pre>
+
+<div class="trick"><b>Trick — min cut from max flow:</b> after computing max flow, BFS from <code class="inline">s</code> on the residual graph. Reachable vertices form the S side; unreachable form the T side. Original edges from S to T form the min cut.</div>
+<div class="tips"><b>Tip — modeling constraints:</b> vertex capacities → split each vertex into in-node and out-node with an edge of capacity c. Multi-source/sink → add super-source and super-sink with ∞ edges.</div>
+<div class="warn"><b>Watch out:</b> reverse residual edges are non-negotiable. Without them the algorithm can get stuck at a non-optimum because it can't "undo" a bad earlier decision.</div>
+<div class="hint-box"><b>Hint — LeetCode #1349 "Maximum students":</b> bipartite matching on chessboard-colored seats based on cheating neighbors. Solve via Dinic or Hopcroft-Karp.</div>
+
+<!-- ============================= 27. Hopcroft-Karp ============================= -->
+<h2 id="s27" class="cat-flow"><span class="cat-chip chip-flow">Matching</span> 27. Bipartite Matching — Hopcroft-Karp</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Find a maximum matching in a bipartite graph (V = L ⊎ R) — pair up the most left-vertices with right-vertices without reusing anyone.</div>
+<div class="block why"><span class="label">WHY</span> The canonical algorithm for assignment problems: workers to tasks, students to seats, requests to servers. Hopcroft-Karp hits <b>O(E·√V)</b>, far better than naïve augmenting-path O(V·E).</div>
+<div class="block how"><span class="label">HOW</span>
+<ol>
+  <li>BFS from every unmatched left vertex to compute a layered graph.</li>
+  <li>Find vertex-disjoint augmenting paths in that layered graph via DFS.</li>
+  <li>Augment all of them at once; repeat until no more augmenting paths exist.</li>
+</ol>
+</div>
+<div class="block theo"><span class="label">THEORY — König's theorem</span> In a bipartite graph, maximum matching equals minimum vertex cover. So if you need min vertex cover on a bipartite graph, solve max matching first.</div>
+<div class="block cx"><span class="label">COMPLEXITY</span> <b>O(E · √V)</b>.</div>
+
+<div class="trick"><b>Trick — bipartite matching in disguise:</b> "assign jobs to workers", "students to seats", "tasks to machines", "domino tiling on a chessboard". If the underlying graph is bipartite, Hopcroft-Karp (or Dinic on unit capacities) is the right tool.</div>
+
+
+
+<!-- ============================= 28. Decision ============================= -->
+<h2 id="s28" class="cat-term"><span class="cat-chip chip-term">Pick Fast</span> 28. Pick-an-Algorithm Decision Sheet</h2>
+
+<div class="block obj"><span class="label">OBJECTIVE</span> Pick the right algorithm in under 30 seconds from the problem's keywords and shape.</div>
+
+<table>
+  <thead><tr><th>Goal</th><th>Algorithm</th><th>Time</th></tr></thead>
+  <tbody>
+    <tr><td>Is vertex t reachable from s?</td><td>DFS or BFS</td><td>O(V + E)</td></tr>
+    <tr><td>Count connected components (undirected)</td><td>DFS / BFS / Union-Find</td><td>O(V + E) / near O(V + E)</td></tr>
+    <tr><td>Shortest path, unweighted</td><td>BFS</td><td>O(V + E)</td></tr>
+    <tr><td>Shortest path, weights ≥ 0</td><td>Dijkstra</td><td>O(E log V)</td></tr>
+    <tr><td>Shortest path, negative edges</td><td>Bellman-Ford</td><td>O(V · E)</td></tr>
+    <tr><td>All-pairs, V ≤ 500</td><td>Floyd-Warshall</td><td>O(V³)</td></tr>
+    <tr><td>All-pairs, big sparse V</td><td>Johnson</td><td>O(V · E + V² log V)</td></tr>
+    <tr><td>Topological order</td><td>Kahn (BFS) / DFS post-order</td><td>O(V + E)</td></tr>
+    <tr><td>Bipartite?</td><td>BFS 2-color</td><td>O(V + E)</td></tr>
+    <tr><td>Cycle in undirected</td><td>DFS parent check / Union-Find</td><td>O(V + E)</td></tr>
+    <tr><td>Cycle in directed</td><td>DFS 3-color / Kahn</td><td>O(V + E)</td></tr>
+    <tr><td>MST, sparse</td><td>Kruskal</td><td>O(E log E)</td></tr>
+    <tr><td>MST, dense</td><td>Prim (array)</td><td>O(V²)</td></tr>
+    <tr><td>SCC</td><td>Tarjan</td><td>O(V + E)</td></tr>
+    <tr><td>Articulation / bridges</td><td>Tarjan-style DFS</td><td>O(V + E)</td></tr>
+    <tr><td>Eulerian path/cycle</td><td>Hierholzer</td><td>O(V + E)</td></tr>
+    <tr><td>Hamiltonian path/cycle</td><td>Backtracking / bitmask DP</td><td>O(n!) / O(2ⁿ · n²)</td></tr>
+    <tr><td>Max flow</td><td>Dinic</td><td>O(V² · E)</td></tr>
+    <tr><td>Bipartite max matching</td><td>Hopcroft-Karp</td><td>O(E · √V)</td></tr>
+    <tr><td>k-coloring</td><td>Backtracking / DSatur</td><td>Exp / heuristic</td></tr>
+    <tr><td>TSP, n ≤ 20</td><td>Bitmask DP</td><td>O(2ⁿ · n²)</td></tr>
+  </tbody>
+</table>
+
+<h3>Master buckets — tips, tricks, hints, pitfalls</h3>
+
+<div class="tips"><b>Tips</b>
+<ul>
+  <li>Ask four questions before coding: directed? weighted? cyclic? connected?</li>
+  <li>Default to adjacency list. Matrix only when V ≤ 500 and density is high.</li>
+  <li>Always add both (u,v) and (v,u) for undirected graphs.</li>
+  <li>Use <code class="inline">long</code> for sums in shortest-path algorithms and guard <code class="inline">INF + w</code>.</li>
+  <li>Mark visited <b>on enqueue</b> in BFS, not on dequeue.</li>
+  <li>In Dijkstra, push a new entry instead of decrease-key; skip stale ones.</li>
+</ul>
+</div>
+
+<div class="trick"><b>Tricks</b>
+<ul>
+  <li><b>0/1 BFS:</b> weights ∈ {0,1} → <code class="inline">ArrayDeque</code>, push-front for 0-weight, push-back for 1-weight.</li>
+  <li><b>Multi-source BFS:</b> seed every source at distance 0 for "nearest X" problems.</li>
+  <li><b>Tree diameter:</b> two BFSes — from any x find farthest y; from y find farthest z. <code class="inline">|y-z|</code> is the diameter.</li>
+  <li><b>Topo + DAG DP:</b> shortest, longest, count of paths — all linear on DAGs.</li>
+  <li><b>Graph coloring models:</b> scheduling, register allocation, Sudoku, map coloring.</li>
+  <li><b>Max flow models:</b> matching, segmentation, min-cost assignment, edge connectivity.</li>
+</ul>
+</div>
+
+<div class="hint-box"><b>Hints / theorems</b>
+<ul>
+  <li>Handshake: Σ deg(v) = 2|E|. Odd-degree vertices come in pairs.</li>
+  <li>Tree ⇔ connected ∧ acyclic ∧ |E| = |V|−1 (any two ⇒ third).</li>
+  <li>Bipartite ⇔ no odd cycle ⇔ 2-colorable.</li>
+  <li>DAG ⇔ topo order exists ⇔ DFS has no back edge.</li>
+  <li>Eulerian (undirected): all degrees even (cycle) or exactly two odd (path).</li>
+  <li>Max flow = min cut.</li>
+  <li>Brooks: χ(G) ≤ Δ(G) unless G is complete or an odd cycle.</li>
+  <li>König: max bipartite matching = min vertex cover.</li>
+</ul>
+</div>
+
+<div class="warn"><b>Pitfalls</b>
+<ul>
+  <li>Off-by-one on 1-indexed vs 0-indexed vertices.</li>
+  <li>Overflow in Floyd / Bellman-Ford; cap INF at <code class="inline">Long.MAX_VALUE / 4</code>.</li>
+  <li>Dijkstra on negative weights — silently wrong.</li>
+  <li>BFS on weighted graphs — silently wrong.</li>
+  <li>DFS stack overflow on V &gt; ~10⁵ — go iterative or bump <code class="inline">-Xss</code>.</li>
+  <li>Forgetting reverse edges in max-flow residual graph.</li>
+  <li>Confusing Euler (edges) with Hamilton (vertices).</li>
+  <li>Greedy coloring with a bad vertex order can use way more colors than necessary.</li>
+</ul>
+</div>
+
+<p class="small" style="margin-top:18px">
+  Print tip: Ctrl+P → Paper: <b>A3</b> → Background graphics: <b>ON</b>. Hints auto-expand on print. Code blocks print with their dark background and colors intact.
+</p>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  /* =========================================================
+     Kiro Dim Dark Mode -- soft slate palette, not pitch-black.
+     Activated only when <html> has class "kiro-dark".
+     Designed so coloured pastel callouts stay LIGHT but their
+     text becomes dark+readable; everything else flips to dim.
+     ========================================================= */
+  html.kiro-dark{
+    --kd-bg:        #1c2128;   /* page bg, slate, not black */
+    --kd-bg-2:      #242a33;   /* panels, h2 bands */
+    --kd-bg-3:      #2c333d;   /* hover / table header */
+    --kd-text:      #e8edf2;   /* main text on dark */
+    --kd-text-mute: #a8b1bd;
+    --kd-border:    #3a414d;
+    --kd-accent:    #8c7bff;
+    --kd-link:      #8cc6ff;
+    --kd-good:      #4ddbb0;
+    --kd-bad:       #ff9d9d;
+    --kd-warn:      #ffd166;
+    --kd-info:      #6ec5ff;
+    --kd-code-bg:   #1f2530;
+    --kd-pre-bg:    #1a1f29;
+    /* Used for elements that keep their original light pastel bg.
+       We force a near-black text colour so they remain readable. */
+    --kd-on-pastel: #15171c;
+    color-scheme: dark;
+    background:#1c2128 !important;
+    color:#e8edf2 !important;
+  }
+
+  /* ----- Base text & layout ----- */
+  html.kiro-dark body{
+    background: var(--kd-bg) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1,
+  html.kiro-dark h3,
+  html.kiro-dark h4,
+  html.kiro-dark h5,
+  html.kiro-dark h6{
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark h1{ border-bottom-color: var(--kd-border) !important; }
+  html.kiro-dark h2{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1 .sub,
+  html.kiro-dark .small,
+  html.kiro-dark .legend,
+  html.kiro-dark .sub,
+  html.kiro-dark .muted{ color: var(--kd-text-mute) !important; }
+
+  html.kiro-dark a{ color: var(--kd-link) !important; }
+  html.kiro-dark a:hover{ color: #c8e1ff !important; }
+  html.kiro-dark hr{ border-color: var(--kd-border) !important; }
+
+  /* ----- Code & pre ----- */
+  html.kiro-dark code,
+  html.kiro-dark code.inline,
+  html.kiro-dark td code,
+  html.kiro-dark th code,
+  html.kiro-dark p code,
+  html.kiro-dark li code,
+  html.kiro-dark span code{
+    background: #2c333d !important;
+    color: #f5e8b8 !important;
+    border: 1px solid #3a414d !important;
+    border-radius: 3px;
+    padding: 0 4px;
+  }
+  html.kiro-dark pre,
+  html.kiro-dark pre.code{
+    background: var(--kd-pre-bg) !important;
+    color: #d6deeb !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark pre code{
+    background: transparent !important;
+    color: inherit !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  html.kiro-dark pre .kw,
+  html.kiro-dark .kw   { color: #ff8489 !important; }
+  html.kiro-dark pre .typ,
+  html.kiro-dark .typ  { color: #ffb070 !important; }
+  html.kiro-dark pre .str,
+  html.kiro-dark .str  { color: #b8dbff !important; }
+  html.kiro-dark pre .num,
+  html.kiro-dark .num  { color: #8cc6ff !important; }
+  html.kiro-dark pre .cmt,
+  html.kiro-dark .cmt  { color: #9aa3b0 !important; }
+  html.kiro-dark pre .ann,
+  html.kiro-dark .ann  { color: #8ee99a !important; }
+  html.kiro-dark pre .fn,
+  html.kiro-dark .fn   { color: #d2b3ff !important; }
+  html.kiro-dark pre .op,
+  html.kiro-dark .op   { color: #d6deeb !important; }
+  html.kiro-dark pre .var,
+  html.kiro-dark .var  { color: #ffb070 !important; }
+
+  /* ----- Tables ----- */
+  html.kiro-dark table{
+    background: transparent !important;
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark th,
+  html.kiro-dark td{
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+    background-color: transparent;
+  }
+  html.kiro-dark th{
+    background: var(--kd-bg-3) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark tr:nth-child(even) td{ background: rgba(255,255,255,.025); }
+
+  html.kiro-dark .right,
+  html.kiro-dark .good,
+  html.kiro-dark tr.right td,
+  html.kiro-dark tr.good td{
+    background: rgba(77,219,176,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .wrong,
+  html.kiro-dark .bad,
+  html.kiro-dark tr.wrong td,
+  html.kiro-dark tr.bad td{
+    background: rgba(255,157,157,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .col-right{ color: var(--kd-good) !important; }
+  html.kiro-dark .col-wrong{ color: var(--kd-bad) !important; }
+
+  html.kiro-dark table.compare th:nth-child(2){
+    background: rgba(255,157,157,.18) !important; color: #ffc4c4 !important;
+  }
+  html.kiro-dark table.compare th:nth-child(3){
+    background: rgba(77,219,176,.18) !important; color: #b0f0d8 !important;
+  }
+  html.kiro-dark table.compare td:nth-child(2){ background: rgba(255,157,157,.06) !important; }
+  html.kiro-dark table.compare td:nth-child(3){ background: rgba(77,219,176,.06) !important; }
+
+  /* ----- Generic tip / note / tricky callouts ----- */
+  html.kiro-dark .tips,
+  html.kiro-dark .tip,
+  html.kiro-dark .note{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .tips b,
+  html.kiro-dark .tip b{ color: var(--kd-warn) !important; }
+
+  html.kiro-dark .tricky{
+    background: rgba(140,123,255,.10) !important;
+    border-color: rgba(140,123,255,.5) !important;
+    color: var(--kd-text) !important;
+  }
+
+  html.kiro-dark .callout,
+  html.kiro-dark .info,
+  html.kiro-dark .panel,
+  html.kiro-dark .box{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .callout.green,
+  html.kiro-dark .callout.success{
+    background: rgba(77,219,176,.10) !important;
+    border-color: rgba(77,219,176,.5) !important;
+  }
+  html.kiro-dark .callout.cyan{
+    background: rgba(110,197,255,.10) !important;
+    border-color: rgba(110,197,255,.5) !important;
+  }
+  html.kiro-dark .callout.red,
+  html.kiro-dark .callout.error,
+  html.kiro-dark .warning{
+    background: rgba(255,157,157,.10) !important;
+    border-color: rgba(255,157,157,.5) !important;
+  }
+  html.kiro-dark .callout.yellow,
+  html.kiro-dark .callout.warning{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+  }
+
+  /* ----- Q-blocks used in Graph_Algorithms_Java cheatsheet:
+           .obj / .why / .how / .theo / .cx (all light pastels).
+           Re-tone them to dim variants with readable text. ----- */
+  html.kiro-dark .block,
+  html.kiro-dark .obj,
+  html.kiro-dark .why,
+  html.kiro-dark .how,
+  html.kiro-dark .theo,
+  html.kiro-dark .cx{
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .block *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .obj *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .why *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .how *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .theo *:not(.label):not(code):not(pre):not(b):not(strong),
+  html.kiro-dark .cx *:not(.label):not(code):not(pre):not(b):not(strong){
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .block b,
+  html.kiro-dark .obj b, html.kiro-dark .why b, html.kiro-dark .how b,
+  html.kiro-dark .theo b, html.kiro-dark .cx b,
+  html.kiro-dark .block strong,
+  html.kiro-dark .obj strong, html.kiro-dark .why strong, html.kiro-dark .how strong,
+  html.kiro-dark .theo strong, html.kiro-dark .cx strong{
+    color: #fff !important;
+  }
+  html.kiro-dark .obj  { background: rgba(76,179,255,.16) !important; border-color: #4cb3ff !important; }
+  html.kiro-dark .why  { background: rgba(255,177,73,.16) !important; border-color: #ffb149 !important; }
+  html.kiro-dark .how  { background: rgba(77,219,176,.16) !important; border-color: #4ddbb0 !important; }
+  html.kiro-dark .theo { background: rgba(176,138,255,.16) !important; border-color: #b08aff !important; }
+  html.kiro-dark .cx   { background: rgba(255,138,193,.16) !important; border-color: #ff8ac1 !important; }
+  /* Their pill-style labels stay coloured (white text already) -- leave as-is. */
+
+  /* h2.cat-* coloured section bands -- repaint to muted versions */
+  html.kiro-dark h2.cat-term  { background: rgba(176,184,196,.12) !important; border-left-color: #b0b8c4 !important; }
+  html.kiro-dark h2.cat-rep   { background: rgba(124,138,232,.15) !important; border-left-color: #7c8ae8 !important; }
+  html.kiro-dark h2.cat-trav  { background: rgba(77,219,176,.15) !important; border-left-color: #4ddbb0 !important; }
+  html.kiro-dark h2.cat-topo  { background: rgba(110,197,255,.15) !important; border-left-color: #6ec5ff !important; }
+  html.kiro-dark h2.cat-sp    { background: rgba(76,179,255,.15) !important; border-left-color: #4cb3ff !important; }
+  html.kiro-dark h2.cat-tree  { background: rgba(176,138,255,.15) !important; border-left-color: #b08aff !important; }
+  html.kiro-dark h2.cat-mst   { background: rgba(255,177,73,.15) !important; border-left-color: #ffb149 !important; }
+  html.kiro-dark h2.cat-euler { background: rgba(255,138,193,.15) !important; border-left-color: #ff8ac1 !important; }
+  html.kiro-dark h2.cat-conn  { background: rgba(255,127,127,.15) !important; border-left-color: #ff7f7f !important; }
+  html.kiro-dark h2.cat-color { background: rgba(176,138,255,.15) !important; border-left-color: #b08aff !important; }
+  html.kiro-dark h2.cat-tsp   { background: rgba(176,160,140,.15) !important; border-left-color: #b0a08c !important; }
+  html.kiro-dark h2.cat-flow  { background: rgba(77,219,176,.15) !important; border-left-color: #4ddbb0 !important; }
+
+  /* category chips -- repaint to muted dim with light text */
+  html.kiro-dark .chip-term  { background: rgba(176,184,196,.18) !important; color: #d6dde6 !important; }
+  html.kiro-dark .chip-rep   { background: rgba(124,138,232,.20) !important; color: #c8d1ff !important; }
+  html.kiro-dark .chip-trav  { background: rgba(77,219,176,.20) !important; color: #b8f0d8 !important; }
+  html.kiro-dark .chip-topo  { background: rgba(110,197,255,.20) !important; color: #c0e3ff !important; }
+  html.kiro-dark .chip-sp    { background: rgba(76,179,255,.20) !important; color: #c0deff !important; }
+  html.kiro-dark .chip-tree  { background: rgba(176,138,255,.20) !important; color: #ddc8ff !important; }
+  html.kiro-dark .chip-mst   { background: rgba(255,177,73,.20) !important; color: #ffd9a8 !important; }
+  html.kiro-dark .chip-euler { background: rgba(255,138,193,.20) !important; color: #ffc8e0 !important; }
+  html.kiro-dark .chip-conn  { background: rgba(255,127,127,.20) !important; color: #ffc8c8 !important; }
+  html.kiro-dark .chip-color { background: rgba(176,138,255,.20) !important; color: #ddc8ff !important; }
+  html.kiro-dark .chip-tsp   { background: rgba(176,160,140,.20) !important; color: #e0d4c5 !important; }
+  html.kiro-dark .chip-flow  { background: rgba(77,219,176,.20) !important; color: #b8f0d8 !important; }
+
+  /* Generic chip used in Leetcode_Patterns_Java */
+  html.kiro-dark .chip{
+    background: var(--kd-bg-2) !important;
+    color: var(--kd-text-mute) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark .chip b{ color: var(--kd-text) !important; }
+
+  /* Specific named callouts in Graph_Algorithms cheatsheet */
+  html.kiro-dark .trick{
+    background: rgba(76,179,255,.10) !important;
+    border-color: rgba(76,179,255,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .trick b{ color: var(--kd-info) !important; }
+  html.kiro-dark .hint-box{
+    background: rgba(77,219,176,.10) !important;
+    border-color: rgba(77,219,176,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .hint-box b{ color: var(--kd-good) !important; }
+  html.kiro-dark .warn{
+    background: rgba(255,157,157,.10) !important;
+    border-color: rgba(255,157,157,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .warn b{ color: var(--kd-bad) !important; }
+
+  /* ----- Pills (incl. easy/med/hard from leetcode files) ----- */
+  html.kiro-dark .pill{ color: #fff !important; }
+  html.kiro-dark .pill.bad,
+  html.kiro-dark .pill.hard{ background: #b3434a !important; }
+  html.kiro-dark .pill.good,
+  html.kiro-dark .pill.easy{ background: #1f8a64 !important; }
+  html.kiro-dark .pill.tip,
+  html.kiro-dark .pill.med { background: #8a6a00 !important; }
+  html.kiro-dark .pill.trk { background: #1f5fa0 !important; }
+
+  /* ----- Details / summary ----- */
+  html.kiro-dark details > summary{ color: var(--kd-link) !important; }
+  html.kiro-dark details[open] > summary{ color: var(--kd-text) !important; }
+  html.kiro-dark details .hint{
+    background: rgba(110,197,255,.12) !important;
+    border-left-color: var(--kd-info) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* TOC, blockquote */
+  html.kiro-dark .toc{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark .toc a{ color: var(--kd-link) !important; }
+  html.kiro-dark blockquote{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* ----- Universal safety net: only kicks in for elements whose
+           background is STILL light AFTER the dark theme has been
+           applied. Tagged at runtime via data-kd-pastel. ----- */
+  html.kiro-dark [data-kd-pastel]{
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] *:not(.label):not(.pill):not(code):not(pre):not(b):not(strong){
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] b,
+  html.kiro-dark [data-kd-pastel] strong{
+    color: #000 !important;
+  }
+  html.kiro-dark [data-kd-pastel] code{
+    background: rgba(0,0,0,.10) !important;
+    color: #15171c !important;
+    border-color: rgba(0,0,0,.18) !important;
+  }
+  html.kiro-dark [data-kd-pastel] a{ color: #1a4f8a !important; }
+
+  /* Toggle button itself */
+  .kiro-dark-toggle{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#1c2128;
+    color:#ffd166;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer;
+    font-size:22px;line-height:1;
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{
+    background:#ffd166;
+    color:#1c2128;
+    border-color:#1c2128;
+  }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+
+  /* ---------- pastel safety net (post-dark) ----------
+     Scan AFTER dark mode is applied and tag only elements whose
+     computed background is still light. We exclude elements whose
+     class names overlap with our explicit dark styles, plus any
+     inline <code>/<pre>, so we never re-darken text we've already
+     styled. */
+  var EXCLUDE_TAGS = {CODE:1, PRE:1, BUTTON:1, INPUT:1, TEXTAREA:1, SELECT:1, OPTION:1, SCRIPT:1, STYLE:1, SVG:1, PATH:1, IMG:1};
+  var EXCLUDE_CLASSES = [
+    'kiro-dark-toggle','kiro-home-btn',
+    'tips','tip','note','tricky','callout','panel','box','warning','warn','trick','hint-box','info',
+    'obj','why','how','theo','cx','block','label',
+    'pill','chip','cat-chip','tag',
+    'right','wrong','good','bad','col-right','col-wrong',
+    'compare','toc','blockquote','muted','sub','small','legend',
+    'chip-term','chip-rep','chip-trav','chip-topo','chip-sp','chip-tree',
+    'chip-mst','chip-euler','chip-conn','chip-color','chip-tsp','chip-flow'
+  ];
+  function hasExcludedClass(el){
+    if(!el.classList || !el.classList.length) return false;
+    for(var i=0;i<EXCLUDE_CLASSES.length;i++){
+      if(el.classList.contains(EXCLUDE_CLASSES[i])) return true;
+    }
+    return false;
+  }
+
+  function untagAll(){
+    var tagged = document.querySelectorAll('[data-kd-pastel]');
+    for(var i=0;i<tagged.length;i++) tagged[i].removeAttribute('data-kd-pastel');
+  }
+
+  function tagPastels(){
+    if(!document.body) return;
+    untagAll();
+    var els = document.body.getElementsByTagName('*');
+    for(var i=0;i<els.length;i++){
+      var el = els[i];
+      if(EXCLUDE_TAGS[el.tagName]) continue;
+      if(hasExcludedClass(el)) continue;
+      /* Skip h2/h2.cat-* -- already themed */
+      if(el.tagName === 'H2') continue;
+      /* Skip table cells inside themed compare/right/wrong rows */
+      if(el.tagName === 'TD' || el.tagName === 'TH'){
+        var tr = el.parentElement;
+        if(tr && (tr.classList.contains('right')||tr.classList.contains('wrong')||tr.classList.contains('good')||tr.classList.contains('bad'))) continue;
+      }
+      var cs = window.getComputedStyle(el);
+      var bg = cs.backgroundColor;
+      var m = bg.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+      if(!m) continue;
+      var r=+m[1], g=+m[2], b=+m[3], a=m[4]===undefined?1:+m[4];
+      if(a < 0.55) continue;
+      var minC = Math.min(r,g,b);
+      /* Pastel/light: every channel >= 220 AND not pure white */
+      if(minC >= 220 && !(r===255 && g===255 && b===255)){
+        el.setAttribute('data-kd-pastel','1');
+      }
+    }
+  }
+
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+      /* Tag after dark CSS is in effect so we only catch genuine misses. */
+      if(typeof requestAnimationFrame === 'function'){
+        requestAnimationFrame(function(){ requestAnimationFrame(tagPastels); });
+      } else { setTimeout(tagPastels, 0); }
+    } else {
+      html.classList.remove('kiro-dark');
+      untagAll();
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>

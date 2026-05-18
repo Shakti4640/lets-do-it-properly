@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Graphs, BFS & DFS — Mastery in a Day (Java)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#0f1419; --panel:#161b22; --panel2:#1c2230; --ink:#e6edf3; --muted:#8b949e;
+    --accent:#58a6ff; --good:#3fb950; --warn:#d29922; --bad:#f85149; --code:#0b0f14;
+    --line:#30363d; --easy:#3fb950; --vEasy:#7ee787; --medium:#d29922; --hard:#f85149;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;font-size:16px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px}
+  header.hero{padding:40px 24px;background:linear-gradient(135deg,#1f6feb22,#d2992222);border-bottom:1px solid var(--line)}
+  header.hero h1{margin:0 0 8px;font-size:2.2rem}
+  header.hero p{margin:0;color:var(--muted);font-size:1.05rem}
+  nav.toc{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 24px;z-index:10;overflow-x:auto;white-space:nowrap}
+  nav.toc a{margin-right:14px;font-size:.92rem;color:var(--muted)}
+  nav.toc a:hover{color:var(--ink)}
+  h2{margin-top:48px;padding-bottom:8px;border-bottom:2px solid var(--line);font-size:1.7rem}
+  h3{margin-top:32px;font-size:1.25rem;color:var(--ink)}
+  h4{margin-top:24px;font-size:1.05rem;color:var(--accent)}
+  p{margin:10px 0}
+  .badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:700;color:#0b0f14;margin-right:8px;vertical-align:middle}
+  .b-veasy{background:var(--vEasy)}
+  .b-easy{background:var(--easy)}
+  .b-medium{background:var(--medium)}
+  .b-hard{background:var(--hard)}
+  .b-info{background:var(--accent)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;font-size:.92rem;line-height:1.5}
+  code{font-family:"JetBrains Mono","Fira Code",Consolas,monospace}
+  pre code{background:transparent;padding:0}
+  :not(pre) > code{background:#1f2937;color:#fbbf24;padding:1px 6px;border-radius:4px;font-size:.88em}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin:14px 0}
+  .panel.tip{border-left:4px solid var(--accent)}
+  .panel.warn{border-left:4px solid var(--warn)}
+  .panel.win{border-left:4px solid var(--good)}
+  .ascii{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-family:"JetBrains Mono",Consolas,monospace;white-space:pre;color:#a6e3a1;font-size:.95rem;overflow-x:auto}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 14px;margin:8px 0}
+  .kv b{color:var(--muted);font-weight:600}
+  details{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600;color:var(--accent)}
+  .kw{color:#ff7b72}
+  .ty{color:#ffa657}
+  .st{color:#a5d6ff}
+  .nm{color:#79c0ff}
+  .cm{color:#8b949e;font-style:italic}
+  .fn{color:#d2a8ff}
+  hr{border:none;border-top:1px solid var(--line);margin:30px 0}
+  .pill{display:inline-block;padding:2px 8px;border-radius:6px;background:#1f2937;color:#9ecbff;font-size:.78rem;margin-right:6px}
+  .lc{font-size:.78rem;color:var(--muted)}
+  ul{padding-left:22px}
+  li{margin:4px 0}
+  .small{font-size:.9rem;color:var(--muted)}
+  .center{text-align:center}
+  table{width:100%;border-collapse:collapse;margin:10px 0}
+  th,td{padding:8px;border:1px solid var(--line);text-align:left}
+  th{background:var(--panel)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>🕸️ Graphs, BFS &amp; DFS — Mastery in a Day</h1>
+    <p>Java edition. Written for a curious 15‑year‑old. If you finished the trees guide, this builds straight on top of it. Trees are graphs that promised not to be naughty — graphs are trees that didn't.</p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#intro">① Intro</a>
+    <a href="#repr">② Representations</a>
+    <a href="#grid">③ Grids as Graphs</a>
+    <a href="#templates">④ Templates</a>
+    <a href="#bfs">⑤ BFS Track</a>
+    <a href="#dfs">⑥ DFS Track</a>
+    <a href="#cheats">⑦ Cheat Sheet</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ============================================================== -->
+<h2 id="intro">① What is a Graph?</h2>
+
+<p>A <b>graph</b> is just dots connected by lines. The dots are <b>nodes</b> (or <b>vertices</b>), the lines are <b>edges</b>. That's it. Cities connected by roads, people connected by friendships, web pages connected by links — all graphs.</p>
+
+<div class="ascii">      A ─── B
+      │   ╱ │
+      │  ╱  │
+      C ─── D ─── E
+</div>
+
+<p>Compare to trees: a tree is a special graph with no cycles and exactly one path between any two nodes. A general graph can have <b>cycles</b> (a path that loops back), <b>multiple paths</b> between two nodes, and even <b>disconnected pieces</b>. That's why graph code <i>always</i> needs a <code>visited</code> set — without it you'd loop forever.</p>
+
+<h3>Vocabulary</h3>
+<div class="kv">
+  <b>Vertex / Node</b><span>A single dot. We'll usually label them with numbers <code>0..n-1</code>.</span>
+  <b>Edge</b><span>A connection between two vertices.</span>
+  <b>Directed</b><span>Edges have a direction (one-way street). <code>A → B</code> doesn't mean <code>B → A</code>.</span>
+  <b>Undirected</b><span>Edges go both ways (a road). If <code>A — B</code>, you can walk both directions.</span>
+  <b>Weighted</b><span>Edges carry a number (cost, distance, time).</span>
+  <b>Cycle</b><span>A path that ends where it started. Trees have none; graphs often do.</span>
+  <b>Connected</b><span>An undirected graph where you can reach any node from any other.</span>
+  <b>Component</b><span>A maximal connected piece. The graph above is 1 component; if D-E was missing, it'd be 2.</span>
+  <b>Degree</b><span>How many edges touch a node.</span>
+  <b>DAG</b><span>Directed Acyclic Graph — directed and no cycles. Think course prerequisites.</span>
+</div>
+
+<div class="panel tip">
+  <b>The one rule that separates trees from graphs:</b> graphs can revisit. So every traversal needs a <code>visited[]</code> array or a <code>Set&lt;Integer&gt;</code>. Forget this and you get an infinite loop.
+</div>
+
+<!-- ============================================================== -->
+<h2 id="repr">② How to store a graph in code</h2>
+
+<p>There are 3 common ways. You'll use #1 for 95% of problems.</p>
+
+<h3>① Adjacency List (the workhorse)</h3>
+
+<p>For each node, store a list of its neighbors. Imagine a phone book: name → list of friends.</p>
+
+<pre><code><span class="cm">// n = number of nodes, edges = int[][] like {{0,1},{1,2},{0,2}}</span>
+<span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; n; i++) adj.add(<span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;());
+<span class="kw">for</span> (<span class="kw">int</span>[] e : edges){
+    adj.get(e[<span class="nm">0</span>]).add(e[<span class="nm">1</span>]);
+    adj.get(e[<span class="nm">1</span>]).add(e[<span class="nm">0</span>]);   <span class="cm">// drop this line if directed</span>
+}
+</code></pre>
+
+<div class="kv">
+  <b>Space</b><span>O(V + E) — tiny for sparse graphs (most real ones).</span>
+  <b>Lookup neighbors</b><span>O(degree) — fast.</span>
+  <b>Edge exists?</b><span>O(degree) — fine.</span>
+</div>
+
+<h3>② Adjacency Matrix</h3>
+
+<p>An <code>n × n</code> grid of booleans/ints. <code>m[i][j] = 1</code> means edge from <code>i</code> to <code>j</code>.</p>
+
+<pre><code><span class="kw">int</span>[][] m = <span class="kw">new int</span>[n][n];
+<span class="kw">for</span> (<span class="kw">int</span>[] e : edges){
+    m[e[<span class="nm">0</span>]][e[<span class="nm">1</span>]] = <span class="nm">1</span>;
+    m[e[<span class="nm">1</span>]][e[<span class="nm">0</span>]] = <span class="nm">1</span>;
+}
+</code></pre>
+
+<p>Good when the graph is <b>dense</b> (most pairs connected) or when "is there an edge from i to j?" is asked a lot. Bad for huge sparse graphs — wastes memory.</p>
+
+<h3>③ Edge List</h3>
+
+<p>Just an array of pairs <code>{u, v}</code>. Mostly useful for algorithms that scan all edges (Kruskal, Bellman-Ford). For BFS/DFS, convert it to an adjacency list first.</p>
+
+<table>
+  <thead><tr><th>Format</th><th>Space</th><th>Best for</th></tr></thead>
+  <tbody>
+    <tr><td>Adjacency list</td><td>O(V+E)</td><td>BFS, DFS, sparse graphs (default pick)</td></tr>
+    <tr><td>Adjacency matrix</td><td>O(V²)</td><td>Dense graphs, fast edge lookup, Floyd-Warshall</td></tr>
+    <tr><td>Edge list</td><td>O(E)</td><td>Kruskal, Bellman-Ford, simple iteration</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================== -->
+<h2 id="grid">③ Grids ARE graphs (this unlocks half of LeetCode)</h2>
+
+<p>A 2D grid like <code>char[][] grid</code> is secretly a graph. Each cell is a node. Each cell connects to its 4 neighbors (up, down, left, right) — sometimes 8 if diagonals count.</p>
+
+<div class="ascii">     0 0 1 0
+     0 1 1 0          ← 1's are land, 0's are water
+     0 0 0 0          "Find islands" = "Find connected components"
+</div>
+
+<p>The magic phrase: <b>"directions array."</b> Memorize this:</p>
+
+<pre><code><span class="kw">int</span>[][] dirs = {{-<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">0</span>,-<span class="nm">1</span>},{<span class="nm">0</span>,<span class="nm">1</span>}};   <span class="cm">// up, down, left, right</span>
+
+<span class="kw">for</span> (<span class="kw">int</span>[] d : dirs){
+    <span class="kw">int</span> nr = r + d[<span class="nm">0</span>];
+    <span class="kw">int</span> nc = c + d[<span class="nm">1</span>];
+    <span class="kw">if</span> (nr &lt; <span class="nm">0</span> || nr &gt;= rows || nc &lt; <span class="nm">0</span> || nc &gt;= cols) <span class="kw">continue</span>;
+    <span class="cm">// nr,nc is a valid neighbor</span>
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Trick:</b> instead of a separate <code>visited[][]</code>, you can often <i>mark the grid itself</i> — flip a <code>'1'</code> to <code>'0'</code> after visiting. Saves memory. The downside: you mutate the input. Most interviewers are fine with it; mention the trade-off.
+</div>
+
+<!-- ============================================================== -->
+<h2 id="templates">④ The two templates you'll write 100 times</h2>
+
+<h3>BFS template</h3>
+
+<pre><code><span class="kw">void</span> <span class="fn">bfs</span>(<span class="kw">int</span> start, <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj){
+    <span class="kw">int</span> n = adj.size();
+    <span class="kw">boolean</span>[] visited = <span class="kw">new boolean</span>[n];
+    <span class="ty">Queue</span>&lt;<span class="ty">Integer</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(start);
+    visited[start] = <span class="kw">true</span>;        <span class="cm">// 🔑 mark when ENQUEUED, not when polled</span>
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span> cur = q.poll();
+        <span class="cm">// do work with cur</span>
+        <span class="kw">for</span> (<span class="kw">int</span> nb : adj.get(cur)){
+            <span class="kw">if</span> (!visited[nb]){
+                visited[nb] = <span class="kw">true</span>;
+                q.add(nb);
+            }
+        }
+    }
+}
+</code></pre>
+
+<div class="panel warn">
+  <b>The #1 BFS bug:</b> marking <code>visited</code> when you <i>poll</i> instead of when you <i>enqueue</i>. If the same node gets queued by 5 neighbors before being polled, you process it 5 times. Always mark on enqueue.
+</div>
+
+<h3>DFS templates (recursive AND iterative)</h3>
+
+<pre><code><span class="cm">// Recursive — clean and short</span>
+<span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u, <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj, <span class="kw">boolean</span>[] visited){
+    <span class="kw">if</span> (visited[u]) <span class="kw">return</span>;
+    visited[u] = <span class="kw">true</span>;
+    <span class="cm">// do work with u</span>
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)) <span class="fn">dfs</span>(v, adj, visited);
+}
+</code></pre>
+
+<pre><code><span class="cm">// Iterative — needed when the graph is HUGE (avoid stack overflow)</span>
+<span class="kw">void</span> <span class="fn">dfsIter</span>(<span class="kw">int</span> start, <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj){
+    <span class="kw">boolean</span>[] visited = <span class="kw">new boolean</span>[adj.size()];
+    <span class="ty">Deque</span>&lt;<span class="ty">Integer</span>&gt; stack = <span class="kw">new</span> <span class="fn">ArrayDeque</span>&lt;&gt;();
+    stack.push(start);
+    <span class="kw">while</span> (!stack.isEmpty()){
+        <span class="kw">int</span> u = stack.pop();
+        <span class="kw">if</span> (visited[u]) <span class="kw">continue</span>;
+        visited[u] = <span class="kw">true</span>;
+        <span class="cm">// do work</span>
+        <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)) <span class="kw">if</span> (!visited[v]) stack.push(v);
+    }
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>BFS vs DFS at a glance:</b><br>
+  BFS uses a <b>queue</b> and explores in <b>layers</b>. Best for <b>shortest path</b> in unweighted graphs.<br>
+  DFS uses a <b>stack</b> (or recursion) and goes <b>deep first</b>. Best for <b>connectivity, cycles, components, topological sort</b>.
+</div>
+
+<hr/>
+
+<!-- ============================================================== -->
+<!-- BFS TRACK -->
+<!-- ============================================================== -->
+<h2 id="bfs">⑤ BFS Track 🚂 — Very Easy → Hard</h2>
+
+<p>BFS gives you <b>shortest distance</b> in unweighted graphs for free. The number of "ripple layers" you go out from the source = the distance.</p>
+
+<!-- ===== BG1 ===== -->
+<h3><span class="badge b-veasy">VERY EASY</span> BG1. Find if Path Exists in Graph <span class="lc">(LC 1971)</span></h3>
+
+<p><b>Problem:</b> Given an undirected graph and two nodes <code>source</code>, <code>destination</code>, return <code>true</code> if a path exists.</p>
+
+<h4>Intuition</h4>
+<p>Start BFS from source. If you ever pop <code>destination</code>, return true. If the queue empties without reaching it, return false.</p>
+
+<pre><code><span class="kw">public boolean</span> <span class="fn">validPath</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] edges, <span class="kw">int</span> src, <span class="kw">int</span> dst){
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++) adj.add(<span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;());
+    <span class="kw">for</span> (<span class="kw">int</span>[] e : edges){
+        adj.get(e[<span class="nm">0</span>]).add(e[<span class="nm">1</span>]);
+        adj.get(e[<span class="nm">1</span>]).add(e[<span class="nm">0</span>]);
+    }
+    <span class="kw">boolean</span>[] visited = <span class="kw">new boolean</span>[n];
+    <span class="ty">Queue</span>&lt;<span class="ty">Integer</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(src); visited[src] = <span class="kw">true</span>;
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span> u = q.poll();
+        <span class="kw">if</span> (u == dst) <span class="kw">return true</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)){
+            <span class="kw">if</span> (!visited[v]){
+                visited[v] = <span class="kw">true</span>;
+                q.add(v);
+            }
+        }
+    }
+    <span class="kw">return false</span>;
+}
+</code></pre>
+
+<!-- ===== BG2 ===== -->
+<h3><span class="badge b-veasy">VERY EASY</span> BG2. Flood Fill <span class="lc">(LC 733)</span></h3>
+
+<p><b>Problem:</b> Given an image (2D int grid), a starting pixel <code>(sr, sc)</code>, and a new color, repaint the connected region of the same color starting at that pixel — like the paint bucket in MS Paint.</p>
+
+<pre><code><span class="kw">public int</span>[][] <span class="fn">floodFill</span>(<span class="kw">int</span>[][] image, <span class="kw">int</span> sr, <span class="kw">int</span> sc, <span class="kw">int</span> color){
+    <span class="kw">int</span> oldColor = image[sr][sc];
+    <span class="kw">if</span> (oldColor == color) <span class="kw">return</span> image;   <span class="cm">// avoid infinite loop</span>
+    <span class="kw">int</span> R = image.length, C = image[<span class="nm">0</span>].length;
+    <span class="kw">int</span>[][] dirs = {{-<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">0</span>,-<span class="nm">1</span>},{<span class="nm">0</span>,<span class="nm">1</span>}};
+    <span class="ty">Queue</span>&lt;<span class="kw">int</span>[]&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(<span class="kw">new int</span>[]{sr, sc});
+    image[sr][sc] = color;            <span class="cm">// mark visited by repainting</span>
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span>[] cur = q.poll();
+        <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs){
+            <span class="kw">int</span> nr = cur[<span class="nm">0</span>] + d[<span class="nm">0</span>], nc = cur[<span class="nm">1</span>] + d[<span class="nm">1</span>];
+            <span class="kw">if</span> (nr&lt;<span class="nm">0</span>||nr&gt;=R||nc&lt;<span class="nm">0</span>||nc&gt;=C) <span class="kw">continue</span>;
+            <span class="kw">if</span> (image[nr][nc] != oldColor) <span class="kw">continue</span>;
+            image[nr][nc] = color;
+            q.add(<span class="kw">new int</span>[]{nr, nc});
+        }
+    }
+    <span class="kw">return</span> image;
+}
+</code></pre>
+
+<div class="panel warn">
+  <b>The "color already matches" trap:</b> If <code>oldColor == color</code>, you'll keep reading neighbors as "still old color" and loop forever. Always early-return.
+</div>
+
+<!-- ===== BG3 ===== -->
+<h3><span class="badge b-easy">EASY</span> BG3. Number of Islands <span class="lc">(LC 200)</span></h3>
+
+<p><b>Problem:</b> A grid of <code>'1'</code> (land) and <code>'0'</code> (water). Count connected groups of land (4-directional).</p>
+
+<h4>Intuition</h4>
+<p>Walk through every cell. When you hit unvisited land, increment the counter and BFS to drown that whole island (mark as <code>'0'</code>). Cells you've already drowned will be skipped automatically.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">numIslands</span>(<span class="kw">char</span>[][] g){
+    <span class="kw">int</span> R = g.length, C = g[<span class="nm">0</span>].length, count = <span class="nm">0</span>;
+    <span class="kw">int</span>[][] dirs = {{-<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">0</span>,-<span class="nm">1</span>},{<span class="nm">0</span>,<span class="nm">1</span>}};
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R; r++) <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C; c++){
+        <span class="kw">if</span> (g[r][c] != <span class="st">'1'</span>) <span class="kw">continue</span>;
+        count++;
+        <span class="ty">Queue</span>&lt;<span class="kw">int</span>[]&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+        q.add(<span class="kw">new int</span>[]{r,c});
+        g[r][c] = <span class="st">'0'</span>;
+        <span class="kw">while</span>(!q.isEmpty()){
+            <span class="kw">int</span>[] cur = q.poll();
+            <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs){
+                <span class="kw">int</span> nr=cur[<span class="nm">0</span>]+d[<span class="nm">0</span>], nc=cur[<span class="nm">1</span>]+d[<span class="nm">1</span>];
+                <span class="kw">if</span> (nr&lt;<span class="nm">0</span>||nr&gt;=R||nc&lt;<span class="nm">0</span>||nc&gt;=C||g[nr][nc] != <span class="st">'1'</span>) <span class="kw">continue</span>;
+                g[nr][nc] = <span class="st">'0'</span>;
+                q.add(<span class="kw">new int</span>[]{nr,nc});
+            }
+        }
+    }
+    <span class="kw">return</span> count;
+}
+</code></pre>
+
+<div class="kv">
+  <b>Time</b><span>O(R·C) — every cell entered once.</span>
+  <b>Space</b><span>O(min(R,C)) — BFS queue holds at most one frontier.</span>
+</div>
+
+<!-- ===== BG4 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> BG4. Rotting Oranges <span class="lc">(LC 994)</span></h3>
+
+<p><b>Problem:</b> 0 = empty, 1 = fresh, 2 = rotten. Every minute, rotten oranges rot their 4 neighbors. Return the minutes until all are rotten, or -1 if impossible.</p>
+
+<h4>Intuition (multi-source BFS — the upgrade)</h4>
+<p>Don't BFS from one source. BFS from <i>every</i> rotten orange <b>at the same time</b>. Push all rotten oranges into the queue at the start. Each BFS layer = one minute.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">orangesRotting</span>(<span class="kw">int</span>[][] g){
+    <span class="kw">int</span> R = g.length, C = g[<span class="nm">0</span>].length, fresh = <span class="nm">0</span>, minutes = <span class="nm">0</span>;
+    <span class="ty">Queue</span>&lt;<span class="kw">int</span>[]&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R; r++) <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C; c++){
+        <span class="kw">if</span> (g[r][c] == <span class="nm">2</span>) q.add(<span class="kw">new int</span>[]{r,c});
+        <span class="kw">else if</span> (g[r][c] == <span class="nm">1</span>) fresh++;
+    }
+    <span class="kw">int</span>[][] dirs = {{-<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">0</span>,-<span class="nm">1</span>},{<span class="nm">0</span>,<span class="nm">1</span>}};
+    <span class="kw">while</span> (!q.isEmpty() &amp;&amp; fresh &gt; <span class="nm">0</span>){
+        <span class="kw">int</span> size = q.size();          <span class="cm">// process one minute at a time</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="kw">int</span>[] cur = q.poll();
+            <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs){
+                <span class="kw">int</span> nr=cur[<span class="nm">0</span>]+d[<span class="nm">0</span>], nc=cur[<span class="nm">1</span>]+d[<span class="nm">1</span>];
+                <span class="kw">if</span> (nr&lt;<span class="nm">0</span>||nr&gt;=R||nc&lt;<span class="nm">0</span>||nc&gt;=C||g[nr][nc] != <span class="nm">1</span>) <span class="kw">continue</span>;
+                g[nr][nc] = <span class="nm">2</span>;
+                fresh--;
+                q.add(<span class="kw">new int</span>[]{nr,nc});
+            }
+        }
+        minutes++;
+    }
+    <span class="kw">return</span> fresh == <span class="nm">0</span> ? minutes : -<span class="nm">1</span>;
+}
+</code></pre>
+
+<div class="panel win">
+  <b>Multi-source BFS</b> is one of the most powerful tricks in graphs. Whenever a problem says "from <i>any</i> of these starting points, find the minimum…" — toss them all in the queue at once and BFS in parallel.
+</div>
+
+<!-- ===== BG5 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> BG5. 01 Matrix <span class="lc">(LC 542)</span></h3>
+
+<p><b>Problem:</b> For each cell in a 0/1 grid, return the distance to the nearest 0.</p>
+
+<h4>Intuition (multi-source BFS, again)</h4>
+<p>Naive: from every <code>1</code>, BFS to find nearest <code>0</code>. Too slow. <b>Flip it</b>: start BFS from every <code>0</code> simultaneously, expanding outward. The layer at which a <code>1</code> is reached IS its distance.</p>
+
+<pre><code><span class="kw">public int</span>[][] <span class="fn">updateMatrix</span>(<span class="kw">int</span>[][] mat){
+    <span class="kw">int</span> R = mat.length, C = mat[<span class="nm">0</span>].length;
+    <span class="kw">int</span>[][] dist = <span class="kw">new int</span>[R][C];
+    <span class="ty">Queue</span>&lt;<span class="kw">int</span>[]&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R; r++) <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C; c++){
+        <span class="kw">if</span> (mat[r][c] == <span class="nm">0</span>) q.add(<span class="kw">new int</span>[]{r,c});
+        <span class="kw">else</span> dist[r][c] = -<span class="nm">1</span>;       <span class="cm">// "not visited yet"</span>
+    }
+    <span class="kw">int</span>[][] dirs = {{-<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">0</span>,-<span class="nm">1</span>},{<span class="nm">0</span>,<span class="nm">1</span>}};
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="kw">int</span>[] cur = q.poll();
+        <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs){
+            <span class="kw">int</span> nr=cur[<span class="nm">0</span>]+d[<span class="nm">0</span>], nc=cur[<span class="nm">1</span>]+d[<span class="nm">1</span>];
+            <span class="kw">if</span> (nr&lt;<span class="nm">0</span>||nr&gt;=R||nc&lt;<span class="nm">0</span>||nc&gt;=C||dist[nr][nc] != -<span class="nm">1</span>) <span class="kw">continue</span>;
+            dist[nr][nc] = dist[cur[<span class="nm">0</span>]][cur[<span class="nm">1</span>]] + <span class="nm">1</span>;
+            q.add(<span class="kw">new int</span>[]{nr,nc});
+        }
+    }
+    <span class="kw">return</span> dist;
+}
+</code></pre>
+
+<!-- ===== BG6 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> BG6. Word Ladder <span class="lc">(LC 127)</span></h3>
+
+<p><b>Problem:</b> Given <code>beginWord</code>, <code>endWord</code>, and a wordList, transform begin → end one letter at a time, every intermediate word must be in the list. Return the length of the shortest sequence (words count), or 0 if impossible.</p>
+
+<h4>Intuition</h4>
+<p>The graph is "hidden": nodes = words, edges = "differ by exactly one letter." BFS from <code>beginWord</code>, generate neighbors by trying every letter at every position. First time we reach <code>endWord</code>, that's the shortest distance.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">ladderLength</span>(<span class="ty">String</span> beginWord, <span class="ty">String</span> endWord, <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; wordList){
+    <span class="ty">Set</span>&lt;<span class="ty">String</span>&gt; dict = <span class="kw">new</span> <span class="fn">HashSet</span>&lt;&gt;(wordList);
+    <span class="kw">if</span> (!dict.contains(endWord)) <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="ty">Queue</span>&lt;<span class="ty">String</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    q.add(beginWord);
+    dict.remove(beginWord);
+    <span class="kw">int</span> steps = <span class="nm">1</span>;
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="ty">String</span> w = q.poll();
+            <span class="kw">if</span> (w.equals(endWord)) <span class="kw">return</span> steps;
+            <span class="kw">char</span>[] arr = w.toCharArray();
+            <span class="kw">for</span> (<span class="kw">int</span> p=<span class="nm">0</span>; p&lt;arr.length; p++){
+                <span class="kw">char</span> orig = arr[p];
+                <span class="kw">for</span> (<span class="kw">char</span> ch=<span class="st">'a'</span>; ch&lt;=<span class="st">'z'</span>; ch++){
+                    <span class="kw">if</span> (ch == orig) <span class="kw">continue</span>;
+                    arr[p] = ch;
+                    <span class="ty">String</span> nxt = <span class="kw">new</span> <span class="ty">String</span>(arr);
+                    <span class="kw">if</span> (dict.remove(nxt)) q.add(nxt);   <span class="cm">// remove == "mark visited"</span>
+                }
+                arr[p] = orig;
+            }
+        }
+        steps++;
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>"Implicit graph" trick:</b> You don't need to <i>build</i> the graph if you can <i>compute neighbors on the fly</i>. Saves tons of memory.
+</div>
+
+<!-- ===== BG7 ===== -->
+<h3><span class="badge b-hard">HARD</span> BG7. Shortest Bridge <span class="lc">(LC 934)</span></h3>
+
+<p><b>Problem:</b> A grid has exactly two islands of <code>1</code>s. Flip the minimum number of <code>0</code>s to <code>1</code>s to connect them.</p>
+
+<h4>Intuition (DFS + multi-source BFS combo)</h4>
+<ol>
+  <li><b>Find the first island</b> with DFS. Mark all its cells as <code>2</code> AND push them all into a queue.</li>
+  <li><b>BFS outward</b> from that whole island in parallel. Every BFS layer = one flip. The instant you touch a <code>1</code> (the second island), return the layer count.</li>
+</ol>
+
+<pre><code><span class="kw">int</span>[][] dirs = {{-<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">0</span>,-<span class="nm">1</span>},{<span class="nm">0</span>,<span class="nm">1</span>}};
+
+<span class="kw">public int</span> <span class="fn">shortestBridge</span>(<span class="kw">int</span>[][] g){
+    <span class="kw">int</span> R = g.length, C = g[<span class="nm">0</span>].length;
+    <span class="ty">Queue</span>&lt;<span class="kw">int</span>[]&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    <span class="kw">boolean</span> found = <span class="kw">false</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R &amp;&amp; !found; r++)
+        <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C &amp;&amp; !found; c++)
+            <span class="kw">if</span> (g[r][c] == <span class="nm">1</span>){ <span class="fn">paint</span>(g, r, c, q); found = <span class="kw">true</span>; }
+
+    <span class="kw">int</span> flips = <span class="nm">0</span>;
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="kw">int</span>[] cur = q.poll();
+            <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs){
+                <span class="kw">int</span> nr=cur[<span class="nm">0</span>]+d[<span class="nm">0</span>], nc=cur[<span class="nm">1</span>]+d[<span class="nm">1</span>];
+                <span class="kw">if</span> (nr&lt;<span class="nm">0</span>||nr&gt;=R||nc&lt;<span class="nm">0</span>||nc&gt;=C||g[nr][nc] == <span class="nm">2</span>) <span class="kw">continue</span>;
+                <span class="kw">if</span> (g[nr][nc] == <span class="nm">1</span>) <span class="kw">return</span> flips;     <span class="cm">// touched island #2</span>
+                g[nr][nc] = <span class="nm">2</span>;                          <span class="cm">// mark water as visited</span>
+                q.add(<span class="kw">new int</span>[]{nr,nc});
+            }
+        }
+        flips++;
+    }
+    <span class="kw">return</span> -<span class="nm">1</span>;   <span class="cm">// unreachable per problem guarantees</span>
+}
+<span class="kw">private void</span> <span class="fn">paint</span>(<span class="kw">int</span>[][] g, <span class="kw">int</span> r, <span class="kw">int</span> c, <span class="ty">Queue</span>&lt;<span class="kw">int</span>[]&gt; q){
+    <span class="kw">if</span> (r&lt;<span class="nm">0</span>||r&gt;=g.length||c&lt;<span class="nm">0</span>||c&gt;=g[<span class="nm">0</span>].length||g[r][c] != <span class="nm">1</span>) <span class="kw">return</span>;
+    g[r][c] = <span class="nm">2</span>;
+    q.add(<span class="kw">new int</span>[]{r,c});
+    <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs) <span class="fn">paint</span>(g, r+d[<span class="nm">0</span>], c+d[<span class="nm">1</span>], q);
+}
+</code></pre>
+
+<!-- ===== BG8 ===== -->
+<h3><span class="badge b-hard">HARD</span> BG8. Bus Routes <span class="lc">(LC 815)</span></h3>
+
+<p><b>Problem:</b> <code>routes[i]</code> = list of stops bus <code>i</code> visits in a loop. Start at <code>source</code>, want to reach <code>target</code>. Return the minimum number of buses you must take, or -1.</p>
+
+<h4>Intuition</h4>
+<p>Trick: BFS over <b>buses</b>, not stops. Build <code>stop → list of buses serving it</code>. Start by enqueuing every bus that passes <code>source</code>. Each BFS layer = +1 bus ridden.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">numBusesToDestination</span>(<span class="kw">int</span>[][] routes, <span class="kw">int</span> src, <span class="kw">int</span> tgt){
+    <span class="kw">if</span> (src == tgt) <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="ty">Map</span>&lt;<span class="ty">Integer</span>, <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; stopToBuses = <span class="kw">new</span> <span class="fn">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> b=<span class="nm">0</span>; b&lt;routes.length; b++)
+        <span class="kw">for</span> (<span class="kw">int</span> stop : routes[b])
+            stopToBuses.computeIfAbsent(stop, k -&gt; <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;()).add(b);
+
+    <span class="ty">Queue</span>&lt;<span class="ty">Integer</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    <span class="ty">Set</span>&lt;<span class="ty">Integer</span>&gt; visitedStops = <span class="kw">new</span> <span class="fn">HashSet</span>&lt;&gt;();
+    <span class="ty">Set</span>&lt;<span class="ty">Integer</span>&gt; visitedBuses = <span class="kw">new</span> <span class="fn">HashSet</span>&lt;&gt;();
+    q.add(src); visitedStops.add(src);
+    <span class="kw">int</span> buses = <span class="nm">0</span>;
+    <span class="kw">while</span> (!q.isEmpty()){
+        <span class="kw">int</span> size = q.size();
+        buses++;
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+            <span class="kw">int</span> stop = q.poll();
+            <span class="kw">for</span> (<span class="kw">int</span> b : stopToBuses.getOrDefault(stop, <span class="ty">List</span>.of())){
+                <span class="kw">if</span> (!visitedBuses.add(b)) <span class="kw">continue</span>;     <span class="cm">// already rode this bus</span>
+                <span class="kw">for</span> (<span class="kw">int</span> nxtStop : routes[b]){
+                    <span class="kw">if</span> (nxtStop == tgt) <span class="kw">return</span> buses;
+                    <span class="kw">if</span> (visitedStops.add(nxtStop)) q.add(nxtStop);
+                }
+            }
+        }
+    }
+    <span class="kw">return</span> -<span class="nm">1</span>;
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Lesson:</b> "What's a node?" is the most important graph question. Sometimes nodes are buses. Sometimes states. Sometimes (word, position) tuples. Pick the right node and the algorithm writes itself.
+</div>
+
+<hr/>
+
+<!-- ============================================================== -->
+<!-- DFS TRACK -->
+<!-- ============================================================== -->
+<h2 id="dfs">⑥ DFS Track 🪂 — Very Easy → Hard</h2>
+
+<p>DFS is your go-to when the question is about <b>structure</b>: connectivity, cycles, components, ordering, "is X reachable from Y," "are there any back edges." Use BFS instead when the question is about <b>shortest distance</b>.</p>
+
+<!-- ===== DG1 ===== -->
+<h3><span class="badge b-veasy">VERY EASY</span> DG1. Number of Islands (DFS) <span class="lc">(LC 200)</span></h3>
+
+<p>Same problem as BG3, written with recursive DFS. This is the version you'll see most often in interviews — shorter and easier to whiteboard.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">numIslands</span>(<span class="kw">char</span>[][] g){
+    <span class="kw">int</span> count = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;g.length; r++)
+        <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;g[<span class="nm">0</span>].length; c++)
+            <span class="kw">if</span> (g[r][c] == <span class="st">'1'</span>){ <span class="fn">sink</span>(g, r, c); count++; }
+    <span class="kw">return</span> count;
+}
+<span class="kw">private void</span> <span class="fn">sink</span>(<span class="kw">char</span>[][] g, <span class="kw">int</span> r, <span class="kw">int</span> c){
+    <span class="kw">if</span> (r&lt;<span class="nm">0</span>||r&gt;=g.length||c&lt;<span class="nm">0</span>||c&gt;=g[<span class="nm">0</span>].length||g[r][c] != <span class="st">'1'</span>) <span class="kw">return</span>;
+    g[r][c] = <span class="st">'0'</span>;
+    <span class="fn">sink</span>(g, r-<span class="nm">1</span>, c); <span class="fn">sink</span>(g, r+<span class="nm">1</span>, c);
+    <span class="fn">sink</span>(g, r, c-<span class="nm">1</span>); <span class="fn">sink</span>(g, r, c+<span class="nm">1</span>);
+}
+</code></pre>
+
+<!-- ===== DG2 ===== -->
+<h3><span class="badge b-veasy">VERY EASY</span> DG2. Number of Provinces <span class="lc">(LC 547)</span></h3>
+
+<p><b>Problem:</b> An <code>n × n</code> matrix <code>isConnected</code> where <code>isConnected[i][j] = 1</code> means city <code>i</code> and <code>j</code> are connected. Count provinces (connected components of cities).</p>
+
+<h4>Intuition</h4>
+<p>Standard "count connected components." Walk every city; if not visited, DFS to mark all in its province; bump the counter.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">findCircleNum</span>(<span class="kw">int</span>[][] m){
+    <span class="kw">int</span> n = m.length, count = <span class="nm">0</span>;
+    <span class="kw">boolean</span>[] visited = <span class="kw">new boolean</span>[n];
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++){
+        <span class="kw">if</span> (!visited[i]){ <span class="fn">dfs</span>(m, visited, i); count++; }
+    }
+    <span class="kw">return</span> count;
+}
+<span class="kw">private void</span> <span class="fn">dfs</span>(<span class="kw">int</span>[][] m, <span class="kw">boolean</span>[] vis, <span class="kw">int</span> u){
+    vis[u] = <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v=<span class="nm">0</span>; v&lt;m.length; v++)
+        <span class="kw">if</span> (m[u][v] == <span class="nm">1</span> &amp;&amp; !vis[v]) <span class="fn">dfs</span>(m, vis, v);
+}
+</code></pre>
+
+<!-- ===== DG3 ===== -->
+<h3><span class="badge b-easy">EASY</span> DG3. Max Area of Island <span class="lc">(LC 695)</span></h3>
+
+<p><b>Problem:</b> Same as Number of Islands, but return the area of the largest one.</p>
+
+<h4>Intuition</h4>
+<p>DFS that <i>returns</i> the area of the island it explored. <code>1 + dfs(up) + dfs(down) + dfs(left) + dfs(right)</code>. Track the global max.</p>
+
+<pre><code><span class="kw">public int</span> <span class="fn">maxAreaOfIsland</span>(<span class="kw">int</span>[][] g){
+    <span class="kw">int</span> best = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;g.length; r++)
+        <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;g[<span class="nm">0</span>].length; c++)
+            <span class="kw">if</span> (g[r][c] == <span class="nm">1</span>) best = <span class="ty">Math</span>.max(best, <span class="fn">area</span>(g, r, c));
+    <span class="kw">return</span> best;
+}
+<span class="kw">private int</span> <span class="fn">area</span>(<span class="kw">int</span>[][] g, <span class="kw">int</span> r, <span class="kw">int</span> c){
+    <span class="kw">if</span> (r&lt;<span class="nm">0</span>||r&gt;=g.length||c&lt;<span class="nm">0</span>||c&gt;=g[<span class="nm">0</span>].length||g[r][c] != <span class="nm">1</span>) <span class="kw">return</span> <span class="nm">0</span>;
+    g[r][c] = <span class="nm">0</span>;          <span class="cm">// mark visited</span>
+    <span class="kw">return</span> <span class="nm">1</span> + <span class="fn">area</span>(g,r-<span class="nm">1</span>,c) + <span class="fn">area</span>(g,r+<span class="nm">1</span>,c) + <span class="fn">area</span>(g,r,c-<span class="nm">1</span>) + <span class="fn">area</span>(g,r,c+<span class="nm">1</span>);
+}
+</code></pre>
+
+<!-- ===== DG4 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> DG4. Clone Graph <span class="lc">(LC 133)</span></h3>
+
+<p><b>Problem:</b> Make a deep copy of an undirected connected graph. Each node has a value and a list of neighbors.</p>
+
+<h4>Intuition</h4>
+<p>Every original node maps to exactly one clone. Use a <code>HashMap&lt;Node, Node&gt;</code> as your "visited" — if you've cloned this node before, return the existing clone (this also breaks cycles).</p>
+
+<pre><code><span class="ty">Map</span>&lt;<span class="ty">Node</span>, <span class="ty">Node</span>&gt; map = <span class="kw">new</span> <span class="fn">HashMap</span>&lt;&gt;();
+
+<span class="kw">public</span> <span class="ty">Node</span> <span class="fn">cloneGraph</span>(<span class="ty">Node</span> node){
+    <span class="kw">if</span> (node == <span class="kw">null</span>) <span class="kw">return null</span>;
+    <span class="kw">if</span> (map.containsKey(node)) <span class="kw">return</span> map.get(node);
+    <span class="ty">Node</span> copy = <span class="kw">new</span> <span class="fn">Node</span>(node.val);
+    map.put(node, copy);                                  <span class="cm">// 🔑 BEFORE recursing</span>
+    <span class="kw">for</span> (<span class="ty">Node</span> nb : node.neighbors)
+        copy.neighbors.add(<span class="fn">cloneGraph</span>(nb));
+    <span class="kw">return</span> copy;
+}
+</code></pre>
+
+<div class="panel warn">
+  <b>Order matters!</b> Put the clone in the map <i>before</i> recursing on neighbors. Otherwise, a cycle (A → B → A) recurses infinitely because the second visit to A doesn't see itself yet.
+</div>
+
+<!-- ===== DG5 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> DG5. Course Schedule (Cycle Detection) <span class="lc">(LC 207)</span></h3>
+
+<p><b>Problem:</b> <code>numCourses</code> courses with prerequisites. Each prereq <code>[a,b]</code> means "to take a, you must take b first." Return <code>true</code> if all courses can be finished — i.e., the directed graph has <b>no cycle</b>.</p>
+
+<h4>Intuition (3-color DFS)</h4>
+<p>Each node has 3 states:</p>
+<ul>
+  <li><b>0 (white)</b> — never visited.</li>
+  <li><b>1 (gray)</b> — currently in the recursion stack (we're exploring it right now).</li>
+  <li><b>2 (black)</b> — fully finished, no cycle through here.</li>
+</ul>
+<p>If during DFS you reach a <b>gray</b> node, that's a back edge → cycle exists.</p>
+
+<pre><code><span class="kw">public boolean</span> <span class="fn">canFinish</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] prereq){
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++) adj.add(<span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;());
+    <span class="kw">for</span> (<span class="kw">int</span>[] p : prereq) adj.get(p[<span class="nm">1</span>]).add(p[<span class="nm">0</span>]);   <span class="cm">// b -&gt; a</span>
+    <span class="kw">int</span>[] state = <span class="kw">new int</span>[n];
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++)
+        <span class="kw">if</span> (state[i] == <span class="nm">0</span> &amp;&amp; <span class="fn">hasCycle</span>(i, adj, state)) <span class="kw">return false</span>;
+    <span class="kw">return true</span>;
+}
+<span class="kw">private boolean</span> <span class="fn">hasCycle</span>(<span class="kw">int</span> u, <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj, <span class="kw">int</span>[] state){
+    state[u] = <span class="nm">1</span>;                       <span class="cm">// gray — visiting</span>
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)){
+        <span class="kw">if</span> (state[v] == <span class="nm">1</span>) <span class="kw">return true</span>;             <span class="cm">// hit gray = cycle</span>
+        <span class="kw">if</span> (state[v] == <span class="nm">0</span> &amp;&amp; <span class="fn">hasCycle</span>(v, adj, state)) <span class="kw">return true</span>;
+    }
+    state[u] = <span class="nm">2</span>;                       <span class="cm">// black — done</span>
+    <span class="kw">return false</span>;
+}
+</code></pre>
+
+<div class="panel tip">
+  <b>Why 3 colors and not 2?</b> A 2-color visited[] tells you "have I seen this before?" but not "am I in the middle of seeing it?" Only the latter detects cycles in directed graphs. Two-color visited works fine for cycle detection in <i>undirected</i> graphs (with a parent check), but for <i>directed</i> you need the 3-color trick.
+</div>
+
+<!-- ===== DG6 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> DG6. Pacific Atlantic Water Flow <span class="lc">(LC 417)</span></h3>
+
+<p><b>Problem:</b> A grid of heights. Water flows from a cell to a neighbor with <i>equal or lower</i> height. Pacific is at top/left edges, Atlantic at bottom/right. Return all cells from which water can reach <b>both</b> oceans.</p>
+
+<h4>Intuition (reverse the flow)</h4>
+<p>Going forward (every cell asking "can I reach an ocean?") is wasteful. Instead, run two DFS <b>from the oceans backward</b>: which cells can the Pacific reach by going <i>uphill</i>? Which can the Atlantic reach? The answer = intersection.</p>
+
+<pre><code><span class="kw">int</span>[][] dirs = {{-<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">1</span>,<span class="nm">0</span>},{<span class="nm">0</span>,-<span class="nm">1</span>},{<span class="nm">0</span>,<span class="nm">1</span>}};
+
+<span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; <span class="fn">pacificAtlantic</span>(<span class="kw">int</span>[][] h){
+    <span class="kw">int</span> R = h.length, C = h[<span class="nm">0</span>].length;
+    <span class="kw">boolean</span>[][] pac = <span class="kw">new boolean</span>[R][C], atl = <span class="kw">new boolean</span>[R][C];
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R; r++){
+        <span class="fn">dfs</span>(h, r, <span class="nm">0</span>,   pac);            <span class="cm">// left edge — Pacific</span>
+        <span class="fn">dfs</span>(h, r, C-<span class="nm">1</span>, atl);            <span class="cm">// right edge — Atlantic</span>
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C; c++){
+        <span class="fn">dfs</span>(h, <span class="nm">0</span>,   c, pac);            <span class="cm">// top — Pacific</span>
+        <span class="fn">dfs</span>(h, R-<span class="nm">1</span>, c, atl);            <span class="cm">// bottom — Atlantic</span>
+    }
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; ans = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R; r++) <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C; c++)
+        <span class="kw">if</span> (pac[r][c] &amp;&amp; atl[r][c]) ans.add(<span class="ty">List</span>.of(r,c));
+    <span class="kw">return</span> ans;
+}
+<span class="kw">private void</span> <span class="fn">dfs</span>(<span class="kw">int</span>[][] h, <span class="kw">int</span> r, <span class="kw">int</span> c, <span class="kw">boolean</span>[][] seen){
+    seen[r][c] = <span class="kw">true</span>;
+    <span class="kw">for</span> (<span class="kw">int</span>[] d : dirs){
+        <span class="kw">int</span> nr=r+d[<span class="nm">0</span>], nc=c+d[<span class="nm">1</span>];
+        <span class="kw">if</span> (nr&lt;<span class="nm">0</span>||nr&gt;=h.length||nc&lt;<span class="nm">0</span>||nc&gt;=h[<span class="nm">0</span>].length) <span class="kw">continue</span>;
+        <span class="kw">if</span> (seen[nr][nc] || h[nr][nc] &lt; h[r][c]) <span class="kw">continue</span>;   <span class="cm">// uphill only</span>
+        <span class="fn">dfs</span>(h, nr, nc, seen);
+    }
+}
+</code></pre>
+
+<!-- ===== DG7 ===== -->
+<h3><span class="badge b-medium">MEDIUM</span> DG7. Surrounded Regions <span class="lc">(LC 130)</span></h3>
+
+<p><b>Problem:</b> Capture all <code>'O'</code>s that are completely surrounded by <code>'X'</code>s. Any <code>'O'</code> connected to the border <i>survives</i>.</p>
+
+<h4>Intuition (border-out trick)</h4>
+<p>Hard: "find every O that's NOT connected to a border." Easy: "find every O that IS connected to a border, mark it safe, then flip everything else."</p>
+
+<pre><code><span class="kw">public void</span> <span class="fn">solve</span>(<span class="kw">char</span>[][] b){
+    <span class="kw">int</span> R = b.length, C = b[<span class="nm">0</span>].length;
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R; r++){ <span class="fn">mark</span>(b, r, <span class="nm">0</span>); <span class="fn">mark</span>(b, r, C-<span class="nm">1</span>); }
+    <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C; c++){ <span class="fn">mark</span>(b, <span class="nm">0</span>, c); <span class="fn">mark</span>(b, R-<span class="nm">1</span>, c); }
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;R; r++) <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;C; c++){
+        <span class="kw">if</span> (b[r][c] == <span class="st">'O'</span>) b[r][c] = <span class="st">'X'</span>;       <span class="cm">// captured</span>
+        <span class="kw">if</span> (b[r][c] == <span class="st">'#'</span>) b[r][c] = <span class="st">'O'</span>;       <span class="cm">// safe</span>
+    }
+}
+<span class="kw">private void</span> <span class="fn">mark</span>(<span class="kw">char</span>[][] b, <span class="kw">int</span> r, <span class="kw">int</span> c){
+    <span class="kw">if</span> (r&lt;<span class="nm">0</span>||r&gt;=b.length||c&lt;<span class="nm">0</span>||c&gt;=b[<span class="nm">0</span>].length||b[r][c] != <span class="st">'O'</span>) <span class="kw">return</span>;
+    b[r][c] = <span class="st">'#'</span>;
+    <span class="fn">mark</span>(b, r-<span class="nm">1</span>, c); <span class="fn">mark</span>(b, r+<span class="nm">1</span>, c);
+    <span class="fn">mark</span>(b, r, c-<span class="nm">1</span>); <span class="fn">mark</span>(b, r, c+<span class="nm">1</span>);
+}
+</code></pre>
+
+<!-- ===== DG8 ===== -->
+<h3><span class="badge b-hard">HARD</span> DG8. Course Schedule II — Topological Sort <span class="lc">(LC 210)</span></h3>
+
+<p><b>Problem:</b> Same as Course Schedule, but return a <i>valid order</i> to take the courses. Empty array if impossible.</p>
+
+<h4>Intuition (postorder DFS = topological order)</h4>
+<p>Run DFS. When a node is fully <b>finished</b> (post-order, after all its children), prepend it to the result. Result is a valid topological order. If any cycle is detected, return empty.</p>
+
+<pre><code><span class="kw">public int</span>[] <span class="fn">findOrder</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] prereq){
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++) adj.add(<span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;());
+    <span class="kw">for</span> (<span class="kw">int</span>[] p : prereq) adj.get(p[<span class="nm">1</span>]).add(p[<span class="nm">0</span>]);
+    <span class="kw">int</span>[] state = <span class="kw">new int</span>[n];
+    <span class="ty">Deque</span>&lt;<span class="ty">Integer</span>&gt; stack = <span class="kw">new</span> <span class="fn">ArrayDeque</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++)
+        <span class="kw">if</span> (state[i] == <span class="nm">0</span> &amp;&amp; !<span class="fn">dfs</span>(i, adj, state, stack)) <span class="kw">return new int</span>[<span class="nm">0</span>];
+    <span class="kw">int</span>[] order = <span class="kw">new int</span>[n];
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++) order[i] = stack.pop();
+    <span class="kw">return</span> order;
+}
+<span class="kw">private boolean</span> <span class="fn">dfs</span>(<span class="kw">int</span> u, <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj, <span class="kw">int</span>[] state, <span class="ty">Deque</span>&lt;<span class="ty">Integer</span>&gt; stack){
+    state[u] = <span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)){
+        <span class="kw">if</span> (state[v] == <span class="nm">1</span>) <span class="kw">return false</span>;       <span class="cm">// cycle</span>
+        <span class="kw">if</span> (state[v] == <span class="nm">0</span> &amp;&amp; !<span class="fn">dfs</span>(v, adj, state, stack)) <span class="kw">return false</span>;
+    }
+    state[u] = <span class="nm">2</span>;
+    stack.push(u);                            <span class="cm">// 🔑 add when DONE — postorder</span>
+    <span class="kw">return true</span>;
+}
+</code></pre>
+
+<div class="panel win">
+  <b>Why postorder works:</b> When you finish a node, every node that <i>depends on it</i> has either already been pushed or will be pushed later — meaning it'll appear above this one in the popped output. So pushing on finish + popping at the end gives a perfect topological order.
+</div>
+
+<details><summary>🧠 Alternative: Kahn's algorithm (BFS-based topo sort)</summary>
+<pre><code><span class="cm">// Compute indegrees, push all 0-indegree nodes, BFS, decrement indegrees.</span>
+<span class="kw">public int</span>[] <span class="fn">findOrderKahn</span>(<span class="kw">int</span> n, <span class="kw">int</span>[][] prereq){
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++) adj.add(<span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;());
+    <span class="kw">int</span>[] indeg = <span class="kw">new int</span>[n];
+    <span class="kw">for</span> (<span class="kw">int</span>[] p : prereq){ adj.get(p[<span class="nm">1</span>]).add(p[<span class="nm">0</span>]); indeg[p[<span class="nm">0</span>]]++; }
+    <span class="ty">Queue</span>&lt;<span class="ty">Integer</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++) <span class="kw">if</span> (indeg[i] == <span class="nm">0</span>) q.add(i);
+    <span class="kw">int</span>[] order = <span class="kw">new int</span>[n]; <span class="kw">int</span> i = <span class="nm">0</span>;
+    <span class="kw">while</span>(!q.isEmpty()){
+        <span class="kw">int</span> u = q.poll();
+        order[i++] = u;
+        <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)) <span class="kw">if</span> (--indeg[v] == <span class="nm">0</span>) q.add(v);
+    }
+    <span class="kw">return</span> i == n ? order : <span class="kw">new int</span>[<span class="nm">0</span>];
+}
+</code></pre>
+</details>
+
+<!-- ===== DG9 ===== -->
+<h3><span class="badge b-hard">HARD</span> DG9. Word Search <span class="lc">(LC 79)</span></h3>
+
+<p><b>Problem:</b> Given a grid of letters and a target word, return <code>true</code> if the word can be spelled by walking through adjacent cells, never reusing a cell.</p>
+
+<h4>Intuition (DFS + backtracking)</h4>
+<p>From every cell that matches <code>word[0]</code>, try DFS. Mark the cell visited (overwrite with a sentinel like <code>'#'</code>), recurse to find <code>word[i+1]</code>, then <b>unmark on the way back</b> so other paths can reuse it.</p>
+
+<pre><code><span class="kw">public boolean</span> <span class="fn">exist</span>(<span class="kw">char</span>[][] b, <span class="ty">String</span> word){
+    <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nm">0</span>; r&lt;b.length; r++)
+        <span class="kw">for</span> (<span class="kw">int</span> c=<span class="nm">0</span>; c&lt;b[<span class="nm">0</span>].length; c++)
+            <span class="kw">if</span> (<span class="fn">go</span>(b, r, c, word, <span class="nm">0</span>)) <span class="kw">return true</span>;
+    <span class="kw">return false</span>;
+}
+<span class="kw">private boolean</span> <span class="fn">go</span>(<span class="kw">char</span>[][] b, <span class="kw">int</span> r, <span class="kw">int</span> c, <span class="ty">String</span> w, <span class="kw">int</span> i){
+    <span class="kw">if</span> (i == w.length()) <span class="kw">return true</span>;
+    <span class="kw">if</span> (r&lt;<span class="nm">0</span>||r&gt;=b.length||c&lt;<span class="nm">0</span>||c&gt;=b[<span class="nm">0</span>].length||b[r][c] != w.charAt(i)) <span class="kw">return false</span>;
+    <span class="kw">char</span> save = b[r][c];
+    b[r][c] = <span class="st">'#'</span>;             <span class="cm">// mark visited</span>
+    <span class="kw">boolean</span> ok = <span class="fn">go</span>(b,r-<span class="nm">1</span>,c,w,i+<span class="nm">1</span>) || <span class="fn">go</span>(b,r+<span class="nm">1</span>,c,w,i+<span class="nm">1</span>)
+              || <span class="fn">go</span>(b,r,c-<span class="nm">1</span>,w,i+<span class="nm">1</span>) || <span class="fn">go</span>(b,r,c+<span class="nm">1</span>,w,i+<span class="nm">1</span>);
+    b[r][c] = save;             <span class="cm">// 🔑 backtrack</span>
+    <span class="kw">return</span> ok;
+}
+</code></pre>
+
+<div class="panel warn">
+  <b>Why backtracking, not just visited?</b> Different starting cells, or even different sub-paths, may need to reuse the same cell. The mark+unmark pattern keeps the visited state local to <i>this exploration only</i>.
+</div>
+
+<!-- ===== DG10 ===== -->
+<h3><span class="badge b-hard">HARD</span> DG10. Critical Connections (Bridges) <span class="lc">(LC 1192)</span></h3>
+
+<p><b>Problem:</b> An undirected network. Find all "critical" edges — edges whose removal would disconnect the graph. (These are called <b>bridges</b>.)</p>
+
+<h4>Intuition (Tarjan's algorithm — fancy DFS)</h4>
+<p>During DFS, give each node two numbers:</p>
+<ul>
+  <li><code>disc[u]</code> = the order in which we discovered <code>u</code>.</li>
+  <li><code>low[u]</code> = the smallest <code>disc</code> reachable from <code>u</code> using its subtree + at most one back edge.</li>
+</ul>
+<p>An edge <code>u → v</code> (where <code>v</code> is <code>u</code>'s child in DFS) is a <b>bridge</b> iff <code>low[v] &gt; disc[u]</code>. Translation: there's no way to get back from <code>v</code>'s subtree to <code>u</code> or above without using that edge.</p>
+
+<pre><code><span class="kw">int</span> timer = <span class="nm">0</span>;
+<span class="kw">int</span>[] disc, low;
+<span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; adj;
+<span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; bridges = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+
+<span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; <span class="fn">criticalConnections</span>(<span class="kw">int</span> n, <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; conn){
+    adj = <span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;n; i++) adj.add(<span class="kw">new</span> <span class="fn">ArrayList</span>&lt;&gt;());
+    <span class="kw">for</span> (<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; e : conn){
+        adj.get(e.get(<span class="nm">0</span>)).add(e.get(<span class="nm">1</span>));
+        adj.get(e.get(<span class="nm">1</span>)).add(e.get(<span class="nm">0</span>));
+    }
+    disc = <span class="kw">new int</span>[n]; low = <span class="kw">new int</span>[n];
+    <span class="ty">Arrays</span>.fill(disc, -<span class="nm">1</span>);
+    <span class="fn">dfs</span>(<span class="nm">0</span>, -<span class="nm">1</span>);
+    <span class="kw">return</span> bridges;
+}
+<span class="kw">private void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u, <span class="kw">int</span> parent){
+    disc[u] = low[u] = timer++;
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)){
+        <span class="kw">if</span> (v == parent) <span class="kw">continue</span>;        <span class="cm">// don't go straight back</span>
+        <span class="kw">if</span> (disc[v] == -<span class="nm">1</span>){              <span class="cm">// unvisited</span>
+            <span class="fn">dfs</span>(v, u);
+            low[u] = <span class="ty">Math</span>.min(low[u], low[v]);
+            <span class="kw">if</span> (low[v] &gt; disc[u])         <span class="cm">// no back edge over u→v ⇒ bridge</span>
+                bridges.add(<span class="ty">List</span>.of(u, v));
+        } <span class="kw">else</span> {
+            low[u] = <span class="ty">Math</span>.min(low[u], disc[v]);
+        }
+    }
+}
+</code></pre>
+
+<div class="panel win">
+  <b>Why this is the boss fight:</b> Tarjan's bridge-finding shows up in cloud network reliability, distributed systems, and circuit design. If you can implement <code>disc</code>/<code>low</code> from scratch, you're ahead of most candidates.
+</div>
+
+<hr/>
+
+<!-- ============================================================== -->
+<h2 id="cheats">⑦ Cheat Sheet — print this and tape it next to the trees one</h2>
+
+<h3>Pick BFS vs DFS in 5 seconds</h3>
+<table>
+  <thead><tr><th>If the problem mentions...</th><th>Reach for...</th></tr></thead>
+  <tbody>
+    <tr><td>shortest path / minimum steps in <i>unweighted</i> graph</td><td><b>BFS</b> from source (or multi-source)</td></tr>
+    <tr><td>"from any starting cell, find min distance" — fire, rot, water spreading</td><td><b>Multi-source BFS</b></td></tr>
+    <tr><td>connected components, count islands, max area</td><td><b>DFS</b> (or BFS — either works)</td></tr>
+    <tr><td>cycle detection in directed graph</td><td><b>DFS with 3-color</b> (white/gray/black)</td></tr>
+    <tr><td>cycle detection in undirected graph</td><td>DFS tracking <b>parent</b>, or Union-Find</td></tr>
+    <tr><td>topological order / scheduling</td><td><b>DFS postorder</b> or <b>Kahn's BFS</b></td></tr>
+    <tr><td>does a path exist between A and B?</td><td>Either — BFS/DFS, doesn't matter</td></tr>
+    <tr><td>"flow from edge" / surrounded regions / border problems</td><td><b>DFS from the border</b></td></tr>
+    <tr><td>shortest path, but edges have weights</td><td>Not BFS! Use <b>Dijkstra</b> (PriorityQueue)</td></tr>
+    <tr><td>bridges / articulation points</td><td><b>Tarjan's</b> (DFS with disc/low)</td></tr>
+  </tbody>
+</table>
+
+<h3>The 4 patterns that solve 80% of graph problems</h3>
+
+<details open><summary>① Standard BFS (shortest path / level by level)</summary>
+<pre><code><span class="ty">Queue</span>&lt;<span class="ty">Integer</span>&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+<span class="kw">boolean</span>[] visited = <span class="kw">new boolean</span>[n];
+q.add(start); visited[start] = <span class="kw">true</span>;
+<span class="kw">int</span> dist = <span class="nm">0</span>;
+<span class="kw">while</span>(!q.isEmpty()){
+    <span class="kw">int</span> size = q.size();
+    <span class="kw">for</span> (<span class="kw">int</span> i=<span class="nm">0</span>; i&lt;size; i++){
+        <span class="kw">int</span> u = q.poll();
+        <span class="kw">if</span> (u == target) <span class="kw">return</span> dist;
+        <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u))
+            <span class="kw">if</span> (!visited[v]){ visited[v] = <span class="kw">true</span>; q.add(v); }
+    }
+    dist++;
+}
+</code></pre>
+</details>
+
+<details><summary>② Multi-source BFS (push all sources at start)</summary>
+<pre><code><span class="ty">Queue</span>&lt;<span class="kw">int</span>[]&gt; q = <span class="kw">new</span> <span class="fn">LinkedList</span>&lt;&gt;();
+<span class="kw">for</span> (every source s) { q.add(s); visited[s] = <span class="kw">true</span>; }
+<span class="cm">// then standard BFS</span>
+</code></pre>
+</details>
+
+<details><summary>③ Recursive DFS for components / area / sinking</summary>
+<pre><code><span class="kw">void</span> <span class="fn">dfs</span>(<span class="kw">int</span> u){
+    <span class="kw">if</span> (visited[u]) <span class="kw">return</span>;
+    visited[u] = <span class="kw">true</span>;
+    <span class="cm">// per-node work</span>
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)) <span class="fn">dfs</span>(v);
+}
+</code></pre>
+</details>
+
+<details><summary>④ DFS with 3-color (cycle detection / topo)</summary>
+<pre><code><span class="kw">int</span>[] state = <span class="kw">new int</span>[n];   <span class="cm">// 0 white, 1 gray, 2 black</span>
+<span class="kw">boolean</span> <span class="fn">dfs</span>(<span class="kw">int</span> u){
+    state[u] = <span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u)){
+        <span class="kw">if</span> (state[v] == <span class="nm">1</span>) <span class="kw">return true</span>;     <span class="cm">// cycle</span>
+        <span class="kw">if</span> (state[v] == <span class="nm">0</span> &amp;&amp; <span class="fn">dfs</span>(v)) <span class="kw">return true</span>;
+    }
+    state[u] = <span class="nm">2</span>;
+    <span class="kw">return false</span>;
+}
+</code></pre>
+</details>
+
+<h3>Final mindset checklist</h3>
+<ol>
+  <li><b>What's a node?</b> Sometimes it's not obvious (states, words, buses).</li>
+  <li><b>What's an edge?</b> When does node A connect to node B?</li>
+  <li><b>Is the graph directed or undirected?</b> Affects how you build adj and detect cycles.</li>
+  <li><b>Is it weighted?</b> If yes, BFS may be wrong — consider Dijkstra.</li>
+  <li><b>Do I need shortest path, count, structure, or order?</b> That picks BFS vs DFS vs topo.</li>
+  <li><b>Test on disconnected graphs.</b> Don't forget the outer <code>for</code> loop that starts a new traversal for every unvisited node.</li>
+  <li><b>Where do I mark visited?</b> On enqueue (BFS) or on entry (DFS). Never later.</li>
+</ol>
+
+<div class="panel win center">
+  <b>That's the whole game. 🌟</b><br>
+  Eight BFS patterns, ten DFS patterns, four templates. Code each problem once from scratch — that's when it sticks.
+</div>
+
+<p class="small center">Pair this with the trees guide. Anywhere you see a tree problem in BFS/DFS form, the same pattern shows up here on a more general graph. Trees = graphs in easy mode.</p>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
