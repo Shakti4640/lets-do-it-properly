@@ -1,3 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>C (OOP-style) — Printable Cheat Sheet (A3)</title>
+<style>
+  @page { size: A3; margin: 12mm; }
+  html, body { background:#fff; color:#111; font-family:"Segoe UI",Arial,Helvetica,sans-serif; font-size:11.5pt; line-height:1.4; margin:0; padding:0; }
+  .wrap { max-width:1650px; margin:0 auto; padding:14px 18px 40px; }
+  h1 { font-size:26pt; margin:4px 0 2px; border-bottom:3px solid #111; padding-bottom:6px; }
+  h1 .sub { font-size:12pt; font-weight:normal; color:#444; margin-left:10px; }
+  h2 { font-size:16pt; margin:22px 0 6px; padding:6px 10px; background:#f2f2f2; border-left:6px solid #111; page-break-after:avoid; }
+  h3 { font-size:12.5pt; margin:14px 0 4px; color:#222; page-break-after:avoid; }
+  h4 { font-size:11.5pt; margin:10px 0 2px; color:#333; page-break-after:avoid; }
+  p, li { margin:4px 0; }
+  code { font-family:Consolas,"Courier New",monospace; font-size:10.25pt; background:#f6f6f6; border:1px solid #e2e2e2; border-radius:3px; padding:1px 5px; color:#222; }
+  pre {
+    font-family:Consolas,"Courier New",monospace; font-size:10.25pt; line-height:1.5;
+    background:#ffffff; color:#24292e; border:1px solid #d0d7de; border-radius:4px;
+    padding:10px 12px; overflow-x:auto; white-space:pre-wrap; page-break-inside:avoid;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  pre .kw  { color:#cf222e; font-weight:600; }
+  pre .typ { color:#953800; }
+  pre .str { color:#0a3069; }
+  pre .num { color:#0550ae; }
+  pre .cmt { color:#6e7781; font-style:italic; }
+  pre .pp  { color:#116329; font-weight:600; }  /* preprocessor */
+  pre .fn  { color:#8250df; }                   /* function calls */
+  table { border-collapse:collapse; width:100%; margin:6px 0 10px; page-break-inside:avoid; }
+  th, td { border:1px solid #333; padding:6px 8px; vertical-align:top; text-align:left; }
+  th { background:#eaeaea; font-weight:600; }
+  table.compare th:nth-child(1) { width:22%; }
+  table.compare th:nth-child(2) { width:39%; background:#fbe8e8; color:#7a0000; }
+  table.compare th:nth-child(3) { width:39%; background:#e5f7e8; color:#0b5d16; }
+  table.compare td:nth-child(2) { background:#fff6f6; }
+  table.compare td:nth-child(3) { background:#f4fbf5; }
+  .tips { border:1px dashed #888; background:#fffdf4; padding:8px 12px; margin:6px 0 10px; border-radius:4px; page-break-inside:avoid; }
+  .tips b { color:#6a4a00; }
+  .tricky { border:1px solid #333; background:#fafaff; padding:10px 12px; margin:10px 0 16px; border-radius:4px; page-break-inside:avoid; }
+  .tricky .q { font-weight:600; margin-bottom:4px; }
+  details > summary { cursor:pointer; color:#005a9e; font-weight:600; margin-top:4px; }
+  details[open] > summary { color:#111; }
+  details .hint { margin-top:4px; padding:6px 8px; background:#eef3ff; border-left:4px solid #005a9e; border-radius:3px; }
+  .pill { display:inline-block; padding:1px 7px; border-radius:10px; font-size:9.5pt; font-weight:600; margin-right:4px; }
+  .pill.bad { background:#a40000; color:#fff; }
+  .pill.good { background:#116611; color:#fff; }
+  .pill.tip { background:#b08100; color:#fff; }
+  @media print {
+    details { page-break-inside:avoid; }
+    details > summary { list-style:none; color:#111; }
+    details > summary::-webkit-details-marker { display:none; }
+    details:not([open]) > *:not(summary) { display:block !important; }
+    details > summary::after { content:" (hint revealed for print)"; font-weight:normal; color:#555; font-size:9.5pt; }
+  }
+  .toc { display:grid; grid-template-columns:repeat(4,1fr); gap:4px 14px; font-size:10.5pt; margin:6px 0 0; }
+  .toc a { color:#005a9e; text-decoration:none; }
+  .toc a:hover { text-decoration:underline; }
+  .legend { font-size:10pt; margin:6px 0 10px; }
+  .small { font-size:9.5pt; color:#555; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>C — "OOP in C" Cheat Sheet<span class="sub">Patterns · Pitfalls · Idioms · Tricky Qs (A3 print)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / UB</span>
+  <span class="pill good">Idiomatic / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">C has no classes. This sheet maps each Java OOP pillar to its idiomatic C realization. Hints auto-expand on print.</span>
+</div>
+
+<div class="toc">
+  <a href="#s0">0. Primitive Types</a>
+  <a href="#s1">1. OOP Pillars in C</a>
+  <a href="#s2">2. struct = "class with no methods"</a>
+  <a href="#s3">3. "Constructors" &amp; "Destructors"</a>
+  <a href="#s4">4. "Access Control" via TU</a>
+  <a href="#s5">5. Encapsulation (Opaque Pointer)</a>
+  <a href="#s6">6. "Inheritance" via Embedding</a>
+  <a href="#s7">7. Polymorphism (Function Pointers / vtable)</a>
+  <a href="#s8">8. Abstraction (Interfaces via vtable)</a>
+  <a href="#s9">9. Pure-Interface vs Partial Base</a>
+  <a href="#s10">10. Overloading (not supported)</a>
+  <a href="#s11">11. static keyword — 3 meanings</a>
+  <a href="#s12">12. const keyword — what it locks</a>
+  <a href="#s13">13. Self reference &amp; base-call</a>
+  <a href="#s14">14. Nested structs &amp; callbacks</a>
+  <a href="#s15">15. Equivalent of Object methods</a>
+  <a href="#s16">16. Composition vs Embedding</a>
+  <a href="#s16b">16b. Is-a vs Has-a Deep Dive</a>
+  <a href="#s17">17. Casting (no RTTI)</a>
+  <a href="#s18">18. Immutability via const</a>
+  <a href="#s19">19. Error handling (no exceptions)</a>
+  <a href="#s20">20. SOLID in C</a>
+  <a href="#s21">21. Memory &amp; RAII substitute</a>
+  <a href="#s22">22. Generics (void*, macros, _Generic)</a>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. Primitive Types &amp; Conversions</h2>
+
+<p>C has no universal base type, no autoboxing, and no type erasure. Integer types come in many widths; portability relies on <code>&lt;stdint.h&gt;</code>.</p>
+
+<h3>Core types (C11)</h3>
+<table>
+  <thead><tr><th>Type</th><th>Typical size</th><th>Range / notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>_Bool</code> / <code>bool</code> (via <code>&lt;stdbool.h&gt;</code>)</td><td>1 byte</td><td><code>true</code>=1, <code>false</code>=0. Any nonzero converts to 1.</td></tr>
+    <tr><td><code>char</code>, <code>signed char</code>, <code>unsigned char</code></td><td>1 byte</td><td><b>Three distinct types.</b> Plain <code>char</code>'s signedness is implementation-defined.</td></tr>
+    <tr><td><code>short</code></td><td>≥ 2 bytes</td><td>Usually 16-bit.</td></tr>
+    <tr><td><code>int</code></td><td>≥ 2 (usually 4)</td><td>Default integer type; promotion target.</td></tr>
+    <tr><td><code>long</code></td><td>≥ 4</td><td>4 on Win64; 8 on Linux/macOS 64-bit.</td></tr>
+    <tr><td><code>long long</code></td><td>≥ 8</td><td>Guaranteed 64-bit.</td></tr>
+    <tr><td><code>float</code>, <code>double</code>, <code>long double</code></td><td>4 / 8 / 8-16</td><td>IEEE-754 typical.</td></tr>
+    <tr><td><code>size_t</code></td><td>4 or 8</td><td>Unsigned; from <code>&lt;stddef.h&gt;</code>. Indices, sizes.</td></tr>
+    <tr><td><code>ptrdiff_t</code></td><td>signed twin of <code>size_t</code></td><td>Pointer subtraction result.</td></tr>
+    <tr><td><code>intptr_t</code> / <code>uintptr_t</code></td><td>—</td><td>Integer wide enough to hold a pointer value.</td></tr>
+    <tr><td><code>int8_t</code>…<code>int64_t</code>, <code>uint8_t</code>…<code>uint64_t</code></td><td>exact</td><td><code>&lt;stdint.h&gt;</code>. Prefer for portability.</td></tr>
+    <tr><td><code>char*</code> / <code>const char*</code></td><td>pointer</td><td>NUL-terminated string convention.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Remember:</b> C has <i>no</i> built-in string type. A "string" is a <code>char*</code> you promise is NUL-terminated. Everything about strings (length, copy, compare) uses <code>&lt;string.h&gt;</code>.</div>
+
+<h3>Parsing &amp; conversion</h3>
+<table>
+  <thead><tr><th>Task</th><th>Prefer</th><th>Avoid</th></tr></thead>
+  <tbody>
+    <tr><td>string → long / double</td><td><code>strtol</code>, <code>strtoul</code>, <code>strtod</code> (check <code>endptr</code> &amp; <code>errno</code>)</td><td><code>atoi</code>, <code>atof</code> (silent on bad input, can cause UB on overflow)</td></tr>
+    <tr><td>number → string</td><td><code>snprintf(buf, sizeof buf, "%d", x)</code></td><td><code>sprintf</code> (no bounds)</td></tr>
+    <tr><td>safe copy</td><td><code>snprintf</code>, bounded <code>strncpy</code> with manual NUL termination, or <code>strlcpy</code> where available</td><td><code>strcpy</code>, <code>gets</code> (gets is removed in C11)</td></tr>
+    <tr><td>Narrowing cast</td><td>Explicit <code>(uint8_t)x</code> — still watch overflow.</td><td>Implicit integer truncation (warnings off).</td></tr>
+    <tr><td>Bad input</td><td><code>strtol</code>: check <code>errno == ERANGE</code>, and that <code>*endptr != '\0'</code>.</td><td>Assuming success.</td></tr>
+  </tbody>
+</table>
+
+<h3>Type promotion rules</h3>
+<ul>
+  <li><b>Integer promotion:</b> <code>char</code>, <code>short</code>, <code>bool</code> → <code>int</code> (or <code>unsigned int</code>) in every expression.</li>
+  <li><b>Usual arithmetic conversions:</b> mixed types promote to the wider/higher-rank type. Mixed signed/unsigned of same rank → <b>unsigned</b>.</li>
+  <li><b>No automatic <code>int</code> → pointer:</b> except <code>0</code> → <code>NULL</code> (a null-pointer constant).</li>
+  <li><b>Array → pointer decay:</b> <code>int a[10]; f(a);</code> passes <code>int*</code>, not an array.</li>
+</ul>
+
+<h3>Wrong vs Right</h3>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Uninitialized locals</td><td><code>int x; printf("%d", x);</code> — UB.</td><td>Always initialize: <code>int x = 0;</code>.</td></tr>
+    <tr><td>Unsigned wrap</td><td><code>for (size_t i = n - 1; i &gt;= 0; --i)</code> — infinite loop.</td><td>Use signed index or <code>while (i--)</code>.</td></tr>
+    <tr><td>Float equality</td><td><code>if (a == b)</code> on doubles.</td><td><code>fabs(a - b) &lt; eps</code> with a sensible epsilon.</td></tr>
+    <tr><td>Money in float</td><td><code>0.1 + 0.2 != 0.3</code>.</td><td>Integer cents (<code>int64_t</code>) or a fixed-point library.</td></tr>
+    <tr><td>Implicit int in old C</td><td>Omitting return type: <code>main() { … }</code></td><td>Always declare: <code>int main(void) { … }</code></td></tr>
+    <tr><td>Unchecked malloc</td><td><code>p = malloc(n); p[0] = 1;</code></td><td><code>if (!p) { handle_error(); }</code> first.</td></tr>
+    <tr><td>printf format mismatch</td><td><code>printf("%d", (long)x)</code> — UB.</td><td>Match: <code>%ld</code>, <code>%zu</code> for <code>size_t</code>, <code>%" PRId64</code> for <code>int64_t</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q1. <code>char c = 200;</code> on a platform where <code>char</code> is signed — what's stored?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Implementation-defined. Likely wraps to -56. Always use <code>uint8_t</code> when you need the value 0..255.</div>
+  </details>
+</div>
+<div class="tricky">
+  <div class="q">Q2. Why does <code>if (-1 &lt; 0u)</code> print false?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Mixed signed/unsigned → <code>-1</code> is converted to unsigned (huge positive). Never compare signed &amp; unsigned without a cast.</div>
+  </details>
+</div>
+<div class="tricky">
+  <div class="q">Q3. <code>printf("%d\n", sizeof(int));</code> — safe?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. <code>sizeof</code> yields <code>size_t</code>, which doesn't match <code>%d</code>. Use <code>%zu</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. OOP Pillars in C</h2>
+<table>
+  <thead><tr><th>Pillar</th><th>Java hook</th><th>Idiomatic C realization</th></tr></thead>
+  <tbody>
+    <tr><td><b>Encapsulation</b></td><td><code>private</code>, getters/setters</td><td>Opaque <code>struct</code> declared in header; definition hidden in <code>.c</code>. Accessor functions only.</td></tr>
+    <tr><td><b>Inheritance</b></td><td><code>extends</code></td><td>Struct embedding as first member; upcast by address.</td></tr>
+    <tr><td><b>Polymorphism</b></td><td><code>virtual</code> methods</td><td>Function pointers inside a struct — a hand-rolled vtable.</td></tr>
+    <tr><td><b>Abstraction</b></td><td>Interfaces, abstract classes</td><td>A struct of function pointers passed around; separate implementations fill them in.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>C's twist:</b> everything is opt-in and manual. There is no compiler help for "is this vtable consistent?" — it's your discipline.</div>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. <code>struct</code> — the "Class with No Methods"</h2>
+
+<pre><span class="cmt">/* point.h */</span>
+<span class="pp">#ifndef</span> POINT_H
+<span class="pp">#define</span> POINT_H
+
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Point</span> {
+    <span class="kw">double</span> x;
+    <span class="kw">double</span> y;
+} <span class="typ">Point</span>;
+
+<span class="kw">void</span> <span class="fn">point_init</span>(<span class="typ">Point</span>* p, <span class="kw">double</span> x, <span class="kw">double</span> y);
+<span class="kw">double</span> <span class="fn">point_distance</span>(<span class="kw">const</span> <span class="typ">Point</span>* a, <span class="kw">const</span> <span class="typ">Point</span>* b);
+
+<span class="pp">#endif</span></pre>
+
+<pre><span class="cmt">/* point.c */</span>
+<span class="pp">#include</span> <span class="str">"point.h"</span>
+<span class="pp">#include</span> <span class="str">&lt;math.h&gt;</span>
+
+<span class="kw">void</span> <span class="fn">point_init</span>(<span class="typ">Point</span>* p, <span class="kw">double</span> x, <span class="kw">double</span> y) {
+    p-&gt;x = x;
+    p-&gt;y = y;
+}
+
+<span class="kw">double</span> <span class="fn">point_distance</span>(<span class="kw">const</span> <span class="typ">Point</span>* a, <span class="kw">const</span> <span class="typ">Point</span>* b) {
+    <span class="kw">double</span> dx = a-&gt;x - b-&gt;x, dy = a-&gt;y - b-&gt;y;
+    <span class="kw">return</span> <span class="fn">sqrt</span>(dx*dx + dy*dy);
+}</pre>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Struct tag vs typedef</td><td>Mixing <code>struct Point</code> and <code>Point</code> inconsistently.</td><td>Typedef once: <code>typedef struct Point { ... } Point;</code>.</td></tr>
+    <tr><td>Header guard</td><td>Including a header twice without guard — redefinition errors.</td><td><code>#ifndef/#define/#endif</code> or <code>#pragma once</code>.</td></tr>
+    <tr><td>Zero-init</td><td>Relying on garbage on the stack.</td><td><code>Point p = {0};</code> or C99 designated init: <code>Point p = {.x = 1.0};</code>.</td></tr>
+    <tr><td>Passing structs</td><td>Passing huge structs by value everywhere.</td><td>Prefer <code>const T*</code>; pass by value only for small value types.</td></tr>
+    <tr><td>Padding/alignment</td><td>Assuming <code>sizeof(T)</code> == sum of member sizes.</td><td>Compiler inserts padding. Use <code>offsetof</code>, not hand math.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Does <code>Point p;</code> inside a function zero the fields?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No — automatic storage is uninitialized. Use <code>Point p = {0};</code> to zero all members.</div>
+  </details>
+</div>
+
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. "Constructors" &amp; "Destructors"</h2>
+
+<p>C has no constructors. The idiom is a <code>*_create / *_destroy</code> pair, or <code>*_init / *_dispose</code> if the caller provides the storage.</p>
+
+<pre><span class="cmt">/* Heap-owned object */</span>
+<span class="typ">Cart</span>* <span class="fn">cart_create</span>(<span class="kw">int</span> discount);
+<span class="kw">void</span>  <span class="fn">cart_destroy</span>(<span class="typ">Cart</span>* c);
+
+<span class="cmt">/* Caller-owned storage */</span>
+<span class="kw">void</span>  <span class="fn">cart_init</span>(<span class="typ">Cart</span>* c, <span class="kw">int</span> discount);
+<span class="kw">void</span>  <span class="fn">cart_dispose</span>(<span class="typ">Cart</span>* c);</pre>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Half-initialized on failure</td><td><code>create</code> partially builds, returns non-NULL.</td><td>Clean up and return <code>NULL</code> on any failure mid-build.</td></tr>
+    <tr><td>Missing destroy</td><td>Calling <code>free(c)</code> only, skipping <code>cart_destroy</code>.</td><td>Destroy handles nested resources first, then <code>free</code>.</td></tr>
+    <tr><td>Ownership unclear</td><td>"Who frees this?" lost in the API.</td><td>Document in the header; name functions like <code>*_take</code>, <code>*_borrow</code>, <code>*_clone</code>.</td></tr>
+    <tr><td>Re-init without dispose</td><td>Calling <code>init</code> on a live object → leaks inner allocations.</td><td>Require <code>dispose</code> first, or make <code>init</code> safe on zero-initialized structs only.</td></tr>
+    <tr><td>double free</td><td>Freeing through two owners.</td><td>After <code>free</code>, set the pointer to <code>NULL</code>; one owner only.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Why set <code>p = NULL;</code> right after <code>free(p);</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Guarding against accidental reuse or double-free. <code>free(NULL)</code> is a no-op, but <code>free</code> on a freed pointer is UB.</div>
+  </details>
+</div>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. "Access Control" via Translation Units</h2>
+
+<p>C has no <code>public</code>/<code>private</code>/<code>protected</code>. You control visibility with:</p>
+<table>
+  <thead><tr><th>Tool</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td>Header (<code>.h</code>) declares</td><td>Everything that's public API.</td></tr>
+    <tr><td><code>static</code> in a <code>.c</code> file</td><td>"Private" — internal linkage, invisible outside the TU.</td></tr>
+    <tr><td>Opaque struct forward declaration</td><td>Callers can hold a <code>struct Cart*</code> but can't access any fields.</td></tr>
+    <tr><td>Naming convention (<code>_foo</code>)</td><td>Convention only — nothing stops the caller.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="cmt">/* cart.h — public */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Cart</span> <span class="typ">Cart</span>;        <span class="cmt">// opaque!</span>
+<span class="typ">Cart</span>* <span class="fn">cart_create</span>(<span class="kw">void</span>);
+<span class="kw">void</span>  <span class="fn">cart_add</span>(<span class="typ">Cart</span>* c, <span class="kw">const</span> <span class="kw">char</span>* item);
+<span class="kw">void</span>  <span class="fn">cart_destroy</span>(<span class="typ">Cart</span>* c);
+
+<span class="cmt">/* cart.c — private */</span>
+<span class="pp">#include</span> <span class="str">"cart.h"</span>
+<span class="kw">struct</span> <span class="typ">Cart</span> { <span class="kw">char</span>** items; <span class="typ">size_t</span> len; <span class="typ">size_t</span> cap; };  <span class="cmt">// hidden</span>
+<span class="kw">static</span> <span class="kw">void</span> <span class="fn">grow</span>(<span class="typ">Cart</span>* c) { <span class="cmt">/* internal helper */</span> }</pre>
+
+<div class="tips"><b>Tip — anonymous helpers:</b> any helper in a <code>.c</code> file that isn't in the header should be marked <code>static</code>. That's C's equivalent of <code>private</code>.</div>
+
+<div class="tricky">
+  <div class="q">Q. What does <code>static</code> on a file-scope function mean?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Internal linkage — the name is visible only in this translation unit. Unrelated to <code>static</code> inside a function (= persist across calls).</div>
+  </details>
+</div>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Encapsulation — Opaque Pointer Pattern</h2>
+
+<p>The strongest encapsulation C offers. Callers see only a forward-declared type; they cannot read or write fields.</p>
+
+<pre><span class="cmt">/* account.h */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Account</span> <span class="typ">Account</span>;
+<span class="typ">Account</span>*  <span class="fn">account_create</span>(<span class="kw">double</span> initial);
+<span class="kw">double</span>    <span class="fn">account_balance</span>(<span class="kw">const</span> <span class="typ">Account</span>* a);
+<span class="kw">int</span>       <span class="fn">account_deposit</span>(<span class="typ">Account</span>* a, <span class="kw">double</span> amount);   <span class="cmt">// 0 on success</span>
+<span class="kw">void</span>      <span class="fn">account_destroy</span>(<span class="typ">Account</span>* a);
+
+<span class="cmt">/* account.c */</span>
+<span class="kw">struct</span> <span class="typ">Account</span> { <span class="kw">double</span> balance; };
+
+<span class="typ">Account</span>* <span class="fn">account_create</span>(<span class="kw">double</span> initial) {
+    <span class="kw">if</span> (initial &lt; <span class="num">0</span>) <span class="kw">return</span> <span class="kw">NULL</span>;
+    <span class="typ">Account</span>* a = <span class="fn">malloc</span>(<span class="kw">sizeof</span> *a);
+    <span class="kw">if</span> (!a) <span class="kw">return</span> <span class="kw">NULL</span>;
+    a-&gt;balance = initial;
+    <span class="kw">return</span> a;
+}
+<span class="kw">double</span> <span class="fn">account_balance</span>(<span class="kw">const</span> <span class="typ">Account</span>* a) { <span class="kw">return</span> a-&gt;balance; }
+<span class="kw">int</span> <span class="fn">account_deposit</span>(<span class="typ">Account</span>* a, <span class="kw">double</span> amount) {
+    <span class="kw">if</span> (amount &lt; <span class="num">0</span>) <span class="kw">return</span> -<span class="num">1</span>;
+    a-&gt;balance += amount; <span class="kw">return</span> <span class="num">0</span>;
+}
+<span class="kw">void</span> <span class="fn">account_destroy</span>(<span class="typ">Account</span>* a) { <span class="fn">free</span>(a); }</pre>
+
+<div class="tips"><b>Benefits:</b> layout is private, you can change it without breaking callers; invariants checked in accessors; compiler prevents field access from outside.</div>
+
+<div class="tricky">
+  <div class="q">Q. An opaque <code>Account*</code> — can the caller <code>sizeof(*a)</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. The type is incomplete in callers' TUs. That's the point — only <code>account.c</code> knows the size.</div>
+  </details>
+</div>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. "Inheritance" via Struct Embedding</h2>
+
+<p>Put the "base" struct as the <b>first</b> member of the "derived" struct. Then a <code>Derived*</code> is safely convertible to a <code>Base*</code>.</p>
+
+<pre><span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Animal</span> { <span class="kw">const</span> <span class="kw">char</span>* name; <span class="kw">int</span> legs; } <span class="typ">Animal</span>;
+
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Dog</span> {
+    <span class="typ">Animal</span> base;               <span class="cmt">// must be first</span>
+    <span class="kw">const</span> <span class="kw">char</span>* breed;
+} <span class="typ">Dog</span>;
+
+<span class="kw">void</span> <span class="fn">animal_print</span>(<span class="kw">const</span> <span class="typ">Animal</span>* a) { <span class="fn">printf</span>(<span class="str">"%s (%d legs)\n"</span>, a-&gt;name, a-&gt;legs); }
+
+<span class="kw">int</span> <span class="fn">main</span>(<span class="kw">void</span>) {
+    <span class="typ">Dog</span> d = { .base = { .name = <span class="str">"Rex"</span>, .legs = <span class="num">4</span> }, .breed = <span class="str">"Lab"</span> };
+    <span class="fn">animal_print</span>(&amp;d.base);                 <span class="cmt">// explicit upcast</span>
+    <span class="fn">animal_print</span>((<span class="typ">Animal</span>*)&amp;d);              <span class="cmt">// same thing, first-member guarantee</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Base not first</td><td>Embedding <code>Animal</code> as a non-first field — pointer cast is UB.</td><td>Always place the "base" as the first member.</td></tr>
+    <tr><td>Downcast</td><td><code>(Dog*)animal</code> without checking.</td><td>Tag the base with a discriminator and verify before cast — C has no RTTI.</td></tr>
+    <tr><td>Copy slicing</td><td><code>Animal a = *(Animal*)&amp;dog;</code> — drops derived fields.</td><td>Pass pointers; copy only when you mean to copy the full derived struct.</td></tr>
+    <tr><td>Name collisions</td><td>Two embedded bases with same-named fields.</td><td>Access via explicit chain: <code>d.base1.foo</code> vs <code>d.base2.foo</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Why must the base struct be the <i>first</i> member?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">C guarantees a pointer to a struct points to its first member (no leading padding). That's the only guarantee that makes upcasting via a plain pointer cast legal.</div>
+  </details>
+</div>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Polymorphism — Function Pointers &amp; Hand-Rolled vtable</h2>
+
+<p>The canonical C OOP pattern. A base struct carries a pointer to a vtable; each derived type fills in a vtable with its own implementations.</p>
+
+<pre><span class="cmt">/* shape.h */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Shape</span> <span class="typ">Shape</span>;
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">ShapeVTable</span> {
+    <span class="kw">double</span> (*area)(<span class="kw">const</span> <span class="typ">Shape</span>*);
+    <span class="kw">void</span>   (*destroy)(<span class="typ">Shape</span>*);       <span class="cmt">// virtual destructor</span>
+} <span class="typ">ShapeVTable</span>;
+
+<span class="kw">struct</span> <span class="typ">Shape</span> { <span class="kw">const</span> <span class="typ">ShapeVTable</span>* vt; };
+
+<span class="kw">static</span> <span class="kw">inline</span> <span class="kw">double</span> <span class="fn">shape_area</span>(<span class="kw">const</span> <span class="typ">Shape</span>* s)   { <span class="kw">return</span> s-&gt;vt-&gt;area(s); }
+<span class="kw">static</span> <span class="kw">inline</span> <span class="kw">void</span>   <span class="fn">shape_destroy</span>(<span class="typ">Shape</span>* s)     { s-&gt;vt-&gt;destroy(s); }
+
+<span class="cmt">/* circle.c */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Circle</span> { <span class="typ">Shape</span> base; <span class="kw">double</span> r; } <span class="typ">Circle</span>;
+
+<span class="kw">static</span> <span class="kw">double</span> <span class="fn">circle_area</span>(<span class="kw">const</span> <span class="typ">Shape</span>* s) {
+    <span class="kw">const</span> <span class="typ">Circle</span>* c = (<span class="kw">const</span> <span class="typ">Circle</span>*)s;
+    <span class="kw">return</span> <span class="num">3.14159265</span> * c-&gt;r * c-&gt;r;
+}
+<span class="kw">static</span> <span class="kw">void</span> <span class="fn">circle_destroy</span>(<span class="typ">Shape</span>* s) { <span class="fn">free</span>(s); }
+
+<span class="kw">static</span> <span class="kw">const</span> <span class="typ">ShapeVTable</span> CIRCLE_VT = { .area = <span class="fn">circle_area</span>, .destroy = <span class="fn">circle_destroy</span> };
+
+<span class="typ">Shape</span>* <span class="fn">circle_new</span>(<span class="kw">double</span> r) {
+    <span class="typ">Circle</span>* c = <span class="fn">malloc</span>(<span class="kw">sizeof</span> *c);
+    <span class="kw">if</span> (!c) <span class="kw">return</span> <span class="kw">NULL</span>;
+    c-&gt;base.vt = &amp;CIRCLE_VT;
+    c-&gt;r = r;
+    <span class="kw">return</span> &amp;c-&gt;base;
+}</pre>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>NULL vtable</td><td>Forgot to wire <code>vt</code> → segfault at first call.</td><td>Initialize <code>vt</code> in the factory, never in client code.</td></tr>
+    <tr><td>Per-instance vtable</td><td>Storing a copy of the vtable in each object.</td><td>Share one static <code>const</code> vtable per type — same idea as a C++ class vtable.</td></tr>
+    <tr><td>Signature drift</td><td>Two implementations accept different param types.</td><td>Pin signatures in the header <code>typedef</code>.</td></tr>
+    <tr><td>Missing virtual destroy</td><td><code>free(shape)</code> skips derived cleanup.</td><td>Call <code>shape_destroy(s)</code> which dispatches to the derived <code>destroy</code>.</td></tr>
+    <tr><td>Thread safety</td><td>Mutating shared vtables at runtime.</td><td>Keep vtables <code>const static</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. Each type has one vtable shared across all instances — why?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Memory + cache efficiency. Per-instance copies waste space and invite bugs when one gets patched.</div>
+  </details>
+</div>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Abstraction — "Interfaces" via a vtable</h2>
+
+<p>An "interface" in C is just a struct of function pointers. Any implementation that fills it in qualifies.</p>
+
+<pre><span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Writer</span> {
+    <span class="kw">void</span> (*write)(<span class="kw">struct</span> <span class="typ">Writer</span>* w, <span class="kw">const</span> <span class="kw">char</span>* s);
+    <span class="kw">void</span> (*flush)(<span class="kw">struct</span> <span class="typ">Writer</span>* w);
+    <span class="kw">void</span> (*close)(<span class="kw">struct</span> <span class="typ">Writer</span>* w);
+} <span class="typ">Writer</span>;
+
+<span class="cmt">/* File-backed implementation */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">FileWriter</span> { <span class="typ">Writer</span> iface; <span class="typ">FILE</span>* fp; } <span class="typ">FileWriter</span>;
+<span class="kw">static</span> <span class="kw">void</span> <span class="fn">fw_write</span>(<span class="typ">Writer</span>* w, <span class="kw">const</span> <span class="kw">char</span>* s) {
+    <span class="fn">fputs</span>(s, ((<span class="typ">FileWriter</span>*)w)-&gt;fp);
+}</pre>
+
+<div class="tips"><b>Tip:</b> keep "interfaces" small (2-3 functions). Bigger ones become a pain to implement — Interface Segregation matters in C too.</div>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Pure-Interface vs Partial Base</h2>
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Pure interface (all function pointers)</th><th>Partial base (data + pointers)</th></tr></thead>
+  <tbody>
+    <tr><td>State</td><td>None in the base.</td><td>Base may carry shared fields.</td></tr>
+    <tr><td>Multiple "inheritance"</td><td>Easy — a struct may expose several interfaces via embedded anchors.</td><td>Harder — only one base can be first.</td></tr>
+    <tr><td>Use when</td><td>Pure capability contract.</td><td>Shared behavior + virtual hooks (Template Method).</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. You want one struct to implement two interfaces A and B. How?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Embed both anchors as fields: <code>struct X { A a_iface; B b_iface; /* data */ };</code> Provide adapter functions like <code>x_as_a(X*)</code> and <code>x_as_b(X*)</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Overloading — not supported</h2>
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>C</th><th>Workarounds</th></tr></thead>
+  <tbody>
+    <tr><td>By signature</td><td>Not allowed — one definition per name.</td><td>Distinct names: <code>vec_add_int</code>, <code>vec_add_float</code>.</td></tr>
+    <tr><td>Generic dispatch</td><td>None built-in.</td><td>C11 <code>_Generic</code> selects at compile time based on argument type (see section 22).</td></tr>
+    <tr><td>Variadic</td><td>Yes via <code>&lt;stdarg.h&gt;</code></td><td>Lose type safety. <code>printf</code>-style only; keep narrow.</td></tr>
+    <tr><td>Default arguments</td><td>None.</td><td>Wrapper function or macro that supplies a default.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="pp">#define</span> MAX(a, b) _Generic((a), <span class="kw">int</span>: max_i, <span class="kw">double</span>: max_d)(a, b)
+<span class="kw">int</span>    <span class="fn">max_i</span>(<span class="kw">int</span>    a, <span class="kw">int</span>    b) { <span class="kw">return</span> a &gt; b ? a : b; }
+<span class="kw">double</span> <span class="fn">max_d</span>(<span class="kw">double</span> a, <span class="kw">double</span> b) { <span class="kw">return</span> a &gt; b ? a : b; }</pre>
+
+<div class="tricky">
+  <div class="q">Q. Can <code>_Generic</code> dispatch at runtime?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. It's a compile-time selection on the <i>static type</i> of the controlling expression. No vtable lookup.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11"><code>11. static</code> — three very different meanings</h2>
+<table>
+  <thead><tr><th>Context</th><th>Meaning</th><th>Analogy</th></tr></thead>
+  <tbody>
+    <tr><td><code>static</code> at file scope (function or global)</td><td>Internal linkage — invisible outside this TU.</td><td>Java <code>private</code> for a file.</td></tr>
+    <tr><td><code>static</code> inside a function</td><td>Storage persists across calls; initialized once.</td><td>A single "hidden" cache.</td></tr>
+    <tr><td><code>static</code> in an array parameter: <code>void f(int a[static 10])</code></td><td>Promise that <code>a</code> has ≥ 10 elements.</td><td>Array-size hint to the compiler.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="kw">int</span> <span class="fn">next_id</span>(<span class="kw">void</span>) {
+    <span class="kw">static</span> <span class="kw">int</span> id = <span class="num">0</span>;     <span class="cmt">// initialized once, persists between calls</span>
+    <span class="kw">return</span> ++id;
+}</pre>
+
+<div class="tricky">
+  <div class="q">Q. What's the difference between <code>static int counter = 0;</code> inside a function vs at file scope?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Inside a function: local name, persists across calls. At file scope: file-global name, but invisible from other TUs. Both use static storage.</div>
+  </details>
+</div>
+
+<!-- ============================= 12 ============================= -->
+<h2 id="s12">12. <code>const</code> — what it actually locks</h2>
+<table>
+  <thead><tr><th>Declaration</th><th>What's const</th></tr></thead>
+  <tbody>
+    <tr><td><code>const int* p</code></td><td>pointed-to value (read right-to-left: pointer to const int).</td></tr>
+    <tr><td><code>int* const p</code></td><td>the pointer itself; the int can change.</td></tr>
+    <tr><td><code>const int* const p</code></td><td>both — fully read-only view.</td></tr>
+    <tr><td><code>int const * p</code></td><td>same as <code>const int* p</code> — east-const style.</td></tr>
+    <tr><td><code>const int x = 42;</code></td><td>Can't reassign. Still has an address.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Trick:</b> read from right to left. <code>const int* p</code> → "p is a pointer to int that is const."</div>
+
+<div class="tricky">
+  <div class="q">Q. Is <code>char* p = "abc"; p[0] = 'A';</code> legal?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No — undefined behavior. String literals are in read-only memory. Use <code>char buf[] = "abc"; buf[0] = 'A';</code> or <code>const char* p = "abc";</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 13 ============================= -->
+<h2 id="s13">13. "Self" reference &amp; base-call</h2>
+
+<p>No <code>this</code> keyword — you pass the object explicitly, by convention first:</p>
+<pre><span class="kw">int</span> <span class="fn">cart_total</span>(<span class="kw">const</span> <span class="typ">Cart</span>* self) { <span class="cmt">/* ... */</span> }</pre>
+
+<p>No <code>super</code>. To delegate to a base, call the base function directly on the embedded base pointer:</p>
+<pre><span class="kw">static</span> <span class="kw">void</span> <span class="fn">dog_print</span>(<span class="kw">const</span> <span class="typ">Animal</span>* a) {
+    <span class="fn">animal_print_base</span>(a);                      <span class="cmt">// "super" call</span>
+    <span class="kw">const</span> <span class="typ">Dog</span>* d = (<span class="kw">const</span> <span class="typ">Dog</span>*)a;
+    <span class="fn">printf</span>(<span class="str">"  breed: %s\n"</span>, d-&gt;breed);
+}</pre>
+
+<!-- ============================= 14 ============================= -->
+<h2 id="s14">14. Nested structs &amp; callbacks</h2>
+<pre><span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Timer</span> {
+    <span class="kw">struct</span> {                     <span class="cmt">// nested, no name</span>
+        <span class="kw">long</span> sec;
+        <span class="kw">long</span> nsec;
+    } fired_at;
+    <span class="kw">void</span> (*on_fire)(<span class="kw">void</span>* user);   <span class="cmt">// callback</span>
+    <span class="kw">void</span>* user;                  <span class="cmt">// opaque user data (C's "this" for closures)</span>
+} <span class="typ">Timer</span>;</pre>
+
+<div class="tips"><b>Tip — "closures" in C:</b> always pair a function pointer with a <code>void* user</code> context slot. Without it, callbacks can't carry state.</div>
+
+<!-- ============================= 15 ============================= -->
+<h2 id="s15">15. Equivalent of Object's <code>equals</code>/<code>hashCode</code>/<code>toString</code></h2>
+<table>
+  <thead><tr><th>Java</th><th>C idiom</th></tr></thead>
+  <tbody>
+    <tr><td><code>equals</code></td><td><code>int foo_equals(const Foo* a, const Foo* b);</code> — returns 0/1.</td></tr>
+    <tr><td><code>compareTo</code></td><td><code>int foo_cmp(const void* a, const void* b);</code> — qsort-compatible, returns &lt;0, 0, &gt;0.</td></tr>
+    <tr><td><code>hashCode</code></td><td><code>uint64_t foo_hash(const Foo* a);</code> — e.g., FNV-1a or siphash.</td></tr>
+    <tr><td><code>toString</code></td><td><code>int foo_format(const Foo* a, char* buf, size_t n);</code> — snprintf-style.</td></tr>
+    <tr><td><code>clone</code></td><td><code>Foo* foo_clone(const Foo* src);</code> — deep copy if needed.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. What should your compare function return when equal?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Exactly <code>0</code>. Non-zero signals "ordering known" to <code>qsort</code>/<code>bsearch</code>. Return <code>a - b</code> only when no overflow is possible.</div>
+  </details>
+</div>
+
+<!-- ============================= 16 ============================= -->
+<h2 id="s16">16. Composition vs Embedding — two different tools</h2>
+<table class="compare">
+  <thead><tr><th>Pattern</th><th>Embedding (for "is-a")</th><th>Pointer composition (for "has-a")</th></tr></thead>
+  <tbody>
+    <tr><td>Layout</td><td><code>struct D { B base; …};</code> — base lives inside.</td><td><code>struct D { B* part; …};</code> — D points at a B.</td></tr>
+    <tr><td>Ownership</td><td>Bundled with D; destroyed together.</td><td>D may or may not own it; document clearly.</td></tr>
+    <tr><td>Upcast</td><td>Free pointer cast (if first member).</td><td>No upcast — it's a different object.</td></tr>
+    <tr><td>Size</td><td>Base size included.</td><td>One pointer.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= 16b ============================= -->
+<h2 id="s16b">16b. Is-a vs Has-a — Deep Dive (C examples)</h2>
+
+<p>In C, the distinction maps to:
+<br>• <b>is-a</b> → struct embedding + first-member rule + shared vtable.
+<br>• <b>has-a</b> → struct with a field (by value, by pointer, or an opaque owner).</p>
+
+<h3>Same-domain contrasts</h3>
+<table class="compare">
+  <thead><tr><th>Scenario</th><th>Wrong ("is-a" abuse)</th><th>Right ("has-a")</th></tr></thead>
+  <tbody>
+    <tr><td>Stack of ints</td><td>Embedding a <code>struct DynArray</code> and leaking its whole API.</td><td><code>struct IntStack { DynArray a; };</code> — only expose <code>push/pop/peek</code>.</td></tr>
+    <tr><td>Logged map</td><td>Making <code>struct LogMap</code> embed <code>HashMap</code> and forwarding nothing.</td><td>Wrap the map as an opaque field; provide the instrumented API only.</td></tr>
+    <tr><td>Square / Rectangle</td><td>Embed <code>Rectangle</code> in <code>Square</code>, override setter via vtable — breaks invariants.</td><td>Both implement a <code>Shape</code> interface; no inheritance between them.</td></tr>
+    <tr><td>Car / Engine</td><td>Embed <code>Engine</code> in <code>Car</code> "so Car inherits start()".</td><td><code>struct Car { Engine engine; Wheel wheels[4]; };</code>.</td></tr>
+    <tr><td>User / Logger</td><td>Embed <code>Logger</code> in <code>User</code> to call <code>user_log()</code>.</td><td><code>struct User { Logger* log; };</code> (non-owning).</td></tr>
+    <tr><td>Order / list of items</td><td>Embed a <code>LinkedList</code> and expose everything.</td><td>Opaque list as a member; expose <code>order_add</code>, <code>order_total</code>, etc.</td></tr>
+    <tr><td>Manager / Employee</td><td>Embed <code>Employee</code> in <code>Manager</code> — rigid as roles change.</td><td>Person carries a set of role tags / role-structs.</td></tr>
+  </tbody>
+</table>
+
+<h3>Pair drill</h3>
+<table>
+  <thead><tr><th>Pair</th><th>Relationship</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Dog ↔ Animal</td><td><b>is-a</b></td><td>Substitutable via first-member embedding.</td></tr>
+    <tr><td>Car ↔ Engine</td><td><b>has-a</b></td><td>Part, not a kind.</td></tr>
+    <tr><td>Car ↔ Wheels (×4)</td><td><b>has-a</b></td><td>Fixed array of parts.</td></tr>
+    <tr><td>Circle ↔ Shape</td><td><b>is-a</b></td><td>Shape is a pure interface / base vtable.</td></tr>
+    <tr><td>House ↔ Rooms</td><td><b>has-a</b></td><td>Contained.</td></tr>
+    <tr><td>Library ↔ Books</td><td><b>has-a</b> (aggregation)</td><td>Books outlive a library closing.</td></tr>
+    <tr><td>Order ↔ LineItems</td><td><b>has-a</b> (composition)</td><td>Items die with the order.</td></tr>
+    <tr><td>BankAccount ↔ Transactions</td><td><b>has-a</b></td><td>Log.</td></tr>
+    <tr><td>SavingsAccount ↔ BankAccount</td><td><b>is-a</b></td><td>Extra behavior on top.</td></tr>
+    <tr><td>Bird ↔ Flyable</td><td>Interface is-a; Penguin isn't</td><td>Capability as a separate vtable.</td></tr>
+    <tr><td>Employee ↔ Salary</td><td><b>has-a</b></td><td>Value field.</td></tr>
+    <tr><td>Employee ↔ Department</td><td><b>has-a</b> (aggregation)</td><td>Department independent.</td></tr>
+    <tr><td>Computer ↔ CPU/RAM/Disk</td><td><b>has-a</b> (composition)</td><td>Parts die with computer.</td></tr>
+    <tr><td>ElectricCar ↔ Car</td><td><b>is-a</b></td><td>Embed Car as first member.</td></tr>
+    <tr><td>ElectricCar ↔ Battery</td><td><b>has-a</b></td><td>Part.</td></tr>
+    <tr><td>Tree ↔ BinaryTree</td><td><b>is-a</b></td><td>—</td></tr>
+    <tr><td>BinaryTree ↔ Node</td><td><b>has-a</b></td><td>Owns root pointer.</td></tr>
+    <tr><td>HTTP server ↔ Handler</td><td><b>has-a</b> (via fn pointer)</td><td>Dispatches to a callback.</td></tr>
+    <tr><td>Service ↔ Repository</td><td><b>has-a</b> (via interface struct)</td><td>Depends on an abstraction.</td></tr>
+  </tbody>
+</table>
+
+<h4>Snippets — right way</h4>
+<pre><span class="cmt">/* Car HAS-A engine and wheels */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Car</span> {
+    <span class="typ">Engine</span>  engine;              <span class="cmt">// composition</span>
+    <span class="typ">Wheel</span>   wheels[<span class="num">4</span>];           <span class="cmt">// aggregation (fixed size)</span>
+    <span class="typ">Logger</span>* log;                 <span class="cmt">// non-owning pointer</span>
+} <span class="typ">Car</span>;</pre>
+
+<pre><span class="cmt">/* Dog IS-A Animal — first-member embedding */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">Dog</span> {
+    <span class="typ">Animal</span> base;                 <span class="cmt">// must be first</span>
+    <span class="kw">const</span> <span class="kw">char</span>* breed;
+} <span class="typ">Dog</span>;
+
+<span class="kw">void</span> <span class="fn">handle</span>(<span class="typ">Animal</span>* a);          <span class="cmt">// accepts a Dog via first-member guarantee</span></pre>
+
+<pre><span class="cmt">/* Decorator — IS-A Writer AND HAS-A Writer (legitimately both) */</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> <span class="typ">BufferedWriter</span> {
+    <span class="typ">Writer</span>  iface;               <span class="cmt">// is-a</span>
+    <span class="typ">Writer</span>* inner;               <span class="cmt">// has-a</span>
+    <span class="kw">char</span>    buf[<span class="num">4096</span>];
+    <span class="typ">size_t</span>  len;
+} <span class="typ">BufferedWriter</span>;</pre>
+
+<h3>Red flags you confused is-a with has-a</h3>
+<ul>
+  <li>You embedded a struct just to reach a helper function — extract it as a free function instead.</li>
+  <li>Your "derived" struct overrides a virtual to do nothing or report an error — LSP broken; use composition.</li>
+  <li>You have a field that can be "detached" and make sense alone — it's has-a.</li>
+  <li>You copied a "derived" by value and got garbled fields — you sliced. Pass by pointer.</li>
+</ul>
+
+<div class="tricky">
+  <div class="q">Q. Why can't you pass a <code>Dog</code> by value where an <code>Animal</code> is expected?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">C copies only <code>sizeof(Animal)</code> bytes — derived fields are lost. Pass <code>Animal*</code> (pointing at the first member of the Dog) instead.</div>
+  </details>
+</div>
+
+<!-- ============================= 17 ============================= -->
+<h2 id="s17">17. Casting — no RTTI in C</h2>
+<table>
+  <thead><tr><th>Cast</th><th>Use</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr><td><code>(T)x</code></td><td>Explicit numeric or pointer conversion.</td><td>Silent data loss, UB on pointer type mismatch.</td></tr>
+    <tr><td><code>void*</code> conversions</td><td>Implicit both ways in standard C (unlike C++).</td><td>Don't overuse — type safety loss.</td></tr>
+    <tr><td>Downcast via first-member rule</td><td><code>(Dog*)animal_ptr</code> when you know it's a Dog.</td><td>UB if it isn't. Add a type tag for safety.</td></tr>
+    <tr><td>Bit-punning</td><td><code>*(float*)&amp;i</code></td><td>UB (strict aliasing). Use <code>memcpy</code> instead.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="cmt">/* Safe type-tag for downcasts */</span>
+<span class="kw">enum</span> <span class="typ">ShapeKind</span> { K_CIRCLE, K_SQUARE };
+<span class="kw">struct</span> <span class="typ">Shape</span> { <span class="kw">enum</span> <span class="typ">ShapeKind</span> kind; <span class="kw">const</span> <span class="typ">ShapeVTable</span>* vt; };
+<span class="kw">const</span> <span class="typ">Circle</span>* <span class="fn">as_circle</span>(<span class="kw">const</span> <span class="typ">Shape</span>* s) {
+    <span class="kw">return</span> s-&gt;kind == K_CIRCLE ? (<span class="kw">const</span> <span class="typ">Circle</span>*)s : <span class="kw">NULL</span>;
+}</pre>
+
+<div class="tricky">
+  <div class="q">Q. Why use <code>memcpy</code> for bit-punning instead of a pointer cast?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Strict aliasing. Accessing an object through a pointer of an incompatible type is UB (except <code>char*</code>). <code>memcpy</code> is the safe, optimized way.</div>
+  </details>
+</div>
+
+<!-- ============================= 18 ============================= -->
+<h2 id="s18">18. Immutability via <code>const</code></h2>
+<table>
+  <thead><tr><th>Goal</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Read-only view to a caller</td><td>Take <code>const T*</code> in function signatures.</td></tr>
+    <tr><td>Read-only field of a struct</td><td>Declare the field <code>const</code> — but it disables default assignment of the whole struct.</td></tr>
+    <tr><td>Compile-time constants</td><td><code>#define</code> for numeric constants; <code>enum</code> for named integers; <code>static const</code> for typed constants.</td></tr>
+    <tr><td>Immutable strings</td><td><code>const char* const name = "…";</code></td></tr>
+  </tbody>
+</table>
+
+<div class="warn"><b>Watch:</b> <code>const</code> can be cast away with <code>const_cast</code>-style <code>(T*)</code>. Modifying a truly-const object is UB.</div>
+
+<!-- ============================= 19 ============================= -->
+<h2 id="s19">19. Error handling — no exceptions</h2>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Return codes</td><td>Returning "-1 on error" for functions that legitimately return negatives.</td><td>Separate return-code and out-parameter: <code>int foo(Input, Output* out);</code>.</td></tr>
+    <tr><td><code>errno</code></td><td>Reading <code>errno</code> without setting it first.</td><td>Set <code>errno = 0;</code> before call; check <i>after</i> if the function documents <code>errno</code>.</td></tr>
+    <tr><td>Cleanup</td><td>Duplicating cleanup at every error path.</td><td><code>goto cleanup</code> pattern, or RAII-like <code>defer</code> macros, or per-resource helper functions.</td></tr>
+    <tr><td>Swallowing errors</td><td>Ignoring return codes of <code>malloc</code>, <code>fopen</code>, <code>fread</code>.</td><td>Check every allocation and I/O; propagate failure.</td></tr>
+    <tr><td><code>setjmp</code>/<code>longjmp</code></td><td>Using as an exception substitute across ownership boundaries.</td><td>Rare and surgical only; doesn't run destructors (C doesn't have any, but leaks resources).</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="kw">int</span> <span class="fn">load_config</span>(<span class="kw">const</span> <span class="kw">char</span>* path, <span class="typ">Config</span>** out) {
+    <span class="kw">int</span> rc = <span class="num">0</span>;
+    <span class="typ">FILE</span>* fp = <span class="kw">NULL</span>;
+    <span class="typ">Config</span>* cfg = <span class="kw">NULL</span>;
+
+    fp = <span class="fn">fopen</span>(path, <span class="str">"rb"</span>);     <span class="kw">if</span> (!fp)  { rc = -<span class="num">1</span>; <span class="kw">goto</span> done; }
+    cfg = <span class="fn">malloc</span>(<span class="kw">sizeof</span> *cfg); <span class="kw">if</span> (!cfg) { rc = -<span class="num">2</span>; <span class="kw">goto</span> done; }
+    <span class="cmt">/* ... fill cfg ... */</span>
+
+    *out = cfg; cfg = <span class="kw">NULL</span>;         <span class="cmt">// transfer ownership</span>
+done:
+    <span class="kw">if</span> (fp)  <span class="fn">fclose</span>(fp);
+    <span class="kw">if</span> (cfg) <span class="fn">free</span>(cfg);
+    <span class="kw">return</span> rc;
+}</pre>
+
+<div class="tricky">
+  <div class="q">Q. Why is <code>goto cleanup</code> considered <i>good</i> C style?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">It's the closest C gets to RAII — one exit path, one cleanup block, no code duplication. Linus's kernel style recommends it.</div>
+  </details>
+</div>
+
+
+
+<!-- ============================= 20 ============================= -->
+<h2 id="s20">20. SOLID in C</h2>
+<table>
+  <thead><tr><th>Letter</th><th>C expression</th></tr></thead>
+  <tbody>
+    <tr><td><b>S</b> Single Responsibility</td><td>One TU per concern; one struct per concept; narrow public API per header.</td></tr>
+    <tr><td><b>O</b> Open/Closed</td><td>Extend by providing a new implementation of an interface vtable. Avoid editing existing modules to add a case.</td></tr>
+    <tr><td><b>L</b> Liskov Substitution</td><td>Every <code>Shape*</code> implementation must honor the contract of every method in the <code>ShapeVTable</code>.</td></tr>
+    <tr><td><b>I</b> Interface Segregation</td><td>Prefer small vtables (Writer, Reader) over one fat base with many hooks.</td></tr>
+    <tr><td><b>D</b> Dependency Inversion</td><td>Modules depend on vtable types, not concrete types. Pass a <code>Writer*</code>, not a <code>FileWriter*</code>.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Pro tip:</b> the plain <code>struct + vtable</code> pattern is C's answer to DI and mocking. Tests can supply their own implementation without touching the production code.</div>
+
+<!-- ============================= 21 ============================= -->
+<h2 id="s21">21. Memory &amp; RAII substitute</h2>
+
+<p>C has no destructors. Resource management is pattern + discipline.</p>
+
+<h3>Patterns</h3>
+<table>
+  <thead><tr><th>Pattern</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Single-owner functions</b></td><td><code>*_create</code> pairs with <code>*_destroy</code>. Ownership transferred by return value.</td></tr>
+    <tr><td><b>Arena / region allocator</b></td><td>Allocate many objects in a pool; free the whole pool at once.</td></tr>
+    <tr><td><b>Ref count</b></td><td>Add <code>refcount</code> to a struct; <code>*_ref</code>/<code>*_unref</code>. Destroy at 0.</td></tr>
+    <tr><td><b>Cleanup macro</b> (GCC/Clang)</td><td><code>__attribute__((cleanup(fn)))</code> auto-calls <code>fn</code> when the variable goes out of scope. Closest thing to RAII.</td></tr>
+    <tr><td><b>goto cleanup</b></td><td>Single exit point, consolidated free/close.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="cmt">/* GCC/Clang: scoped auto-cleanup */</span>
+<span class="kw">static</span> <span class="kw">inline</span> <span class="kw">void</span> <span class="fn">fclose_p</span>(<span class="typ">FILE</span>** fp) { <span class="kw">if</span> (*fp) <span class="fn">fclose</span>(*fp); }
+<span class="pp">#define</span> AUTO_FILE __attribute__((cleanup(fclose_p)))
+
+<span class="kw">int</span> <span class="fn">read_header</span>(<span class="kw">const</span> <span class="kw">char</span>* path) {
+    AUTO_FILE <span class="typ">FILE</span>* fp = <span class="fn">fopen</span>(path, <span class="str">"rb"</span>);
+    <span class="kw">if</span> (!fp) <span class="kw">return</span> -<span class="num">1</span>;
+    <span class="cmt">/* ...work... — fp is auto-closed on return */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Mismatched alloc/free</td><td><code>malloc</code> + <code>delete</code> (C++ mix).</td><td>Pair <code>malloc</code>/<code>free</code>, <code>calloc</code>/<code>free</code>, <code>realloc</code>/<code>free</code>.</td></tr>
+    <tr><td>Use-after-free</td><td>Keeping a pointer after <code>free</code>.</td><td>Set to <code>NULL</code>; never re-dereference.</td></tr>
+    <tr><td>Stack vs heap lifetime</td><td>Returning a pointer to a local array.</td><td>Return via <code>malloc</code> or let the caller pass a buffer.</td></tr>
+    <tr><td>Overflow in <code>malloc</code></td><td><code>malloc(n * sizeof(T))</code> when n is attacker-controlled.</td><td>Overflow-check: <code>if (n &gt; SIZE_MAX / sizeof(T)) …</code>.</td></tr>
+    <tr><td>Leaks in error paths</td><td>Every branch frees a different subset.</td><td>Single <code>cleanup:</code> label; free everything unconditionally at the end.</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. How can C code approximate C++'s RAII?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">GCC/Clang <code>__attribute__((cleanup(fn)))</code> calls a cleanup function when the variable leaves scope. Portable fallback: <code>goto cleanup</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= 22 ============================= -->
+<h2 id="s22">22. Generics — <code>void*</code>, macros, <code>_Generic</code></h2>
+<table>
+  <thead><tr><th>Approach</th><th>Sample</th><th>Trade-offs</th></tr></thead>
+  <tbody>
+    <tr><td><code>void*</code> + size</td><td>Standard containers: <code>qsort(void*, size, size, cmp)</code>.</td><td>Universal, but type-unsafe and slower (indirection, cb calls).</td></tr>
+    <tr><td>Type-generic macros</td><td><code>#define MAX(a,b) ((a) &gt; (b) ? (a) : (b))</code></td><td>Double-evaluation pitfalls; no safety; no scoping.</td></tr>
+    <tr><td>Header-inclusion templates</td><td>Include a header multiple times with different <code>T</code> <code>#define</code>s.</td><td>One definition per type; type safety; more code in binary.</td></tr>
+    <tr><td><code>_Generic</code> (C11)</td><td>Compile-time type dispatch.</td><td>Only dispatches on static type; doesn't help runtime polymorphism.</td></tr>
+    <tr><td>Flexible array member</td><td><code>struct { size_t n; int data[]; };</code></td><td>Nice fit for variable-length objects; keep at end of struct.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="pp">#define</span> SWAP(a, b) \
+    <span class="kw">do</span> { <span class="kw">typeof</span>(a) _t = (a); (a) = (b); (b) = _t; } <span class="kw">while</span> (<span class="num">0</span>)   <span class="cmt">// GCC/Clang</span>
+
+<span class="kw">int</span> x = <span class="num">1</span>, y = <span class="num">2</span>;
+SWAP(x, y);</pre>
+
+<div class="tricky">
+  <div class="q">Q. Why is <code>#define MAX(a,b) a &gt; b ? a : b</code> buggy?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Operator precedence and double evaluation: <code>MAX(i++, j)</code> increments <code>i</code> twice. Wrap arguments in parens and use a statement expression or <code>__typeof__</code>.</div>
+  </details>
+</div>
+
+<!-- ============================= END ============================= -->
+<h2 id="end">Quick Interview Gotchas</h2>
+<table>
+  <thead><tr><th>#</th><th>Gotcha</th><th>Answer</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Does C have classes?</td><td>No. Use <code>struct</code> + functions; add vtables for polymorphism.</td></tr>
+    <tr><td>2</td><td>Pass by value or reference?</td><td>By value (including structs). Pass a pointer for "reference" semantics.</td></tr>
+    <tr><td>3</td><td>Private members?</td><td>Opaque forward-declared struct + <code>static</code> helpers in the <code>.c</code>.</td></tr>
+    <tr><td>4</td><td>Polymorphism without overhead?</td><td>Struct-of-function-pointers vtable. One indirect call per virtual.</td></tr>
+    <tr><td>5</td><td>Default arguments?</td><td>Not in the language. Provide wrappers or macros.</td></tr>
+    <tr><td>6</td><td>Operator overloading?</td><td>Not in C. Functions like <code>vec_add</code>, <code>vec_dot</code>.</td></tr>
+    <tr><td>7</td><td>Exceptions?</td><td>No. Return codes, errno, goto cleanup, setjmp/longjmp (rare).</td></tr>
+    <tr><td>8</td><td>Generic data structures?</td><td><code>void*</code> with size_t, macro templates, or <code>_Generic</code>.</td></tr>
+    <tr><td>9</td><td>Destructor?</td><td>Write a <code>*_destroy</code> function; call it manually, or use <code>__attribute__((cleanup))</code>.</td></tr>
+    <tr><td>10</td><td>Memory safety?</td><td>You. That's it. Tools: <code>-Wall -Wextra -Werror</code>, sanitizers, static analyzers, Valgrind.</td></tr>
+  </tbody>
+</table>
+
+<p class="small" style="margin-top:18px">
+  Printing tip: Ctrl+P → Paper: A3 → Background graphics: ON. Hints auto-expand in print.
+</p>
+
+</div>
+
+<script>
+// --- Simple C syntax highlighter for all <pre> blocks ---
+(function () {
+  const KEYWORDS = new Set([
+    "auto","break","case","char","const","continue","default","do","double","else","enum",
+    "extern","float","for","goto","if","inline","int","long","register","restrict","return",
+    "short","signed","sizeof","static","struct","switch","typedef","union","unsigned","void",
+    "volatile","while","_Alignas","_Alignof","_Atomic","_Bool","_Complex","_Generic","_Imaginary",
+    "_Noreturn","_Static_assert","_Thread_local","bool","true","false","NULL","typeof","__typeof__",
+    "__attribute__","asm"
+  ]);
+  const TYPES = /^(FILE|size_t|ptrdiff_t|intptr_t|uintptr_t|int8_t|int16_t|int32_t|int64_t|uint8_t|uint16_t|uint32_t|uint64_t|wchar_t|time_t|clock_t|va_list|jmp_buf|sigset_t|pid_t|off_t|mode_t|pthread_t|pthread_mutex_t|pthread_cond_t|Point|Cart|Account|Animal|Dog|Shape|ShapeVTable|Circle|Square|Writer|Reader|FileWriter|BufferedWriter|Timer|Engine|Wheel|Logger|Config|LineItem|Order|Person|Role|Node|Tree|BinaryTree|ShapeKind|DynArray|HashMap|LinkedList|IntStack|LogMap|Employee|Manager|Department|BankAccount|SavingsAccount|ElectricCar|Car|Battery|Cpu|Ram|Disk|Computer|Library|Book|Bird|Sparrow|Penguin|Repository|Service)$/;
+
+  function escape(s){ return s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+  function highlight(src) {
+    // Comments, strings/chars, preprocessor (line-based), numbers, identifiers
+    const tokenRe = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\\n])*")|('(?:\\.|[^'\\\n])*')|(^[ \t]*#[^\n]*)|(\b\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?[uUlLfF]{0,3}\b|\b0x[\da-fA-F_]+[uUlL]{0,3}\b|\b0b[01_]+[uUlL]{0,3}\b)|([A-Za-z_][A-Za-z0-9_]*)/gm;
+    let out = "";
+    let last = 0;
+    let m;
+    while ((m = tokenRe.exec(src)) !== null) {
+      out += escape(src.slice(last, m.index));
+      if (m[1]) out += '<span class="cmt">' + escape(m[1]) + '</span>';
+      else if (m[2]) out += '<span class="str">' + escape(m[2]) + '</span>';
+      else if (m[3]) out += '<span class="str">' + escape(m[3]) + '</span>';
+      else if (m[4]) out += '<span class="pp">' + escape(m[4]) + '</span>';
+      else if (m[5]) out += '<span class="num">' + escape(m[5]) + '</span>';
+      else if (m[6]) {
+        const w = m[6];
+        if (KEYWORDS.has(w))      out += '<span class="kw">'  + w + '</span>';
+        else if (TYPES.test(w))   out += '<span class="typ">' + w + '</span>';
+        else                      out += escape(w);
+      }
+      last = tokenRe.lastIndex;
+    }
+    out += escape(src.slice(last));
+    return out;
+  }
+
+  document.querySelectorAll("pre").forEach(pre => {
+    if (pre.dataset.hl === "1") return;
+    const raw = pre.textContent;
+    pre.innerHTML = highlight(raw);
+    pre.dataset.hl = "1";
+  });
+})();
+</script>
+
+
+
+
+
+
+
+
 
 
 
@@ -44,7 +979,6 @@
   <span aria-hidden="true">&#x1F3E0;</span>
 </a>
 <!-- KIRO_HOME_BUTTON_END -->
-
 
 
 <!-- KIRO_DARK_MODE_START -->
@@ -124,7 +1058,7 @@
   html.kiro-dark pre,
   html.kiro-dark pre.code{
     background: var(--kd-pre-bg) !important;
-    color: #d6deeb !important;
+    color: #e8edf2 !important;
     border-color: var(--kd-border) !important;
   }
   html.kiro-dark pre code{
@@ -133,24 +1067,41 @@
     border: 0 !important;
     padding: 0 !important;
   }
-  html.kiro-dark pre .kw,
-  html.kiro-dark .kw   { color: #ff8489 !important; }
-  html.kiro-dark pre .typ,
-  html.kiro-dark .typ  { color: #ffb070 !important; }
-  html.kiro-dark pre .str,
-  html.kiro-dark .str  { color: #b8dbff !important; }
-  html.kiro-dark pre .num,
-  html.kiro-dark .num  { color: #8cc6ff !important; }
-  html.kiro-dark pre .cmt,
-  html.kiro-dark .cmt  { color: #9aa3b0 !important; }
-  html.kiro-dark pre .ann,
-  html.kiro-dark .ann  { color: #8ee99a !important; }
-  html.kiro-dark pre .fn,
-  html.kiro-dark .fn   { color: #d2b3ff !important; }
-  html.kiro-dark pre .op,
-  html.kiro-dark .op   { color: #d6deeb !important; }
-  html.kiro-dark pre .var,
-  html.kiro-dark .var  { color: #ffb070 !important; }
+  /* Dark-friendly GitHub Dark colours mapped to syntax-highlight classes
+     used across the cheatsheets. !important + html.kiro-dark ancestor
+     guarantees these win against the original light-theme colours. */
+  html.kiro-dark pre .kw,    html.kiro-dark .kw,
+  html.kiro-dark pre span.kw    { color: #ff7b72 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .typ,   html.kiro-dark .typ,
+  html.kiro-dark pre span.typ   { color: #ffa657 !important; font-weight: 400 !important; }
+  html.kiro-dark pre .str,   html.kiro-dark .str,
+  html.kiro-dark pre span.str   { color: #a5d6ff !important; font-weight: 400 !important; }
+  html.kiro-dark pre .num,   html.kiro-dark .num,
+  html.kiro-dark pre span.num   { color: #79c0ff !important; font-weight: 400 !important; }
+  html.kiro-dark pre .cmt,   html.kiro-dark .cmt,
+  html.kiro-dark pre span.cmt   { color: #9aa3b0 !important; font-style: italic !important; font-weight: 400 !important; }
+  html.kiro-dark pre .ann,   html.kiro-dark .ann,
+  html.kiro-dark pre span.ann   { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .fn,    html.kiro-dark .fn,
+  html.kiro-dark pre span.fn    { color: #d2a8ff !important; }
+  html.kiro-dark pre .pp,    html.kiro-dark .pp,
+  html.kiro-dark pre span.pp    { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .bi,    html.kiro-dark .bi,
+  html.kiro-dark pre span.bi    { color: #d2a8ff !important; }
+  html.kiro-dark pre .dec,   html.kiro-dark .dec,
+  html.kiro-dark pre span.dec   { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .self,  html.kiro-dark .self,
+  html.kiro-dark pre span.self  { color: #ffa657 !important; font-style: italic !important; }
+  html.kiro-dark pre .mac,   html.kiro-dark .mac,
+  html.kiro-dark pre span.mac   { color: #d2a8ff !important; font-weight: 600 !important; }
+  html.kiro-dark pre .attr,  html.kiro-dark .attr,
+  html.kiro-dark pre span.attr  { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .var,   html.kiro-dark .var,
+  html.kiro-dark pre span.var   { color: #ffa657 !important; }
+  html.kiro-dark pre .op,    html.kiro-dark .op,
+  html.kiro-dark pre span.op    { color: #c9d1d9 !important; }
+  /* Plain text inside <pre> (no class) inherits the pre's white colour. */
+  html.kiro-dark pre{ color: #e8edf2 !important; }
 
   /* ----- Tables ----- */
   html.kiro-dark table{
@@ -453,6 +1404,65 @@
     for(var i=0;i<tagged.length;i++) tagged[i].removeAttribute('data-kd-pastel');
   }
 
+  /* ---------- Recolor / restore syntax highlighting in <pre> blocks ----------
+     Runtime highlighters and static highlight classes use colors designed
+     for white backgrounds. In dark mode we re-color the spans inline with
+     dark-friendly colors. Light mode restores the originals from cache. */
+  var DARK_TOKEN_COLORS = {
+    /* keyword */          'kw':   '#ff7b72',
+    /* type */             'typ':  '#ffa657',
+    /* string */           'str':  '#a5d6ff',
+    /* number */           'num':  '#79c0ff',
+    /* comment */          'cmt':  '#9aa3b0',
+    /* annotation @Foo */  'ann':  '#7ee787',
+    /* function call */    'fn':   '#d2a8ff',
+    /* preprocessor */     'pp':   '#7ee787',
+    /* builtin */          'bi':   '#d2a8ff',
+    /* decorator */        'dec':  '#7ee787',
+    /* self/cls */         'self': '#ffa657',
+    /* macro */            'mac':  '#d2a8ff',
+    /* attribute */        'attr': '#7ee787',
+    /* variable */         'var':  '#ffa657',
+    /* operator */         'op':   '#c9d1d9'
+  };
+  var DARK_TOKEN_BOLD = {'kw':1, 'ann':1, 'pp':1, 'dec':1, 'attr':1, 'mac':1};
+  var DARK_TOKEN_ITALIC = {'cmt':1, 'self':1};
+  function recolorOne(pre){
+    var spans = pre.getElementsByTagName('span');
+    for(var i=0;i<spans.length;i++){
+      var s = spans[i];
+      var cls = s.className;
+      if(!cls) continue;
+      var color = DARK_TOKEN_COLORS[cls];
+      if(!color) continue;
+      /* Cache the original inline style once so we can restore it. */
+      if(s.dataset.kdOrigStyle === undefined){
+        s.dataset.kdOrigStyle = s.getAttribute('style') || '';
+      }
+      s.style.color = color;
+      s.style.fontWeight = DARK_TOKEN_BOLD[cls] ? '600' : '400';
+      s.style.fontStyle = DARK_TOKEN_ITALIC[cls] ? 'italic' : 'normal';
+    }
+  }
+  function recolorHighlight(){
+    var pres = document.getElementsByTagName('pre');
+    for(var i=0;i<pres.length;i++) recolorOne(pres[i]);
+  }
+  function restoreHighlight(){
+    var pres = document.getElementsByTagName('pre');
+    for(var i=0;i<pres.length;i++){
+      var spans = pres[i].getElementsByTagName('span');
+      for(var j=0;j<spans.length;j++){
+        var s = spans[j];
+        if(s.dataset.kdOrigStyle !== undefined){
+          var orig = s.dataset.kdOrigStyle;
+          if(orig){ s.setAttribute('style', orig); }
+          else { s.removeAttribute('style'); }
+        }
+      }
+    }
+  }
+
   function tagPastels(){
     if(!document.body) return;
     untagAll();
@@ -521,3 +1531,5 @@
 </script>
 <!-- KIRO_DARK_MODE_END -->
 
+</body>
+</html>
