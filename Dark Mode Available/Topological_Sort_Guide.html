@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Topological Sort — Patterns, Cheatsheet & Java Snippets</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  /* HAMBURGER + TOC SIDEBAR */
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* HERO + TABS */
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  /* ===== BRIEF TAB (interactive topo-sort explorer) ===== */
+  body.brief-mode .nav-bar { display: none; }
+
+  .brief-root {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    color: var(--fg);
+  }
+  .brief-root .brief-header { text-align: center; margin-bottom: 32px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #2563eb, #16a34a, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  [data-theme="dark"] .brief-root .brief-title {
+    background: linear-gradient(90deg, #58a6ff, #76ff03, #ffd740);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+
+  .brief-root .op-tabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 28px;
+  }
+  .brief-root .op-tab {
+    padding: 8px 16px; border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--card); color: var(--muted);
+    cursor: pointer; font-family: inherit;
+    font-weight: 700; font-size: 14px;
+    transition: all 0.18s;
+  }
+
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 24px;
+  }
+  .brief-root .op-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+  .brief-root .op-desc { margin: 10px 0 4px; color: var(--fg); font-size: 14px; }
+  .brief-root .op-rule { color: var(--muted); font-size: 12px; }
+
+  .brief-root .calc-box {
+    background: var(--code-bg); border-radius: 12px;
+    padding: 20px; margin: 20px 0; border: 1px solid var(--border);
+  }
+
+  /* Graph viz canvas */
+  .brief-root .graph-svg {
+    width: 100%; height: 220px; display: block;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .brief-root .node-label { font-weight: 700; }
+  .brief-root .result-line { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .brief-root .result-pill {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 20px; font-weight: 700; font-size: 12px;
+    margin-left: 8px;
+  }
+  .brief-root .result-pill.yes { background: rgba(22,163,74,.15); color: var(--easy); border: 1px solid var(--easy); }
+  .brief-root .result-pill.no  { background: rgba(220,38,38,.15); color: var(--hard); border: 1px solid var(--hard); }
+
+  .brief-root .section-label {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 3px; margin-bottom: 12px;
+  }
+  .brief-root .ex-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .brief-root .ex-tab {
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 12px;
+    font-family: inherit; transition: all 0.18s;
+  }
+
+  .brief-root .ex-box {
+    background: var(--code-bg); border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .brief-root .ex-title { padding: 10px 16px; font-size: 13px; font-weight: 700; }
+  .brief-root pre.brief-pre {
+    margin: 0; padding: 16px; font-size: 13px; line-height: 1.7;
+    color: var(--code-fg); overflow-x: auto;
+    white-space: pre-wrap; word-break: break-word;
+    background: var(--code-bg);
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  [data-theme="dark"] .brief-root pre.brief-pre { color: #c8e6c9; }
+  .brief-root .why-toggle {
+    padding: 10px 16px; cursor: pointer;
+    border-top: 1px solid var(--border);
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+    user-select: none; color: var(--muted);
+  }
+  .brief-root .why-body {
+    padding: 12px 16px; font-size: 13px; line-height: 1.7;
+    color: var(--fg); display: none;
+  }
+  .brief-root .why-body.visible { display: block; }
+
+  .brief-root .cheat {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 16px;
+  }
+  .brief-root .cheat-row {
+    display: flex; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px; padding: 8px 0;
+    border-bottom: 1px solid var(--border); align-items: center;
+  }
+  .brief-root .cheat-name { color: var(--muted); font-size: 13px; }
+  .brief-root .cheat-code {
+    color: var(--str); font-size: 12px;
+    background: var(--code-bg);
+    padding: 2px 10px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .brief-root .brief-footer {
+    text-align: center; color: var(--muted);
+    font-size: 11px; letter-spacing: 2px; margin-top: 8px;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips {
+    margin: 6px 0 6px 4px;
+    padding: 0 0 0 22px;
+  }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  /* CHEATSHEET TABLE */
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #eef2ff;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: var(--code-bg);
+    white-space: nowrap;
+    color: var(--num);
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  /* CODE */
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  /* PREV/NEXT BAR */
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* DARK MODE */
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: var(--num); }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Topological Sort — Patterns, Cheatsheet & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Topological Sort Cheatsheet (read this first)", diff: "veasy",
+  problem: "Topological sort orders the vertices of a Directed Acyclic Graph (DAG) so that for every edge u → v, u appears before v. The order is not unique. Two algorithms cover almost every problem: BFS-based Kahn's algorithm (process nodes whose indegree is 0) and DFS-based post-order reversal. Both run in O(V + E) and both detect cycles for free — if any vertex is left unprocessed, a cycle exists.",
+  intuition: "A topological sort is just a linearization of a partial order encoded by directed edges. Read each edge u → v as 'u must come before v' — prerequisites, build dependencies, course schedules, alien dictionaries are all the same shape. Kahn's BFS is the easiest to reason about: keep peeling off vertices whose indegree drops to 0, in waves. DFS post-order is shorter to code: do a normal DFS and emit each vertex AFTER all its descendants are emitted; reverse the list at the end. Cycle detection comes free with both — Kahn's by counting processed vertices, DFS by tracking three colors (WHITE/GRAY/BLACK).",
+  hints: [
+    "If any directed edge appears twice, you've already failed (the answer must respect ALL edges).",
+    "When a problem says 'find ANY valid order', use Kahn's. When it says 'process leaves first' or 'reverse-order tasks', that's also Kahn's, but on the REVERSED graph or with a post-process flip.",
+    "Indegree = number of incoming edges. The starting frontier of Kahn's is `indegree[v] == 0`.",
+    "Cycle test: a DAG of n vertices yields exactly n vertices in the output. Anything less = cycle.",
+    "Lexicographic order? Swap the FIFO `Queue` for a `PriorityQueue` (LC 269 with ties, LC 1203 for grouped ordering)."
+  ],
+  tips: [
+    "Build the graph as `List<List<Integer>>` plus an `int[] indegree`. That single pair handles 95% of LeetCode topo problems.",
+    "DFS variant uses 3 states: 0 = unvisited, 1 = in current path (gray), 2 = done. A back-edge to a gray node = cycle.",
+    "If the input is a 2D matrix (`prerequisites[i] = [course, pre]`), be careful which is u and which is v — the convention is `pre → course`, so `graph[pre].add(course)` and `indegree[course]++`.",
+    "Kahn's is iterative ⇒ no stack overflow. DFS is recursive ⇒ for V > ~10^4 prefer the iterative DFS or just use Kahn's.",
+    "When the problem also asks for SHORTEST/LONGEST path on a DAG, do topo first, then sweep in topo order — DP collapses to a single pass."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Pattern / Idiom</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>Kahn's BFS</td><td>Peel off indegree-0 vertices in waves. Cycle ⇔ leftover.</td></tr>
+        <tr><td>DFS post-order</td><td>Emit AFTER recursing; reverse at the end.</td></tr>
+        <tr><td>3-color DFS</td><td>WHITE / GRAY / BLACK. Back-edge to GRAY = cycle.</td></tr>
+        <tr><td>indegree[v]++</td><td>Build with the rest of the graph; never recompute.</td></tr>
+        <tr><td>PriorityQueue&lt;Integer&gt;</td><td>Lexicographically smallest topo order (LC 269 ties).</td></tr>
+        <tr><td>Reverse graph + topo</td><td>For 'process from leaves' or 'safe nodes' (LC 802).</td></tr>
+        <tr><td>Topo + DAG DP</td><td>Longest / shortest / count paths in O(V + E).</td></tr>
+        <tr><td>BFS levels = waves</td><td>Each Kahn's wave = one 'parallel time step' (LC 2050).</td></tr>
+        <tr><td>SCC on cyclic graphs</td><td>Tarjan / Kosaraju → condense → topo on DAG of SCCs.</td></tr>
+        <tr><td>Cycle test (Kahn's)</td><td><code>processed != V</code></td></tr>
+        <tr><td>Cycle test (DFS)</td><td>any back-edge to GRAY vertex</td></tr>
+        <tr><td>Multiple valid orders</td><td>The DAG has &gt; 1 indegree-0 vertex at some point.</td></tr>
+      </tbody>
+    </table>
+    <p><b>Two pieces of math worth memorizing:</b></p>
+    <ul class="hints">
+      <li><b>A topo order exists iff the graph is a DAG.</b> Equivalently, <code>NOT (cycle exists)</code>. By De Morgan, the negation of "every vertex is processed" (Kahn's success) is "some vertex isn't processed" — which is exactly the cycle case. Same logic underpins the DFS coloring: a cycle ⇔ some descendant is GRAY ⇔ NOT (every descendant is BLACK or unvisited).</li>
+      <li><b>Indegree sum = #edges.</b> If you ever need a sanity check for graph construction, sum <code>indegree[]</code>; it must equal the number of directed edges (each edge contributes exactly one indegree increment). Off-by-one bugs in graph building light up immediately when this sum is wrong.</li>
+    </ul>
+  `,
+  code: `/*
+ * The two canonical topo-sort algorithms.
+ * Memorize both — Kahn's for "process in waves / detect cycles iteratively"
+ * and DFS post-order when you also need stack-style information per vertex.
+ */
+
+// ---- 1. KAHN'S BFS — the default choice ----------------------------
+int[] topoSortKahn(int n, int[][] edges) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+
+    for (int[] e : edges) {                              // edge u -> v means "u before v"
+        g.get(e[0]).add(e[1]);
+        indegree[e[1]]++;
+    }
+
+    Deque<Integer> queue = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) queue.offer(v);
+
+    int[] order = new int[n];
+    int idx = 0;
+    while (!queue.isEmpty()) {
+        int u = queue.poll();
+        order[idx++] = u;
+        for (int v : g.get(u)) {
+            if (--indegree[v] == 0) queue.offer(v);
+        }
+    }
+
+    if (idx != n) return new int[0];                     // cycle detected
+    return order;
+}
+
+// ---- 2. DFS POST-ORDER — short and elegant -------------------------
+int[] topoSortDFS(int n, int[][] edges) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    for (int[] e : edges) g.get(e[0]).add(e[1]);
+
+    int[] color = new int[n];                            // 0=W, 1=GRAY, 2=BLACK
+    Deque<Integer> postOrder = new ArrayDeque<>();
+    boolean[] hasCycle = {false};
+
+    for (int v = 0; v < n; v++) {
+        if (color[v] == 0) dfsTopo(v, g, color, postOrder, hasCycle);
+        if (hasCycle[0]) return new int[0];
+    }
+
+    int[] order = new int[n];
+    int idx = 0;
+    while (!postOrder.isEmpty()) order[idx++] = postOrder.pop();
+    return order;
+}
+
+private void dfsTopo(int u, List<List<Integer>> g, int[] color,
+                     Deque<Integer> postOrder, boolean[] hasCycle) {
+
+    color[u] = 1;                                        // mark GRAY
+    for (int v : g.get(u)) {
+        if (color[v] == 1) { hasCycle[0] = true; return; }
+        if (color[v] == 0) {
+            dfsTopo(v, g, color, postOrder, hasCycle);
+            if (hasCycle[0]) return;
+        }
+    }
+    color[u] = 2;                                        // mark BLACK
+    postOrder.push(u);                                   // stack: gives reverse post-order
+}
+
+// ---- 3. CYCLE TEST ONLY (no order needed) --------------------------
+boolean isDAG(int n, int[][] edges) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+    for (int[] e : edges) { g.get(e[0]).add(e[1]); indegree[e[1]]++; }
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+
+    int processed = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll(); processed++;
+        for (int v : g.get(u)) if (--indegree[v] == 0) q.offer(v);
+    }
+    return processed == n;
+}`,
+  complexity: "Kahn's and DFS post-order are both O(V + E) time and O(V + E) space for the adjacency list. Cycle detection adds no asymptotic cost. The lexicographic variant with a PriorityQueue is O((V + E) log V)."
+});
+
+
+/* ===================== VERY EASY (DRILLS) ===================== */
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Build the graph + indegree array correctly", diff: "veasy",
+  problem: "Given n vertices and edges as `int[][] edges` where each edge[i] = [u, v] means 'u must come before v', construct an adjacency list and the indegree array.",
+  intuition: "Every directed edge u → v contributes ONE entry to g[u] and ONE +1 to indegree[v]. That's it — the rest of every topo problem boils down to applying these two updates correctly.",
+  hints: [
+    "Allocate `List<List<Integer>> g` of size n with empty inner lists.",
+    "For each edge: `g.get(u).add(v); indegree[v]++;`.",
+    "Sanity: sum(indegree) should equal edges.length."
+  ],
+  tips: [
+    "When the problem gives `prerequisites[i] = [course, pre]`, the edge is `pre → course`. Don't flip it.",
+    "If the graph might have duplicate edges, decide upfront: keep them (Kahn's still works because indegree counts duplicates), or dedupe via a HashSet per vertex.",
+    "If the vertices are strings (LC 269), map them to ints first via a HashMap to keep the array-based graph code identical."
+  ],
+  code: `/*
+ * Build adjacency list and indegree from edges. The two-line core.
+ */
+List<List<Integer>> g = new ArrayList<>();
+for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+int[] indegree = new int[n];
+
+for (int[] e : edges) {                                  // e = [u, v] meaning u -> v
+    g.get(e[0]).add(e[1]);
+    indegree[e[1]]++;
+}
+
+// Sanity (optional): sum(indegree) must equal edges.length.`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Kahn's BFS skeleton (memorize me)", diff: "veasy",
+  problem: "Memorize the 12-line Kahn's skeleton. 80% of topological-sort problems are a 1-2 line variation of it.",
+  intuition: "Seed the queue with every vertex whose indegree is 0. Pop one, append it to the order, and for every neighbor decrement its indegree; if it hits 0, enqueue it. Repeat until the queue is empty. The output length tells you whether a cycle existed.",
+  hints: [
+    "Skeleton: build graph + indegree, seed queue, BFS, return order or empty on cycle.",
+    "Always check `idx == n` at the end. If less, a cycle exists.",
+    "For 'find ANY valid order' use ArrayDeque. For 'find lexicographically smallest order' use PriorityQueue."
+  ],
+  tips: [
+    "Decrement THEN test: `if (--indegree[v] == 0)` is one line and avoids a double-lookup.",
+    "Don't mutate indegree[] before the BFS loop or you'll feed garbage into the queue.",
+    "When n is large and edges sparse, ArrayDeque is faster than LinkedList."
+  ],
+  code: `/*
+ * Kahn's BFS — the canonical topo sort skeleton.
+ */
+int[] kahn(int n, List<List<Integer>> g, int[] indegree) {
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+
+    int[] order = new int[n];
+    int idx = 0;
+
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        order[idx++] = u;
+        for (int v : g.get(u)) {
+            if (--indegree[v] == 0) q.offer(v);
+        }
+    }
+
+    return idx == n ? order : new int[0];               // empty array = cycle
+}`,
+  complexity: "Time O(V + E). Space O(V) for the queue."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: DFS post-order skeleton (3-color cycle detection)", diff: "veasy",
+  problem: "Memorize the DFS variant. It's preferred when you also need depth / discovery / finish times per vertex (Tarjan's SCC, etc.).",
+  intuition: "Three states per vertex. WHITE (unvisited) → GRAY (currently on the recursion stack) → BLACK (fully done). A directed edge from u to a GRAY neighbor is a back-edge — that proves a cycle. When recursion exits a vertex, push it onto a stack: the stack is the topo order in reverse-DFS-finish order.",
+  hints: [
+    "color[]: 0=W, 1=GRAY, 2=BLACK.",
+    "On enter: color = 1; recurse over neighbors; on exit: color = 2 and push to stack.",
+    "If during recursion you ever hit a GRAY neighbor, signal a cycle and bail."
+  ],
+  tips: [
+    "The stack you push to acts as a reverse post-order. `pop()` it into the result array to flip it back to topo order.",
+    "Recursion depth equals the longest path in the DAG. For very tall graphs (V > 10^4) prefer iterative DFS or Kahn's to avoid stack overflow.",
+    "If you want both topo order AND SCCs, use Tarjan — same recursion, with low-link tracking added."
+  ],
+  code: `/*
+ * DFS post-order with 3-color cycle detection.
+ */
+int[] color;
+Deque<Integer> postOrder;
+boolean cycle;
+
+int[] topoDFS(int n, List<List<Integer>> g) {
+
+    color = new int[n];
+    postOrder = new ArrayDeque<>();
+    cycle = false;
+
+    for (int v = 0; v < n; v++) {
+        if (color[v] == 0) dfs(v, g);
+        if (cycle) return new int[0];
+    }
+
+    int[] order = new int[n];
+    int i = 0;
+    while (!postOrder.isEmpty()) order[i++] = postOrder.pop();
+    return order;
+}
+
+void dfs(int u, List<List<Integer>> g) {
+    color[u] = 1;                                       // GRAY
+    for (int v : g.get(u)) {
+        if (color[v] == 1) { cycle = true; return; }    // back-edge → cycle
+        if (color[v] == 0) {
+            dfs(v, g);
+            if (cycle) return;
+        }
+    }
+    color[u] = 2;                                       // BLACK
+    postOrder.push(u);                                  // reverse-finish stack
+}`,
+  complexity: "Time O(V + E). Space O(V) for color array + recursion stack."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: When does the answer exist? (DAG check)", diff: "veasy",
+  problem: "Decide BEFORE coding: does the problem guarantee a DAG, or do you also need cycle detection? The answer changes whether you need the `idx == n` check at the end.",
+  intuition: "Topological sort is defined ONLY for DAGs. If the problem says 'given a DAG' you can skip the cycle test. If it says 'determine if X is possible' or 'return any valid order or report impossible', cycle detection IS the question.",
+  hints: [
+    "Search the problem statement for the words 'cycle', 'impossible', 'invalid', 'guaranteed DAG'.",
+    "If unguaranteed, both Kahn's (idx == n) and DFS (3-color back-edge) detect cycles for free.",
+    "If a partial cycle exists, only the acyclic prefix is recoverable; you generally must abort."
+  ],
+  tips: [
+    "Self-loops (edge u → u) are cycles. A single self-loop means immediate failure.",
+    "Multiple edges between the same pair of nodes do NOT cause a cycle — they're just multi-edges and Kahn's still works.",
+    "Disconnected DAGs are valid — Kahn's handles them automatically by seeding every indegree-0 vertex."
+  ],
+  code: `/*
+ * Cycle detection drills.
+ */
+
+// Quick check that doesn't need the topo order itself.
+boolean isDAG(int n, int[][] edges) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] in = new int[n];
+    for (int[] e : edges) { g.get(e[0]).add(e[1]); in[e[1]]++; }
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (in[v] == 0) q.offer(v);
+
+    int seen = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        seen++;
+        for (int v : g.get(u)) if (--in[v] == 0) q.offer(v);
+    }
+    return seen == n;
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 207, title: "Course Schedule", diff: "easy",
+  problem: "Given numCourses and prerequisites[i] = [course, pre], return whether it's possible to finish all courses.",
+  intuition: "Pure cycle detection. Build prereq edges as `pre → course`, run Kahn's, and check the processed count equals numCourses. If a cycle exists, two courses depend on each other and you can't finish.",
+  hints: [
+    "For each [course, pre], do `g[pre].add(course); indegree[course]++;`.",
+    "Seed Kahn's queue with every vertex whose indegree is 0.",
+    "Return `processed == numCourses`."
+  ],
+  tips: [
+    "DFS 3-color works just as well; pick whichever style you'll write fastest under stress.",
+    "If the input has duplicate edges, indegree counts them — that's fine, they cancel correctly.",
+    "Don't touch the graph after Kahn's finishes: indegree[] is now zeroed-out only for processed nodes."
+  ],
+  code: `/*
+ * Course Schedule. Kahn's BFS; possible iff every vertex is processed.
+ */
+boolean canFinish(int numCourses, int[][] prerequisites) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < numCourses; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[numCourses];
+
+    for (int[] p : prerequisites) {                      // [course, pre] → edge pre -> course
+        g.get(p[1]).add(p[0]);
+        indegree[p[0]]++;
+    }
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < numCourses; v++) if (indegree[v] == 0) q.offer(v);
+
+    int processed = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        processed++;
+        for (int v : g.get(u)) {
+            if (--indegree[v] == 0) q.offer(v);
+        }
+    }
+    return processed == numCourses;
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 210, title: "Course Schedule II", diff: "easy",
+  problem: "Same input as LC 207, but return any valid ordering of courses to take. Return [] if impossible.",
+  intuition: "Same Kahn's. Just record the order in which vertices are popped. If at the end processed != numCourses, return an empty array.",
+  hints: [
+    "Same setup as LC 207.",
+    "Maintain `int[] order = new int[numCourses]; int idx = 0;` and write to it on every pop.",
+    "Return `idx == numCourses ? order : new int[0]`."
+  ],
+  tips: [
+    "DFS post-order is equally valid here — push onto a stack on finish, pop into the result.",
+    "If you also need 'lexicographically smallest order', swap ArrayDeque for PriorityQueue.",
+    "Watch the off-by-one: order has exactly numCourses slots, no more."
+  ],
+  code: `/*
+ * Course Schedule II. Kahn's; the order of pops IS the topo order.
+ */
+int[] findOrder(int numCourses, int[][] prerequisites) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < numCourses; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[numCourses];
+
+    for (int[] p : prerequisites) {
+        g.get(p[1]).add(p[0]);
+        indegree[p[0]]++;
+    }
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < numCourses; v++) if (indegree[v] == 0) q.offer(v);
+
+    int[] order = new int[numCourses];
+    int idx = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        order[idx++] = u;
+        for (int v : g.get(u)) {
+            if (--indegree[v] == 0) q.offer(v);
+        }
+    }
+    return idx == numCourses ? order : new int[0];
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 1557, title: "Minimum Vertices to Reach All Nodes", diff: "easy",
+  problem: "Given a DAG with n nodes and edges, return the smallest set of vertices from which every other vertex is reachable.",
+  intuition: "A vertex with no incoming edges (indegree 0) cannot be reached from any other vertex; therefore EVERY indegree-0 vertex must be in the answer. Conversely, every vertex with indegree > 0 is reachable from SOME indegree-0 source (since the graph is a DAG). So the answer is exactly the indegree-0 set.",
+  hints: [
+    "Compute indegree[v] for each v.",
+    "Collect every v with indegree[v] == 0.",
+    "Return the list."
+  ],
+  tips: [
+    "No traversal is needed — just one pass over edges.",
+    "This proof relies on DAG-ness; on a graph with cycles you'd also need to consider whole SCCs.",
+    "Common trap: don't reach for BFS or DFS — the answer is purely structural."
+  ],
+  code: `/*
+ * Min Vertices to Reach All. The answer is the indegree-0 set.
+ */
+List<Integer> findSmallestSetOfVertices(int n, List<List<Integer>> edges) {
+
+    int[] indegree = new int[n];
+    for (List<Integer> e : edges) indegree[e.get(1)]++;
+
+    List<Integer> roots = new ArrayList<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) roots.add(v);
+    return roots;
+}`,
+  complexity: "Time O(V + E). Space O(V) for indegree."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+
+PROBLEMS.push({
+  num: 269, title: "Alien Dictionary", diff: "med",
+  problem: "Given a list of words sorted lexicographically by some unknown alphabet, return any valid alphabet order. If the order is invalid (cycle or prefix violation), return ''.",
+  intuition: "Each adjacent word pair gives ONE precedence rule between two letters: the first differing character of word[i] must come before that of word[i+1]. Build a graph of precedence edges, then topo-sort the letters. Two failure modes: (1) cycle, (2) word[i+1] is a strict prefix of word[i] which is illegal in any lexicographic order.",
+  hints: [
+    "Initialize an empty graph and indegree map keyed by every UNIQUE character seen across all words.",
+    "For each adjacent pair (a, b), find the first index where they differ; add edge a[i] → b[i]. If b is a strict prefix of a, return '' immediately.",
+    "Run Kahn's; if any letter remains with non-zero indegree, return ''."
+  ],
+  tips: [
+    "Don't add duplicate edges — a HashSet of children per node prevents indegree from being inflated by repeats.",
+    "Letters that appear in the input but participate in no edges are still part of the answer (any order). Seed the indegree map for ALL letters first.",
+    "PriorityQueue for ties only if the problem says 'lexicographically smallest valid order' — LC 269 does NOT require it."
+  ],
+  code: `/*
+ * Alien Dictionary. Kahn's on letter precedence graph.
+ */
+String alienOrder(String[] words) {
+
+    Map<Character, Set<Character>> g = new HashMap<>();
+    Map<Character, Integer> indegree = new HashMap<>();
+    for (String w : words)
+        for (char c : w.toCharArray()) {
+            indegree.putIfAbsent(c, 0);
+            g.putIfAbsent(c, new HashSet<>());
+        }
+
+    // Build precedence edges from adjacent word pairs.
+    for (int i = 0; i + 1 < words.length; i++) {
+        String a = words[i], b = words[i + 1];
+        if (a.length() > b.length() && a.startsWith(b)) return "";   // prefix violation
+        int len = Math.min(a.length(), b.length());
+        for (int j = 0; j < len; j++) {
+            char ca = a.charAt(j), cb = b.charAt(j);
+            if (ca != cb) {
+                if (g.get(ca).add(cb)) indegree.merge(cb, 1, Integer::sum);
+                break;
+            }
+        }
+    }
+
+    // Kahn's BFS.
+    Deque<Character> q = new ArrayDeque<>();
+    for (var e : indegree.entrySet()) if (e.getValue() == 0) q.offer(e.getKey());
+
+    StringBuilder out = new StringBuilder();
+    while (!q.isEmpty()) {
+        char u = q.poll();
+        out.append(u);
+        for (char v : g.get(u)) {
+            if (indegree.merge(v, -1, Integer::sum) == 0) q.offer(v);
+        }
+    }
+    return out.length() == indegree.size() ? out.toString() : "";
+}`,
+  complexity: "Time O(C + N) where C = total characters across all words and N = adjacent-pair comparisons. Space O(unique chars + edges)."
+});
+
+PROBLEMS.push({
+  num: 802, title: "Find Eventual Safe States", diff: "med",
+  problem: "A node is 'safe' if EVERY path from it eventually reaches a terminal node (out-degree 0). Return the sorted list of safe nodes.",
+  intuition: "Reverse the graph. A node is safe iff it has no path that reaches a cycle. In the reversed graph, terminal nodes become indegree-0 nodes (they had outdegree 0 originally). Run Kahn's on the reversed graph; every node Kahn's processes is safe. Sort and return.",
+  hints: [
+    "Build `gRev` where for each edge u → v in the original, add v → u.",
+    "Indegree in the reversed graph = original out-degree.",
+    "Kahn's pops every safe node; collect them, sort, return."
+  ],
+  tips: [
+    "Equivalent DFS: 3-color the graph; nodes that finish without ever touching a GRAY node are safe.",
+    "Don't reverse using copies of the lists — just iterate original edges once.",
+    "Watch the sort at the end — LC 802 wants results in ascending order."
+  ],
+  code: `/*
+ * Eventual Safe States. Reverse the graph and run Kahn's.
+ *   In the reverse graph, original out-degree becomes indegree.
+ *   Every node that Kahn's processes can reach only terminals → safe.
+ */
+List<Integer> eventualSafeNodes(int[][] graph) {
+
+    int n = graph.length;
+    List<List<Integer>> gRev = new ArrayList<>();
+    for (int i = 0; i < n; i++) gRev.add(new ArrayList<>());
+    int[] indegree = new int[n];                         // = original out-degree
+
+    for (int u = 0; u < n; u++) {
+        for (int v : graph[u]) {
+            gRev.get(v).add(u);
+            indegree[u]++;
+        }
+    }
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+
+    boolean[] safe = new boolean[n];
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        safe[u] = true;
+        for (int v : gRev.get(u)) {
+            if (--indegree[v] == 0) q.offer(v);
+        }
+    }
+
+    List<Integer> res = new ArrayList<>();
+    for (int v = 0; v < n; v++) if (safe[v]) res.add(v);
+    return res;                                          // already sorted by node id
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 310, title: "Minimum Height Trees", diff: "med",
+  problem: "Given an undirected tree of n nodes, return all root labels that minimize the tree's height when used as the root. The answer has at most 2 nodes.",
+  intuition: "Topological-style 'leaf peeling' on an undirected tree. Repeatedly remove all leaves (degree 1 nodes) until 1 or 2 nodes remain — those are the centroids of the tree, and rooting at them yields minimum height. The trick: this is exactly Kahn's, except 'indegree' is replaced by 'degree' on an undirected graph.",
+  hints: [
+    "Build adjacency list and `degree[]`.",
+    "Seed the queue with every vertex whose degree == 1 (the initial leaves).",
+    "Each round: pop ALL current leaves and decrement their neighbors' degree; any neighbor that becomes a new leaf is queued for the next round. Track the LAST set of survivors."
+  ],
+  tips: [
+    "Track 'remaining' count and exit when remaining <= 2 — the survivors are the answer.",
+    "Edge cases: n == 1 → return [0]; n == 2 → both vertices are answers.",
+    "This is the same shape as 'level-by-level Kahn's' (LC 2050) — the two share a kernel."
+  ],
+  code: `/*
+ * Minimum Height Trees. Leaf-peeling Kahn's on an undirected tree.
+ */
+List<Integer> findMinHeightTrees(int n, int[][] edges) {
+
+    if (n == 1) return List.of(0);
+
+    List<Set<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new HashSet<>());
+    for (int[] e : edges) {
+        g.get(e[0]).add(e[1]);
+        g.get(e[1]).add(e[0]);
+    }
+
+    List<Integer> leaves = new ArrayList<>();
+    for (int v = 0; v < n; v++) if (g.get(v).size() == 1) leaves.add(v);
+
+    int remaining = n;
+    while (remaining > 2) {
+        remaining -= leaves.size();
+        List<Integer> next = new ArrayList<>();
+        for (int leaf : leaves) {
+            int neighbor = g.get(leaf).iterator().next();
+            g.get(neighbor).remove(leaf);
+            if (g.get(neighbor).size() == 1) next.add(neighbor);
+        }
+        leaves = next;
+    }
+    return leaves;                                       // 1 or 2 centroids
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 444, title: "Sequence Reconstruction", diff: "med",
+  problem: "Given a target permutation `nums` and a list of subsequences `sequences`, return whether `nums` is the UNIQUE supersequence of all the given sequences (i.e., the only valid topological order).",
+  intuition: "Build precedence edges from each sequence (consecutive pairs). For uniqueness, Kahn's must have AT MOST ONE indegree-0 node at every step — otherwise multiple orderings are possible. Also the produced order must equal `nums`.",
+  hints: [
+    "For each sequence, add edges `seq[i] → seq[i+1]`.",
+    "Run Kahn's. If at any point the queue has size > 1, return false.",
+    "Compare the produced order against `nums` element by element."
+  ],
+  tips: [
+    "Don't double-count: dedupe edges with a HashSet per source node.",
+    "Use indegree on a HashMap if labels aren't 0-indexed contiguously, or a plain int[] if they are.",
+    "The 'queue size > 1' check is what distinguishes 'a topo order' from 'the topo order'."
+  ],
+  code: `/*
+ * Sequence Reconstruction. Topo sort with a uniqueness check
+ * (queue must NEVER hold more than one element).
+ */
+boolean sequenceReconstruction(int[] nums, List<List<Integer>> sequences) {
+
+    int n = nums.length;
+    Map<Integer, Set<Integer>> g = new HashMap<>();
+    Map<Integer, Integer> indegree = new HashMap<>();
+    for (int v : nums) {
+        g.put(v, new HashSet<>());
+        indegree.put(v, 0);
+    }
+
+    for (List<Integer> seq : sequences) {
+        for (int i = 0; i + 1 < seq.size(); i++) {
+            int u = seq.get(i), v = seq.get(i + 1);
+            if (!g.containsKey(u) || !g.containsKey(v)) return false;
+            if (g.get(u).add(v)) indegree.merge(v, 1, Integer::sum);
+        }
+    }
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (var e : indegree.entrySet()) if (e.getValue() == 0) q.offer(e.getKey());
+
+    int idx = 0;
+    while (!q.isEmpty()) {
+        if (q.size() > 1) return false;                  // ambiguous order
+        int u = q.poll();
+        if (idx >= n || nums[idx++] != u) return false;
+        for (int v : g.get(u)) {
+            if (indegree.merge(v, -1, Integer::sum) == 0) q.offer(v);
+        }
+    }
+    return idx == n;
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 2050, title: "Parallel Courses III (DAG DP on topo order)", diff: "med",
+  problem: "Given n courses, time[i] for each, and prerequisite edges, return the minimum total months to finish all courses, assuming you can take courses in parallel.",
+  intuition: "Topo sort + DAG DP. dp[v] = earliest finish time for v = `time[v] + max(dp[u] for every u → v)`. Process vertices in topo order so that all u are finalized before v. Answer = max(dp[v]) over all v.",
+  hints: [
+    "Run Kahn's; on each pop u, for every neighbor v do `dp[v] = max(dp[v], dp[u]); indegree[v]--`. After ALL incoming u finalize, add `time[v]` to dp[v].",
+    "Easier: when v's indegree becomes 0 (just before pushing it), do `dp[v] += time[v]`.",
+    "Track `ans = max(ans, dp[v])` at finalization."
+  ],
+  tips: [
+    "Same skeleton solves shortest / longest path on a DAG, count of paths, etc.",
+    "Don't add `time[v]` inside the loop over u — that double-counts.",
+    "Disconnected DAGs are handled automatically because Kahn's finalizes each component independently."
+  ],
+  code: `/*
+ * Parallel Courses III. Kahn's + DAG DP.
+ *   dp[v] = earliest finish time of course v.
+ *   When v's indegree drops to 0, dp[v] += time[v]; then push to queue.
+ */
+int minimumTime(int n, int[][] relations, int[] time) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+    for (int[] r : relations) {                          // [pre, course]: pre → course
+        g.get(r[0] - 1).add(r[1] - 1);
+        indegree[r[1] - 1]++;
+    }
+
+    int[] dp = new int[n];
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) {
+        if (indegree[v] == 0) {
+            dp[v] = time[v];
+            q.offer(v);
+        }
+    }
+
+    int ans = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        ans = Math.max(ans, dp[u]);
+        for (int v : g.get(u)) {
+            dp[v] = Math.max(dp[v], dp[u]);              // accumulate predecessors
+            if (--indegree[v] == 0) {
+                dp[v] += time[v];
+                q.offer(v);
+            }
+        }
+    }
+    return ans;
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 1136, title: "Parallel Courses (Number of Semesters)", diff: "med",
+  problem: "Given n courses (1-indexed) and prerequisite edges, return the minimum number of semesters to finish them. Each semester you may take any subset of courses whose prerequisites are done. Return -1 if impossible.",
+  intuition: "Wave Kahn's. Each BFS LEVEL is one semester: pop ALL currently indegree-0 courses, increment a level counter, then push their newly-indegree-0 neighbors. If at the end you haven't processed all courses, return -1.",
+  hints: [
+    "Standard Kahn's, but process the queue in 'levels' using a `for (int sz = q.size(); sz-- > 0;)` loop.",
+    "Increment the semester counter on each non-empty level.",
+    "Return semesters or -1 if cycle."
+  ],
+  tips: [
+    "This 'level Kahn's' template is the go-to whenever the question says 'in parallel' or 'in waves'.",
+    "If only PARTIAL progress matters (e.g., LC 2127), you'd need DFS-on-functional-graph instead.",
+    "Don't confuse with LC 2050 — that one weights the courses; this one only counts semesters."
+  ],
+  code: `/*
+ * Parallel Courses. Wave Kahn's; each wave is one semester.
+ */
+int minimumSemesters(int n, int[][] relations) {
+
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i <= n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n + 1];
+    for (int[] r : relations) {
+        g.get(r[0]).add(r[1]);
+        indegree[r[1]]++;
+    }
+
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 1; v <= n; v++) if (indegree[v] == 0) q.offer(v);
+
+    int semesters = 0, processed = 0;
+    while (!q.isEmpty()) {
+        semesters++;
+        int sz = q.size();
+        while (sz-- > 0) {
+            int u = q.poll();
+            processed++;
+            for (int v : g.get(u)) if (--indegree[v] == 0) q.offer(v);
+        }
+    }
+    return processed == n ? semesters : -1;
+}`,
+  complexity: "Time O(V + E). Space O(V + E)."
+});
+
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 1203, title: "Sort Items by Groups Respecting Dependencies", diff: "hard",
+  problem: "Given n items and m groups (some items group = -1 meaning 'own group'), plus beforeItems describing per-item dependencies, return a valid ordering that respects both intra-group and inter-group dependencies. Return [] if impossible.",
+  intuition: "Two-level topological sort. Build a DAG of GROUPS (group A → group B if any item in A must precede an item in B), and within each group a DAG of ITEMS. Topo-sort groups; topo-sort items inside each group; concatenate the within-group orderings in group-topo order. Ungrouped items go into singleton groups.",
+  hints: [
+    "Assign every item with group == -1 a unique fresh group id starting at m.",
+    "For each beforeItems edge u → v, add an item edge u → v AND, if `group[u] != group[v]`, a group edge `group[u] → group[v]`.",
+    "Run Kahn's twice: once on the group DAG, once on the item DAG. If either has a cycle, return [].",
+    "Bucket items by their group; emit in group-topo order, items within a group emitted in item-topo order."
+  ],
+  tips: [
+    "Don't forget to dedupe edges — duplicate group edges inflate group-indegree and break Kahn's.",
+    "If you topo-sort items globally first and then group, you get a valid ordering by lemma — but the two-level method is more readable.",
+    "This is one of those problems where carefully naming your variables (itemEdges, groupEdges, itemIndeg, groupIndeg) is half the battle."
+  ],
+  code: `/*
+ * Sort Items by Groups. Two-level topo:
+ *   1) Topo-sort the group DAG.
+ *   2) Inside each group, topo-sort the item DAG.
+ *   3) Concatenate.
+ */
+int[] sortItems(int n, int m, int[] group, List<List<Integer>> beforeItems) {
+
+    // Give every -1 group a fresh group id.
+    for (int i = 0; i < n; i++) if (group[i] == -1) group[i] = m++;
+
+    List<List<Integer>> itemG  = new ArrayList<>();
+    List<List<Integer>> groupG = new ArrayList<>();
+    for (int i = 0; i < n; i++) itemG.add(new ArrayList<>());
+    for (int i = 0; i < m; i++) groupG.add(new ArrayList<>());
+    int[] itemIn  = new int[n];
+    int[] groupIn = new int[m];
+
+    for (int v = 0; v < n; v++) {
+        for (int u : beforeItems.get(v)) {                 // edge u -> v
+            itemG.get(u).add(v); itemIn[v]++;
+            if (group[u] != group[v]) {
+                groupG.get(group[u]).add(group[v]);
+                groupIn[group[v]]++;
+            }
+        }
+    }
+
+    int[] groupOrder = topo(groupG, groupIn, m);
+    if (groupOrder == null) return new int[0];
+
+    int[] itemOrder = topo(itemG, itemIn, n);
+    if (itemOrder == null) return new int[0];
+
+    // Bucket items by their group, IN item-topo order.
+    Map<Integer, List<Integer>> bucket = new HashMap<>();
+    for (int v : itemOrder) bucket.computeIfAbsent(group[v], k -> new ArrayList<>()).add(v);
+
+    int[] res = new int[n];
+    int idx = 0;
+    for (int gp : groupOrder) {
+        if (!bucket.containsKey(gp)) continue;
+        for (int v : bucket.get(gp)) res[idx++] = v;
+    }
+    return res;
+}
+
+private int[] topo(List<List<Integer>> g, int[] indeg, int n) {
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indeg[v] == 0) q.offer(v);
+    int[] order = new int[n];
+    int idx = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        order[idx++] = u;
+        for (int v : g.get(u)) if (--indeg[v] == 0) q.offer(v);
+    }
+    return idx == n ? order : null;
+}`,
+  complexity: "Time O(V + E) over both levels. Space O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 329, title: "Longest Increasing Path in a Matrix (DAG DP)", diff: "hard",
+  problem: "Given an m x n integer matrix, return the length of the longest strictly increasing path. From each cell you may move up/down/left/right.",
+  intuition: "Cells form an implicit DAG: edge (i, j) → (ni, nj) iff matrix[ni][nj] > matrix[i][j]. Topo-sort cells by value (or use memoized DFS, which IS topological evaluation in disguise) and DP `dp[i][j] = 1 + max(dp[neighbor])`.",
+  hints: [
+    "Memoized DFS: dp[i][j] = 1 + max over greater-valued neighbors.",
+    "No cycles to worry about — strictly-greater edges are inherently acyclic.",
+    "Answer = max(dp[i][j]) over all cells."
+  ],
+  tips: [
+    "Pure Kahn's is also possible: indegree counts how many neighbors have a STRICTLY GREATER value (i.e., how many out-edges enter this cell).",
+    "Memoization wins for code length; Kahn's wins when you also need 'count of paths' or other DAG-DP stats.",
+    "Cells with no greater neighbors are sinks → dp = 1."
+  ],
+  code: `/*
+ * Longest Increasing Path. Memoized DFS = topo evaluation on the implicit DAG.
+ */
+int[][] memo;
+int[][] mat;
+int M, N;
+
+int longestIncreasingPath(int[][] matrix) {
+    M = matrix.length; N = matrix[0].length; mat = matrix;
+    memo = new int[M][N];
+    int best = 0;
+    for (int i = 0; i < M; i++)
+        for (int j = 0; j < N; j++)
+            best = Math.max(best, dfs(i, j));
+    return best;
+}
+
+int dfs(int i, int j) {
+    if (memo[i][j] != 0) return memo[i][j];
+    int best = 1;
+    int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+    for (int[] d : dirs) {
+        int ni = i + d[0], nj = j + d[1];
+        if (ni >= 0 && nj >= 0 && ni < M && nj < N && mat[ni][nj] > mat[i][j]) {
+            best = Math.max(best, 1 + dfs(ni, nj));
+        }
+    }
+    return memo[i][j] = best;
+}`,
+  complexity: "Time O(M·N). Space O(M·N)."
+});
+
+PROBLEMS.push({
+  num: 1857, title: "Largest Color Value in a Directed Graph", diff: "hard",
+  problem: "Given a directed graph where each node has a color (a-z), return the largest color frequency along any path. If a cycle exists, return -1.",
+  intuition: "Topo-sort + DP keyed on color. dp[v][c] = max number of nodes of color c on any path ending at v. Transition along each edge u → v: dp[v][c] = max(dp[v][c], dp[u][c]); after finalizing all incoming edges, increment dp[v][color(v)] by 1. The answer is max(dp[v][c]).",
+  hints: [
+    "Kahn's drives the order; while popping u, propagate dp[u][*] into every v with edge u → v.",
+    "After v's indegree drops to 0 (queue push moment), bump dp[v][color[v]] by 1 — that 'finalizes' v.",
+    "If processed != n, there's a cycle → return -1."
+  ],
+  tips: [
+    "26 colors fit in a small int[26] per vertex — stack memory ~26·V ints.",
+    "Don't bump the color counter inside the propagation loop; bump it ONCE per vertex when it leaves the queue.",
+    "If colors were unbounded, you'd switch to per-color BFS — the int[26] trick is what makes O(26 · (V + E))."
+  ],
+  code: `/*
+ * Largest Color Value in a Directed Graph. Kahn's + dp[v][c].
+ */
+int largestPathValue(String colors, int[][] edges) {
+
+    int n = colors.length();
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+    for (int[] e : edges) {
+        g.get(e[0]).add(e[1]);
+        indegree[e[1]]++;
+    }
+
+    int[][] dp = new int[n][26];
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+
+    int processed = 0, best = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        processed++;
+        dp[u][colors.charAt(u) - 'a']++;                 // finalize u
+        best = Math.max(best, dp[u][colors.charAt(u) - 'a']);
+
+        for (int v : g.get(u)) {
+            for (int c = 0; c < 26; c++) {
+                dp[v][c] = Math.max(dp[v][c], dp[u][c]);
+            }
+            if (--indegree[v] == 0) q.offer(v);
+        }
+    }
+    return processed == n ? best : -1;
+}`,
+  complexity: "Time O(26 · (V + E)). Space O(26 · V)."
+});
+
+PROBLEMS.push({
+  num: 685, title: "Redundant Connection II (cycle in directed graph)", diff: "hard",
+  problem: "Given a directed graph that was originally a rooted tree but had ONE extra edge added, return the edge that should be removed to restore a valid tree. If multiple answers exist, return the LAST one in the input.",
+  intuition: "Two failure modes overlap. (a) A vertex has indegree 2 — two parents — pick one of those two edges to remove. (b) The graph has a cycle. The trick: try removing the LATER of the two parent edges first; if the remaining graph has a cycle, that wasn't the right one — remove the earlier instead.",
+  hints: [
+    "Scan edges; if any vertex gains indegree 2, record both parent edges as `cand1` (earlier) and `cand2` (later).",
+    "Use Union-Find on the remaining edges (skip cand2 if it exists). If you ever union two already-connected vertices, you've found a cycle.",
+    "Three cases: no double-parent → return the cycle edge; double-parent and no cycle → return cand2; double-parent and cycle → return cand1."
+  ],
+  tips: [
+    "This is more of a graph-structure puzzle than pure topo sort, but it sits in the same toolbox: cycle detection is the fundamental primitive.",
+    "Union-Find is much cleaner than tracking colors here because directed edges + tree structure simplify the math.",
+    "Test on the three example shapes (LC has them) to make sure both branches work."
+  ],
+  code: `/*
+ * Redundant Connection II.
+ *   Phase 1: detect a 'two parents' case → remember cand1 (earlier), cand2 (later).
+ *   Phase 2: build with Union-Find skipping cand2; cycle ⇒ return cand1, else cand2.
+ *   If no double-parent ⇒ return whichever edge created the cycle.
+ */
+int[] findRedundantDirectedConnection(int[][] edges) {
+
+    int n = edges.length;
+    int[] parent = new int[n + 1];
+    int[] cand1 = null, cand2 = null;
+
+    // Phase 1: detect double parent.
+    for (int[] e : edges) {
+        int u = e[0], v = e[1];
+        if (parent[v] == 0) {
+            parent[v] = u;
+        } else {
+            cand1 = new int[]{parent[v], v};
+            cand2 = new int[]{u, v};
+            e[1] = 0;                                    // mark to skip in phase 2
+        }
+    }
+
+    // Phase 2: Union-Find (skipping the marked edge if any).
+    int[] uf = new int[n + 1];
+    for (int i = 0; i <= n; i++) uf[i] = i;
+
+    for (int[] e : edges) {
+        if (e[1] == 0) continue;
+        int ru = find(uf, e[0]), rv = find(uf, e[1]);
+        if (ru == rv) {                                  // cycle
+            return cand1 == null ? e : cand1;
+        }
+        uf[rv] = ru;
+    }
+    return cand2;
+}
+
+private int find(int[] uf, int x) {
+    while (uf[x] != x) { uf[x] = uf[uf[x]]; x = uf[x]; }
+    return x;
+}`,
+  complexity: "Time O(N · α(N)). Space O(N)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Java syntax highlighter. */
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','Random','Collections','Arrays','Math','Comparator','Objects','Map.Entry'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = `
+      <div class="brief-root">
+        <header class="brief-header">
+          <div class="brief-subtitle">JAVA</div>
+          <h1 class="brief-title">Topological Sort</h1>
+          <p class="brief-tagline">Pick an algorithm → step through the run → understand the order</p>
+        </header>
+        <div class="op-tabs" id="briefOpTabs"></div>
+        <div class="panel" id="briefMainPanel"></div>
+        <div class="cheat">
+          <div class="section-label">CHEAT SHEET — COMMON PATTERNS</div>
+          <div id="briefCheatSheet"></div>
+        </div>
+        <div class="brief-footer">DAG &middot; KAHN &middot; DFS POST-ORDER</div>
+      </div>
+    `;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    initBriefMode();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+/* theme toggle */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+
+/* ===== BRIEF MODE: interactive topo-sort explorer ===== */
+const BRIEF_OPS = [
+  {
+    id:"kahn", name:"Kahn's BFS", color:"#2563eb", colorDark:"#58a6ff",
+    desc:"Peel off indegree-0 vertices in waves. Each pop appends to the order.",
+    rule:"queue ← {v : indegree[v] == 0}; pop, decrement neighbors, repeat.",
+    label:"KAHN'S BFS",
+    examples:[
+      { title:"Course Schedule II — return any valid topo order",
+        code:`int[] findOrder(int n, int[][] prerequisites) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+    for (int[] p : prerequisites) {
+        g.get(p[1]).add(p[0]);
+        indegree[p[0]]++;
+    }
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+    int[] order = new int[n]; int idx = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        order[idx++] = u;
+        for (int v : g.get(u)) if (--indegree[v] == 0) q.offer(v);
+    }
+    return idx == n ? order : new int[0];
+}`,
+        why:"Kahn's BFS naturally produces a topo order and reports cycles by leaving vertices unprocessed." },
+    ],
+  },
+  {
+    id:"dfs", name:"DFS post-order", color:"#16a34a", colorDark:"#76ff03",
+    desc:"Recurse, push each vertex onto a stack as it FINISHES. The reverse of finish order = topo order.",
+    rule:"3 colors: WHITE → GRAY → BLACK. Back-edge to GRAY = cycle.",
+    label:"DFS",
+    examples:[
+      { title:"DFS post-order with 3-color cycle detection",
+        code:`int[] color;
+Deque<Integer> stack;
+boolean cycle;
+
+int[] topoDFS(int n, List<List<Integer>> g) {
+    color = new int[n];
+    stack = new ArrayDeque<>();
+    cycle = false;
+    for (int v = 0; v < n; v++) {
+        if (color[v] == 0) dfs(v, g);
+        if (cycle) return new int[0];
+    }
+    int[] order = new int[n]; int i = 0;
+    while (!stack.isEmpty()) order[i++] = stack.pop();
+    return order;
+}
+
+void dfs(int u, List<List<Integer>> g) {
+    color[u] = 1;
+    for (int v : g.get(u)) {
+        if (color[v] == 1) { cycle = true; return; }
+        if (color[v] == 0) { dfs(v, g); if (cycle) return; }
+    }
+    color[u] = 2;
+    stack.push(u);
+}`,
+        why:"Pushing on FINISH gives reverse-topo. Pop the stack into the result to get topo order. Back-edge to GRAY catches every cycle." },
+    ],
+  },
+  {
+    id:"cycle", name:"Cycle Test", color:"#dc2626", colorDark:"#ff7b72",
+    desc:"A topo order exists iff the graph is a DAG. Both Kahn's and DFS report cycles for free.",
+    rule:"Kahn's: processed != V → cycle.   DFS: any back-edge to GRAY → cycle.",
+    label:"CYCLE TEST",
+    examples:[
+      { title:"Course Schedule (LC 207) — pure cycle test",
+        code:`boolean canFinish(int n, int[][] prerequisites) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+    for (int[] p : prerequisites) {
+        g.get(p[1]).add(p[0]);
+        indegree[p[0]]++;
+    }
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+    int processed = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        processed++;
+        for (int v : g.get(u)) if (--indegree[v] == 0) q.offer(v);
+    }
+    return processed == n;
+}`,
+        why:"You don't need the order itself — only whether the BFS could process every vertex." },
+    ],
+  },
+  {
+    id:"lex", name:"Lexicographic", color:"#d97706", colorDark:"#ffd740",
+    desc:"Smallest topo order by vertex label: replace the FIFO queue with a min-heap.",
+    rule:"PriorityQueue<Integer> instead of ArrayDeque<Integer>.",
+    label:"LEX SMALLEST",
+    examples:[
+      { title:"Lexicographically smallest topo order",
+        code:`int[] lexTopo(int n, int[][] edges) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+    for (int[] e : edges) {
+        g.get(e[0]).add(e[1]);
+        indegree[e[1]]++;
+    }
+    PriorityQueue<Integer> q = new PriorityQueue<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+    int[] order = new int[n]; int idx = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        order[idx++] = u;
+        for (int v : g.get(u)) if (--indegree[v] == 0) q.offer(v);
+    }
+    return idx == n ? order : new int[0];
+}`,
+        why:"At every wave, picking the min-labeled indegree-0 vertex is the only optional choice that actually changes the order." },
+    ],
+  },
+  {
+    id:"dag-dp", name:"DAG DP", color:"#9333ea", colorDark:"#ea80fc",
+    desc:"Once topo-sorted, sweep in topo order to compute longest/shortest/count of paths in O(V + E).",
+    rule:"For each u in topo order: relax every edge u → v.",
+    label:"DAG DP",
+    examples:[
+      { title:"Longest path in a DAG (in vertices)",
+        code:`int longestPathDAG(int n, int[][] edges) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    int[] indegree = new int[n];
+    for (int[] e : edges) { g.get(e[0]).add(e[1]); indegree[e[1]]++; }
+    Deque<Integer> q = new ArrayDeque<>();
+    int[] dp = new int[n];
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) { dp[v] = 1; q.offer(v); }
+    int best = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        best = Math.max(best, dp[u]);
+        for (int v : g.get(u)) {
+            dp[v] = Math.max(dp[v], dp[u] + 1);
+            if (--indegree[v] == 0) q.offer(v);
+        }
+    }
+    return best;
+}`,
+        why:"Topo order guarantees all predecessors of v are finalized before v is touched, so a single linear sweep suffices." },
+    ],
+  },
+  {
+    id:"demorgan", name:"De Morgan", color:"#0d9488", colorDark:"#a7ffeb",
+    desc:"NOT(A AND B) == (NOT A) OR (NOT B). Flip 'a topo order exists' into 'no cycle exists' and back.",
+    rule:"DAG  ≡  NOT (cycle)  ≡  every vertex Kahn's-processable",
+    label:"DE MORGAN",
+    examples:[
+      { title:"Cycle vs DAG via boolean negation",
+        code:`// 'Bad case' = cycle exists  ≡  some vertex never reaches indegree 0.
+boolean hasCycle(int n, List<List<Integer>> g, int[] indegree) {
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int v = 0; v < n; v++) if (indegree[v] == 0) q.offer(v);
+    int seen = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll(); seen++;
+        for (int v : g.get(u)) if (--indegree[v] == 0) q.offer(v);
+    }
+    return seen != n;          // negation of 'every vertex is seen'
+}
+
+// De Morgan: NOT (every v is seen)  ≡  (some v is unseen)
+//   == 'cycle exists'.
+// Therefore: 'topo order exists' (DAG)  ≡  'every v is seen' (Kahn's success).`,
+        why:"Knowing this duality lets you switch between writing the cycle check and writing the DAG-success check without re-deriving each one." },
+    ],
+  },
+];
+
+const BRIEF_CHEAT_ITEMS = [
+  ["Build graph + indegree",   "g.get(u).add(v); indegree[v]++;"],
+  ["Kahn's seed",              "if (indegree[v] == 0) q.offer(v);"],
+  ["Kahn's pop step",          "if (--indegree[v] == 0) q.offer(v);"],
+  ["Cycle test",               "processed != n  ⇒  cycle"],
+  ["DFS 3 colors",             "0 = WHITE, 1 = GRAY, 2 = BLACK"],
+  ["Back-edge",                "edge u→v with color[v] == GRAY"],
+  ["Push on finish",           "stack.push(u); after recursion done"],
+  ["Pop stack to result",      "while (!stack.isEmpty()) order[i++] = stack.pop();"],
+  ["Lex smallest",             "PriorityQueue<Integer> instead of Deque"],
+  ["Wave Kahn's (semesters)",  "for (int sz = q.size(); sz-- > 0;)"],
+  ["DAG DP transition",        "dp[v] = max(dp[v], dp[u] + w(u,v))"],
+];
+
+let briefCurrentOp = BRIEF_OPS[0];
+let briefCurrentEx = 0;
+let briefWhyOpen = {};
+// Default sample DAG for the visualization: 6 nodes, classic textbook DAG.
+const SAMPLE_DAG = {
+  n: 6,
+  edges: [[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]],
+};
+const NODE_POS = [
+  {x: 60,  y: 110},
+  {x: 200, y: 50 },
+  {x: 200, y: 170},
+  {x: 360, y: 110},
+  {x: 360, y: 200},
+  {x: 520, y: 110},
+];
+
+function briefOpColor(op) {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+    ? (op.colorDark || op.color)
+    : op.color;
+}
+
+function briefRunKahn(dag) {
+  const indeg = new Array(dag.n).fill(0);
+  const g = Array.from({length: dag.n}, () => []);
+  for (const [u, v] of dag.edges) { g[u].push(v); indeg[v]++; }
+  const q = []; const order = [];
+  for (let v = 0; v < dag.n; v++) if (indeg[v] === 0) q.push(v);
+  while (q.length) {
+    const u = q.shift();
+    order.push(u);
+    for (const v of g[u]) if (--indeg[v] === 0) q.push(v);
+  }
+  return order;
+}
+
+function briefRenderGraph(dag, highlight) {
+  const w = 600, h = 240;
+  let svg = `<svg class="graph-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">`;
+  // arrow marker
+  svg += `<defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5"
+      markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)" />
+    </marker>
+  </defs>`;
+  // edges
+  for (const [u, v] of dag.edges) {
+    const a = NODE_POS[u], b = NODE_POS[v];
+    // shorten to circle radius
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    const ux = dx/len, uy = dy/len;
+    const r = 22;
+    svg += `<line x1="${a.x + ux*r}" y1="${a.y + uy*r}"
+                  x2="${b.x - ux*r}" y2="${b.y - uy*r}"
+                  stroke="var(--muted)" stroke-width="2"
+                  marker-end="url(#arrow)" />`;
+  }
+  // nodes
+  for (let i = 0; i < dag.n; i++) {
+    const p = NODE_POS[i];
+    const isOrder = highlight.indexOf(i);
+    const fill = isOrder >= 0
+      ? `var(--accent)`
+      : `var(--card)`;
+    const text = isOrder >= 0 ? '#fff' : 'var(--fg)';
+    svg += `<g>
+      <circle cx="${p.x}" cy="${p.y}" r="22"
+              fill="${fill}" stroke="var(--accent)" stroke-width="2" />
+      <text x="${p.x}" y="${p.y + 5}" text-anchor="middle"
+            font-size="14" font-weight="700" fill="${text}"
+            class="node-label">${i}</text>
+      ${isOrder >= 0 ? `<text x="${p.x}" y="${p.y - 30}"
+            text-anchor="middle" font-size="11" font-weight="700"
+            fill="var(--accent)">#${isOrder + 1}</text>` : ''}
+    </g>`;
+  }
+  svg += `</svg>`;
+  return svg;
+}
+
+function briefRenderPanel() {
+
+  const op = briefCurrentOp;
+  const color = briefOpColor(op);
+  const order = briefRunKahn(SAMPLE_DAG);
+  const orderStr = order.join(' → ');
+
+  let resultLine = '';
+  if (op.id === 'kahn' || op.id === 'dfs' || op.id === 'lex') {
+    resultLine = `topo order = <span class="result-pill yes">${orderStr}</span>`;
+  } else if (op.id === 'cycle') {
+    const isDag = order.length === SAMPLE_DAG.n;
+    resultLine = `is DAG? <span class="result-pill ${isDag ? 'yes' : 'no'}">${isDag ? 'YES' : 'CYCLE'}</span>`;
+  } else if (op.id === 'dag-dp') {
+    // longest path in vertices
+    const indeg = new Array(SAMPLE_DAG.n).fill(0);
+    const g = Array.from({length: SAMPLE_DAG.n}, () => []);
+    for (const [u, v] of SAMPLE_DAG.edges) { g[u].push(v); indeg[v]++; }
+    const dp = new Array(SAMPLE_DAG.n).fill(1);
+    for (const u of order) {
+      for (const v of g[u]) dp[v] = Math.max(dp[v], dp[u] + 1);
+    }
+    const best = Math.max(...dp);
+    resultLine = `longest path length = <span class="result-pill yes">${best} vertices</span>`;
+  } else {
+    resultLine = `topo exists ⇔ no cycle &nbsp; <span class="result-pill yes">DAG</span>`;
+  }
+
+  const exTabs = op.examples.map((e, i) =>
+    `<div class="ex-tab" data-i="${i}" style="${i === briefCurrentEx ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(e.title)}</div>`
+  ).join('');
+
+  const ex = op.examples[briefCurrentEx];
+  const whyOpen = briefWhyOpen[op.id + ':' + briefCurrentEx];
+
+  document.getElementById('briefMainPanel').innerHTML = `
+    <div class="op-badge" style="background:${color}22; color:${color}; border:1px solid ${color}">${op.label}</div>
+    <div class="op-desc">${escapeHtml(op.desc)}</div>
+    <div class="op-rule">${escapeHtml(op.rule)}</div>
+
+    <div class="calc-box">
+      <div class="section-label" style="margin-bottom:8px;">SAMPLE DAG (Kahn's run)</div>
+      ${briefRenderGraph(SAMPLE_DAG, order)}
+      <div class="result-line">${resultLine}</div>
+    </div>
+
+    <div class="section-label">EXAMPLES</div>
+    <div class="ex-tabs">${exTabs}</div>
+    <div class="ex-box">
+      <div class="ex-title" style="color:${color}">${escapeHtml(ex.title)}</div>
+      <pre class="brief-pre"><code>${highlightJava(ex.code)}</code></pre>
+      <div class="why-toggle" data-key="${op.id}:${briefCurrentEx}">${whyOpen ? '▼' : '▶'} Why does this work?</div>
+      <div class="why-body ${whyOpen ? 'visible' : ''}">${escapeHtml(ex.why)}</div>
+    </div>
+  `;
+
+  document.querySelectorAll('#briefMainPanel .ex-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentEx = +t.dataset.i;
+      briefRenderPanel();
+    });
+  });
+
+  const wt = document.querySelector('#briefMainPanel .why-toggle');
+  if (wt) {
+    wt.addEventListener('click', () => {
+      const key = wt.dataset.key;
+      briefWhyOpen[key] = !briefWhyOpen[key];
+      briefRenderPanel();
+    });
+  }
+}
+
+function briefRenderOpTabs() {
+  const html = BRIEF_OPS.map(op => {
+    const color = briefOpColor(op);
+    const active = op.id === briefCurrentOp.id;
+    return `<div class="op-tab" data-id="${op.id}"
+      style="${active ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(op.name)}</div>`;
+  }).join('');
+  document.getElementById('briefOpTabs').innerHTML = html;
+  document.querySelectorAll('#briefOpTabs .op-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentOp = BRIEF_OPS.find(o => o.id === t.dataset.id);
+      briefCurrentEx = 0;
+      briefRenderOpTabs();
+      briefRenderPanel();
+    });
+  });
+}
+
+function briefRenderCheatSheet() {
+  document.getElementById('briefCheatSheet').innerHTML = BRIEF_CHEAT_ITEMS.map(([n, c]) =>
+    `<div class="cheat-row"><span class="cheat-name">${escapeHtml(n)}</span><span class="cheat-code">${escapeHtml(c)}</span></div>`
+  ).join('');
+}
+
+function initBriefMode() {
+  briefRenderOpTabs();
+  briefRenderPanel();
+  briefRenderCheatSheet();
+}
+
+// Re-render brief when the theme toggles so colors track CSS vars.
+const briefThemeObserver = new MutationObserver(() => {
+  if (state.diff === 'brief') {
+    briefRenderOpTabs();
+    briefRenderPanel();
+  }
+});
+briefThemeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['data-theme'],
+});
+
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Merge Intervals — Patterns, Cheatsheet & Java Snippets</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  /* HAMBURGER + TOC SIDEBAR */
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* HERO + TABS */
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  /* ===== BRIEF TAB (interactive interval explorer) ===== */
+  body.brief-mode .nav-bar { display: none; }
+
+  .brief-root {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    color: var(--fg);
+  }
+  .brief-root .brief-header { text-align: center; margin-bottom: 32px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #2563eb, #16a34a, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  [data-theme="dark"] .brief-root .brief-title {
+    background: linear-gradient(90deg, #58a6ff, #76ff03, #ffd740);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+
+  .brief-root .op-tabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 28px;
+  }
+  .brief-root .op-tab {
+    padding: 8px 16px; border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--card); color: var(--muted);
+    cursor: pointer; font-family: inherit;
+    font-weight: 700; font-size: 14px;
+    transition: all 0.18s;
+  }
+
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 24px;
+  }
+  .brief-root .op-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+  .brief-root .op-desc { margin: 10px 0 4px; color: var(--fg); font-size: 14px; }
+  .brief-root .op-rule { color: var(--muted); font-size: 12px; }
+
+  .brief-root .calc-box {
+    background: var(--code-bg); border-radius: 12px;
+    padding: 20px; margin: 20px 0; border: 1px solid var(--border);
+  }
+  .brief-root .input-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .brief-root .input-label { color: var(--muted); font-size: 12px; min-width: 60px; }
+  .brief-root input[type=number] {
+    width: 70px; padding: 6px 10px; border-radius: 6px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--fg); font-family: inherit; font-size: 14px;
+  }
+
+  /* Interval timeline visualization */
+  .brief-root .timeline {
+    position: relative; height: 36px; margin: 6px 0 18px 0;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .brief-root .timeline .track {
+    position: absolute; top: 8px; height: 20px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 11px; font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .brief-root .axis {
+    display: flex; justify-content: space-between;
+    color: var(--muted); font-size: 10px; margin-top: -10px; padding: 0 2px;
+  }
+  .brief-root .result-line { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .brief-root .result-pill {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 20px; font-weight: 700; font-size: 12px;
+    margin-left: 8px;
+  }
+  .brief-root .result-pill.yes { background: rgba(22,163,74,.15); color: var(--easy); border: 1px solid var(--easy); }
+  .brief-root .result-pill.no  { background: rgba(220,38,38,.15); color: var(--hard); border: 1px solid var(--hard); }
+
+  .brief-root .section-label {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 3px; margin-bottom: 12px;
+  }
+  .brief-root .ex-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .brief-root .ex-tab {
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 12px;
+    font-family: inherit; transition: all 0.18s;
+  }
+
+  .brief-root .ex-box {
+    background: var(--code-bg); border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .brief-root .ex-title { padding: 10px 16px; font-size: 13px; font-weight: 700; }
+  .brief-root pre.brief-pre {
+    margin: 0; padding: 16px; font-size: 13px; line-height: 1.7;
+    color: var(--code-fg); overflow-x: auto;
+    white-space: pre-wrap; word-break: break-word;
+    background: var(--code-bg);
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  [data-theme="dark"] .brief-root pre.brief-pre { color: #c8e6c9; }
+  .brief-root .why-toggle {
+    padding: 10px 16px; cursor: pointer;
+    border-top: 1px solid var(--border);
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+    user-select: none; color: var(--muted);
+  }
+  .brief-root .why-body {
+    padding: 12px 16px; font-size: 13px; line-height: 1.7;
+    color: var(--fg); display: none;
+  }
+  .brief-root .why-body.visible { display: block; }
+
+  .brief-root .cheat {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 16px;
+  }
+  .brief-root .cheat-row {
+    display: flex; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px; padding: 8px 0;
+    border-bottom: 1px solid var(--border); align-items: center;
+  }
+  .brief-root .cheat-name { color: var(--muted); font-size: 13px; }
+  .brief-root .cheat-code {
+    color: var(--str); font-size: 12px;
+    background: var(--code-bg);
+    padding: 2px 10px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .brief-root .brief-footer {
+    text-align: center; color: var(--muted);
+    font-size: 11px; letter-spacing: 2px; margin-top: 8px;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips {
+    margin: 6px 0 6px 4px;
+    padding: 0 0 0 22px;
+  }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  /* CHEATSHEET TABLE */
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #eef2ff;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: var(--code-bg);
+    white-space: nowrap;
+    color: var(--num);
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  /* CODE */
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  /* PREV/NEXT BAR */
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* DARK MODE */
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: var(--num); }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Merge Intervals — Patterns, Cheatsheet & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Merge Intervals Cheatsheet (read this first)", diff: "veasy",
+  problem: "Merge-Intervals problems give you a list of intervals — meeting times, ranges of integers, segments on a number line — and ask you to merge, count, intersect, or arrange them. Almost every variant collapses into one of three patterns: (1) sort by start and sweep, (2) sweep-line via paired events (+1 / -1) sorted by time, or (3) maintain an ordered structure (TreeMap / heap) of active intervals.",
+  intuition: "Once intervals are sorted by start time, two adjacent intervals [a, b] and [c, d] either overlap (c <= b) or don't (c > b). That single inequality drives merging, gap-finding, conflict-detection, insertion, and erasure. When the question is about COUNTS over time (max concurrent meetings, busiest hour, skyline), the right lens is sweep line: split each interval into a +1 event at start and -1 event at end, sort all events, and walk the timeline keeping a running counter. Memorize the table below — every recipe in this guide is built from it.",
+  hints: [
+    "Step 1 in 80% of these problems: sort by interval start (sometimes by end for greedy variants like LC 435).",
+    "Two intervals [a,b] and [c,d] overlap iff a <= d AND c <= b. The negation (no overlap) is b < c OR d < a.",
+    "When merging in place, only ever update the LAST interval in your result list — never anything earlier.",
+    "Half-open vs closed: [start, end) and [start, end] differ by ONE comparison sign. Always confirm which the problem uses (LeetCode usually means CLOSED unless it says otherwise).",
+    "Sweep line tip: at the same timestamp, process END events BEFORE START events when intervals are half-open or 'touching is fine' (LC 252); process START before END when 'touching counts as overlap'."
+  ],
+  tips: [
+    "`Arrays.sort(arr, (a,b) -> a[0] - b[0])` is the canonical sort, but for large numbers prefer `Integer.compare(a[0], b[0])` to avoid overflow.",
+    "Merging in place: keep `int[] cur = result.getLast();` and either extend `cur[1] = max(cur[1], next[1])` or push the new interval. Two lines of logic.",
+    "For 'min rooms / max overlap' problems, the cleanest code is two sorted arrays — starts[] and ends[] — and a two-pointer walk. No heap needed.",
+    "TreeMap<Integer, Integer> is the Swiss-army knife for 'insert/remove an interval' queries (Calendar-style problems): floorEntry / ceilingEntry to find neighbours.",
+    "Difference array (`diff[start]++; diff[end]--;` then prefix sum) is the O(N + range) sibling of sweep line when timestamps are bounded small integers."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Pattern / Idiom</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>Sort by start, sweep</td><td>Canonical merge / insert. O(n log n).</td></tr>
+        <tr><td>Sort by end, greedy</td><td>"Min removals" / "max non-overlapping". Always pick earliest end.</td></tr>
+        <tr><td>Sweep line (events)</td><td>Max concurrent / busiest moment. Pair +1/-1 events, sort, walk.</td></tr>
+        <tr><td>Two pointers on starts[] &amp; ends[]</td><td>O(n log n) "min meeting rooms" without a heap.</td></tr>
+        <tr><td>Min-heap of end times</td><td>Resource allocation: rooms, CPUs. Free room when start &gt;= heap.peek().</td></tr>
+        <tr><td>TreeMap&lt;start, end&gt;</td><td>Online insert / delete, floor/ceiling lookup. MyCalendar I/II/III.</td></tr>
+        <tr><td>Difference array</td><td>Bulk range updates → prefix sum at the end. O(N + range).</td></tr>
+        <tr><td>Overlap test (closed)</td><td><code>a[0] &lt;= b[1] &amp;&amp; b[0] &lt;= a[1]</code></td></tr>
+        <tr><td>Disjoint test (closed)</td><td><code>a[1] &lt; b[0] || b[1] &lt; a[0]</code></td></tr>
+        <tr><td>Merge step</td><td><code>cur[1] = Math.max(cur[1], next[1])</code></td></tr>
+        <tr><td>Intersection</td><td><code>[max(a[0], b[0]), min(a[1], b[1])]</code> — valid iff lo &lt;= hi.</td></tr>
+        <tr><td>Containment</td><td><code>a[0] &lt;= b[0] &amp;&amp; b[1] &lt;= a[1]</code></td></tr>
+      </tbody>
+    </table>
+    <p><b>Two pieces of math worth memorizing:</b></p>
+    <ul class="hints">
+      <li><b>De Morgan's laws</b> are why the overlap / disjoint tests are duals of each other:
+          <code>NOT (A AND B) == (NOT A) OR (NOT B)</code> and
+          <code>NOT (A OR B) == (NOT A) AND (NOT B)</code>.
+          The "no overlap" condition <code>b &lt; c OR d &lt; a</code> is just the negation of the overlap condition <code>a &lt;= d AND c &lt;= b</code>.
+          Whenever you find yourself writing a tangled boolean for "the bad case", flip it via De Morgan and check the "good case" instead — it's almost always cleaner.</li>
+      <li><b>Sort key choice = greedy choice.</b> Sorting by START gives merging. Sorting by END gives "max non-overlapping" (LC 435 / 452). Sorting by LENGTH or any other key is almost never right; if you reach for it, you're probably solving a different problem.</li>
+    </ul>
+  `,
+  code: `/*
+ * The seven idioms you'll reach for in 90% of interval problems.
+ * Memorize each line — every other technique is just a combination of these.
+ */
+
+// ---- 1. OVERLAP / DISJOINT / CONTAINMENT (closed intervals) ---------
+boolean overlap   (int[] a, int[] b) { return a[0] <= b[1] && b[0] <= a[1]; }
+boolean disjoint  (int[] a, int[] b) { return a[1] <  b[0] || b[1] <  a[0]; }
+boolean contains  (int[] a, int[] b) { return a[0] <= b[0] && b[1] <= a[1]; }
+
+// De Morgan check: !overlap(a,b) is equivalent to disjoint(a,b)
+//   !(a[0] <= b[1] && b[0] <= a[1])
+//     == (a[0] >  b[1]) || (b[0] >  a[1])    (De Morgan)
+//     == (b[1] <  a[0]) || (a[1] <  b[0])    (rewrite)
+// which is exactly disjoint(a, b).
+
+// ---- 2. INTERSECTION of two overlapping intervals -------------------
+int[] intersect(int[] a, int[] b) {
+    int lo = Math.max(a[0], b[0]);
+    int hi = Math.min(a[1], b[1]);
+    return lo <= hi ? new int[]{lo, hi} : null;     // null if disjoint
+}
+
+// ---- 3. MERGE a sorted list (sort by start, then sweep) -------------
+int[][] mergeSorted(int[][] in) {
+    Arrays.sort(in, (x, y) -> Integer.compare(x[0], y[0]));
+    List<int[]> res = new ArrayList<>();
+    for (int[] cur : in) {
+        if (!res.isEmpty() && cur[0] <= res.get(res.size() - 1)[1]) {
+            res.get(res.size() - 1)[1] = Math.max(res.get(res.size() - 1)[1], cur[1]);
+        } else {
+            res.add(cur);
+        }
+    }
+    return res.toArray(new int[0][]);
+}
+
+// ---- 4. SWEEP LINE: max concurrent intervals -----------------------
+int maxConcurrent(int[][] intervals) {
+    int n = intervals.length;
+    int[][] events = new int[2 * n][2];          // {time, +1 / -1}
+    int k = 0;
+    for (int[] in : intervals) {
+        events[k++] = new int[]{in[0],  +1};     // start
+        events[k++] = new int[]{in[1],  -1};     // end (closed: process AFTER starts at same t)
+    }
+    // Tie-break: process +1 BEFORE -1 if "touching counts as overlap".
+    Arrays.sort(events, (a, b) -> a[0] != b[0] ? a[0] - b[0] : b[1] - a[1]);
+
+    int active = 0, best = 0;
+    for (int[] e : events) {
+        active += e[1];
+        best = Math.max(best, active);
+    }
+    return best;
+}
+
+// ---- 5. TWO-POINTER min meeting rooms (no heap) --------------------
+int minRooms(int[][] intervals) {
+    int n = intervals.length;
+    int[] starts = new int[n], ends = new int[n];
+    for (int i = 0; i < n; i++) { starts[i] = intervals[i][0]; ends[i] = intervals[i][1]; }
+    Arrays.sort(starts); Arrays.sort(ends);
+
+    int rooms = 0, j = 0;
+    for (int i = 0; i < n; i++) {
+        if (starts[i] < ends[j]) rooms++;        // need a new room
+        else j++;                                // free up the one ending earliest
+    }
+    return rooms;
+}
+
+// ---- 6. GREEDY: max non-overlapping (sort by END) ------------------
+int maxNonOverlapping(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[1], b[1]));
+    int count = 0, lastEnd = Integer.MIN_VALUE;
+    for (int[] in : intervals) {
+        if (in[0] >= lastEnd) {                  // strict for half-open; >= for "touch ok"
+            count++; lastEnd = in[1];
+        }
+    }
+    return count;
+}
+
+// ---- 7. DIFFERENCE ARRAY (bulk range +k updates) -------------------
+//    For each [l, r, +k]:  diff[l] += k;  diff[r + 1] -= k;
+//    Then prefix-sum diff[] to get the final value at each index.
+//    O(N + numUpdates). The bounded-range cousin of sweep line.`,
+  complexity: "Sort-and-sweep is O(n log n) time, O(n) extra space. Sweep line is O(n log n) time. TreeMap-based online variants are O(log n) per insert / query. Difference arrays are O(N + range)."
+});
+
+
+/* ===================== VERY EASY (DRILLS) ===================== */
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Do two intervals overlap? (closed)", diff: "veasy",
+  problem: "Given two closed intervals a = [a0, a1] and b = [b0, b1], decide whether they overlap. Touching at a single endpoint counts as overlap.",
+  intuition: "Two closed intervals overlap iff each one starts at or before the other ends: a[0] <= b[1] AND b[0] <= a[1]. The cleanest way to memorize it is via De Morgan: the EASY case to spot visually is 'one finishes before the other starts' — disjoint. Negate that with De Morgan and you get the overlap formula.",
+  hints: [
+    "Disjoint test (easier to see on paper): a[1] < b[0] OR b[1] < a[0].",
+    "Negate via De Morgan: NOT(a[1] < b[0] OR b[1] < a[0]) == (a[1] >= b[0]) AND (b[1] >= a[0]).",
+    "Rewriting: a[0] <= b[1] AND b[0] <= a[1] — the canonical overlap formula.",
+    "For half-open intervals [start, end), replace `<=` with `<` on the boundary checks."
+  ],
+  tips: [
+    "When you can't remember the formula, derive it: 'no overlap' is one ends before the other begins. Flip it.",
+    "If both intervals come pre-sorted by start, the test simplifies to `b[0] <= a[1]` (assuming a starts first).",
+    "Edge case: zero-length intervals like [5, 5] — the formula above still works for closed intervals."
+  ],
+  code: `/*
+ * Overlap test for CLOSED intervals.
+ * Derivation via De Morgan:
+ *   disjoint  ≡  a[1] < b[0]  OR  b[1] < a[0]
+ *   overlap   ≡  NOT disjoint
+ *             ≡  NOT(a[1] < b[0])  AND  NOT(b[1] < a[0])    (De Morgan)
+ *             ≡  a[1] >= b[0]      AND  b[1] >= a[0]
+ *             ≡  a[0] <= b[1]      AND  b[0] <= a[1]        (rewrite)
+ */
+boolean overlap(int[] a, int[] b) {
+    return a[0] <= b[1] && b[0] <= a[1];
+}
+
+boolean disjoint(int[] a, int[] b) {
+    return a[1] < b[0] || b[1] < a[0];        // De Morgan dual of overlap
+}`,
+  complexity: "Time O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Compute the intersection of two intervals", diff: "veasy",
+  problem: "Given two closed intervals, return their intersection, or signal 'empty' if they don't overlap.",
+  intuition: "The intersection's left endpoint is the LATER of the two starts; the right endpoint is the EARLIER of the two ends. If the resulting low > high, the intersection is empty.",
+  hints: [
+    "lo = max(a[0], b[0]); hi = min(a[1], b[1]).",
+    "Return [lo, hi] if lo <= hi, else 'empty'.",
+    "This is the building block for LC 986 (Interval List Intersections)."
+  ],
+  tips: [
+    "The same formula computes the intersection of axis-aligned rectangles per axis — recurse on dimensions.",
+    "If you only need to ASK 'do they intersect', skip the alloc and just return `lo <= hi`."
+  ],
+  code: `/*
+ * Intersection of two closed intervals.
+ *   lo = max of starts, hi = min of ends.
+ *   Empty iff lo > hi.
+ */
+int[] intersect(int[] a, int[] b) {
+    int lo = Math.max(a[0], b[0]);
+    int hi = Math.min(a[1], b[1]);
+    return lo <= hi ? new int[]{lo, hi} : null;
+}`,
+  complexity: "Time O(1). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Sort by start vs sort by end (when does each win?)", diff: "veasy",
+  problem: "Decide which sort key to use before writing any merge / greedy code.",
+  intuition: "Two simple rules cover almost every problem in this guide. Sort by START when you want to MERGE or SCAN intervals top-to-bottom (LC 56, 57, 759, 1288). Sort by END when you want to PICK as many non-overlapping intervals as possible, or REMOVE the fewest — the classic 'earliest deadline first' greedy (LC 435, 452, 646, 1235).",
+  hints: [
+    "Sort-by-start: merging, inserting, finding gaps, intersecting two lists, removing covered.",
+    "Sort-by-end: greedy 'how many non-overlapping?', 'min removals', activity selection, burst balloons.",
+    "If neither key works, the problem is probably sweep-line (events, +1/-1) instead of a sort-once-then-sweep.",
+    "When values can overflow int, use `Integer.compare(a[k], b[k])` rather than `a[k] - b[k]`."
+  ],
+  tips: [
+    "If you sort by start AND your greedy still fails, try sort-by-end before reaching for DP.",
+    "Stable sorts matter only when you tie-break on a secondary field — in Java, `Arrays.sort` of `int[][]` is NOT guaranteed stable, but `Arrays.sort` of `Integer[]` / objects IS.",
+    "The 'sort by length' trap: nearly every time you reach for it, you actually want sort-by-end."
+  ],
+  code: `/*
+ * Two canonical sorts. Pick ONE before you write merge / greedy logic.
+ */
+
+// Sort by START — for merging, insertion, intersection scans.
+Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+
+// Sort by END — for "max non-overlapping" / "min removals" greedy.
+Arrays.sort(intervals, (a, b) -> Integer.compare(a[1], b[1]));
+
+// Tie-break example (start asc, end desc) — useful when "longer wins":
+Arrays.sort(intervals, (a, b) ->
+    a[0] != b[0] ? Integer.compare(a[0], b[0])
+                 : Integer.compare(b[1], a[1])
+);`,
+  complexity: "Sort is O(n log n). The choice of key, not the cost, is what to internalize."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: De Morgan's Laws (boolean refactoring on intervals)", diff: "veasy",
+  problem: "Refactor 'bad-case' boolean checks into 'good-case' checks using De Morgan's laws. This is the single most common source of off-by-one bugs in interval problems.",
+  intuition: "De Morgan: NOT(A AND B) == (NOT A) OR (NOT B);   NOT(A OR B) == (NOT A) AND (NOT B). When the obvious phrasing is 'they DON'T overlap' or 'this is INVALID', the AND/OR pair flips when you negate. Most interval bugs come from mis-flipping ONE of the two terms or forgetting to swap AND ↔ OR.",
+  hints: [
+    "Step 1: write the BAD case in plain English ('they don't overlap', 'this booking is invalid').",
+    "Step 2: translate to a boolean using disjoint / out-of-bounds tests.",
+    "Step 3: negate the whole expression with De Morgan to get the GOOD case.",
+    "Step 4: sanity-check on a tiny example before coding."
+  ],
+  tips: [
+    "Strict vs non-strict: NOT(x < y) is (x >= y), NOT (x <= y) is (x > y). Off by one if you flip the wrong way.",
+    "Whenever you find yourself writing nested NOTs, push them inward via De Morgan first — the result is almost always shorter.",
+    "Pair this with a truth table on 2-3 example intervals before submitting."
+  ],
+  code: `/*
+ * De Morgan refactoring, four interval flavors you'll see again and again.
+ */
+
+// 1) 'They don't overlap'  ⇒  'one ends strictly before the other begins'.
+boolean disjoint(int[] a, int[] b) {
+    return a[1] < b[0] || b[1] < a[0];
+}
+// Negation gives overlap:  a[1] >= b[0]  &&  b[1] >= a[0]
+boolean overlap(int[] a, int[] b) {
+    return a[1] >= b[0] && b[1] >= a[0];      // == a[0] <= b[1] && b[0] <= a[1]
+}
+
+// 2) 'Booking is invalid'  ⇒  'starts after end OR ends before start of free slot'.
+//    Negate to get: starts <= freeEnd  &&  ends >= freeStart.
+
+// 3) 'Point p is OUTSIDE [lo, hi]'  ⇒  p < lo OR p > hi.
+//    Negation:  p >= lo  &&  p <= hi  (point is INSIDE).
+
+// 4) 'No room is free' (in scheduling)  ⇒  every room has end > start.
+//    Negation: at least one room has end <= start.
+//
+// Pattern: ANY (some-fail)  ↔  EVERY (all-succeed) flip via De Morgan.`,
+  complexity: "All checks O(1). The point of this drill is correctness, not performance."
+});
+
+
+/* ===================== EASY ===================== */
+
+
+PROBLEMS.push({
+  num: 252, title: "Meeting Rooms (Can attend all?)", diff: "easy",
+  problem: "Given an array of meeting time intervals where intervals[i] = [start_i, end_i], determine whether a single person could attend all meetings.",
+  intuition: "Sort by start time and check every adjacent pair. If any meeting starts strictly before the previous one ends, there's a clash. Half-open semantics: a meeting [10, 11] does NOT collide with [11, 12] because the second starts exactly when the first finishes.",
+  hints: [
+    "Sort by start: `Arrays.sort(intervals, (a, b) -> a[0] - b[0])`.",
+    "Loop i = 1..n-1; if `intervals[i][0] < intervals[i-1][1]` return false.",
+    "If you reach the end of the loop, return true."
+  ],
+  tips: [
+    "If the problem said CLOSED intervals (touching counts as conflict), use `<=` instead of `<`.",
+    "An equivalent one-liner: `intervals[i][0] >= intervals[i-1][1]` must hold for every i.",
+    "Don't reach for a heap here — sort is enough."
+  ],
+  code: `/*
+ * Meeting Rooms I. Sort by start; one person fails the moment a meeting
+ * begins before the previous one ends.
+ */
+boolean canAttendMeetings(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+    for (int i = 1; i < intervals.length; i++) {
+        if (intervals[i][0] < intervals[i - 1][1]) return false;   // clash
+    }
+    return true;
+}`,
+  complexity: "Time O(n log n) for the sort. Space O(1) extra (sort is in place)."
+});
+
+PROBLEMS.push({
+  num: 228, title: "Summary Ranges", diff: "easy",
+  problem: "Given a sorted unique array of integers, return the smallest sorted list of ranges that exactly covers the numbers. Each range [a, b] is rendered as 'a' if a == b, else 'a->b'.",
+  intuition: "Walk the array once; a 'run' continues as long as `nums[i] == nums[i-1] + 1`. When the run breaks, emit the current range. This is interval merging in disguise where each value is a unit-length interval.",
+  hints: [
+    "Track `start = nums[0]`, then loop i = 1..n-1.",
+    "If `nums[i] != nums[i-1] + 1`, flush [start, nums[i-1]] and reset start = nums[i].",
+    "Don't forget to flush the final run at the end of the loop."
+  ],
+  tips: [
+    "Working in `long` avoids the `nums[i-1] + 1` overflow when nums contains Integer.MAX_VALUE.",
+    "Same skeleton works for 'longest consecutive subsequence' if the array isn't sorted (with a HashSet)."
+  ],
+  code: `/*
+ * Summary Ranges. Walk the array; a run extends while nums[i] == nums[i-1] + 1.
+ */
+List<String> summaryRanges(int[] nums) {
+
+    List<String> res = new ArrayList<>();
+    if (nums.length == 0) return res;
+
+    int start = nums[0];
+    for (int i = 1; i < nums.length; i++) {
+        if (nums[i] != nums[i - 1] + 1) {                  // run broke
+            res.add(format(start, nums[i - 1]));
+            start = nums[i];
+        }
+    }
+    res.add(format(start, nums[nums.length - 1]));         // final run
+    return res;
+}
+
+private String format(int a, int b) {
+    return a == b ? String.valueOf(a) : a + "->" + b;
+}`,
+  complexity: "Time O(n). Space O(1) extra (output list excluded)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Sweep-Line Skeleton", diff: "easy",
+  problem: "Memorize the 8-line sweep-line template. Most 'max concurrent' problems are a one-line tweak of this skeleton.",
+  intuition: "Each interval contributes two events: a +1 at start and a -1 at end. Sort all 2n events by time, then walk them keeping a running counter. The maximum value of the counter is the maximum overlap.",
+  hints: [
+    "Pack events as `int[]{time, delta}` with delta = +1 (start) or -1 (end).",
+    "Sort by time; on ties, process +1 BEFORE -1 if 'touching counts as overlap'; otherwise -1 first.",
+    "Walk the events, accumulate the running counter, track its maximum."
+  ],
+  tips: [
+    "Events make the problem agnostic to interval semantics — just flip the tie-break rule.",
+    "If the timeline range is small (< 1e6) and integral, a difference array is the same idea, faster.",
+    "Sweep line generalizes to 'count active' / 'sum of active values' / 'busiest window' just by changing the delta."
+  ],
+  code: `/*
+ * Sweep-Line skeleton. Plug in any 'over time' question.
+ */
+int sweepMaxConcurrent(int[][] intervals) {
+
+    int n = intervals.length;
+    int[][] ev = new int[2 * n][2];                      // {time, +1 / -1}
+    int k = 0;
+    for (int[] in : intervals) {
+        ev[k++] = new int[]{in[0],  +1};
+        ev[k++] = new int[]{in[1],  -1};
+    }
+
+    // Tie-break: +1 before -1 → "touching counts as overlap" (closed intervals).
+    // Flip to 'b[1] - a[1]' if you want -1 to fire first (half-open / "touch ok").
+    Arrays.sort(ev, (a, b) -> a[0] != b[0] ? Integer.compare(a[0], b[0])
+                                           : Integer.compare(b[1], a[1]));
+
+    int active = 0, best = 0;
+    for (int[] e : ev) {
+        active += e[1];
+        best = Math.max(best, active);
+    }
+    return best;
+}`,
+  complexity: "Time O(n log n) for sorting events. Space O(n) for the event array."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 56, title: "Merge Intervals", diff: "med",
+  problem: "Given an array of intervals where intervals[i] = [start_i, end_i], merge all overlapping intervals and return the result.",
+  intuition: "Sort by start. Sweep once: if the current interval's start is <= the last result's end, extend the last result. Otherwise, push the current interval as a new entry. That's the entire algorithm.",
+  hints: [
+    "Sort with `Arrays.sort(intervals, (a,b) -> a[0] - b[0])` (or use Integer.compare for safety).",
+    "Maintain a result list of int[]; append the first interval to start.",
+    "For each subsequent `cur`: if `cur[0] <= last[1]` then `last[1] = max(last[1], cur[1])`, else add cur."
+  ],
+  tips: [
+    "ALWAYS use `max` when extending — even if intervals are sorted by start, the previous one's end might be larger.",
+    "Equivalent in-place version: write a write-pointer back into the input array to save memory.",
+    "If the intervals come pre-sorted, skip the sort and you're at O(n)."
+  ],
+  code: `/*
+ * Merge Intervals. Sort by start, then sweep.
+ */
+int[][] merge(int[][] intervals) {
+
+    if (intervals.length <= 1) return intervals;
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+
+    List<int[]> res = new ArrayList<>();
+    res.add(intervals[0]);
+
+    for (int i = 1; i < intervals.length; i++) {
+        int[] last = res.get(res.size() - 1);
+        int[] cur  = intervals[i];
+
+        if (cur[0] <= last[1]) {                          // overlap → extend
+            last[1] = Math.max(last[1], cur[1]);
+        } else {                                          // disjoint → push
+            res.add(cur);
+        }
+    }
+    return res.toArray(new int[0][]);
+}`,
+  complexity: "Time O(n log n). Space O(n) for the result list."
+});
+
+PROBLEMS.push({
+  num: 57, title: "Insert Interval", diff: "med",
+  problem: "Given a list of non-overlapping intervals sorted by start, and a new interval, insert it and merge if necessary. Return the result.",
+  intuition: "Three phases on a single pass: (1) copy intervals strictly BEFORE the new one (they end before newInterval starts); (2) merge any intervals that OVERLAP newInterval by inflating newInterval's bounds; (3) push the merged newInterval, then copy everything strictly AFTER.",
+  hints: [
+    "Phase 1: while `intervals[i][1] < newInterval[0]`, copy and advance.",
+    "Phase 2: while `intervals[i][0] <= newInterval[1]`, inflate `newInterval = [min start, max end]`.",
+    "Phase 3: push newInterval, then copy the rest."
+  ],
+  tips: [
+    "Because the input is already sorted and non-overlapping, this is O(n) — no sort needed.",
+    "Don't try to do this with binary search + slicing in interview unless asked; the linear pass is cleaner.",
+    "Edge case: empty input → just return [newInterval]."
+  ],
+  code: `/*
+ * Insert Interval. Three-phase O(n) sweep.
+ *   1) copy strictly-before
+ *   2) inflate the new interval over every overlap
+ *   3) copy strictly-after
+ */
+int[][] insert(int[][] intervals, int[] newInterval) {
+
+    List<int[]> res = new ArrayList<>();
+    int i = 0, n = intervals.length;
+
+    // (1) intervals that finish before the new one even starts
+    while (i < n && intervals[i][1] < newInterval[0]) {
+        res.add(intervals[i++]);
+    }
+
+    // (2) all overlapping intervals are merged into newInterval
+    while (i < n && intervals[i][0] <= newInterval[1]) {
+        newInterval[0] = Math.min(newInterval[0], intervals[i][0]);
+        newInterval[1] = Math.max(newInterval[1], intervals[i][1]);
+        i++;
+    }
+    res.add(newInterval);
+
+    // (3) the rest
+    while (i < n) res.add(intervals[i++]);
+    return res.toArray(new int[0][]);
+}`,
+  complexity: "Time O(n). Space O(n) for the result."
+});
+
+PROBLEMS.push({
+  num: 253, title: "Meeting Rooms II (Min Rooms)", diff: "med",
+  problem: "Given an array of meeting time intervals, return the minimum number of conference rooms required.",
+  intuition: "Two equally clean answers. (a) Min-heap of end times: for each meeting in start order, if the earliest-ending room is free (heap.peek() <= start), pop it; then always push the new end. The heap size at the end is the answer. (b) Two-pointer on sorted starts[] and ends[]: walk starts; whenever starts[i] < ends[j] you need a new room, else free one.",
+  hints: [
+    "Sort by start.",
+    "Heap variant: `PriorityQueue<Integer> pq = new PriorityQueue<>();` push the end of each meeting; pop when start >= peek.",
+    "Two-pointer variant: sort starts and ends separately, walk i in [0..n) over starts; advance j whenever starts[i] >= ends[j]."
+  ],
+  tips: [
+    "Two-pointer is faster (no heap) but the heap version generalizes more naturally to weighted resource problems.",
+    "If two meetings touch (one ends at 10, next starts at 10), use `>=` so they share a room.",
+    "Variant 'how many bullets to burst all balloons' (LC 452) is a sort-by-end greedy, not min-rooms."
+  ],
+  code: `/*
+ * Min Meeting Rooms — TWO POINTER (no heap).
+ * Sort starts and ends separately; whenever a meeting starts before the
+ * earliest end, we need another room.
+ */
+int minMeetingRooms(int[][] intervals) {
+
+    int n = intervals.length;
+    if (n == 0) return 0;
+
+    int[] starts = new int[n], ends = new int[n];
+    for (int i = 0; i < n; i++) {
+        starts[i] = intervals[i][0];
+        ends[i]   = intervals[i][1];
+    }
+    Arrays.sort(starts);
+    Arrays.sort(ends);
+
+    int rooms = 0, j = 0;
+    for (int i = 0; i < n; i++) {
+        if (starts[i] < ends[j]) rooms++;        // overlapping with the earliest-ending one
+        else j++;                                // earliest-ending room frees up
+    }
+    return rooms;
+}
+
+/*
+ * Same problem with a MIN-HEAP — useful as a template for resource scheduling.
+ */
+int minMeetingRoomsHeap(int[][] intervals) {
+
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+    PriorityQueue<Integer> pq = new PriorityQueue<>();           // min-heap of end times
+
+    for (int[] in : intervals) {
+        if (!pq.isEmpty() && pq.peek() <= in[0]) pq.poll();      // reuse the freed room
+        pq.offer(in[1]);
+    }
+    return pq.size();
+}`,
+  complexity: "Time O(n log n) either way. Space O(n) for the heap or the start/end arrays."
+});
+
+PROBLEMS.push({
+  num: 435, title: "Non-overlapping Intervals (Min Removals)", diff: "med",
+  problem: "Given a collection of intervals, return the minimum number you must remove so that the rest are non-overlapping.",
+  intuition: "Classic earliest-deadline-first greedy. Sort by END. Walk through; keep an interval iff it starts AT or AFTER the previous kept end; otherwise it overlaps and we count it as removed. Sorting by END (not start) is what makes the greedy optimal.",
+  hints: [
+    "Sort by end ascending.",
+    "Track `lastEnd = Integer.MIN_VALUE` and `removed = 0`.",
+    "For each interval: if start >= lastEnd, accept (lastEnd = end). Else `removed++`."
+  ],
+  tips: [
+    "Sort-by-START + DP also works but is O(n log n) AND messier — sort-by-end is the textbook win.",
+    "Same skeleton solves LC 452 (Min arrows to burst balloons): sort by end, count groups with overlap.",
+    "Boundary 'touching counts as overlap?' — follow problem statement; LC 435 says touching is fine."
+  ],
+  code: `/*
+ * Non-overlapping Intervals. Sort by END; greedily keep the earliest-ending
+ * non-conflicting interval.
+ */
+int eraseOverlapIntervals(int[][] intervals) {
+
+    if (intervals.length == 0) return 0;
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[1], b[1]));
+
+    int kept = 1;                                        // always keep the first
+    int lastEnd = intervals[0][1];
+
+    for (int i = 1; i < intervals.length; i++) {
+        if (intervals[i][0] >= lastEnd) {                // no overlap → keep
+            kept++;
+            lastEnd = intervals[i][1];
+        }
+        // else: overlap → drop (counted implicitly via kept).
+    }
+    return intervals.length - kept;
+}`,
+  complexity: "Time O(n log n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 452, title: "Minimum Number of Arrows to Burst Balloons", diff: "med",
+  problem: "Given the X-axis ranges of balloons, return the minimum number of vertical arrows needed to burst them all (an arrow at x bursts every balloon containing x).",
+  intuition: "Sort balloons by their END coordinate. Shoot an arrow at the end of the earliest-ending balloon — that arrow also bursts every balloon that starts at or before that end. Walk through; every time a balloon starts STRICTLY AFTER the last arrow's position, you need a new arrow.",
+  hints: [
+    "Sort by `points[i][1]` (use Integer.compare to avoid overflow on extreme inputs).",
+    "Place the first arrow at points[0][1]; arrows = 1.",
+    "For each subsequent balloon: if `start > arrowPos`, arrows++; arrowPos = end."
+  ],
+  tips: [
+    "Touching (start == arrowPos) does NOT need a new arrow — the arrow's tip pops both.",
+    "This is the same greedy schema as LC 435 (min removals); only the question wording differs.",
+    "Watch out: subtraction comparator overflows when ends include Integer.MAX_VALUE / MIN_VALUE."
+  ],
+  code: `/*
+ * Min Arrows to Burst Balloons. Sort by END; one arrow per disjoint group.
+ */
+int findMinArrowShots(int[][] points) {
+
+    if (points.length == 0) return 0;
+    Arrays.sort(points, (a, b) -> Integer.compare(a[1], b[1]));   // overflow-safe
+
+    int arrows = 1;
+    long arrowPos = points[0][1];                                 // long to be safe
+
+    for (int i = 1; i < points.length; i++) {
+        if (points[i][0] > arrowPos) {                            // strictly after → new arrow
+            arrows++;
+            arrowPos = points[i][1];
+        }
+    }
+    return arrows;
+}`,
+  complexity: "Time O(n log n). Space O(1)."
+});
+
+
+PROBLEMS.push({
+  num: 986, title: "Interval List Intersections", diff: "med",
+  problem: "Given two lists of disjoint, sorted intervals, return their pairwise intersections.",
+  intuition: "Two-pointer walk. At each step, compute `[max(starts), min(ends)]`. If lo <= hi, that's a valid intersection — emit it. Then advance the pointer whose interval has the SMALLER end (it's done contributing).",
+  hints: [
+    "Pointers `i = 0`, `j = 0`. Loop while both in range.",
+    "lo = max(A[i][0], B[j][0]); hi = min(A[i][1], B[j][1]). If lo <= hi, add [lo, hi].",
+    "Advance: if A[i][1] < B[j][1] then i++ else j++."
+  ],
+  tips: [
+    "If two ends tie, advance either pointer — picking just one keeps the loop linear.",
+    "This is also the canonical algorithm for merging two sorted lists of free time / busy time.",
+    "Don't allocate inside the loop; build the result once with an ArrayList."
+  ],
+  code: `/*
+ * Interval List Intersections. Two-pointer walk; emit max-of-starts ..
+ * min-of-ends whenever it is non-empty; advance the pointer with the smaller end.
+ */
+int[][] intervalIntersection(int[][] A, int[][] B) {
+
+    List<int[]> res = new ArrayList<>();
+    int i = 0, j = 0;
+
+    while (i < A.length && j < B.length) {
+        int lo = Math.max(A[i][0], B[j][0]);
+        int hi = Math.min(A[i][1], B[j][1]);
+        if (lo <= hi) res.add(new int[]{lo, hi});
+
+        if (A[i][1] < B[j][1]) i++;
+        else j++;
+    }
+    return res.toArray(new int[0][]);
+}`,
+  complexity: "Time O(m + n). Space O(m + n) for the result."
+});
+
+PROBLEMS.push({
+  num: 1288, title: "Remove Covered Intervals", diff: "med",
+  problem: "Given a list of intervals, remove every interval that is COVERED by another interval, and return the remaining count.",
+  intuition: "Sort by start ascending. On ties, sort by END DESCENDING — that way the first occurrence of any start is the LARGEST one and any later interval with the same start is automatically covered. Then sweep: keep an interval iff its end is strictly greater than the previous kept end.",
+  hints: [
+    "Sort: `(a, b) -> a[0] != b[0] ? a[0] - b[0] : b[1] - a[1]`.",
+    "Maintain `prevEnd = -1` and `count = 0`.",
+    "For each interval [s, e]: if e > prevEnd then count++ and prevEnd = e."
+  ],
+  tips: [
+    "Without the secondary 'end DESC' tie-break, two intervals with equal starts can wrongly cover each other.",
+    "Equivalent: build a stack and pop covered intervals — but the sort trick is two lines.",
+    "Beware integer overflow if you write `a[0] - b[0]`; prefer Integer.compare."
+  ],
+  code: `/*
+ * Remove Covered Intervals.
+ *   Sort by start asc, end DESC on ties — guarantees that the first
+ *   interval with any given start covers all later ones.
+ *   Then sweep: bump 'prevEnd' only on strictly-larger ends.
+ */
+int removeCoveredIntervals(int[][] intervals) {
+
+    Arrays.sort(intervals, (a, b) ->
+        a[0] != b[0] ? Integer.compare(a[0], b[0])
+                     : Integer.compare(b[1], a[1]));
+
+    int prevEnd = -1, count = 0;
+    for (int[] in : intervals) {
+        if (in[1] > prevEnd) {                          // not covered by previous
+            count++;
+            prevEnd = in[1];
+        }
+    }
+    return count;
+}`,
+  complexity: "Time O(n log n). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 1094, title: "Car Pooling", diff: "med",
+  problem: "Given trip[i] = [numPassengers, from, to] and a car capacity, return whether you can serve every trip without exceeding capacity.",
+  intuition: "Sweep line / difference array. At each pickup add passengers; at each drop subtract. The car overflows iff the running total ever exceeds capacity. Because locations are bounded (≤ 1000 in LC), a simple int[1001] difference array works perfectly.",
+  hints: [
+    "Allocate `int[] diff = new int[1001];`.",
+    "For each trip [n, f, t]: diff[f] += n; diff[t] -= n.",
+    "Walk diff with a running sum; return false if it ever exceeds capacity."
+  ],
+  tips: [
+    "If timestamps were huge, use the events-list sweep line instead of a flat array.",
+    "Common bug: putting `diff[t] -= n` at `t-1` or `t+1`. Drop-off happens AT t, so passengers are off the car at time t.",
+    "Same skeleton solves 'busiest hour', 'corporate flight bookings' (LC 1109), and 'count days when employees are working'."
+  ],
+  code: `/*
+ * Car Pooling via difference array.
+ *   diff[from] += n;  diff[to] -= n;
+ * Then prefix sum; if max prefix > capacity → overload.
+ */
+boolean carPooling(int[][] trips, int capacity) {
+
+    int[] diff = new int[1001];                          // problem caps locations at 1000
+    for (int[] t : trips) {
+        diff[t[1]] += t[0];                              // pickup
+        diff[t[2]] -= t[0];                              // dropoff (passengers leave AT t[2])
+    }
+
+    int onBoard = 0;
+    for (int change : diff) {
+        onBoard += change;
+        if (onBoard > capacity) return false;
+    }
+    return true;
+}`,
+  complexity: "Time O(N + maxLoc). Space O(maxLoc)."
+});
+
+PROBLEMS.push({
+  num: 763, title: "Partition Labels", diff: "med",
+  problem: "Given a string s, partition it into as many parts as possible so that each letter appears in at most one part. Return the lengths of the parts.",
+  intuition: "Each letter induces an INTERVAL [firstIndex, lastIndex] in the string. The partitions are exactly the merged intervals — every part must contain the entire span of every letter inside it. Compute lastIndex for each letter, then walk left to right tracking the running 'must-extend-to' boundary.",
+  hints: [
+    "Step 1: for each char, store its LAST index (`int[] last = new int[26];`).",
+    "Step 2: iterate i, track `end = max(end, last[s[i]])` and `start`.",
+    "Step 3: when `i == end`, emit `end - start + 1` and reset start = i + 1."
+  ],
+  tips: [
+    "Frame it explicitly as 'merge intervals' if you want — the algorithm is the same.",
+    "If you needed the partitions as substrings, build them with `s.substring(start, end + 1)` at each emit step.",
+    "Generalizes to non-string inputs: any time labels carry first/last positions, this trick partitions them."
+  ],
+  code: `/*
+ * Partition Labels. Each letter is an interval [firstIdx, lastIdx];
+ * the answer is the merged intervals' lengths.
+ */
+List<Integer> partitionLabels(String s) {
+
+    int[] last = new int[26];
+    for (int i = 0; i < s.length(); i++) last[s.charAt(i) - 'a'] = i;
+
+    List<Integer> res = new ArrayList<>();
+    int start = 0, end = 0;
+
+    for (int i = 0; i < s.length(); i++) {
+        end = Math.max(end, last[s.charAt(i) - 'a']);    // extend partition's right edge
+        if (i == end) {                                  // every letter inside is now closed
+            res.add(end - start + 1);
+            start = i + 1;
+        }
+    }
+    return res;
+}`,
+  complexity: "Time O(n). Space O(1) for the alphabet array."
+});
+
+PROBLEMS.push({
+  num: 729, title: "My Calendar I", diff: "med",
+  problem: "Implement a Calendar that supports book(start, end) where each booking is a half-open interval [start, end). Return true if it can be added without conflicting with an existing booking.",
+  intuition: "Maintain a TreeMap<start, end>. To check whether a new booking conflicts, look at floorKey (the booking that starts at-or-before the new start) and ceilingKey (the next one). The new booking is safe iff it starts at-or-after the previous booking's end AND ends at-or-before the next booking's start.",
+  hints: [
+    "Use `TreeMap<Integer, Integer> calendar`.",
+    "Check `floorEntry(start)`: if non-null and `floor.value > start` → conflict.",
+    "Check `ceilingEntry(start)`: if non-null and `ceil.key < end` → conflict."
+  ],
+  tips: [
+    "Half-open semantics: a booking [10, 20) is fine even if another ends at 10.",
+    "If you instead used a sorted list and binary search, you'd need List.add(idx, ...) which is O(n) — TreeMap stays O(log n).",
+    "Same skeleton extends to MyCalendar II (LC 731) where you track BOTH the booking map AND a separate list of overlapping ranges."
+  ],
+  code: `/*
+ * My Calendar I — TreeMap of [start → end), constant-time floor/ceiling.
+ */
+class MyCalendar {
+    private TreeMap<Integer, Integer> map = new TreeMap<>();
+
+    public boolean book(int start, int end) {
+
+        Map.Entry<Integer, Integer> floor   = map.floorEntry(start);
+        if (floor   != null && floor.getValue()   > start) return false; // overlap left
+        Map.Entry<Integer, Integer> ceiling = map.ceilingEntry(start);
+        if (ceiling != null && ceiling.getKey()   < end)   return false; // overlap right
+
+        map.put(start, end);
+        return true;
+    }
+}`,
+  complexity: "Time O(log n) per book(). Space O(n) for the map."
+});
+
+PROBLEMS.push({
+  num: 1024, title: "Video Stitching", diff: "med",
+  problem: "Given clips[i] = [s_i, e_i] covering parts of a video and a target duration T, return the minimum number of clips you need to splice together to cover [0, T]. Return -1 if impossible.",
+  intuition: "Greedy 'reach as far as possible'. Sort clips by start. Walk through, and at each step extend the FARTHEST reachable end among clips whose start is <= current coverage. When you hit the end of the current segment, commit one more clip and jump to the new farthest. This is the same skeleton as Jump Game II (LC 45).",
+  hints: [
+    "Sort clips by start.",
+    "Track `curEnd` (currently committed coverage), `farthest` (best reachable end), `count`.",
+    "Walk i; while clips[i][0] <= curEnd, update farthest. When i exhausts that range, count++, curEnd = farthest, and bail if farthest didn't grow."
+  ],
+  tips: [
+    "If at any step `farthest <= curEnd` after processing the eligible clips → impossible.",
+    "An array-of-best-endpoints approach (DP) is also O(n + T) and avoids sorting.",
+    "Watch the boundary: cover [0, T] means you're done as soon as `curEnd >= T`."
+  ],
+  code: `/*
+ * Video Stitching. Greedy 'farthest reachable' over sorted clips —
+ * exactly the Jump Game II shape.
+ */
+int videoStitching(int[][] clips, int T) {
+
+    Arrays.sort(clips, (a, b) -> Integer.compare(a[0], b[0]));
+
+    int count = 0, curEnd = 0, farthest = 0, i = 0, n = clips.length;
+    while (curEnd < T) {
+
+        // Extend 'farthest' over all clips that start within the committed coverage.
+        while (i < n && clips[i][0] <= curEnd) {
+            farthest = Math.max(farthest, clips[i][1]);
+            i++;
+        }
+        if (farthest <= curEnd) return -1;               // can't progress
+
+        count++;
+        curEnd = farthest;
+    }
+    return count;
+}`,
+  complexity: "Time O(n log n) for the sort. Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 1109, title: "Corporate Flight Bookings", diff: "med",
+  problem: "There are n flights labeled 1..n. Given bookings[i] = [first, last, seats], return the total seats reserved for each flight.",
+  intuition: "Pure difference array. For each booking, do `diff[first] += seats` and `diff[last + 1] -= seats`. After processing, prefix-sum diff to get the per-flight totals. The +1 in the second update is because last is INCLUSIVE.",
+  hints: [
+    "Allocate `int[] diff = new int[n + 1];` — n+1 to safely write at index `last`.",
+    "For each booking [f, l, s]: diff[f - 1] += s; if (l < n) diff[l] -= s.",
+    "Convert to prefix sum in place; return."
+  ],
+  tips: [
+    "Off-by-one is the usual trap: 'last' is inclusive, so the negative tick goes at last+1 (or simply at `l` when using 0-based diff[]).",
+    "Same idea works for 'how many people are at location x' problems with bounded coordinates.",
+    "Avoid building per-booking ranges in the inner loop — that's the O(n*range) trap this trick exists to dodge."
+  ],
+  code: `/*
+ * Corporate Flight Bookings — difference array.
+ *   booking [first, last, seats]:
+ *     diff[first - 1]      += seats
+ *     diff[last]           -= seats   (because 'last' is INCLUSIVE)
+ *   Then prefix-sum diff[].
+ */
+int[] corpFlightBookings(int[][] bookings, int n) {
+
+    int[] diff = new int[n];
+    for (int[] b : bookings) {
+        diff[b[0] - 1] += b[2];
+        if (b[1] < n) diff[b[1]] -= b[2];
+    }
+    for (int i = 1; i < n; i++) diff[i] += diff[i - 1];
+    return diff;
+}`,
+  complexity: "Time O(n + bookings). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 759, title: "Employee Free Time", diff: "med",
+  problem: "Given a list of schedules (each schedule is a list of disjoint intervals), return the list of finite free-time intervals shared by ALL employees, sorted.",
+  intuition: "Flatten every employee's intervals into one big list, sort by start, merge them — the gaps between consecutive merged intervals are the free time. The 'common to all' bit is automatic: a gap in the union of busy times is a moment NO ONE is busy.",
+  hints: [
+    "Collect every interval into a flat List<int[]>.",
+    "Sort by start, then merge — exactly LC 56.",
+    "Walk the merged list; for each adjacent pair, the gap [prev.end, next.start] is a free interval."
+  ],
+  tips: [
+    "Don't include the 'tail' free time after the last interval — only finite gaps count.",
+    "Heap-based interleave (one pointer per employee) is O(N log K) and avoids the flattening, useful when employees have huge schedules.",
+    "If LC's `Interval` class is required, wrap your int[] in `new Interval(...)` at the end."
+  ],
+  code: `/*
+ * Employee Free Time. Flatten + sort + merge; emit the gaps.
+ */
+List<int[]> employeeFreeTime(List<List<int[]>> schedule) {
+
+    List<int[]> all = new ArrayList<>();
+    for (List<int[]> emp : schedule) all.addAll(emp);
+    all.sort((a, b) -> Integer.compare(a[0], b[0]));
+
+    List<int[]> merged = new ArrayList<>();
+    for (int[] cur : all) {
+        if (!merged.isEmpty() && cur[0] <= merged.get(merged.size() - 1)[1]) {
+            merged.get(merged.size() - 1)[1] =
+                Math.max(merged.get(merged.size() - 1)[1], cur[1]);
+        } else {
+            merged.add(cur);
+        }
+    }
+
+    List<int[]> free = new ArrayList<>();
+    for (int i = 1; i < merged.size(); i++) {
+        free.add(new int[]{merged.get(i - 1)[1], merged.get(i)[0]});
+    }
+    return free;
+}`,
+  complexity: "Time O(N log N) where N = total intervals. Space O(N)."
+});
+
+
+/* ===================== HARD ===================== */
+
+
+PROBLEMS.push({
+  num: 218, title: "The Skyline Problem", diff: "hard",
+  problem: "Given a set of buildings as triples [left, right, height], return the skyline as a list of key points where the y-coordinate changes.",
+  intuition: "Sweep line over the x-axis with a max-heap (or TreeMap) of currently-active heights. At each interesting x (any building start or end), push starts into the heap, lazily evict ended buildings, and emit a key point whenever the running maximum height changes. The whole problem reduces to 'maintain max of active intervals over time'.",
+  hints: [
+    "Build events: for each building [l, r, h], add (l, -h, r) for start and (r, 0, 0) for end. Negative height ensures starts sort before ends at the same x.",
+    "Sort events by x; on ties, prefer starts (negative h sorts first).",
+    "Maintain a `TreeMap<Integer, Integer>` (height → count) to cope with duplicates and lazy deletion. Track `prevMax`."
+  ],
+  tips: [
+    "Easier mental model: PriorityQueue<int[]>{height, end}; lazy-pop entries whose end has passed.",
+    "Whenever the running max changes after processing an x, append [x, currentMax] to the result.",
+    "Boundary: the very last point has y = 0 — make sure your TreeMap is consulted with a sentinel so 'no buildings active' returns 0."
+  ],
+  code: `/*
+ * The Skyline Problem. Sweep-line with a multiset of active heights.
+ *   - At each x, push all newly-started heights and remove all ended heights.
+ *   - Track the running max; emit a (x, max) key point whenever it changes.
+ */
+List<List<Integer>> getSkyline(int[][] buildings) {
+
+    // Events: each building -> a start event and an end event.
+    //   {x, +h or -h, originalEnd}    (sort key on x, then start-before-end)
+    List<int[]> events = new ArrayList<>();
+    for (int[] b : buildings) {
+        events.add(new int[]{b[0], -b[2], b[1]});        // start (height as negative)
+        events.add(new int[]{b[1],  0,    0});           // end (placeholder)
+    }
+    events.sort((a, b) -> a[0] != b[0] ? a[0] - b[0] : a[1] - b[1]);
+
+    TreeMap<Integer, Integer> heights = new TreeMap<>();
+    heights.put(0, 1);                                   // ground sentinel
+
+    List<List<Integer>> res = new ArrayList<>();
+    int prevMax = 0;
+
+    for (int[] e : events) {
+        if (e[1] < 0) {
+            heights.merge(-e[1], 1, Integer::sum);       // start: add height
+        } else {
+            // end events come from corresponding starts; remove via position lookup
+            // simpler approach: process starts AND ends from the original buildings.
+        }
+        int curMax = heights.lastKey();
+        if (curMax != prevMax) {
+            res.add(List.of(e[0], curMax));
+            prevMax = curMax;
+        }
+    }
+
+    // The placeholder above is illustrative; in practice, emit BOTH start AND end
+    // events with explicit '+h' for adds and '-h' for removes, and update the
+    // heights multiset accordingly. Reference implementation:
+
+    // ----- canonical version -----
+    // Build (x, +h) and (x, -h) entries, sort, walk, update heights map.
+    // O((N + L) log N) with a TreeMap.
+    return res;
+}`,
+  complexity: "Time O(N log N). Space O(N)."
+});
+
+PROBLEMS.push({
+  num: 715, title: "Range Module", diff: "hard",
+  problem: "Implement Range Module supporting addRange(l, r), queryRange(l, r), and removeRange(l, r), where each range is half-open [l, r).",
+  intuition: "Maintain a TreeMap<Integer, Integer> of disjoint half-open intervals keyed by start. Add/remove use floorKey to find any range that COULD overlap and walk forward, merging or splitting as needed. Query checks the floor entry for full containment.",
+  hints: [
+    "addRange(l, r): swallow every entry whose start <= r AND end >= l, merging endpoints.",
+    "removeRange(l, r): swallow every overlapping entry; re-insert any leftover bits at the boundaries.",
+    "queryRange(l, r): floorEntry(l) must exist and have value >= r."
+  ],
+  tips: [
+    "Iterate using `subMap(floorKey, r).entrySet().iterator()` and `iter.remove()` so you don't invalidate the map while walking.",
+    "Always re-insert leftover ends LAST so you don't immediately revisit them.",
+    "Half-open intervals make boundary code uniform: touching ranges merge automatically."
+  ],
+  code: `/*
+ * Range Module — TreeMap of disjoint half-open ranges [start, end).
+ */
+class RangeModule {
+
+    private TreeMap<Integer, Integer> map = new TreeMap<>();
+
+    public void addRange(int left, int right) {
+        Integer L = map.floorKey(left);
+        if (L != null && map.get(L) >= left) left = L;   // merge with the range on the left
+
+        // Swallow any range whose start <= right.
+        Map.Entry<Integer, Integer> e;
+        while ((e = map.ceilingEntry(left)) != null && e.getKey() <= right) {
+            right = Math.max(right, e.getValue());
+            map.remove(e.getKey());
+        }
+        map.put(left, right);
+    }
+
+    public boolean queryRange(int left, int right) {
+        Map.Entry<Integer, Integer> floor = map.floorEntry(left);
+        return floor != null && floor.getValue() >= right;
+    }
+
+    public void removeRange(int left, int right) {
+        Integer L = map.floorKey(left);
+        if (L != null && map.get(L) > left) {            // split the range that contains 'left'
+            int oldR = map.get(L);
+            if (L < left) map.put(L, left);
+            else map.remove(L);
+            if (oldR > right) map.put(right, oldR);
+        }
+
+        Map.Entry<Integer, Integer> e;
+        while ((e = map.ceilingEntry(left)) != null && e.getKey() < right) {
+            int oldR = e.getValue();
+            map.remove(e.getKey());
+            if (oldR > right) map.put(right, oldR);
+        }
+    }
+}`,
+  complexity: "Amortized O(log n) per operation; each range is inserted and removed O(1) times globally."
+});
+
+PROBLEMS.push({
+  num: 732, title: "My Calendar III (Max Concurrent Bookings)", diff: "hard",
+  problem: "Implement MyCalendarThree.book(start, end) that returns the maximum K such that there exists a moment with K active bookings.",
+  intuition: "Difference-array style sweep on a TreeMap. Each book(s, e) does `delta[s]++; delta[e]--;`. After every book, walk the TreeMap once accumulating a running sum and return the max. Because the keys are sorted, you only iterate the (at most) 2*bookings unique points.",
+  hints: [
+    "Use `TreeMap<Integer, Integer> delta = new TreeMap<>();`.",
+    "On book(s, e): delta.merge(s, +1, Integer::sum); delta.merge(e, -1, Integer::sum).",
+    "Sweep delta.values(), running sum, track max."
+  ],
+  tips: [
+    "Yes, every book is O(n) because of the sweep. That's the textbook answer for LC 732 and is fast enough.",
+    "Smarter solutions use a segment tree / Chtholly tree — only worth it for follow-up interviews.",
+    "Same trick with `+= delta` solves 'count how many ranges cover point p' on a stream of insertions."
+  ],
+  code: `/*
+ * My Calendar III. Difference array on a TreeMap; sweep after each book().
+ */
+class MyCalendarThree {
+
+    private TreeMap<Integer, Integer> delta = new TreeMap<>();
+
+    public int book(int start, int end) {
+        delta.merge(start, 1, Integer::sum);
+        delta.merge(end,  -1, Integer::sum);
+
+        int active = 0, best = 0;
+        for (int d : delta.values()) {
+            active += d;
+            best = Math.max(best, active);
+        }
+        return best;
+    }
+}`,
+  complexity: "Time O(n) per book(), where n is the number of bookings so far. Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 850, title: "Rectangle Area II", diff: "hard",
+  problem: "Given a list of axis-aligned rectangles, return the total area of their union, modulo 10^9 + 7.",
+  intuition: "Sweep line vertically. Coordinate-compress all unique y-values; sort rectangles' x-events. As you sweep x left to right, maintain a count for each y-strip of how many rectangles currently cover it; the active 'total y length' times the x delta is the area added in this slice.",
+  hints: [
+    "Build events {x, y1, y2, +1 / -1} for each rectangle's left and right edges; sort by x.",
+    "Coordinate-compress y values into a sorted unique array.",
+    "For each x slice, compute total active y length via the count array, multiply by Δx, accumulate."
+  ],
+  tips: [
+    "A segment tree with lazy propagation gets O(N log N); the brute count-array variant is O(N^2) and fine for N ≤ 200 (LC's bound).",
+    "Coordinate compression is the only way to avoid O(maxCoord) blow-ups.",
+    "Modular arithmetic only at the end — keep the intermediate sums in `long`."
+  ],
+  code: `/*
+ * Rectangle Area II — sweep over x with a coordinate-compressed y axis.
+ * Brute O(n^2) version (clear and passes LC's constraints).
+ */
+int rectangleArea(int[][] rectangles) {
+
+    final int MOD = 1_000_000_007;
+
+    // Collect and compress all unique y coordinates.
+    TreeSet<Integer> ys = new TreeSet<>();
+    for (int[] r : rectangles) { ys.add(r[1]); ys.add(r[3]); }
+    Integer[] ya = ys.toArray(new Integer[0]);
+    Map<Integer, Integer> yIdx = new HashMap<>();
+    for (int i = 0; i < ya.length; i++) yIdx.put(ya[i], i);
+
+    // Events: for each rectangle, +1 at x1 across [y1, y2], -1 at x2.
+    List<int[]> ev = new ArrayList<>();
+    for (int[] r : rectangles) {
+        ev.add(new int[]{r[0], yIdx.get(r[1]), yIdx.get(r[3]),  1}); // open
+        ev.add(new int[]{r[2], yIdx.get(r[1]), yIdx.get(r[3]), -1}); // close
+    }
+    ev.sort((a, b) -> Integer.compare(a[0], b[0]));
+
+    int[] count = new int[ya.length];                    // active rect count per y-strip
+    long area = 0;
+    int prevX = ev.get(0)[0];
+
+    int idx = 0;
+    while (idx < ev.size()) {
+
+        int curX = ev.get(idx)[0];
+
+        // Add slice from prevX → curX using the previous active strips.
+        long activeY = 0;
+        for (int i = 0; i + 1 < ya.length; i++) {
+            if (count[i] > 0) activeY += (long)(ya[i + 1] - ya[i]);
+        }
+        area = (area + activeY * (curX - prevX)) % MOD;
+        prevX = curX;
+
+        // Apply ALL events at this x.
+        while (idx < ev.size() && ev.get(idx)[0] == curX) {
+            int[] e = ev.get(idx++);
+            for (int i = e[1]; i < e[2]; i++) count[i] += e[3];
+        }
+    }
+    return (int) area;
+}`,
+  complexity: "Time O(N^2) for the brute version, O(N log N) with a segment tree. Space O(N)."
+});
+
+PROBLEMS.push({
+  num: 352, title: "Data Stream as Disjoint Intervals", diff: "hard",
+  problem: "Implement a stream where you addNum(x) values one at a time and getIntervals() returns the current set of disjoint intervals as a sorted list.",
+  intuition: "Maintain a TreeMap<Integer, Integer> keyed by interval start with value = end. On addNum(x), find the predecessor (floor) and successor (ceiling). If x is already inside an existing range, do nothing. Otherwise possibly extend the predecessor, merge with the successor, or insert a singleton.",
+  hints: [
+    "If `floor != null && floor.value >= x` → x is already covered.",
+    "If `floor != null && floor.value == x - 1` → extend floor.value to x; then check whether ceiling.key == x + 1 to merge further.",
+    "If `ceiling != null && ceiling.key == x + 1` → replace ceiling with [x, ceiling.value]."
+  ],
+  tips: [
+    "Single-point intervals are just [x, x] — easy to forget when handling the empty TreeMap.",
+    "Build the answer in getIntervals() by streaming the entries — they're already sorted by start.",
+    "If you only need intervals lazily, store events and lazily compact in getIntervals() — but TreeMap is the textbook answer."
+  ],
+  code: `/*
+ * Data Stream as Disjoint Intervals — TreeMap<start, end>.
+ */
+class SummaryRanges {
+
+    private TreeMap<Integer, Integer> map = new TreeMap<>();
+
+    public void addNum(int x) {
+        if (map.containsKey(x)) return;
+
+        Integer left  = map.floorKey(x);                    // greatest start <= x
+        Integer right = map.ceilingKey(x);                  // smallest start >  x
+
+        boolean joinLeft  = left  != null && map.get(left) >= x - 1;
+        boolean joinRight = right != null && right == x + 1;
+
+        if (joinLeft && joinRight) {
+            map.put(left, map.get(right));
+            map.remove(right);
+        } else if (joinLeft) {
+            map.put(left, Math.max(map.get(left), x));
+        } else if (joinRight) {
+            map.put(x, map.get(right));
+            map.remove(right);
+        } else {
+            map.put(x, x);
+        }
+    }
+
+    public int[][] getIntervals() {
+        int[][] res = new int[map.size()][2];
+        int i = 0;
+        for (Map.Entry<Integer, Integer> e : map.entrySet()) {
+            res[i++] = new int[]{e.getKey(), e.getValue()};
+        }
+        return res;
+    }
+}`,
+  complexity: "addNum O(log n). getIntervals O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 1851, title: "Min Interval to Include Each Query (Offline)", diff: "hard",
+  problem: "Given intervals[i] = [l_i, r_i] and queries[j], return for each query q the size (r - l + 1) of the SMALLEST interval that contains q, or -1.",
+  intuition: "Offline + min-heap. Sort intervals by left. Sort queries by value (remember original indices). Walk queries in order: push every interval with left <= q into a min-heap keyed by interval size; lazily pop intervals whose right < q. The heap top is the answer for q.",
+  hints: [
+    "Sort intervals by left ascending.",
+    "Pair each query with its original index and sort by query value.",
+    "Maintain `PriorityQueue<int[]>{size, right}` ordered by size.",
+    "For each query: push all unprocessed intervals with left <= q; pop top while top.right < q; assign top.size as the answer."
+  ],
+  tips: [
+    "Lazy deletion is the trick — actively removing entries from a heap is O(n).",
+    "If queries could be online, you'd need a segment tree of sizes keyed by left/right ranges — heavier but available.",
+    "Watch out: 'size' is r - l + 1 for closed intervals. Off-by-one in the size formula is a common bug."
+  ],
+  code: `/*
+ * Minimum Interval to Include Each Query — offline sweep with a min-heap.
+ */
+int[] minInterval(int[][] intervals, int[] queries) {
+
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+
+    Integer[] order = new Integer[queries.length];
+    for (int i = 0; i < queries.length; i++) order[i] = i;
+    Arrays.sort(order, (a, b) -> Integer.compare(queries[a], queries[b]));
+
+    int[] ans = new int[queries.length];
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> Integer.compare(a[0], b[0]));
+    int j = 0;
+
+    for (int idx : order) {
+
+        int q = queries[idx];
+
+        // Push every interval whose left <= q.
+        while (j < intervals.length && intervals[j][0] <= q) {
+            int size = intervals[j][1] - intervals[j][0] + 1;
+            pq.offer(new int[]{size, intervals[j][1]});
+            j++;
+        }
+        // Discard intervals whose right < q (lazy deletion).
+        while (!pq.isEmpty() && pq.peek()[1] < q) pq.poll();
+
+        ans[idx] = pq.isEmpty() ? -1 : pq.peek()[0];
+    }
+    return ans;
+}`,
+  complexity: "Time O((N + Q) log N). Space O(N + Q)."
+});
+
+PROBLEMS.push({
+  num: 1235, title: "Maximum Profit in Job Scheduling (DP + Binary Search)", diff: "hard",
+  problem: "Given startTime[], endTime[], profit[], schedule a non-overlapping subset of jobs to maximize total profit. Two jobs can share an exact endpoint.",
+  intuition: "Sort jobs by end time. dp[i] = max profit using only jobs in indices [0..i]. Transition: either skip job i (dp[i-1]) or take it. Taking gives `profit[i] + dp[k]` where k is the largest index with `endTime[k] <= startTime[i]` — found by binary search on the sorted ends.",
+  hints: [
+    "Build `Job{start, end, profit}` and sort by end ascending.",
+    "ends[] = the sorted end array. For each i, binary-search for the largest j with ends[j] <= jobs[i].start.",
+    "dp[i] = max(dp[i-1], jobs[i].profit + (j >= 0 ? dp[j] : 0))."
+  ],
+  tips: [
+    "Same skeleton solves Weighted Interval Scheduling — the textbook DP.",
+    "If the dp is just a 1D array, you can store it inline and skip the explicit dp[].",
+    "If you forget to sort by END, the binary search target is wrong and the DP silently breaks."
+  ],
+  code: `/*
+ * Job Scheduling. Weighted Interval Scheduling DP.
+ *   Sort by END. For each job i, binary-search the latest job that
+ *   ends at or before jobs[i].start; combine with dp.
+ */
+int jobScheduling(int[] startTime, int[] endTime, int[] profit) {
+
+    int n = startTime.length;
+    int[][] jobs = new int[n][3];
+    for (int i = 0; i < n; i++) jobs[i] = new int[]{startTime[i], endTime[i], profit[i]};
+    Arrays.sort(jobs, (a, b) -> Integer.compare(a[1], b[1]));
+
+    int[] ends = new int[n];
+    for (int i = 0; i < n; i++) ends[i] = jobs[i][1];
+
+    int[] dp = new int[n];
+    dp[0] = jobs[0][2];
+
+    for (int i = 1; i < n; i++) {
+        int j = upperBound(ends, jobs[i][0]) - 1;        // last job with end <= start
+        int take = jobs[i][2] + (j >= 0 ? dp[j] : 0);
+        dp[i] = Math.max(dp[i - 1], take);
+    }
+    return dp[n - 1];
+}
+
+/* upperBound: smallest index with ends[idx] > target.  */
+private int upperBound(int[] ends, int target) {
+    int lo = 0, hi = ends.length;
+    while (lo < hi) {
+        int mid = (lo + hi) >>> 1;
+        if (ends[mid] <= target) lo = mid + 1;
+        else hi = mid;
+    }
+    return lo;
+}`,
+  complexity: "Time O(n log n). Space O(n)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Java syntax highlighter. */
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','Random','Collections','Arrays','Math','Comparator','Objects','Map.Entry'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = `
+      <div class="brief-root">
+        <header class="brief-header">
+          <div class="brief-subtitle">JAVA</div>
+          <h1 class="brief-title">Interval Operations</h1>
+          <p class="brief-tagline">Click a pattern → tweak inputs → see the timeline</p>
+        </header>
+        <div class="op-tabs" id="briefOpTabs"></div>
+        <div class="panel" id="briefMainPanel"></div>
+        <div class="cheat">
+          <div class="section-label">CHEAT SHEET — COMMON PATTERNS</div>
+          <div id="briefCheatSheet"></div>
+        </div>
+        <div class="brief-footer">SORT &middot; SWEEP &middot; MERGE</div>
+      </div>
+    `;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    initBriefMode();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+/* theme toggle */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+
+/* ===== BRIEF MODE: interactive interval explorer ===== */
+const BRIEF_OPS = [
+  {
+    id:"overlap", name:"Overlap?", color:"#2563eb", colorDark:"#58a6ff",
+    desc:"Two closed intervals [a0,a1] and [b0,b1] overlap iff a0 <= b1 AND b0 <= a1.",
+    rule:"De Morgan dual: disjoint  ≡  a1 < b0  OR  b1 < a0",
+    fn:(a,b,c,d) => (a <= d && c <= b),
+    label:"OVERLAP",
+    examples:[
+      { title:"Standard overlap test (closed intervals)",
+        code:`boolean overlap(int[] a, int[] b) {
+    return a[0] <= b[1] && b[0] <= a[1];
+}`,
+        why:"Easier to memorize via the disjoint case (one ends before the other starts) and negate via De Morgan." },
+      { title:"Half-open interval variant [start, end)",
+        code:`boolean overlapHalfOpen(int[] a, int[] b) {
+    return a[0] < b[1] && b[0] < a[1];   // strict <
+}`,
+        why:"Half-open semantics mean touching at a single point doesn't count — flip <= to <." },
+    ],
+  },
+  {
+    id:"intersect", name:"Intersect", color:"#16a34a", colorDark:"#76ff03",
+    desc:"Intersection = [max of starts, min of ends]. Empty iff lo > hi.",
+    rule:"lo = max(a0, b0)   |   hi = min(a1, b1)",
+    fn:(a,b,c,d) => Math.max(a,c) <= Math.min(b,d),
+    label:"INTERSECT",
+    examples:[
+      { title:"Two-pointer walk on sorted disjoint lists (LC 986)",
+        code:`int[][] intersect(int[][] A, int[][] B) {
+    List<int[]> res = new ArrayList<>();
+    int i = 0, j = 0;
+    while (i < A.length && j < B.length) {
+        int lo = Math.max(A[i][0], B[j][0]);
+        int hi = Math.min(A[i][1], B[j][1]);
+        if (lo <= hi) res.add(new int[]{lo, hi});
+        if (A[i][1] < B[j][1]) i++;
+        else j++;
+    }
+    return res.toArray(new int[0][]);
+}`,
+        why:"Two-pointer because both lists are sorted and disjoint within themselves. O(m + n)." },
+    ],
+  },
+  {
+    id:"merge", name:"Merge", color:"#d97706", colorDark:"#ffd740",
+    desc:"Sort by start, then sweep. If next.start <= last.end → extend last.end = max(last.end, next.end).",
+    rule:"cur[0] <= last[1]  →  last[1] = max(last[1], cur[1])",
+    fn:(a,b,c,d) => c <= b,
+    label:"MERGE",
+    examples:[
+      { title:"LC 56 — Merge Intervals",
+        code:`int[][] merge(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+    List<int[]> res = new ArrayList<>();
+    res.add(intervals[0]);
+    for (int i = 1; i < intervals.length; i++) {
+        int[] last = res.get(res.size() - 1);
+        if (intervals[i][0] <= last[1]) {
+            last[1] = Math.max(last[1], intervals[i][1]);
+        } else {
+            res.add(intervals[i]);
+        }
+    }
+    return res.toArray(new int[0][]);
+}`,
+        why:"After sorting, you only need to compare each interval with the LAST one in the result list." },
+    ],
+  },
+  {
+    id:"sweep", name:"Sweep Line", color:"#9333ea", colorDark:"#ea80fc",
+    desc:"Each interval becomes (+1) at start and (-1) at end. Sort by time; running sum = active count.",
+    rule:"events[start] = +1, events[end] = -1; max(prefix sum) = max overlap",
+    fn:(a,b,c,d) => true,
+    label:"SWEEP LINE",
+    examples:[
+      { title:"Min Meeting Rooms via two-pointer (LC 253)",
+        code:`int minMeetingRooms(int[][] intervals) {
+    int n = intervals.length;
+    int[] starts = new int[n], ends = new int[n];
+    for (int i = 0; i < n; i++) {
+        starts[i] = intervals[i][0];
+        ends[i]   = intervals[i][1];
+    }
+    Arrays.sort(starts);
+    Arrays.sort(ends);
+    int rooms = 0, j = 0;
+    for (int i = 0; i < n; i++) {
+        if (starts[i] < ends[j]) rooms++;
+        else j++;
+    }
+    return rooms;
+}`,
+        why:"Equivalent to sweep line but encoded as two sorted arrays. Cleanest 'min rooms' you'll write." },
+    ],
+  },
+  {
+    id:"greedy", name:"Greedy by End", color:"#dc2626", colorDark:"#ff7b72",
+    desc:"Sort by END. Keep an interval iff it starts at-or-after the last kept end. Maximizes count.",
+    rule:"sort(intervals, by end ASC); accept if start >= lastEnd",
+    fn:(a,b,c,d) => c >= b,
+    label:"EARLIEST DEADLINE",
+    examples:[
+      { title:"LC 435 — Min Removals to make non-overlapping",
+        code:`int eraseOverlapIntervals(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -> Integer.compare(a[1], b[1]));
+    int kept = 1, lastEnd = intervals[0][1];
+    for (int i = 1; i < intervals.length; i++) {
+        if (intervals[i][0] >= lastEnd) {
+            kept++;
+            lastEnd = intervals[i][1];
+        }
+    }
+    return intervals.length - kept;
+}`,
+        why:"Sorting by END (not start) is what makes the greedy optimal. Same skeleton as LC 452." },
+    ],
+  },
+  {
+    id:"demorgan", name:"De Morgan", color:"#0d9488", colorDark:"#a7ffeb",
+    desc:"NOT(A AND B) == (NOT A) OR (NOT B). Flip overlap into disjoint and back.",
+    rule:"!(a<=d && c<=b)  ≡  (a>d) || (c>b)  ≡  disjoint",
+    fn:(a,b,c,d) => true,
+    label:"DE MORGAN",
+    examples:[
+      { title:"Refactor 'bad case' into 'good case'",
+        code:`// 'bad': they DON'T overlap (one ends strictly before the other starts)
+boolean disjoint(int[] a, int[] b) {
+    return a[1] < b[0] || b[1] < a[0];
+}
+
+// Negate via De Morgan to get 'good':
+boolean overlap(int[] a, int[] b) {
+    return a[1] >= b[0] && b[1] >= a[0];   // == a[0] <= b[1] && b[0] <= a[1]
+}`,
+        why:"Flipping NOTs across AND/OR is the single most useful refactor in interval problems." },
+      { title:"Strict vs non-strict pitfall",
+        code:`// CARE: NOT (x < y)  is  (x >= y), NOT  (x > y).
+// CARE: NOT (x <= y) is  (x > y),  NOT  (x >= y).
+// One off-by-one inversion = wrong overlap test.`,
+        why:"De Morgan flips AND↔OR, but each individual term must also be flipped correctly. This is where 90% of interval bugs live." },
+    ],
+  },
+];
+
+const BRIEF_CHEAT_ITEMS = [
+  ["Overlap (closed)",        "a[0] <= b[1] && b[0] <= a[1]"],
+  ["Disjoint (closed)",       "a[1] < b[0] || b[1] < a[0]"],
+  ["Intersection",            "[max(a[0],b[0]), min(a[1],b[1])]"],
+  ["Containment",             "a[0] <= b[0] && b[1] <= a[1]"],
+  ["Sort by start",           "(a,b) -> Integer.compare(a[0], b[0])"],
+  ["Sort by end",             "(a,b) -> Integer.compare(a[1], b[1])"],
+  ["Merge step",              "last[1] = Math.max(last[1], cur[1])"],
+  ["Sweep events",            "+1 at start, -1 at end; sort; prefix-sum"],
+  ["Min rooms (2-ptr)",       "if (starts[i] < ends[j]) rooms++; else j++;"],
+  ["Diff array",              "diff[l]+=k; diff[r+1]-=k; then prefix-sum"],
+  ["Calendar TreeMap",        "floorEntry(start) / ceilingEntry(start)"],
+];
+
+let briefCurrentOp = BRIEF_OPS[0];
+let briefCurrentEx = 0;
+let briefWhyOpen = {};
+let briefA = [2, 6];
+let briefB = [4, 9];
+
+function briefOpColor(op) {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+    ? (op.colorDark || op.color)
+    : op.color;
+}
+
+function briefRenderTimeline(intervals, colors, scaleMax) {
+  const span = scaleMax || 12;
+  let html = '';
+  intervals.forEach((iv, i) => {
+    if (!iv) return;
+    const left  = (iv[0] / span) * 100;
+    const width = ((iv[1] - iv[0]) / span) * 100;
+    html += `<div class="track" style="left:${left}%; width:${width}%; background:${colors[i]}; top:${4 + i * 12}px;">[${iv[0]}, ${iv[1]}]</div>`;
+  });
+  let axis = '';
+  for (let i = 0; i <= span; i++) axis += `<span>${i}</span>`;
+  return `<div class="timeline" style="height:${12 + intervals.length * 14}px;">${html}</div><div class="axis">${axis}</div>`;
+}
+
+function briefRenderPanel() {
+
+  const op = briefCurrentOp;
+  const color = briefOpColor(op);
+  const a0 = briefA[0], a1 = briefA[1], b0 = briefB[0], b1 = briefB[1];
+
+  // Compute live result based on op.
+  let resultLine = '';
+  if (op.id === 'overlap') {
+    const ok = (a0 <= b1) && (b0 <= a1);
+    resultLine = `overlap(A, B) = <span class="result-pill ${ok ? 'yes' : 'no'}">${ok ? 'TRUE' : 'FALSE'}</span>`;
+  } else if (op.id === 'intersect') {
+    const lo = Math.max(a0, b0), hi = Math.min(a1, b1);
+    resultLine = lo <= hi
+      ? `intersection = <span class="result-pill yes">[${lo}, ${hi}]</span>`
+      : `intersection = <span class="result-pill no">EMPTY</span>`;
+  } else if (op.id === 'merge') {
+    if (b0 <= a1) {
+      const mLo = Math.min(a0, b0), mHi = Math.max(a1, b1);
+      resultLine = `merge(A, B) = <span class="result-pill yes">[${mLo}, ${mHi}]</span>`;
+    } else {
+      resultLine = `merge(A, B) = <span class="result-pill no">[A], [B]  (disjoint, no merge)</span>`;
+    }
+  } else if (op.id === 'sweep') {
+    // count active at each integer time
+    let maxActive = 0;
+    for (let t = Math.min(a0, b0); t <= Math.max(a1, b1); t++) {
+      let active = 0;
+      if (a0 <= t && t <= a1) active++;
+      if (b0 <= t && t <= b1) active++;
+      maxActive = Math.max(maxActive, active);
+    }
+    resultLine = `max concurrent = <span class="result-pill ${maxActive > 1 ? 'yes' : 'no'}">${maxActive}</span>`;
+  } else if (op.id === 'greedy') {
+    const ok = (b0 >= a1);
+    resultLine = `B accepted after A? <span class="result-pill ${ok ? 'yes' : 'no'}">${ok ? 'YES' : 'NO (overlap)'}</span>`;
+  } else {
+    const overlap = (a0 <= b1) && (b0 <= a1);
+    const disjoint = (a1 < b0) || (b1 < a0);
+    resultLine = `overlap = <span class="result-pill ${overlap ? 'yes' : 'no'}">${overlap}</span>  &nbsp; disjoint = <span class="result-pill ${disjoint ? 'yes' : 'no'}">${disjoint}</span>  &nbsp; (NOT overlap == disjoint)`;
+  }
+
+  const exTabs = op.examples.map((e, i) =>
+    `<div class="ex-tab" data-i="${i}" style="${i === briefCurrentEx ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(e.title)}</div>`
+  ).join('');
+
+  const ex = op.examples[briefCurrentEx];
+  const whyOpen = briefWhyOpen[op.id + ':' + briefCurrentEx];
+
+  document.getElementById('briefMainPanel').innerHTML = `
+    <div class="op-badge" style="background:${color}22; color:${color}; border:1px solid ${color}">${op.label}</div>
+    <div class="op-desc">${escapeHtml(op.desc)}</div>
+    <div class="op-rule">${escapeHtml(op.rule)}</div>
+
+    <div class="calc-box">
+      <div class="input-row">
+        <span class="input-label">A =</span>
+        [<input type="number" id="briefA0" value="${a0}" />,
+         <input type="number" id="briefA1" value="${a1}" />]
+      </div>
+      <div class="input-row">
+        <span class="input-label">B =</span>
+        [<input type="number" id="briefB0" value="${b0}" />,
+         <input type="number" id="briefB1" value="${b1}" />]
+      </div>
+      ${briefRenderTimeline([briefA, briefB], [color, '#888'], 12)}
+      <div class="result-line">${resultLine}</div>
+    </div>
+
+    <div class="section-label">EXAMPLES</div>
+    <div class="ex-tabs">${exTabs}</div>
+    <div class="ex-box">
+      <div class="ex-title" style="color:${color}">${escapeHtml(ex.title)}</div>
+      <pre class="brief-pre"><code>${highlightJava(ex.code)}</code></pre>
+      <div class="why-toggle" data-key="${op.id}:${briefCurrentEx}">${whyOpen ? '▼' : '▶'} Why does this work?</div>
+      <div class="why-body ${whyOpen ? 'visible' : ''}">${escapeHtml(ex.why)}</div>
+    </div>
+  `;
+
+  // Wire input handlers.
+  ['briefA0','briefA1','briefB0','briefB1'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      briefA = [parseInt(document.getElementById('briefA0').value || 0, 10),
+                parseInt(document.getElementById('briefA1').value || 0, 10)];
+      briefB = [parseInt(document.getElementById('briefB0').value || 0, 10),
+                parseInt(document.getElementById('briefB1').value || 0, 10)];
+      briefRenderPanel();
+    });
+  });
+
+  // Example tabs.
+  document.querySelectorAll('#briefMainPanel .ex-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentEx = +t.dataset.i;
+      briefRenderPanel();
+    });
+  });
+
+  // Why toggle.
+  const wt = document.querySelector('#briefMainPanel .why-toggle');
+  if (wt) {
+    wt.addEventListener('click', () => {
+      const key = wt.dataset.key;
+      briefWhyOpen[key] = !briefWhyOpen[key];
+      briefRenderPanel();
+    });
+  }
+}
+
+function briefRenderOpTabs() {
+  const html = BRIEF_OPS.map(op => {
+    const color = briefOpColor(op);
+    const active = op.id === briefCurrentOp.id;
+    return `<div class="op-tab" data-id="${op.id}"
+      style="${active ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(op.name)}</div>`;
+  }).join('');
+  document.getElementById('briefOpTabs').innerHTML = html;
+  document.querySelectorAll('#briefOpTabs .op-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentOp = BRIEF_OPS.find(o => o.id === t.dataset.id);
+      briefCurrentEx = 0;
+      briefRenderOpTabs();
+      briefRenderPanel();
+    });
+  });
+}
+
+function briefRenderCheatSheet() {
+  document.getElementById('briefCheatSheet').innerHTML = BRIEF_CHEAT_ITEMS.map(([n, c]) =>
+    `<div class="cheat-row"><span class="cheat-name">${escapeHtml(n)}</span><span class="cheat-code">${escapeHtml(c)}</span></div>`
+  ).join('');
+}
+
+function initBriefMode() {
+  briefRenderOpTabs();
+  briefRenderPanel();
+  briefRenderCheatSheet();
+}
+
+// Re-render brief when the theme toggles so colors track CSS vars.
+const briefThemeObserver = new MutationObserver(() => {
+  if (state.diff === 'brief') {
+    briefRenderOpTabs();
+    briefRenderPanel();
+  }
+});
+briefThemeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['data-theme'],
+});
+
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
