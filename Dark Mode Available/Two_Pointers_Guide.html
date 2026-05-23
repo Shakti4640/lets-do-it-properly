@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Two Pointers — Patterns, Cheatsheet & Java Snippets</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    color: var(--fg);
+  }
+  .brief-root .brief-header { text-align: center; margin-bottom: 32px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #2563eb, #16a34a, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  [data-theme="dark"] .brief-root .brief-title {
+    background: linear-gradient(90deg, #58a6ff, #76ff03, #ffd740);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .op-tabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 28px;
+  }
+  .brief-root .op-tab {
+    padding: 8px 16px; border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--card); color: var(--muted);
+    cursor: pointer; font-family: inherit;
+    font-weight: 700; font-size: 14px;
+    transition: all 0.18s;
+  }
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 24px;
+  }
+  .brief-root .op-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+  .brief-root .op-desc { margin: 10px 0 4px; color: var(--fg); font-size: 14px; }
+  .brief-root .op-rule { color: var(--muted); font-size: 12px; }
+  .brief-root .calc-box {
+    background: var(--code-bg); border-radius: 12px;
+    padding: 20px; margin: 20px 0; border: 1px solid var(--border);
+  }
+  .brief-root .input-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .brief-root .input-label { color: var(--muted); font-size: 12px; min-width: 60px; }
+  .brief-root input[type=text], .brief-root input[type=number] {
+    padding: 6px 10px; border-radius: 6px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--fg); font-family: inherit; font-size: 14px;
+  }
+  .brief-root input[type=text] { width: 240px; }
+  .brief-root input[type=number] { width: 70px; }
+  .brief-root .arr-row { display: flex; gap: 4px; flex-wrap: wrap; margin: 12px 0; }
+  .brief-root .arr-cell {
+    min-width: 36px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 5px;
+    font-weight: 700; font-size: 13px;
+    background: var(--bg); color: var(--fg);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .brief-root .arr-cell.left-ptr { box-shadow: 0 0 0 2px var(--easy); background: rgba(22,163,74,.18); color: var(--easy); }
+  .brief-root .arr-cell.right-ptr { box-shadow: 0 0 0 2px var(--med); background: rgba(217,119,6,.18); color: var(--med); }
+  .brief-root .arr-cell.both-ptr { box-shadow: 0 0 0 2px var(--accent); background: rgba(37,99,235,.18); color: var(--accent); }
+  .brief-root .arr-cell .lbl {
+    position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; font-weight: 700;
+  }
+  .brief-root .ptr-row { display: flex; gap: 16px; font-size: 11px; color: var(--muted); margin-top: 18px; }
+  .brief-root .result-line { margin-top: 16px; font-size: 13px; color: var(--muted); }
+  .brief-root .result-pill {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 20px; font-weight: 700; font-size: 12px;
+    margin-left: 8px;
+  }
+  .brief-root .result-pill.yes { background: rgba(22,163,74,.15); color: var(--easy); border: 1px solid var(--easy); }
+  .brief-root .result-pill.no  { background: rgba(220,38,38,.15); color: var(--hard); border: 1px solid var(--hard); }
+  .brief-root .section-label {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 3px; margin-bottom: 12px;
+  }
+  .brief-root .ex-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .brief-root .ex-tab {
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 12px;
+    font-family: inherit; transition: all 0.18s;
+  }
+  .brief-root .ex-box {
+    background: var(--code-bg); border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .brief-root .ex-title { padding: 10px 16px; font-size: 13px; font-weight: 700; }
+  .brief-root pre.brief-pre {
+    margin: 0; padding: 16px; font-size: 13px; line-height: 1.7;
+    color: var(--code-fg); overflow-x: auto;
+    white-space: pre-wrap; word-break: break-word;
+    background: var(--code-bg);
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  [data-theme="dark"] .brief-root pre.brief-pre { color: #c8e6c9; }
+  .brief-root .why-toggle {
+    padding: 10px 16px; cursor: pointer;
+    border-top: 1px solid var(--border);
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+    user-select: none; color: var(--muted);
+  }
+  .brief-root .why-body {
+    padding: 12px 16px; font-size: 13px; line-height: 1.7;
+    color: var(--fg); display: none;
+  }
+  .brief-root .why-body.visible { display: block; }
+  .brief-root .cheat {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 16px;
+  }
+  .brief-root .cheat-row {
+    display: flex; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px; padding: 8px 0;
+    border-bottom: 1px solid var(--border); align-items: center;
+  }
+  .brief-root .cheat-name { color: var(--muted); font-size: 13px; }
+  .brief-root .cheat-code {
+    color: var(--str); font-size: 12px;
+    background: var(--code-bg);
+    padding: 2px 10px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .brief-root .brief-footer {
+    text-align: center; color: var(--muted);
+    font-size: 11px; letter-spacing: 2px; margin-top: 8px;
+  }
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #eef2ff;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: var(--code-bg);
+    white-space: nowrap;
+    color: var(--num);
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: var(--num); }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Two Pointers — Patterns, Cheatsheet & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Two Pointers Cheatsheet (read this first)", diff: "veasy",
+  problem: "Two Pointers is a family of techniques where two indices walk an array (or string, or linked list) along carefully chosen rules so that the entire pass is O(N) instead of O(N^2). Three flavors cover almost everything: (1) OPPOSITE ends — left starts at 0, right at n-1, they walk toward each other (sorted-array search, palindrome, container with most water); (2) SAME direction at different speeds — slow / fast pointers (cycle detection, in-place compaction, kth-from-end); (3) PARTITION — a write-pointer trails a read-pointer to compact / categorize values in place (Dutch national flag, move zeros, remove duplicates).",
+  intuition: "The trick of two pointers is monotonicity. On a SORTED array, moving left forward strictly increases the smaller value and moving right backward strictly decreases the larger value — so each step you can decide which one to move based on whether the current sum/diff is too small or too big. For SLOW/FAST cycle detection, the gap closes by 1 every step on a circular path, which is why slow == fast eventually inside any cycle. For PARTITION, the write-pointer is a 'next free slot' that trails the read-pointer; the invariant `everything before write is good` holds across the entire pass.",
+  hints: [
+    "First rule: never move both pointers backward. If you do, you've left two-pointer territory and you're brute-forcing.",
+    "Sort first whenever the problem is about sums, pairs, or relative ordering and the input is permission-to-sort. Two pointers + sort is N log N which beats N^2 hash-set tricks on memory.",
+    "For 'find a pair with sum == target' on a sorted array, opposite-ends two pointers; for unsorted, prefer a HashSet (don't sort just to two-pointer when O(N) HashSet works).",
+    "Slow / fast: slow moves +1, fast moves +2. They meet inside a cycle. To find cycle start, reset slow to head and walk both at +1 — they meet at the entry node (Floyd).",
+    "Partition: write starts at 0; for each read index, decide if nums[read] should be kept; if yes, copy to nums[write++]. The final answer is the prefix nums[0..write)."
+  ],
+  tips: [
+    "Total movement of each pointer is bounded by N. That's why the loop is O(N) even when there's a `while` inside the `for`.",
+    "Be VERY careful with `while (left < right)` vs `while (left <= right)`. The former skips the middle on odd lengths; the latter checks it. Pick deliberately.",
+    "Skip duplicates AFTER moving, not before, when listing all triplets/quadruplets. Use `while (l < r && nums[l] == nums[l+1]) l++;` style.",
+    "For linked lists, advance fast by k FIRST to create a gap, then move both together — this is how 'remove kth from end' lands cleanly in one pass.",
+    "When the array isn't sorted but you still want sum-pairs, a HashMap (LC 1) is two-pointer's hash twin. Same time, more memory."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Pattern / Idiom</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>Opposite ends</td><td>l = 0, r = n-1; while l &lt; r move based on a comparison.</td></tr>
+        <tr><td>Sorted pair sum</td><td>If sum &lt; target l++; if sum &gt; target r--; else hit.</td></tr>
+        <tr><td>Palindrome check</td><td>Mirror compare s[l] vs s[r]; advance both inward.</td></tr>
+        <tr><td>Container / area</td><td>Move the side with the SHORTER value (it's the bottleneck).</td></tr>
+        <tr><td>Slow / Fast</td><td>slow += 1, fast += 2. Meet inside any cycle (Floyd).</td></tr>
+        <tr><td>Cycle entry (Floyd)</td><td>After meeting, reset slow to head; walk both at +1.</td></tr>
+        <tr><td>Kth from end</td><td>Advance fast by k first, then walk both until fast is null.</td></tr>
+        <tr><td>Partition / write idx</td><td>w starts at 0; for each r, copy to w if it satisfies condition; w++.</td></tr>
+        <tr><td>Dutch flag (3-way)</td><td>lo / mid / hi pointers; swap based on category of nums[mid].</td></tr>
+        <tr><td>Skip duplicates</td><td>while (l &lt; r &amp;&amp; nums[l] == nums[l+1]) l++;</td></tr>
+        <tr><td>Merge two sorted</td><td>Two read pointers, one write pointer; pick smaller each step.</td></tr>
+        <tr><td>Trapping rain water</td><td>Two pointers + leftMax / rightMax; advance shorter side.</td></tr>
+      </tbody>
+    </table>
+    <p><b>Two pieces of intuition worth memorizing:</b></p>
+    <ul class="hints">
+      <li><b>Monotone decisions.</b> On a sorted array, every comparison gives an <i>unambiguous</i> direction: too small → move left up; too big → move right down. The reason brute force is N^2 is that without sorting, you don't have this monotonicity. Whenever you see a sorted/permitted-to-sort array and a pair/triple/sum question, two pointers is almost certainly the intended tool.</li>
+      <li><b>The write pointer is an invariant.</b> In partition problems, every iteration preserves the invariant <code>nums[0..write)</code> contains exactly the elements that satisfy the predicate, in original order. If you can write down that invariant clearly, the inner copy logic almost writes itself.</li>
+    </ul>
+  `,
+  code: `/*
+ * The five idioms you'll reach for in 90% of two-pointer problems.
+ * Memorize each — every other recipe is a remix of these.
+ */
+
+// ---- 1. OPPOSITE ENDS — Two-Sum on a sorted array -------------------
+int[] twoSumSorted(int[] nums, int target) {
+
+    int l = 0, r = nums.length - 1;
+    while (l < r) {
+        int s = nums[l] + nums[r];
+        if (s == target)      return new int[]{l, r};
+        else if (s < target)  l++;        // need bigger sum
+        else                  r--;        // need smaller sum
+    }
+    return new int[]{-1, -1};
+}
+
+// ---- 2. PALINDROME CHECK (skip non-alnum, ignore case) -------------
+boolean isPalindrome(String s) {
+
+    int l = 0, r = s.length() - 1;
+    while (l < r) {
+        while (l < r && !Character.isLetterOrDigit(s.charAt(l))) l++;
+        while (l < r && !Character.isLetterOrDigit(s.charAt(r))) r--;
+        if (Character.toLowerCase(s.charAt(l)) != Character.toLowerCase(s.charAt(r))) return false;
+        l++; r--;
+    }
+    return true;
+}
+
+// ---- 3. SLOW / FAST — Linked-list cycle detection -------------------
+boolean hasCycle(ListNode head) {
+
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) return true;
+    }
+    return false;
+}
+
+// Cycle entry (Floyd): after they meet, reset slow to head and walk both
+// by +1; the next meeting point is the cycle's start node.
+ListNode cycleStart(ListNode head) {
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next; fast = fast.next.next;
+        if (slow == fast) {
+            slow = head;
+            while (slow != fast) { slow = slow.next; fast = fast.next; }
+            return slow;
+        }
+    }
+    return null;
+}
+
+// ---- 4. PARTITION — Move zeros to the end (in place) ---------------
+void moveZeroes(int[] nums) {
+
+    int w = 0;
+    for (int r = 0; r < nums.length; r++) {
+        if (nums[r] != 0) nums[w++] = nums[r];     // copy non-zero forward
+    }
+    while (w < nums.length) nums[w++] = 0;          // fill tail with zeros
+}
+
+// ---- 5. DUTCH NATIONAL FLAG — 3-way partition ----------------------
+void sortColors(int[] nums) {
+
+    int lo = 0, mid = 0, hi = nums.length - 1;
+    while (mid <= hi) {
+        if      (nums[mid] == 0) { swap(nums, lo++, mid++); }
+        else if (nums[mid] == 2) { swap(nums, mid,  hi--);  }   // don't advance mid
+        else                     { mid++; }
+    }
+}
+
+private void swap(int[] a, int i, int j) { int t = a[i]; a[i] = a[j]; a[j] = t; }`,
+  complexity: "Every skeleton above is O(N) time. Two-pointer + sort is O(N log N) when sorting is the bottleneck. Space is O(1) for in-place variants and O(1) for opposite-ends/cycle detection."
+});
+
+
+/* ===================== VERY EASY (DRILLS) ===================== */
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Pick the right two-pointer flavor", diff: "veasy",
+  problem: "Before writing any code, classify the problem into OPPOSITE-ENDS, SLOW/FAST, or PARTITION. Picking wrong is the single biggest cause of two-pointer bugs.",
+  intuition: "OPPOSITE-ENDS whenever the array is sorted (or permitted to sort) and the question is about a relationship between two values: pair sum, pair diff, palindrome, container area, three-sum after sorting. SLOW/FAST whenever the input is a linked list and the question involves cycles, midpoint, or kth-from-end. PARTITION whenever the question is 'rearrange in place to put X first / move Y to the end / collapse duplicates'.",
+  hints: [
+    "Sorted array + pair / triple / sum  ⇒  opposite ends.",
+    "Linked list + cycle / midpoint / kth-from-end  ⇒  slow / fast.",
+    "Rearrange / dedupe / partition in place  ⇒  write-pointer (partition).",
+    "Subarray / substring with a constraint  ⇒  this is sliding window's territory, not two-pointers."
+  ],
+  tips: [
+    "If you're tempted to use two pointers AND it's not sorted, first ask 'can I sort it?' If not, switch to HashMap or sliding window.",
+    "Sliding window is two-pointer's cousin where both pointers move forward — same complexity, different vibe.",
+    "If you find yourself moving a pointer BACKWARD, you've left two-pointer territory."
+  ],
+  code: `/*
+ * Decision flowchart (mental model).
+ *
+ *   Sorted array + pair / triple ?       → OPPOSITE-ENDS
+ *   Linked list + cycle / mid / kth ?    → SLOW / FAST
+ *   Rearrange in place ?                 → WRITE POINTER (PARTITION)
+ *   Contiguous subarray with constraint ?→ SLIDING WINDOW (different guide)
+ */`,
+  complexity: "Every two-pointer template is O(N). The classification step costs nothing; the wrong template costs the whole interview."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Opposite-ends template", diff: "veasy",
+  problem: "Memorize the 5-line opposite-ends skeleton. Every Two-Sum-on-sorted, palindrome, container-area, or pair-search problem on a sorted array is one tweak of this.",
+  intuition: "Two pointers, l = 0 and r = n-1, walk inward until they cross. At each step, examine the pair (nums[l], nums[r]) and choose which side to move based on a comparison.",
+  hints: [
+    "while (l < r) compare nums[l] and nums[r] (or their sum, or s.charAt(l) vs s.charAt(r)).",
+    "Move the pointer that needs to move based on the comparison.",
+    "Stop when l >= r."
+  ],
+  tips: [
+    "`while (l < r)` is the default; use `while (l <= r)` only when the middle element matters in its own right (e.g., binary search).",
+    "When comparing chars, lowercase / strip non-alnum BEFORE comparing.",
+    "Don't update both pointers in the wrong-comparison branch — that's how you skip the answer."
+  ],
+  code: `/*
+ * Opposite-ends two-pointer skeleton.
+ */
+int oppositeEnds(int[] nums, int target) {
+
+    int l = 0, r = nums.length - 1;
+    while (l < r) {
+        int s = nums[l] + nums[r];
+        if      (s == target) return l;       // found
+        else if (s <  target) l++;
+        else                  r--;
+    }
+    return -1;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Slow / Fast template", diff: "veasy",
+  problem: "Memorize the 5-line slow / fast skeleton for cycle detection on linked lists. Same shape solves midpoint, kth-from-end, and Floyd's cycle entry.",
+  intuition: "slow moves +1 each step, fast moves +2. If there's a cycle, the gap shrinks by 1 each step inside the cycle, so they collide. If there isn't, fast falls off the end first.",
+  hints: [
+    "Initialize slow = fast = head.",
+    "Loop while (fast != null && fast.next != null).",
+    "slow = slow.next; fast = fast.next.next; if (slow == fast) return true."
+  ],
+  tips: [
+    "For linked-list MIDPOINT, when fast falls off the end slow is at the middle (rounded up for even lengths).",
+    "For KTH FROM END, advance fast by k BEFORE the joint walk; then walk both until fast is null. slow is at the answer.",
+    "Always check fast.next AS WELL AS fast — otherwise you NPE on `fast.next.next`."
+  ],
+  code: `/*
+ * Slow / fast skeleton — cycle detection.
+ */
+boolean hasCycle(ListNode head) {
+
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) return true;
+    }
+    return false;
+}
+
+/* Midpoint via the same pattern.  */
+ListNode middleNode(ListNode head) {
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+    }
+    return slow;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Partition / write-pointer template", diff: "veasy",
+  problem: "Memorize the 'write index' skeleton. Move zeros, remove duplicates, remove element, sort colors — all the same shape.",
+  intuition: "A write pointer w starts at 0. As read pointer r walks the array, decide whether nums[r] should be kept; if yes, write it to nums[w] and advance w. After the pass, the prefix nums[0..w) is the answer.",
+  hints: [
+    "w = 0.",
+    "for (int r = 0; r < n; r++) if (predicate(nums[r])) nums[w++] = nums[r].",
+    "Optional cleanup of the tail (e.g., zero-fill for moveZeroes)."
+  ],
+  tips: [
+    "When elements must STAY in their relative order, this template is exactly right.",
+    "When ordering doesn't matter, you can swap nums[r] with nums[w] to keep the array unchanged in size — sometimes lighter on writes.",
+    "For 'remove duplicates from sorted array', the predicate is `r == 0 || nums[r] != nums[r-1]`."
+  ],
+  code: `/*
+ * Partition / write-pointer skeleton — Move Zeros (LC 283).
+ */
+void moveZeroes(int[] nums) {
+
+    int w = 0;
+    for (int r = 0; r < nums.length; r++) {
+        if (nums[r] != 0) nums[w++] = nums[r];        // KEEP non-zero
+    }
+    while (w < nums.length) nums[w++] = 0;            // tail-fill
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Why two pointers is O(N)", diff: "veasy",
+  problem: "Convince yourself why a `for` loop that contains a `while` loop is still O(N) for two-pointer code. This is the single most common interviewer follow-up.",
+  intuition: "Each pointer moves only in ONE direction. Each pointer moves at most N positions in TOTAL across the whole algorithm — not per outer iteration. Therefore the sum of work over all iterations is bounded by 2N, which is O(N). Contrast this with naive nested loops where the inner loop restarts from 0 every outer iteration — that's where N^2 comes from.",
+  hints: [
+    "Identify the pointers and prove each moves only forward (or only inward).",
+    "Sum the total movement across the entire run; show it's bounded by N (or 2N).",
+    "Conclude that the overall step count is O(N) regardless of nesting in the source code."
+  ],
+  tips: [
+    "This is also the proof for sliding window's O(N), Kahn's BFS, and most amortized analyses.",
+    "If your two-pointer code resets a pointer back to 0 inside the loop, you've broken the invariant and you're back to O(N^2).",
+    "Saying 'each pointer moves at most N times' in an interview is gold — drop it whenever you write two-pointer code."
+  ],
+  code: `/*
+ * Amortized argument for two pointers.
+ *
+ *   Outer loop: r goes 0 → n-1   (n iterations).
+ *   Inner loop: l can only INCREASE, never decrease.
+ *
+ *   Total inner increments over the whole run ≤ n.
+ *
+ *   Therefore total work ≤ 2n = O(n), even though the source code
+ *   has a 'while inside for'. The same amortized argument is the
+ *   reason sliding window is also O(n).
+ */`,
+  complexity: "All two-pointer skeletons are O(N) by this amortized argument. Brushing this proof up will save you in interviews."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 167, title: "Two Sum II — Input Array Is Sorted", diff: "easy",
+  problem: "Given a 1-indexed sorted array of integers and a target, find the two numbers whose sum equals target. Return their 1-indexed positions.",
+  intuition: "Opposite-ends two-pointer. If the current sum is too small, move left up (increases sum). If too big, move right down (decreases sum). On a sorted array, this is monotone and never misses a valid pair.",
+  hints: [
+    "l = 0, r = n - 1.",
+    "while (l < r): compute s = nums[l] + nums[r]. If s == target return {l+1, r+1}. If s < target l++ else r--.",
+    "Guaranteed exactly one solution per problem statement."
+  ],
+  tips: [
+    "1-indexed output is a common gotcha — return l+1 and r+1.",
+    "BinarySearch alternative is O(N log N); two pointers is O(N) and simpler here.",
+    "Don't write `for (int i ...) for (int j ...)` — that's O(N^2)."
+  ],
+  code: `/*
+ * Two Sum II. Opposite-ends two-pointer on a sorted array.
+ */
+int[] twoSum(int[] nums, int target) {
+
+    int l = 0, r = nums.length - 1;
+    while (l < r) {
+        int s = nums[l] + nums[r];
+        if      (s == target) return new int[]{l + 1, r + 1};
+        else if (s <  target) l++;
+        else                  r--;
+    }
+    return new int[]{-1, -1};
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 125, title: "Valid Palindrome", diff: "easy",
+  problem: "Given a string s, determine if it is a palindrome considering only alphanumeric characters and ignoring case.",
+  intuition: "Opposite-ends with a skip rule. Walk l forward and r backward; on each step, skip non-alnum chars on either side, then compare lowercase versions.",
+  hints: [
+    "Inner whiles: `while (l < r && !isAlnum(s[l])) l++;` and the same for r.",
+    "Compare `Character.toLowerCase(s[l])` with `Character.toLowerCase(s[r])`.",
+    "If they don't match, return false. Else l++ and r--."
+  ],
+  tips: [
+    "Use `Character.isLetterOrDigit` rather than rolling your own.",
+    "Single-char strings and empty strings are always palindromes.",
+    "Avoid `s.toLowerCase()` upfront — it allocates a whole new string. Compare lowercase per char instead."
+  ],
+  code: `/*
+ * Valid Palindrome. Opposite-ends with non-alnum skips.
+ */
+boolean isPalindrome(String s) {
+
+    int l = 0, r = s.length() - 1;
+    while (l < r) {
+        while (l < r && !Character.isLetterOrDigit(s.charAt(l))) l++;
+        while (l < r && !Character.isLetterOrDigit(s.charAt(r))) r--;
+        if (Character.toLowerCase(s.charAt(l)) != Character.toLowerCase(s.charAt(r))) return false;
+        l++; r--;
+    }
+    return true;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 283, title: "Move Zeroes", diff: "easy",
+  problem: "Given an integer array, move all zeros to the end while keeping the relative order of the non-zero elements. Do it in place.",
+  intuition: "Partition / write pointer. Walk r from 0 to n-1; copy every non-zero to nums[w++]. After the pass, fill nums[w..n) with zeros.",
+  hints: [
+    "w = 0.",
+    "for (r = 0..n-1) if (nums[r] != 0) nums[w++] = nums[r].",
+    "Tail loop: while (w < n) nums[w++] = 0."
+  ],
+  tips: [
+    "Alternative one-pass swap version: when nums[r] != 0, swap nums[w++] and nums[r]. Cleaner if writes are expensive.",
+    "Don't return anything — modify in place per the problem.",
+    "Edge case: all zeros (or no zeros) — both handled by the same loop."
+  ],
+  code: `/*
+ * Move Zeros. Write-pointer partition.
+ */
+void moveZeroes(int[] nums) {
+
+    int w = 0;
+    for (int r = 0; r < nums.length; r++) {
+        if (nums[r] != 0) nums[w++] = nums[r];
+    }
+    while (w < nums.length) nums[w++] = 0;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 26, title: "Remove Duplicates from Sorted Array", diff: "easy",
+  problem: "Given a sorted integer array, remove duplicates in place so that each unique element appears once. Return the new length.",
+  intuition: "Write pointer with a 'first occurrence' predicate. Since the array is sorted, an element is the first occurrence iff it's at index 0 OR differs from nums[r - 1].",
+  hints: [
+    "If n == 0 return 0. Otherwise w = 1, r = 1.",
+    "for (r = 1..n-1) if (nums[r] != nums[r-1]) nums[w++] = nums[r].",
+    "Return w."
+  ],
+  tips: [
+    "Don't dedupe by allocating a new array — the problem requires in place.",
+    "The trailing values past index w are 'don't care' per the problem.",
+    "Same skeleton solves LC 80 'Remove Duplicates II' (allow up to 2 occurrences) — change the predicate."
+  ],
+  code: `/*
+ * Remove Duplicates from Sorted Array. Write pointer where the predicate
+ * is "first occurrence" (sorted ⇒ differ from previous).
+ */
+int removeDuplicates(int[] nums) {
+
+    if (nums.length == 0) return 0;
+    int w = 1;
+    for (int r = 1; r < nums.length; r++) {
+        if (nums[r] != nums[r - 1]) nums[w++] = nums[r];
+    }
+    return w;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 27, title: "Remove Element", diff: "easy",
+  problem: "Given an integer array nums and a value val, remove all occurrences of val in place and return the new length.",
+  intuition: "Write pointer with predicate 'nums[r] != val'. Copy whatever survives.",
+  hints: [
+    "w = 0.",
+    "for (r = 0..n-1) if (nums[r] != val) nums[w++] = nums[r].",
+    "Return w."
+  ],
+  tips: [
+    "If val is rare, an alternative 'swap with end' approach minimizes writes.",
+    "If val is the majority, the straight write-pointer is more cache friendly.",
+    "The order of remaining elements is preserved with the write-pointer version."
+  ],
+  code: `/*
+ * Remove Element. Write pointer.
+ */
+int removeElement(int[] nums, int val) {
+
+    int w = 0;
+    for (int r = 0; r < nums.length; r++) {
+        if (nums[r] != val) nums[w++] = nums[r];
+    }
+    return w;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 88, title: "Merge Sorted Array (in place from the back)", diff: "easy",
+  problem: "Given two sorted arrays nums1 (with extra space at the end) and nums2, merge nums2 into nums1 as one sorted array, in place.",
+  intuition: "Three pointers walking BACKWARDS. Place the larger of nums1[i] and nums2[j] at nums1[k], decrementing whichever provided it. Walking backward avoids overwriting unread elements.",
+  hints: [
+    "i = m - 1, j = n - 1, k = m + n - 1.",
+    "while (i >= 0 && j >= 0): if nums1[i] > nums2[j], nums1[k--] = nums1[i--]; else nums1[k--] = nums2[j--].",
+    "Tail: while (j >= 0) nums1[k--] = nums2[j--] (nums1 leftovers are already in place)."
+  ],
+  tips: [
+    "Walking forward and shifting elements would be O(N · M); back-to-front is O(N + M).",
+    "If nums2 finishes first, you don't need to copy anything — nums1's prefix is already sorted.",
+    "Watch the boundary: k starts at m + n - 1, NOT m + n."
+  ],
+  code: `/*
+ * Merge Sorted Array. Walk all three indices backward.
+ */
+void merge(int[] nums1, int m, int[] nums2, int n) {
+
+    int i = m - 1, j = n - 1, k = m + n - 1;
+    while (i >= 0 && j >= 0) {
+        if (nums1[i] > nums2[j]) nums1[k--] = nums1[i--];
+        else                     nums1[k--] = nums2[j--];
+    }
+    while (j >= 0) nums1[k--] = nums2[j--];
+}`,
+  complexity: "Time O(M + N). Space O(1)."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 11, title: "Container With Most Water", diff: "med",
+  problem: "Given n non-negative integers representing heights of vertical lines, find two lines that together with the x-axis form a container holding the most water.",
+  intuition: "Opposite-ends. Area = (r - l) × min(height[l], height[r]). The area is bounded by the SHORTER side, so moving the shorter side INWARD is the only move that can possibly increase the area (the longer side can't grow because width shrinks and the shorter cap stays).",
+  hints: [
+    "l = 0, r = n - 1, best = 0.",
+    "while (l < r): area = (r - l) * min(h[l], h[r]); update best.",
+    "Move the shorter side: if h[l] < h[r] then l++ else r--."
+  ],
+  tips: [
+    "Tie-break (h[l] == h[r]): either move works. Picking l++ is conventional.",
+    "Two-pointer here is opposite-ends without an inner shrink loop — pure O(N) decision per step.",
+    "Brute force is O(N^2). The two-pointer win comes from never re-considering a discarded shorter side."
+  ],
+  code: `/*
+ * Container With Most Water. Opposite-ends; always advance the SHORTER side.
+ */
+int maxArea(int[] height) {
+
+    int l = 0, r = height.length - 1, best = 0;
+    while (l < r) {
+        int h = Math.min(height[l], height[r]);
+        best = Math.max(best, h * (r - l));
+        if (height[l] < height[r]) l++; else r--;
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 15, title: "3Sum", diff: "med",
+  problem: "Given an integer array nums, return all unique triplets [a, b, c] such that a + b + c == 0.",
+  intuition: "Sort, then fix one element and run opposite-ends two-pointer for the remaining pair sum equals -nums[i]. The sort enables both monotonicity and easy duplicate-skipping.",
+  hints: [
+    "Sort nums. Loop i = 0..n-3; skip i if nums[i] == nums[i-1].",
+    "Inside, l = i+1, r = n-1; target = -nums[i]; standard two-pointer.",
+    "After a hit, also skip duplicates of nums[l] and nums[r] before continuing."
+  ],
+  tips: [
+    "Early break when nums[i] > 0 — no triplet sums to zero past this point on a sorted array.",
+    "Use Integer.compare for comparator if you write a custom sort; default int sort is fine here.",
+    "Don't forget the trailing duplicate skips on l AND r — without them, you re-emit triplets."
+  ],
+  code: `/*
+ * 3Sum. Sort + fix-one + opposite-ends; skip dups carefully.
+ */
+List<List<Integer>> threeSum(int[] nums) {
+
+    Arrays.sort(nums);
+    List<List<Integer>> res = new ArrayList<>();
+
+    for (int i = 0; i < nums.length - 2; i++) {
+
+        if (nums[i] > 0) break;                          // remaining sum can't be 0
+        if (i > 0 && nums[i] == nums[i - 1]) continue;   // skip duplicate first term
+
+        int l = i + 1, r = nums.length - 1, target = -nums[i];
+        while (l < r) {
+            int s = nums[l] + nums[r];
+            if (s == target) {
+                res.add(List.of(nums[i], nums[l], nums[r]));
+                while (l < r && nums[l] == nums[l + 1]) l++;
+                while (l < r && nums[r] == nums[r - 1]) r--;
+                l++; r--;
+            } else if (s < target) l++;
+            else                   r--;
+        }
+    }
+    return res;
+}`,
+  complexity: "Time O(N^2). Space O(1) extra (output excluded)."
+});
+
+PROBLEMS.push({
+  num: 16, title: "3Sum Closest", diff: "med",
+  problem: "Given an integer array and a target, return the sum of the three integers closest to target.",
+  intuition: "Same sort + fix-one + opposite-ends as LC 15, but instead of comparing to zero, you track the running closest sum.",
+  hints: [
+    "Sort. best = nums[0] + nums[1] + nums[2] (initial seed).",
+    "Loop i; standard two-pointer with l = i+1, r = n-1; track |s - target| against best.",
+    "Move l or r based on whether s < target or s > target."
+  ],
+  tips: [
+    "Use long for absolute differences if values are near Integer.MAX_VALUE.",
+    "Early-exit when s == target — that's as close as you can get.",
+    "Skipping duplicates here is optional (doesn't affect correctness) but speeds it up."
+  ],
+  code: `/*
+ * 3Sum Closest. Same skeleton as LC 15; track the best |s - target|.
+ */
+int threeSumClosest(int[] nums, int target) {
+
+    Arrays.sort(nums);
+    int best = nums[0] + nums[1] + nums[2];
+
+    for (int i = 0; i < nums.length - 2; i++) {
+
+        int l = i + 1, r = nums.length - 1;
+        while (l < r) {
+            int s = nums[i] + nums[l] + nums[r];
+            if (Math.abs(s - target) < Math.abs(best - target)) best = s;
+            if (s == target) return target;
+            if (s < target)  l++;
+            else             r--;
+        }
+    }
+    return best;
+}`,
+  complexity: "Time O(N^2). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 18, title: "4Sum", diff: "med",
+  problem: "Given an integer array nums and a target, return all unique quadruplets that sum to target.",
+  intuition: "Sort + fix two outer indices i, j and run opposite-ends two-pointer on l, r for the remaining pair sum. Skip duplicates at every level.",
+  hints: [
+    "Sort. Two outer for-loops i and j (j starts at i+1); skip duplicates at both.",
+    "Inside: l = j+1, r = n-1, target' = target - nums[i] - nums[j]; standard two-pointer.",
+    "After a hit, skip duplicate l and r values before advancing."
+  ],
+  tips: [
+    "Use long when computing sums to avoid overflow (target can be near Integer.MAX_VALUE in tests).",
+    "Aggressive pruning: if 4 * nums[i] > target after sort, break the i loop; similarly for the j loop.",
+    "Same skeleton extends to k-sum recursion: write `kSum(nums, k, start, target)` that bottoms out at k == 2."
+  ],
+  code: `/*
+ * 4Sum. Sort + fix two + opposite-ends inner two-pointer.
+ */
+List<List<Integer>> fourSum(int[] nums, int target) {
+
+    Arrays.sort(nums);
+    List<List<Integer>> res = new ArrayList<>();
+    int n = nums.length;
+
+    for (int i = 0; i < n - 3; i++) {
+        if (i > 0 && nums[i] == nums[i - 1]) continue;
+        for (int j = i + 1; j < n - 2; j++) {
+            if (j > i + 1 && nums[j] == nums[j - 1]) continue;
+
+            int l = j + 1, r = n - 1;
+            long t2 = (long) target - nums[i] - nums[j];
+            while (l < r) {
+                long s = (long) nums[l] + nums[r];
+                if (s == t2) {
+                    res.add(List.of(nums[i], nums[j], nums[l], nums[r]));
+                    while (l < r && nums[l] == nums[l + 1]) l++;
+                    while (l < r && nums[r] == nums[r - 1]) r--;
+                    l++; r--;
+                } else if (s < t2) l++;
+                else               r--;
+            }
+        }
+    }
+    return res;
+}`,
+  complexity: "Time O(N^3). Space O(1) extra."
+});
+
+PROBLEMS.push({
+  num: 75, title: "Sort Colors (Dutch National Flag)", diff: "med",
+  problem: "Sort an array containing only 0s, 1s, and 2s in place using one pass and constant extra space.",
+  intuition: "Three pointers — lo, mid, hi. Maintain invariants: nums[0..lo) is all 0; nums[lo..mid) is all 1; nums[hi+1..n) is all 2; nums[mid..hi] is unprocessed. Each step on nums[mid] decides which side to swap to.",
+  hints: [
+    "lo = 0, mid = 0, hi = n - 1.",
+    "while (mid <= hi): if nums[mid] == 0 swap(nums, lo++, mid++); else if nums[mid] == 2 swap(nums, mid, hi--); else mid++.",
+    "Don't advance mid in the '2' branch — the swapped-in value is unprocessed."
+  ],
+  tips: [
+    "This is THE textbook three-way partition. Memorize the invariants in plain English.",
+    "Generalizes to 'partition by predicate' for any 3-way bucketing.",
+    "Two passes (count 0/1/2 then overwrite) also works but is two passes — interviewers prefer the one-pass."
+  ],
+  code: `/*
+ * Sort Colors. Dutch National Flag — single pass, three pointers.
+ */
+void sortColors(int[] nums) {
+
+    int lo = 0, mid = 0, hi = nums.length - 1;
+    while (mid <= hi) {
+        if      (nums[mid] == 0) swap(nums, lo++, mid++);
+        else if (nums[mid] == 2) swap(nums, mid,  hi--);
+        else                     mid++;
+    }
+}
+
+private void swap(int[] a, int i, int j) { int t = a[i]; a[i] = a[j]; a[j] = t; }`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 142, title: "Linked List Cycle II (Floyd's Cycle Entry)", diff: "med",
+  problem: "Given the head of a linked list, return the node where the cycle begins, or null if there is no cycle.",
+  intuition: "Floyd. Phase 1: slow/fast detect a meeting point inside the cycle. Phase 2: reset slow to head and walk both pointers at +1 — they meet at the cycle entry. The math: distance from head to entry equals distance from meeting point to entry (both walked at +1).",
+  hints: [
+    "Phase 1: standard slow/fast. If fast falls off the end, no cycle.",
+    "Phase 2: slow = head; while (slow != fast) advance both by 1; return slow.",
+    "Result: the entry node of the cycle."
+  ],
+  tips: [
+    "Floyd's correctness boils down to: a + b == k(a + b + c) for some k, where a is head→entry, b is entry→meeting, c is meeting→entry. Solve to get a == c (mod loop length).",
+    "If you can use a HashSet, that solves it too in O(N) time and O(N) space — but Floyd is the O(1) gold standard.",
+    "Always check fast and fast.next inside the loop condition."
+  ],
+  code: `/*
+ * Linked List Cycle II. Floyd's two-phase algorithm.
+ */
+ListNode detectCycle(ListNode head) {
+
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) {
+            slow = head;
+            while (slow != fast) {
+                slow = slow.next;
+                fast = fast.next;
+            }
+            return slow;                                 // entry node
+        }
+    }
+    return null;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 19, title: "Remove Nth Node From End of List", diff: "med",
+  problem: "Given the head of a singly linked list and an integer n, remove the nth node from the end and return the modified head.",
+  intuition: "Two-pointer with a gap. Advance fast by n FIRST so the gap between slow and fast is exactly n. Then walk both until fast.next is null — slow is now at the node just BEFORE the one to remove.",
+  hints: [
+    "Use a dummy node before head so that removing the first node is uniform.",
+    "Advance fast by n steps from dummy.",
+    "While fast.next != null, advance both by 1. Then slow.next = slow.next.next."
+  ],
+  tips: [
+    "Dummy node makes 'remove the head' work without a special case.",
+    "Off-by-one trap: if you advance fast by n+1 instead of n, you'll be one node too late.",
+    "n is always valid per problem statement; don't bother with bounds checks."
+  ],
+  code: `/*
+ * Remove Nth Node From End. Two-pointer with a fixed gap of n.
+ */
+ListNode removeNthFromEnd(ListNode head, int n) {
+
+    ListNode dummy = new ListNode(0, head);
+    ListNode slow = dummy, fast = dummy;
+
+    for (int i = 0; i < n; i++) fast = fast.next;        // build gap
+    while (fast.next != null) {
+        slow = slow.next;
+        fast = fast.next;
+    }
+    slow.next = slow.next.next;                          // splice out
+    return dummy.next;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 5, title: "Longest Palindromic Substring (expand around center)", diff: "med",
+  problem: "Given a string s, return the longest palindromic substring.",
+  intuition: "Two pointers expanding outward from each center. There are 2N - 1 centers (each char and each gap between chars). For each, expand l and r outward while s[l] == s[r]; track the longest.",
+  hints: [
+    "For i in 0..n-1, run two expansions: (i, i) for odd-length palindromes and (i, i+1) for even-length.",
+    "Each expansion: while (l >= 0 && r < n && s[l] == s[r]) { l--; r++; }. The valid palindrome is s.substring(l+1, r).",
+    "Track best l and r."
+  ],
+  tips: [
+    "Not classic two-pointer (the pointers move OUT, not in), but the spirit is identical: monotone moves with O(N) total work per center.",
+    "For O(N) overall, switch to Manacher's algorithm — overkill for most interviews.",
+    "Watch the substring boundary: it's [l+1, r), not [l, r)."
+  ],
+  code: `/*
+ * Longest Palindromic Substring via expand-around-center.
+ */
+String longestPalindrome(String s) {
+
+    if (s == null || s.isEmpty()) return "";
+    int bestL = 0, bestR = 0;
+    for (int i = 0; i < s.length(); i++) {
+        int[] a = expand(s, i, i);
+        int[] b = expand(s, i, i + 1);
+        if (a[1] - a[0] > bestR - bestL) { bestL = a[0]; bestR = a[1]; }
+        if (b[1] - b[0] > bestR - bestL) { bestL = b[0]; bestR = b[1]; }
+    }
+    return s.substring(bestL, bestR + 1);
+}
+
+private int[] expand(String s, int l, int r) {
+    while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) { l--; r++; }
+    return new int[]{l + 1, r - 1};
+}`,
+  complexity: "Time O(N^2). Space O(1)."
+});
+
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 42, title: "Trapping Rain Water", diff: "hard",
+  problem: "Given n non-negative integers representing heights, compute how much water it can trap after raining.",
+  intuition: "Two pointers + leftMax / rightMax. At each step, the side with the SMALLER max determines that column's water level. Advance that side because its max can only grow, and on the way it accumulates trapped water.",
+  hints: [
+    "l = 0, r = n - 1, leftMax = 0, rightMax = 0, total = 0.",
+    "while (l < r): if height[l] < height[r], update leftMax with height[l]; total += leftMax - height[l]; l++.",
+    "Else, update rightMax with height[r]; total += rightMax - height[r]; r--."
+  ],
+  tips: [
+    "Why this works: if height[l] < height[r], we KNOW rightMax >= height[r] > height[l], so leftMax IS the bottleneck for column l no matter what's beyond r.",
+    "Stack-based and DP solutions also work, but two-pointer is O(N) with O(1) space — the gold standard.",
+    "Handle empty input upfront (n < 3 → 0)."
+  ],
+  code: `/*
+ * Trapping Rain Water. Two pointers + leftMax / rightMax.
+ *   The smaller side determines that column's water level.
+ */
+int trap(int[] height) {
+
+    int l = 0, r = height.length - 1;
+    int leftMax = 0, rightMax = 0, total = 0;
+
+    while (l < r) {
+        if (height[l] < height[r]) {
+            if (height[l] >= leftMax)  leftMax  = height[l];
+            else                       total   += leftMax  - height[l];
+            l++;
+        } else {
+            if (height[r] >= rightMax) rightMax = height[r];
+            else                       total   += rightMax - height[r];
+            r--;
+        }
+    }
+    return total;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 287, title: "Find the Duplicate Number (Floyd on values)", diff: "hard",
+  problem: "Given an array nums of n + 1 integers each in [1, n], exactly one number is repeated. Find it without modifying the array and using O(1) extra space.",
+  intuition: "Treat the array as a function f(i) = nums[i]. The 'next pointer' from index i is nums[i]. Because of the pigeonhole principle, there must be a cycle, and its ENTRY is the duplicate. Run Floyd's algorithm on this implicit linked list.",
+  hints: [
+    "Phase 1: slow = nums[slow]; fast = nums[nums[fast]] until they meet.",
+    "Phase 2: slow = nums[0]; advance both at +1 until they meet — that's the duplicate.",
+    "No allocation, no array mutation — O(1) space."
+  ],
+  tips: [
+    "If the constraint 'don't modify' were lifted, you could just sort or use a HashSet — much easier.",
+    "If the constraint 'O(1) space' were lifted, mark visited via negation — also easier.",
+    "Floyd's elegance shines exactly when both constraints are present."
+  ],
+  code: `/*
+ * Find the Duplicate Number. Floyd's cycle detection on f(i) = nums[i].
+ */
+int findDuplicate(int[] nums) {
+
+    int slow = nums[0], fast = nums[0];
+    do {
+        slow = nums[slow];
+        fast = nums[nums[fast]];
+    } while (slow != fast);
+
+    slow = nums[0];
+    while (slow != fast) {
+        slow = nums[slow];
+        fast = nums[fast];
+    }
+    return slow;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 76, title: "Minimum Window Substring (two pointers + counters)", diff: "hard",
+  problem: "Given strings s and t, return the smallest substring of s containing every character of t with multiplicity.",
+  intuition: "Two pointers (left, right) over s plus a 'have/need' counter. Expand right until the window satisfies need; then shrink left as far as possible while still satisfying need, recording the min length.",
+  hints: [
+    "Build need[128] from t and 'required' = number of distinct chars in t.",
+    "have[128]; matched = 0; left = 0; bestLen = INF, bestL = -1.",
+    "Expand right; if have[s[r]] reaches need[s[r]], matched++.",
+    "While matched == required: record window if smaller; have[s[left]]--; if it drops below need, matched--; left++."
+  ],
+  tips: [
+    "This is sliding window's flagship problem AND a textbook two-pointer — the line between the two is blurry.",
+    "The matched / required counter beats Arrays.equals comparisons by a factor of charset size.",
+    "For Unicode, swap int[128] for HashMap<Character,Integer>."
+  ],
+  code: `/*
+ * Minimum Window Substring. Two pointers + matched/required counter.
+ */
+String minWindow(String s, String t) {
+
+    if (s.length() < t.length() || t.isEmpty()) return "";
+
+    int[] need = new int[128], have = new int[128];
+    int required = 0;
+    for (char c : t.toCharArray()) {
+        if (need[c] == 0) required++;
+        need[c]++;
+    }
+
+    int left = 0, matched = 0, bestL = -1, bestLen = Integer.MAX_VALUE;
+
+    for (int right = 0; right < s.length(); right++) {
+
+        char cR = s.charAt(right);
+        have[cR]++;
+        if (need[cR] > 0 && have[cR] == need[cR]) matched++;
+
+        while (matched == required) {
+            if (right - left + 1 < bestLen) {
+                bestLen = right - left + 1;
+                bestL = left;
+            }
+            char cL = s.charAt(left++);
+            have[cL]--;
+            if (need[cL] > 0 && have[cL] < need[cL]) matched--;
+        }
+    }
+    return bestL == -1 ? "" : s.substring(bestL, bestL + bestLen);
+}`,
+  complexity: "Time O(|s| + |t|). Space O(charset)."
+});
+
+PROBLEMS.push({
+  num: 581, title: "Shortest Unsorted Continuous Subarray", diff: "hard",
+  problem: "Given an integer array, return the length of the shortest contiguous subarray that, if sorted, would make the whole array sorted ascending.",
+  intuition: "Two pointers walking inward to find the boundary of the 'misplaced' region. Walk a left→right pass tracking max-so-far; the rightmost index where nums[i] < max is the right boundary. Then walk right→left tracking min-so-far; the leftmost index where nums[i] > min is the left boundary.",
+  hints: [
+    "Pass 1 (left→right): keep max; right = i whenever nums[i] < max.",
+    "Pass 2 (right→left): keep min; left = i whenever nums[i] > min.",
+    "If right < left return 0; else return right - left + 1."
+  ],
+  tips: [
+    "It's two passes but each is O(N) and O(1) space — no sorting needed.",
+    "Sorting + comparing is a simpler O(N log N) baseline; the two-pointer pass is the optimal answer.",
+    "Edge case: already sorted → max never violates → return 0."
+  ],
+  code: `/*
+ * Shortest Unsorted Continuous Subarray. Two passes; track maxLeft and minRight.
+ */
+int findUnsortedSubarray(int[] nums) {
+
+    int n = nums.length;
+    int max = Integer.MIN_VALUE, min = Integer.MAX_VALUE;
+    int left = -1, right = -2;                           // empty by default
+
+    for (int i = 0; i < n; i++) {
+        max = Math.max(max, nums[i]);
+        if (nums[i] < max) right = i;                    // misplaced from the right side
+    }
+    for (int i = n - 1; i >= 0; i--) {
+        min = Math.min(min, nums[i]);
+        if (nums[i] > min) left = i;                     // misplaced from the left side
+    }
+    return right - left + 1;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 4, title: "Median of Two Sorted Arrays (binary partition)", diff: "hard",
+  problem: "Given two sorted arrays nums1 and nums2 of sizes m and n, return the median of the combined sorted array in O(log(min(m, n))) time.",
+  intuition: "Binary search on the partition point in the SHORTER array. For partition (i, j) with i + j = (m + n + 1) / 2, the four boundary elements (a-left, a-right, b-left, b-right) determine validity. If aLeft > bRight, partition i is too far right; if bLeft > aRight, too far left. Two-pointer style boundary checks even though the search is binary.",
+  hints: [
+    "Ensure m <= n by swapping if necessary.",
+    "Binary search lo..hi over i (the partition in nums1). j = (m + n + 1) / 2 - i.",
+    "Use ±INF for out-of-bounds boundary values; check aLeft <= bRight && bLeft <= aRight to find the right partition."
+  ],
+  tips: [
+    "The trickiest classic two-pointer / binary-search hybrid. Practice it once and you'll never forget.",
+    "Median formula: if (m + n) is odd, max(aLeft, bLeft); if even, (max(aLeft, bLeft) + min(aRight, bRight)) / 2.0.",
+    "Beware integer overflow when computing the half-size; use safe (m + n + 1) / 2."
+  ],
+  code: `/*
+ * Median of Two Sorted Arrays. Binary search the partition on the
+ * shorter array; check the four boundary values for the median.
+ */
+double findMedianSortedArrays(int[] a, int[] b) {
+
+    if (a.length > b.length) { int[] t = a; a = b; b = t; }
+    int m = a.length, n = b.length;
+    int half = (m + n + 1) / 2;
+    int lo = 0, hi = m;
+
+    while (lo <= hi) {
+        int i = (lo + hi) >>> 1;
+        int j = half - i;
+        int aLeft  = i == 0 ? Integer.MIN_VALUE : a[i - 1];
+        int aRight = i == m ? Integer.MAX_VALUE : a[i];
+        int bLeft  = j == 0 ? Integer.MIN_VALUE : b[j - 1];
+        int bRight = j == n ? Integer.MAX_VALUE : b[j];
+
+        if (aLeft <= bRight && bLeft <= aRight) {
+            if (((m + n) & 1) == 1) return Math.max(aLeft, bLeft);
+            return (Math.max(aLeft, bLeft) + Math.min(aRight, bRight)) / 2.0;
+        } else if (aLeft > bRight) hi = i - 1;
+        else                       lo = i + 1;
+    }
+    throw new IllegalArgumentException();
+}`,
+  complexity: "Time O(log min(m, n)). Space O(1)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => { stash.push(html); return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001'; };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','ListNode','Random','Collections','Arrays','Math','Comparator','Objects','Map.Entry'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) { return PROBLEMS.filter(p => p.diff === diff); }
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = `
+      <div class="brief-root">
+        <header class="brief-header">
+          <div class="brief-subtitle">JAVA</div>
+          <h1 class="brief-title">Two Pointers</h1>
+          <p class="brief-tagline">Pick a flavor → tweak inputs → see the pointers walk</p>
+        </header>
+        <div class="op-tabs" id="briefOpTabs"></div>
+        <div class="panel" id="briefMainPanel"></div>
+        <div class="cheat">
+          <div class="section-label">CHEAT SHEET — COMMON PATTERNS</div>
+          <div id="briefCheatSheet"></div>
+        </div>
+        <div class="brief-footer">OPPOSITE &middot; SLOW/FAST &middot; PARTITION</div>
+      </div>
+    `;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    initBriefMode();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+
+/* ===== BRIEF MODE: interactive two-pointer explorer ===== */
+const BRIEF_OPS = [
+  {
+    id:"opposite", name:"Opposite Ends", color:"#2563eb", colorDark:"#58a6ff",
+    desc:"l = 0, r = n-1; walk inward based on a comparison.",
+    rule:"if sum < target → l++  |  if sum > target → r--  |  else hit",
+    label:"OPPOSITE ENDS",
+    examples:[
+      { title:"LC 167 — Two Sum II",
+        code:`int[] twoSum(int[] nums, int target) {
+    int l = 0, r = nums.length - 1;
+    while (l < r) {
+        int s = nums[l] + nums[r];
+        if      (s == target) return new int[]{l + 1, r + 1};
+        else if (s <  target) l++;
+        else                  r--;
+    }
+    return new int[]{-1, -1};
+}`,
+        why:"Sorting makes the sum monotone in each pointer's direction, so each comparison gives an unambiguous next move." },
+    ],
+  },
+  {
+    id:"slowfast", name:"Slow / Fast", color:"#16a34a", colorDark:"#76ff03",
+    desc:"slow += 1, fast += 2. Used for cycle detection, midpoint, kth-from-end.",
+    rule:"slow = slow.next; fast = fast.next.next; meet ⇒ cycle",
+    label:"SLOW / FAST",
+    examples:[
+      { title:"Linked List Cycle (LC 141)",
+        code:`boolean hasCycle(ListNode head) {
+    ListNode slow = head, fast = head;
+    while (fast != null && fast.next != null) {
+        slow = slow.next;
+        fast = fast.next.next;
+        if (slow == fast) return true;
+    }
+    return false;
+}`,
+        why:"In a cycle the gap between slow and fast shrinks by 1 each step, so they must meet within one full loop." },
+    ],
+  },
+  {
+    id:"partition", name:"Partition", color:"#d97706", colorDark:"#ffd740",
+    desc:"Write pointer trails read pointer; copy values that satisfy a predicate.",
+    rule:"if (keep(nums[r])) nums[w++] = nums[r];",
+    label:"PARTITION",
+    examples:[
+      { title:"LC 283 — Move Zeroes",
+        code:`void moveZeroes(int[] nums) {
+    int w = 0;
+    for (int r = 0; r < nums.length; r++) {
+        if (nums[r] != 0) nums[w++] = nums[r];
+    }
+    while (w < nums.length) nums[w++] = 0;
+}`,
+        why:"The invariant 'nums[0..w) are exactly the kept values, in order' holds across every iteration." },
+    ],
+  },
+  {
+    id:"dutch", name:"Dutch Flag", color:"#9333ea", colorDark:"#ea80fc",
+    desc:"Three pointers — lo, mid, hi — partition into three buckets in one pass.",
+    rule:"== 0 → swap(lo++, mid++)  |  == 2 → swap(mid, hi--)  |  == 1 → mid++",
+    label:"3-WAY PARTITION",
+    examples:[
+      { title:"LC 75 — Sort Colors",
+        code:`void sortColors(int[] nums) {
+    int lo = 0, mid = 0, hi = nums.length - 1;
+    while (mid <= hi) {
+        if      (nums[mid] == 0) swap(nums, lo++, mid++);
+        else if (nums[mid] == 2) swap(nums, mid,  hi--);
+        else                     mid++;
+    }
+}`,
+        why:"Invariants: nums[0..lo) is 0s, nums[lo..mid) is 1s, nums[hi+1..n) is 2s. Each step preserves them." },
+    ],
+  },
+  {
+    id:"trap", name:"Trap (leftMax/rightMax)", color:"#dc2626", colorDark:"#ff7b72",
+    desc:"For 'water trapped' style problems, advance the side with the SMALLER max.",
+    rule:"if h[l] < h[r] then leftMax bounds column l; advance l",
+    label:"LEFT/RIGHT MAX",
+    examples:[
+      { title:"LC 42 — Trapping Rain Water",
+        code:`int trap(int[] height) {
+    int l = 0, r = height.length - 1;
+    int leftMax = 0, rightMax = 0, total = 0;
+    while (l < r) {
+        if (height[l] < height[r]) {
+            if (height[l] >= leftMax)  leftMax  = height[l];
+            else                       total   += leftMax  - height[l];
+            l++;
+        } else {
+            if (height[r] >= rightMax) rightMax = height[r];
+            else                       total   += rightMax - height[r];
+            r--;
+        }
+    }
+    return total;
+}`,
+        why:"The smaller side determines that column's water level — the other side's max is guaranteed at least as large." },
+    ],
+  },
+  {
+    id:"floyd", name:"Floyd's Entry", color:"#0d9488", colorDark:"#a7ffeb",
+    desc:"After slow/fast meet, reset slow to head and walk both at +1; they meet at cycle entry.",
+    rule:"a == c (mod loop length): proven by 2(a+b) = a+b+nL.",
+    label:"CYCLE ENTRY",
+    examples:[
+      { title:"LC 287 — Find the Duplicate Number",
+        code:`int findDuplicate(int[] nums) {
+    int slow = nums[0], fast = nums[0];
+    do {
+        slow = nums[slow];
+        fast = nums[nums[fast]];
+    } while (slow != fast);
+
+    slow = nums[0];
+    while (slow != fast) {
+        slow = nums[slow];
+        fast = nums[fast];
+    }
+    return slow;
+}`,
+        why:"Treat nums[i] as a 'next' pointer. Pigeonhole guarantees a cycle; its entry IS the duplicate." },
+    ],
+  },
+];
+
+const BRIEF_CHEAT_ITEMS = [
+  ["Opposite ends",          "while (l < r) { ...; l++ or r--; }"],
+  ["Slow / Fast cycle",      "slow=head; fast=head.next.next; meet ⇒ cycle"],
+  ["Floyd's entry",          "after meet: slow=head; walk both +1 → entry"],
+  ["Midpoint of list",       "while fast && fast.next: slow,fast = +1,+2"],
+  ["Kth from end",           "advance fast by k first, then walk both"],
+  ["Partition / write idx",  "if (keep(nums[r])) nums[w++] = nums[r];"],
+  ["Dutch flag (3-way)",     "lo / mid / hi; swap based on category"],
+  ["Skip duplicates",        "while (l<r && nums[l]==nums[l+1]) l++;"],
+  ["Container area",         "advance the SHORTER side"],
+  ["Trap rain water",        "advance side with SMALLER current value"],
+  ["Merge sorted in place",  "walk all three indices BACKWARD"],
+];
+
+let briefCurrentOp = BRIEF_OPS[0];
+let briefCurrentEx = 0;
+let briefWhyOpen = {};
+let briefArrStr = "1,3,5,7,9,11";
+let briefTarget = 12;
+
+function briefOpColor(op) {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+    ? (op.colorDark || op.color)
+    : op.color;
+}
+
+function briefParseArr() {
+  return briefArrStr.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+}
+
+function briefRenderArr(arr, l, r, extras) {
+  let cells = '';
+  for (let i = 0; i < arr.length; i++) {
+    const cls = ['arr-cell'];
+    if (l !== undefined && r !== undefined && i >= Math.min(l, r) && i <= Math.max(l, r)) cls.push('in-window');
+    if (i === l) cls.push('left-ptr');
+    if (i === r) cls.push('right-ptr');
+    cells += `<div class="${cls.join(' ')}">${arr[i]}</div>`;
+  }
+  return `<div class="arr-row">${cells}</div>
+          <div class="ptr-row">
+            <span style="color:var(--easy)">■ left/slow</span>
+            <span style="color:var(--med)">■ right/fast</span>
+            ${extras || ''}
+          </div>`;
+}
+
+function briefComputeOpposite(arr, target) {
+  // sort to ensure two-pointer correctness
+  const sorted = arr.slice().sort((a, b) => a - b);
+  let l = 0, r = sorted.length - 1;
+  while (l < r) {
+    const s = sorted[l] + sorted[r];
+    if (s === target) return { l, r, val: '[' + sorted[l] + ', ' + sorted[r] + ']', label: 'pair found (sorted view)', sorted };
+    else if (s < target) l++;
+    else r--;
+  }
+  return { l: 0, r: -1, val: 'none', label: 'no pair sums to ' + target, sorted };
+}
+
+function briefComputeMoveZeros(arr) {
+  // simulate move-zeros: highlight final w boundary
+  const a = arr.slice();
+  let w = 0;
+  for (let r = 0; r < a.length; r++) {
+    if (a[r] !== 0) a[w++] = a[r];
+  }
+  const finalW = w;
+  while (w < a.length) a[w++] = 0;
+  return { arr: a, l: 0, r: finalW - 1, val: finalW, label: '# of non-zero elements (write pointer)' };
+}
+
+function briefComputeDutch(arr) {
+  const a = arr.map(x => ((x % 3) + 3) % 3);            // map any input to 0/1/2
+  let lo = 0, mid = 0, hi = a.length - 1;
+  while (mid <= hi) {
+    if (a[mid] === 0) { [a[lo], a[mid]] = [a[mid], a[lo]]; lo++; mid++; }
+    else if (a[mid] === 2) { [a[mid], a[hi]] = [a[hi], a[mid]]; hi--; }
+    else mid++;
+  }
+  return { arr: a, l: 0, r: a.length - 1, val: a.join(','), label: 'sorted into 0s/1s/2s (mod 3)' };
+}
+
+function briefComputeContainer(arr) {
+  let l = 0, r = arr.length - 1, best = 0, bestL = 0, bestR = 0;
+  while (l < r) {
+    const h = Math.min(arr[l], arr[r]);
+    const area = h * (r - l);
+    if (area > best) { best = area; bestL = l; bestR = r; }
+    if (arr[l] < arr[r]) l++; else r--;
+  }
+  return { l: bestL, r: bestR, val: best, label: 'max container area' };
+}
+
+function briefComputeTrap(arr) {
+  let l = 0, r = arr.length - 1, leftMax = 0, rightMax = 0, total = 0;
+  while (l < r) {
+    if (arr[l] < arr[r]) {
+      if (arr[l] >= leftMax) leftMax = arr[l]; else total += leftMax - arr[l];
+      l++;
+    } else {
+      if (arr[r] >= rightMax) rightMax = arr[r]; else total += rightMax - arr[r];
+      r--;
+    }
+  }
+  return { val: total, label: 'water trapped' };
+}
+
+function briefRenderPanel() {
+
+  const op = briefCurrentOp;
+  const color = briefOpColor(op);
+  const arr = briefParseArr();
+  let info, displayArr = arr;
+
+  if (op.id === 'opposite') {
+    info = briefComputeOpposite(arr, briefTarget);
+    displayArr = info.sorted;
+  } else if (op.id === 'partition') {
+    info = briefComputeMoveZeros(arr);
+    displayArr = info.arr;
+  } else if (op.id === 'dutch') {
+    info = briefComputeDutch(arr);
+    displayArr = info.arr;
+  } else if (op.id === 'trap') {
+    info = briefComputeTrap(arr);
+  } else if (op.id === 'floyd') {
+    info = { val: '—', label: 'Floyd works on a linked list / function — see code' };
+  } else {
+    info = briefComputeContainer(arr);
+  }
+
+  let cells;
+  if (op.id === 'trap' || op.id === 'floyd' || op.id === 'slowfast') {
+    cells = briefRenderArr(displayArr);
+  } else {
+    cells = briefRenderArr(displayArr, info.l, info.r);
+  }
+
+  const exTabs = op.examples.map((e, i) =>
+    `<div class="ex-tab" data-i="${i}" style="${i === briefCurrentEx ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(e.title)}</div>`
+  ).join('');
+
+  const ex = op.examples[briefCurrentEx];
+  const whyOpen = briefWhyOpen[op.id + ':' + briefCurrentEx];
+
+  document.getElementById('briefMainPanel').innerHTML = `
+    <div class="op-badge" style="background:${color}22; color:${color}; border:1px solid ${color}">${op.label}</div>
+    <div class="op-desc">${escapeHtml(op.desc)}</div>
+    <div class="op-rule">${escapeHtml(op.rule)}</div>
+
+    <div class="calc-box">
+      <div class="input-row">
+        <span class="input-label">array</span>
+        <input type="text" id="briefArr" value="${escapeHtml(briefArrStr)}" />
+        <span class="input-label">target</span>
+        <input type="number" id="briefTarget" value="${briefTarget}" />
+      </div>
+      ${cells}
+      <div class="result-line">${escapeHtml(info.label)}: <span class="result-pill yes">${escapeHtml(String(info.val))}</span></div>
+    </div>
+
+    <div class="section-label">EXAMPLES</div>
+    <div class="ex-tabs">${exTabs}</div>
+    <div class="ex-box">
+      <div class="ex-title" style="color:${color}">${escapeHtml(ex.title)}</div>
+      <pre class="brief-pre"><code>${highlightJava(ex.code)}</code></pre>
+      <div class="why-toggle" data-key="${op.id}:${briefCurrentEx}">${whyOpen ? '▼' : '▶'} Why does this work?</div>
+      <div class="why-body ${whyOpen ? 'visible' : ''}">${escapeHtml(ex.why)}</div>
+    </div>
+  `;
+
+  const arrEl = document.getElementById('briefArr');
+  const tEl = document.getElementById('briefTarget');
+  if (arrEl) arrEl.addEventListener('input', () => { briefArrStr = arrEl.value; briefRenderPanel(); });
+  if (tEl)   tEl.addEventListener('input',   () => { briefTarget = parseInt(tEl.value, 10) || 0; briefRenderPanel(); });
+
+  document.querySelectorAll('#briefMainPanel .ex-tab').forEach(t => {
+    t.addEventListener('click', () => { briefCurrentEx = +t.dataset.i; briefRenderPanel(); });
+  });
+
+  const wt = document.querySelector('#briefMainPanel .why-toggle');
+  if (wt) {
+    wt.addEventListener('click', () => {
+      const key = wt.dataset.key;
+      briefWhyOpen[key] = !briefWhyOpen[key];
+      briefRenderPanel();
+    });
+  }
+}
+
+function briefRenderOpTabs() {
+  const html = BRIEF_OPS.map(op => {
+    const color = briefOpColor(op);
+    const active = op.id === briefCurrentOp.id;
+    return `<div class="op-tab" data-id="${op.id}"
+      style="${active ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(op.name)}</div>`;
+  }).join('');
+  document.getElementById('briefOpTabs').innerHTML = html;
+  document.querySelectorAll('#briefOpTabs .op-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentOp = BRIEF_OPS.find(o => o.id === t.dataset.id);
+      briefCurrentEx = 0;
+      briefRenderOpTabs();
+      briefRenderPanel();
+    });
+  });
+}
+
+function briefRenderCheatSheet() {
+  document.getElementById('briefCheatSheet').innerHTML = BRIEF_CHEAT_ITEMS.map(([n, c]) =>
+    `<div class="cheat-row"><span class="cheat-name">${escapeHtml(n)}</span><span class="cheat-code">${escapeHtml(c)}</span></div>`
+  ).join('');
+}
+
+function initBriefMode() {
+  briefRenderOpTabs();
+  briefRenderPanel();
+  briefRenderCheatSheet();
+}
+
+const briefThemeObserver = new MutationObserver(() => {
+  if (state.diff === 'brief') {
+    briefRenderOpTabs();
+    briefRenderPanel();
+  }
+});
+briefThemeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['data-theme'],
+});
+
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

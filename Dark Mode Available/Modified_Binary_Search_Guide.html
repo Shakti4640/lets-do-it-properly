@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Modified Binary Search — Patterns, Cheatsheet & Java Snippets</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  body.brief-mode .nav-bar { display: none; }
+
+  .brief-root {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    color: var(--fg);
+  }
+  .brief-root .brief-header { text-align: center; margin-bottom: 32px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #2563eb, #16a34a, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  [data-theme="dark"] .brief-root .brief-title {
+    background: linear-gradient(90deg, #58a6ff, #76ff03, #ffd740);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+
+  .brief-root .op-tabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 28px;
+  }
+  .brief-root .op-tab {
+    padding: 8px 16px; border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--card); color: var(--muted);
+    cursor: pointer; font-family: inherit;
+    font-weight: 700; font-size: 14px;
+    transition: all 0.18s;
+  }
+
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 24px;
+  }
+  .brief-root .op-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+  .brief-root .op-desc { margin: 10px 0 4px; color: var(--fg); font-size: 14px; }
+  .brief-root .op-rule { color: var(--muted); font-size: 12px; }
+
+  .brief-root .calc-box {
+    background: var(--code-bg); border-radius: 12px;
+    padding: 20px; margin: 20px 0; border: 1px solid var(--border);
+  }
+  .brief-root .input-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .brief-root .input-label { color: var(--muted); font-size: 12px; min-width: 60px; }
+  .brief-root input[type=text], .brief-root input[type=number] {
+    padding: 6px 10px; border-radius: 6px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--fg); font-family: inherit; font-size: 14px;
+  }
+  .brief-root input[type=text] { width: 240px; }
+  .brief-root input[type=number] { width: 70px; }
+
+  .brief-root .arr-row { display: flex; gap: 4px; flex-wrap: wrap; margin: 12px 0; }
+  .brief-root .arr-cell {
+    min-width: 32px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 5px;
+    font-weight: 700; font-size: 13px;
+    background: var(--bg); color: var(--fg);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .brief-root .arr-cell.lo { box-shadow: 0 0 0 2px var(--easy); }
+  .brief-root .arr-cell.hi { box-shadow: 0 0 0 2px var(--med); }
+  .brief-root .arr-cell.mid {
+    background: rgba(37,99,235,.18);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .brief-root .arr-cell.eliminated { opacity: 0.35; }
+  .brief-root .arr-cell .lbl {
+    position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; font-weight: 600; color: var(--muted);
+  }
+  .brief-root .ptr-row { display: flex; gap: 16px; font-size: 11px; color: var(--muted); margin-top: 18px; }
+  .brief-root .result-line { margin-top: 16px; font-size: 13px; color: var(--muted); }
+  .brief-root .result-pill {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 20px; font-weight: 700; font-size: 12px;
+    margin-left: 8px;
+  }
+  .brief-root .result-pill.yes { background: rgba(22,163,74,.15); color: var(--easy); border: 1px solid var(--easy); }
+  .brief-root .result-pill.no  { background: rgba(220,38,38,.15); color: var(--hard); border: 1px solid var(--hard); }
+
+  .brief-root .section-label {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 3px; margin-bottom: 12px;
+  }
+  .brief-root .ex-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .brief-root .ex-tab {
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 12px;
+    font-family: inherit; transition: all 0.18s;
+  }
+
+  .brief-root .ex-box {
+    background: var(--code-bg); border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .brief-root .ex-title { padding: 10px 16px; font-size: 13px; font-weight: 700; }
+  .brief-root pre.brief-pre {
+    margin: 0; padding: 16px; font-size: 13px; line-height: 1.7;
+    color: var(--code-fg); overflow-x: auto;
+    white-space: pre-wrap; word-break: break-word;
+    background: var(--code-bg);
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  [data-theme="dark"] .brief-root pre.brief-pre { color: #c8e6c9; }
+  .brief-root .why-toggle {
+    padding: 10px 16px; cursor: pointer;
+    border-top: 1px solid var(--border);
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+    user-select: none; color: var(--muted);
+  }
+  .brief-root .why-body {
+    padding: 12px 16px; font-size: 13px; line-height: 1.7;
+    color: var(--fg); display: none;
+  }
+  .brief-root .why-body.visible { display: block; }
+
+  .brief-root .cheat {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 16px;
+  }
+  .brief-root .cheat-row {
+    display: flex; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px; padding: 8px 0;
+    border-bottom: 1px solid var(--border); align-items: center;
+  }
+  .brief-root .cheat-name { color: var(--muted); font-size: 13px; }
+  .brief-root .cheat-code {
+    color: var(--str); font-size: 12px;
+    background: var(--code-bg);
+    padding: 2px 10px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .brief-root .brief-footer {
+    text-align: center; color: var(--muted);
+    font-size: 11px; letter-spacing: 2px; margin-top: 8px;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #eef2ff;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: var(--code-bg);
+    white-space: nowrap;
+    color: var(--num);
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: var(--num); }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .arr-cell.mid { background: rgba(88,166,255,.18); color: var(--accent); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Modified Binary Search — Patterns, Cheatsheet & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Modified Binary Search Cheatsheet (read this first)", diff: "veasy",
+  problem: "Modified binary search is binary search where the array isn't necessarily sorted in the obvious way: it might be rotated, infinite, 2D, bitonic, or — most importantly — represent the ANSWER SPACE rather than the input. The trick is to spot a MONOTONIC PREDICATE p(x): a function from values to {false, false, ..., true, true, true} (or its mirror). Once you have a monotonic predicate, binary search finds the boundary in O(log N).",
+  intuition: "Stop thinking 'binary search needs a sorted array'. Think 'binary search needs a monotonic predicate'. The predicate could be `nums[mid] >= target` (classic), `canShipInDays(capacity, D)` (LC 1011), `countLessOrEqual(matrix, x) >= k` (LC 378), or even a parity check on a sorted-with-duplicates array. The whole skill is: (1) identify what is monotonic, (2) write the predicate as a clean boolean, (3) plug it into one of three skeletons — find first true, find last true, or pure equality search.",
+  hints: [
+    "Use `lo + (hi - lo) / 2` or `(lo + hi) >>> 1` for mid to avoid integer overflow.",
+    "Two boundary templates dominate: 'first index where p(x) is TRUE' (left-bound) and 'last index where p(x) is FALSE' (right-bound).",
+    "Decide upfront whether your loop is `while (lo < hi)` (for boundary search; lo IS the answer at exit) or `while (lo <= hi)` (for equality search; return -1 on miss).",
+    "Search-on-answer is the killer feature: lo and hi span possible ANSWER VALUES, and the predicate calls a feasibility function on `mid`.",
+    "If the predicate is wrong, no amount of pointer math will save you. Always verify on a tiny example before coding."
+  ],
+  tips: [
+    "Off-by-one is THE bug here. The two skeletons differ only in `mid` rounding (down vs up) and which side absorbs the post-comparison +1/−1.",
+    "When searching for an `int` answer, set `hi` to one past the largest possible answer (e.g. `nums.length` for an insertion point) — that way `lo == hi == n` cleanly says 'not found'.",
+    "When searching for a `double` answer (LC 4 median, LC 644 max average II), loop while `hi - lo > eps` and trust `(hi + lo) / 2`.",
+    "Floor division of (lo + hi) on negative ranges can surprise you — prefer `lo + (hi - lo) / 2` for portability.",
+    "Lower-bound and upper-bound are the same skeleton with one inequality flipped. Memorize both."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Skeleton / Idiom</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>Equality search</td><td><code>while (lo &lt;= hi)</code>; mid; if equal return; else move lo or hi.</td></tr>
+        <tr><td>Lower bound (first ≥ x)</td><td><code>while (lo &lt; hi)</code>; if nums[mid] &lt; x → lo = mid+1, else hi = mid. Return lo.</td></tr>
+        <tr><td>Upper bound (first &gt; x)</td><td>Same as lower bound but strict <code>nums[mid] &lt;= x → lo = mid+1</code>.</td></tr>
+        <tr><td>First TRUE of monotonic p</td><td>same skeleton; if !p(mid) lo = mid+1 else hi = mid.</td></tr>
+        <tr><td>Last FALSE of monotonic p</td><td>mirror: if p(mid) hi = mid−1 else lo = mid. Use <code>mid = lo + (hi − lo + 1) / 2</code>.</td></tr>
+        <tr><td>Search on answer</td><td>lo/hi span possible answer values; call <code>feasible(mid)</code>.</td></tr>
+        <tr><td>Rotated sorted array</td><td>One half is always sorted; check which half contains target.</td></tr>
+        <tr><td>2D matrix BS</td><td>Treat as flat: <code>row = mid / cols; col = mid % cols</code>.</td></tr>
+        <tr><td>Bitonic peak</td><td>compare nums[mid] with nums[mid+1]; move toward the larger neighbour.</td></tr>
+        <tr><td>Infinite stream</td><td>Double <code>hi</code> until in-range, then standard search.</td></tr>
+        <tr><td>Mid overflow safe</td><td><code>lo + (hi − lo) / 2</code> or <code>(lo + hi) &gt;&gt;&gt; 1</code></td></tr>
+      </tbody>
+    </table>
+    <p><b>The single mental switch:</b></p>
+    <ul class="hints">
+      <li><b>Stop searching for VALUES; start searching for the BOUNDARY of a monotonic predicate.</b> Whether the array is rotated, the answer is a capacity, or the structure is 2D, every problem reduces to: write <code>p(x)</code> that flips from FALSE to TRUE exactly once over the search domain, then run the boundary skeleton. Once you internalize this, modified binary search stops feeling magical.</li>
+      <li><b>Loop invariants matter more than mid-formulas.</b> For boundary searches, the invariant is 'the answer is somewhere in [lo, hi]'. Every iteration must shrink that range strictly without crossing the boundary. If you can state the invariant in one sentence before coding, you'll get the off-by-ones right.</li>
+    </ul>
+  `,
+  code: `/*
+ * The four canonical skeletons. Memorize each one — every modified
+ * binary search problem is a glue-up of these.
+ */
+
+// ---- 1. EQUALITY SEARCH (classic LC 704) ----------------------------
+int findEqual(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return mid;
+        if (nums[mid] < target) lo = mid + 1;
+        else                    hi = mid - 1;
+    }
+    return -1;
+}
+
+// ---- 2. LOWER BOUND (first index with nums[i] >= x) -----------------
+int lowerBound(int[] nums, int x) {
+    int lo = 0, hi = nums.length;                  // hi can be n (insertion point)
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] < x) lo = mid + 1;           // mid is FALSE for "≥ x"
+        else               hi = mid;               // mid is TRUE; keep it as candidate
+    }
+    return lo;                                     // first index where nums[i] >= x, or n
+}
+
+// ---- 3. UPPER BOUND (first index with nums[i] > x) ------------------
+int upperBound(int[] nums, int x) {
+    int lo = 0, hi = nums.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] <= x) lo = mid + 1;
+        else                hi = mid;
+    }
+    return lo;
+}
+
+// ---- 4. FIRST TRUE of a monotonic predicate p(x) --------------------
+//    p(x) is FALSE for x < boundary and TRUE for x >= boundary.
+//    lo / hi span the search domain (often [smallest, largest+1]).
+int firstTrue(int lo, int hi, java.util.function.IntPredicate p) {
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (p.test(mid)) hi = mid;                 // keep mid as a candidate
+        else             lo = mid + 1;
+    }
+    return lo;                                     // smallest x for which p(x) is true
+}
+
+/*
+ * Example use: search-on-answer.
+ *   minimum capacity to ship within D days  =  firstTrue(maxWeight, sumOfWeights+1, c -> canShip(weights, c, D))
+ *   The predicate is monotone: if you can ship at capacity c, you can ship at any larger capacity.
+ */`,
+  complexity: "Every skeleton is O(log N) per binary search. Search-on-answer multiplies by the cost of one feasibility check. Space is O(1) for all of these."
+});
+
+
+/* ===================== VERY EASY (DRILLS) ===================== */
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Equality search vs boundary search", diff: "veasy",
+  problem: "Decide upfront which of the two main loop shapes you need: `while (lo <= hi)` for equality or `while (lo < hi)` for a boundary.",
+  intuition: "If the question is 'does element X exist? if so where?' use equality search. If the question is 'where does the predicate change from FALSE to TRUE?' use boundary search. Boundary search returns lo at exit and never needs a 'not found' return value (unless lo lands at hi == n).",
+  hints: [
+    "Equality: `while (lo <= hi)`, return -1 if not found.",
+    "Boundary: `while (lo < hi)`, lo IS the answer; check at the end whether the predicate is actually true.",
+    "Never mix: `while (lo < hi)` with `mid - 1` updates is the classic infinite-loop trap."
+  ],
+  tips: [
+    "Boundary search uses HALF-OPEN intervals [lo, hi) which is why lo can equal n when the answer is 'not found'.",
+    "Equality search uses CLOSED intervals [lo, hi] which is why hi starts at n - 1.",
+    "If your loop ever hangs in testing, you almost certainly have a mismatch between mid update and loop condition."
+  ],
+  code: `/*
+ * Two skeletons side by side. Pick ONE per problem — never blend.
+ */
+
+// Equality (CLOSED interval)
+int findEqual(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return mid;
+        if (nums[mid] < target)  lo = mid + 1;
+        else                     hi = mid - 1;
+    }
+    return -1;
+}
+
+// Boundary (HALF-OPEN interval)
+int firstWhereTrue(int n, java.util.function.IntPredicate p) {
+    int lo = 0, hi = n;                            // half-open
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (p.test(mid)) hi = mid;
+        else             lo = mid + 1;
+    }
+    return lo;                                     // == n if no index satisfies p
+}`,
+  complexity: "Both are O(log N). Choosing the wrong shape doubles your interview debugging time."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Lower bound and upper bound", diff: "veasy",
+  problem: "Memorize these two siblings — they are the engine of 'count of x', 'first occurrence', 'last occurrence', and most range queries.",
+  intuition: "Lower bound returns the first index whose value is ≥ x; upper bound returns the first index whose value is > x. The number of occurrences of x is `upperBound(x) - lowerBound(x)`. The first occurrence of x is `lowerBound(x)` (if it points to an x). The last is `upperBound(x) - 1`.",
+  hints: [
+    "Lower bound test: `nums[mid] < x` → lo = mid + 1, else hi = mid.",
+    "Upper bound test: `nums[mid] <= x` → lo = mid + 1, else hi = mid.",
+    "Both return values land in [0, n]. Check `lo < n && nums[lo] == x` for true membership."
+  ],
+  tips: [
+    "Java's built-ins: `Arrays.binarySearch` returns ANY matching index (or `-(insertionPoint+1)`) — not a true lower bound. Roll your own when accuracy matters.",
+    "These two cover ranges in sorted arrays, BSTs flattened, and even tie-handling for duplicate keys.",
+    "If you need 'last index with nums[i] <= x', that's `upperBound(x) - 1`."
+  ],
+  code: `/*
+ * Lower bound and upper bound. The cleanest tools for sorted-array queries.
+ */
+
+int lowerBound(int[] nums, int x) {
+    int lo = 0, hi = nums.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] < x) lo = mid + 1;
+        else               hi = mid;
+    }
+    return lo;
+}
+
+int upperBound(int[] nums, int x) {
+    int lo = 0, hi = nums.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] <= x) lo = mid + 1;
+        else                hi = mid;
+    }
+    return lo;
+}
+
+// Count of x in nums:
+//   int count = upperBound(nums, x) - lowerBound(nums, x);
+// First index of x (or -1):
+//   int idx = lowerBound(nums, x);
+//   return (idx < nums.length && nums[idx] == x) ? idx : -1;`,
+  complexity: "Both are O(log N), O(1) space."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Mid overflow & infinite-loop traps", diff: "veasy",
+  problem: "Two bugs cause 90% of binary search failures: integer overflow on `(lo + hi) / 2` and infinite loops because mid doesn't change.",
+  intuition: "If both lo and hi are near `Integer.MAX_VALUE`, `lo + hi` overflows to a negative number and `mid` becomes wrong. Always write `lo + (hi - lo) / 2` or `(lo + hi) >>> 1`. Infinite loops come from boundary search where mid rounds down toward `lo`: when lo + 1 == hi and the update moves `lo = mid` (unchanged), the loop hangs.",
+  hints: [
+    "Overflow-safe mid: `lo + (hi - lo) / 2` is universal; `(lo + hi) >>> 1` works for non-negative inputs.",
+    "If your boundary search uses `lo = mid` (move-right, keep mid), use `mid = lo + (hi - lo + 1) / 2` (round UP) to ensure mid != lo.",
+    "If your boundary search uses `hi = mid` (move-left, keep mid), use `mid = lo + (hi - lo) / 2` (round DOWN, default)."
+  ],
+  tips: [
+    "Mnemonic: when lo absorbs mid, round mid UP. When hi absorbs mid, round mid DOWN. Then the range strictly shrinks every iteration.",
+    "Java's `>>>` is the unsigned right shift; `(lo + hi) >>> 1` is what `Arrays.binarySearch` uses internally.",
+    "Always test on n = 1 and n = 2 — that's where these bugs surface first."
+  ],
+  code: `/*
+ * Two safe mid formulas; pick by which side absorbs mid.
+ */
+
+// Default (round down) — pair with hi = mid; lo = mid + 1.
+int midDown(int lo, int hi) {
+    return lo + (hi - lo) / 2;
+}
+
+// Round up — pair with lo = mid; hi = mid - 1.
+int midUp(int lo, int hi) {
+    return lo + (hi - lo + 1) / 2;
+}
+
+/*
+ * BAD (overflows): int mid = (lo + hi) / 2;
+ * BAD (infinite):  while (lo < hi) { int mid = midDown(lo, hi); if (...) lo = mid; else hi = mid - 1; }
+ */`,
+  complexity: "Time O(1) per mid. The point is correctness, not speed."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 704, title: "Binary Search", diff: "easy",
+  problem: "Given a sorted array of distinct integers and a target, return the index of the target or -1 if not present.",
+  intuition: "Vanilla equality search. Closed-interval skeleton: `lo = 0; hi = n - 1; while (lo <= hi)`.",
+  hints: [
+    "Compute `mid = lo + (hi - lo) / 2`.",
+    "If nums[mid] == target return mid; if less, lo = mid + 1; else hi = mid - 1.",
+    "Return -1 at the end."
+  ],
+  tips: [
+    "Don't reach for Arrays.binarySearch in interviews — write it yourself.",
+    "If the array can have duplicates and you want first occurrence, switch to lower bound.",
+    "Watch for the empty array — the while condition handles it correctly when lo = 0, hi = -1."
+  ],
+  code: `/*
+ * Binary Search — equality template (closed interval).
+ */
+int search(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return mid;
+        if (nums[mid] < target)  lo = mid + 1;
+        else                     hi = mid - 1;
+    }
+    return -1;
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 35, title: "Search Insert Position", diff: "easy",
+  problem: "Given a sorted array of distinct integers and a target, return the index where target should be inserted to keep the array sorted.",
+  intuition: "This IS lower bound. The insertion point for x is the first index where nums[i] >= x, and lower bound returns exactly that — including n if x is larger than every element.",
+  hints: [
+    "Half-open: `lo = 0; hi = nums.length`.",
+    "Compute mid; if nums[mid] < target lo = mid + 1, else hi = mid.",
+    "Return lo."
+  ],
+  tips: [
+    "Don't add a special case for 'target larger than all'; lower bound handles it by returning n.",
+    "The same skeleton handles 'first index whose value is ≥ x' for any predicate-style problem.",
+    "If duplicates were allowed, lower bound returns the FIRST insertion position; upper bound returns the position AFTER the last duplicate."
+  ],
+  code: `/*
+ * Search Insert Position — lower bound.
+ */
+int searchInsert(int[] nums, int target) {
+    int lo = 0, hi = nums.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] < target) lo = mid + 1;
+        else                    hi = mid;
+    }
+    return lo;
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 278, title: "First Bad Version", diff: "easy",
+  problem: "Given an API isBadVersion(v) that is monotone (FALSE...FALSE TRUE...TRUE), return the first bad version among 1..n, minimizing API calls.",
+  intuition: "Textbook 'first TRUE of a monotonic predicate'. The predicate flips from FALSE (good) to TRUE (bad) exactly once. Boundary skeleton: keep mid when isBadVersion(mid), else discard mid and lo = mid + 1.",
+  hints: [
+    "lo = 1; hi = n.",
+    "Compute mid; if isBadVersion(mid) hi = mid, else lo = mid + 1.",
+    "Return lo."
+  ],
+  tips: [
+    "API call count is exactly the number of iterations: ⌈log2(n)⌉.",
+    "Use `(lo + hi) >>> 1` if the inputs can be near Integer.MAX_VALUE — the >>> avoids overflow.",
+    "Same skeleton solves any 'first index where a sensor turns on' problem."
+  ],
+  code: `/*
+ * First Bad Version. Boundary skeleton over the monotone predicate isBadVersion.
+ */
+int firstBadVersion(int n) {
+    int lo = 1, hi = n;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (isBadVersion(mid)) hi = mid;
+        else                   lo = mid + 1;
+    }
+    return lo;
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 33, title: "Search in Rotated Sorted Array", diff: "med",
+  problem: "Given an integer array `nums` (no duplicates) sorted ascending then rotated at an unknown pivot, and a target, return its index or -1.",
+  intuition: "At every step, AT LEAST ONE half [lo..mid] or [mid..hi] is normally sorted. Decide which half is sorted by comparing nums[lo] with nums[mid]; if the target falls in the sorted half's range, recurse there, otherwise the other half.",
+  hints: [
+    "Compute mid normally.",
+    "If nums[lo] <= nums[mid], the LEFT half is sorted. If target lies in [nums[lo], nums[mid]) go left; else go right.",
+    "Else the RIGHT half is sorted. If target lies in (nums[mid], nums[hi]] go right; else go left."
+  ],
+  tips: [
+    "Equality at the boundary nums[mid] vs target should return mid before either branch — a common forgotten case.",
+    "If duplicates were allowed (LC 81), you sometimes can't decide which half is sorted; bump lo by 1 in that case.",
+    "Don't try to 'find the pivot first'. The combined approach is just as fast and avoids two passes."
+  ],
+  code: `/*
+ * Search in Rotated Sorted Array. At every step, identify the sorted half.
+ */
+int search(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return mid;
+
+        if (nums[lo] <= nums[mid]) {                  // LEFT half is sorted
+            if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+            else                                          lo = mid + 1;
+        } else {                                      // RIGHT half is sorted
+            if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+            else                                          hi = mid - 1;
+        }
+    }
+    return -1;
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 153, title: "Find Minimum in Rotated Sorted Array", diff: "med",
+  problem: "A sorted ascending array of distinct integers has been rotated at an unknown pivot. Return the minimum element.",
+  intuition: "Boundary search: the predicate is `nums[mid] <= nums[hi]`. If TRUE the minimum is in [lo, mid]; if FALSE the minimum is strictly to the right of mid. Why compare with `nums[hi]`? Because in a rotated array, the right end's value is a stable reference for which side contains the rotation point.",
+  hints: [
+    "lo = 0; hi = n - 1; loop while lo < hi.",
+    "If nums[mid] > nums[hi] the minimum is in the RIGHT half (lo = mid + 1).",
+    "Else the minimum is in [lo, mid] (hi = mid).",
+    "Return nums[lo]."
+  ],
+  tips: [
+    "Comparing with nums[hi] (not nums[lo]) is what makes the predicate monotone in the rotated array.",
+    "If duplicates exist (LC 154), when nums[mid] == nums[hi] you can't decide; just hi-- and continue (worst case O(N)).",
+    "Off-by-one trap: hi = nums.length - 1 (NOT n) because the predicate is closed-interval here."
+  ],
+  code: `/*
+ * Find Minimum in Rotated Sorted Array. Compare with the RIGHT end.
+ */
+int findMin(int[] nums) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] > nums[hi]) lo = mid + 1;        // min is to the right
+        else                      hi = mid;            // min is at or left of mid
+    }
+    return nums[lo];
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 34, title: "Find First and Last Position of Element in Sorted Array", diff: "med",
+  problem: "Given a sorted array nums (with duplicates) and a target, return the indices of the first and last occurrences, or [-1,-1].",
+  intuition: "First occurrence is `lowerBound(target)`; last occurrence is `upperBound(target) - 1`. Confirm the lower bound actually points to a target.",
+  hints: [
+    "Compute first = lowerBound(target). If first == n or nums[first] != target, return [-1, -1].",
+    "Compute last = upperBound(target) - 1.",
+    "Return [first, last]."
+  ],
+  tips: [
+    "You never need to write two slightly-different binary searches — lower + upper bound do it cleanly.",
+    "If the input has fewer than 2 elements, the bounds still work — no special-casing needed.",
+    "Python's bisect_left / bisect_right are direct equivalents."
+  ],
+  code: `/*
+ * First and Last Position. Two boundary searches.
+ */
+int[] searchRange(int[] nums, int target) {
+    int first = lowerBound(nums, target);
+    if (first == nums.length || nums[first] != target) return new int[]{-1, -1};
+    int last = upperBound(nums, target) - 1;
+    return new int[]{first, last};
+}
+
+private int lowerBound(int[] nums, int x) {
+    int lo = 0, hi = nums.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] < x) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+}
+private int upperBound(int[] nums, int x) {
+    int lo = 0, hi = nums.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] <= x) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 162, title: "Find Peak Element", diff: "med",
+  problem: "A peak is an element strictly greater than its neighbours. Given nums where nums[-1] = nums[n] = -∞, return ANY peak index.",
+  intuition: "Compare nums[mid] with nums[mid + 1]. If nums[mid] < nums[mid + 1], a peak must lie strictly to the right (climb uphill). Otherwise a peak lies at mid or to its left. The 'climb uphill' invariant guarantees we can never lose all peaks.",
+  hints: [
+    "lo = 0; hi = n - 1.",
+    "If nums[mid] < nums[mid + 1] lo = mid + 1; else hi = mid.",
+    "Return lo."
+  ],
+  tips: [
+    "Don't compare with mid - 1 — the boundary at mid + 1 is always in range when hi = n - 1 and lo < hi.",
+    "Same skeleton finds the peak of a bitonic array (LC 852).",
+    "Multiple peaks → returns any one. Don't try to also find 'all peaks' with this template; that's O(N)."
+  ],
+  code: `/*
+ * Find Peak Element. Climb uphill via the right neighbour.
+ */
+int findPeakElement(int[] nums) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] < nums[mid + 1]) lo = mid + 1;
+        else                           hi = mid;
+    }
+    return lo;
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 74, title: "Search a 2D Matrix", diff: "med",
+  problem: "Each row of an m × n matrix is sorted ascending and the first integer of each row is greater than the last integer of the previous row. Given target, return whether it's present.",
+  intuition: "The matrix is just one big sorted array of length m·n. Binary-search over the FLAT index and convert to (row, col) on the fly: `row = mid / n; col = mid % n`.",
+  hints: [
+    "lo = 0; hi = m * n - 1.",
+    "mid → row = mid / n, col = mid % n.",
+    "If matrix[row][col] == target return true; if less, lo = mid + 1; else hi = mid - 1."
+  ],
+  tips: [
+    "If the rows are sorted but rows aren't 'stitched' (LC 240), this template is wrong; use staircase search from a corner.",
+    "Watch m*n overflow — extremely unlikely on LC's bounds, but in real code use long.",
+    "An equivalent approach: find the row first, then binary-search inside it. Same complexity, more code."
+  ],
+  code: `/*
+ * Search a 2D Matrix. Flat-index trick over m*n cells.
+ */
+boolean searchMatrix(int[][] matrix, int target) {
+    int m = matrix.length, n = matrix[0].length;
+    int lo = 0, hi = m * n - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        int v = matrix[mid / n][mid % n];
+        if (v == target) return true;
+        if (v < target)  lo = mid + 1;
+        else             hi = mid - 1;
+    }
+    return false;
+}`,
+  complexity: "Time O(log(mn)). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 1011, title: "Capacity to Ship Packages within D Days (Search on Answer)", diff: "med",
+  problem: "Given weights and an integer D, return the minimum capacity such that all packages can be shipped in order within D days.",
+  intuition: "Binary search on the answer. The predicate `canShip(capacity)` returns whether weights can be partitioned into ≤ D contiguous groups whose sums each ≤ capacity. The predicate is monotone: if you can ship at capacity c, you can ship at any larger capacity. So the answer is `firstTrue` over [maxWeight, sumOfWeights].",
+  hints: [
+    "lo = max(weights) (each package must fit in a single day).",
+    "hi = sum(weights) (one day suffices for everything).",
+    "Predicate canShip(c): greedily simulate days and return days <= D.",
+    "Boundary skeleton; return lo."
+  ],
+  tips: [
+    "Same template solves 'split array largest sum' (LC 410), 'koko eating bananas' (LC 875), 'minimum time to repair cars' (LC 2594), and many 'find smallest x such that ...' problems.",
+    "The predicate must be O(N) or better — that's why the total cost is O(N log range).",
+    "Don't lo = 0; that violates the constraint that any single package weight must fit."
+  ],
+  code: `/*
+ * Capacity to Ship Packages within D Days. Search on answer.
+ */
+int shipWithinDays(int[] weights, int D) {
+
+    int lo = 0, hi = 0;
+    for (int w : weights) { lo = Math.max(lo, w); hi += w; }
+
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (canShip(weights, mid, D)) hi = mid;
+        else                          lo = mid + 1;
+    }
+    return lo;
+}
+
+private boolean canShip(int[] weights, int capacity, int D) {
+    int days = 1, load = 0;
+    for (int w : weights) {
+        if (load + w > capacity) { days++; load = 0; }
+        load += w;
+    }
+    return days <= D;
+}`,
+  complexity: "Time O(N log(sum)). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 875, title: "Koko Eating Bananas", diff: "med",
+  problem: "Given piles[] and an integer h, return the minimum eating speed k (bananas/hour) such that Koko finishes all piles within h hours.",
+  intuition: "Binary search on k. Predicate: at speed k, hours needed = sum over piles of ⌈pile / k⌉. The predicate 'hoursNeeded(k) <= h' is monotone in k. Search [1, max(piles)] for the smallest feasible k.",
+  hints: [
+    "lo = 1; hi = max(piles).",
+    "Predicate: sum of (pile + k - 1) / k for each pile must be ≤ h.",
+    "Use boundary skeleton; return lo."
+  ],
+  tips: [
+    "Always use long inside the predicate — the sum can overflow int when piles are large and k is small.",
+    "(p + k - 1) / k is the integer ceiling. Don't reach for Math.ceilDiv unless you're on Java 18+.",
+    "Same shape as LC 1011 — only the predicate changes."
+  ],
+  code: `/*
+ * Koko Eating Bananas. Search-on-answer over speed k.
+ */
+int minEatingSpeed(int[] piles, int h) {
+
+    int lo = 1, hi = 0;
+    for (int p : piles) hi = Math.max(hi, p);
+
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (hoursNeeded(piles, mid) <= h) hi = mid;
+        else                              lo = mid + 1;
+    }
+    return lo;
+}
+
+private long hoursNeeded(int[] piles, int k) {
+    long total = 0;
+    for (int p : piles) total += (p + k - 1) / k;
+    return total;
+}`,
+  complexity: "Time O(N log(max(piles))). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 81, title: "Search in Rotated Sorted Array II (with duplicates)", diff: "med",
+  problem: "Same as LC 33 but the rotated array may contain duplicates. Return whether target exists.",
+  intuition: "Mostly the same as LC 33 — but when nums[lo] == nums[mid] == nums[hi] you can't tell which half is sorted. In that case shrink both ends by one and continue. Worst-case O(N) on highly-duplicated input, average O(log N).",
+  hints: [
+    "If nums[mid] == target return true.",
+    "If nums[lo] == nums[mid] && nums[mid] == nums[hi]: lo++; hi--; continue.",
+    "Otherwise apply the LC 33 logic to choose the sorted half."
+  ],
+  tips: [
+    "The lo++ / hi-- step is the only addition; everything else is identical.",
+    "Don't try to detect duplicates upfront — the in-loop check handles it cheaply.",
+    "If the input is heavily duplicated, this can degenerate to linear; that's expected and unavoidable."
+  ],
+  code: `/*
+ * Search in Rotated Sorted Array II. Adds an O(N) escape hatch for duplicates.
+ */
+boolean search(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return true;
+
+        if (nums[lo] == nums[mid] && nums[mid] == nums[hi]) {
+            lo++; hi--;
+        } else if (nums[lo] <= nums[mid]) {
+            if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+            else                                          lo = mid + 1;
+        } else {
+            if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+            else                                          hi = mid - 1;
+        }
+    }
+    return false;
+}`,
+  complexity: "Average O(log N), worst case O(N) on heavy duplicates. Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 540, title: "Single Element in a Sorted Array", diff: "med",
+  problem: "Given a sorted array where every element appears exactly twice except for one, find that one in O(log N).",
+  intuition: "Use parity. Pair up indices (0,1),(2,3),(4,5),... . Before the unique element, every pair satisfies nums[2i] == nums[2i+1]. After the unique element, the pairing breaks. Binary-search on the EVEN index `mid`; check whether nums[mid] == nums[mid + 1].",
+  hints: [
+    "lo = 0; hi = (n - 1) / 2 (we search over PAIR indices).",
+    "Compute mid; let realMid = 2 * mid. If nums[realMid] == nums[realMid + 1], the unique element is to the right (lo = mid + 1). Else hi = mid.",
+    "Return nums[2 * lo]."
+  ],
+  tips: [
+    "The trick is searching over PAIR indices (not raw indices) so mid is always even.",
+    "An equivalent approach: at any mid, ensure mid is even (`mid -= mid & 1`) and apply the same comparison.",
+    "Same skeleton works for any 'one element broken in a paired structure' problem."
+  ],
+  code: `/*
+ * Single Element in a Sorted Array. Search over PAIR indices.
+ */
+int singleNonDuplicate(int[] nums) {
+    int lo = 0, hi = (nums.length - 1) / 2;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[2 * mid] == nums[2 * mid + 1]) lo = mid + 1;
+        else                                    hi = mid;
+    }
+    return nums[2 * lo];
+}`,
+  complexity: "Time O(log N). Space O(1)."
+});
+
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 4, title: "Median of Two Sorted Arrays", diff: "hard",
+  problem: "Given two sorted arrays A and B (sizes m and n), return the median of their union in O(log(min(m, n))).",
+  intuition: "Binary-search on the partition of the SMALLER array. Pick i ∈ [0, m]; the corresponding partition of the larger array is j = (m + n + 1) / 2 - i. The split is valid iff A[i-1] ≤ B[j] AND B[j-1] ≤ A[i]. Move i left or right based on which constraint fails. The median is then a function of the four boundary values.",
+  hints: [
+    "Ensure m ≤ n by swapping arrays if needed.",
+    "lo = 0; hi = m. Pick i, compute j = (m+n+1)/2 - i. Replace out-of-bounds with ±∞.",
+    "If A[i-1] > B[j] → i too large, hi = i - 1. If B[j-1] > A[i] → i too small, lo = i + 1. Else valid split.",
+    "Median: max(A[i-1], B[j-1]) for odd total length; (max(A[i-1],B[j-1]) + min(A[i],B[j])) / 2 for even."
+  ],
+  tips: [
+    "Always recurse / binary-search on the SMALLER array to keep the search domain at log(min(m,n)).",
+    "Use sentinels Integer.MIN_VALUE / Integer.MAX_VALUE to handle edge partitions cleanly — easier than special cases.",
+    "Don't try to merge first; that's O(m + n) and misses the asymptotic bound."
+  ],
+  code: `/*
+ * Median of Two Sorted Arrays. Binary-search the partition of the smaller array.
+ */
+double findMedianSortedArrays(int[] A, int[] B) {
+
+    if (A.length > B.length) return findMedianSortedArrays(B, A);
+
+    int m = A.length, n = B.length;
+    int total = m + n;
+    int half  = (total + 1) / 2;
+    int lo = 0, hi = m;
+
+    while (lo <= hi) {
+        int i = lo + (hi - lo) / 2;
+        int j = half - i;
+
+        int Ai_1 = (i == 0) ? Integer.MIN_VALUE : A[i - 1];
+        int Ai   = (i == m) ? Integer.MAX_VALUE : A[i];
+        int Bj_1 = (j == 0) ? Integer.MIN_VALUE : B[j - 1];
+        int Bj   = (j == n) ? Integer.MAX_VALUE : B[j];
+
+        if (Ai_1 > Bj)        hi = i - 1;
+        else if (Bj_1 > Ai)   lo = i + 1;
+        else {
+            int leftMax  = Math.max(Ai_1, Bj_1);
+            if ((total & 1) == 1) return leftMax;
+            int rightMin = Math.min(Ai, Bj);
+            return (leftMax + rightMin) / 2.0;
+        }
+    }
+    throw new IllegalStateException();                 // unreachable
+}`,
+  complexity: "Time O(log(min(m, n))). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 410, title: "Split Array Largest Sum", diff: "hard",
+  problem: "Split nums into k non-empty contiguous subarrays so that the largest subarray sum is minimized. Return that minimum.",
+  intuition: "Search on answer over the largest sum X. Predicate: `canSplit(X, k)` greedily groups elements until adding one would exceed X, then starts a new group; returns whether the number of groups ≤ k. The answer is `firstTrue` over [max(nums), sum(nums)].",
+  hints: [
+    "lo = max(nums); hi = sum(nums).",
+    "Boundary skeleton: if canSplit(mid, k) hi = mid, else lo = mid + 1.",
+    "Predicate is O(N), entire algorithm O(N log(sum))."
+  ],
+  tips: [
+    "Same template as LC 1011; the predicate's only difference is comparing groups against k.",
+    "Verify the predicate on tiny inputs first — most bugs live in the greedy split.",
+    "An O(N²k) DP also works but is slower for big inputs."
+  ],
+  code: `/*
+ * Split Array Largest Sum. Search on the largest-sum value.
+ */
+int splitArray(int[] nums, int k) {
+
+    int lo = 0, hi = 0;
+    for (int v : nums) { lo = Math.max(lo, v); hi += v; }
+
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (canSplit(nums, mid, k)) hi = mid;
+        else                        lo = mid + 1;
+    }
+    return lo;
+}
+
+private boolean canSplit(int[] nums, int cap, int k) {
+    int groups = 1, sum = 0;
+    for (int v : nums) {
+        if (sum + v > cap) { groups++; sum = 0; }
+        sum += v;
+    }
+    return groups <= k;
+}`,
+  complexity: "Time O(N log(sum)). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 378, title: "Kth Smallest Element in a Sorted Matrix", diff: "hard",
+  problem: "Given an n × n matrix where each row and each column is sorted ascending, return the kth smallest element.",
+  intuition: "Search on answer over the VALUE x. Predicate: `countLessOrEqual(matrix, x) >= k`. Counting can be done in O(n) per call by walking from the top-right corner: if matrix[i][j] <= x add (i + 1) to count and j++, else i--. Search over [matrix[0][0], matrix[n-1][n-1]].",
+  hints: [
+    "lo = matrix[0][0]; hi = matrix[n-1][n-1].",
+    "Boundary skeleton: if count(mid) >= k hi = mid, else lo = mid + 1.",
+    "count(x) walks O(n) from the top-right corner.",
+    "Return lo."
+  ],
+  tips: [
+    "Counting from the bottom-LEFT corner also works — pick whichever you find clearer.",
+    "Heap-based approach (PriorityQueue with k extracts) is O((n + k) log n) — usually slower for square matrices.",
+    "Watch overflow on large values: keep count as int (it's at most n²), but lo/hi may need long for huge matrices."
+  ],
+  code: `/*
+ * Kth Smallest Element in a Sorted Matrix. Search on value with O(n) counter.
+ */
+int kthSmallest(int[][] matrix, int k) {
+
+    int n = matrix.length;
+    int lo = matrix[0][0], hi = matrix[n - 1][n - 1];
+
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (countLessOrEqual(matrix, mid) >= k) hi = mid;
+        else                                    lo = mid + 1;
+    }
+    return lo;
+}
+
+private int countLessOrEqual(int[][] matrix, int x) {
+    int n = matrix.length, i = n - 1, j = 0, count = 0;
+    while (i >= 0 && j < n) {
+        if (matrix[i][j] <= x) { count += i + 1; j++; }
+        else                   i--;
+    }
+    return count;
+}`,
+  complexity: "Time O(n · log(maxVal − minVal)). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 2616, title: "Minimize the Maximum Difference of Pairs (Search on Answer)", diff: "hard",
+  problem: "Given nums and integer p, choose p disjoint pairs (i, j) so that the MAXIMUM |nums[i] - nums[j]| over pairs is minimized. Return that minimum.",
+  intuition: "Sort nums. The candidate maxima x are integers. Predicate: 'can we find at least p disjoint pairs with diff ≤ x in the sorted array?' Greedy: walk i = 0..n-2; if nums[i+1] - nums[i] ≤ x, count a pair and skip both (i += 2), else i += 1. Predicate is monotone in x. Search [0, max(nums) - min(nums)].",
+  hints: [
+    "Sort nums.",
+    "lo = 0; hi = nums[n-1] - nums[0].",
+    "Boundary skeleton; predicate is O(N).",
+    "Greedy in predicate must skip both elements after pairing them."
+  ],
+  tips: [
+    "Sorting is the key — without it, the greedy is wrong.",
+    "Same skeleton applies to many 'minimize max' problems: search-on-answer + monotone feasibility.",
+    "Don't double-count: once paired, skip BOTH endpoints by `i += 2`."
+  ],
+  code: `/*
+ * Minimize Max Diff of Pairs. Sort + search-on-answer + greedy pairing.
+ */
+int minimizeMax(int[] nums, int p) {
+
+    Arrays.sort(nums);
+    int n = nums.length;
+    int lo = 0, hi = nums[n - 1] - nums[0];
+
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (canPair(nums, mid, p)) hi = mid;
+        else                       lo = mid + 1;
+    }
+    return lo;
+}
+
+private boolean canPair(int[] nums, int x, int p) {
+    int count = 0, i = 0;
+    while (i + 1 < nums.length) {
+        if (nums[i + 1] - nums[i] <= x) { count++; i += 2; }
+        else                            { i++; }
+        if (count >= p) return true;
+    }
+    return false;
+}`,
+  complexity: "Time O(N log N + N log(maxDiff)). Space O(1)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','Random','Collections','Arrays','Math','Comparator','Objects','Map.Entry'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) { return PROBLEMS.filter(p => p.diff === diff); }
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = `
+      <div class="brief-root">
+        <header class="brief-header">
+          <div class="brief-subtitle">JAVA</div>
+          <h1 class="brief-title">Modified Binary Search</h1>
+          <p class="brief-tagline">Pick a flavor → tweak inputs → step through lo / mid / hi</p>
+        </header>
+        <div class="op-tabs" id="briefOpTabs"></div>
+        <div class="panel" id="briefMainPanel"></div>
+        <div class="cheat">
+          <div class="section-label">CHEAT SHEET — COMMON PATTERNS</div>
+          <div id="briefCheatSheet"></div>
+        </div>
+        <div class="brief-footer">MONOTONIC PREDICATE &middot; HALVE &middot; CONVERGE</div>
+      </div>
+    `;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    initBriefMode();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+
+/* ===== BRIEF MODE: interactive binary-search explorer ===== */
+const BRIEF_OPS = [
+  {
+    id:"equal", name:"Equality", color:"#2563eb", colorDark:"#58a6ff",
+    desc:"Classic binary search on a sorted array. while (lo <= hi); return mid on hit, -1 on miss.",
+    rule:"if nums[mid] < target → lo = mid+1; if > → hi = mid-1.",
+    label:"EQUALITY",
+    examples:[
+      { title:"LC 704 — Binary Search",
+        code:`int search(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return mid;
+        if (nums[mid] < target)  lo = mid + 1;
+        else                     hi = mid - 1;
+    }
+    return -1;
+}`,
+        why:"Closed interval [lo, hi]. Each iteration either returns or strictly shrinks the range." },
+    ],
+  },
+  {
+    id:"lower", name:"Lower bound", color:"#16a34a", colorDark:"#76ff03",
+    desc:"First index whose value is ≥ x. Returns n when x is bigger than every element.",
+    rule:"if nums[mid] < x → lo = mid+1; else hi = mid.",
+    label:"LOWER BOUND",
+    examples:[
+      { title:"LC 35 — Search Insert Position",
+        code:`int searchInsert(int[] nums, int target) {
+    int lo = 0, hi = nums.length;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] < target) lo = mid + 1;
+        else                    hi = mid;
+    }
+    return lo;
+}`,
+        why:"Half-open interval [lo, hi). The loop's invariant: 'the answer lives somewhere in [lo, hi]'." },
+    ],
+  },
+  {
+    id:"first-true", name:"First TRUE", color:"#d97706", colorDark:"#ffd740",
+    desc:"For a monotone predicate p(x): smallest x with p(x) true. Universal boundary search.",
+    rule:"if p(mid) → hi = mid; else lo = mid + 1.",
+    label:"FIRST TRUE",
+    examples:[
+      { title:"LC 278 — First Bad Version",
+        code:`int firstBadVersion(int n) {
+    int lo = 1, hi = n;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (isBadVersion(mid)) hi = mid;
+        else                   lo = mid + 1;
+    }
+    return lo;
+}`,
+        why:"isBadVersion is monotone: once TRUE, every later version is also TRUE. The boundary is what we want." },
+    ],
+  },
+  {
+    id:"answer", name:"Search on Answer", color:"#9333ea", colorDark:"#ea80fc",
+    desc:"Binary-search VALUES, not indices. Predicate is a feasibility check on capacity / speed / time.",
+    rule:"lo, hi span the answer domain; canDoIt(mid) drives shrinking.",
+    label:"SEARCH ON ANSWER",
+    examples:[
+      { title:"LC 1011 — Capacity to Ship Packages within D Days",
+        code:`int shipWithinDays(int[] weights, int D) {
+    int lo = 0, hi = 0;
+    for (int w : weights) { lo = Math.max(lo, w); hi += w; }
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (canShip(weights, mid, D)) hi = mid;
+        else                          lo = mid + 1;
+    }
+    return lo;
+}
+
+private boolean canShip(int[] weights, int cap, int D) {
+    int days = 1, load = 0;
+    for (int w : weights) {
+        if (load + w > cap) { days++; load = 0; }
+        load += w;
+    }
+    return days <= D;
+}`,
+        why:"Feasibility is monotone in capacity, so the smallest feasible capacity is the answer." },
+    ],
+  },
+  {
+    id:"rotated", name:"Rotated", color:"#dc2626", colorDark:"#ff7b72",
+    desc:"In a rotated sorted array, at every step ONE half is normally sorted. Pick the half that contains target.",
+    rule:"compare nums[lo] with nums[mid] to identify the sorted half",
+    label:"ROTATED",
+    examples:[
+      { title:"LC 33 — Search in Rotated Sorted Array",
+        code:`int search(int[] nums, int target) {
+    int lo = 0, hi = nums.length - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (nums[mid] == target) return mid;
+
+        if (nums[lo] <= nums[mid]) {
+            if (nums[lo] <= target && target < nums[mid]) hi = mid - 1;
+            else                                          lo = mid + 1;
+        } else {
+            if (nums[mid] < target && target <= nums[hi]) lo = mid + 1;
+            else                                          hi = mid - 1;
+        }
+    }
+    return -1;
+}`,
+        why:"Knowing which half is sorted converts the rotated case back into a one-step binary search." },
+    ],
+  },
+  {
+    id:"matrix", name:"2D / Flat", color:"#0d9488", colorDark:"#a7ffeb",
+    desc:"For an m×n matrix sorted as one big sequence, binary-search the FLAT index and convert to (row, col).",
+    rule:"row = mid / cols, col = mid % cols",
+    label:"2D / FLAT",
+    examples:[
+      { title:"LC 74 — Search a 2D Matrix",
+        code:`boolean searchMatrix(int[][] matrix, int target) {
+    int m = matrix.length, n = matrix[0].length;
+    int lo = 0, hi = m * n - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        int v = matrix[mid / n][mid % n];
+        if (v == target) return true;
+        if (v < target)  lo = mid + 1;
+        else             hi = mid - 1;
+    }
+    return false;
+}`,
+        why:"The flat-index trick avoids two-stage searching and stays at O(log(m·n))." },
+    ],
+  },
+];
+
+const BRIEF_CHEAT_ITEMS = [
+  ["Mid (overflow safe)",      "lo + (hi - lo) / 2"],
+  ["Closed interval loop",     "while (lo <= hi)"],
+  ["Half-open boundary loop",  "while (lo < hi)"],
+  ["Lower bound",              "if (nums[mid] < x) lo = mid+1 else hi = mid"],
+  ["Upper bound",              "if (nums[mid] <= x) lo = mid+1 else hi = mid"],
+  ["First TRUE",               "if (p(mid)) hi = mid else lo = mid+1"],
+  ["Last FALSE (round up)",    "mid = lo + (hi - lo + 1) / 2"],
+  ["Rotated half check",       "nums[lo] <= nums[mid] → left sorted"],
+  ["2D flat index",            "row = mid / cols; col = mid % cols"],
+  ["Search-on-answer",         "lo / hi span ANSWER values; predicate on mid"],
+  ["Bitonic peak",             "compare nums[mid] with nums[mid+1]"],
+];
+
+let briefCurrentOp = BRIEF_OPS[0];
+let briefCurrentEx = 0;
+let briefWhyOpen = {};
+let briefArrStr = "1,3,5,7,9,11,13";
+let briefTarget = 7;
+
+function briefOpColor(op) {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+    ? (op.colorDark || op.color)
+    : op.color;
+}
+
+function briefParseArr() {
+  return briefArrStr.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+}
+
+function briefRunSearch(arr, target, mode) {
+  // Returns final lo, hi, foundIdx (or -1), and trace of (lo, mid, hi).
+  let lo, hi, found = -1;
+  const trace = [];
+  if (mode === 'equal') {
+    lo = 0; hi = arr.length - 1;
+    while (lo <= hi) {
+      const mid = lo + ((hi - lo) >> 1);
+      trace.push([lo, mid, hi]);
+      if (arr[mid] === target) { found = mid; break; }
+      if (arr[mid] < target) lo = mid + 1; else hi = mid - 1;
+    }
+  } else if (mode === 'lower' || mode === 'first-true') {
+    lo = 0; hi = arr.length;
+    while (lo < hi) {
+      const mid = lo + ((hi - lo) >> 1);
+      trace.push([lo, mid, hi - 1]);
+      if (arr[mid] < target) lo = mid + 1; else hi = mid;
+    }
+    if (lo < arr.length && arr[lo] === target) found = lo;
+  } else if (mode === 'answer') {
+    // demo: find smallest index with arr[i] >= target — same as lower bound.
+    lo = 0; hi = arr.length;
+    while (lo < hi) {
+      const mid = lo + ((hi - lo) >> 1);
+      trace.push([lo, mid, hi - 1]);
+      if (arr[mid] < target) lo = mid + 1; else hi = mid;
+    }
+    if (lo < arr.length && arr[lo] >= target) found = lo;
+  } else if (mode === 'rotated') {
+    lo = 0; hi = arr.length - 1;
+    while (lo <= hi) {
+      const mid = lo + ((hi - lo) >> 1);
+      trace.push([lo, mid, hi]);
+      if (arr[mid] === target) { found = mid; break; }
+      if (arr[lo] <= arr[mid]) {
+        if (arr[lo] <= target && target < arr[mid]) hi = mid - 1;
+        else                                        lo = mid + 1;
+      } else {
+        if (arr[mid] < target && target <= arr[hi]) lo = mid + 1;
+        else                                        hi = mid - 1;
+      }
+    }
+  } else {
+    // matrix: just visualize equality on the flat array
+    lo = 0; hi = arr.length - 1;
+    while (lo <= hi) {
+      const mid = lo + ((hi - lo) >> 1);
+      trace.push([lo, mid, hi]);
+      if (arr[mid] === target) { found = mid; break; }
+      if (arr[mid] < target) lo = mid + 1; else hi = mid - 1;
+    }
+  }
+  return { found, trace };
+}
+
+function briefRenderArrayCells(arr, lo, mid, hi, found) {
+  let cells = '';
+  for (let i = 0; i < arr.length; i++) {
+    const cls = ['arr-cell'];
+    if (i < lo || i > hi) cls.push('eliminated');
+    if (i === mid) cls.push('mid');
+    if (i === lo)  cls.push('lo');
+    if (i === hi)  cls.push('hi');
+    let lbl = '';
+    if (i === lo) lbl = 'lo';
+    if (i === hi) lbl = lbl ? lbl + '/hi' : 'hi';
+    if (i === mid) lbl = lbl ? 'mid' : 'mid';
+    cells += `<div class="${cls.join(' ')}">${arr[i]}${lbl ? `<span class="lbl">${lbl}</span>` : ''}</div>`;
+  }
+  return `<div class="arr-row">${cells}</div>
+          <div class="ptr-row">
+            <span style="color:var(--easy)">■ lo</span>
+            <span style="color:var(--accent)">■ mid (current pivot)</span>
+            <span style="color:var(--med)">■ hi</span>
+          </div>`;
+}
+
+function briefRenderPanel() {
+
+  const op = briefCurrentOp;
+  const color = briefOpColor(op);
+  const arr = briefParseArr();
+
+  // For 'rotated' demo, build a rotated copy of the sorted parse.
+  let view = arr.slice();
+  if (op.id === 'rotated' && view.length > 2) {
+    const k = Math.floor(view.length / 3);
+    view = view.slice(k).concat(view.slice(0, k));
+  }
+
+  const { found, trace } = briefRunSearch(view, briefTarget, op.id);
+  const last = trace.length ? trace[trace.length - 1] : [0, -1, view.length - 1];
+  const cells = briefRenderArrayCells(view, last[0], last[1], last[2], found);
+
+  let resultLine;
+  if (found >= 0) {
+    resultLine = `target ${briefTarget} found at index <span class="result-pill yes">${found}</span> in ${trace.length} step${trace.length === 1 ? '' : 's'}`;
+  } else if (op.id === 'lower' || op.id === 'first-true' || op.id === 'answer') {
+    resultLine = `lower-bound index = <span class="result-pill yes">${last[0]}</span> in ${trace.length} step${trace.length === 1 ? '' : 's'}`;
+  } else {
+    resultLine = `target ${briefTarget} <span class="result-pill no">NOT FOUND</span> after ${trace.length} step${trace.length === 1 ? '' : 's'}`;
+  }
+
+  const exTabs = op.examples.map((e, i) =>
+    `<div class="ex-tab" data-i="${i}" style="${i === briefCurrentEx ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(e.title)}</div>`
+  ).join('');
+
+  const ex = op.examples[briefCurrentEx];
+  const whyOpen = briefWhyOpen[op.id + ':' + briefCurrentEx];
+
+  document.getElementById('briefMainPanel').innerHTML = `
+    <div class="op-badge" style="background:${color}22; color:${color}; border:1px solid ${color}">${op.label}</div>
+    <div class="op-desc">${escapeHtml(op.desc)}</div>
+    <div class="op-rule">${escapeHtml(op.rule)}</div>
+
+    <div class="calc-box">
+      <div class="input-row">
+        <span class="input-label">array</span>
+        <input type="text" id="briefArr" value="${escapeHtml(briefArrStr)}" />
+        <span class="input-label">target</span>
+        <input type="number" id="briefTarget" value="${briefTarget}" />
+      </div>
+      ${cells}
+      <div class="result-line">${resultLine}</div>
+    </div>
+
+    <div class="section-label">EXAMPLES</div>
+    <div class="ex-tabs">${exTabs}</div>
+    <div class="ex-box">
+      <div class="ex-title" style="color:${color}">${escapeHtml(ex.title)}</div>
+      <pre class="brief-pre"><code>${highlightJava(ex.code)}</code></pre>
+      <div class="why-toggle" data-key="${op.id}:${briefCurrentEx}">${whyOpen ? '▼' : '▶'} Why does this work?</div>
+      <div class="why-body ${whyOpen ? 'visible' : ''}">${escapeHtml(ex.why)}</div>
+    </div>
+  `;
+
+  const arrEl = document.getElementById('briefArr');
+  const tEl = document.getElementById('briefTarget');
+  if (arrEl) arrEl.addEventListener('input', () => { briefArrStr = arrEl.value; briefRenderPanel(); });
+  if (tEl)   tEl.addEventListener('input',   () => { briefTarget = parseInt(tEl.value, 10) || 0; briefRenderPanel(); });
+
+  document.querySelectorAll('#briefMainPanel .ex-tab').forEach(t => {
+    t.addEventListener('click', () => { briefCurrentEx = +t.dataset.i; briefRenderPanel(); });
+  });
+  const wt = document.querySelector('#briefMainPanel .why-toggle');
+  if (wt) wt.addEventListener('click', () => {
+    const key = wt.dataset.key;
+    briefWhyOpen[key] = !briefWhyOpen[key];
+    briefRenderPanel();
+  });
+}
+
+function briefRenderOpTabs() {
+  const html = BRIEF_OPS.map(op => {
+    const color = briefOpColor(op);
+    const active = op.id === briefCurrentOp.id;
+    return `<div class="op-tab" data-id="${op.id}"
+      style="${active ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(op.name)}</div>`;
+  }).join('');
+  document.getElementById('briefOpTabs').innerHTML = html;
+  document.querySelectorAll('#briefOpTabs .op-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentOp = BRIEF_OPS.find(o => o.id === t.dataset.id);
+      briefCurrentEx = 0;
+      briefRenderOpTabs();
+      briefRenderPanel();
+    });
+  });
+}
+
+function briefRenderCheatSheet() {
+  document.getElementById('briefCheatSheet').innerHTML = BRIEF_CHEAT_ITEMS.map(([n, c]) =>
+    `<div class="cheat-row"><span class="cheat-name">${escapeHtml(n)}</span><span class="cheat-code">${escapeHtml(c)}</span></div>`
+  ).join('');
+}
+
+function initBriefMode() {
+  briefRenderOpTabs();
+  briefRenderPanel();
+  briefRenderCheatSheet();
+}
+
+const briefThemeObserver = new MutationObserver(() => {
+  if (state.diff === 'brief') {
+    briefRenderOpTabs();
+    briefRenderPanel();
+  }
+});
+briefThemeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['data-theme'],
+});
+
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
