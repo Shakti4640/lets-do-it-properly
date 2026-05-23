@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sliding Window — Patterns, Cheatsheet & Java Snippets</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  body.brief-mode .nav-bar { display: none; }
+
+  .brief-root {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+    color: var(--fg);
+  }
+  .brief-root .brief-header { text-align: center; margin-bottom: 32px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #2563eb, #16a34a, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  [data-theme="dark"] .brief-root .brief-title {
+    background: linear-gradient(90deg, #58a6ff, #76ff03, #ffd740);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+
+  .brief-root .op-tabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 28px;
+  }
+  .brief-root .op-tab {
+    padding: 8px 16px; border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--card); color: var(--muted);
+    cursor: pointer; font-family: inherit;
+    font-weight: 700; font-size: 14px;
+    transition: all 0.18s;
+  }
+
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 24px;
+  }
+  .brief-root .op-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+  .brief-root .op-desc { margin: 10px 0 4px; color: var(--fg); font-size: 14px; }
+  .brief-root .op-rule { color: var(--muted); font-size: 12px; }
+
+  .brief-root .calc-box {
+    background: var(--code-bg); border-radius: 12px;
+    padding: 20px; margin: 20px 0; border: 1px solid var(--border);
+  }
+  .brief-root .input-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .brief-root .input-label { color: var(--muted); font-size: 12px; min-width: 60px; }
+  .brief-root input[type=text], .brief-root input[type=number] {
+    padding: 6px 10px; border-radius: 6px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--fg); font-family: inherit; font-size: 14px;
+  }
+  .brief-root input[type=text] { width: 240px; }
+  .brief-root input[type=number] { width: 70px; }
+
+  /* Window viz */
+  .brief-root .arr-row { display: flex; gap: 4px; flex-wrap: wrap; margin: 12px 0; }
+  .brief-root .arr-cell {
+    min-width: 32px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 5px;
+    font-weight: 700; font-size: 13px;
+    background: var(--bg); color: var(--fg);
+    transition: all 0.2s;
+  }
+  .brief-root .arr-cell.in-window {
+    border-color: var(--accent);
+    background: rgba(37,99,235,.18);
+    color: var(--accent);
+  }
+  .brief-root .arr-cell.left-ptr { box-shadow: 0 0 0 2px var(--easy); }
+  .brief-root .arr-cell.right-ptr { box-shadow: 0 0 0 2px var(--med); }
+  .brief-root .ptr-row { display: flex; gap: 16px; font-size: 11px; color: var(--muted); margin-top: -4px; }
+  .brief-root .result-line { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .brief-root .result-pill {
+    display: inline-block; padding: 4px 12px;
+    border-radius: 20px; font-weight: 700; font-size: 12px;
+    margin-left: 8px;
+  }
+  .brief-root .result-pill.yes { background: rgba(22,163,74,.15); color: var(--easy); border: 1px solid var(--easy); }
+  .brief-root .result-pill.no  { background: rgba(220,38,38,.15); color: var(--hard); border: 1px solid var(--hard); }
+
+  .brief-root .section-label {
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 3px; margin-bottom: 12px;
+  }
+  .brief-root .ex-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .brief-root .ex-tab {
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 12px;
+    font-family: inherit; transition: all 0.18s;
+  }
+
+  .brief-root .ex-box {
+    background: var(--code-bg); border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .brief-root .ex-title { padding: 10px 16px; font-size: 13px; font-weight: 700; }
+  .brief-root pre.brief-pre {
+    margin: 0; padding: 16px; font-size: 13px; line-height: 1.7;
+    color: var(--code-fg); overflow-x: auto;
+    white-space: pre-wrap; word-break: break-word;
+    background: var(--code-bg);
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  [data-theme="dark"] .brief-root pre.brief-pre { color: #c8e6c9; }
+  .brief-root .why-toggle {
+    padding: 10px 16px; cursor: pointer;
+    border-top: 1px solid var(--border);
+    font-size: 12px; display: flex; align-items: center; gap: 8px;
+    user-select: none; color: var(--muted);
+  }
+  .brief-root .why-body {
+    padding: 12px 16px; font-size: 13px; line-height: 1.7;
+    color: var(--fg); display: none;
+  }
+  .brief-root .why-body.visible { display: block; }
+
+  .brief-root .cheat {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 16px;
+  }
+  .brief-root .cheat-row {
+    display: flex; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px; padding: 8px 0;
+    border-bottom: 1px solid var(--border); align-items: center;
+  }
+  .brief-root .cheat-name { color: var(--muted); font-size: 13px; }
+  .brief-root .cheat-code {
+    color: var(--str); font-size: 12px;
+    background: var(--code-bg);
+    padding: 2px 10px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .brief-root .brief-footer {
+    text-align: center; color: var(--muted);
+    font-size: 11px; letter-spacing: 2px; margin-top: 8px;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips {
+    margin: 6px 0 6px 4px;
+    padding: 0 0 0 22px;
+  }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #eef2ff;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: var(--code-bg);
+    white-space: nowrap;
+    color: var(--num);
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: var(--num); }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .arr-cell.in-window { background: rgba(88,166,255,.18); color: var(--accent); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Sliding Window — Patterns, Cheatsheet & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Sliding Window Cheatsheet (read this first)", diff: "veasy",
+  problem: "A sliding window is a contiguous sub-segment [left..right] of an array or string that grows from the right and shrinks from the left in O(N). Three flavors cover almost every problem: (1) FIXED-size window of length k — slide both pointers in lockstep; (2) VARIABLE-size 'longest valid window' — expand right, shrink left until the window is valid again, take the max length; (3) VARIABLE-size 'shortest valid window' — expand right until valid, then shrink left as far as still valid, take the min length. Most problems collapse into one of these three skeletons.",
+  intuition: "Think of two pointers, `left` and `right`, with all the action between them. Maintain a small running summary of the window — a sum, a HashMap of frequencies, a count of distinct values, a max via deque, etc. The whole point is that as `right` moves +1 you ADD one element, and as `left` moves +1 you REMOVE one. That keeps each step O(1), so the entire pass is O(N). The trickiest part is the SHRINK condition: write 'window is valid' as a boolean and shrink while it's true (for shortest) or while it's false (for longest until valid).",
+  hints: [
+    "Decide upfront: fixed size? longest? shortest? exactly-k? at-most-k? Each has its own template.",
+    "'Exactly k' = 'at most k' minus 'at most k-1' — turn an 'exactly' into a difference of two 'at-mosts'.",
+    "Maintain ONE summary structure inside the window. The fancier problems just use a fancier structure (HashMap, Deque, BST).",
+    "When in doubt, write the inner loop as `while (windowInvalid) shrinkLeft();` — that single line is what makes the algorithm correct.",
+    "Char-frequency windows almost always use `int[26]` or `int[128]` for ASCII — faster than HashMap for tight inner loops."
+  ],
+  tips: [
+    "Always update your summary BEFORE checking the condition, and update again AFTER moving `left`. Off-by-one bugs live at exactly these two spots.",
+    "For 'max element in window' use a monotonic deque storing indices (LC 239) — O(N) total.",
+    "For 'count distinct chars' use a counter + 'distinct' integer that increments when a count goes 0→1 and decrements when it goes 1→0.",
+    "For sums or counts on integer arrays, use `long` to be safe — products especially overflow `int` quickly.",
+    "If the question says 'subarray' it usually means contiguous (window territory). If it says 'subsequence', sliding window is rarely the right tool."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Pattern / Idiom</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>Fixed-size window of k</td><td>Slide left and right together. Add nums[r]; if r-l+1 == k, record answer and remove nums[l]; l++.</td></tr>
+        <tr><td>Longest valid window</td><td>Expand r; while invalid, shrink l. Track max(r - l + 1).</td></tr>
+        <tr><td>Shortest valid window</td><td>Expand r; while valid, record min(r-l+1) and shrink l. Track min length.</td></tr>
+        <tr><td>At-most-k</td><td>Standard 'longest valid' — count subarrays whose constraint &le; k.</td></tr>
+        <tr><td>Exactly-k</td><td>atMost(k) - atMost(k-1).</td></tr>
+        <tr><td>Anagram / permutation</td><td>Two char-count arrays + a 'matched' counter for O(1) compare.</td></tr>
+        <tr><td>Window max / min</td><td>Monotonic deque of indices; pop from back while smaller, pop front when out of range.</td></tr>
+        <tr><td>Sum of window</td><td>One long; window += nums[r]; window -= nums[l].</td></tr>
+        <tr><td>Distinct count</td><td>HashMap&lt;ch, count&gt; + int 'distinct'; ++/-- on 0↔1 transitions.</td></tr>
+        <tr><td>Two-pointer twin</td><td>When the window is monotone in one variable (sum on positives) — same skeleton, no Deque/Map needed.</td></tr>
+      </tbody>
+    </table>
+    <p><b>The one decision that drives everything:</b></p>
+    <ul class="hints">
+      <li><b>Write the validity predicate first.</b> Before touching pointers, write a one-liner like <code>distinct &lt;= k</code> or <code>need == 0</code> that tells you whether the current window is acceptable. The expand / shrink loops are just mechanical translations of that predicate. Most sliding-window bugs come from skipping this step and inventing an ad-hoc shrink condition mid-code.</li>
+      <li><b>Each pointer moves O(N) times total</b>, not per iteration. That is why the algorithm is linear even though there are two nested loops in the code — left can only catch up to right, and right only goes forward. If you ever find yourself moving left BACKWARD, you've left sliding-window territory.</li>
+    </ul>
+  `,
+  code: `/*
+ * The four canonical skeletons. Memorize each one — the hard problems
+ * are all variations of these.
+ */
+
+// ---- 1. FIXED-SIZE window of length k -------------------------------
+int fixedWindowMaxSum(int[] nums, int k) {
+
+    long sum = 0;
+    for (int i = 0; i < k; i++) sum += nums[i];
+
+    long best = sum;
+    for (int r = k; r < nums.length; r++) {
+        sum += nums[r] - nums[r - k];          // add new, drop oldest
+        best = Math.max(best, sum);
+    }
+    return (int) best;
+}
+
+// ---- 2. LONGEST valid window (variable size) ------------------------
+int longestValidWindow(int[] nums) {
+
+    int left = 0, best = 0;
+    /* maintain summary, e.g. int sum = 0; */
+    /* int sum = 0; */
+    int sum = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        sum += nums[right];                    // EXPAND
+
+        while (sum > /* limit */ 100) {        // SHRINK while invalid
+            sum -= nums[left++];
+        }
+
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}
+
+// ---- 3. SHORTEST valid window (variable size) -----------------------
+int shortestValidWindow(int[] nums, int target) {
+
+    int left = 0, best = Integer.MAX_VALUE;
+    int sum = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        sum += nums[right];
+
+        while (sum >= target) {                // valid → try shrinking
+            best = Math.min(best, right - left + 1);
+            sum -= nums[left++];
+        }
+    }
+    return best == Integer.MAX_VALUE ? 0 : best;
+}
+
+// ---- 4. EXACTLY-k via two AT-MOST-k passes --------------------------
+int subarraysWithKDistinct(int[] nums, int k) {
+    return atMostK(nums, k) - atMostK(nums, k - 1);
+}
+
+private int atMostK(int[] nums, int k) {
+
+    Map<Integer, Integer> cnt = new HashMap<>();
+    int left = 0, total = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        cnt.merge(nums[right], 1, Integer::sum);
+        while (cnt.size() > k) {
+            int x = nums[left++];
+            if (cnt.merge(x, -1, Integer::sum) == 0) cnt.remove(x);
+        }
+        total += right - left + 1;             // # of subarrays ending at right
+    }
+    return total;
+}`,
+  complexity: "Every skeleton is O(N) time. Space depends on the summary: O(1) for sums, O(k) for fixed-size structures, O(alphabet) for char-count problems."
+});
+
+
+/* ===================== VERY EASY (DRILLS) ===================== */
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Pick the right window flavor", diff: "veasy",
+  problem: "Before writing any code, classify the problem into FIXED-size, LONGEST, SHORTEST, or AT-MOST-k. The wrong template will fight you the entire interview.",
+  intuition: "FIXED whenever the problem GIVES you a length k and asks for max/min/sum over EVERY window of that length. LONGEST when it asks for the max LENGTH satisfying a property. SHORTEST when it asks for the min LENGTH that satisfies (achieves) a property. COUNT (atMost) when it asks how many subarrays have the property; turn 'exactly k' into 'atMost(k) - atMost(k-1)'.",
+  hints: [
+    "If the input gives you `k` directly: fixed window.",
+    "Phrasing 'longest substring/subarray such that X' → longest variable window.",
+    "Phrasing 'minimum length subarray such that X' or 'shortest with X' → shortest window.",
+    "Phrasing 'how many subarrays have X' → atMost trick (especially for 'exactly k')."
+  ],
+  tips: [
+    "If 'X' is monotone (e.g. growing right side strictly increases the offending count), variable window works. If 'X' can flip both ways inside the same window, you may need a different tool (prefix sums, segment tree).",
+    "Don't try to brute force 'exactly-k' with a single window — almost always the atMost trick wins.",
+    "When the problem reads 'in O(N)' or 'one pass', it's a strong hint a sliding window is intended."
+  ],
+  code: `/*
+ * Decision flowchart (mental model).
+ *
+ *   Fixed length k given?       → FIXED window template.
+ *   "longest..." / "max length"?→ LONGEST variable window.
+ *   "shortest..." / "min length"? → SHORTEST variable window.
+ *   "how many..." / "count"?    → atMost(k) (- atMost(k-1) if "exactly k").
+ *
+ * Inside each, the only thing that changes is the SUMMARY structure
+ * (sum / hashmap / deque) and the VALIDITY predicate.
+ */`,
+  complexity: "All sliding-window templates run in O(N). The classification step costs zero — but choosing the wrong one wastes minutes."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Fixed-size window template", diff: "veasy",
+  problem: "Memorize the 8-line fixed-window template. 'Max sum of k consecutive elements', 'Average of every k-window', 'Number of vowels in every k-window' — all the same shape.",
+  intuition: "Prime the window with the first k elements, then for every right index from k onward, add nums[right] and subtract nums[right - k]. The window is always exactly the last k elements ending at `right`.",
+  hints: [
+    "Prime: `for (int i = 0; i < k; i++) sum += nums[i];`",
+    "Slide: `for (int r = k; r < n; r++) { sum += nums[r] - nums[r - k]; ... }`.",
+    "Track answer with `Math.max` / `Math.min` after each slide."
+  ],
+  tips: [
+    "Use `long` for sums on integer arrays — `int` overflows quickly when k or values are large.",
+    "If you also need 'max over the window' instead of sum, switch to a monotonic deque — same outer loop.",
+    "Always handle `n < k` upfront; otherwise the priming loop reads past the array."
+  ],
+  code: `/*
+ * Fixed-size window template. The Hello-World of sliding windows.
+ */
+double maxAverage(int[] nums, int k) {
+
+    long sum = 0;
+    for (int i = 0; i < k; i++) sum += nums[i];
+
+    long best = sum;
+    for (int r = k; r < nums.length; r++) {
+        sum += nums[r] - nums[r - k];           // slide
+        best = Math.max(best, sum);
+    }
+    return best / (double) k;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Variable-size 'longest valid' template", diff: "veasy",
+  problem: "Memorize the 'longest valid' template. 'Longest substring without repeats', 'Longest with at most k distinct', 'Longest with sum &lt;= S' — all the same shape.",
+  intuition: "Move `right` outward by one each step (always +1). Maintain a tiny summary of the window. While the summary says invalid, shrink from the left until valid again. After the inner shrink loop, the window is the longest valid window ENDING at `right` — record max(right - left + 1).",
+  hints: [
+    "Initialize `left = 0` and any summary (sum/map/count) to empty.",
+    "For each `right`, add `nums[right]` to the summary.",
+    "While the window is invalid, remove `nums[left]` and `left++`.",
+    "After the while, update best length."
+  ],
+  tips: [
+    "Predicate-first programming: write `while (invalid) shrink();`. Don't try to inline the validity check.",
+    "Don't `continue` over the inner while — you'll forget to update `best`.",
+    "When the summary is a HashMap, decrement and remove on 0 to keep `cnt.size()` exact."
+  ],
+  code: `/*
+ * Longest-valid template. Add to summary, shrink while invalid,
+ * then record best.
+ */
+int longestValid(int[] nums) {
+
+    int left = 0, best = 0;
+    int sum = 0;                              // example summary
+
+    for (int right = 0; right < nums.length; right++) {
+
+        sum += nums[right];                   // EXPAND
+
+        while (sum > 100) {                   // shrink while INVALID
+            sum -= nums[left++];
+        }
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space depends on summary; O(1) for plain sums."
+});
+
+PROBLEMS.push({
+  num: 0, title: "Drill: Variable-size 'shortest valid' template", diff: "veasy",
+  problem: "Memorize the 'shortest valid' template. The shrink loop runs WHILE THE WINDOW IS VALID, recording the min length each iteration.",
+  intuition: "Expand right until the window first becomes valid. Then shrink left as much as possible while keeping the window valid; each shrink step is a candidate min. Move on to the next right.",
+  hints: [
+    "For each `right`, add `nums[right]` to the summary.",
+    "While the window is VALID, record `best = min(best, right - left + 1)` and shrink left.",
+    "End: return `best == ∞ ? 0 : best`."
+  ],
+  tips: [
+    "It's the same skeleton as 'longest', but the while loop's condition is reversed and `best` is updated INSIDE the while.",
+    "If you forget to update best inside the while, you'll undershoot when the optimal window is 1 element wide.",
+    "Watch for empty answer: most problems expect 0 (LC 209) when no window is ever valid."
+  ],
+  code: `/*
+ * Shortest-valid template. While valid, record and shrink.
+ */
+int shortestValid(int[] nums, int target) {
+
+    int left = 0, best = Integer.MAX_VALUE;
+    int sum = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        sum += nums[right];
+
+        while (sum >= target) {               // VALID — try shrinking
+            best = Math.min(best, right - left + 1);
+            sum -= nums[left++];
+        }
+    }
+    return best == Integer.MAX_VALUE ? 0 : best;
+}`,
+  complexity: "Time O(N). Space O(1) extra."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 643, title: "Maximum Average Subarray I", diff: "easy",
+  problem: "Given an integer array nums and integer k, find the contiguous subarray of length k that has the maximum average and return that average.",
+  intuition: "Fixed-size window of length k. Compute the sum of the first k elements, then slide one position at a time updating sum by `+ nums[r] - nums[r - k]`. The max average is the max sum divided by k.",
+  hints: [
+    "Prime the window: `for (int i = 0; i < k; i++) sum += nums[i];`.",
+    "Slide: `for (int r = k; r < n; r++) sum += nums[r] - nums[r - k];`.",
+    "Track best sum, then return best / (double) k."
+  ],
+  tips: [
+    "Use `long` to avoid overflow if values are near Integer.MAX_VALUE.",
+    "Don't recompute the sum every window — that's O(N·k) and TLEs on large inputs.",
+    "Returning `(double) bestSum / k` is sufficient; you don't need to recompute averages mid-loop."
+  ],
+  code: `/*
+ * Max Average Subarray I. Fixed-size window template.
+ */
+double findMaxAverage(int[] nums, int k) {
+
+    long sum = 0;
+    for (int i = 0; i < k; i++) sum += nums[i];
+
+    long best = sum;
+    for (int r = k; r < nums.length; r++) {
+        sum += nums[r] - nums[r - k];
+        best = Math.max(best, sum);
+    }
+    return best / (double) k;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 1456, title: "Maximum Number of Vowels in Substring of Size k", diff: "easy",
+  problem: "Given a string s and an integer k, return the maximum number of vowel letters in any substring of length k.",
+  intuition: "Same fixed-size window template, only the summary changes from 'sum of nums' to 'count of vowels'. Slide the window one step at a time, +1 if the new char is a vowel, -1 if the dropped char is a vowel.",
+  hints: [
+    "Helper: `boolean isVowel(char c)` returning true for a/e/i/o/u.",
+    "Prime: count vowels in s[0..k-1].",
+    "Slide: `if (isVowel(s[r])) cnt++; if (isVowel(s[r - k])) cnt--; best = max(best, cnt);`."
+  ],
+  tips: [
+    "A boolean[128] vowel table or a String.indexOf('aeiou', c) >= 0 are equally fine.",
+    "Track and short-circuit if cnt == k — you can never improve beyond that.",
+    "Watch the boundary: in the slide loop r starts at k, NOT 0."
+  ],
+  code: `/*
+ * Max Vowels in Window of Size k. Fixed-size window over a count summary.
+ */
+int maxVowels(String s, int k) {
+
+    int cnt = 0;
+    for (int i = 0; i < k; i++) if (isVowel(s.charAt(i))) cnt++;
+
+    int best = cnt;
+    for (int r = k; r < s.length(); r++) {
+        if (isVowel(s.charAt(r)))     cnt++;
+        if (isVowel(s.charAt(r - k))) cnt--;
+        best = Math.max(best, cnt);
+        if (best == k) return k;                       // early exit
+    }
+    return best;
+}
+
+private boolean isVowel(char c) {
+    return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u';
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 1085, title: "Drill: Two-pointer twin (when sliding window degenerates)", diff: "easy",
+  problem: "Recognize when a problem looks like a window but is really just two pointers because the summary is monotone. 'Container with most water', 'Trapping rain water II' style — same shape, no shrink-while loop needed.",
+  intuition: "When the validity predicate is monotone in one variable (sum on a positive array, area on width × min-height), you don't need an inner shrink loop. Just compute the answer once per (left, right) and advance whichever side is 'limiting'. Two-pointer is sliding window's older sibling.",
+  hints: [
+    "Two pointers, no inner while loop.",
+    "Each step decide WHICH pointer to advance — usually the one whose value is smaller (or the one that can't possibly improve the answer otherwise).",
+    "Each pointer moves O(N) total — same linear cost."
+  ],
+  tips: [
+    "If you find yourself implementing two pointers but moving the LEFT pointer right INSIDE a while loop on a monotone condition, that IS sliding window. Pick whichever framing is clearer.",
+    "Knowing the difference saves you from over-engineering with a HashMap when a single pointer comparison would do."
+  ],
+  code: `/*
+ * Two-pointer twin: 'Container With Most Water' (LC 11).
+ * No shrink-while; just one comparison per step.
+ */
+int maxArea(int[] heights) {
+
+    int l = 0, r = heights.length - 1, best = 0;
+
+    while (l < r) {
+        int h = Math.min(heights[l], heights[r]);
+        best = Math.max(best, h * (r - l));
+        if (heights[l] < heights[r]) l++;
+        else r--;
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 3, title: "Longest Substring Without Repeating Characters", diff: "med",
+  problem: "Given a string s, find the length of the longest substring without repeating characters.",
+  intuition: "Variable-size 'longest valid'. Maintain a HashMap (or int[128] for ASCII) of char counts inside the window. Whenever a duplicate enters (count > 1), shrink from the left until that char's count is back to 1.",
+  hints: [
+    "Initialize int[128] cnt = new int[128]; left = 0; best = 0.",
+    "For each right: cnt[s[right]]++. While cnt[s[right]] > 1, decrement cnt[s[left]] and left++.",
+    "Update best with right - left + 1."
+  ],
+  tips: [
+    "An int[128] beats a HashMap for ASCII inputs by ~4x.",
+    "Alternative: store last seen index of each char and jump left to lastSeen[ch] + 1 — also O(N) but more error-prone.",
+    "Watch unicode: if s can contain non-ASCII, use HashMap<Character, Integer>."
+  ],
+  code: `/*
+ * Longest Substring Without Repeating. Variable window keyed on char count.
+ */
+int lengthOfLongestSubstring(String s) {
+
+    int[] cnt = new int[128];
+    int left = 0, best = 0;
+
+    for (int right = 0; right < s.length(); right++) {
+
+        char c = s.charAt(right);
+        cnt[c]++;
+
+        while (cnt[c] > 1) {                          // shrink while duplicate exists
+            cnt[s.charAt(left++)]--;
+        }
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space O(charset)."
+});
+
+PROBLEMS.push({
+  num: 209, title: "Minimum Size Subarray Sum", diff: "med",
+  problem: "Given an array of positive integers and an integer target, return the minimal length of a contiguous subarray whose sum is ≥ target. Return 0 if none.",
+  intuition: "Shortest-valid window. Expand right while accumulating sum. Whenever sum ≥ target, we have a valid window — record its length and shrink from the left, recording each smaller valid length, until sum drops below target.",
+  hints: [
+    "left = 0, sum = 0, best = INF.",
+    "For each right: sum += nums[right]. While sum ≥ target: best = min(best, right - left + 1); sum -= nums[left++].",
+    "Return best == INF ? 0 : best."
+  ],
+  tips: [
+    "Works because all values are positive — moving left forward strictly reduces the sum. With negatives, you'd need prefix sums + Deque.",
+    "Use long for sum if values are near Integer.MAX_VALUE.",
+    "If the problem allows negatives, switch to LC 862 'Shortest Subarray with Sum at Least K' (Deque + prefix-sum)."
+  ],
+  code: `/*
+ * Min Size Subarray Sum. Shortest-valid template on positive numbers.
+ */
+int minSubArrayLen(int target, int[] nums) {
+
+    int left = 0, best = Integer.MAX_VALUE;
+    long sum = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        sum += nums[right];
+
+        while (sum >= target) {                      // VALID, try shrinking
+            best = Math.min(best, right - left + 1);
+            sum -= nums[left++];
+        }
+    }
+    return best == Integer.MAX_VALUE ? 0 : best;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 424, title: "Longest Repeating Character Replacement", diff: "med",
+  problem: "Given a string s and integer k, return the length of the longest substring containing the same letter after at most k replacements.",
+  intuition: "Window is valid iff `(window length - max char count in window) ≤ k`. Track the max count seen so far inside the window — even though it can decay when chars leave, the answer's max count never decreases for the optimal window, so a stale max doesn't hurt correctness.",
+  hints: [
+    "int[26] cnt; int maxCnt = 0; left = 0.",
+    "For each right: cnt[s[right] - 'A']++; maxCnt = max(maxCnt, cnt[s[right]-'A']).",
+    "While (right - left + 1) - maxCnt > k: cnt[s[left]-'A']--; left++.",
+    "Update best = max(best, right - left + 1)."
+  ],
+  tips: [
+    "The 'sticky maxCnt' trick is the trap — DON'T recompute the true max on shrink. Correctness still holds because the answer can never be smaller than the longest window seen.",
+    "This is the single most asked variable-window twist; memorize the predicate.",
+    "If the alphabet is large (Unicode), use a HashMap and do recompute the max on shrink."
+  ],
+  code: `/*
+ * Longest Repeating Character Replacement.
+ *   window is valid iff (windowLen - maxCharCount) <= k.
+ *   maxCnt is "sticky" — never decreased on shrink, but still correct
+ *   because the answer is monotonic in maxCnt.
+ */
+int characterReplacement(String s, int k) {
+
+    int[] cnt = new int[26];
+    int left = 0, best = 0, maxCnt = 0;
+
+    for (int right = 0; right < s.length(); right++) {
+
+        cnt[s.charAt(right) - 'A']++;
+        maxCnt = Math.max(maxCnt, cnt[s.charAt(right) - 'A']);
+
+        while ((right - left + 1) - maxCnt > k) {
+            cnt[s.charAt(left++) - 'A']--;
+        }
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space O(26)."
+});
+
+PROBLEMS.push({
+  num: 567, title: "Permutation in String", diff: "med",
+  problem: "Given two strings s1 and s2, return true if s2 contains a permutation of s1.",
+  intuition: "Fixed-size window of length s1.length over s2, plus a 'matched' counter. Maintain need[c] for s1, have[c] for the window. A window is a valid permutation iff have == need; track this lazily with a 'matched' integer: matched++ when have[c] reaches need[c]; matched-- when leaving that bucket.",
+  hints: [
+    "If s2.length < s1.length, return false.",
+    "Build need[26] from s1; track matched = number of buckets where have[c] == need[c].",
+    "Slide a window of length s1.length over s2; on add/remove a char, update have[c] and matched accordingly.",
+    "Return true the moment matched == 26 (or the count of distinct buckets)."
+  ],
+  tips: [
+    "Track matched only over buckets where need[c] > 0 OR over all 26; the latter is simpler and still O(1) per update.",
+    "Avoid full Arrays.equals(need, have) per step — that turns the algorithm into O(26·N).",
+    "Same skeleton solves LC 438 'Find All Anagrams in a String'."
+  ],
+  code: `/*
+ * Permutation in String. Fixed-size window with a 'matched' counter
+ * across all 26 buckets.
+ */
+boolean checkInclusion(String s1, String s2) {
+
+    if (s1.length() > s2.length()) return false;
+
+    int[] need = new int[26];
+    int[] have = new int[26];
+    for (char c : s1.toCharArray()) need[c - 'a']++;
+
+    int matched = 0;
+    for (int c = 0; c < 26; c++) if (need[c] == 0) matched++;
+
+    int K = s1.length();
+    for (int r = 0; r < s2.length(); r++) {
+
+        int idx = s2.charAt(r) - 'a';
+        have[idx]++;
+        if (have[idx] == need[idx]) matched++;
+        else if (have[idx] == need[idx] + 1) matched--;
+
+        if (r >= K) {
+            int out = s2.charAt(r - K) - 'a';
+            have[out]--;
+            if (have[out] == need[out]) matched++;
+            else if (have[out] == need[out] - 1) matched--;
+        }
+        if (matched == 26) return true;
+    }
+    return false;
+}`,
+  complexity: "Time O(N + 26). Space O(26)."
+});
+
+PROBLEMS.push({
+  num: 438, title: "Find All Anagrams in a String", diff: "med",
+  problem: "Given strings s and p, return the start indices of every substring of s that is an anagram of p.",
+  intuition: "Same as LC 567, but instead of returning the moment we match, we record the start index. Same need/have/matched pattern, fixed-size window of length p.length.",
+  hints: [
+    "Build need[26] for p; have[26] starts at 0.",
+    "Slide a length-|p| window; maintain matched buckets count.",
+    "When matched == 26 (i.e. have == need), append (r - |p| + 1) to result."
+  ],
+  tips: [
+    "Bug pattern: forgetting to add the very first window's match. The `if (r >= K - 1)` guard fires from the first complete window onward.",
+    "If you only need the COUNT (not indices) the same algorithm works; just count instead of pushing.",
+    "Don't fall back on sorting per window (O(N · k log k))."
+  ],
+  code: `/*
+ * Find All Anagrams. Fixed-size window of length p.length with a
+ * 'matched' counter across all 26 buckets.
+ */
+List<Integer> findAnagrams(String s, String p) {
+
+    List<Integer> res = new ArrayList<>();
+    if (p.length() > s.length()) return res;
+
+    int[] need = new int[26], have = new int[26];
+    for (char c : p.toCharArray()) need[c - 'a']++;
+
+    int matched = 0;
+    for (int c = 0; c < 26; c++) if (need[c] == 0) matched++;
+
+    int K = p.length();
+    for (int r = 0; r < s.length(); r++) {
+
+        int idx = s.charAt(r) - 'a';
+        have[idx]++;
+        if (have[idx] == need[idx]) matched++;
+        else if (have[idx] == need[idx] + 1) matched--;
+
+        if (r >= K) {
+            int out = s.charAt(r - K) - 'a';
+            have[out]--;
+            if (have[out] == need[out]) matched++;
+            else if (have[out] == need[out] - 1) matched--;
+        }
+
+        if (r >= K - 1 && matched == 26) {
+            res.add(r - K + 1);
+        }
+    }
+    return res;
+}`,
+  complexity: "Time O(N). Space O(26)."
+});
+
+PROBLEMS.push({
+  num: 1004, title: "Max Consecutive Ones III", diff: "med",
+  problem: "Given a binary array nums and integer k, return the maximum number of consecutive 1s after flipping at most k 0s to 1s.",
+  intuition: "Variable-size 'longest valid' window where 'valid' means 'window contains at most k zeros'. Track zeros count; while zeros > k, shrink left.",
+  hints: [
+    "left = 0, zeros = 0, best = 0.",
+    "For each right: if nums[right] == 0, zeros++. While zeros > k: if nums[left] == 0, zeros--; left++.",
+    "best = max(best, right - left + 1)."
+  ],
+  tips: [
+    "Subtle 'sticky window' trick: many editorials replace the inner while with an if (so the window never shrinks). The window may stay invalid mid-traversal but its LENGTH is still the answer because the final right-left+1 is always ≥ best valid length seen. Cleaner code, same answer.",
+    "Same skeleton solves 'longest subarray with at most k swaps' style problems.",
+    "Generalizes to 'longest with at most k of value X'."
+  ],
+  code: `/*
+ * Max Consecutive Ones III. Longest window containing at most k zeros.
+ */
+int longestOnes(int[] nums, int k) {
+
+    int left = 0, zeros = 0, best = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        if (nums[right] == 0) zeros++;
+
+        while (zeros > k) {
+            if (nums[left++] == 0) zeros--;
+        }
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space O(1)."
+});
+
+PROBLEMS.push({
+  num: 904, title: "Fruit Into Baskets (Longest with at most 2 distinct)", diff: "med",
+  problem: "You have rows of fruit trees, each represented by an int. With two baskets that can each hold one fruit type, return the longest contiguous run you can pick such that you only ever see at most 2 distinct types.",
+  intuition: "Longest window with at most 2 distinct values. HashMap counts; whenever map.size > 2, shrink from the left.",
+  hints: [
+    "Map<Integer,Integer> cnt; left = 0; best = 0.",
+    "For each right: cnt.merge(nums[right], 1, Integer::sum). While cnt.size() > 2: decrement cnt[nums[left]]; if 0, remove; left++.",
+    "best = max(best, right - left + 1)."
+  ],
+  tips: [
+    "Generalizes directly to LC 340 'Longest Substring with At Most K Distinct Characters' — replace 2 with k.",
+    "Use putIfAbsent + remove on 0 to keep map.size() exact.",
+    "If only 2 baskets, an int-pair tracker is faster than a HashMap; for general k, stick with the map."
+  ],
+  code: `/*
+ * Fruit Into Baskets. Longest window with at most 2 distinct values.
+ */
+int totalFruit(int[] fruits) {
+
+    Map<Integer, Integer> cnt = new HashMap<>();
+    int left = 0, best = 0;
+
+    for (int right = 0; right < fruits.length; right++) {
+
+        cnt.merge(fruits[right], 1, Integer::sum);
+
+        while (cnt.size() > 2) {
+            int x = fruits[left++];
+            if (cnt.merge(x, -1, Integer::sum) == 0) cnt.remove(x);
+        }
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space O(1) (at most 3 keys mid-iteration)."
+});
+
+PROBLEMS.push({
+  num: 992, title: "Subarrays with K Different Integers (atMost trick)", diff: "med",
+  problem: "Given an integer array nums and integer k, return the number of contiguous subarrays containing exactly k different integers.",
+  intuition: "Direct sliding window counts 'at most k'. To get 'exactly k' subtract: `atMost(k) - atMost(k-1)`. The atMost subroutine adds `right - left + 1` to a running total each step (the number of valid subarrays ending at the current right).",
+  hints: [
+    "Implement `atMostK(int[] nums, int k)`.",
+    "Inside: variable window, shrink while distinct > k, add (right - left + 1) to total each step.",
+    "Return atMostK(nums, k) - atMostK(nums, k - 1)."
+  ],
+  tips: [
+    "The subtraction trick is THE classic sliding-window manoeuvre — memorize it.",
+    "Forgetting `atMostK(nums, k - 1)` returns 'at most k' instead of 'exactly k' — silent wrong answer.",
+    "Same idea solves 'binary subarrays with sum K' (LC 930)."
+  ],
+  code: `/*
+ * Subarrays with K Different Integers.
+ *   exactly(k) = atMost(k) - atMost(k - 1).
+ */
+int subarraysWithKDistinct(int[] nums, int k) {
+    return atMostK(nums, k) - atMostK(nums, k - 1);
+}
+
+private int atMostK(int[] nums, int k) {
+
+    Map<Integer, Integer> cnt = new HashMap<>();
+    int left = 0, total = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        cnt.merge(nums[right], 1, Integer::sum);
+        while (cnt.size() > k) {
+            int x = nums[left++];
+            if (cnt.merge(x, -1, Integer::sum) == 0) cnt.remove(x);
+        }
+        total += right - left + 1;             // # valid subarrays ending at right
+    }
+    return total;
+}`,
+  complexity: "Time O(N). Space O(N) for the map."
+});
+
+PROBLEMS.push({
+  num: 1438, title: "Longest Subarray With Absolute Diff ≤ Limit (Monotonic Deques)", diff: "med",
+  problem: "Given nums and limit, return the longest contiguous subarray such that max - min ≤ limit.",
+  intuition: "Maintain TWO monotonic deques over indices: a max-deque (decreasing values from front) and a min-deque (increasing values from front). The window's true max and min are at the deques' fronts. While maxFront - minFront > limit, shrink left and pop deque fronts whose index falls out of the window.",
+  hints: [
+    "ArrayDeque<Integer> maxQ, minQ store INDICES.",
+    "On adding nums[right]: pop from back of maxQ while nums[back] ≤ nums[right]; pop from back of minQ while nums[back] ≥ nums[right]; offerLast right.",
+    "While nums[maxQ.peekFirst()] - nums[minQ.peekFirst()] > limit: left++; pollFirst from each deque if its front index < left.",
+    "best = max(best, right - left + 1)."
+  ],
+  tips: [
+    "Monotonic deque is the canonical 'O(1) max/min over a sliding window'.",
+    "Don't use a TreeMap unless N is small — TreeMap brings an extra log factor.",
+    "Bug pattern: comparing values, not indices, when checking out-of-window. Always store and compare indices for boundary checks."
+  ],
+  code: `/*
+ * Longest Subarray With Absolute Diff <= limit.
+ * Two monotonic deques: max (descending) and min (ascending), holding indices.
+ */
+int longestSubarray(int[] nums, int limit) {
+
+    Deque<Integer> maxQ = new ArrayDeque<>();
+    Deque<Integer> minQ = new ArrayDeque<>();
+    int left = 0, best = 0;
+
+    for (int right = 0; right < nums.length; right++) {
+
+        while (!maxQ.isEmpty() && nums[maxQ.peekLast()] <= nums[right]) maxQ.pollLast();
+        while (!minQ.isEmpty() && nums[minQ.peekLast()] >= nums[right]) minQ.pollLast();
+        maxQ.offerLast(right);
+        minQ.offerLast(right);
+
+        while (nums[maxQ.peekFirst()] - nums[minQ.peekFirst()] > limit) {
+            left++;
+            if (maxQ.peekFirst() < left) maxQ.pollFirst();
+            if (minQ.peekFirst() < left) minQ.pollFirst();
+        }
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}`,
+  complexity: "Time O(N). Space O(N)."
+});
+
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 76, title: "Minimum Window Substring", diff: "hard",
+  problem: "Given strings s and t, return the smallest substring of s that contains every character of t (with multiplicities). Empty string if impossible.",
+  intuition: "Shortest-valid window with a 'have/need' counter. Track the number of t-chars currently 'satisfied' (have[c] >= need[c]). When satisfied count equals the number of distinct chars in t, the window is valid; shrink while still valid, recording the min length.",
+  hints: [
+    "Build need[128] from t and 'required' = number of distinct chars in t.",
+    "have[128]; matched = 0; left = 0; bestLen = INF, bestL = -1.",
+    "Expand right; if have[s[r]] reaches need[s[r]], matched++.",
+    "While matched == required: record window if smaller; have[s[left]]--; if have[s[left]] < need[s[left]], matched--; left++."
+  ],
+  tips: [
+    "matched / required is the cleanest validity predicate — avoid full Arrays.equals.",
+    "Use s.charAt(i) directly instead of converting toCharArray for tight code.",
+    "Edge cases: t longer than s, t empty (LC says return ''), characters in t not in s (impossible)."
+  ],
+  code: `/*
+ * Minimum Window Substring. Shortest-valid window with matched/required.
+ */
+String minWindow(String s, String t) {
+
+    if (s.length() < t.length() || t.isEmpty()) return "";
+
+    int[] need = new int[128], have = new int[128];
+    int required = 0;
+    for (char c : t.toCharArray()) {
+        if (need[c] == 0) required++;
+        need[c]++;
+    }
+
+    int left = 0, matched = 0, bestL = -1, bestLen = Integer.MAX_VALUE;
+
+    for (int right = 0; right < s.length(); right++) {
+
+        char cR = s.charAt(right);
+        have[cR]++;
+        if (need[cR] > 0 && have[cR] == need[cR]) matched++;
+
+        while (matched == required) {
+            if (right - left + 1 < bestLen) {
+                bestLen = right - left + 1;
+                bestL = left;
+            }
+            char cL = s.charAt(left++);
+            have[cL]--;
+            if (need[cL] > 0 && have[cL] < need[cL]) matched--;
+        }
+    }
+
+    return bestL == -1 ? "" : s.substring(bestL, bestL + bestLen);
+}`,
+  complexity: "Time O(|s| + |t|). Space O(charset)."
+});
+
+PROBLEMS.push({
+  num: 239, title: "Sliding Window Maximum (Monotonic Deque)", diff: "hard",
+  problem: "Given an integer array nums and integer k, return the max of every contiguous window of length k.",
+  intuition: "Monotonic decreasing deque of INDICES. Before pushing nums[right], pop everything ≤ it from the back (they can never be the future max). Before reading the front, pop while it's out of the window (index ≤ right - k). The front is always the current window's max.",
+  hints: [
+    "Deque<Integer> dq stores indices in decreasing order of values.",
+    "While !dq.isEmpty() && dq.peekFirst() <= right - k: dq.pollFirst().",
+    "While !dq.isEmpty() && nums[dq.peekLast()] <= nums[right]: dq.pollLast().",
+    "dq.offerLast(right). If right >= k - 1, append nums[dq.peekFirst()] to result."
+  ],
+  tips: [
+    "Total work is O(N) because each index enters and leaves the deque at most once.",
+    "PriorityQueue alternative is O(N log k) — slower but easier to write under stress.",
+    "Storing indices (not values) is mandatory so you can detect 'out of window'."
+  ],
+  code: `/*
+ * Sliding Window Maximum. Monotonic decreasing deque of indices.
+ */
+int[] maxSlidingWindow(int[] nums, int k) {
+
+    int n = nums.length;
+    int[] res = new int[n - k + 1];
+    Deque<Integer> dq = new ArrayDeque<>();
+
+    for (int right = 0; right < n; right++) {
+
+        // Drop out-of-window indices from the front.
+        while (!dq.isEmpty() && dq.peekFirst() <= right - k) dq.pollFirst();
+
+        // Maintain decreasing order: pop smaller-or-equal tails.
+        while (!dq.isEmpty() && nums[dq.peekLast()] <= nums[right]) dq.pollLast();
+
+        dq.offerLast(right);
+
+        if (right >= k - 1) res[right - k + 1] = nums[dq.peekFirst()];
+    }
+    return res;
+}`,
+  complexity: "Time O(N). Space O(k)."
+});
+
+PROBLEMS.push({
+  num: 30, title: "Substring with Concatenation of All Words", diff: "hard",
+  problem: "Given s and words[] of equal-length words, return all start indices in s where a substring of length |words| · L is the concatenation of EVERY word exactly once (any order).",
+  intuition: "L = words[0].length(). Run L parallel sliding windows, one per offset i in [0, L). Inside each, the unit is a 'chunk' of L characters — slide chunk by chunk. Maintain a need-vs-have multiset of chunks; same matched/required trick as LC 76 but per-chunk instead of per-char.",
+  hints: [
+    "Build need: Map<String,Integer> from words[].",
+    "For offset = 0..L-1: left = offset, have = empty, matched = 0.",
+    "For each chunk start right = offset, offset+L, ...: extract sub = s.substring(right, right+L). If sub not in need: reset have/left/matched = 0/right+L/0 and continue. Else update have[sub], maybe matched++; if window has more than words.length chunks, pop from left.",
+    "When matched == need.size(), record start = left."
+  ],
+  tips: [
+    "Per-offset windows share NOTHING — reset state when the next offset starts.",
+    "For a faster implementation, also reset on sub not in need (the next valid window must begin at right + L).",
+    "Total work is O(L · N) since each character is part of exactly one offset's window."
+  ],
+  code: `/*
+ * Substring with Concatenation of All Words.
+ *   L = single-word length; run L parallel sliding windows.
+ */
+List<Integer> findSubstring(String s, String[] words) {
+
+    List<Integer> res = new ArrayList<>();
+    if (words.length == 0) return res;
+
+    int L = words[0].length();
+    int totalLen = L * words.length;
+    if (s.length() < totalLen) return res;
+
+    Map<String, Integer> need = new HashMap<>();
+    for (String w : words) need.merge(w, 1, Integer::sum);
+    int required = need.size();
+
+    for (int offset = 0; offset < L; offset++) {
+
+        Map<String, Integer> have = new HashMap<>();
+        int left = offset, matched = 0;
+
+        for (int right = offset; right + L <= s.length(); right += L) {
+
+            String sub = s.substring(right, right + L);
+
+            if (!need.containsKey(sub)) {                  // total reset
+                have.clear();
+                matched = 0;
+                left = right + L;
+                continue;
+            }
+
+            have.merge(sub, 1, Integer::sum);
+            if (have.get(sub).equals(need.get(sub))) matched++;
+            else if (have.get(sub) == need.get(sub) + 1) matched--;
+
+            // Shrink if window too long (> words.length chunks).
+            while (right - left + L > totalLen) {
+                String out = s.substring(left, left + L);
+                if (have.get(out).equals(need.get(out))) matched--;
+                have.merge(out, -1, Integer::sum);
+                if (have.get(out) == 0) have.remove(out);
+                left += L;
+                if (have.containsKey(out) && have.get(out).equals(need.get(out))) matched++;
+            }
+
+            if (matched == required) res.add(left);
+        }
+    }
+    return res;
+}`,
+  complexity: "Time O(L · N). Space O(words)."
+});
+
+PROBLEMS.push({
+  num: 862, title: "Shortest Subarray with Sum at Least K (Deque + Prefix Sums)", diff: "hard",
+  problem: "Given an integer array nums (may contain negatives) and integer k, return the length of the shortest non-empty subarray with sum ≥ k. -1 if none.",
+  intuition: "Plain sliding window doesn't work because shrinking left can INCREASE the sum (negatives) — non-monotonic. Use prefix sums P and a monotonically increasing deque of indices into P. For each right index, pop from the front while `P[right] - P[front] ≥ k` (record best length and discard front), then pop from the back while `P[back] ≥ P[right]` (back can never beat right going forward).",
+  hints: [
+    "Compute long[] P prefix sums of length n + 1.",
+    "Deque<Integer> dq.",
+    "For r = 0..n: while !dq.isEmpty() && P[r] - P[dq.peekFirst()] >= k: best = min(best, r - dq.pollFirst()).",
+    "While !dq.isEmpty() && P[dq.peekLast()] >= P[r]: dq.pollLast(). dq.offerLast(r)."
+  ],
+  tips: [
+    "Index-into-prefix is what makes this work — both pointers walk over [0..n] inclusive.",
+    "Use long[] for prefix sums to avoid overflow.",
+    "If you ever try to use a vanilla sliding window here, you'll get the wrong answer on inputs with negatives."
+  ],
+  code: `/*
+ * Shortest Subarray with Sum at Least K.
+ *   Prefix sums P[]; monotonic increasing deque of indices into P.
+ *   When P[r] - P[front] >= k, the subarray (front, r] is valid;
+ *   shorter ones can only come from later 'front' indices.
+ */
+int shortestSubarray(int[] nums, int k) {
+
+    int n = nums.length;
+    long[] P = new long[n + 1];
+    for (int i = 0; i < n; i++) P[i + 1] = P[i] + nums[i];
+
+    Deque<Integer> dq = new ArrayDeque<>();
+    int best = Integer.MAX_VALUE;
+
+    for (int r = 0; r <= n; r++) {
+
+        while (!dq.isEmpty() && P[r] - P[dq.peekFirst()] >= k) {
+            best = Math.min(best, r - dq.pollFirst());
+        }
+        while (!dq.isEmpty() && P[dq.peekLast()] >= P[r]) dq.pollLast();
+        dq.offerLast(r);
+    }
+    return best == Integer.MAX_VALUE ? -1 : best;
+}`,
+  complexity: "Time O(N). Space O(N)."
+});
+
+PROBLEMS.push({
+  num: 480, title: "Sliding Window Median (Two Heaps / TreeMap)", diff: "hard",
+  problem: "Given an integer array nums and an integer k, return the median of every contiguous window of length k.",
+  intuition: "Maintain two structures whose sizes balance: a max-heap of the smaller half and a min-heap of the larger half. The median is at the top(s). Insertions are O(log k). Deletions when an element falls out of the window: use lazy deletion (mark removed via a HashMap delayed counter, then top() until front is not lazy-deleted) — or use a TreeMap where remove(k) is true O(log k).",
+  hints: [
+    "Use two PriorityQueues + a 'delayed removal' HashMap for lazy deletion.",
+    "After each add and remove, rebalance so |left| == |right| or |left| == |right| + 1.",
+    "Median = left.peek() for odd k; (left.peek() + right.peek()) / 2.0 for even.",
+    "Skip lazy-deleted tops via a `prune()` helper that polls while the top is marked."
+  ],
+  tips: [
+    "Use double for the average to avoid integer overflow on extreme inputs.",
+    "TreeMap<Long, Integer> with first/last keys is conceptually simpler if you've not done lazy heaps before — slightly slower constants.",
+    "Sliding-window median is the textbook example for 'when sliding window meets two heaps'."
+  ],
+  code: `/*
+ * Sliding Window Median. Two heaps with lazy deletion.
+ *   left  = max-heap of the smaller half.
+ *   right = min-heap of the larger half.
+ *   Lazy-deletion via 'delayed' counts; prune() pops marked tops.
+ */
+double[] medianSlidingWindow(int[] nums, int k) {
+
+    int n = nums.length;
+    double[] res = new double[n - k + 1];
+
+    PriorityQueue<Long> left  = new PriorityQueue<>(Comparator.reverseOrder());
+    PriorityQueue<Long> right = new PriorityQueue<>();
+    Map<Long, Integer> delayed = new HashMap<>();
+    int balance = 0;                                   // size(left) - size(right) ignoring lazy
+
+    java.util.function.LongConsumer add = x -> {
+        if (left.isEmpty() || x <= left.peek()) { left.offer(x); balance++; }
+        else { right.offer(x); balance--; }
+    };
+
+    java.util.function.LongConsumer remove = x -> {
+        delayed.merge(x, 1, Integer::sum);
+        if (!left.isEmpty() && x <= left.peek()) balance--;
+        else balance++;
+    };
+
+    Runnable prune = () -> {
+        while (!left.isEmpty() && delayed.getOrDefault(left.peek(), 0) > 0) {
+            delayed.merge(left.peek(), -1, Integer::sum); left.poll();
+        }
+        while (!right.isEmpty() && delayed.getOrDefault(right.peek(), 0) > 0) {
+            delayed.merge(right.peek(), -1, Integer::sum); right.poll();
+        }
+    };
+
+    Runnable rebalance = () -> {
+        while (balance > 1) { right.offer(left.poll()); balance -= 2; prune.run(); }
+        while (balance < 0) { left.offer(right.poll());  balance += 2; prune.run(); }
+    };
+
+    for (int r = 0; r < n; r++) {
+        add.accept(nums[r]);
+        if (r >= k) remove.accept(nums[r - k]);
+        prune.run();
+        rebalance.run();
+        prune.run();
+        if (r >= k - 1) {
+            if ((k & 1) == 1) res[r - k + 1] = (double) left.peek();
+            else              res[r - k + 1] = ((double) left.peek() + (double) right.peek()) / 2.0;
+        }
+    }
+    return res;
+}`,
+  complexity: "Time O(N log k). Space O(k)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','Random','Collections','Arrays','Math','Comparator','Objects','Map.Entry'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) { return PROBLEMS.filter(p => p.diff === diff); }
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = `
+      <div class="brief-root">
+        <header class="brief-header">
+          <div class="brief-subtitle">JAVA</div>
+          <h1 class="brief-title">Sliding Window</h1>
+          <p class="brief-tagline">Pick a flavor → tweak inputs → watch the window slide</p>
+        </header>
+        <div class="op-tabs" id="briefOpTabs"></div>
+        <div class="panel" id="briefMainPanel"></div>
+        <div class="cheat">
+          <div class="section-label">CHEAT SHEET — COMMON PATTERNS</div>
+          <div id="briefCheatSheet"></div>
+        </div>
+        <div class="brief-footer">EXPAND &middot; SHRINK &middot; RECORD</div>
+      </div>
+    `;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    initBriefMode();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+
+/* ===== BRIEF MODE: interactive sliding-window explorer ===== */
+const BRIEF_OPS = [
+  {
+    id:"fixed", name:"Fixed-size", color:"#2563eb", colorDark:"#58a6ff",
+    desc:"Window length is fixed at k. Slide both pointers in lockstep; add new, drop oldest.",
+    rule:"sum += nums[r] - nums[r - k]",
+    label:"FIXED-SIZE",
+    examples:[
+      { title:"Max Sum of k consecutive elements",
+        code:`int maxSum(int[] nums, int k) {
+    long sum = 0;
+    for (int i = 0; i < k; i++) sum += nums[i];
+    long best = sum;
+    for (int r = k; r < nums.length; r++) {
+        sum += nums[r] - nums[r - k];
+        best = Math.max(best, sum);
+    }
+    return (int) best;
+}`,
+        why:"The window always covers the last k elements. Adding nums[r] and dropping nums[r-k] keeps each step O(1)." },
+    ],
+  },
+  {
+    id:"longest", name:"Longest", color:"#16a34a", colorDark:"#76ff03",
+    desc:"Expand right by 1 each step. Shrink left until the window is valid again. Track max length.",
+    rule:"while (invalid) shrinkLeft();   best = max(best, r - l + 1);",
+    label:"LONGEST",
+    examples:[
+      { title:"LC 3 — Longest Substring Without Repeating Characters",
+        code:`int lengthOfLongestSubstring(String s) {
+    int[] cnt = new int[128];
+    int left = 0, best = 0;
+    for (int right = 0; right < s.length(); right++) {
+        char c = s.charAt(right);
+        cnt[c]++;
+        while (cnt[c] > 1) cnt[s.charAt(left++)]--;
+        best = Math.max(best, right - left + 1);
+    }
+    return best;
+}`,
+        why:"Each character enters the window once and leaves once. The total work is O(N) even though the inner while can shrink several times in a row." },
+    ],
+  },
+  {
+    id:"shortest", name:"Shortest", color:"#d97706", colorDark:"#ffd740",
+    desc:"Expand right. While the window is valid, record min length and shrink left to try smaller.",
+    rule:"while (valid) { best = min(best, r - l + 1); shrinkLeft(); }",
+    label:"SHORTEST",
+    examples:[
+      { title:"LC 209 — Min Size Subarray Sum",
+        code:`int minSubArrayLen(int target, int[] nums) {
+    int left = 0, best = Integer.MAX_VALUE;
+    long sum = 0;
+    for (int right = 0; right < nums.length; right++) {
+        sum += nums[right];
+        while (sum >= target) {
+            best = Math.min(best, right - left + 1);
+            sum -= nums[left++];
+        }
+    }
+    return best == Integer.MAX_VALUE ? 0 : best;
+}`,
+        why:"Update best INSIDE the while so you don't miss the optimal 1-wide window." },
+    ],
+  },
+  {
+    id:"atmost", name:"At-most / Exactly", color:"#9333ea", colorDark:"#ea80fc",
+    desc:"Count subarrays satisfying a constraint. exactly(k) = atMost(k) - atMost(k-1).",
+    rule:"total += right - left + 1   inside the at-most window",
+    label:"AT-MOST",
+    examples:[
+      { title:"LC 992 — Subarrays with K Different Integers",
+        code:`int subarraysWithKDistinct(int[] nums, int k) {
+    return atMostK(nums, k) - atMostK(nums, k - 1);
+}
+
+private int atMostK(int[] nums, int k) {
+    Map<Integer, Integer> cnt = new HashMap<>();
+    int left = 0, total = 0;
+    for (int right = 0; right < nums.length; right++) {
+        cnt.merge(nums[right], 1, Integer::sum);
+        while (cnt.size() > k) {
+            int x = nums[left++];
+            if (cnt.merge(x, -1, Integer::sum) == 0) cnt.remove(x);
+        }
+        total += right - left + 1;
+    }
+    return total;
+}`,
+        why:"Subtraction collapses 'exactly k' into two clean 'at most' passes, neither of which needs explicit bookkeeping for the lower bound." },
+    ],
+  },
+  {
+    id:"deque", name:"Monotonic Deque", color:"#dc2626", colorDark:"#ff7b72",
+    desc:"Track max or min over a window in O(1). Indices in the deque form a monotonic sequence.",
+    rule:"pop back while ≤ new value; push back; pop front when out of window",
+    label:"MONOTONIC DEQUE",
+    examples:[
+      { title:"LC 239 — Sliding Window Maximum",
+        code:`int[] maxSlidingWindow(int[] nums, int k) {
+    int n = nums.length;
+    int[] res = new int[n - k + 1];
+    Deque<Integer> dq = new ArrayDeque<>();
+    for (int r = 0; r < n; r++) {
+        while (!dq.isEmpty() && dq.peekFirst() <= r - k) dq.pollFirst();
+        while (!dq.isEmpty() && nums[dq.peekLast()] <= nums[r]) dq.pollLast();
+        dq.offerLast(r);
+        if (r >= k - 1) res[r - k + 1] = nums[dq.peekFirst()];
+    }
+    return res;
+}`,
+        why:"Each index is pushed and popped at most once, so total work across all windows is O(N)." },
+    ],
+  },
+  {
+    id:"matched", name:"Matched / Required", color:"#0d9488", colorDark:"#a7ffeb",
+    desc:"For 'window must contain all of t', track per-bucket matches with a single counter.",
+    rule:"matched bumps when have[c] == need[c]; drops when it leaves that exact equality",
+    label:"MATCHED COUNTER",
+    examples:[
+      { title:"LC 76 — Minimum Window Substring",
+        code:`String minWindow(String s, String t) {
+    if (s.length() < t.length() || t.isEmpty()) return "";
+    int[] need = new int[128], have = new int[128];
+    int required = 0;
+    for (char c : t.toCharArray()) {
+        if (need[c] == 0) required++;
+        need[c]++;
+    }
+    int left = 0, matched = 0, bestL = -1, bestLen = Integer.MAX_VALUE;
+    for (int right = 0; right < s.length(); right++) {
+        char cR = s.charAt(right);
+        have[cR]++;
+        if (need[cR] > 0 && have[cR] == need[cR]) matched++;
+        while (matched == required) {
+            if (right - left + 1 < bestLen) {
+                bestLen = right - left + 1;
+                bestL = left;
+            }
+            char cL = s.charAt(left++);
+            have[cL]--;
+            if (need[cL] > 0 && have[cL] < need[cL]) matched--;
+        }
+    }
+    return bestL == -1 ? "" : s.substring(bestL, bestL + bestLen);
+}`,
+        why:"matched / required is O(1) per step. A full Arrays.equals would push the algorithm to O(charset · N)." },
+    ],
+  },
+];
+
+const BRIEF_CHEAT_ITEMS = [
+  ["Fixed window slide",       "sum += nums[r] - nums[r - k];"],
+  ["Longest valid loop",       "while (invalid) shrinkLeft();"],
+  ["Shortest valid loop",      "while (valid) { record; shrinkLeft(); }"],
+  ["Exactly-k via atMost",     "atMost(k) - atMost(k - 1)"],
+  ["Subarray count step",      "total += right - left + 1;"],
+  ["Char count summary",       "int[26] or int[128]"],
+  ["Distinct count map",       "if (cnt.merge(x,-1,...) == 0) cnt.remove(x);"],
+  ["Window max via deque",     "while (nums[back] <= new) pop back;"],
+  ["Window min via deque",     "while (nums[back] >= new) pop back;"],
+  ["Anagram match counter",    "matched++ on have == need; matched-- on leave"],
+  ["Negatives + sum bound",    "Deque + prefix sums (LC 862)"],
+];
+
+let briefCurrentOp = BRIEF_OPS[0];
+let briefCurrentEx = 0;
+let briefWhyOpen = {};
+let briefArrStr = "2,1,5,1,3,2";
+let briefK = 3;
+
+function briefOpColor(op) {
+  return document.documentElement.getAttribute('data-theme') === 'dark'
+    ? (op.colorDark || op.color)
+    : op.color;
+}
+
+function briefParseArr() {
+  return briefArrStr.split(',').map(s => parseInt(s.trim(), 10)).filter(x => !isNaN(x));
+}
+
+function briefRenderArrayCells(arr, l, r) {
+  let cells = '';
+  for (let i = 0; i < arr.length; i++) {
+    const cls = ['arr-cell'];
+    if (i >= l && i <= r) cls.push('in-window');
+    if (i === l && l <= r) cls.push('left-ptr');
+    if (i === r && l <= r) cls.push('right-ptr');
+    cells += `<div class="${cls.join(' ')}">${arr[i]}</div>`;
+  }
+  return `<div class="arr-row">${cells}</div>
+          <div class="ptr-row">
+            <span style="color:var(--easy)">■ left</span>
+            <span style="color:var(--med)">■ right</span>
+            <span style="color:var(--accent)">■ inside window</span>
+          </div>`;
+}
+
+function briefComputeFixed(arr, k) {
+  if (arr.length < k || k <= 0) return { l: 0, r: -1, val: '—', label: 'window too large' };
+  let sum = 0;
+  for (let i = 0; i < k; i++) sum += arr[i];
+  let bestSum = sum, bestL = 0;
+  for (let r = k; r < arr.length; r++) {
+    sum += arr[r] - arr[r - k];
+    if (sum > bestSum) { bestSum = sum; bestL = r - k + 1; }
+  }
+  return { l: bestL, r: bestL + k - 1, val: bestSum, label: 'best window sum' };
+}
+
+function briefComputeLongestNoRepeat(arr) {
+  // longest window of values without repeats
+  const seen = new Map();
+  let l = 0, bestL = 0, bestR = -1;
+  for (let r = 0; r < arr.length; r++) {
+    while (seen.has(arr[r])) {
+      seen.delete(arr[l]);
+      l++;
+    }
+    seen.set(arr[r], r);
+    if (r - l > bestR - bestL) { bestL = l; bestR = r; }
+  }
+  return { l: bestL, r: bestR, val: bestR - bestL + 1, label: 'longest no-repeat length' };
+}
+
+function briefComputeShortestSum(arr, target) {
+  let l = 0, sum = 0, bestL = 0, bestR = -1, bestLen = Infinity;
+  for (let r = 0; r < arr.length; r++) {
+    sum += arr[r];
+    while (sum >= target) {
+      if (r - l + 1 < bestLen) { bestLen = r - l + 1; bestL = l; bestR = r; }
+      sum -= arr[l++];
+    }
+  }
+  return bestLen === Infinity
+    ? { l: 0, r: -1, val: 0, label: 'no window has sum ≥ ' + target }
+    : { l: bestL, r: bestR, val: bestLen, label: 'shortest length with sum ≥ ' + target };
+}
+
+function briefComputeAtMostKDistinct(arr, k) {
+  const cnt = new Map();
+  let l = 0, bestL = 0, bestR = -1, total = 0;
+  for (let r = 0; r < arr.length; r++) {
+    cnt.set(arr[r], (cnt.get(arr[r]) || 0) + 1);
+    while (cnt.size > k) {
+      const x = arr[l++];
+      cnt.set(x, cnt.get(x) - 1);
+      if (cnt.get(x) === 0) cnt.delete(x);
+    }
+    total += r - l + 1;
+    if (r - l > bestR - bestL) { bestL = l; bestR = r; }
+  }
+  return { l: bestL, r: bestR, val: total, label: '#subarrays with ≤ ' + k + ' distinct' };
+}
+
+function briefComputeDequeMax(arr, k) {
+  if (arr.length < k || k <= 0) return { l: 0, r: -1, val: '—', label: 'window too large' };
+  const dq = []; let bestL = 0, bestR = k - 1, bestVal = -Infinity;
+  for (let r = 0; r < arr.length; r++) {
+    while (dq.length && dq[0] <= r - k) dq.shift();
+    while (dq.length && arr[dq[dq.length - 1]] <= arr[r]) dq.pop();
+    dq.push(r);
+    if (r >= k - 1) {
+      const v = arr[dq[0]];
+      if (v > bestVal) { bestVal = v; bestL = r - k + 1; bestR = r; }
+    }
+  }
+  return { l: bestL, r: bestR, val: bestVal, label: 'best window max' };
+}
+
+function briefRenderPanel() {
+
+  const op = briefCurrentOp;
+  const color = briefOpColor(op);
+  const arr = briefParseArr();
+  let info;
+
+  if (op.id === 'fixed') info = briefComputeFixed(arr, briefK);
+  else if (op.id === 'longest') info = briefComputeLongestNoRepeat(arr);
+  else if (op.id === 'shortest') info = briefComputeShortestSum(arr, briefK);
+  else if (op.id === 'atmost') info = briefComputeAtMostKDistinct(arr, briefK);
+  else if (op.id === 'deque') info = briefComputeDequeMax(arr, briefK);
+  else info = { l: 0, r: arr.length - 1, val: arr.length, label: 'whole array' };
+
+  const cells = briefRenderArrayCells(arr, info.l, info.r);
+
+  const exTabs = op.examples.map((e, i) =>
+    `<div class="ex-tab" data-i="${i}" style="${i === briefCurrentEx ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(e.title)}</div>`
+  ).join('');
+
+  const ex = op.examples[briefCurrentEx];
+  const whyOpen = briefWhyOpen[op.id + ':' + briefCurrentEx];
+
+  document.getElementById('briefMainPanel').innerHTML = `
+    <div class="op-badge" style="background:${color}22; color:${color}; border:1px solid ${color}">${op.label}</div>
+    <div class="op-desc">${escapeHtml(op.desc)}</div>
+    <div class="op-rule">${escapeHtml(op.rule)}</div>
+
+    <div class="calc-box">
+      <div class="input-row">
+        <span class="input-label">array</span>
+        <input type="text" id="briefArr" value="${escapeHtml(briefArrStr)}" />
+        <span class="input-label">${op.id === 'shortest' ? 'target' : 'k'}</span>
+        <input type="number" id="briefK" value="${briefK}" />
+      </div>
+      ${cells}
+      <div class="result-line">${escapeHtml(info.label)}: <span class="result-pill yes">${info.val}</span></div>
+    </div>
+
+    <div class="section-label">EXAMPLES</div>
+    <div class="ex-tabs">${exTabs}</div>
+    <div class="ex-box">
+      <div class="ex-title" style="color:${color}">${escapeHtml(ex.title)}</div>
+      <pre class="brief-pre"><code>${highlightJava(ex.code)}</code></pre>
+      <div class="why-toggle" data-key="${op.id}:${briefCurrentEx}">${whyOpen ? '▼' : '▶'} Why does this work?</div>
+      <div class="why-body ${whyOpen ? 'visible' : ''}">${escapeHtml(ex.why)}</div>
+    </div>
+  `;
+
+  const arrEl = document.getElementById('briefArr');
+  const kEl = document.getElementById('briefK');
+  if (arrEl) arrEl.addEventListener('input', () => { briefArrStr = arrEl.value; briefRenderPanel(); });
+  if (kEl)   kEl.addEventListener('input',   () => { briefK = parseInt(kEl.value, 10) || 0; briefRenderPanel(); });
+
+  document.querySelectorAll('#briefMainPanel .ex-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentEx = +t.dataset.i;
+      briefRenderPanel();
+    });
+  });
+
+  const wt = document.querySelector('#briefMainPanel .why-toggle');
+  if (wt) {
+    wt.addEventListener('click', () => {
+      const key = wt.dataset.key;
+      briefWhyOpen[key] = !briefWhyOpen[key];
+      briefRenderPanel();
+    });
+  }
+}
+
+function briefRenderOpTabs() {
+  const html = BRIEF_OPS.map(op => {
+    const color = briefOpColor(op);
+    const active = op.id === briefCurrentOp.id;
+    return `<div class="op-tab" data-id="${op.id}"
+      style="${active ? 'background:'+color+'22; color:'+color+'; border-color:'+color : ''}">${escapeHtml(op.name)}</div>`;
+  }).join('');
+  document.getElementById('briefOpTabs').innerHTML = html;
+  document.querySelectorAll('#briefOpTabs .op-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      briefCurrentOp = BRIEF_OPS.find(o => o.id === t.dataset.id);
+      briefCurrentEx = 0;
+      briefRenderOpTabs();
+      briefRenderPanel();
+    });
+  });
+}
+
+function briefRenderCheatSheet() {
+  document.getElementById('briefCheatSheet').innerHTML = BRIEF_CHEAT_ITEMS.map(([n, c]) =>
+    `<div class="cheat-row"><span class="cheat-name">${escapeHtml(n)}</span><span class="cheat-code">${escapeHtml(c)}</span></div>`
+  ).join('');
+}
+
+function initBriefMode() {
+  briefRenderOpTabs();
+  briefRenderPanel();
+  briefRenderCheatSheet();
+}
+
+const briefThemeObserver = new MutationObserver(() => {
+  if (state.diff === 'brief') {
+    briefRenderOpTabs();
+    briefRenderPanel();
+  }
+});
+briefThemeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['data-theme'],
+});
+
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
