@@ -1,0 +1,3918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>~100 Linux Commands — Cheatsheet, Why You Use It, and Recipes</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #16a34a;          /* terminal green */
+    --accent2: #0d9488;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #0b1020;
+    --code-fg: #e6edf3;
+    --kw:  #ff8a65;             /* keywords / builtins */
+    --typ: #c084fc;             /* commands */
+    --bi:  #ffd166;             /* flags */
+    --str: #a5d6ff;             /* strings */
+    --cmt: #8b949e;             /* comments */
+    --num: #79c0ff;             /* numbers */
+    --pth: #9ae6b4;             /* paths */
+    --veasy: #0891b2;
+    --easy:  #16a34a;
+    --med:   #d97706;
+    --hard:  #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  /* HAMBURGER + TOC SIDEBAR */
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #dcfce7; color: var(--accent); }
+  .sidebar a.active { background: #dcfce7; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 32px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* HERO + TABS */
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p  { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy  .dot { background: var(--easy); }
+  .tab.med   .dot { background: var(--med); }
+  .tab.hard  .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  /* MAIN */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #dcfce7; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy  { background: var(--easy); }
+  .badge.med   { background: var(--med); }
+  .badge.hard  { background: var(--hard); }
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    font-weight: 600;
+    letter-spacing: .03em;
+  }
+  .pill.fs   { background:#eef2ff; color:#3730a3; }
+  .pill.proc { background:#fef3c7; color:#92400e; }
+  .pill.net  { background:#fce7f3; color:#9d174d; }
+  .pill.text { background:#e0e7ff; color:#3730a3; }
+  .pill.sec  { background:#fef2f2; color:#991b1b; }
+  .pill.pkg  { background:#f3e8ff; color:#6b21a8; }
+  .pill.sys  { background:#fff7ed; color:#c2410c; }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #f0fdf4;
+    border-left: 4px solid #22c55e;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .formula {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 13.5px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+
+  /* CHEATSHEET TABLE */
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #dcfce7;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: #f0fdf4;
+    white-space: nowrap;
+    color: #166534;
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  /* CODE — terminal style */
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid #1c2333;
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }   /* shell keywords (if/then/etc) */
+  .typ { color: var(--typ); font-weight: 600; }   /* command name */
+  .bi  { color: var(--bi);  font-weight: 500; }   /* flags */
+  .str { color: var(--str); }                     /* strings */
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+  .pth { color: var(--pth); }                     /* paths starting with / or ~ */
+  .pmt { color: #4ade80; font-weight: 700; }      /* prompt $ # */
+
+  /* PREV/NEXT BAR */
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #dcfce7; color: var(--accent); border-color: #86efac; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  /* BRIEF TAB */
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #16a34a, #06b6d4, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 20px;
+  }
+  .brief-root .panel h3 {
+    margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .brief-root .grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .brief-root .card-mini {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; background: #f0fdf4;
+  }
+  .brief-root .card-mini b { color: var(--accent); display:block; margin-bottom:4px; font-size:13.5px;
+    font-family: "JetBrains Mono", Consolas, monospace; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow {
+    border: 1px dashed var(--border); border-radius: 12px;
+    padding: 16px; background: var(--code-bg);
+    color: var(--code-fg);
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 13px; line-height: 1.9;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+  }
+  .brief-root .flow .q { color: #4ade80; font-weight:700; }
+  .brief-root .flow .a { color: #fbbf24; }
+  .brief-root .flow .alg { color: #c084fc; font-weight:700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* DARK MODE */
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #4ade80;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #060a14;
+    --code-fg: #e6edf3;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(74,222,128,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(74,222,128,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(34,197,94,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .pill { background: rgba(4,120,87,.18); color: #a7f3d0; }
+  [data-theme="dark"] .pill.fs   { background: rgba(67,56,202,.18);  color: #c7d2fe; }
+  [data-theme="dark"] .pill.proc { background: rgba(146,64,14,.18); color: #fde68a; }
+  [data-theme="dark"] .pill.net  { background: rgba(157,23,77,.18); color: #fbcfe8; }
+  [data-theme="dark"] .pill.text { background: rgba(55,48,163,.18); color: #c7d2fe; }
+  [data-theme="dark"] .pill.sec  { background: rgba(153,27,27,.18); color: #fecaca; }
+  [data-theme="dark"] .pill.pkg  { background: rgba(107,33,168,.18); color: #e9d5ff; }
+  [data-theme="dark"] .pill.sys  { background: rgba(194,65,12,.18); color: #fed7aa; }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(74,222,128,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(74,222,128,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: #86efac; }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .card-mini { background: rgba(74,222,128,.07); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>~100 Linux Commands — Cheatsheet, Why You Use It &amp; Recipes</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL COMMANDS ----------------------- */
+const PROBLEMS = [];
+
+
+/* ===================== FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Linux Command Mental Model (read this first)", diff: "veasy",
+  family: "Foundations",
+  problem: "Almost every Linux command follows the same shape: command [flags] [args] — the command does one thing well, flags tweak how it behaves, and args tell it what to operate on. Output goes to stdout (1), errors go to stderr (2), and you can pipe (|) the output of one command as the input of the next. That's it. The other 95% of mastering Linux is just learning which commands to chain.",
+  intuition: "The shell is a glue language built around three primitives: PROCESSES (each command is a program), FILES (everything is a file — devices, sockets, /proc, /sys), and PIPES (composing programs together via streams of bytes). Once you internalise this, the 100 commands stop feeling like 100 things to memorise and start feeling like a small set of building blocks you compose. ls, cat, grep, sort, uniq, wc, head, tail, find, xargs, sed, awk — that's already 80% of daily work.",
+  hints: [
+    "Two prompts in a terminal: $ means a regular user, # means root.",
+    "Streams: stdin (0) ← keyboard, stdout (1) → screen, stderr (2) → screen. Redirect with <, >, 2>, &>.",
+    "Pipe |: command1 | command2 — stdout of #1 becomes stdin of #2. Build pipelines, not loops.",
+    "Quoting matters: 'single' = literal, \"double\" = expand variables, `backtick` / $(cmd) = run a subshell.",
+    "Exit code 0 = success, non-zero = failure. Chain with && (run if previous succeeded) or || (run if it failed).",
+    "Help in three flavours: --help (quick), man cmd (full manual), tldr cmd (modern community examples)."
+  ],
+  tips: [
+    "Tab-completion is your superpower — type the first 2-3 letters and press Tab.",
+    "History: ↑/↓ arrows, Ctrl+R for reverse-search, !! re-runs the previous command, !$ is the last argument.",
+    "Don't run as root unless you must. sudo for one-shot privilege; passwordless sudo for trusted scripts.",
+    "When a command silently does nothing scary, that means it worked (Unix tradition).",
+    "If a command is taking too long, Ctrl+C cancels it. Ctrl+Z suspends it (then `bg` or `fg`)."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Family</th><th>Commands you'll use daily</th></tr></thead>
+      <tbody>
+        <tr><td>Navigation</td><td>pwd, ls, cd, tree, pushd, popd</td></tr>
+        <tr><td>Files</td><td>cp, mv, rm, mkdir, rmdir, touch, ln, stat, file</td></tr>
+        <tr><td>View / edit</td><td>cat, less, head, tail, nano, vim, view</td></tr>
+        <tr><td>Search</td><td>grep, find, locate, which, type, fzf</td></tr>
+        <tr><td>Text munging</td><td>sort, uniq, wc, cut, tr, sed, awk, paste, join, comm</td></tr>
+        <tr><td>Permissions</td><td>chmod, chown, chgrp, umask, sudo, passwd</td></tr>
+        <tr><td>Processes</td><td>ps, top, htop, kill, pkill, jobs, bg, fg, nohup, &</td></tr>
+        <tr><td>Disks</td><td>df, du, mount, umount, lsblk, fdisk, mkfs, fsck</td></tr>
+        <tr><td>Network</td><td>ping, curl, wget, ss, netstat, dig, ip, ssh, scp, rsync</td></tr>
+        <tr><td>Packages</td><td>apt, dnf/yum, pacman, snap, dpkg, rpm</td></tr>
+        <tr><td>Compression</td><td>tar, gzip, gunzip, zip, unzip, xz, bzip2</td></tr>
+        <tr><td>System</td><td>uname, uptime, whoami, id, who, w, free, env, date</td></tr>
+        <tr><td>Services</td><td>systemctl, journalctl, service, crontab, at</td></tr>
+        <tr><td>Power tools</td><td>xargs, tee, watch, time, screen, tmux, jq</td></tr>
+      </tbody>
+    </table>
+    <p><b>Streams &amp; redirection one-liners:</b></p>
+    <ul class="hints">
+      <li><code>cmd &gt; out.txt</code> — overwrite stdout to a file. Use <code>&gt;&gt;</code> to append.</li>
+      <li><code>cmd 2&gt; err.txt</code> — redirect just stderr.</li>
+      <li><code>cmd &amp;&gt; all.log</code> (bash) or <code>cmd &gt; all.log 2&gt;&amp;1</code> — both streams to one file.</li>
+      <li><code>cmd &lt; in.txt</code> — feed a file as stdin.</li>
+      <li><code>cmd1 | cmd2</code> — pipe stdout of cmd1 into stdin of cmd2.</li>
+      <li><code>cmd | tee log.txt</code> — see output AND save it. Add <code>-a</code> to append.</li>
+    </ul>
+  `,
+  code: `# The five lines you'll type at the start of nearly every shell session.
+# Memorise them; they are the prelude to every recipe in this guide.
+
+pwd                    # where am I?
+ls -lah                # what's here? (long, all-files, human sizes)
+cd /var/log            # go somewhere
+history | tail -20     # what did I just do?
+man ls                 # how does this command work? (q to quit)
+
+# The shape every command follows:
+#   command [flags] [args]
+#   ──┬───  ──┬──── ──┬──
+#     │       │       └── what to operate on (file, host, pattern)
+#     │       └────────── how to behave (-l -a --recursive --color=auto)
+#     └────────────────── the program (ls, grep, find, ...)`,
+  complexity: "Reading this card: 90 seconds. Internalising it: a week of forcing yourself to use the terminal."
+});
+
+/* ===================== EASY — Navigation, files, viewing ===================== */
+
+PROBLEMS.push({
+  num: 1, title: "pwd — Print Working Directory", diff: "easy",
+  family: "Filesystem · Navigation",
+  problem: "Print the absolute path of the current shell's working directory. The most basic 'where am I?' command.",
+  intuition: "Every shell has a current directory (CWD). pwd just asks the kernel what it is. Useful in scripts to log context, in prompts to show location, and as a sanity check after `cd`.",
+  hints: [
+    "pwd alone prints the logical path (follows symlinks as you cd'd through them).",
+    "pwd -P prints the physical resolved path (no symlinks).",
+    "Available as a shell builtin AND as /bin/pwd — they behave slightly differently with symlinks."
+  ],
+  tips: [
+    "Inside scripts, prefer $PWD over running pwd — same value, no fork.",
+    "If your prompt shows the full path you may not need pwd much, but it's still gold in scripts and pipelines."
+  ],
+  code: `$ pwd
+/home/alice/projects/api
+
+$ pwd -P                    # resolve symlinks
+/data/disk2/projects/api
+
+# in a script
+echo "Running from: $PWD"`,
+  complexity: "O(1). No I/O. Always free."
+});
+
+PROBLEMS.push({
+  num: 2, title: "ls — List Directory Contents", diff: "easy",
+  family: "Filesystem · Navigation",
+  problem: "List files and directories. The most-typed command on Earth. ls reads a directory inode and prints its entries; flags control what details and which entries.",
+  intuition: "ls IS your file browser. -l switches to a long-form table (perms / owner / size / mtime / name). -a shows hidden dotfiles. -h makes sizes human-readable. -t sorts by modification time so the freshest stuff floats to the top — which is what you want 80% of the time.",
+  hints: [
+    "ls -lah is the daily driver (long, all, human-readable).",
+    "ls -lt → newest first; add -r to reverse.",
+    "ls -ld dir/ → info about the directory itself, not its contents.",
+    "ls -i shows inode numbers; useful for spotting hardlinks.",
+    "ls --color=auto colour-codes by type (set as alias on most distros)."
+  ],
+  tips: [
+    "alias ll='ls -lah' — almost universal.",
+    "ls -S sorts by file size (largest first) — fast 'what's eating my disk' inside a single dir.",
+    "For huge dirs, prefer `ls -U` (no sort) or pipe into `head` — sorting 10⁶ entries is slow."
+  ],
+  code: `$ ls                              # bare list
+$ ls -l                           # long form
+$ ls -la                          # include hidden
+$ ls -lah                         # + human sizes (the daily driver)
+$ ls -lt                          # newest first
+$ ls -ltr | tail -20              # last 20 modified
+$ ls -lS | head -20               # 20 biggest files in this dir
+$ ls -ld /etc                     # the dir itself, not contents
+$ ls /etc/*.conf                  # globs are expanded by the shell`,
+  complexity: "O(n) where n = entries in the dir. Sorted by name by default."
+});
+
+PROBLEMS.push({
+  num: 3, title: "cd — Change Directory", diff: "easy",
+  family: "Filesystem · Navigation",
+  problem: "Move the shell's current working directory. Shell builtin (it MUST be a builtin — a child process can't change its parent's CWD).",
+  intuition: "Just remember three special targets: ~ is your home, - is the previous dir (toggle), and .. is the parent. Combine with TAB-completion and you almost never type a full path.",
+  hints: [
+    "cd with no args → home (~).",
+    "cd - → toggle to last dir (back-and-forth gold).",
+    "cd .. → up one. cd ../.. → up two. cd / → filesystem root.",
+    "$OLDPWD holds the previous dir — referenced by `cd -`.",
+    "pushd / popd build a stack of dirs — better than `cd -` when you have ≥3 to juggle."
+  ],
+  tips: [
+    "If you cd a lot through a deep tree, look at `z`/`zoxide` or `autojump` — they jump to a frecency-ranked dir from a partial name.",
+    "Set CDPATH for project roots: CDPATH=.:$HOME/projects then `cd api` works from anywhere."
+  ],
+  code: `$ cd                              # → home (~)
+$ cd /var/log                     # absolute
+$ cd projects/api                 # relative
+$ cd ..                           # parent
+$ cd -                            # toggle to previous dir
+$ pushd /etc && popd              # save & return
+
+# CDPATH trick
+$ export CDPATH=.:~/projects
+$ cd api                          # finds ~/projects/api`,
+  complexity: "O(1). Pure metadata change."
+});
+
+PROBLEMS.push({
+  num: 4, title: "ls + tree — Visualise Directory Structure", diff: "easy",
+  family: "Filesystem · Navigation",
+  problem: "When ls is too flat, `tree` draws the directory tree with proper indentation and Unicode box-drawing — instantly see the project layout.",
+  intuition: "Reading nested directories with ls forces you to mentally rebuild the hierarchy. tree just draws it. -L limits depth so you don't dump a node_modules apocalypse.",
+  hints: [
+    "tree -L 2 → only 2 levels deep.",
+    "tree -d → directories only.",
+    "tree -a → include hidden.",
+    "tree -I 'node_modules|.git|venv' → ignore noise dirs.",
+    "Not installed by default everywhere; `apt install tree` / `brew install tree`."
+  ],
+  tips: [
+    "tree --gitignore → respect .gitignore (newer versions).",
+    "tree -shu → sizes + human-readable + show owners.",
+    "Pipe into `less` for huge trees: `tree | less -R`."
+  ],
+  code: `$ tree -L 2 ~/projects/api
+api
+├── README.md
+├── src
+│   ├── main.py
+│   └── utils.py
+└── tests
+    └── test_main.py
+
+$ tree -L 3 -I 'node_modules|.git' --gitignore`,
+  complexity: "O(n) over directory entries. Cheap for normal projects."
+});
+
+PROBLEMS.push({
+  num: 5, title: "mkdir / rmdir — Create / Remove Directories", diff: "easy",
+  family: "Filesystem · Files",
+  problem: "Make new directories and remove empty ones. mkdir -p creates the entire missing parent chain in one call.",
+  intuition: "`mkdir a/b/c` fails if `a` doesn't exist. `mkdir -p a/b/c` creates whatever's missing along the way. rmdir is the safe sibling of rm — it refuses to delete a non-empty dir, so you don't blow up something accidentally.",
+  hints: [
+    "mkdir -p path/to/new → idempotent and won't error if it already exists.",
+    "mkdir -m 700 secure → set perms in the same call.",
+    "rmdir removes only EMPTY dirs (use rm -r for non-empty).",
+    "Use brace expansion to scaffold projects: mkdir -p src/{api,db,utils} tests"
+  ],
+  tips: [
+    "rmdir failing with 'Directory not empty' is a feature, not a bug — it's saving you from yourself.",
+    "Newer mkdir on GNU has --parents (long form) and -v (verbose) which is great in scripts."
+  ],
+  code: `$ mkdir reports
+$ mkdir -p data/2026/{01,02,03}/raw      # brace expansion → 3 dirs
+$ mkdir -m 700 ~/.secrets                # 700 = owner-only
+$ rmdir empty_dir                         # ok
+$ rmdir not_empty                         # ERROR: refuses
+$ rm -r not_empty                         # use rm for non-empty`,
+  complexity: "O(1) per directory. mkdir -p is one syscall per missing level."
+});
+
+PROBLEMS.push({
+  num: 6, title: "touch — Create File or Update Timestamp", diff: "easy",
+  family: "Filesystem · Files",
+  problem: "If the file doesn't exist, create an empty one. If it does, update its access + modification times to now. Two jobs in one tiny command.",
+  intuition: "touch is how you 'mention' a file into existence — handy in tests, Makefiles, or to force a rebuild based on mtime. Setting timestamps with -t / -d is a sneaky power-feature for testing time-based logic.",
+  hints: [
+    "touch a b c → creates / refreshes three files.",
+    "touch -a → only access time. -m → only modification time.",
+    "touch -t YYYYMMDDHHMM file → set a specific timestamp.",
+    "touch -r ref file → copy ref's mtime onto file."
+  ],
+  tips: [
+    "Make targets often `touch` a stamp file to record 'this step finished'.",
+    "Combined with find -newer, touch lets you mark a snapshot point and then list everything modified since."
+  ],
+  code: `$ touch new.txt                     # create empty file
+$ touch a.log b.log c.log           # all three
+$ touch -t 202401011200 old.txt     # backdate to 2024-01-01 12:00
+$ touch -r ref.txt out.txt          # copy ref's mtime onto out`,
+  complexity: "O(1). Pure inode metadata write."
+});
+
+PROBLEMS.push({
+  num: 7, title: "cp — Copy Files & Directories", diff: "easy",
+  family: "Filesystem · Files",
+  problem: "Duplicate a file or directory. -r for recursive, -a for archive (preserves perms / symlinks / timestamps), -i to prompt before overwriting.",
+  intuition: "cp is dumb-and-fast: it reads bytes from src and writes them to dst. The flags decide whether to preserve metadata (-a / --preserve), follow symlinks (-L) or copy them as-is (-P), and what to do on collisions (-i / -f / -n).",
+  hints: [
+    "cp src dst → file to file (or file into existing dir).",
+    "cp -r srcdir/ dstdir/ → recursive directory copy.",
+    "cp -a → archive: -dpR — keeps everything (use this for backups).",
+    "cp -u → only copy if src is newer (cheap incremental).",
+    "cp -i → interactive prompt before overwriting."
+  ],
+  tips: [
+    "For large or cross-machine copies, switch to `rsync` — restartable, parallel, smarter about partial files.",
+    "cp does NOT skip duplicates — use rsync or hardlinks for dedup-aware copying.",
+    "The trailing slash on the SOURCE matters for some tools (rsync) but not for cp."
+  ],
+  code: `$ cp report.txt report.bak
+$ cp file.txt /tmp/                    # into a dir
+$ cp -r src/ backup/                   # recursive
+$ cp -a /etc /root/etc.snapshot        # full archive
+$ cp -u src/*.log dst/                 # only newer
+$ cp -i existing.txt new.txt           # prompt on overwrite`,
+  complexity: "O(bytes). Time dominated by disk throughput."
+});
+
+PROBLEMS.push({
+  num: 8, title: "mv — Move / Rename", diff: "easy",
+  family: "Filesystem · Files",
+  problem: "Move files between directories. On the same filesystem, it's just a rename of the inode link — instant. Across filesystems it's actually a copy + delete.",
+  intuition: "Renaming and moving are the same operation in Unix — a directory is just a list of name→inode mappings. `mv old new` rewrites that mapping. Use -i to be careful, -n to never overwrite, -v to see what happened.",
+  hints: [
+    "mv a b → rename a to b (same dir).",
+    "mv a /tmp/ → move a into /tmp.",
+    "mv -i → prompt before clobbering.",
+    "mv -n → never overwrite (silent skip).",
+    "mv -t /tmp/ a b c → target-first form (handy with xargs)."
+  ],
+  tips: [
+    "Cross-device mv = cp + rm — slow and not atomic. Beware partial moves on NFS.",
+    "For batch renames, use `rename` (perl) or a `for` loop with shell parameter expansion.",
+    "If a destination exists and is a directory, mv puts the source INSIDE it."
+  ],
+  code: `$ mv draft.md final.md             # rename
+$ mv *.log /var/log/archive/        # move many
+$ mv -i a.txt b.txt                 # prompt on clobber
+$ mv -n new.txt out.txt             # never overwrite
+
+# Batch rename .txt → .md
+$ for f in *.txt; do mv "$f" "\${f%.txt}.md"; done`,
+  complexity: "Same FS: O(1). Cross-FS: O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 9, title: "rm — Remove Files & Directories", diff: "easy",
+  family: "Filesystem · Files",
+  problem: "Delete files. -r for recursive, -f to force (no prompt, ignore missing), -i to prompt for each. The most dangerous everyday command.",
+  intuition: "rm doesn't move things to a trash can — bytes are unlinked from the directory and the kernel reclaims the inode if no process still has it open. There is no undo. Treat `rm -rf` like power tools: protected eyewear required.",
+  hints: [
+    "rm file → remove a file.",
+    "rm -r dir → recursively remove a directory.",
+    "rm -rf path → unstoppable, silent recursive removal.",
+    "rm -i / -I → prompt (I prompts only once for many files).",
+    "rm -- -weirdfile → use `--` to remove files starting with `-`."
+  ],
+  tips: [
+    "Never use rm -rf with variables you didn't sanity-check. `rm -rf $DIR/` with empty $DIR = `rm -rf /`.",
+    "alias rm='rm -i' is too noisy for pros. Prefer `trash-cli` which moves to ~/.local/share/Trash so you can recover.",
+    "ZFS and btrfs snapshots are your real undo. ext4 has no undelete worth relying on."
+  ],
+  code: `$ rm tmp.log
+$ rm -r build/
+$ rm -rf node_modules                # the most-typed flag combo on Earth
+$ rm -i *.bak                        # prompt for each
+$ rm -- -i.txt                       # delete a file literally named "-i.txt"
+
+# SAFER pattern in scripts:
+#   never expand to / if a var is empty
+[ -n "$DIR" ] && [ "$DIR" != "/" ] && rm -rf "$DIR"`,
+  complexity: "O(n) over entries. Disk I/O for inode + directory updates."
+});
+
+PROBLEMS.push({
+  num: 10, title: "cat — Concatenate & Print Files", diff: "easy",
+  family: "Filesystem · View / Edit",
+  problem: "Print file contents to stdout. Concatenate multiple files in order. The atom of pipelines.",
+  intuition: "cat is the simplest possible file reader — open, read, write to stdout. It's almost never the right way to VIEW a file (`less` is), but it's the right way to FEED a file into a pipeline or stitch files together.",
+  hints: [
+    "cat file → print one file.",
+    "cat a b c → concatenate three files in order.",
+    "cat -n → number every line.",
+    "cat -A → show all special characters (tabs as ^I, line endings as $).",
+    "cat > file then type, Ctrl-D to finish — quick way to write a tiny file.",
+    "cat << EOF ... EOF — heredoc for multi-line content in scripts."
+  ],
+  tips: [
+    "'Useless use of cat' (UUOC): `cat file | grep x` is the same as `grep x file` — just do the latter.",
+    "Use `bat` (a modern cat replacement) for syntax highlighting and paging by default.",
+    "For BIG files, `cat` floods the terminal. Use `less` or `head` instead."
+  ],
+  code: `$ cat /etc/hostname
+$ cat -n script.sh                    # numbered lines
+$ cat a.log b.log c.log > combined.log
+$ cat <<EOF > config.yml
+name: api
+port: 8080
+EOF
+$ cat -A messy.txt                    # see hidden tabs / CRs`,
+  complexity: "O(bytes). Pure I/O."
+});
+
+PROBLEMS.push({
+  num: 11, title: "less — Page Through Files", diff: "easy",
+  family: "Filesystem · View / Edit",
+  problem: "View a file (or piped output) one screenful at a time, with search, navigation, and follow-mode. The default file viewer.",
+  intuition: "less is `more`'s smarter descendant — you can scroll BOTH ways, search forward (/) and backward (?), and tail-follow (F). For any non-trivial file, you want less, not cat.",
+  hints: [
+    "Space / b → page down / up. g / G → top / bottom.",
+    "/pattern → search forward; n → next match; N → previous.",
+    "F → follow mode (like `tail -f`); Ctrl-C to stop following.",
+    "-N → show line numbers. -S → don't wrap long lines.",
+    "less -R → render ANSI colour codes (great for piped logs).",
+    "q to quit."
+  ],
+  tips: [
+    "less is set as the default pager for `man` and `git log` — knowing its keys pays off everywhere.",
+    "less +F is the modern replacement for `tail -f` because you can stop following with Ctrl-C and then scroll up.",
+    "less +G file → start at the bottom (newest log lines)."
+  ],
+  code: `$ less /var/log/syslog
+$ less +F /var/log/nginx/access.log    # follow live
+$ tail -100 big.log | less -R          # paginate ANSI-coloured output
+$ less -S wide.csv                     # no line wrap`,
+  complexity: "O(1) memory regardless of file size — that's the point."
+});
+
+PROBLEMS.push({
+  num: 12, title: "head / tail — First or Last N Lines", diff: "easy",
+  family: "Filesystem · View / Edit",
+  problem: "Print the first N (head) or last N (tail) lines of a file. tail -f follows a file as it grows — the standard way to watch live logs.",
+  intuition: "When you only care about the boundaries of a file (CSV header, the most recent log lines), head and tail are 100× cheaper than opening the whole thing. tail -f keeps the file descriptor open and prints new bytes as they arrive — which is how you watch a server log in real time.",
+  hints: [
+    "head -n 20 file → first 20 lines (default 10).",
+    "tail -n 20 file → last 20 lines.",
+    "tail -n +50 file → from line 50 to end.",
+    "tail -f file → follow appended writes.",
+    "tail -F file → follow even across file rotations.",
+    "head -c 100 → first 100 BYTES (binary-safe)."
+  ],
+  tips: [
+    "Multi-tail: `tail -f a.log b.log` shows both, with banners.",
+    "For huge log files, prefer `less +F` — same idea but you can scroll up without losing the tail.",
+    "Combine head + tail to grab a middle slice: `head -n 200 file | tail -n 50` → lines 151-200."
+  ],
+  code: `$ head -n 5 data.csv               # 5 first rows
+$ tail -n 100 server.log
+$ tail -f /var/log/syslog          # watch live
+$ tail -F /var/log/nginx/*.log     # survive logrotate
+$ sed -n '100,150p' file.txt       # alternative: lines 100-150`,
+  complexity: "head: O(N) where N = lines requested. tail: O(file) once for plain tail, O(1) per new line in -f mode."
+});
+
+PROBLEMS.push({
+  num: 13, title: "echo / printf — Print Text", diff: "easy",
+  family: "Shell · Output",
+  problem: "echo prints arguments separated by spaces, then a newline. printf uses C-style format strings for precise control. echo is convenient; printf is correct.",
+  intuition: "Use echo for casual prints. The moment you need precise formatting, no trailing newline, or portability across shells — use printf. printf %s safely prints any string including ones starting with a dash.",
+  hints: [
+    "echo hello world → 'hello world\\n'.",
+    "echo -n → no trailing newline.",
+    "echo -e → interpret \\n, \\t (BUT this is non-portable; printf does it cleanly).",
+    "printf '%s\\n' \"$var\" → always-correct way to print a variable.",
+    "printf '%-10s %5d\\n' name 42 → C-style aligned columns."
+  ],
+  tips: [
+    "Bash builtin echo is fast; /bin/echo behaves slightly differently (no -n on some Unix).",
+    "In scripts, prefer printf — it's POSIX and handles all edge cases.",
+    "echo $var is unsafe if var contains backslashes or starts with -. printf '%s\\n' \"$var\" is bullet-proof."
+  ],
+  code: `$ echo "Hello, $USER"
+$ echo -n "no newline"
+$ printf '%s = %d\\n' answer 42
+$ printf '%-10s %5d\\n' apples 3 bananas 17
+apples         3
+bananas       17
+
+$ for h in a b c; do printf '%s\\n' "$h"; done`,
+  complexity: "O(bytes printed). Builtins, so essentially free."
+});
+
+PROBLEMS.push({
+  num: 14, title: "stat / file — Inspect a File", diff: "easy",
+  family: "Filesystem · Files",
+  problem: "stat prints the inode metadata (perms, owner, size, atime/mtime/ctime, links). file infers the content TYPE by reading magic bytes.",
+  intuition: "ls -l shows the same info but compactly; stat is the verbose version, perfect for scripts that need a single field. file is the safety check before you `cat` something — is this really a JSON file or a 4 GB binary that will eat your terminal?",
+  hints: [
+    "stat file → full metadata.",
+    "stat -c '%s' file → just the size in bytes.",
+    "stat -c '%y' file → just the modification time.",
+    "file -b foo → brief description (no filename prefix).",
+    "file -i foo → MIME type (good for scripts)."
+  ],
+  tips: [
+    "stat is the right tool for `if file is older than X seconds, do Y` in shell scripts.",
+    "On macOS, BSD stat has different flags (-f instead of -c). Install GNU coreutils with brew if you switch.",
+    "file picks up far more than extension — it identifies ELF, ZIP, PNG, UTF-8 etc by magic bytes."
+  ],
+  code: `$ stat report.pdf
+  File: report.pdf
+  Size: 248391  Blocks: 488   IO Block: 4096   regular file
+Access: 2026-05-20 09:14:01
+Modify: 2026-05-19 18:42:33
+
+$ stat -c '%s %n' *.log              # size + name only
+$ file mystery.bin
+mystery.bin: ELF 64-bit LSB executable, x86-64
+$ file -i image.png
+image.png: image/png; charset=binary`,
+  complexity: "O(1). Pure metadata read."
+});
+
+PROBLEMS.push({
+  num: 15, title: "ln — Hard & Symbolic Links", diff: "easy",
+  family: "Filesystem · Files",
+  problem: "Make a second name pointing to the same file. -s makes a SYMLINK (a new file holding a path). Without -s you get a HARDLINK (a new directory entry pointing at the same inode).",
+  intuition: "Hardlinks are indistinguishable from the original — same inode, same data, same permissions. Delete one, others remain. Symlinks are pointers BY PATH — break them by moving the target. Use symlinks for `latest` pointers, project-wide config aliases, alternative names; use hardlinks for dedup-style backups.",
+  hints: [
+    "ln -s target name → symbolic link (most common).",
+    "ln target name → hardlink.",
+    "ls -l shows arrows (->)) for symlinks.",
+    "Hardlinks must live on the same filesystem as the target; symlinks can cross.",
+    "readlink path → resolve a symlink. realpath path → fully resolve all symlinks."
+  ],
+  tips: [
+    "ln -sfn target /path/to/link → atomic re-point of a symlink (the -n is critical for symlinked dirs).",
+    "Use symlinks for `current → release-2026-05-25` blue/green deploys.",
+    "find . -lname '*broken*' finds dangling symlinks."
+  ],
+  code: `$ ln -s /var/log/nginx/access.log ~/nginx.log    # symlink
+$ ls -l ~/nginx.log
+lrwxrwxrwx 1 alice alice 26 May 24 ~/nginx.log -> /var/log/nginx/access.log
+
+$ ln big.iso big.iso.bak           # hardlink (no extra disk)
+$ ln -sfn release-2026-05-25 current   # atomic symlink swap`,
+  complexity: "O(1)."
+});
+
+
+PROBLEMS.push({
+  num: 16, title: "which / type / whereis — Where is this Command?", diff: "easy",
+  family: "Shell · Discovery",
+  problem: "Figure out where a command lives, whether it's a builtin, an alias, a function, or a binary. Three commands, slightly different scopes.",
+  intuition: "When `cmd` does something unexpected, your shell may be running an alias, a function, a builtin, or a binary on PATH — in that priority. `type` tells you which one. `which` only finds binaries. `whereis` also locates man pages and source.",
+  hints: [
+    "type cmd → 'cmd is /usr/bin/cmd' OR 'cmd is aliased to ...' OR 'cmd is a shell builtin'.",
+    "type -a cmd → ALL matches (alias, function, builtin, binaries).",
+    "which cmd → binary path only (PATH search, no aliases/builtins).",
+    "whereis cmd → binary, source, man page paths."
+  ],
+  tips: [
+    "Always prefer `type -a` over `which` — it tells the truth about aliases and functions.",
+    "If a command is unexpectedly slow, `type -a` it — you might be running a wrapper.",
+    "command -v cmd is the POSIX way (returns the path, exit 0 if found)."
+  ],
+  code: `$ type ls
+ls is aliased to 'ls --color=auto'
+$ type -a ls
+ls is aliased to 'ls --color=auto'
+ls is /usr/bin/ls
+$ which python3
+/usr/bin/python3
+$ whereis curl
+curl: /usr/bin/curl /usr/share/man/man1/curl.1.gz`,
+  complexity: "O(PATH entries)."
+});
+
+PROBLEMS.push({
+  num: 17, title: "grep — Global Regex Print", diff: "easy",
+  family: "Text · Search",
+  problem: "Search input for lines matching a regex and print them. The original — and still the default — text search tool.",
+  intuition: "grep is a regex sieve. It opens every input line, tests it against your pattern, and prints the matches. Combined with pipes, it's how you turn 'noisy' command output into 'just the line I care about'.",
+  hints: [
+    "grep pattern file → basic regex.",
+    "grep -i → case-insensitive. -v → INVERT (lines NOT matching).",
+    "grep -n → show line numbers. -c → just count.",
+    "grep -r dir/ → recursive. --include='*.py' to filter file types.",
+    "grep -E → extended regex (no escaping for + ? |). -P → Perl regex (lookarounds, \\d, etc).",
+    "grep -F fixed string (literal, no regex meta).",
+    "grep -A 3 -B 2 → 3 lines after, 2 before each match."
+  ],
+  tips: [
+    "ripgrep (`rg`) is a faster, smarter modern replacement — respects .gitignore, recursive by default.",
+    "grep -l only PRINTS the filenames containing a match. -L the inverse (files NOT matching).",
+    "Use -F for literal strings (URLs, IPs) — way faster and no surprises with regex chars.",
+    "Combine -o with a regex to extract just the matching substring per line."
+  ],
+  code: `$ grep ERROR app.log
+$ grep -i 'fail' app.log              # case-insensitive
+$ grep -rn 'TODO' src/                # recursive, with line numbers
+$ grep -E '(fatal|panic|crash)' *.log
+$ grep -A2 -B2 'Exception' app.log    # context window
+$ grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+' access.log | sort -u  # extract IPs`,
+  complexity: "O(bytes · regex). DFA-based for plain regexes; backtracking for -P."
+});
+
+PROBLEMS.push({
+  num: 18, title: "find — Search the Filesystem", diff: "easy",
+  family: "Filesystem · Search",
+  problem: "Walk a directory tree and act on entries that match expressions on name, size, time, permissions, type. The Swiss army knife of file discovery.",
+  intuition: "find walks the tree depth-first and tests each entry against your filters. Filters AND together by default (`-name X -size +1G`). The -exec / -delete actions can do something with each match — making find a one-stop search-and-act tool.",
+  hints: [
+    "find . -name '*.log' → match by name (case-sensitive). -iname for insensitive.",
+    "find . -type f / -type d / -type l → file / dir / symlink.",
+    "find . -mtime -7 → modified in the last 7 days. +30 → older than 30.",
+    "find . -size +100M → larger than 100 MB.",
+    "find . -name '*.tmp' -delete → built-in delete (faster than -exec).",
+    "find . -name '*.py' -exec wc -l {} + → run wc on every match (+ batches).",
+    "find . -name '*.py' -print0 | xargs -0 grep TODO → safe handling of weird filenames."
+  ],
+  tips: [
+    "find is recursive by default — no -r needed.",
+    "find . -newer ref.txt finds everything modified after ref.txt — great with `touch` snapshots.",
+    "Prefer `find . -exec cmd {} +` (batches) over `\\;` (one-per-call) — often 100× faster.",
+    "fd-find is a modern, friendlier alternative with sane defaults."
+  ],
+  code: `$ find . -name '*.py'
+$ find /var/log -type f -mtime +30 -size +10M
+$ find . -type f -name '*.tmp' -delete
+$ find . -name '*.py' -exec grep -l 'import requests' {} +
+$ find . -type f -print0 | xargs -0 wc -l | sort -n | tail`,
+  complexity: "O(entries) for the walk; per-match cost depends on actions."
+});
+
+PROBLEMS.push({
+  num: 19, title: "locate / mlocate — Filesystem Search by Index", diff: "easy",
+  family: "Filesystem · Search",
+  problem: "find scans the disk; locate consults a pre-built index — instant results across the whole filesystem.",
+  intuition: "A nightly cron job (`updatedb`) builds /var/lib/mlocate/mlocate.db, an index of every path on the system. locate just does a substring lookup against that DB — sub-second for millions of files. The trade-off: results are as fresh as the last updatedb run.",
+  hints: [
+    "locate name → substring match anywhere in the path.",
+    "locate -i name → case-insensitive.",
+    "locate -r 'regex$' → regex.",
+    "sudo updatedb → refresh the index NOW.",
+    "Not installed by default everywhere; `apt install plocate` or `mlocate`."
+  ],
+  tips: [
+    "If a freshly-created file isn't in locate yet, it's because updatedb hasn't run. Use find for 'right now' freshness, locate for everything-else.",
+    "plocate (newer) is way faster than mlocate and uses much less disk for the index."
+  ],
+  code: `$ locate nginx.conf
+/etc/nginx/nginx.conf
+/usr/share/man/man5/nginx.conf.5.gz
+
+$ sudo updatedb && locate myfreshfile.txt
+
+$ locate -r '\\.crt$'                 # all certificates`,
+  complexity: "O(matches). Index lookup is sub-millisecond per query."
+});
+
+PROBLEMS.push({
+  num: 20, title: "wc — Word, Line, Byte Counter", diff: "easy",
+  family: "Text · Counting",
+  problem: "Count lines (-l), words (-w), bytes (-c) or characters (-m). Simple but lives in 80% of pipelines.",
+  intuition: "Once you know any pipeline ends with `| wc -l` to count results, you'll start counting everything. wc is also the lightweight 'how big is this CSV?' check.",
+  hints: [
+    "wc file → lines, words, bytes (in that order).",
+    "wc -l → JUST line count (the 99% case).",
+    "wc -c → bytes. wc -m → characters (different in UTF-8).",
+    "Pipe-form: `cmd | wc -l` to count results."
+  ],
+  tips: [
+    "wc -l is faster than literally any other way to count lines in a text file.",
+    "If the file doesn't end with a newline, the LAST line isn't counted by wc -l. Use `grep -c '' file` to count even the trailing.",
+    "For huge binary-ish files, wc -c is ≈ stat size — use stat instead for pure size."
+  ],
+  code: `$ wc -l data.csv
+142847 data.csv
+$ ls /etc | wc -l                # how many entries in /etc
+$ grep ERROR app.log | wc -l     # error count
+$ find . -name '*.py' | wc -l    # py file count`,
+  complexity: "O(bytes). Pure scan."
+});
+
+PROBLEMS.push({
+  num: 21, title: "sort — Sort Lines", diff: "easy",
+  family: "Text · Munging",
+  problem: "Sort the lines of input. Default is lexicographic; flags switch to numeric, reverse, by-key, unique, case-insensitive.",
+  intuition: "Most pipeline aggregations need sorted input first — sort + uniq -c is the canonical 'count things'. -k chooses the column, -t the delimiter, -n numeric, -r reverse, -u dedup. Once you have these in muscle memory you can stop reaching for Python for ad-hoc data tasks.",
+  hints: [
+    "sort file → lexicographic.",
+    "sort -n → numeric. -nr → numeric, descending.",
+    "sort -k 2 → sort by 2nd whitespace-separated field.",
+    "sort -t, -k 3,3n data.csv → sort CSV by 3rd column, numeric.",
+    "sort -u → sort + remove duplicates in one pass.",
+    "sort --human-numeric-sort (-h) → understands 1K, 5M, 2G."
+  ],
+  tips: [
+    "Always sort BEFORE uniq — uniq only collapses ADJACENT duplicates.",
+    "For huge files, set LC_ALL=C — switches sort to byte-wise comparison and is dramatically faster.",
+    "sort -R randomises (great for random sampling). shuf does it more efficiently for large files."
+  ],
+  code: `$ sort names.txt
+$ sort -u emails.txt > unique.txt
+$ sort -k 2 -t, data.csv          # by 2nd CSV column
+$ sort -nr scores.txt | head -10  # top 10 numeric
+$ du -sh */ | sort -h             # human-readable sizes
+$ LC_ALL=C sort huge.txt > sorted.txt   # 2× faster on big inputs`,
+  complexity: "O(n log n). External merge sort spills to disk when needed."
+});
+
+PROBLEMS.push({
+  num: 22, title: "uniq — Filter Adjacent Duplicates", diff: "easy",
+  family: "Text · Munging",
+  problem: "Collapse adjacent duplicate lines. Combined with sort, this is the standard pattern for counting unique values.",
+  intuition: "uniq only sees neighbours — two equal lines that aren't adjacent stay separate. So the canonical recipe is `sort | uniq -c | sort -nr` to get a frequency-ranked count.",
+  hints: [
+    "uniq → keep first of each run of duplicates.",
+    "uniq -c → prefix count.",
+    "uniq -d → only print duplicate lines (one per group).",
+    "uniq -u → only print lines that were unique to begin with.",
+    "uniq -i → case-insensitive."
+  ],
+  tips: [
+    "ALWAYS pair with sort first.",
+    "`sort | uniq -c | sort -nr | head` is the most-typed analytics pipeline in shell history.",
+    "For column-aware dedup, use `awk '!seen[$1]++'` (preserves order; one-pass)."
+  ],
+  code: `$ sort access.log | awk '{print $1}' | sort | uniq -c | sort -nr | head
+   1283 192.168.1.10
+    472 10.0.0.4
+    ...
+
+# preserve original order while deduping
+$ awk '!seen[$0]++' file > deduped.txt`,
+  complexity: "O(n) over input. Memory O(unique runs)."
+});
+
+PROBLEMS.push({
+  num: 23, title: "cut — Slice Out Columns", diff: "easy",
+  family: "Text · Munging",
+  problem: "Extract specific bytes / characters / fields from each line. The cheap way to pull a column out of CSV/TSV-like data.",
+  intuition: "When the data is regular (one record per line, fields separated by a single char), cut is faster and simpler than awk. When fields are space-padded or quoted, you need awk or a real parser.",
+  hints: [
+    "cut -d, -f1 → first column of CSV.",
+    "cut -d, -f1,3 → 1st and 3rd columns.",
+    "cut -d, -f2- → from 2nd column to end.",
+    "cut -c 1-10 → first 10 characters.",
+    "cut -f 1 → default delimiter is TAB (great for TSV)."
+  ],
+  tips: [
+    "cut does NOT understand quoted CSV fields. For real CSV use `csvkit` (csvcut) or `mlr`.",
+    "cut -d' ' fails on multiple spaces — switch to awk for whitespace splitting."
+  ],
+  code: `$ cut -d: -f1 /etc/passwd          # all usernames
+$ cut -d, -f1,3 data.csv
+$ cut -c 1-8 logfile               # first 8 chars of each line`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 24, title: "tr — Translate / Squeeze / Delete Characters", diff: "easy",
+  family: "Text · Munging",
+  problem: "Transliterate characters from one set to another, squeeze runs of repeats, or delete characters entirely. Operates on bytes, not lines.",
+  intuition: "tr is the fastest tool for char-level edits — uppercase a stream, swap punctuation for newlines (so you can `sort | uniq`), strip CRs from a Windows file, etc. Two args = mapping; one arg + -d = delete; -s = squeeze runs.",
+  hints: [
+    "tr 'a-z' 'A-Z' → uppercase.",
+    "tr -d '\\r' → strip carriage returns (Windows → Unix line endings).",
+    "tr -s ' ' → squeeze multiple spaces to one.",
+    "tr -c 'a-zA-Z0-9' '\\n' → replace anything not alnum with newline (tokenise!)."
+  ],
+  tips: [
+    "tr only reads from stdin — pipe a file in: `tr ... < file`.",
+    "For multi-byte (UTF-8) operations, tr is unreliable — use sed or perl.",
+    "Combo: `cat poem.txt | tr -c 'a-zA-Z' '\\n' | sort | uniq -c | sort -nr` = word frequencies in 4 commands."
+  ],
+  code: `$ echo "hello" | tr 'a-z' 'A-Z'
+HELLO
+$ tr -d '\\r' < windows.txt > unix.txt
+$ tr -s ' ' < spaced.txt          # collapse spaces
+$ cat poem.txt | tr -c 'a-zA-Z' '\\n' | sort | uniq -c | sort -nr | head`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 25, title: "chmod — Change File Permissions", diff: "easy",
+  family: "Security · Permissions",
+  problem: "Adjust read/write/execute bits for owner (u), group (g), other (o), all (a). Octal form (chmod 755) sets all bits at once; symbolic form (chmod u+x) tweaks individual bits.",
+  intuition: "Each file has 9 perm bits = 3 categories × 3 ops. Octal = three digits where each is r(4) + w(2) + x(1). 755 = rwxr-xr-x = full for owner, read+exec for everyone else. 644 = rw-r--r-- = standard for normal files. 700 = rwx------ = private. 600 = rw------- = private file like an SSH key.",
+  hints: [
+    "chmod 644 file → -rw-r--r--",
+    "chmod 755 dir  → drwxr-xr-x  (dirs need x to be 'enterable')",
+    "chmod +x script.sh → make executable.",
+    "chmod -R o-rwx dir/ → recursively strip all 'other' permissions.",
+    "chmod g+s dir → setgid: new files inherit the dir's group (great for shared project dirs)."
+  ],
+  tips: [
+    "Files: 644. Directories: 755. Secrets: 600. Private dirs: 700. Memorise these four.",
+    "An SSH private key MUST be 600 (or 400) — sshd refuses anything wider.",
+    "Scripts need +x AND a #! shebang — chmod alone isn't enough.",
+    "umask sets the DEFAULT perms for new files — usually 022 (which produces 644 for files)."
+  ],
+  code: `$ chmod 755 deploy.sh
+$ chmod +x deploy.sh                 # same effect, symbolic
+$ chmod 600 ~/.ssh/id_ed25519        # private key
+$ chmod -R go-rwx ~/.ssh             # nuke group/other perms recursively
+$ chmod g+s shared_project/          # setgid on dir`,
+  complexity: "O(1) per file. -R is O(entries)."
+});
+
+PROBLEMS.push({
+  num: 26, title: "chown / chgrp — Change Owner & Group", diff: "easy",
+  family: "Security · Permissions",
+  problem: "Change a file's owner (chown user file), group (chgrp group file or chown :group file), or both at once (chown user:group file).",
+  intuition: "Permissions are about three roles — but those roles are decided by ownership. Move a config file under your user, hand a project dir to a deploy group, fix 'permission denied' after a `cp -p` from a tarball — chown does it. Almost always needs sudo.",
+  hints: [
+    "chown user file → owner only.",
+    "chown :group file → group only (same as chgrp).",
+    "chown user:group file → both.",
+    "chown -R user:group dir/ → recursive.",
+    "chown --reference=ref.txt out.txt → mirror the perms from another file."
+  ],
+  tips: [
+    "After `tar -xf` from a foreign archive, the files often belong to a numeric UID that doesn't exist on your box — fix with `chown -R $USER: dir/`.",
+    "On most distros, only root can `chown` to other users — but you can chown YOUR file to ANOTHER GROUP you're a member of.",
+    "Use `id user` to check what UID/GID a user actually has."
+  ],
+  code: `$ sudo chown alice report.txt
+$ sudo chown alice:devs report.txt
+$ sudo chown -R www-data:www-data /var/www/html
+$ chown --reference=template.txt new.txt`,
+  complexity: "O(1) per file. -R is O(entries)."
+});
+
+PROBLEMS.push({
+  num: 27, title: "sudo / su — Run as Another User", diff: "easy",
+  family: "Security · Permissions",
+  problem: "sudo runs ONE command as another user (root by default). su switches your shell into another user's session entirely.",
+  intuition: "sudo is the modern way: per-command, audited, with fine-grained policy in /etc/sudoers. su is the old way: become someone for the whole session. Use sudo for almost everything; reach for `sudo -i` (interactive root shell) when you have a long admin task.",
+  hints: [
+    "sudo cmd → run cmd as root (asks for YOUR password, not root's).",
+    "sudo -u alice cmd → run as alice instead.",
+    "sudo -i → root login shell (full root env, in /root).",
+    "sudo -s → root shell with your env preserved.",
+    "sudo !! → re-run the previous command with sudo (lifesaver)."
+  ],
+  tips: [
+    "Never share or set a password for the `root` account on modern systems — disable root login, give selected users sudo.",
+    "`sudo -l` lists what the current user is allowed to run with sudo.",
+    "A common safe sudoers entry: `%admin ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart myapp` — narrowly scoped.",
+    "Always use `visudo` to edit /etc/sudoers — syntax-checks before saving so you don't lock yourself out."
+  ],
+  code: `$ sudo apt update
+$ sudo -u postgres psql           # become postgres for one psql session
+$ sudo -i                         # interactive root shell
+$ sudo !!                         # re-run last command as root
+
+# Edit sudoers SAFELY
+$ sudo visudo`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 28, title: "passwd — Change Password", diff: "easy",
+  family: "Security · Permissions",
+  problem: "Change your own password (or another user's, with sudo). Updates /etc/shadow.",
+  intuition: "passwd alone changes YOUR password (asks for old then new). With sudo + a username, it changes someone else's. -l locks an account, -u unlocks, -e expires immediately so the user must change on next login.",
+  hints: [
+    "passwd → change my own password.",
+    "sudo passwd alice → change alice's.",
+    "sudo passwd -l alice → lock the account (can't log in via password).",
+    "sudo passwd -e alice → expire — force change on next login.",
+    "passwd -S alice → status (locked, expired, password set)."
+  ],
+  tips: [
+    "Locking with passwd -l doesn't disable SSH key access — also disable shell or remove from sudoers if you really want them out.",
+    "On systems using SSSD/LDAP/AD, passwd may need `--all` or have to be done via the directory."
+  ],
+  code: `$ passwd
+Changing password for alice.
+Current password:
+New password:
+
+$ sudo passwd bob               # admin sets bob's password
+$ sudo passwd -l bob            # lock bob
+$ sudo passwd -e bob            # force change on next login`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 29, title: "whoami / id / who / w — Who am I, Who is Here", diff: "easy",
+  family: "System · Identity",
+  problem: "Four small commands answering 'whose terminal am I in?' and 'who else is logged in?'.",
+  intuition: "whoami = current effective username. id = full identity (UID, GID, all groups, SELinux context). who = users with active login sessions. w = same as who, plus what they're running and load average.",
+  hints: [
+    "whoami → just the username.",
+    "id → uid=1000(alice) gid=1000(alice) groups=1000(alice),27(sudo)...",
+    "id -nG → just the group names.",
+    "who → list logged-in users (terminal, login time).",
+    "w → who + load + idle + foreground process."
+  ],
+  tips: [
+    "Inside a sudo'd shell, whoami says `root` but `echo $SUDO_USER` reveals who launched it.",
+    "groups (alone) is a shortcut for `id -nG`.",
+    "`last` (separate command) shows the historical login record from /var/log/wtmp."
+  ],
+  code: `$ whoami
+alice
+$ id
+uid=1000(alice) gid=1000(alice) groups=1000(alice),27(sudo),100(users)
+$ who
+alice  pts/0  2026-05-20 09:14 (192.168.1.50)
+$ w
+ 09:42:12 up 12 days, load average: 0.30, 0.42, 0.50
+USER  TTY   FROM           IDLE  WHAT
+alice pts/0 192.168.1.50    0.0s vim`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 30, title: "history — Recall Past Commands", diff: "easy",
+  family: "Shell · Productivity",
+  problem: "Show the shell's command history. Combined with !, !!, !$ shortcuts and Ctrl+R search, you almost never type a long command twice.",
+  intuition: "Bash/zsh keep a rolling history (default 500–10000 lines) in ~/.bash_history / ~/.zsh_history. history shows it numbered. ! references re-run by number; Ctrl+R interactively searches; !!, !$, !* refer to the previous command, its last arg, all args.",
+  hints: [
+    "history → numbered list.",
+    "history | grep ssh → all ssh-related past commands.",
+    "!42 → re-run command #42.",
+    "!! → re-run the previous command.",
+    "!$ → the LAST argument of the previous command.",
+    "Ctrl+R → reverse-incremental search."
+  ],
+  tips: [
+    "export HISTSIZE=10000 HISTFILESIZE=20000 to keep more history.",
+    "export HISTCONTROL=ignoreboth → skip dups and lines starting with a space (great for typing secrets).",
+    "history -d N deletes one entry; history -c clears the whole session."
+  ],
+  code: `$ history | tail
+ 998  cd /var/log
+ 999  grep ERROR syslog
+1000  history | tail
+
+$ !999            # re-run grep ERROR syslog
+$ sudo !!         # last command as root
+$ ls /etc/nginx/nginx.conf
+$ vim !$          # opens /etc/nginx/nginx.conf`,
+  complexity: "O(history size)."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 31, title: "ps — Process Snapshot", diff: "med",
+  family: "Processes · Inspection",
+  problem: "Print a one-shot list of running processes. Different flag conventions (BSD vs SysV) hide a lot of power — ps aux and ps -ef are the two everyday recipes.",
+  intuition: "ps reads /proc and prints one line per process. The columns matter: PID, %CPU, %MEM, VSZ, RSS, STAT, START, TIME, COMMAND. ps aux gives you the BSD-style 'all users + full command line' view; ps -ef the SysV equivalent.",
+  hints: [
+    "ps aux → all processes, all users, BSD style.",
+    "ps -ef → same idea, SysV style.",
+    "ps -ef | grep nginx → quick 'is X running?' check.",
+    "ps aux --sort=-%mem | head → top memory consumers.",
+    "ps -fU alice → all of alice's processes.",
+    "ps -p 1234 -o pid,cmd,etime → custom columns for one PID."
+  ],
+  tips: [
+    "STAT column tells a lot: R=running, S=sleeping, D=uninterruptible (waiting on I/O), Z=zombie, T=stopped.",
+    "pgrep / pkill are a saner way to find / signal processes by name (cards 33).",
+    "For watching load over time, prefer top / htop instead of polling ps."
+  ],
+  code: `$ ps aux | head
+USER PID %CPU %MEM   VSZ   RSS TTY STAT START TIME COMMAND
+root   1  0.0  0.1 22580  9100 ?   Ss   May20 0:42 /sbin/init
+
+$ ps aux --sort=-%cpu | head -10        # top CPU eaters
+$ ps -ef | grep [n]ginx                 # cute trick: avoid matching grep itself
+$ ps -p $$ -o pid,ppid,cmd               # info about THIS shell`,
+  complexity: "O(processes). Reads /proc/[pid]/."
+});
+
+PROBLEMS.push({
+  num: 32, title: "top / htop — Live Process Monitor", diff: "med",
+  family: "Processes · Monitoring",
+  problem: "Refreshing process list with CPU, memory, load, uptime — the live view. htop is the friendlier modern version.",
+  intuition: "Where `ps` is a snapshot, top is a live dashboard. Sort columns, filter, kill, renice — all interactive. htop adds colours, mouse, tree view, easier kill/renice. On any server you administer, install htop on day 1.",
+  hints: [
+    "top: P=sort by CPU, M=sort by memory, T=sort by time, k=kill, r=renice, q=quit.",
+    "top -b -n 1 → batch mode, one snapshot — perfect for scripts and logs.",
+    "htop: F5=tree view, F6=sort, F9=kill, F4=filter.",
+    "load avg = avg runnable processes over 1/5/15 min. > #cores means saturation.",
+    "Press 1 in top to see PER-CPU usage."
+  ],
+  tips: [
+    "If top shows a process at 100%+ CPU, it's using more than one core (top counts each core separately).",
+    "RES (top) ≈ RSS (ps) = real RAM in use. VIRT is virtual address space — usually huge and largely meaningless.",
+    "btop is the prettiest modern alternative if you like graphs.",
+    "atop logs to a file — great forensic tool for 'why was the server slow at 3 AM?'."
+  ],
+  code: `$ top
+$ htop
+$ top -b -n 1 | head -20            # snapshot for a script
+$ pidstat 1 5                       # per-process CPU every 1s for 5s (sysstat)`,
+  complexity: "O(processes) per refresh."
+});
+
+PROBLEMS.push({
+  num: 33, title: "kill / pkill / killall — Signal Processes", diff: "med",
+  family: "Processes · Control",
+  problem: "Send a signal to one or more processes. Default is SIGTERM (15) — polite ask to exit. SIGKILL (9) — non-negotiable termination.",
+  intuition: "Linux IPC is built on signals. TERM lets the program clean up; KILL is the kernel forcibly tearing it down. Always start with TERM. INT is what Ctrl+C sends. HUP traditionally tells daemons to reload config without restarting.",
+  hints: [
+    "kill 1234 → SIGTERM to PID 1234.",
+    "kill -9 1234 → SIGKILL (last resort).",
+    "kill -HUP $(pidof nginx) → tell nginx to reload config.",
+    "pkill -f 'python myapp.py' → kill by full command-line match.",
+    "killall nginx → kill all processes named exactly nginx.",
+    "kill -l → list all signal names + numbers."
+  ],
+  tips: [
+    "If a process won't die with TERM, FIRST check if it's a zombie (STAT=Z) or stuck in D state (uninterruptible I/O). KILL won't help in either case.",
+    "Use pkill -f for python/java apps — the binary is `python`/`java` so killall doesn't match.",
+    "kill 0 → signal the entire process group of the current shell. Sometimes useful in Ctrl+C-resistant scripts."
+  ],
+  code: `$ kill 1234                       # polite TERM
+$ kill -9 1234                    # forceful KILL
+$ kill -HUP $(pidof nginx)        # reload nginx config
+$ pkill -f 'python myapp.py'
+$ killall -u alice                # kill everything alice owns
+$ kill -l                         # signal name table`,
+  complexity: "O(1) per signal."
+});
+
+PROBLEMS.push({
+  num: 34, title: "jobs / bg / fg / & / nohup / disown — Background Jobs", diff: "med",
+  family: "Processes · Control",
+  problem: "Run things in the background, suspend the foreground, resume them, or detach them so they survive logout.",
+  intuition: "Append `&` to launch in the background. Ctrl+Z suspends the foreground. `jobs` lists shell jobs. `bg` resumes a suspended job in the background. `fg` brings it back to the foreground. `nohup` + `&` makes it survive when the terminal closes; `disown` does the same after the fact.",
+  hints: [
+    "long_cmd & → run in background.",
+    "jobs → list this shell's jobs (with [N] numbers).",
+    "fg %1 → bring job 1 to foreground. bg %1 → resume in background.",
+    "Ctrl+Z → suspend current foreground job.",
+    "nohup cmd > out.log 2>&1 & → run, ignore SIGHUP, redirect output.",
+    "disown -h %1 → detach a running job from this shell so logout doesn't kill it."
+  ],
+  tips: [
+    "For anything you might want to come back to LATER from another terminal, prefer tmux or screen — 100× more flexible than nohup.",
+    "& alone DOESN'T survive logout reliably; `nohup … &` or `setsid …` does.",
+    "If you forget to nohup, recover by suspending (Ctrl+Z), `bg`, then `disown -h`."
+  ],
+  code: `$ long_task &                       # background
+[1] 12873
+
+$ jobs
+[1]+ Running   long_task
+
+$ fg %1                            # back to foreground
+^Z                                  # suspend
+$ bg                               # resume in background
+$ disown -h %1                     # let it survive logout
+
+$ nohup ./serve.sh > app.log 2>&1 &`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 35, title: "df / du — Disk Usage", diff: "med",
+  family: "System · Disks",
+  problem: "df shows free space per FILESYSTEM. du shows used space per DIRECTORY/FILE. Two questions, two tools.",
+  intuition: "df reads from the kernel's mounted-filesystem table — instant. du recursively walks directory trees and sums file sizes — slow on big trees but exact. Together they answer 'why is my disk full?'.",
+  hints: [
+    "df -h → human-readable mounted filesystems.",
+    "df -i → inode usage (you can run out of inodes before bytes!).",
+    "du -sh dir/ → total size of dir, human-readable.",
+    "du -sh */ | sort -h → biggest immediate subdirs.",
+    "du -h --max-depth=1 / 2>/dev/null | sort -h → top-level breakdown of /.",
+    "ncdu → interactive du replacement (TUI). Killer for finding waste."
+  ],
+  tips: [
+    "df reports apparent FS usage; du reports allocated bytes — they often differ on sparse files / deduped FS.",
+    "If df says full but du says little is used, look for DELETED files held open by a process: `lsof | grep deleted`.",
+    "ncdu is the right tool 90% of the time you're hunting for big stuff.",
+    "Be careful with du on /proc and /sys — exclude them or get garbage."
+  ],
+  code: `$ df -h
+Filesystem  Size  Used  Avail Use% Mounted on
+/dev/sda1   100G   72G    23G  77%  /
+
+$ du -sh ~/Downloads
+3.4G  /home/alice/Downloads
+
+$ du -h --max-depth=1 / 2>/dev/null | sort -h | tail
+$ ncdu /                              # interactive`,
+  complexity: "df: O(1). du: O(entries)."
+});
+
+PROBLEMS.push({
+  num: 36, title: "free / vmstat / uptime — Memory & Load", diff: "med",
+  family: "System · Monitoring",
+  problem: "free → memory snapshot. vmstat → memory + CPU + I/O over time. uptime → load average + how long since boot.",
+  intuition: "Linux aggressively caches files in RAM, so 'used' looks scary; the number that matters is 'available'. Load average above #cores means there's a queue. vmstat surfaces swap pressure (si/so) and I/O wait (wa) — the numbers that actually predict bad days.",
+  hints: [
+    "free -h → human-readable memory.",
+    "free -m → in MB.",
+    "Look at AVAILABLE (not 'free') — it includes reclaimable cache.",
+    "vmstat 1 → 1-second sample. Watch `wa` (I/O wait) and `si/so` (swap in/out).",
+    "uptime → load avg = mean runnable + uninterruptible procs over 1/5/15 min."
+  ],
+  tips: [
+    "If swap is being used (si/so > 0 in vmstat), you have memory pressure RIGHT NOW.",
+    "Linux reports 'used = total − free − buffers − cache'. If you don't subtract buffers/cache, you'll panic for no reason.",
+    "Load average of 8 on an 8-core box is fine. On a 2-core box it's a fire.",
+    "sar (sysstat) records this stuff continuously — install it on any real server."
+  ],
+  code: `$ free -h
+              total   used   free   shared  buff/cache   available
+Mem:          15Gi   3.0Gi  9.5Gi  120Mi   3.0Gi        12Gi
+Swap:         2.0Gi  0B     2.0Gi
+
+$ vmstat 1 5
+$ uptime
+ 14:22:17 up 12 days, load average: 0.42, 0.55, 0.60`,
+  complexity: "O(1) per sample."
+});
+
+PROBLEMS.push({
+  num: 37, title: "uname / lsb_release / hostnamectl — System Info", diff: "med",
+  family: "System · Identity",
+  problem: "Tell you what kernel and distro you're on. The first thing you check on a new box.",
+  intuition: "uname -a is universally available across all Unix-likes. lsb_release / /etc/os-release / hostnamectl give the distro name and version, useful for picking the right install commands.",
+  hints: [
+    "uname -a → kernel, hostname, arch, version.",
+    "uname -r → kernel release only.",
+    "uname -m → architecture (x86_64, aarch64, …).",
+    "cat /etc/os-release → distro identity (machine-readable).",
+    "hostnamectl → hostname + chassis + kernel + OS in one block (systemd)."
+  ],
+  tips: [
+    "/etc/os-release is the most-portable way to detect distro in scripts.",
+    "uname -m matters a lot when picking binaries (arm64 vs amd64).",
+    "On macOS, uname works but lsb_release does not — use sw_vers."
+  ],
+  code: `$ uname -a
+Linux api-01 6.5.0-15-generic #15-Ubuntu SMP x86_64 GNU/Linux
+$ uname -r
+6.5.0-15-generic
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 24.04 LTS"
+ID=ubuntu
+VERSION_ID="24.04"
+$ hostnamectl`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 38, title: "date / cal / hwclock — Time", diff: "med",
+  family: "System · Time",
+  problem: "Print the current date/time in any format you want. cal prints calendars. hwclock reads/writes the hardware RTC.",
+  intuition: "date is mostly used inside scripts: `date +%Y-%m-%d` for filenames, `date -d 'yesterday'` to compute timestamps, `date -u` for UTC. Linux servers should run UTC; convert to local in display only.",
+  hints: [
+    "date → 'Sat May 24 14:00:00 UTC 2026'.",
+    "date +%Y-%m-%d → 2026-05-24.",
+    "date +%s → epoch seconds.",
+    "date -d '2026-01-01 +90 days' → date arithmetic.",
+    "date -u → UTC.",
+    "TZ=America/New_York date → one-off TZ override."
+  ],
+  tips: [
+    "date +%Y%m%d-%H%M%S is the safe filename-friendly stamp.",
+    "BSD/macOS date has different flags (-v, -j) — scripts that work on Linux often break on macOS.",
+    "For ISO 8601: date -Is (or --iso-8601=seconds) — pleasant and unambiguous."
+  ],
+  code: `$ date
+Sat May 24 14:30:12 UTC 2026
+$ date +%Y%m%d-%H%M%S
+20260524-143012
+$ date -d 'yesterday' +%Y-%m-%d
+2026-05-23
+$ TZ=Asia/Kolkata date
+$ cal -3                          # last/this/next month`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 39, title: "env / export / set / unset — Environment Variables", diff: "med",
+  family: "Shell · Environment",
+  problem: "Inspect and modify the environment. export X=val makes a variable visible to child processes. env runs a command with a controlled environment.",
+  intuition: "A process inherits its parent's environment. `X=val cmd` sets X just for cmd. `export X=val` sets X for the current shell AND every child it spawns. `set` shows shell variables and functions; `env` shows just exported environment.",
+  hints: [
+    "export PATH=$PATH:/opt/bin → add to PATH.",
+    "X=hello cmd → cmd sees X without polluting the shell.",
+    "env → list exported environment.",
+    "env -i bash → start a clean shell with NO inherited env (great for repro).",
+    "unset X → remove X. unset -f fn → remove a function."
+  ],
+  tips: [
+    "export is permanent for THIS shell only. For new shells, put it in ~/.bashrc / ~/.zshrc / ~/.profile.",
+    "PATH with a trailing colon implicitly includes the current dir — security hazard.",
+    "env -i is the cleanest way to debug 'works in my shell, fails in cron' problems."
+  ],
+  code: `$ export PATH=$PATH:$HOME/bin
+$ export EDITOR=vim
+$ HOST=db.local PORT=5432 ./connect.sh   # one-shot env
+
+$ env | grep -i locale
+$ env -i bash --noprofile --norc         # minimal shell for repro
+$ unset DEBUG`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 40, title: "alias / unalias — Command Shortcuts", diff: "med",
+  family: "Shell · Productivity",
+  problem: "Define a short name that expands into a longer command. Aliases live in the current shell; persist them in ~/.bashrc / ~/.zshrc.",
+  intuition: "Aliases are pure text substitution at the start of the command. They can't take arguments mid-command — for that, write a function. The right aliases are the ones that match how YOU work; copying someone else's dotfiles wholesale rarely sticks.",
+  hints: [
+    "alias ll='ls -lah'",
+    "alias gs='git status'",
+    "alias gco='git checkout'",
+    "alias .. ='cd ..'   (some shells)",
+    "alias → list all current aliases.",
+    "unalias ll → remove."
+  ],
+  tips: [
+    "Aliases ONLY expand at the start of a command. `sudo ll` won't expand ll. Solution: `alias sudo='sudo '` (trailing space).",
+    "For anything with arguments inside, use a shell function: `g() { git \"$@\"; }`.",
+    "Don't override common commands with destructive flags — `alias rm='rm -i'` makes you sloppy on systems where the alias isn't set."
+  ],
+  code: `# in ~/.bashrc / ~/.zshrc
+alias ll='ls -lah'
+alias gs='git status -sb'
+alias ..='cd ..'
+alias ports='ss -tulpn'
+alias myip="curl -s ifconfig.me"
+
+# function (handles arguments)
+mkcd() { mkdir -p "$1" && cd "$1"; }`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 41, title: "tar — Archive Files", diff: "med",
+  family: "Files · Compression",
+  problem: "Bundle many files into a single archive (and optionally compress). tar -czf creates a .tar.gz; tar -xzf extracts.",
+  intuition: "tar = 'tape archive' (it really did target tapes). It just concatenates files with headers — no compression by itself. Tack on z (gzip), j (bzip2), or J (xz) and you get a compressed archive. The two patterns to memorise: `tar -czf out.tgz dir/` and `tar -xzf in.tgz`.",
+  hints: [
+    "tar -czf out.tar.gz files...   → create gzipped archive.",
+    "tar -xzf in.tar.gz             → extract.",
+    "tar -tzf in.tar.gz             → LIST contents (don't extract).",
+    "tar -xzf in.tar.gz -C /tmp/    → extract to a different dir.",
+    "tar -czf out.tar.gz --exclude='node_modules' dir/",
+    "tar -czf - dir/ | ssh host 'tar -xzf - -C /backup/'   → stream over SSH."
+  ],
+  tips: [
+    "Mnemonic: 'eXtract Ze Files' = xzf; 'Compress Ze Files' = czf.",
+    "Always TEST with -t before extracting an unknown archive (could clobber your CWD).",
+    "Use --strip-components=1 to drop the top-level dir on extract.",
+    "For very large archives, `pigz` (parallel gzip) replaces gzip and uses all your cores: `tar -c dir | pigz > out.tar.gz`."
+  ],
+  code: `$ tar -czf project.tar.gz project/
+$ tar -tzf project.tar.gz | head            # peek inside
+$ tar -xzf project.tar.gz -C /tmp/
+$ tar -czf - project/ | ssh backup 'cat > project.tgz'
+$ tar -czf snap.tar.gz --exclude='*.log' --exclude='node_modules' .`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 42, title: "gzip / gunzip / zcat / xz / bzip2 — Single-File Compression", diff: "med",
+  family: "Files · Compression",
+  problem: "Compress a single file in place. gzip is fast and ubiquitous; xz compresses tighter but slower; bzip2 sits in between.",
+  intuition: "Use gzip when speed matters (HTTP, log rotation). Use xz when size matters (releases, big tarballs). zcat / xzcat / bzcat read compressed files without decompressing to disk — chain them into pipelines.",
+  hints: [
+    "gzip file → file.gz (deletes original).",
+    "gzip -k file → keep original.",
+    "gunzip file.gz → reverse.",
+    "zcat file.gz → print decompressed contents to stdout.",
+    "zgrep / zless → grep / less directly on .gz files.",
+    "xz -T0 → use all cores."
+  ],
+  tips: [
+    "Compression ratio: xz > bzip2 > gzip. Speed: gzip ≫ bzip2 > xz.",
+    "Logrotate uses gzip by default — fine for streaming, rotate with -9 if you keep them long-term.",
+    "pigz (parallel gzip) is a drop-in replacement and 4-8× faster on multi-core machines."
+  ],
+  code: `$ gzip access.log                  # → access.log.gz, original deleted
+$ gzip -k -9 dump.sql              # keep + max compression
+$ zcat access.log.gz | grep ERROR
+$ zless big.log.gz                 # paginate compressed
+$ xz -T0 backup.tar                # parallel xz`,
+  complexity: "O(bytes). Compression is CPU-bound."
+});
+
+PROBLEMS.push({
+  num: 43, title: "zip / unzip — Cross-platform Archives", diff: "med",
+  family: "Files · Compression",
+  problem: "ZIP is the de facto cross-platform format. zip creates a .zip (combine + compress). unzip extracts. Use when sharing with non-Unix folks.",
+  intuition: "Linux natives reach for tar.gz; the rest of the world reaches for zip. zip stores per-file compression so unzip can extract a single entry without scanning the whole archive — handy for big bundles.",
+  hints: [
+    "zip out.zip a b c → archive 3 files.",
+    "zip -r out.zip dir/ → recursive.",
+    "zip -e out.zip files... → password-protect.",
+    "unzip in.zip → extract here.",
+    "unzip -l in.zip → list contents.",
+    "unzip in.zip -d /tmp/ → extract to a target dir."
+  ],
+  tips: [
+    "ZIP encryption (-e) is weak by default. For real secrecy, encrypt with `gpg` or `7z -p` (AES-256).",
+    "unzip handles legacy CP437/UTF-8 quirks unevenly — use `-O UTF-8` when you see mojibake.",
+    "Symlinks and Unix permissions don't fully survive a roundtrip through zip — prefer tar for Linux-to-Linux."
+  ],
+  code: `$ zip -r project.zip project/
+$ zip -e secrets.zip secret.txt
+$ unzip -l archive.zip
+$ unzip -O UTF-8 windows_cp437.zip`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 44, title: "Redirection: > >> < 2> &> | tee — Wiring Streams", diff: "med",
+  family: "Shell · I/O",
+  problem: "Connect command outputs to files and other commands. Once you internalise these operators you compose pipelines instead of writing scripts.",
+  intuition: "Every process has 3 streams. > rewires stdout, 2> rewires stderr, &> rewires both. Pipe (|) wires stdout into the next process's stdin. tee splits a stream so it goes to BOTH a file and the pipeline's next stage.",
+  hints: [
+    "cmd > out.txt → overwrite stdout to file.",
+    "cmd >> out.txt → APPEND.",
+    "cmd 2> err.txt → just stderr.",
+    "cmd > all.log 2>&1 → both streams to one file (POSIX form).",
+    "cmd &> all.log → bash-only short form.",
+    "cmd1 | cmd2 → pipe.",
+    "cmd | tee log.txt → also write to log.txt while passing through.",
+    "cmd | tee -a log.txt → append, don't overwrite."
+  ],
+  tips: [
+    "ORDER MATTERS: `cmd > x 2>&1` and `cmd 2>&1 > x` do different things. The first redirects stderr→stdout AFTER stdout was redirected (so both go to x). The second is the opposite.",
+    "tee with sudo is the trick to write to root-owned files: `echo line | sudo tee -a /etc/file`.",
+    "&> only works in bash/zsh, not in /bin/sh. Use the explicit `> x 2>&1` for POSIX scripts."
+  ],
+  code: `$ cmd > out.log              # stdout → file (overwrite)
+$ cmd >> out.log             # append
+$ cmd 2> err.log             # stderr → file
+$ cmd > all.log 2>&1         # both → one file
+$ cmd1 | cmd2                # pipe
+$ make 2>&1 | tee build.log  # see AND save
+$ echo line | sudo tee -a /etc/hosts`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 45, title: "xargs — Build Command Lines from Stdin", diff: "med",
+  family: "Shell · Composition",
+  problem: "Read items from stdin and run a command with them as arguments. Bridges 'list of things' (find, grep) and 'do something with each' (rm, cp, mv, curl).",
+  intuition: "Some commands accept many file args at once; xargs gathers stdin into batches and invokes them. Use -0 / -print0 for filenames with spaces. Use -P for parallelism. Use -I for placeholders when the item isn't at the end of the command.",
+  hints: [
+    "find . -name '*.tmp' | xargs rm",
+    "Use -print0 / -0 to handle spaces & newlines: find . -name '*.tmp' -print0 | xargs -0 rm",
+    "xargs -n1 → one item per call.",
+    "xargs -P 8 → run up to 8 invocations in parallel.",
+    "xargs -I {} mv {} archive/ → use {} as a placeholder anywhere in the command.",
+    "echo 'a b c' | xargs → strips and concatenates, useful as `tr` replacement."
+  ],
+  tips: [
+    "ALWAYS use -0 with find for paths — unquoted filenames with spaces will break wildly.",
+    "GNU parallel is xargs on steroids — better progress and error handling.",
+    "If a command doesn't read filenames as args (`docker rm` does, `tar -xzf` doesn't), xargs won't help."
+  ],
+  code: `$ find . -name '*.tmp' -print0 | xargs -0 rm -v
+$ ls *.jpg | xargs -P 4 -I {} convert {} -resize 50% small/{}
+$ cat hosts.txt | xargs -n1 -P 10 -I {} curl -sI https://{} | head -1`,
+  complexity: "O(items)."
+});
+
+PROBLEMS.push({
+  num: 46, title: "watch — Run a Command Repeatedly", diff: "med",
+  family: "Shell · Productivity",
+  problem: "Re-run a command at a fixed interval, replacing the output in place. Like a cheap dashboard.",
+  intuition: "When you'd otherwise type `up-arrow, enter` ten times to see something change, use `watch`. The default interval is 2 seconds; -n changes it. -d highlights diffs. -t hides the header for screen-real-estate sake.",
+  hints: [
+    "watch cmd → re-run every 2 sec.",
+    "watch -n 1 cmd → every 1 sec.",
+    "watch -d cmd → highlight differences.",
+    "watch -c cmd → preserve ANSI colours.",
+    "watch 'free -h && df -h | head'  → multiple commands (quote them)."
+  ],
+  tips: [
+    "Use single-quotes around composite commands so the shell doesn't expand them once and pass a static string.",
+    "For continuous logs, `tail -f` is better than `watch tail`.",
+    "watch is great for kubectl: `watch -n2 kubectl get pods`."
+  ],
+  code: `$ watch -n 1 'free -h'
+$ watch -d 'ls -l /var/spool/postfix/incoming | wc -l'
+$ watch -c 'kubectl get pods --all-namespaces'`,
+  complexity: "O(cmd) per refresh."
+});
+
+PROBLEMS.push({
+  num: 47, title: "tee — Split a Pipeline to a File and Onward", diff: "med",
+  family: "Shell · I/O",
+  problem: "Read stdin, write to one or more files, AND pass it through stdout. Lets you save and continue in the same pipeline.",
+  intuition: "Without tee, `cmd > log.txt` consumes the output and pipelines stop. With tee, you keep one foot in the file and one in the pipeline — and you can write to multiple files at once. Bonus: tee with sudo is the standard way to write a root-owned file from a normal-user shell.",
+  hints: [
+    "cmd | tee out.log",
+    "cmd | tee -a out.log    → append.",
+    "cmd | tee a.log b.log   → write to multiple files at once.",
+    "echo line | sudo tee /etc/something    → privileged write.",
+    "cmd | tee >(grep ERROR > errors.log) >(wc -l > count.log) > all.log    → fan-out (bash process substitution)."
+  ],
+  tips: [
+    "Forgetting -a is a classic 'I just lost my logs' bug — tee overwrites by default.",
+    "tee with process substitution is one of the most underused power features of bash."
+  ],
+  code: `$ make 2>&1 | tee build.log | grep -i warning
+$ echo "127.0.0.1 dev.local" | sudo tee -a /etc/hosts
+$ curl -fsSL https://get.docker.com | tee install.sh | sudo bash`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 48, title: "sed — Stream Editor (basics)", diff: "med",
+  family: "Text · Munging",
+  problem: "Read text from stdin, apply a regex-driven script, write to stdout. The default verb is `s/pattern/replacement/` — substitution.",
+  intuition: "sed is grep + replace. `sed 's/foo/bar/g'` substitutes globally on every line. -i edits files in place. -n + p prints only matches. Address ranges restrict where the script runs (`1,10s/...`, `/start/,/end/d`).",
+  hints: [
+    "sed 's/foo/bar/g' file → substitute on stdout.",
+    "sed -i 's/foo/bar/g' file → in-place edit.",
+    "sed -i.bak ... → in-place AND keep a .bak.",
+    "sed -n '5,10p' file → print lines 5-10 (act like head/tail middle slice).",
+    "sed '/^#/d' file → delete comment lines.",
+    "sed -E 's/([a-z]+)/<\\1>/g' → ERE + capture groups."
+  ],
+  tips: [
+    "macOS BSD sed is INCOMPATIBLE with GNU on -i (needs an empty arg: `sed -i '' ...`). Use perl -i if you need cross-platform.",
+    "Use a delimiter other than / when the pattern contains slashes: `sed 's|/usr/bin|/opt/bin|g'`.",
+    "For complex multi-line edits, awk or Python is friendlier than sed."
+  ],
+  code: `$ sed 's/error/ERROR/g' app.log
+$ sed -i.bak 's/localhost/db.prod/g' config.yml
+$ sed -n '/BEGIN/,/END/p' big.txt        # print between markers
+$ sed '/^$/d' file                       # remove blank lines
+$ sed -E 's/^([0-9]+),/[\\1] /' data.csv`,
+  complexity: "O(bytes · regex)."
+});
+
+PROBLEMS.push({
+  num: 49, title: "awk — Pattern-Action Text Processor", diff: "med",
+  family: "Text · Munging",
+  problem: "A tiny programming language for text. Splits each line into fields ($1, $2, ...) and runs your script on lines that match a pattern. The right tool when cut + sed run out of room.",
+  intuition: "awk is `{pattern} { action }` repeated for every line. Built-in vars: NR (line number), NF (field count), $0 (full line), $1..$N (fields), FS (input delimiter), OFS (output delimiter). With BEGIN { } and END { } blocks you can compute totals, averages, group-bys — full stream analytics in one line.",
+  hints: [
+    "awk '{print $1}' file → first column.",
+    "awk -F, '$3 > 100 {print}' data.csv → conditional row filter.",
+    "awk '{ s += $1 } END { print s }' → sum a column.",
+    "awk '!seen[$0]++' file → preserve-order dedup.",
+    "awk -v threshold=100 '$2 > threshold' → pass shell vars in.",
+    "awk 'NR==FNR{a[$1]; next} ($1 in a)' set.txt big.txt → join-style filter."
+  ],
+  tips: [
+    "Default field separator is any run of whitespace — perfect for ps, ls, df output.",
+    "OFS isn't applied unless you assign to a field. Trick: `awk -v OFS=, '{$1=$1; print}'` retabs.",
+    "For huge data jobs, mawk and gawk differ in speed (mawk is faster, gawk has more features)."
+  ],
+  code: `$ awk '{print $1, $5}' /etc/passwd        # default FS=whitespace, won't help here
+$ awk -F: '{print $1, $7}' /etc/passwd     # username + shell
+$ awk -F, '$3 > 1000 {print $1, $3}' sales.csv
+$ awk '{ s += $2 } END { printf "avg=%.2f\\n", s/NR }' nums.txt
+$ awk 'NR==FNR { ip[$1]=1; next } ($1 in ip)' bad_ips.txt access.log`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 50, title: "diff / patch / colordiff — Compare Files", diff: "med",
+  family: "Text · Comparison",
+  problem: "diff prints the line-level difference between two files. patch applies that diff to a third file. The original code-review and version-control machinery.",
+  intuition: "diff -u produces 'unified' output (the format Git uses). patch reads a unified diff and edits the target file accordingly. For directories, diff -r recursively compares trees.",
+  hints: [
+    "diff a b → terse classic output.",
+    "diff -u a b → unified diff (the Git format).",
+    "diff -r dir1 dir2 → recursive directory diff.",
+    "diff -q dir1 dir2 → only say 'differ', no contents.",
+    "patch < changes.patch → apply diff to the file in CWD.",
+    "patch -p1 < deep.patch → strip 1 leading path component."
+  ],
+  tips: [
+    "Use `colordiff` or `git diff --no-index a b` for nicer colours.",
+    "diff exits 0 (same), 1 (different), 2 (error) — useful in scripts.",
+    "For complex 3-way merges, use `diff3` or just open both files in `vimdiff`."
+  ],
+  code: `$ diff old.txt new.txt
+$ diff -u old.txt new.txt > change.patch
+$ patch < change.patch
+$ diff -rq dir1 dir2 | grep -v '^Only in'
+$ git diff --no-index old.txt new.txt    # nicer coloured diff`,
+  complexity: "O(n + m + edits)."
+});
+
+
+PROBLEMS.push({
+  num: 51, title: "ping — Test Reachability", diff: "med",
+  family: "Network · Diagnostics",
+  problem: "Send ICMP Echo Requests to a host, measure round-trip time, and check if it's reachable. The first 5 seconds of any network debug.",
+  intuition: "ping is layer-3 reachability + RTT in one command. If ping fails: routing or firewall. If ping works but app fails: layer 4/7. Many cloud providers block ICMP — `ping` failing isn't proof of unreachability there; use `nc -zv host port` instead.",
+  hints: [
+    "ping host → keep going until Ctrl+C.",
+    "ping -c 4 host → send 4 then stop.",
+    "ping -i 0.2 host → 200ms interval (needs root for <1s on some boxes).",
+    "ping -W 1 host → wait at most 1s per packet.",
+    "ping6 / ping -6 → IPv6.",
+    "ping -f host → flood (root only)."
+  ],
+  tips: [
+    "Cloud LBs / WAFs often drop ICMP — use `curl -I https://host` or `nc -zv host port` to test reachability through them.",
+    "Sustained packet loss > 1-2% on a wired link is a problem; on Wi-Fi up to 5% is normal.",
+    "mtr (card 56) is ping + traceroute combined and far more diagnostic."
+  ],
+  code: `$ ping -c 4 google.com
+PING google.com (142.250.190.78): 56 data bytes
+64 bytes from 142.250.190.78: icmp_seq=1 ttl=116 time=14.2 ms
+...
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+
+$ ping -c 4 -W 1 db.internal
+$ nc -zv db.internal 5432         # alternative when ICMP is blocked`,
+  complexity: "O(packets)."
+});
+
+PROBLEMS.push({
+  num: 52, title: "curl — Transfer URLs", diff: "med",
+  family: "Network · HTTP",
+  problem: "Make HTTP / HTTPS / FTP / etc requests and print the response. The most-used HTTP client on the planet — for testing APIs, downloading files, scripting webhooks.",
+  intuition: "curl is THE universal client. -i shows headers + body, -I just headers, -L follows redirects, -X selects method, -H adds headers, -d sends a body, -u handles basic auth. Once you know these 7, you can hit any REST API.",
+  hints: [
+    "curl https://api.example.com → GET, body to stdout.",
+    "curl -fsSL url → fail-fast, silent, show errors, follow redirects (the universal 'install script' pattern).",
+    "curl -I url → just response headers (HEAD).",
+    "curl -X POST -H 'Content-Type: application/json' -d '{\"name\":\"x\"}' url → JSON POST.",
+    "curl -u user:pass url → basic auth.",
+    "curl -o out.bin url → save body to file.",
+    "curl -w '%{http_code} %{time_total}\\n' -o /dev/null -s url → just the status + timing."
+  ],
+  tips: [
+    "Always pair -f with -sS in scripts — fails on HTTP errors and shows curl errors but not progress.",
+    "For downloads, prefer `curl -fLO` (preserves the URL filename) or wget.",
+    "HTTPie (`http`) is a friendlier alternative for daily use; curl is the universal one.",
+    "Use --resolve to test against a specific IP without changing /etc/hosts."
+  ],
+  code: `$ curl -fsSL https://api.github.com/zen
+$ curl -I https://example.com
+$ curl -X POST -H 'Content-Type: application/json' \\
+       -d '{"q":"linux"}' https://api.example.com/search
+$ curl -fLO https://example.com/file.tgz
+$ curl -w '%{http_code} %{time_total}s\\n' -o /dev/null -s https://example.com`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 53, title: "wget — Non-interactive Downloader", diff: "med",
+  family: "Network · HTTP",
+  problem: "Download files (and websites) from HTTP/HTTPS/FTP. Like curl but with batteries included for recursive site mirroring and resumable downloads.",
+  intuition: "Use wget for downloads, curl for API calls. wget defaults are exactly what a download wants: save to a file, retry, resume. -c continues an interrupted download. -r recursively mirrors a site.",
+  hints: [
+    "wget url → save to URL's filename in CWD.",
+    "wget -O out.bin url → save with a chosen name.",
+    "wget -c url → continue an interrupted download.",
+    "wget -r --no-parent --convert-links url → mirror a site for offline reading.",
+    "wget -i urls.txt → download every URL listed in a file."
+  ],
+  tips: [
+    "wget --limit-rate=1m → throttle bandwidth so you don't saturate the link.",
+    "If you need cookies, headers, or POST: use curl. If you need recursive mirroring: wget.",
+    "On macOS, wget isn't installed by default — `brew install wget`."
+  ],
+  code: `$ wget https://example.com/file.tgz
+$ wget -c https://example.com/big.iso          # resume
+$ wget -O ubuntu.iso 'https://releases.ubuntu.com/24.04/ubuntu-24.04-desktop-amd64.iso'
+$ wget -i list.txt                              # batch download
+$ wget -r -np -k --random-wait https://docs.example.com/`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 54, title: "ssh — Secure Shell", diff: "med",
+  family: "Network · Remote Access",
+  problem: "Open an interactive shell on a remote machine, or run a single command remotely. Authenticated with public-key crypto. The backbone of remote Linux administration.",
+  intuition: "ssh is encrypted telnet + auth. With keys (~/.ssh/id_ed25519), it's password-less. With ~/.ssh/config you give hosts short names + per-host options. With -L / -R / -D you forward ports — turning ssh into a poor man's VPN.",
+  hints: [
+    "ssh user@host → interactive shell.",
+    "ssh user@host 'cmd' → run remote command, return output.",
+    "ssh-keygen -t ed25519 → make a modern keypair.",
+    "ssh-copy-id user@host → install your pubkey on the remote.",
+    "ssh -i key.pem user@host → use a non-default key.",
+    "ssh -L 8080:db:5432 host → local port 8080 → host's view of db:5432.",
+    "ssh -D 1080 host → SOCKS proxy through host."
+  ],
+  tips: [
+    "Always use ed25519 keys for new pairs — RSA 4096 is fine but slower; smaller keys are weak.",
+    "~/.ssh/config is a productivity multiplier. Define `Host prod` once, then `ssh prod` everywhere.",
+    "Disable password auth on production servers — `PasswordAuthentication no` in sshd_config.",
+    "ssh -A forwards your local ssh agent — convenient but a real risk on untrusted hops."
+  ],
+  code: `$ ssh-keygen -t ed25519 -C "alice@laptop"
+$ ssh-copy-id alice@bastion.example.com
+$ ssh alice@bastion 'uptime; df -h | head'
+$ ssh -L 5432:db.internal:5432 bastion        # tunnel
+# then point your local psql at localhost:5432
+
+# ~/.ssh/config
+Host prod
+    HostName api.example.com
+    User alice
+    IdentityFile ~/.ssh/id_ed25519
+    Port 2222`,
+  complexity: "O(bytes transferred)."
+});
+
+PROBLEMS.push({
+  num: 55, title: "scp / sftp — Secure File Copy", diff: "med",
+  family: "Network · File Transfer",
+  problem: "scp copies files over SSH (cp-like syntax). sftp is an interactive ftp-like client over SSH. Both encrypt in flight using your existing SSH keys.",
+  intuition: "scp is great for one-shot copies but doesn't resume and is slower than rsync. sftp is friendlier when you don't know the target paths upfront. For anything bigger than a few hundred MB, jump to rsync (card 70).",
+  hints: [
+    "scp file user@host:/path/ → upload.",
+    "scp user@host:/path/file . → download.",
+    "scp -r dir/ user@host:/path/ → recursive.",
+    "scp -P 2222 → non-default SSH port (capital P!).",
+    "sftp user@host → interactive: ls / cd / get / put / mget / mput / bye."
+  ],
+  tips: [
+    "OpenSSH 9+ deprecates scp's protocol — `scp` now defaults to SFTP under the hood. Behaviour is mostly identical.",
+    "scp doesn't show progress for many files. Use rsync -avP for visible progress.",
+    "For big transfers between two servers, run rsync FROM one of them rather than tunneling through your laptop."
+  ],
+  code: `$ scp report.pdf alice@host:/tmp/
+$ scp alice@host:/var/log/app.log .
+$ scp -r project/ alice@host:~/code/
+
+$ sftp alice@host
+sftp> cd /tmp
+sftp> put dump.sql
+sftp> get backup.tgz
+sftp> bye`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 56, title: "traceroute / mtr — Path to a Host", diff: "med",
+  family: "Network · Diagnostics",
+  problem: "traceroute shows every router (hop) between you and a target by sending packets with increasing TTL. mtr is traceroute + ping in a continuously updating dashboard.",
+  intuition: "TTL=1 makes the FIRST hop drop the packet and reply 'time exceeded'. TTL=2 makes the second hop reply, and so on — that's how you reconstruct the path. mtr loops this and shows packet loss and RTT per hop, so you can spot WHICH hop is the problem.",
+  hints: [
+    "traceroute host → list hops + latency.",
+    "traceroute -I host → use ICMP (often passes more firewalls).",
+    "traceroute -T -p 443 host → TCP traceroute (rare drop).",
+    "mtr host → live dashboard.",
+    "mtr -r -c 100 host → batch report (great for tickets)."
+  ],
+  tips: [
+    "Network engineers love an mtr report attached to a bug. It says where the loss happens, not just 'it's slow'.",
+    "Asymmetric routing means the path back may differ — check from BOTH ends.",
+    "* * * usually means a hop blocks ICMP, not packet loss."
+  ],
+  code: `$ traceroute google.com
+$ traceroute -T -p 443 google.com
+$ mtr -r -c 50 google.com           # 50 cycles, then a static report`,
+  complexity: "O(hops · packets)."
+});
+
+PROBLEMS.push({
+  num: 57, title: "dig / nslookup / host — DNS Lookups", diff: "med",
+  family: "Network · DNS",
+  problem: "Query DNS — translate hostnames to IPs and back. dig is the powerful one; host is the quick one; nslookup is the legacy one.",
+  intuition: "dig gives you the full DNS response — answer, authority, additional sections, with TTL. Use +short for one-line results. Specify a record type (A, AAAA, MX, TXT, NS, CNAME, SOA, ANY) and a server to query (`@8.8.8.8`).",
+  hints: [
+    "dig example.com → A records (IPv4).",
+    "dig example.com AAAA → IPv6.",
+    "dig example.com MX → mail servers.",
+    "dig example.com TXT → SPF / DKIM / verification records.",
+    "dig +short example.com → just the answers.",
+    "dig @8.8.8.8 example.com → query Google DNS specifically.",
+    "dig -x 8.8.8.8 → reverse lookup."
+  ],
+  tips: [
+    "Always check WHICH resolver is being used: `cat /etc/resolv.conf`. Surprising answers often come from a stale local cache or DHCP-pushed DNS.",
+    "TTL low? Expect propagation delays after changes. TTL high? Old answers persist for hours.",
+    "`getent hosts host` follows the FULL nsswitch chain (hosts file + DNS + mDNS) — useful for `why does Java resolve this differently?'."
+  ],
+  code: `$ dig +short example.com
+$ dig example.com MX
+$ dig @1.1.1.1 example.com TXT
+$ dig -x 8.8.8.8
+
+$ host github.com
+$ getent hosts api.internal`,
+  complexity: "O(query)."
+});
+
+PROBLEMS.push({
+  num: 58, title: "ip / ifconfig — Network Interfaces", diff: "med",
+  family: "Network · Configuration",
+  problem: "Inspect and configure network interfaces, addresses, routes, and links. `ip` (iproute2) is the modern tool; `ifconfig` is legacy but still common in older howtos.",
+  intuition: "Three things to know: interfaces (`ip link`), addresses (`ip addr`), and routes (`ip route`). Once you can read all three, debugging 'why is this network broken' gets a lot less mystical.",
+  hints: [
+    "ip a → addresses on every interface (alias for `ip addr show`).",
+    "ip r → routing table (alias for `ip route show`).",
+    "ip link set eth0 up/down → enable/disable an interface.",
+    "ip addr add 10.0.0.5/24 dev eth0 → add an IP.",
+    "ip route add default via 10.0.0.1 → set default gateway.",
+    "ifconfig → legacy view, often missing on new minimal images."
+  ],
+  tips: [
+    "Configuring with `ip` is NOT persistent — reboots reset it. Persistent config lives in NetworkManager / netplan / systemd-networkd / /etc/network/interfaces depending on distro.",
+    "For permanent changes on Ubuntu 24, edit /etc/netplan/*.yaml + `sudo netplan apply`.",
+    "`ip -c` (or alias `ipa='ip -c a'`) gives nicer coloured output."
+  ],
+  code: `$ ip -c a
+$ ip r
+default via 192.168.1.1 dev wlan0
+192.168.1.0/24 dev wlan0 proto kernel scope link src 192.168.1.50
+
+$ sudo ip link set eth0 up
+$ sudo ip addr add 10.0.0.5/24 dev eth0
+$ sudo ip route add default via 10.0.0.1`,
+  complexity: "O(interfaces / routes)."
+});
+
+PROBLEMS.push({
+  num: 59, title: "ss / netstat — Sockets & Listening Ports", diff: "med",
+  family: "Network · Sockets",
+  problem: "List sockets — what's listening, what's connected, in what state. ss is the modern fast version; netstat is legacy and slower.",
+  intuition: "Reach for `ss -tulpn` reflexively. -t TCP, -u UDP, -l listening, -p process owning each socket, -n numeric (don't resolve names — much faster). It's the single command that answers 'what's running on what port?'.",
+  hints: [
+    "ss -tulpn → all listening TCP+UDP sockets with PIDs.",
+    "ss -tnp → established TCP connections with PIDs.",
+    "ss -s → summary counts (sockets in each state).",
+    "ss -tn state established '( dport = :443 )' → fancy filter expressions.",
+    "lsof -iTCP -sTCP:LISTEN -P -n → alternative view via lsof."
+  ],
+  tips: [
+    "ss is a 1:1 replacement for netstat and 10× faster on busy boxes. Build the muscle memory.",
+    "If you see TIME_WAIT in huge numbers, that's normal after lots of short-lived connections — usually fine to ignore.",
+    "Combine with watch for a live picker: `watch -n1 'ss -tn state established | head'`."
+  ],
+  code: `$ sudo ss -tulpn
+Netid State  Local Address:Port  Peer Address:Port Process
+tcp   LISTEN 0.0.0.0:22         0.0.0.0:*         users:(("sshd",pid=812))
+tcp   LISTEN 127.0.0.1:5432     0.0.0.0:*         users:(("postgres",pid=1024))
+
+$ ss -tnp                            # established
+$ ss -s                              # summary
+$ sudo lsof -iTCP -sTCP:LISTEN -P -n`,
+  complexity: "O(sockets)."
+});
+
+PROBLEMS.push({
+  num: 60, title: "nc (netcat) — Swiss Army Knife of Network I/O", diff: "med",
+  family: "Network · Tools",
+  problem: "Read or write raw data over TCP/UDP. Test ports, build a one-line chat server, transfer files, debug protocols.",
+  intuition: "nc is the lowest-level practical network tool. -l makes it listen, -z probes (no data), -v adds chatter, -u switches to UDP. With it you can scan ports, hand-craft HTTP requests, ship files between machines.",
+  hints: [
+    "nc -zv host 22 → check if port 22 is open.",
+    "nc -zv host 1-1024 → port scan a range.",
+    "nc -l 9999 → listen on TCP 9999 (server side).",
+    "nc host 9999 → connect to host:9999 (client side).",
+    "nc -lv 5000 < file → serve a file. nc host 5000 > file → receive it.",
+    "echo -e 'GET / HTTP/1.0\\r\\n\\r\\n' | nc example.com 80 → hand-craft HTTP."
+  ],
+  tips: [
+    "There are TWO ncs: traditional (Hobbit) and OpenBSD. Some flags differ. ncat (from nmap) is the powerful modern one.",
+    "Use `nc -zv` to test whether a firewall is blocking you when ICMP is silent.",
+    "For SSL, nc doesn't speak it — use `openssl s_client -connect host:443`."
+  ],
+  code: `$ nc -zv db.internal 5432
+Connection to db.internal 5432 port [tcp/postgresql] succeeded!
+
+# one-line chat
+host A: nc -l 9000
+host B: nc A 9000
+
+# file transfer
+A: nc -l 5000 > out.tgz
+B: nc -N A 5000 < in.tgz`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 61, title: "apt / dnf / yum / pacman — Package Managers", diff: "med",
+  family: "Packages",
+  problem: "Install, update, remove software. Different distros, same job. Knowing apt and dnf covers ~90% of Linux servers in the wild.",
+  intuition: "Each package manager: (1) keeps an INDEX of available packages from configured repositories, (2) RESOLVES dependencies, (3) DOWNLOADS + verifies + installs. Always run the index update before the install.",
+  hints: [
+    "apt update && apt install pkg → Debian/Ubuntu (refresh index, install).",
+    "apt upgrade → upgrade installed packages.",
+    "apt remove pkg / apt purge pkg → remove (purge also wipes config).",
+    "apt search pkg / apt show pkg → search / show details.",
+    "dnf install pkg / dnf upgrade → Fedora/RHEL/Rocky.",
+    "yum is the older RHEL tool; dnf supersedes it.",
+    "pacman -Syu → Arch full system upgrade.",
+    "pacman -S pkg → install. -R pkg → remove."
+  ],
+  tips: [
+    "On Ubuntu, prefer `apt` interactively but `apt-get` in scripts (more stable output).",
+    "For Python / Node / Ruby, use the LANGUAGE'S manager (pip, npm, gem) — distro packages are often months stale.",
+    "Always `apt update` BEFORE installing, otherwise you may pull a stale package.",
+    "`apt list --installed | grep ...` finds what you have installed. dnf list installed is the equivalent."
+  ],
+  code: `# Debian / Ubuntu
+$ sudo apt update && sudo apt install -y htop ripgrep
+$ sudo apt upgrade
+$ sudo apt remove --purge nginx
+
+# Fedora / RHEL / Rocky
+$ sudo dnf install htop
+$ sudo dnf upgrade
+
+# Arch
+$ sudo pacman -Syu
+$ sudo pacman -S htop`,
+  complexity: "O(packages · download size)."
+});
+
+PROBLEMS.push({
+  num: 62, title: "dpkg / rpm — Low-level Package Tools", diff: "med",
+  family: "Packages",
+  problem: "Install / inspect / remove individual .deb (dpkg) or .rpm (rpm) files. The layer below apt/dnf — useful when you have a downloaded package or need to query metadata.",
+  intuition: "apt/dnf RESOLVE deps and call dpkg/rpm under the hood. Use dpkg/rpm to inspect what you have installed, list files belonging to a package, or install a single .deb/.rpm without going through the index.",
+  hints: [
+    "dpkg -i pkg.deb → install (deps NOT auto-resolved). Follow with `apt -f install` to fix.",
+    "dpkg -l → list installed packages.",
+    "dpkg -L pkg → list files installed by pkg.",
+    "dpkg -S /path/to/file → which package owns this file?",
+    "rpm -ivh pkg.rpm → install (RHEL/Fedora).",
+    "rpm -qa → list installed.",
+    "rpm -qf /path → which package owns this file."
+  ],
+  tips: [
+    "If `dpkg -i` errors with missing deps, run `sudo apt-get install -f` and apt fixes it.",
+    "Never use rpm/dpkg to upgrade core stuff that yum/apt manages — you'll desync the system.",
+    "`dpkg -S $(which curl)` is the fastest way to confirm what package put a binary in PATH."
+  ],
+  code: `$ sudo dpkg -i ./teams.deb
+$ sudo apt-get install -f          # fix missing deps
+
+$ dpkg -L nginx | head             # what files does nginx own?
+$ dpkg -S /usr/bin/curl
+curl: /usr/bin/curl
+
+$ rpm -qa | grep python
+$ rpm -qf /usr/bin/python3`,
+  complexity: "O(package size)."
+});
+
+PROBLEMS.push({
+  num: 63, title: "systemctl — Manage Services (systemd)", diff: "med",
+  family: "System · Services",
+  problem: "Start / stop / enable / disable services on every modern Linux. systemd replaced SysV init years ago — knowing systemctl is mandatory.",
+  intuition: "Each service is a .service unit file. systemctl is the controller. The four daily verbs are start, stop, restart, status. The two boot-time verbs are enable (start at boot) and disable (don't). Add reload to send SIGHUP / re-read config without dropping connections.",
+  hints: [
+    "systemctl status nginx → state, recent logs, PID.",
+    "systemctl start / stop / restart / reload nginx",
+    "systemctl enable nginx → start at boot.",
+    "systemctl enable --now nginx → enable AND start now.",
+    "systemctl daemon-reload → reload unit FILES after editing them.",
+    "systemctl list-units --type=service → all services.",
+    "systemctl --failed → only failed services."
+  ],
+  tips: [
+    "Always run `systemctl daemon-reload` after editing /etc/systemd/system/*.service.",
+    "User services live in `systemctl --user` — same commands, no root needed, per-user.",
+    "Logs for a unit: `journalctl -u nginx -f` (card 64).",
+    "On older RHEL or container distros, you may have `service` instead — same idea, fewer features."
+  ],
+  code: `$ sudo systemctl status nginx
+$ sudo systemctl restart nginx
+$ sudo systemctl enable --now nginx
+$ sudo systemctl daemon-reload
+$ systemctl list-units --type=service --state=running
+$ systemctl --failed`,
+  complexity: "O(units)."
+});
+
+PROBLEMS.push({
+  num: 64, title: "journalctl — Read Systemd Logs", diff: "med",
+  family: "System · Logs",
+  problem: "Query the systemd journal — a structured, indexed, binary log store that captures everything from kernel messages to per-service stdout/stderr.",
+  intuition: "journalctl replaces grep through /var/log/* for systemd-managed services. Filter by unit (-u), time (--since), priority (-p), follow live (-f), output JSON (-o json) for scripting.",
+  hints: [
+    "journalctl -u nginx → all nginx logs.",
+    "journalctl -u nginx -f → follow live.",
+    "journalctl -u nginx --since '1 hour ago'",
+    "journalctl --since today -p err → today's errors and worse.",
+    "journalctl -k → kernel messages only (= dmesg).",
+    "journalctl -b → since current boot. -b -1 → previous boot.",
+    "journalctl --disk-usage → how big is the journal?"
+  ],
+  tips: [
+    "If --since 'today' returns nothing on a fresh system, the journal might be in volatile mode (RAM-only). Set Storage=persistent in /etc/systemd/journald.conf.",
+    "Use `-o json-pretty` to feed structured logs to jq.",
+    "Cap journal size: `journalctl --vacuum-size=1G`."
+  ],
+  code: `$ journalctl -u nginx -f
+$ journalctl -u nginx --since '10 min ago' -p warning
+$ journalctl -k --since yesterday      # kernel msgs since yesterday
+$ journalctl -b -1 -p err              # errors during the previous boot
+$ journalctl -u nginx -o json | jq '.MESSAGE'`,
+  complexity: "O(matched records). Indexed by time/unit."
+});
+
+PROBLEMS.push({
+  num: 65, title: "crontab / cron / at — Schedule Jobs", diff: "med",
+  family: "System · Scheduling",
+  problem: "cron runs commands at recurring schedules. at runs a one-off job at a specific time. systemd timers are the modern alternative.",
+  intuition: "Each user has a crontab — a file of `min hour day month weekday command` lines. cron reads it and runs commands at the matching time. at queues a single command. Both are battle-tested for decades.",
+  hints: [
+    "crontab -e → edit (current user's).",
+    "crontab -l → list.",
+    "crontab -r → REMOVE entire crontab (be careful!).",
+    "Format: `m h dom mon dow cmd` (5 time fields + command).",
+    "Examples: `0 3 * * *` daily at 03:00; `*/5 * * * *` every 5 min; `0 9 * * 1-5` weekdays at 09:00.",
+    "echo 'cmd' | at 22:00 → run at 10 pm.",
+    "atq / atrm → list / remove pending at-jobs."
+  ],
+  tips: [
+    "cron runs commands with a MINIMAL environment — set PATH and any vars at the top of the crontab or use absolute paths.",
+    "Always log what cron does: `0 3 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1`.",
+    "For anything you'd want logs, retries, dependencies for, prefer systemd timers over cron.",
+    "Test with `MAILTO=you@example.com` so cron emails on stderr — most setups silently drop output."
+  ],
+  code: `# crontab -e
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=ops@example.com
+
+0 3 * * *  /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+*/5 * * * * /usr/local/bin/healthcheck.sh
+0 9 * * 1-5 /usr/local/bin/morning_report.sh
+
+# one-shot
+$ echo 'tar -czf /backup/dump.tgz /data' | at 22:00`,
+  complexity: "O(jobs)."
+});
+
+PROBLEMS.push({
+  num: 66, title: "lsof — List Open Files", diff: "med",
+  family: "System · Inspection",
+  problem: "Show every open file descriptor system-wide — including sockets, pipes, regular files. Answers 'who has this file open?', 'what's listening on port X?', 'why is this disk full?'.",
+  intuition: "On Linux EVERYTHING is a file. Sockets are files, the terminal is a file, /dev/null is a file. lsof inspects the kernel's file-descriptor tables and prints them. -p PID, -i NETWORK, -u USER, +D DIR — pick what you need.",
+  hints: [
+    "lsof -i :443 → what's using port 443?",
+    "lsof -p 1234 → all FDs of PID 1234.",
+    "lsof -u alice → all files alice has open.",
+    "lsof +D /var/log → all files open under /var/log (slow but exhaustive).",
+    "lsof | grep deleted → files that were deleted but still held open (the classic 'df full but du says empty' detector)."
+  ],
+  tips: [
+    "lsof is SLOW because it scans every /proc/[pid]/fd. Be specific.",
+    "For port-only questions, `ss -tulpn` is faster.",
+    "fuser is a smaller, simpler cousin: `fuser /var/log/foo.log` says who has that one file open."
+  ],
+  code: `$ sudo lsof -i :443
+$ sudo lsof -p $(pidof nginx | awk '{print $1}')
+$ sudo lsof | grep deleted | head           # held-open deleted files
+$ sudo lsof +D /var/log/nginx`,
+  complexity: "O(open FDs)."
+});
+
+PROBLEMS.push({
+  num: 67, title: "strace / ltrace — Trace Syscalls / Library Calls", diff: "med",
+  family: "System · Debugging",
+  problem: "strace prints every system call a process makes. ltrace prints every dynamic-library call. The right tools when 'why doesn't this thing work?' becomes 'WHAT is it doing?'.",
+  intuition: "When you can't reproduce in a debugger, attach strace and watch reality. -f follows children, -e narrows to one syscall family, -c summarises. ltrace is similar but for shared-library calls — useful for 'why is this fast/slow?' on a binary.",
+  hints: [
+    "strace ./prog → run + trace.",
+    "strace -p 1234 → attach to a running PID.",
+    "strace -f → follow forked children.",
+    "strace -e openat,read ./prog → filter to specific syscalls.",
+    "strace -c ./prog → summary counts + time per syscall.",
+    "ltrace ./prog → same idea, library calls."
+  ],
+  tips: [
+    "strace adds 50%+ overhead — don't run it on prod under load.",
+    "If you need to know which file the program tried to open, `-e openat -e access -e stat` is gold.",
+    "`strace -f -e network ./prog` is the easy way to see all network activity from an opaque binary.",
+    "perf trace (newer) is far less intrusive than strace for production debugging."
+  ],
+  code: `$ strace ls > /dev/null 2>&1 | head
+$ strace -e openat -f -p 1234 2>&1 | head
+$ strace -c ./prog
+% time   seconds  usecs/call    calls    syscall
+ 38.21  0.012345          12     1029     read
+ 25.04  0.008100           8     1012     write
+...
+$ ltrace ./prog 2>&1 | head`,
+  complexity: "Substantial overhead — O(syscalls)."
+});
+
+PROBLEMS.push({
+  num: 68, title: "fdisk / parted / lsblk / blkid — Disks & Partitions", diff: "med",
+  family: "System · Storage",
+  problem: "Inspect block devices, view / edit partition tables, identify filesystem types and UUIDs. The pre-flight check before mounting or formatting.",
+  intuition: "lsblk gives you a tree (disks → partitions → mountpoints). blkid tells you what filesystem is on each. fdisk and parted edit partition tables — destructive, so always read twice.",
+  hints: [
+    "lsblk → tree of block devices.",
+    "lsblk -f → adds filesystem + UUID + mountpoint.",
+    "blkid → UUIDs and FS types per partition.",
+    "sudo fdisk -l → list partition tables.",
+    "sudo fdisk /dev/sdb → interactive partition editor.",
+    "sudo parted /dev/sdb → scriptable alternative (also handles GPT)."
+  ],
+  tips: [
+    "PARTITION EDITS ARE DESTRUCTIVE. Take a backup, double-check the device path, and prefer GPT (parted) for any disk over 2 TB.",
+    "Use UUIDs in /etc/fstab, not /dev/sdX names — sda might become sdb after a reboot.",
+    "lsblk -t shows topology including alignment / scheduler — useful for SSD tuning."
+  ],
+  code: `$ lsblk -f
+NAME   FSTYPE FSVER LABEL UUID                                 MOUNTPOINTS
+sda
+├─sda1 vfat   FAT32 EFI   ABCD-1234                            /boot/efi
+├─sda2 ext4   1.0   root  76b27c2c-...                          /
+└─sda3 swap   1     swap  9c9f...                              [SWAP]
+
+$ sudo fdisk -l /dev/sdb
+$ sudo blkid | head`,
+  complexity: "O(1) for inspection."
+});
+
+PROBLEMS.push({
+  num: 69, title: "mount / umount / fstab — Filesystems", diff: "med",
+  family: "System · Storage",
+  problem: "Attach (mount) and detach (umount) filesystems. /etc/fstab automates mounting at boot. Master this and adding / moving disks stops being scary.",
+  intuition: "Linux's filesystem is a single tree; mounting splices a device into a path. /etc/fstab is the persistent, declarative version. mount alone shows what's currently mounted; mount -a re-applies fstab.",
+  hints: [
+    "mount → list current mounts.",
+    "sudo mount /dev/sdb1 /mnt → ad-hoc mount.",
+    "sudo mount -t ntfs-3g /dev/sdc1 /mnt → specify FS type.",
+    "sudo umount /mnt → unmount (target must not be in use).",
+    "sudo mount -a → mount everything in /etc/fstab.",
+    "fstab columns: device  mountpoint  fs-type  options  dump  pass."
+  ],
+  tips: [
+    "Use UUID= or LABEL= in fstab, never /dev/sdX (unstable across reboots).",
+    "Add `nofail,x-systemd.device-timeout=5s` for non-critical disks so a missing one won't fail the boot.",
+    "Test new fstab entries with `mount -a` BEFORE rebooting — boot failure on bad fstab requires recovery mode.",
+    "`umount -l` (lazy) detaches even when files are open, but is rarely a good idea on prod."
+  ],
+  code: `$ sudo mount /dev/sdb1 /mnt
+$ sudo umount /mnt
+
+# /etc/fstab
+UUID=76b27c2c-... /        ext4  defaults                 0 1
+UUID=ABCD-1234    /boot/efi vfat  defaults                 0 2
+//nas/share       /mnt/nas  cifs  credentials=/root/.cifs,nofail 0 0
+
+$ sudo mount -a                # apply fstab safely`,
+  complexity: "O(1) per mount."
+});
+
+PROBLEMS.push({
+  num: 70, title: "rsync — Smart File Sync", diff: "med",
+  family: "Network · File Transfer",
+  problem: "Sync files between two locations (local↔local or local↔remote-over-SSH), copying ONLY the differences. The right answer for backups, deployments, and big copies.",
+  intuition: "rsync compares src and dst, transmits only changed blocks, is restartable, preserves attributes — and runs over plain SSH so no special server needed. The flag set you'll use 95% of the time is `-avzhP`.",
+  hints: [
+    "rsync -av src/ dst/ → archive mode (preserves perms, times, symlinks). Trailing slash on src copies CONTENTS; no slash copies the dir.",
+    "-z compresses in-flight (helpful over slow links).",
+    "-P shows progress + allows resuming.",
+    "-h human-readable sizes.",
+    "--delete removes files on dst that no longer exist on src (mirror mode — DANGEROUS, test with --dry-run first).",
+    "--exclude='*.log' --exclude='.git/' to skip noise.",
+    "rsync -av src/ user@host:/path/ → push to remote.",
+    "rsync -av user@host:/path/ dst/ → pull from remote."
+  ],
+  tips: [
+    "ALWAYS rsync --dry-run -a -v first to see what will happen, especially with --delete.",
+    "The trailing-slash-on-src rule trips up everyone exactly once. Memorise it.",
+    "For VERY large initial transfers, tar | ssh | tar can be faster than rsync (no checksumming on the first run).",
+    "rsync over SSH respects ~/.ssh/config — set your jumphosts there, not in --rsh."
+  ],
+  code: `$ rsync -avzhP src/ dst/
+$ rsync -avzhP --delete src/ dst/                # mirror — be careful
+$ rsync -avzhP --exclude='node_modules' src/ user@host:/srv/app/
+$ rsync -avzhP -e 'ssh -p 2222' user@host:/var/log/ ./logs/
+$ rsync -avzh --dry-run --delete src/ dst/        # preview a destructive sync`,
+  complexity: "O(changed bytes + checksumming)."
+});
+
+
+PROBLEMS.push({
+  num: 71, title: "iptables / nftables / ufw — Firewalls", diff: "med",
+  family: "Security · Network",
+  problem: "Filter traffic at the kernel. iptables is the classic; nftables is its modern replacement; ufw / firewalld are friendly front-ends.",
+  intuition: "The Linux kernel has hooks at every stage of packet processing (PREROUTING, INPUT, FORWARD, OUTPUT, POSTROUTING). iptables/nftables write rules into those hooks. ufw lets you say 'allow 22' without learning the chain model. Start with ufw on a server and graduate when you need fine control.",
+  hints: [
+    "ufw enable → activate the firewall.",
+    "ufw allow 22/tcp → allow SSH.",
+    "ufw allow from 10.0.0.0/24 to any port 5432 → allow private subnet to Postgres.",
+    "ufw deny 80 → block HTTP.",
+    "ufw status verbose → what's allowed.",
+    "iptables -L -n -v → list rules with byte counters (legacy view).",
+    "nft list ruleset → modern equivalent."
+  ],
+  tips: [
+    "ALWAYS allow your SSH port BEFORE enabling the firewall on a remote box. The classic locked-out-of-the-server mistake.",
+    "Cloud providers often have their OWN firewall (security groups). Both apply — your packet must survive both.",
+    "Host firewall + cloud security group + WAF: defense in depth.",
+    "Persist rules: `iptables-save > /etc/iptables/rules.v4`, or use a service like netfilter-persistent / firewalld."
+  ],
+  code: `# UFW (Ubuntu / Debian friendly)
+$ sudo ufw allow OpenSSH
+$ sudo ufw allow 80/tcp
+$ sudo ufw allow from 10.0.0.0/24 to any port 5432
+$ sudo ufw enable
+$ sudo ufw status verbose
+
+# raw iptables (legacy / scripts)
+$ sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+$ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+$ sudo iptables -A INPUT -j DROP
+
+# nftables (modern)
+$ sudo nft add rule inet filter input tcp dport 22 accept`,
+  complexity: "O(rules) per packet."
+});
+
+PROBLEMS.push({
+  num: 72, title: "openssl — Cryptography Toolkit", diff: "med",
+  family: "Security · Crypto",
+  problem: "Generate keys, view certificates, debug TLS, hash files, encrypt blobs. The Swiss army knife of crypto on Linux.",
+  intuition: "openssl is huge — but you only need ~5 sub-commands daily: `s_client` (test TLS), `x509` (read certs), `genpkey` / `req` (make keys + CSRs), `dgst` (hash), `enc` (encrypt). Memorise these and most cert-related work becomes fluent.",
+  hints: [
+    "openssl s_client -connect host:443 -servername host → talk TLS, see the chain.",
+    "openssl x509 -in cert.pem -noout -text → human-readable cert.",
+    "openssl x509 -in cert.pem -noout -enddate → expiry only.",
+    "openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048",
+    "openssl req -new -key key.pem -out csr.pem -subj '/CN=example.com'",
+    "openssl dgst -sha256 file → SHA-256 hash.",
+    "openssl rand -base64 32 → 32 bytes of random base64."
+  ],
+  tips: [
+    "openssl s_client | openssl x509 -noout -dates is the one-liner cert-expiry check.",
+    "Use `-servername` (SNI) when testing — modern hosts won't return a useful cert without it.",
+    "For everyday secret encryption, `age` and `gpg` are friendlier than `openssl enc`."
+  ],
+  code: `$ openssl s_client -connect example.com:443 -servername example.com </dev/null 2>/dev/null \\
+  | openssl x509 -noout -dates
+notBefore=Apr  1 00:00:00 2026 GMT
+notAfter =Jul  1 23:59:59 2026 GMT
+
+$ openssl x509 -in /etc/letsencrypt/live/example.com/fullchain.pem -noout -text | head
+$ openssl rand -base64 32
+$ openssl dgst -sha256 large_file.bin`,
+  complexity: "Depends on operation. Hashes are fast; key generation is CPU-bound."
+});
+
+PROBLEMS.push({
+  num: 73, title: "tmux / screen — Persistent Terminal Sessions", diff: "med",
+  family: "Shell · Productivity",
+  problem: "Detach a terminal session and reattach later — even after you log out or your network drops. Plus split panes / multiple windows in one terminal.",
+  intuition: "An SSH session that drops kills your shell. Run your work inside tmux instead, and the work survives — just `tmux attach` from anywhere. tmux is the modern one (recommended); screen is the classic.",
+  hints: [
+    "tmux → start a new session.",
+    "tmux new -s work → named session.",
+    "tmux ls → list sessions.",
+    "tmux attach -t work → re-attach.",
+    "Inside: Ctrl-b d = detach. Ctrl-b c = new window. Ctrl-b , = rename. Ctrl-b % = vertical split. Ctrl-b \" = horizontal split. Ctrl-b o = next pane.",
+    "tmux kill-session -t work → kill it."
+  ],
+  tips: [
+    "Always use tmux on remote boxes for anything longer than 30 seconds — connection drops happen.",
+    "~/.tmux.conf can rebind Ctrl-b to Ctrl-a (closer to home row), enable mouse, add a status bar.",
+    "byobu is a friendly tmux/screen front-end with sensible defaults — great for newcomers."
+  ],
+  code: `$ tmux new -s deploy
+# … do work …
+# Ctrl-b d  to detach
+
+$ ssh laptop          # disconnect, log out, etc.
+$ tmux ls
+deploy: 3 windows (created Sat May 24 ...)
+$ tmux attach -t deploy
+
+# split panes inside tmux
+# Ctrl-b %     -> vertical split
+# Ctrl-b "     -> horizontal split
+# Ctrl-b o     -> next pane`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 74, title: "vim / nano — Terminal Text Editors", diff: "med",
+  family: "Shell · Editors",
+  problem: "Edit a file in the terminal. nano is the friendly one (commands shown at the bottom). vim is the powerful one (modal editing, infinite power once you climb the learning cliff).",
+  intuition: "Every Linux user must know at least one. nano is enough for config-file edits. vim is worth learning because it's everywhere (every server, every container) and once internalised it's the fastest editor on the planet.",
+  hints: [
+    "nano file → edit. Ctrl+O save, Ctrl+X exit, Ctrl+W search, Ctrl+\\ replace.",
+    "vim file → edit. Modes: NORMAL (default, navigation), INSERT (i to enter, Esc to leave), VISUAL (v).",
+    "vim essentials: i insert, Esc, :w write, :q quit, :wq save+quit, :q! discard.",
+    "vim navigation: h j k l = ←↓↑→. w next word, b prev word. gg top, G bottom. /pattern search, n next.",
+    "vim editing: dd delete line, yy yank line, p paste, u undo, Ctrl-r redo. .  repeat last change."
+  ],
+  tips: [
+    "Run `vimtutor` once. Painful for 20 minutes, life-changing forever.",
+    "If you find yourself in vim by accident, ESC ESC :q! gets out without saving.",
+    "Most production servers have `vi`/`vim` and `nano`. If you only learn one, learn vim — sooner or later you'll be on a box without nano.",
+    "neovim is a modern fork with better defaults; helix is a non-modal alternative worth checking out."
+  ],
+  code: `# nano (beginner-friendly)
+$ nano /etc/nginx/nginx.conf
+# Ctrl+O = save, Ctrl+X = exit
+
+# vim — first 10 commands
+i        # enter INSERT mode
+Esc      # back to NORMAL
+:w       # save
+:q       # quit
+:wq      # save + quit
+:q!      # quit, discard changes
+dd       # delete current line
+yy       # yank (copy) line
+p        # paste
+/error   # search "error", n for next`,
+  complexity: "Editor speed."
+});
+
+PROBLEMS.push({
+  num: 75, title: "git — Version Control (essentials)", diff: "med",
+  family: "Dev · Version Control",
+  problem: "Track changes to files, branch in parallel, merge work, push/pull from remotes. The de-facto VCS for everything.",
+  intuition: "Git stores SNAPSHOTS, not diffs. Every commit is a content-addressed object. Knowing add/commit/push/pull/branch/merge covers 90% of daily flow. The other 10% you Google when needed.",
+  hints: [
+    "git init / git clone url",
+    "git status / git diff / git log --oneline",
+    "git add file / git add -p (review hunk by hunk)",
+    "git commit -m 'msg'",
+    "git push / git pull",
+    "git branch / git switch -c feature / git switch main",
+    "git merge feature / git rebase main",
+    "git stash / git stash pop"
+  ],
+  tips: [
+    "Always git status before committing — see what's actually staged.",
+    "git diff --staged shows what WILL be committed.",
+    "Force pushes (`git push --force`) destroy history. Use `--force-with-lease` for the safer version.",
+    "git log --graph --oneline --decorate --all is a great pretty log."
+  ],
+  code: `$ git clone git@github.com:org/repo.git && cd repo
+$ git switch -c feature/api-pagination
+$ vim src/api.py
+$ git add -p && git commit -m 'feat(api): add cursor pagination'
+$ git push -u origin feature/api-pagination
+
+# review history
+$ git log --graph --oneline --decorate --all | head`,
+  complexity: "O(diff)."
+});
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 76, title: "Bash Scripting Basics — variables, conditions, loops", diff: "hard",
+  family: "Shell · Scripting",
+  problem: "Move from typing commands to writing reusable scripts: variables, quoting, if/while/for, functions, exit codes, set -euo pipefail.",
+  intuition: "Bash is a quirky language but knowing its basic forms and a couple of safety flags lets you automate 80% of the small-scale ops work. Always start scripts with `set -euo pipefail` (exit on errors, unset vars, broken pipes) — it makes failures fail loudly.",
+  hints: [
+    "Shebang: `#!/usr/bin/env bash`",
+    "Safety: `set -euo pipefail`",
+    "Variables: `name=value` (no spaces around =). Use \"$name\" everywhere — quoting prevents word-splitting.",
+    "Conditions: `if [[ -f file ]]; then ... elif [[ $x -gt 10 ]]; then ... else ... fi`",
+    "Loops: `for f in *.log; do ... done` and `while read -r line; do ... done < file`",
+    "Functions: `name() { ...; return 0; }`",
+    "Exit codes: 0 = success, non-zero = failure. `$?` is the last."
+  ],
+  tips: [
+    "[[ ]] (bash) is safer than [ ] (POSIX) — supports regex with =~, no word-splitting.",
+    "Always `\"$var\"` quote variables. The number of bash bugs caused by unquoted vars is staggering.",
+    "shellcheck is your friend. Run it on every script. It catches 90% of latent bugs.",
+    "For anything > ~200 lines, switch to Python."
+  ],
+  code: `#!/usr/bin/env bash
+set -euo pipefail
+
+THRESHOLD=\${1:-90}        # default 90 if not provided
+
+usage() { printf 'Usage: %s [threshold]\\n' "$0"; }
+
+check_disk() {
+  local pct
+  pct=$(df --output=pcent / | tr -dc '0-9')
+  if (( pct > THRESHOLD )); then
+    printf 'WARN: root is %d%% full\\n' "$pct" >&2
+    return 1
+  fi
+  printf 'OK: root is %d%%\\n' "$pct"
+}
+
+main() {
+  [[ $# -gt 1 ]] && { usage; exit 2; }
+  check_disk
+}
+main "$@"`,
+  complexity: "Depends on what the script does."
+});
+
+PROBLEMS.push({
+  num: 77, title: "Process Substitution & Subshells — <(cmd) >(cmd) (cmd)", diff: "hard",
+  family: "Shell · Composition",
+  problem: "Treat a command's output as a temporary file (`<(cmd)`), or a file as something to write into a command's stdin (`>(cmd)`). Compare two outputs side by side, fan out a stream into multiple analysers.",
+  intuition: "Bash creates a `/dev/fd/N` virtual file that streams the command's I/O. So `diff <(sort a) <(sort b)` runs sort on each input and feeds the two streams to diff as if they were files. `tee >(grep ERROR > err.log) >(wc -l > count.log) > all.log` fans output into THREE consumers.",
+  hints: [
+    "<(cmd) → process substitution that produces input.",
+    ">(cmd) → process substitution that consumes input.",
+    "(cmd)  → SUBSHELL. Variables set inside don't escape. CWD changes don't escape. Useful for isolated work.",
+    "Bash/zsh only — not POSIX sh."
+  ],
+  tips: [
+    "diff <(cmd1) <(cmd2) is the killer use case — compare anything that produces stdout.",
+    "tee with >() is the cleanest fan-out pattern in bash.",
+    "Anything inside `(...)` runs in a subshell, so `cd /tmp && do_work` doesn't affect the parent shell."
+  ],
+  code: `$ diff <(curl -s prod/api/list) <(curl -s staging/api/list)
+$ join <(sort users.csv) <(sort orders.csv)
+
+# fan-out: keep raw, AND extract errors, AND count lines, all from one source
+$ make 2>&1 | tee >(grep -i error > errors.log) \\
+                   >(wc -l > linecount.txt) \\
+                   > full.log
+
+# subshell — doesn't pollute the outer env
+$ (cd /tmp && tar -czf - foo)  > foo.tgz
+$ pwd                          # still wherever you were`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 78, title: "Trap, Signals & Cleanup — trap 'cmd' EXIT", diff: "hard",
+  family: "Shell · Scripting",
+  problem: "Run a cleanup function automatically when the script exits — successful, failed, or killed. The right way to remove temp files, kill children, release locks.",
+  intuition: "trap registers a handler for a signal. The magic signal is EXIT — it fires on any exit path. Set it ONCE at the top of the script and you've covered every cleanup case in one place.",
+  hints: [
+    "trap 'cleanup' EXIT → cleanup runs no matter how the script ends.",
+    "trap '' INT → ignore Ctrl+C.",
+    "trap - SIGNAL → reset to default handler.",
+    "Pair with `mktemp` for safe temp dirs: `tmp=$(mktemp -d); trap 'rm -rf \"$tmp\"' EXIT`."
+  ],
+  tips: [
+    "Always trap EXIT before creating any temp resource. Otherwise an `exit` in the middle leaks it.",
+    "If your script forks long-running children, trap also kills them: `trap 'kill 0' EXIT`.",
+    "`set -e` + trap on ERR is a great combo — log line numbers on failure: `trap 'echo failed at line $LINENO' ERR`."
+  ],
+  code: `#!/usr/bin/env bash
+set -euo pipefail
+
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+trap 'echo "FAILED at line $LINENO" >&2' ERR
+
+curl -sSL https://example.com/data.tgz -o "$TMP/data.tgz"
+tar -xzf "$TMP/data.tgz" -C "$TMP/extracted"
+process "$TMP/extracted"
+# tmpdir auto-cleaned even if process() throws`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 79, title: "find -exec vs xargs — Acting on Many Files Safely", diff: "hard",
+  family: "Filesystem · Composition",
+  problem: "Apply a command to every match. `find -exec` is built in; `xargs` is more flexible (parallelism, batching). Each has subtle gotchas around special filenames.",
+  intuition: "With find -exec ... {} \\;, find runs the command ONCE PER MATCH (slow). With find -exec ... {} +, it batches into one command line (fast). With xargs, you control batching and PARALLELISM. Always use NUL terminators (`-print0` / `-0`) for filename safety.",
+  hints: [
+    "find . -name '*.log' -exec gzip {} \\;       # one fork per match",
+    "find . -name '*.log' -exec gzip {} +        # one fork, many args (batch)",
+    "find . -name '*.jpg' -print0 | xargs -0 -P 4 -I {} convert {} -quality 80 small/{}",
+    "find . -name '*.tmp' -delete                # find's built-in delete (faster)",
+    "Use --null / -0 wherever names might contain spaces, newlines, quotes."
+  ],
+  tips: [
+    "Whenever you find yourself piping `find ... | xargs ...`, ALSO add `-print0` and `-0`. It's almost always required for correctness.",
+    "GNU `parallel` is a richer xargs with progress, retries, and CSV-style argument expansion.",
+    "Profile before parallelising — disk I/O is often the bottleneck and parallel jobs make it WORSE."
+  ],
+  code: `# Bad: breaks on filenames with spaces / quotes
+find . -name '*.log' | xargs gzip
+
+# Correct: NUL-terminated
+find . -name '*.log' -print0 | xargs -0 gzip
+
+# Even cleaner if the cmd accepts many args at once
+find . -name '*.log' -exec gzip {} +
+
+# Parallel example
+find . -name '*.tif' -print0 | xargs -0 -P "$(nproc)" -I {} \\
+  convert {} -resize 50% out/{}`,
+  complexity: "O(matches)."
+});
+
+PROBLEMS.push({
+  num: 80, title: "sed Power Tools — multi-line, address ranges, scripts", diff: "hard",
+  family: "Text · Munging",
+  problem: "Beyond `s/foo/bar/g`: ranges, hold-space, multi-line. The advanced moves that turn sed into a programmable text editor.",
+  intuition: "sed has a 'pattern space' (current line) and a 'hold space' (a clipboard). Most one-liners use only pattern space. Multi-line edits use hold space. ADDRESSES restrict where commands run (`/start/,/end/`, `1,10`, `$`).",
+  hints: [
+    "sed -n '/BEGIN/,/END/p' file → print between markers (anchors).",
+    "sed '1d' file → delete first line.",
+    "sed '$d' file → delete last.",
+    "sed -i 's@^@>>@' file → indent every line.",
+    "sed '/pattern/,+5 d' → delete pattern + next 5 lines.",
+    "sed '/MARKER/r insert.txt' file → insert insert.txt after MARKER lines."
+  ],
+  tips: [
+    "When the pattern contains slashes, use a different delimiter: `s|/old|/new|`.",
+    "For multi-line, sed gets ugly fast — perl -pe is often more readable.",
+    "BSD sed (macOS) requires `-i ''` for in-place — use `gsed` from coreutils for cross-platform sanity."
+  ],
+  code: `# delete lines 50 to 100
+$ sed -i '50,100d' file
+
+# print only the SECTION between two markers
+$ sed -n '/^# config:/,/^# end/p' big.conf
+
+# insert a line BEFORE every match
+$ sed -i '/^server {/i # generated $(date)' nginx.conf
+
+# replace ONLY in lines that match a context
+$ sed -i '/listen 80;/s/80/8080/' nginx.conf`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 81, title: "awk Power Tools — multi-file, BEGIN/END, group-bys", diff: "hard",
+  family: "Text · Munging",
+  problem: "awk as a tiny analytics engine — joins, group-bys, percentiles, multi-file processing.",
+  intuition: "awk has associative arrays, regex, and proper control flow. With BEGIN { } and END { } blocks plus an array indexed by a field, you have group-by-and-count in 30 characters. NR==FNR gives you cross-file joins.",
+  hints: [
+    "Group-by + count: `awk '{c[$1]++} END {for (k in c) print c[k], k}' | sort -nr`",
+    "Sum by group: `awk -F, '{s[$1]+=$3} END {for (k in s) print k, s[k]}'`",
+    "Two-file join: `awk 'NR==FNR{h[$1]=$2; next} ($1 in h){print $0, h[$1]}' lookup.tsv data.tsv`",
+    "Percentile (after sort): `awk -v p=0.95 'BEGIN{} {a[NR]=$1} END{print a[int(NR*p)]}'`",
+    "Skip CSV header: `awk 'NR==1{next} ...'`"
+  ],
+  tips: [
+    "awk's `printf` matches C — use it for aligned output.",
+    "If your awk grows past 30 lines, switch to Python — debuggability wins.",
+    "GNU awk (gawk) has true multi-dim arrays and time functions. `awk --version` to check.",
+    "frawk and dsq are modern column-oriented alternatives if you live in CSV/TSV."
+  ],
+  code: `# top 10 IPs by hit count
+$ awk '{c[$1]++} END {for (ip in c) print c[ip], ip}' access.log | sort -rn | head
+
+# join two files: lookup by user_id
+$ awk 'NR==FNR{name[$1]=$2; next} ($2 in name){print $0, name[$2]}' \\
+        users.tsv events.tsv
+
+# 95th percentile of response time (already-sorted file of times)
+$ sort -n times.txt | awk 'BEGIN{} {a[NR]=$1} END{print a[int(NR*0.95)]}'`,
+  complexity: "O(bytes)."
+});
+
+PROBLEMS.push({
+  num: 82, title: "jq — Query JSON like SQL", diff: "hard",
+  family: "Text · JSON",
+  problem: "Filter, transform, and query JSON from the command line. The tool that makes APIs first-class shell citizens.",
+  intuition: "jq is a tiny functional language. `.` is the input, `.field` walks into a key, `[]` iterates an array, `|` pipes a value through. You compose these into selectors and transformations. The result is JSON unless you `-r` for raw strings.",
+  hints: [
+    "jq . file.json → pretty-print.",
+    "jq '.users[]' file.json → expand the users array.",
+    "jq '.users[] | select(.active) | .email' file.json → filter + project.",
+    "jq -r '.users[].email' file.json → raw output (no quotes).",
+    "jq '.items | length' → array length.",
+    "jq '[.users[].age] | add / length' → average age.",
+    "jq 'group_by(.team) | map({team: .[0].team, n: length})' → group-by + count."
+  ],
+  tips: [
+    "Always pair curl with `| jq` when dealing with JSON APIs — way better than reading raw.",
+    "jq -c outputs one JSON object per line — perfect for streaming + xargs / parallel.",
+    "For YAML, `yq` (mikefarah's Go version) does the same idea.",
+    "If your jq pipeline is > 5 lines, switch to a real script."
+  ],
+  code: `$ curl -fsS https://api.github.com/users/torvalds | jq .login,.followers
+$ curl -fsS https://api.github.com/repos/torvalds/linux/issues \\
+   | jq '.[] | {n: .number, t: .title, s: .state}' | head
+
+# all DNS records that are CNAMEs
+$ dig +noall +answer +stats example.com ANY \\
+   | awk '{print $5,$1}' | sort
+
+# group repos by language
+$ curl -s https://api.github.com/users/torvalds/repos \\
+   | jq 'group_by(.language) | map({lang: .[0].language, n: length})'`,
+  complexity: "O(input size)."
+});
+
+PROBLEMS.push({
+  num: 83, title: "iotop / iostat / pidstat — I/O and Per-process Stats", diff: "hard",
+  family: "System · Performance",
+  problem: "Find which process is hammering disk, how busy each device is, and per-process CPU/I/O over time. The diagnostic trio when 'load is high but I don't know who'.",
+  intuition: "top tells you CPU; iostat tells you DISK; iotop tells you which process is responsible. pidstat (sysstat) gives per-process granularity over time. Together they answer 'why is the box slow' in 2 minutes flat.",
+  hints: [
+    "iotop -oP → only processes actually doing I/O (root).",
+    "iostat -xz 1 → per-device extended stats every second; %util is the headline.",
+    "pidstat -d 1 → per-process I/O.",
+    "pidstat -u 1 → per-process CPU.",
+    "pidstat -p PID 1 → focus on one PID."
+  ],
+  tips: [
+    "%util ~100% on a device = saturated. await >> svctm = queueing. r/s and w/s are the throughput.",
+    "iotop shows IO wait but only when run as root. ioutils may need install (apt install iotop sysstat).",
+    "For a one-shot snapshot, prefer `iostat -xz 1 5` (5 samples, 1s each) over a single sample which is meaningless on a fresh boot."
+  ],
+  code: `$ sudo iotop -oP
+$ iostat -xz 1 5
+$ pidstat -d 1 5
+$ pidstat -u 1 5
+$ pidstat -p $(pidof postgres) 1`,
+  complexity: "O(processes / devices) per sample."
+});
+
+PROBLEMS.push({
+  num: 84, title: "perf / sar / dstat — Profiling & Long-term Capture", diff: "hard",
+  family: "System · Performance",
+  problem: "perf samples the CPU and shows hot functions. sar (sysstat) records every metric every 10 minutes for weeks. dstat is a friendly all-in-one live monitor.",
+  intuition: "perf is your hot-path profiler — perf top shows live hottest functions, perf record + perf report capture a window. sar fills in the 'what was the box doing at 03:14 last Tuesday?' gap that no realtime tool can. dstat is the cleanest all-metrics-in-one-line live monitor.",
+  hints: [
+    "sudo perf top → live system-wide hot functions.",
+    "sudo perf record -F 99 -p PID -g -- sleep 30 → 30s sample of one PID.",
+    "sudo perf report → analyse last record.",
+    "sar 1 10 → live CPU. sar -r 1 10 → memory. sar -d 1 10 → disks. sar -n DEV 1 10 → network.",
+    "sar -f /var/log/sa/saXX → look at archived data from past days.",
+    "dstat -tcdngy 1 → time/cpu/disk/net/page/sys per second."
+  ],
+  tips: [
+    "Enable sar on every prod server: `apt install sysstat`, then enable in /etc/default/sysstat.",
+    "perf needs kernel symbols — install kernel-headers / linux-tools-$(uname -r).",
+    "FlameGraph + perf is the gold standard for CPU profiling on Linux. Worth learning."
+  ],
+  code: `$ sudo perf top
+$ sudo perf record -F 99 -p $(pidof api) -g -- sleep 30
+$ sudo perf report
+
+$ sar 1 10              # 10 one-second CPU samples
+$ sar -f /var/log/sa/sa20 -r   # memory on day 20
+
+$ dstat -tcdngy 1`,
+  complexity: "Sampling overhead is small (~1-3%)."
+});
+
+PROBLEMS.push({
+  num: 85, title: "tcpdump / tshark — Packet Capture", diff: "hard",
+  family: "Network · Diagnostics",
+  problem: "Capture packets at any interface for forensic-level network debugging. tcpdump is text; wireshark/tshark is the GUI/CLI big sibling with deep protocol decoders.",
+  intuition: "When ping works and ss looks fine but the app is broken, you've reached layer 7. tcpdump shows you the bytes on the wire. Filter expressions limit volume: by host, port, direction, protocol. Always write a pcap (-w) for analysis in wireshark — tcpdump's text output is unreadable for anything serious.",
+  hints: [
+    "sudo tcpdump -i any -nn 'tcp port 80' → live capture, no DNS / port resolution.",
+    "sudo tcpdump -i any -nn -w out.pcap 'host 10.0.0.5' → capture to a file.",
+    "tcpdump -r out.pcap -nn → read back.",
+    "Filter syntax (BPF): `host x and port y`, `not arp`, `tcp[tcpflags] & tcp-syn != 0`.",
+    "tshark is the wireshark CLI: tshark -i any -f 'port 53' -Y dns."
+  ],
+  tips: [
+    "ALWAYS write to a pcap and analyse in Wireshark — tcpdump is for live triage only.",
+    "Capture is bandwidth-heavy. -s 96 caps each packet at 96 bytes (just headers) — far cheaper.",
+    "Look at the SYN-ACK timing for connect-time issues and the ACK gaps for throughput problems.",
+    "On encrypted traffic you can still see SNI, IPs, ports, packet timing — useful even without decryption."
+  ],
+  code: `$ sudo tcpdump -i eth0 -nn 'tcp port 443 and host api.example.com'
+$ sudo tcpdump -i any -nn -s 96 -w api.pcap 'host 10.0.0.5' &
+# … reproduce issue …
+$ sudo kill %1
+$ tcpdump -r api.pcap -nn | head
+
+# tshark equivalent
+$ sudo tshark -i any -f 'port 80' -Y http.request`,
+  complexity: "O(bytes captured)."
+});
+
+PROBLEMS.push({
+  num: 86, title: "GNU Parallel — Easy Parallel Pipelines", diff: "hard",
+  family: "Shell · Composition",
+  problem: "Run jobs in parallel from a list of inputs, with progress, retries, and clean output ordering. The friendlier xargs.",
+  intuition: "parallel takes one input per line and runs your command N at a time, where N = #cores by default. {} is the input placeholder; {.} drops the extension; {/} drops the directory. Output is collected and printed in input order so logs aren't garbled.",
+  hints: [
+    "ls *.jpg | parallel -j 8 'convert {} -quality 80 out/{/}'",
+    "parallel echo ::: a b c ::: 1 2 3   → cartesian product (9 pairs).",
+    "parallel --bar → show a progress bar.",
+    "parallel --joblog jobs.log → record runtimes + exit codes.",
+    "parallel -k → keep input order in output."
+  ],
+  tips: [
+    "If parallel isn't installed: `apt install parallel` (Debian) / `brew install parallel` (mac).",
+    "On first run, parallel prints a citation message — silence with `parallel --citation` and accept once.",
+    "For trivial cases, xargs -P is fine. For anything with retries, progress, or input arithmetic, parallel is way ahead."
+  ],
+  code: `$ ls *.tif | parallel -j $(nproc) --bar 'convert {} -resize 50% small/{/}'
+
+# cartesian product
+$ parallel echo ::: env1 env2 ::: us-east us-west
+env1 us-east
+env1 us-west
+env2 us-east
+env2 us-west
+
+# command per line of input
+$ cat hosts.txt | parallel -j 20 ssh {} 'uptime'`,
+  complexity: "O(jobs / parallelism)."
+});
+
+PROBLEMS.push({
+  num: 87, title: "openssh advanced — config, jumphosts, agent forwarding", diff: "hard",
+  family: "Network · Remote Access",
+  problem: "Beyond `ssh user@host` — multi-hop bastions, ProxyJump, keep-alives, multiplexing, agent forwarding done safely.",
+  intuition: "All real ssh power lives in ~/.ssh/config. Define hosts once, set ProxyJump for bastions, ControlMaster for connection reuse, and you go from 'wait for handshake every time' to 'instant'.",
+  hints: [
+    "ProxyJump bastion → ssh through bastion automatically (Host stanza).",
+    "ControlMaster auto + ControlPath ~/.ssh/cm/%r@%h:%p + ControlPersist 10m → reuse a single TCP connection across many ssh/scp/rsync calls.",
+    "ServerAliveInterval 30 ServerAliveCountMax 3 → keep idle sessions alive across NAT.",
+    "ssh -A → forward your local agent (USE WITH CARE — agent socket is exposed to the remote root).",
+    "Use jump-host file: `ssh -J bastion target`."
+  ],
+  tips: [
+    "Never `-A` to a host you don't fully trust — agent forwarding lets the remote use your keys for outbound auth.",
+    "ControlMaster speeds up tools like Ansible, Terraform, GitLab Runner massively.",
+    "Restrict bastion access to specific user/host pairs in ~/.ssh/authorized_keys with `from=...`, `command=...`, `restrict`.",
+    "On the bastion, enable `ProxyCommand` only for explicitly-listed downstream hosts — don't make it an open relay."
+  ],
+  code: `# ~/.ssh/config
+Host bastion
+    HostName bastion.example.com
+    User alice
+    IdentityFile ~/.ssh/id_ed25519
+    ServerAliveInterval 30
+    ControlMaster auto
+    ControlPath   ~/.ssh/cm/%r@%h:%p
+    ControlPersist 10m
+
+Host db-*
+    User root
+    ProxyJump bastion
+    IdentityFile ~/.ssh/id_ed25519
+
+$ ssh db-prod-1            # routes via bastion automatically
+$ scp dump.sql db-prod-1:/tmp/    # uses the same multiplexed channel`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 88, title: "cgroups & systemd — Resource Limits", diff: "hard",
+  family: "System · Limits",
+  problem: "Cap CPU, memory, IO, processes for a service or user. The mechanism behind every container runtime — also useful for any greedy daemon.",
+  intuition: "cgroups (control groups) is the kernel feature; systemd exposes it via Slice/Scope/Service units. You set CPUQuota=, MemoryMax=, IOWeight=, TasksMax= in a unit file or a drop-in. Misbehaving services get throttled instead of crashing the box.",
+  hints: [
+    "systemd-run --slice=batch.slice --scope nice -n 19 ./big_job → ad-hoc run inside a slice.",
+    "/etc/systemd/system/myapp.service.d/limits.conf with [Service] CPUQuota=200% MemoryMax=2G",
+    "systemctl set-property myapp.service MemoryMax=2G CPUQuota=150% → live tweak.",
+    "systemd-cgtop → top, but for cgroups.",
+    "Persistent slices via /etc/systemd/system/*.slice."
+  ],
+  tips: [
+    "MemoryMax= triggers OOM kill on overshoot. MemoryHigh= just throttles. Use High first as a soft warning.",
+    "CPUQuota=100% means one whole CPU (1 core, 100% of one). 400% = 4 cores' worth.",
+    "Set TasksMax for things that fork-bomb on bug.",
+    "For per-user limits, drop-in to user@.service or use systemd-tmpfiles + login.defs."
+  ],
+  code: `# /etc/systemd/system/myapp.service.d/limits.conf
+[Service]
+CPUQuota=200%
+MemoryMax=2G
+MemoryHigh=1500M
+IOWeight=80
+TasksMax=512
+
+$ sudo systemctl daemon-reload
+$ sudo systemctl restart myapp
+$ systemd-cgtop
+$ systemctl show myapp | grep -E '(CPU|Memory)'`,
+  complexity: "O(1)."
+});
+
+PROBLEMS.push({
+  num: 89, title: "Namespaces & unshare / nsenter — Build-your-own Container", diff: "hard",
+  family: "System · Isolation",
+  problem: "Linux namespaces isolate PIDs, network, mounts, users, IPC, UTS, cgroups. Combined with cgroups (card 88) they ARE what makes a container. unshare creates a new namespace; nsenter joins an existing one.",
+  intuition: "Containers aren't magic — they're a process running with a different view of the kernel. Each namespace virtualises one resource. unshare --net puts your process in a fresh network namespace (no interfaces). nsenter -t PID -a puts you INSIDE another process's namespaces — perfect for poking inside a container as the host.",
+  hints: [
+    "sudo unshare --net --pid --fork --mount-proc bash → mini-container shell.",
+    "sudo nsenter -t PID -a → enter ALL namespaces of target PID.",
+    "lsns → list namespaces system-wide.",
+    "ip netns add foo / ip netns exec foo bash → named network namespaces.",
+    "/proc/PID/ns/* are the namespace handles."
+  ],
+  tips: [
+    "`docker exec` is essentially `nsenter` with extra plumbing — useful to know when docker is being weird.",
+    "User namespaces are how rootless containers work — root inside maps to a normal UID outside.",
+    "Don't ship hand-built unshare contraptions to prod — use a real container runtime. But they're great for debugging."
+  ],
+  code: `# enter the network namespace of a docker container
+$ PID=$(docker inspect --format '{{.State.Pid}}' my_container)
+$ sudo nsenter -t $PID -n ip a
+
+# create an isolated mini-container
+$ sudo unshare --net --pid --mount --uts --fork --mount-proc \\
+       /bin/bash
+# inside: ip a (no eth!), ps -ef (only this shell)`,
+  complexity: "O(1) per namespace op."
+});
+
+PROBLEMS.push({
+  num: 90, title: "iptables / nftables NAT, port-forward, masquerade", diff: "hard",
+  family: "Security · Network",
+  problem: "Translate addresses (NAT), forward ports, masquerade outbound traffic, route between networks. The plumbing behind home routers, gateways, and most container networks.",
+  intuition: "The kernel applies rules in stages. PREROUTING is for incoming-not-yet-routed (DNAT — port forwarding). POSTROUTING is for outgoing-after-routing (SNAT / MASQUERADE — outbound NAT). Once you understand which stage you need, the rules write themselves.",
+  hints: [
+    "Enable forwarding: `sysctl -w net.ipv4.ip_forward=1` (and persist in /etc/sysctl.d/).",
+    "Port forward: `iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT --to 10.0.0.5:8080`",
+    "Outbound NAT (mask many → one): `iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE`",
+    "Allow forwarded: `iptables -A FORWARD -i eth0 -o eth1 -m state --state NEW -j ACCEPT`",
+    "Make persistent: `iptables-save > /etc/iptables/rules.v4` + netfilter-persistent."
+  ],
+  tips: [
+    "Always add `-m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT` to FORWARD — otherwise reply packets get dropped.",
+    "On systemd-networkd / firewalld systems, prefer the configured tool (firewalld zones, networkd) over raw iptables.",
+    "nftables is the modern kernel API; iptables-nft writes nftables rules under the hood on new distros.",
+    "For containers, let the runtime (docker / podman) own the rules — manual edits will be overwritten."
+  ],
+  code: `$ sudo sysctl -w net.ipv4.ip_forward=1
+
+# forward host:80 → 10.0.0.5:8080
+$ sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 \\
+        -j DNAT --to 10.0.0.5:8080
+$ sudo iptables -A FORWARD -p tcp -d 10.0.0.5 --dport 8080 -j ACCEPT
+$ sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+# persist
+$ sudo iptables-save | sudo tee /etc/iptables/rules.v4`,
+  complexity: "O(rules) per packet."
+});
+
+
+PROBLEMS.push({
+  num: 91, title: "logrotate — Rotate, Compress, Retain Logs", diff: "hard",
+  family: "System · Logs",
+  problem: "Without rotation, logs grow until they fill the disk. logrotate runs daily, renames yesterday's log, optionally compresses old ones, and keeps a fixed retention window.",
+  intuition: "logrotate reads /etc/logrotate.conf and /etc/logrotate.d/* drop-ins. Each stanza names a path glob, a frequency (daily/weekly/monthly), how many to keep, and what to do after rotating (e.g., signal the daemon to reopen its log file with `postrotate`).",
+  hints: [
+    "Each /etc/logrotate.d/foo file is for one app's logs.",
+    "rotate N → keep N old rotations.",
+    "compress / delaycompress → gzip old logs (delaycompress = don't compress the most recent).",
+    "missingok / notifempty → don't error if the file is missing or empty.",
+    "postrotate / endscript → run after rotation (e.g., systemctl reload nginx).",
+    "logrotate -d /etc/logrotate.d/foo → DRY RUN to debug the config."
+  ],
+  tips: [
+    "Using `copytruncate` is the lazy way for apps that don't reopen on signal — but you risk losing in-flight writes.",
+    "ALWAYS test new rotators with `logrotate -d` before rolling out — broken config = log holes you don't notice for weeks.",
+    "Match retention to your compliance / disk budget — `rotate 14 daily` keeps two weeks compressed.",
+    "For apps that already rotate themselves (like nginx with `daily-log-rotate.sh` or python's RotatingFileHandler), don't add logrotate on top."
+  ],
+  code: `# /etc/logrotate.d/myapp
+/var/log/myapp/*.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    sharedscripts
+    postrotate
+        systemctl reload myapp >/dev/null 2>&1 || true
+    endscript
+}
+
+$ sudo logrotate -d /etc/logrotate.d/myapp     # dry run
+$ sudo logrotate -f /etc/logrotate.d/myapp     # force run`,
+  complexity: "O(files rotated)."
+});
+
+PROBLEMS.push({
+  num: 92, title: "Inotifywait / Inotifywatch — React to File Changes", diff: "hard",
+  family: "Filesystem · Monitoring",
+  problem: "Watch a path and trigger actions when files are created, modified, or deleted. The kernel-level alternative to polling.",
+  intuition: "inotify is a kernel subsystem that delivers FS events. inotifywait blocks until something happens; inotifywatch summarises events over a window. Use it for live-reload scripts, sync-on-change pipelines, intrusion-detection, deploy hooks.",
+  hints: [
+    "inotifywait -m -r -e modify,create,delete /path → continuous (-m), recursive (-r).",
+    "inotifywait -e close_write file → wake when the file is closed after writing (better than `modify` for many editors).",
+    "inotifywait --format '%w%f %e' file → custom output.",
+    "while inotifywait -e close_write src/; do make; done → minimal live-reload."
+  ],
+  tips: [
+    "Default inotify watch limits are TINY (8K). For big trees: `sysctl fs.inotify.max_user_watches=524288`.",
+    "On macOS use fswatch — same idea, different syscalls.",
+    "For polling-style cross-platform, `entr` (\"watch files and run a command\") is the cleanest one-liner."
+  ],
+  code: `# rebuild on save
+$ while inotifywait -qq -e close_write -r src/; do
+    make
+  done
+
+# rsync new files immediately
+$ inotifywait -m -r -e close_write,move,delete /data | \\
+  while read path action file; do
+    rsync -az /data/ backup:/data/
+  done`,
+  complexity: "O(events)."
+});
+
+PROBLEMS.push({
+  num: 93, title: "fail2ban / sshguard — Ban Brute-force IPs", diff: "hard",
+  family: "Security · Network",
+  problem: "Watch logs for failed login patterns and dynamically firewall offenders. The first line of defense for any internet-exposed SSH or web admin panel.",
+  intuition: "fail2ban tails logs (sshd, nginx, postfix), counts failures per IP within a window, and adds a firewall rule when the threshold is hit. Auto-unbans after a configurable cooldown.",
+  hints: [
+    "/etc/fail2ban/jail.local → site-local overrides.",
+    "Defaults: bantime, findtime, maxretry.",
+    "fail2ban-client status → which jails are active.",
+    "fail2ban-client status sshd → who's banned right now.",
+    "fail2ban-client unban IP → manual unban (in case you locked yourself)."
+  ],
+  tips: [
+    "Whitelist your office / VPN IP in `ignoreip = ...` — losing access because you fat-fingered your own SSH password is no fun.",
+    "Configure persistent banning across restarts with the `recidive` jail.",
+    "For very busy sites, fail2ban can churn a lot of CPU on log parsing — switch to nftables-based set bans for scale."
+  ],
+  code: `# /etc/fail2ban/jail.local
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+ignoreip = 127.0.0.1/8 10.0.0.0/8
+
+[sshd]
+enabled = true
+
+[nginx-http-auth]
+enabled = true
+
+$ sudo systemctl reload fail2ban
+$ sudo fail2ban-client status sshd
+$ sudo fail2ban-client unban 1.2.3.4`,
+  complexity: "O(log events)."
+});
+
+PROBLEMS.push({
+  num: 94, title: "auditd — Kernel-level Audit Logs", diff: "hard",
+  family: "Security · Audit",
+  problem: "Record syscalls, file accesses, privilege changes — at the kernel level — for compliance, forensics, intrusion detection.",
+  intuition: "auditd writes events to /var/log/audit/audit.log. Rules in /etc/audit/rules.d/ tell it what to watch. ausearch + aureport are the query tools. Auditd is heavy — turn it on for sensitive boxes (HIPAA, PCI), not everyday servers.",
+  hints: [
+    "auditctl -w /etc/passwd -p wa -k passwd_changes → watch writes / attribute changes on /etc/passwd, tag them 'passwd_changes'.",
+    "auditctl -a always,exit -F arch=b64 -S execve -k all_execs → log every exec.",
+    "ausearch -k passwd_changes → all events with that key.",
+    "aureport --summary → high-level summary."
+  ],
+  tips: [
+    "Auditd can produce GIGABYTES of logs. Be selective — broad rules will fill your disk.",
+    "Combine with a SIEM (rsyslog → Splunk / ELK) — local log retention should be short.",
+    "On modern systems, eBPF-based tools (sysdig, falco) are more flexible than classic auditd."
+  ],
+  code: `# /etc/audit/rules.d/security.rules
+-w /etc/passwd  -p wa -k passwd_changes
+-w /etc/shadow  -p wa -k shadow_changes
+-w /etc/sudoers -p wa -k sudoers_changes
+-a always,exit  -F arch=b64 -S execve -k all_execs
+
+$ sudo augenrules --load
+$ sudo ausearch -k sudoers_changes --start today
+$ sudo aureport -au --summary    # auth events`,
+  complexity: "Audit overhead can be high — measure."
+});
+
+PROBLEMS.push({
+  num: 95, title: "Disk Recovery & Forensics — dd, ddrescue, photorec", diff: "hard",
+  family: "System · Disks",
+  problem: "Clone failing disks, recover deleted files, image a partition for forensic analysis. The tools you reach for AFTER something has gone wrong.",
+  intuition: "dd copies blocks. ddrescue is a smarter dd that handles read errors (essential for failing drives). photorec recovers files by signature — even from corrupted partition tables. Always work from an IMAGE, never the live disk.",
+  hints: [
+    "dd if=/dev/sdb of=disk.img bs=4M status=progress → image a disk.",
+    "ddrescue /dev/sdb disk.img mapfile.log → resilient image (the right tool for failing drives).",
+    "photorec disk.img → carve files by signature.",
+    "testdisk → partition-table repair.",
+    "dd if=/dev/zero of=/dev/sdb bs=1M → wipe (use shred for higher pass counts; SSDs need blkdiscard)."
+  ],
+  tips: [
+    "**`dd` typos are catastrophic.** Mis-typing if=/of= can wipe a live system. Triple-check device paths.",
+    "Add `status=progress` (GNU dd) to see throughput.",
+    "Never `dd` a live, mounted partition — boot from a Live USB and image the disk while it's idle.",
+    "On SSDs, blkdiscard (TRIM-based wipe) is faster + healthier than overwriting."
+  ],
+  code: `$ sudo dd if=/dev/sdb of=disk.img bs=4M status=progress conv=fsync
+$ sudo ddrescue /dev/sdb disk.img recovery.log
+
+$ sudo photorec disk.img       # recover files by signature
+
+# wipe with verification
+$ sudo shred -vn 1 -z /dev/sdb`,
+  complexity: "O(disk size)."
+});
+
+PROBLEMS.push({
+  num: 96, title: "LVM — Logical Volume Manager", diff: "hard",
+  family: "System · Storage",
+  problem: "A flexible layer between physical disks and filesystems: pool disks together, slice the pool into logical volumes, resize / snapshot live. The default storage layer on most enterprise Linux installs.",
+  intuition: "Three concepts: PV (Physical Volume — a disk or partition), VG (Volume Group — a pool of PVs), LV (Logical Volume — a slice of the VG that gets a filesystem). Adding a disk = pvcreate + vgextend. Growing a filesystem = lvextend + resize2fs.",
+  hints: [
+    "pvcreate /dev/sdb → mark a disk as a PV.",
+    "vgcreate vg0 /dev/sdb /dev/sdc → pool them.",
+    "lvcreate -L 50G -n data vg0 → carve out a 50G LV.",
+    "lvextend -L +20G /dev/vg0/data && resize2fs /dev/vg0/data → grow it.",
+    "lvcreate -s -L 10G -n data_snap /dev/vg0/data → instant snapshot for backups.",
+    "vgs / lvs / pvs → status overviews."
+  ],
+  tips: [
+    "Snapshots are COW — they cost disk only as the LIVE volume diverges. Great for consistent backups.",
+    "Don't fill a VG to 100% — leave headroom for snapshots.",
+    "ZFS / btrfs are more modern alternatives with built-in snapshots, checksums, dedup. LVM is still the most common in EL-family distros.",
+    "Always backup before any LVM resize. Things go wrong rarely but spectacularly."
+  ],
+  code: `$ sudo pvcreate /dev/sdb
+$ sudo vgcreate vg0 /dev/sdb
+$ sudo lvcreate -L 100G -n data vg0
+$ sudo mkfs.ext4 /dev/vg0/data
+$ sudo mount /dev/vg0/data /data
+
+# grow it later
+$ sudo lvextend -L +50G /dev/vg0/data
+$ sudo resize2fs /dev/vg0/data
+
+# snapshot for a hot backup
+$ sudo lvcreate -s -L 20G -n data_snap /dev/vg0/data
+$ sudo mount -o ro /dev/vg0/data_snap /mnt/snap`,
+  complexity: "O(1) for metadata ops."
+});
+
+PROBLEMS.push({
+  num: 97, title: "Containers — docker / podman essentials", diff: "hard",
+  family: "Dev · Containers",
+  problem: "Build, run, ship containerised applications. docker is the dominant CLI; podman is a daemonless, rootless drop-in replacement.",
+  intuition: "A container is a process with a different view of the kernel (namespaces) and resource limits (cgroups). Images are layered tarballs of files. The 8 commands you'll use 99% of the time: build, run, ps, logs, exec, stop, rm, image ls.",
+  hints: [
+    "docker build -t myimg:tag . → build image from Dockerfile in CWD.",
+    "docker run --rm -it -p 8080:80 -v $PWD:/app myimg:tag → run; map a port; mount a volume.",
+    "docker ps / docker ps -a → running / all.",
+    "docker logs -f container → tail logs.",
+    "docker exec -it container bash → shell into a running container.",
+    "docker stop / docker rm / docker rmi → stop / remove container / image.",
+    "docker image prune / docker system prune → reclaim disk."
+  ],
+  tips: [
+    "Always pin image versions (`alpine:3.19`, not `alpine:latest`) for reproducibility.",
+    "Use multi-stage builds — separate the build environment from the runtime image.",
+    "podman has the same CLI as docker; many places `alias docker=podman` and never look back.",
+    "For real production orchestration, kubectl (k8s) takes over from docker run."
+  ],
+  code: `# Dockerfile
+FROM python:3.12-slim AS build
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
+COPY . .
+
+FROM python:3.12-slim
+COPY --from=build /root/.local /root/.local
+COPY --from=build /app /app
+ENV PATH=/root/.local/bin:\$PATH
+WORKDIR /app
+CMD ["python", "main.py"]
+
+$ docker build -t myapi:1.0 .
+$ docker run --rm -d -p 8080:8080 --name api myapi:1.0
+$ docker logs -f api
+$ docker exec -it api bash
+$ docker stop api`,
+  complexity: "O(image size) for builds; O(1) for run."
+});
+
+PROBLEMS.push({
+  num: 98, title: "kubectl — Kubernetes CLI essentials", diff: "hard",
+  family: "Dev · Containers · Orchestration",
+  problem: "Talk to a Kubernetes cluster: list pods, see logs, exec into a container, apply manifests, debug deploys.",
+  intuition: "kubectl is the unified verb-noun CLI: `kubectl <verb> <resource> [name]`. The verbs you'll use: get, describe, logs, exec, apply, delete, port-forward, rollout. Resources: pods, deployments, services, ingresses, configmaps, secrets, nodes.",
+  hints: [
+    "kubectl get pods -A → all pods, all namespaces.",
+    "kubectl get pods -n myns -l app=api → labelled pods in a namespace.",
+    "kubectl describe pod NAME → full details + events (the first thing to do when something is wrong).",
+    "kubectl logs -f -l app=api → follow logs across all pods of an app.",
+    "kubectl exec -it pod -- bash → shell into a pod.",
+    "kubectl apply -f manifest.yaml → declarative config.",
+    "kubectl rollout status deploy/api / rollout undo → deploy management.",
+    "kubectl port-forward svc/api 8080:80 → tunnel a service to your laptop."
+  ],
+  tips: [
+    "Set up shell completion (kubectl completion bash | source) and an alias (alias k=kubectl) — saves hours.",
+    "k9s is a TUI dashboard that makes day-to-day kubectl life FAR pleasanter.",
+    "Always use namespaces. Use kubectx + kubens to switch context/namespace fast.",
+    "If kubectl is slow, check that your kubeconfig isn't pointed at a stale or far-away cluster."
+  ],
+  code: `$ kubectl get pods -A
+$ kubectl get pods -n prod -l app=api -o wide
+$ kubectl describe pod api-7d... -n prod | head -40
+$ kubectl logs -f deploy/api -n prod
+$ kubectl exec -it api-7d... -n prod -- sh
+$ kubectl apply -f manifests/
+$ kubectl rollout restart deploy/api -n prod
+$ kubectl port-forward svc/api 8080:80 -n prod`,
+  complexity: "O(API responses)."
+});
+
+PROBLEMS.push({
+  num: 99, title: "eBPF Tools — bpftrace / bcc / opensnoop / execsnoop", diff: "hard",
+  family: "System · Tracing",
+  problem: "Trace what the kernel and processes are doing in real time, with negligible overhead, using eBPF programs. The future of Linux observability.",
+  intuition: "eBPF lets you run safe, verified programs INSIDE the kernel — attached to syscalls, kprobes, tracepoints, perf events. Tools like opensnoop (\"who's opening this file?\"), execsnoop (\"who just spawned that process?\"), tcplife (\"all TCP connections + their durations\") give visibility that strace can't match without crippling overhead.",
+  hints: [
+    "sudo opensnoop → live `which file is being opened by which process`.",
+    "sudo execsnoop → live `who is exec'ing what`.",
+    "sudo tcplife → log every TCP connection + duration.",
+    "sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { @[comm] = count(); }' → custom one-liner.",
+    "Install bcc-tools / bpftrace via your package manager."
+  ],
+  tips: [
+    "bpftrace one-liners are like awk for the kernel — small, composable, powerful.",
+    "Brendan Gregg's BPF Performance Tools is the canonical reference.",
+    "Older kernels (<4.9) don't support BPF tracing — check `uname -r` if tools fail mysteriously.",
+    "Falco uses eBPF for production runtime security — worth knowing if you do containers."
+  ],
+  code: `$ sudo opensnoop -n nginx | head           # what files does nginx open?
+$ sudo execsnoop                            # every new process system-wide
+$ sudo tcplife -t                           # TCP sessions w/ duration
+
+# bpftrace one-liner: count syscalls per process for 5 sec
+$ sudo bpftrace -e '
+  tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }
+  END { print(@); }
+' -c 'sleep 5'`,
+  complexity: "Trivially low overhead — typically <1%."
+});
+
+PROBLEMS.push({
+  num: 100, title: "The Universal Debug Recipe — top → ss → strace → logs", diff: "hard",
+  family: "System · Debugging",
+  problem: "Given 'this server is broken', how do you triage without random guessing? A short, repeatable script.",
+  intuition: "Always work from coarse to fine: load → resources → processes → network → kernel calls → app logs. Stop at the layer that explains the symptom. The 5-step recipe below covers ~90% of incidents and takes 2-3 minutes to walk.",
+  hints: [
+    "1. uptime + free -h + df -h — is the box even healthy?",
+    "2. top / htop — which process is eating CPU / RAM?",
+    "3. ss -tulpn + ss -s — are the right ports listening? Are there abnormal connection counts?",
+    "4. journalctl -u SERVICE -n 200 / docker logs / app log file — what is the app saying about itself?",
+    "5. If still puzzled: strace -p PID, tcpdump on the relevant port, or perf top — drill into syscalls / packets / hot paths."
+  ],
+  tips: [
+    "Always WRITE DOWN what you change. The 'undo button' for sysadmins is a notebook.",
+    "Don't change two things at once — you'll never know which one fixed it.",
+    "Keep the repro as small and reliable as possible before you start digging.",
+    "Once it's fixed, write a short post-mortem. The 5 minutes you spend is the only thing that prevents the next incident."
+  ],
+  code: `# 1. is the box healthy?
+$ uptime; free -h; df -h | head; lsblk -f
+
+# 2. who's eating resources?
+$ top -b -n 1 | head -20
+$ ps aux --sort=-%mem | head
+
+# 3. who's listening / connecting?
+$ sudo ss -tulpn
+$ sudo ss -s
+
+# 4. what does the app say?
+$ sudo journalctl -u myapp --since '30 min ago' -p warning -n 200
+$ sudo tail -n 200 /var/log/myapp/error.log
+
+# 5. drill into syscalls / packets if needed
+$ sudo strace -f -e network -p $(pidof myapp)
+$ sudo tcpdump -i any -nn -s 96 -w /tmp/capture.pcap host BAD_IP &`,
+  complexity: "Triage time: a few minutes if you stay disciplined."
+});
+
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Shell / Bash highlighter. Designed for the snippets in this guide
+   (not a full bash parser — just makes the code blocks readable). */
+function highlightShell(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+
+  // line comments (#) — but NOT a leading # at line-start when followed by a !
+  // and NOT inside numbers/colours we already produced. Simple form: # to end-of-line
+  // as long as it is preceded by whitespace, line-start, or ;.
+  s = s.replace(/(^|[\s;|&])(#[^\n]*)/g, (_, pre, c) => pre + stashIt('<span class="cmt">' + c + '</span>'));
+
+  // double-quoted strings
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  // single-quoted strings (no escapes inside)
+  s = s.replace(/&#39;[^&\n]*?&#39;/g,                 m => stashIt('<span class="str">' + m + '</span>'));
+
+  // prompt at start of a line: $  or  #  (followed by space)
+  s = s.replace(/(^|\n)(\$|#) /g, (_, nl, ch) => nl + stashIt('<span class="pmt">' + ch + '</span>') + ' ');
+
+  // long flags first, then short flags (so '--abc' wins over '-a')
+  s = s.replace(/(?<=\s)--?[A-Za-z][A-Za-z0-9_-]*/g, m => stashIt('<span class="bi">' + m + '</span>'));
+
+  // absolute paths (start with /) and home paths (start with ~/)
+  s = s.replace(/(?<=\s)(~?\/[A-Za-z0-9_./*?-]+)/g, (m) => stashIt('<span class="pth">' + m + '</span>'));
+
+  // common command names (highlighted as 'type')
+  const cmds = ['ls','cd','pwd','cat','less','more','head','tail','echo','printf','mkdir','rmdir','touch',
+    'cp','mv','rm','ln','stat','file','find','grep','locate','sort','uniq','cut','tr','sed','awk','wc',
+    'tee','xargs','watch','diff','patch','tar','gzip','gunzip','zcat','zip','unzip','xz','bzip2','curl',
+    'wget','ssh','scp','sftp','rsync','ping','traceroute','mtr','dig','nslookup','host','ip','ifconfig',
+    'ss','netstat','nc','tcpdump','tshark','nmap','sudo','su','passwd','chmod','chown','chgrp','umask',
+    'whoami','id','who','w','last','history','env','export','set','unset','alias','unalias','jobs','bg',
+    'fg','nohup','disown','kill','pkill','killall','pidof','ps','top','htop','iotop','iostat','vmstat',
+    'free','uptime','uname','date','cal','df','du','ncdu','lsblk','blkid','fdisk','parted','mount',
+    'umount','systemctl','journalctl','service','crontab','at','atq','atrm','apt','apt-get','dnf','yum',
+    'pacman','dpkg','rpm','snap','lsof','strace','ltrace','perf','sar','dstat','pidstat','ufw','iptables',
+    'nftables','nft','fail2ban-client','ausearch','aureport','auditctl','augenrules','openssl','tmux',
+    'screen','vim','vi','nano','git','jq','yq','docker','podman','kubectl','helm','make','tree','fzf',
+    'parallel','inotifywait','inotifywatch','entr','dd','ddrescue','photorec','testdisk','shred',
+    'pvcreate','vgcreate','lvcreate','lvextend','resize2fs','vgs','lvs','pvs','logrotate','mktemp',
+    'unshare','nsenter','lsns','sysctl','hostnamectl','tldr','man','type','which','whereis','readlink',
+    'realpath','pushd','popd','source','exec','trap','test','true','false','time','bpftrace','opensnoop',
+    'execsnoop','tcplife','iotop','htop','btop','atop','bat','rg','fd','fzf','wireshark','smbclient',
+    'getent','sshd','setsid'];
+  const cmdRe = new RegExp('\\b(' + cmds.join('|') + ')\\b', 'g');
+  s = s.replace(cmdRe, m => stashIt('<span class="typ">' + m + '</span>'));
+
+  // shell keywords
+  const kws = ['if','then','else','elif','fi','for','while','do','done','case','esac','in','function',
+    'local','return','break','continue','export','source','let','select','time'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, m => stashIt('<span class="kw">' + m + '</span>'));
+
+  // numbers (avoid being inside identifiers)
+  s = s.replace(/(?<![A-Za-z_])\b(\d+(?:\.\d+)?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS
+    .filter(p => p.diff === diff)
+    .sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function familyPillClass(family) {
+  if (!family) return '';
+  const f = family.toLowerCase();
+  if (f.includes('filesystem')) return 'fs';
+  if (f.includes('process'))    return 'proc';
+  if (f.includes('network'))    return 'net';
+  if (f.includes('text'))       return 'text';
+  if (f.includes('security'))   return 'sec';
+  if (f.includes('packages'))   return 'pkg';
+  if (f.includes('system'))     return 'sys';
+  return '';
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  const formulaBlock = p.formula
+    ? `<div class="section-title">Format / Syntax</div><div class="formula">${escapeHtml(p.formula)}</div>`
+    : '';
+
+  const familyPill = p.family
+    ? `<span class="pill ${familyPillClass(p.family)}">${escapeHtml(p.family)}</span>`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+
+      <div class="section-title">Why You Use It</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${formulaBlock}
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Shell Recipes</div>
+      <pre class="code"><code>${highlightShell(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity / Cost:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+/* theme toggle */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+/* ===== BRIEF MODE: 5-question decision flow + family map ===== */
+function renderBriefView() {
+  const families = [
+    { title: 'Navigation',      cmds: [['pwd','where am I'], ['ls','what is here'], ['cd','move'], ['tree','draw the tree'], ['pushd / popd','dir stack']] },
+    { title: 'Files',           cmds: [['cp','copy'], ['mv','move/rename'], ['rm','delete'], ['mkdir','create dir'], ['touch','create / refresh'], ['ln','hard / symlink'], ['stat','metadata'], ['file','what kind?']] },
+    { title: 'View / Edit',     cmds: [['cat','print'], ['less','page'], ['head / tail','first/last lines'], ['vim / nano','edit']] },
+    { title: 'Search',          cmds: [['grep','regex search'], ['find','walk + act'], ['locate','indexed FS search'], ['which / type','where is this cmd']] },
+    { title: 'Text Munging',    cmds: [['sort','sort'], ['uniq','dedup adjacent'], ['cut','slice columns'], ['tr','transliterate'], ['sed','stream edit'], ['awk','pattern · action'], ['wc','count'], ['jq','JSON']] },
+    { title: 'Permissions',     cmds: [['chmod','perms'], ['chown / chgrp','owner / group'], ['sudo / su','escalate'], ['umask','default perms'], ['passwd','change password']] },
+    { title: 'Processes',       cmds: [['ps','snapshot'], ['top / htop','live'], ['kill / pkill','signal'], ['jobs / bg / fg','shell jobs'], ['nohup','survive logout']] },
+    { title: 'Disks & FS',      cmds: [['df','free space'], ['du / ncdu','used space'], ['lsblk / blkid','devices'], ['mount / umount','attach'], ['fdisk / parted','partitions'], ['lvm','logical volumes']] },
+    { title: 'Network',         cmds: [['ping','reachability'], ['curl / wget','HTTP'], ['ss / netstat','sockets'], ['dig','DNS'], ['ip / ifconfig','interfaces'], ['ssh / scp / rsync','remote'], ['tcpdump','packets']] },
+    { title: 'Packages',        cmds: [['apt / dnf / pacman','high-level'], ['dpkg / rpm','low-level']] },
+    { title: 'Compression',     cmds: [['tar','archive'], ['gzip / xz / bzip2','compress'], ['zip / unzip','cross-platform']] },
+    { title: 'System',          cmds: [['uname','kernel'], ['date','time'], ['free','memory'], ['uptime','load'], ['systemctl','services'], ['journalctl','logs'], ['cron / at','schedule']] },
+    { title: 'Power Tools',     cmds: [['xargs','build cmd-lines'], ['tee','split streams'], ['watch','re-run'], ['parallel','easy concurrency'], ['tmux / screen','persistent sessions']] },
+    { title: 'Debugging',       cmds: [['lsof','open files'], ['strace / ltrace','syscalls'], ['perf / sar','profiling'], ['bpftrace / opensnoop','eBPF']] },
+    { title: 'Security',        cmds: [['ufw / iptables / nftables','firewall'], ['openssl','crypto'], ['fail2ban','brute-force ban'], ['auditd','kernel audit']] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> What do I need to find or list?
+   ├── <span class="a">file by name</span>          → <span class="alg">find / locate</span>
+   ├── <span class="a">file by contents</span>      → <span class="alg">grep -r  /  rg</span>
+   ├── <span class="a">listening port</span>        → <span class="alg">ss -tulpn</span>
+   ├── <span class="a">running process</span>       → <span class="alg">ps aux | grep   /   pgrep</span>
+   ├── <span class="a">open file by PID/port</span> → <span class="alg">lsof</span>
+   └── <span class="a">DNS record</span>            → <span class="alg">dig +short</span>
+
+<span class="q">Q2.</span> Something is too big / disk is full?
+   ├── per filesystem      → <span class="alg">df -h</span>
+   ├── per directory       → <span class="alg">du -sh */ | sort -h   /   ncdu</span>
+   ├── deleted-but-open    → <span class="alg">lsof | grep deleted</span>
+   └── inodes exhausted    → <span class="alg">df -i</span>
+
+<span class="q">Q3.</span> Something is slow / unresponsive?
+   ├── load + free RAM     → <span class="alg">uptime · free -h</span>
+   ├── per-CPU / per-process CPU → <span class="alg">top · htop · pidstat -u 1</span>
+   ├── disk I/O            → <span class="alg">iostat -xz 1 · iotop -oP</span>
+   ├── what's on the wire  → <span class="alg">ss -s · tcpdump · iftop</span>
+   └── deep / hot fns      → <span class="alg">perf top · bpftrace</span>
+
+<span class="q">Q4.</span> I need to send / move data
+   ├── one file, fast        → <span class="alg">scp / rsync</span>
+   ├── many files, smart     → <span class="alg">rsync -avzhP</span>
+   ├── stream into a pipe    → <span class="alg">tar -cz src/ | ssh host 'tar -xz -C dst'</span>
+   ├── HTTP API              → <span class="alg">curl -fsSL · jq</span>
+   └── over flaky link       → <span class="alg">rsync -P (resume)  /  wget -c</span>
+
+<span class="q">Q5.</span> Run, schedule, or persist work
+   ├── one-shot, foreground   → <span class="alg">cmd</span>
+   ├── one-shot, background   → <span class="alg">cmd &  /  nohup cmd &</span>
+   ├── recurring              → <span class="alg">crontab -e   /   systemd timer</span>
+   ├── one-time future        → <span class="alg">at 22:00</span>
+   ├── parallel batch         → <span class="alg">xargs -P / parallel</span>
+   └── service / on-boot      → <span class="alg">systemctl enable --now myapp</span>
+`;
+
+  const recipeCards = [
+    { b: 'Top 10 IPs in access log',      s: "awk '{print $1}' access.log | sort | uniq -c | sort -nr | head" },
+    { b: 'Disk hogs in current dir',      s: "du -sh */ | sort -h" },
+    { b: 'Live tail multiple logs',       s: "tail -F /var/log/{nginx,app}/*.log" },
+    { b: 'Find files modified today',     s: "find . -type f -mtime -1" },
+    { b: 'Replace string across project', s: "grep -rl OLD . | xargs sed -i 's/OLD/NEW/g'" },
+    { b: 'Who is on port 443?',           s: "sudo ss -tulpn 'sport = :443'" },
+    { b: 'Tunnel remote DB to laptop',    s: "ssh -L 5432:db:5432 bastion" },
+    { b: 'Backup with deletion mirror',   s: "rsync -avzhP --delete src/ dst/" },
+    { b: 'How big is this dir tree?',     s: "du -sh dir/   /   ncdu dir/" },
+    { b: 'Cert expires in N days?',       s: "openssl s_client -connect h:443 < /dev/null 2>/dev/null | openssl x509 -noout -dates" },
+    { b: 'JSON pretty + filter',          s: "curl -s URL | jq '.users[] | select(.active) | .email'" },
+    { b: 'Gzip a CSV but keep it',        s: "gzip -k data.csv  →  data.csv + data.csv.gz" },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.cmds.map(c => `<div class="card-mini"><b>${escapeHtml(c[0])}</b><span>${escapeHtml(c[1])}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const recipes_html = `
+    <div class="panel">
+      <h3>One-Liner Recipes</h3>
+      <div class="grid">
+        ${recipeCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">L I N U X &nbsp; C O M M A N D S</div>
+        <h1 class="brief-title">100 Commands · One Decision</h1>
+        <p class="brief-tagline">Pick the question. The command picks itself.</p>
+      </header>
+
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+
+      ${recipes_html}
+      ${families_html}
+    </div>
+  `;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

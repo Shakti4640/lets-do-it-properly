@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Java Streams — Cheatsheet, Operations &amp; Real Recipes</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;          /* stream blue */
+    --accent2: #0891b2;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw:  #cf222e;
+    --typ: #6f42c1;
+    --bi:  #b91c1c;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy:  #16a34a;
+    --med:   #d97706;
+    --hard:  #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #dbeafe; color: var(--accent); }
+  .sidebar a.active { background: #dbeafe; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 32px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p  { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy  .dot { background: var(--easy); }
+  .tab.med   .dot { background: var(--med); }
+  .tab.hard  .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 24px 120px; }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 { margin: 0 0 6px; font-size: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .num-tag { background: #dbeafe; color: var(--accent); padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: "JetBrains Mono", Consolas, monospace; }
+  .badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .05em; }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy  { background: var(--easy); }
+  .badge.med   { background: var(--med); }
+  .badge.hard  { background: var(--hard); }
+  .pill { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-weight: 600; letter-spacing: .03em; }
+  .pill.src   { background:#dcfce7; color:#166534; }
+  .pill.itm   { background:#fef3c7; color:#92400e; }
+  .pill.term  { background:#fce7f3; color:#9d174d; }
+  .pill.coll  { background:#ede9fe; color:#5b21b6; }
+  .pill.par   { background:#fee2e2; color:#991b1b; }
+  .pill.opt   { background:#e0f2fe; color:#075985; }
+
+  .section-title { font-size: 13.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition { background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 12px 16px; margin: 8px 0; }
+  .formula { background: #ecfeff; border-left: 4px solid #06b6d4; border-radius: 6px; padding: 10px 16px; margin: 8px 0; font-family: "JetBrains Mono", Consolas, monospace; font-size: 13.5px; overflow-x: auto; white-space: pre; }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block { background: #fef9c3; border-left: 4px solid #ca8a04; border-radius: 6px; padding: 10px 16px; margin: 8px 0; }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+  .cheat-table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; font-size: 14px; }
+  .cheat-table th, .cheat-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  .cheat-table th { background: #dbeafe; color: var(--accent); font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .cheat-table td:first-child { font-family: "JetBrains Mono", Consolas, monospace; background: #eff6ff; white-space: nowrap; color: #1e40af; }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code { background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 6px 0; }
+  pre.code code { font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace; }
+  .kw { color: var(--kw); font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .bi { color: var(--bi); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 60; box-shadow: 0 -2px 8px rgba(0,0,0,.04); }
+  .nav-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--fg); font-weight: 500; }
+  .nav-btn:hover:not(:disabled) { background: #dbeafe; color: var(--accent); border-color: #93c5fd; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd { display: inline-block; border: 1px solid #d0d7de; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; background: #f6f8fa; font-family: monospace; font-size: 11px; color: #444; }
+
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle { font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px; }
+  .brief-root .brief-title { font-size: clamp(28px, 6vw, 48px); font-weight: 900; margin: 0; background: linear-gradient(90deg, #2563eb, #06b6d4, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; }
+  .brief-root .panel h3 { margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .brief-root .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .brief-root .card-mini { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: #eff6ff; }
+  .brief-root .card-mini b { color: var(--accent); display: block; margin-bottom: 4px; font-size: 13.5px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow { border: 1px dashed var(--border); border-radius: 12px; padding: 16px; background: var(--code-bg); font-family: "JetBrains Mono", Consolas, monospace; font-size: 13px; line-height: 1.9; overflow-x: auto; white-space: pre; margin: 0; color: var(--fg); }
+  .brief-root .flow .q { color: var(--accent); font-weight: 700; }
+  .brief-root .flow .a { color: var(--str); }
+  .brief-root .flow .alg { color: var(--bi); font-weight: 700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+  .theme-toggle { position: fixed; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001; font-size: 20px; line-height: 1; color: var(--fg); transition: background .15s, color .15s, border-color .15s, transform .15s; }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --accent: #60a5fa;
+    --border: #30363d; --card: #161b22; --code-bg: #0b0f15; --code-fg: #e6edf3;
+    --kw: #ff7b72; --typ: #d2a8ff; --bi: #ffa657; --str: #a5d6ff; --cmt: #8b949e; --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover, [data-theme="dark"] .sidebar a.active { background: rgba(96,165,250,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(96,165,250,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(59,130,246,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(202,138,4,.10); }
+  [data-theme="dark"] .pill { background: rgba(55,48,163,.18); color: #c7d2fe; }
+  [data-theme="dark"] .pill.src  { background: rgba(22,101,52,.18); color: #bbf7d0; }
+  [data-theme="dark"] .pill.itm  { background: rgba(146,64,14,.18); color: #fde68a; }
+  [data-theme="dark"] .pill.term { background: rgba(157,23,77,.18); color: #fbcfe8; }
+  [data-theme="dark"] .pill.coll { background: rgba(91,33,182,.18); color: #ddd6fe; }
+  [data-theme="dark"] .pill.par  { background: rgba(153,27,27,.18); color: #fecaca; }
+  [data-theme="dark"] .pill.opt  { background: rgba(7,89,133,.18); color: #bae6fd; }
+  [data-theme="dark"] .nav-bar { background: var(--card); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(96,165,250,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(96,165,250,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: #93c5fd; }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .card-mini { background: rgba(96,165,250,.07); }
+</style>
+</head>
+<body>
+<button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar"><h2>Table of Contents</h2><div id="toc"></div></aside>
+<header class="topbar">
+  <h1>Java Streams — Cheatsheet, Operations &amp; Real Recipes</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+<main id="main"></main>
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+<script>
+const PROBLEMS = [];
+
+
+PROBLEMS.push({
+  num: 0, title: "The Java Streams Mental Model (read this first)", diff: "veasy",
+  family: "Foundations",
+  problem: "A Stream<T> is a lazy, single-use pipeline of values. You build it as: SOURCE → INTERMEDIATE operations (filter, map, sorted, distinct, ...) → ONE TERMINAL operation (collect, reduce, forEach, count, toList, anyMatch, ...). Nothing actually runs until the terminal call — the intermediate ops just describe the work.",
+  intuition: "Streams are NOT a faster for-loop. They're a different way to EXPRESS the work — a description of WHAT instead of HOW. The win is readability: 'filter, group by department, sum the salaries' becomes one short pipeline instead of three nested loops with a HashMap. The cost is allocation overhead and a slight runtime tax. Use streams when the chain reads better than the loop; reach for a tight loop in hot inner paths.",
+  hints: [
+    "Three pieces of the pipeline: SOURCE (collection / array / generator) → ZERO+ INTERMEDIATE OPS (lazy, return Stream) → ONE TERMINAL OP (eager, returns a result or void).",
+    "Lazy means nothing runs until the terminal. .map() with a side effect that's never reached on a short-circuiting terminal will simply not execute.",
+    "Streams are SINGLE-USE. Reusing a consumed Stream throws IllegalStateException.",
+    "Stream != Collection. A stream has no storage of its own; it pulls from a source on demand.",
+    "Primitive specialisations exist: IntStream, LongStream, DoubleStream — avoid boxing on hot paths.",
+    "parallelStream() splits across the common ForkJoinPool. Don't use it by default; profile first."
+  ],
+  tips: [
+    "Default to .stream(), and only switch to .parallelStream() when (a) the data is large, (b) the per-element work is CPU-heavy, and (c) you've measured a win.",
+    "Don't mutate shared state inside a stream — that's a classic correctness bug.",
+    "Don't reach for streams when a 5-line for loop is clearer. They're a tool, not a religion.",
+    "Always know your terminal — without one, the pipeline does nothing."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Stage</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td>Sources</td><td>Collection.stream(), Arrays.stream(arr), Stream.of(...), Stream.iterate, Stream.generate, Files.lines, IntStream.range</td></tr>
+        <tr><td>Intermediate (stateless)</td><td>filter, map, mapToInt/Long/Double, flatMap, peek, takeWhile (9+), dropWhile (9+)</td></tr>
+        <tr><td>Intermediate (stateful)</td><td>sorted, distinct, limit, skip</td></tr>
+        <tr><td>Short-circuiting terminals</td><td>findFirst, findAny, anyMatch, allMatch, noneMatch, limit (also intermediate)</td></tr>
+        <tr><td>Reducing terminals</td><td>reduce, collect, count, sum, min, max, average, toList (16+), toArray</td></tr>
+        <tr><td>Iterating terminals</td><td>forEach, forEachOrdered</td></tr>
+      </tbody>
+    </table>
+  `,
+  code: `import java.util.*;
+import java.util.stream.*;
+
+// The three pieces:
+List<String> names = people.stream()                     // SOURCE
+    .filter(p -> p.age() >= 18)                          // intermediate
+    .map(Person::name)                                   // intermediate
+    .sorted()                                            // intermediate (stateful)
+    .toList();                                           // TERMINAL (Java 16+)
+
+// Without a terminal, NOTHING happens:
+people.stream().filter(p -> { System.out.println(p); return true; });
+// → prints nothing. There's no terminal.`,
+  complexity: "Pipeline cost = sum of per-element costs over N elements. Most pipelines are O(N); sorted() adds O(N log N)."
+});
+
+
+/* ===================== SOURCES ===================== */
+
+PROBLEMS.push({
+  num: 1, title: "Stream Sources — where streams begin", diff: "easy",
+  family: "Sources",
+  problem: "Every pipeline starts from a source. The five you'll use 95% of the time: Collection.stream(), Arrays.stream(arr), Stream.of(varargs), IntStream.range(lo, hi), Files.lines(path).",
+  intuition: "Pick the source that matches your input shape. From a list/set: Collection.stream(). From an array: Arrays.stream(arr). For a fixed list of values: Stream.of(...). For an integer range: IntStream.range — primitive, no boxing. For a big text file line-by-line: Files.lines — lazy, you can chain filter/map and never load the whole file into memory.",
+  hints: [
+    "list.stream() / set.stream() / map.entrySet().stream() — most common.",
+    "Arrays.stream(int[]) → IntStream; Arrays.stream(T[]) → Stream<T>.",
+    "Stream.of(\"a\",\"b\",\"c\") — varargs literal.",
+    "IntStream.range(0, n) (exclusive end) / IntStream.rangeClosed(0, n) (inclusive).",
+    "Stream.empty() — sometimes useful in chained logic.",
+    "Files.lines(Path) returns Stream<String>; CLOSE IT (try-with-resources)."
+  ],
+  tips: [
+    "For huge log files, Files.lines + filter is dramatically less memory than Files.readAllLines.",
+    "Stream.iterate(seed, hasNext, next) — the bounded form (Java 9+) — is the safe one. Old Stream.iterate(seed, fn) is infinite; combine with .limit(n).",
+    "Stream.generate(Supplier) is for infinite generators (random, ticks). Always pair with .limit().",
+    "BufferedReader.lines() is older and equivalent to Files.lines for already-open readers."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+import java.nio.file.*;
+
+// from a collection
+List<Integer> xs = List.of(1,2,3,4,5);
+xs.stream().filter(x -> x > 2).count();          // 3
+
+// from an array
+int[] arr = {1,2,3};
+Arrays.stream(arr).sum();                         // 6
+
+// fixed values
+Stream.of("a","b","c").forEach(System.out::println);
+
+// integer range
+int sum = IntStream.range(0, 1_000_000).sum();
+
+// generators (infinite — always limit!)
+Stream.iterate(1, n -> n * 2).limit(10).toList();         // [1,2,4,8,..,512]
+Stream.generate(Math::random).limit(5).toList();
+
+// big file, line by line — close the stream!
+try (Stream<String> lines = Files.lines(Paths.get("app.log"))) {
+    long errs = lines.filter(s -> s.contains("ERROR")).count();
+}`,
+  complexity: "O(1) to construct. Cost depends on what you do with the elements."
+});
+
+
+/* ===================== INTERMEDIATE OPS ===================== */
+
+PROBLEMS.push({
+  num: 2, title: "filter — keep only what matches", diff: "easy",
+  family: "Intermediate · Stateless",
+  problem: "filter(Predicate<T>) keeps elements for which the predicate returns true. The most-used intermediate op.",
+  intuition: "Equivalent to `if (pred(x)) emit(x)` per element. No state, parallelises trivially. Chain multiple filters when each one is independently meaningful — the JIT collapses them efficiently.",
+  hints: [
+    "filter(p) — keep elements where p.test(e) is true.",
+    "Stack filters when each represents a separate condition for readability.",
+    "Negate a predicate with Predicate.not(pred) (Java 11+) — cleaner than `!pred.test(x)`.",
+    "filter is stateless and short-circuit-friendly when paired with findFirst / anyMatch."
+  ],
+  tips: [
+    "filter().filter() vs filter(a && b) — same result, often same perf. Pick what reads better.",
+    "If your predicate is expensive AND most items pass, swap order so the cheap predicate runs first.",
+    "Don't filter just to drop nulls — Stream.ofNullable (Java 9+) handles single-element nullable cases."
+  ],
+  code: `import java.util.*;
+import java.util.function.Predicate;
+
+List<String> nonEmpty = strings.stream()
+    .filter(Objects::nonNull)
+    .filter(Predicate.not(String::isBlank))
+    .toList();
+
+// composite predicate
+Predicate<Person> adult = p -> p.age() >= 18;
+Predicate<Person> indian = p -> "IN".equals(p.country());
+List<Person> r = people.stream().filter(adult.and(indian)).toList();`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 3, title: "map / mapToInt / mapToObj — transform each element", diff: "easy",
+  family: "Intermediate · Stateless",
+  problem: "map(Function<T,R>) returns a Stream<R>. mapToInt/Long/Double switch to primitive streams (avoid boxing). mapToObj on a primitive stream goes the other way.",
+  intuition: "1-to-1 transformation. If you're projecting a field, prefer method references (`Person::name`) — faster and clearer than lambdas. The mapToInt family is the fix when sum/avg/min/max are on the menu.",
+  hints: [
+    "map(fn) — Stream<T> → Stream<R>.",
+    "mapToInt(ToIntFunction) → IntStream (and similarly for Long, Double). Enables sum/average/min/max/summaryStatistics.",
+    "mapToObj(IntFunction<R>) → Stream<R>. Useful inside primitive ranges.",
+    "boxed() converts IntStream → Stream<Integer> when you need a Stream<Integer>."
+  ],
+  tips: [
+    "Use the primitive specialisations whenever you do arithmetic — boxing is real overhead at scale.",
+    "If you find yourself chaining many maps, consider one method reference to a helper — keeps the pipeline short.",
+    "map is stateless and parallel-safe — keep the function pure."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+// project a field
+List<String> names = people.stream().map(Person::name).toList();
+
+// arithmetic — go primitive
+double avgAge = people.stream().mapToInt(Person::age).average().orElse(0);
+int totalSalary = employees.stream().mapToInt(Employee::salary).sum();
+
+// IntStream → Stream<R>
+List<String> labels = IntStream.range(0, 5)
+    .mapToObj(i -> "row-" + i)
+    .toList();
+
+// box back to Integer when you need a Stream<Integer>
+List<Integer> squares = IntStream.range(1, 6).map(i -> i*i).boxed().toList();`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 4, title: "flatMap — flatten nested streams", diff: "med",
+  family: "Intermediate · Stateless",
+  problem: "flatMap(Function<T, Stream<R>>) emits zero, one, or many output elements per input — and concatenates them. The right tool when each input maps to a sequence (split a string into tokens, expand a node into its children, blow up a list of lists).",
+  intuition: "map gives Stream<Stream<R>>. flatMap gives Stream<R>. The classic shape: 'I have a List<Order>, each order has a List<Item>, give me one stream of all items'. flatMap collapses the nesting.",
+  hints: [
+    "flatMap(fn) where fn returns a Stream — output elements are appended.",
+    "Use Collection::stream as the function when you have List/Set fields.",
+    "mapMulti (Java 16+) is a faster alternative when you want to emit elements imperatively without creating intermediate streams.",
+    "flatMap can also FILTER — return Stream.empty() to drop an input."
+  ],
+  tips: [
+    "Don't flatMap when filter+map suffices — it allocates a sub-stream per input.",
+    "When the inner thing is an Optional, use Stream.of vs Stream.empty inside flatMap, OR use Optional::stream (Java 9+).",
+    "flatMap parallelises but the inner sub-streams must be conformant (most are)."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+// list of lists → single list
+List<List<Integer>> nested = List.of(List.of(1,2), List.of(3,4,5));
+List<Integer> flat = nested.stream().flatMap(Collection::stream).toList();
+
+// orders → all items across all orders
+List<Item> all = orders.stream().flatMap(o -> o.items().stream()).toList();
+
+// tokenise lines
+List<String> words = lines.stream()
+    .flatMap(line -> Arrays.stream(line.split("\\\\s+")))
+    .toList();
+
+// drop Optional<T> wrapping
+List<String> names = people.stream()
+    .map(Person::nickname)         // Optional<String>
+    .flatMap(Optional::stream)     // Java 9+
+    .toList();`,
+  complexity: "O(total output elements)."
+});
+
+PROBLEMS.push({
+  num: 5, title: "peek — observe without changing", diff: "med",
+  family: "Intermediate · Stateless",
+  problem: "peek(Consumer<T>) runs a side effect on each element flowing through, then forwards it unchanged. Designed for debugging.",
+  intuition: "Use peek to inspect a pipeline without breaking it: insert println / log / counter mid-stream and see what's flowing. DO NOT use peek for real side effects in production — it's not guaranteed to run on every element when a downstream short-circuiting op (limit, anyMatch, findFirst) cuts the pipeline early.",
+  hints: [
+    "peek(System.out::println) — quick debugging.",
+    "Behaviour is implementation-dependent under short-circuiting terminals.",
+    "Forwards the element unchanged — for true transformation use map.",
+    "Don't depend on peek for correctness in any production code."
+  ],
+  tips: [
+    "If you need a guaranteed side effect, use forEach (terminal) — but at that point you can't keep transforming.",
+    "Replace peek-for-counting with mapToInt(...).sum() or use a Collector.",
+    "peek inside parallelStream visits elements on multiple threads — your consumer must be thread-safe."
+  ],
+  code: `import java.util.stream.Stream;
+
+List<String> result = Stream.of("a","b","c","d")
+    .peek(s -> System.out.println("filtering: " + s))
+    .filter(s -> !s.equals("c"))
+    .peek(s -> System.out.println("mapping: " + s))
+    .map(String::toUpperCase)
+    .toList();
+// Note: the order shows interleaving — that's the lazy pipeline.`,
+  complexity: "O(N) plus the cost of the consumer."
+});
+
+
+PROBLEMS.push({
+  num: 6, title: "sorted — order the stream", diff: "easy",
+  family: "Intermediate · Stateful",
+  problem: "sorted() uses natural order; sorted(Comparator) uses the supplied one. Stateful — must buffer the entire stream before emitting.",
+  intuition: "Sorting forces the pipeline to materialise everything. After sorted, downstream operations see elements in order. Use Comparator.comparing / thenComparing for clean multi-key sorts. Avoid sorting infinite streams — they never finish.",
+  hints: [
+    "sorted() — natural order; element type must be Comparable.",
+    "sorted(Comparator.comparing(Person::age)) — by key.",
+    "sorted(Comparator.reverseOrder()) — descending.",
+    "sorted ALWAYS reads the whole input — incompatible with infinite streams unless paired with limit before sort? No: limit before sort doesn't help on an infinite source either; you need a different approach.",
+    "Stable sort — equal-key elements preserve their input order."
+  ],
+  tips: [
+    "For top-K of a huge stream, DON'T sort then limit. Use a min-heap (PriorityQueue) of size K — O(N log K).",
+    "Sorting in parallel streams isn't always faster — the merge step is non-trivial.",
+    "If your data is already mostly-sorted, the underlying TimSort runs nearly O(N)."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+// natural order
+List<Integer> sorted = Stream.of(3,1,4,1,5,9,2,6).sorted().toList();
+
+// by key
+List<Person> byAge = people.stream()
+    .sorted(Comparator.comparingInt(Person::age))
+    .toList();
+
+// multi-key, descending on second
+List<Person> byDeptThenSalaryDesc = people.stream()
+    .sorted(Comparator.comparing(Person::dept)
+                      .thenComparing(Comparator.comparingInt(Person::salary).reversed()))
+    .toList();`,
+  complexity: "O(N log N) time, O(N) space."
+});
+
+PROBLEMS.push({
+  num: 7, title: "distinct — drop duplicates", diff: "easy",
+  family: "Intermediate · Stateful",
+  problem: "distinct() removes duplicates using equals/hashCode. Stateful — keeps a running Set of seen elements.",
+  intuition: "If you need uniqueness in the output, distinct is the easy switch. The catch: it relies on equals/hashCode being correct on your element type.",
+  hints: [
+    "distinct() — uses Object.equals() under the hood.",
+    "Memory grows with the number of unique elements.",
+    "Order is preserved (insertion order on ordered streams).",
+    "For 'distinct by key' (no equals control), use a Collectors.toMap trick or a manual filter+Set."
+  ],
+  tips: [
+    "Don't use distinct on parallel streams of huge data — synchronisation overhead can erase parallel gains.",
+    "Distinct-by-key (e.g., distinct people by name) is a common need: filter with a ConcurrentHashMap.newKeySet() or a HashSet wrapper.",
+    "If your data is already deduped upstream, skip distinct — it's not free."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+List<Integer> u = Stream.of(1,2,2,3,3,3,4).distinct().toList();   // [1,2,3,4]
+
+// distinct by key
+Set<String> seen = new HashSet<>();
+List<Person> uniq = people.stream()
+    .filter(p -> seen.add(p.name()))                  // returns true if newly added
+    .toList();`,
+  complexity: "O(N) time, O(unique) space."
+});
+
+PROBLEMS.push({
+  num: 8, title: "limit / skip — slice the stream", diff: "easy",
+  family: "Intermediate · Stateful",
+  problem: "limit(n) keeps the first n elements. skip(n) drops the first n. Together they pageinate streams.",
+  intuition: "limit short-circuits — once it has emitted n elements, the upstream stops producing (great for infinite generators). skip walks past the first n then yields the rest. Pagination = .skip(page * size).limit(size).",
+  hints: [
+    "limit(n) — first n. Tames infinite streams.",
+    "skip(n) — drop first n. limit and skip parallelise but at a cost — element-order matters for them.",
+    "Combine: pages = .skip(page*size).limit(size).",
+    "For huge offsets, skip is O(N) — the underlying stream must walk them."
+  ],
+  tips: [
+    "On a parallelStream, limit forces ordered semantics — it's slower than on a sequential stream.",
+    "limit(0) returns an empty stream — sometimes useful in conditional pipelines.",
+    "If you want random sampling, write your own (Reservoir sampling) — Stream doesn't have it built in."
+  ],
+  code: `import java.util.stream.*;
+
+// pagination
+int page = 2, size = 20;
+List<Order> pageRows = orders.stream().skip(page * size).limit(size).toList();
+
+// take first 10 of an infinite stream
+List<Long> firstTen = Stream.iterate(0L, n -> n + 1).limit(10).toList();`,
+  complexity: "limit: O(min(n, source)). skip: O(min(n, source))."
+});
+
+PROBLEMS.push({
+  num: 9, title: "takeWhile / dropWhile — Java 9+ slicing on a predicate", diff: "med",
+  family: "Intermediate · Stateful",
+  problem: "takeWhile(p) emits the prefix of elements where p is true, then stops. dropWhile(p) drops the prefix where p is true, then emits everything from the first failure on. Both rely on encounter order.",
+  intuition: "filter REMOVES non-matching elements wherever they appear. takeWhile/dropWhile only look at the LEADING run. They're the right tool when your data is sorted or has a meaningful order — e.g., 'rows until the first blank line', 'lines after the header'.",
+  hints: [
+    "takeWhile — keep until the predicate first fails, then stop.",
+    "dropWhile — drop until the predicate first fails, then keep all the rest.",
+    "These behave per-element only on ORDERED streams. On unordered they degenerate to filter-like semantics.",
+    "Both stop / start at the FIRST boundary — they don't restart later."
+  ],
+  tips: [
+    "On infinite streams, takeWhile is the clean way to bound: Stream.iterate(0, n -> n+1).takeWhile(n -> n*n < 1000).",
+    "If you're tempted to use parallel + takeWhile, you'll usually lose the ordering guarantee — use sequential.",
+    "These are not the same as filter. filter keeps every match anywhere; takeWhile stops at the first non-match."
+  ],
+  code: `import java.util.stream.*;
+
+// header + body of a config file
+List<String> headerLines = lines.stream()
+    .takeWhile(l -> l.startsWith("#"))
+    .toList();
+
+List<String> body = lines.stream()
+    .dropWhile(l -> l.startsWith("#"))
+    .toList();
+
+// bounded infinite stream
+List<Integer> squaresUnder100 = Stream.iterate(1, n -> n + 1)
+    .takeWhile(n -> n * n < 100)
+    .map(n -> n * n)
+    .toList();   // [1,4,9,16,25,36,49,64,81]`,
+  complexity: "O(prefix). dropWhile is O(N) in the worst case."
+});
+
+
+/* ===================== TERMINAL OPS ===================== */
+
+PROBLEMS.push({
+  num: 10, title: "forEach / forEachOrdered — drain the stream with a side effect", diff: "easy",
+  family: "Terminal",
+  problem: "forEach(Consumer) runs the consumer on every element. forEachOrdered preserves encounter order even on parallel streams.",
+  intuition: "Used when the result IS the side effect — printing, writing to a file, sending an event. On sequential streams the order is the input order; on parallelStream forEach makes no order guarantee. Use forEachOrdered if order matters in parallel.",
+  hints: [
+    "forEach(System.out::println) — print each.",
+    "forEachOrdered — slower in parallel, but ordered.",
+    "After forEach, the stream is consumed. Don't try to keep a reference.",
+    "Don't mutate shared state inside forEach in parallel — use a Collector."
+  ],
+  tips: [
+    "If you find yourself collecting into a list and then forEach'ing it, just forEach the stream — skip the list.",
+    "If you want a result, NOT a side effect, use collect/reduce/toList — not forEach.",
+    "forEach in parallel + writing to a non-thread-safe sink (ArrayList, StringBuilder) → corruption."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+orders.stream().forEach(o -> writeAudit(o));
+orders.parallelStream().forEachOrdered(o -> appendInOrder(o));`,
+  complexity: "O(N) plus the consumer's cost."
+});
+
+PROBLEMS.push({
+  num: 11, title: "count / sum / min / max / average — numeric reductions", diff: "easy",
+  family: "Terminal · Reduction",
+  problem: "count() returns the number of elements (Stream<T>). On primitive streams: sum, min, max, average, summaryStatistics for everything at once.",
+  intuition: "These are the canonical aggregations. On Stream<T>, you typically mapToInt/Long/Double first, then aggregate — primitive specialisations exist precisely so you can sum without boxing.",
+  hints: [
+    "stream.count() — long count.",
+    "intStream.sum() — int (LongStream.sum returns long, DoubleStream returns double).",
+    "intStream.min() / max() / average() return OptionalInt / OptionalDouble (because the stream might be empty).",
+    "intStream.summaryStatistics() — count + sum + min + max + average in one pass.",
+    "On Stream<T> use .mapToInt(...).sum() etc."
+  ],
+  tips: [
+    "average returns OptionalDouble — handle empty: .orElse(0).",
+    "summaryStatistics is the cheapest way when you need more than one of those numbers.",
+    "Streams of double can lose precision on large sums — use Kahan summation or BigDecimal if it matters."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+long n = orders.stream().count();
+int total = orders.stream().mapToInt(Order::amount).sum();
+OptionalInt biggest = orders.stream().mapToInt(Order::amount).max();
+double avg = orders.stream().mapToInt(Order::amount).average().orElse(0);
+
+IntSummaryStatistics s = orders.stream().mapToInt(Order::amount).summaryStatistics();
+System.out.printf("n=%d sum=%d min=%d max=%d avg=%.2f%n",
+    s.getCount(), s.getSum(), s.getMin(), s.getMax(), s.getAverage());`,
+  complexity: "O(N), single pass."
+});
+
+PROBLEMS.push({
+  num: 12, title: "toList / toArray — materialise into a Collection or array", diff: "easy",
+  family: "Terminal",
+  problem: "Stream.toList() (Java 16+) returns an unmodifiable List. Stream.toArray() returns Object[]; Stream.toArray(T[]::new) returns a typed array. Older code uses Collectors.toList().",
+  intuition: "Most pipelines end with toList / toSet / toMap. Pick the modern shorthand `.toList()` when you don't need to control the implementation; use Collectors.toCollection(...) when you specifically need an ArrayList you can mutate or a TreeSet that's sorted.",
+  hints: [
+    ".toList() — Java 16+, unmodifiable, fast. The default modern choice.",
+    "Collectors.toList() — older; returns a mutable ArrayList (implementation NOT guaranteed forever).",
+    "Collectors.toUnmodifiableList() — explicit immutable.",
+    "Collectors.toCollection(ArrayList::new) — when you need a specific implementation.",
+    "stream.toArray(String[]::new) — typed array.",
+    "intStream.toArray() — primitive int[]."
+  ],
+  tips: [
+    ".toList() is unmodifiable. If callers need to add elements later, use Collectors.toList() or new ArrayList<>(stream.toList()).",
+    "Collectors.toUnmodifiableList rejects nulls — useful as a defensive contract.",
+    "Returning the result of stream.toList() to untrusted callers is safe — they can't mutate it."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+// Modern (Java 16+)
+List<String> a = stream.toList();
+
+// Mutable result
+List<String> b = stream.collect(Collectors.toCollection(ArrayList::new));
+
+// Typed array
+String[] c = stream.toArray(String[]::new);
+
+// Primitive
+int[] sums = ints.stream().mapToInt(Integer::intValue).toArray();`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 13, title: "anyMatch / allMatch / noneMatch — short-circuiting boolean queries", diff: "easy",
+  family: "Terminal · Short-circuit",
+  problem: "anyMatch(p) returns true on the first match. allMatch(p) returns false on the first non-match. noneMatch(p) returns false on the first match. All three short-circuit — they stop reading as soon as the answer is decided.",
+  intuition: "Use these instead of `count > 0`, `count == size`, etc. — short-circuiting saves work on large or infinite streams. Empty stream: allMatch and noneMatch return TRUE (vacuous truth); anyMatch returns FALSE.",
+  hints: [
+    "stream.anyMatch(p) — exists?",
+    "stream.allMatch(p) — universally true?",
+    "stream.noneMatch(p) — universally false?",
+    "All three are short-circuiting — perfect for huge / infinite inputs.",
+    "Vacuous results: allMatch / noneMatch on empty = true; anyMatch on empty = false."
+  ],
+  tips: [
+    "Don't write `stream.filter(p).count() > 0` — use anyMatch.",
+    "On parallelStream, these are still correct but the 'first' element seen is non-deterministic — that's fine for boolean answers.",
+    "Use to early-exit infinite generators: `Stream.generate(...).anyMatch(condition)` will return as soon as one matches."
+  ],
+  code: `import java.util.stream.*;
+
+boolean hasError = lines.stream().anyMatch(l -> l.contains("ERROR"));
+boolean allValid = events.stream().allMatch(Event::isValid);
+boolean noBlanks = strings.stream().noneMatch(String::isBlank);`,
+  complexity: "O(N) worst-case; short-circuits."
+});
+
+PROBLEMS.push({
+  num: 14, title: "findFirst / findAny — pick one element", diff: "easy",
+  family: "Terminal · Short-circuit",
+  problem: "findFirst returns the first element in encounter order. findAny may return any element (faster on parallel). Both return Optional — empty if the stream had no elements.",
+  intuition: "When you only need one match, these short-circuit. Pair with filter: `stream.filter(p).findFirst()`. On a parallelStream, findFirst still returns the first in encounter order (slow); findAny lets the runtime return whichever it has — much faster.",
+  hints: [
+    "stream.filter(p).findFirst() — Optional<T>, first match.",
+    "stream.filter(p).findAny() — Optional<T>, any match.",
+    "Both return empty Optional when nothing matches.",
+    "Short-circuiting — they stop reading as soon as a match is found."
+  ],
+  tips: [
+    "On sequential streams, findFirst and findAny are functionally identical. The difference shows up in parallelStream.",
+    "Don't .get() the Optional — use .orElse, .orElseGet, .orElseThrow.",
+    "If you really need ALL matches, use filter + toList. Don't pretend you only need one."
+  ],
+  code: `import java.util.*;
+
+Optional<Person> firstAdult = people.stream()
+    .filter(p -> p.age() >= 18)
+    .findFirst();
+
+Person any = people.parallelStream()
+    .filter(p -> p.country().equals("IN"))
+    .findAny()
+    .orElseThrow();`,
+  complexity: "O(N) worst-case; short-circuits."
+});
+
+
+PROBLEMS.push({
+  num: 15, title: "reduce — fold a stream into one value", diff: "med",
+  family: "Terminal · Reduction",
+  problem: "Three forms: reduce(BinaryOperator) → Optional<T>; reduce(identity, BinaryOperator) → T; reduce(identity, BiFunction, BinaryOperator) → U (the parallel-friendly form).",
+  intuition: "Most aggregations are already covered by sum/max/count/collect. Reach for reduce when those don't fit — concatenate strings with a separator, multiply, fold a custom struct. The accumulator MUST be associative (and stateless) for parallel streams to give correct answers.",
+  hints: [
+    "reduce(BinaryOperator) — no identity; returns Optional<T>.",
+    "reduce(identity, BinaryOperator) — returns T; never empty.",
+    "reduce(identity, accumulator, combiner) — type-changing reduce; combiner is used in parallel.",
+    "Identity must satisfy: combiner(identity, x) == x for all x.",
+    "Operator must be ASSOCIATIVE for parallel correctness."
+  ],
+  tips: [
+    "Most string-join cases want Collectors.joining, not reduce.",
+    "Most sum/min/max cases want mapToInt(...).sum() etc.",
+    "If reduce gives wrong results in parallel, you're either non-associative or sharing state.",
+    "Folding into a mutable container? You want Collectors.collect, not reduce. Reduce is for immutable folds."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+int product = Stream.of(2,3,4,5).reduce(1, (a,b) -> a*b);          // 120
+Optional<Integer> maxOpt = Stream.of(3,1,4,1,5,9,2).reduce(Integer::max);
+
+// custom fold (stateless, associative)
+String joined = Stream.of("a","b","c").reduce("", (a,b) -> a + b);   // "abc"
+// (but Collectors.joining is the right call here)
+
+// parallel-friendly form (identity, accumulator, combiner)
+int totalLen = words.parallelStream()
+    .reduce(0, (sum, w) -> sum + w.length(), Integer::sum);`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 16, title: "Optional<T> — the right way to handle 'might be empty'", diff: "med",
+  family: "Optional",
+  problem: "Optional represents 'a value that might be there'. Streams return Optional from findFirst, findAny, min, max, reduce-without-identity. Use the chained API (map / flatMap / filter / orElse / orElseGet / ifPresent) — never call .get() blind.",
+  intuition: "Optional forces you to think about the empty case at the type level. .get() bypasses that. .orElse(default) substitutes a value. .orElseGet(supplier) substitutes a lazily-computed value. .orElseThrow() throws when empty (NoSuchElementException by default; pass your own).",
+  hints: [
+    "opt.isPresent() / opt.isEmpty() — boolean checks.",
+    "opt.orElse(x) — eager default.",
+    "opt.orElseGet(() -> compute()) — lazy default.",
+    "opt.orElseThrow(() -> new NotFound()) — throw if empty.",
+    "opt.map(fn) → Optional<R>. opt.flatMap(fn) when fn already returns Optional.",
+    "opt.ifPresent(consumer) / opt.ifPresentOrElse(consumer, runnable) (Java 9+).",
+    "opt.stream() (Java 9+) — flatMap an Optional in a stream pipeline."
+  ],
+  tips: [
+    "Don't use Optional as a field type or method parameter — it's designed for return types.",
+    "Don't call .get() unless you've checked isPresent in the same line — and even then orElseThrow is clearer.",
+    "Optional.of(null) THROWS. Optional.ofNullable(null) returns empty. Pick the correct one.",
+    "Don't use Optional<List<T>> — use empty list to mean 'nothing'."
+  ],
+  code: `import java.util.*;
+
+Optional<Person> p = people.stream().filter(x -> x.id().equals(id)).findFirst();
+
+String name = p.map(Person::name).orElse("unknown");
+int age = p.map(Person::age).orElse(0);
+
+p.ifPresentOrElse(
+    person -> System.out.println("found " + person),
+    () -> System.out.println("nope"));
+
+// Don't do this:
+// String x = p.get().name();        // throws if empty
+
+// Do this:
+String x = p.map(Person::name).orElseThrow(() -> new NoSuchElementException("no person " + id));`,
+  complexity: "O(1) for the wrapper itself."
+});
+
+
+/* ===================== COLLECTORS ===================== */
+
+PROBLEMS.push({
+  num: 17, title: "Collectors.toMap — Stream → Map", diff: "med",
+  family: "Collectors",
+  problem: "toMap(keyFn, valueFn) builds a Map. THROWS on duplicate keys unless you supply a merge function. The 4-arg form lets you choose the Map implementation (TreeMap, LinkedHashMap).",
+  intuition: "Most 'index by ID' or 'lookup table' patterns end here. The trap is duplicates — toMap will throw IllegalStateException if two elements produce the same key. Always think 'are keys unique here?' and pass a merge function if you're not 100% sure.",
+  hints: [
+    "Collectors.toMap(keyFn, valueFn) — throws on duplicate key.",
+    "Collectors.toMap(keyFn, valueFn, mergeFn) — duplicates are merged.",
+    "Collectors.toMap(keyFn, valueFn, mergeFn, mapFactory) — choose the Map impl.",
+    "Collectors.toUnmodifiableMap(...) — defensive immutability.",
+    "Function.identity() is handy as the value function: `toMap(Person::id, identity())`."
+  ],
+  tips: [
+    "Always reach for the 3-arg form unless you've verified key uniqueness — production data eventually has duplicates.",
+    "merge function `(a, b) -> a` keeps first; `(a, b) -> b` keeps last.",
+    "Need a Map<K, List<V>>? Use groupingBy, not toMap-with-list-merging.",
+    "Need ordered iteration? `toMap(..., LinkedHashMap::new)`."
+  ],
+  code: `import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+// index by id (assume unique)
+Map<String, Person> byId = people.stream()
+    .collect(Collectors.toMap(Person::id, Function.identity()));
+
+// safe form for ambiguous keys
+Map<String, Integer> highestSalaryByDept = employees.stream()
+    .collect(Collectors.toMap(
+        Employee::dept,
+        Employee::salary,
+        Integer::max));         // merge collisions by max
+
+// preserve insertion order
+Map<String, Person> ordered = people.stream()
+    .collect(Collectors.toMap(
+        Person::id,
+        Function.identity(),
+        (a,b) -> a,
+        LinkedHashMap::new));`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 18, title: "Collectors.joining — concatenate strings", diff: "easy",
+  family: "Collectors",
+  problem: "Collectors.joining(separator, prefix, suffix) builds one String from a Stream<String>. Three overloads: no args, separator only, prefix+sep+suffix.",
+  intuition: "The right tool whenever you assemble CSV rows, comma-separated lists, or SQL IN clauses from a stream. Cleaner and faster than reduce-with-+ and StringBuilder loops.",
+  hints: [
+    "Collectors.joining() — concatenate with no separator.",
+    "Collectors.joining(\", \") — comma separated.",
+    "Collectors.joining(\", \", \"[\", \"]\") — full bracketed form.",
+    "For non-String streams, .map(Object::toString) first."
+  ],
+  tips: [
+    "joining is implemented with StringBuilder internally — no quadratic concatenation.",
+    "For very large outputs, write to a Writer with a forEach instead of building one giant String.",
+    "If your prefix/suffix are conditional, compute them outside and concat — keeping the joining call simple."
+  ],
+  code: `import java.util.*;
+import java.util.stream.Collectors;
+
+String csv = ids.stream().collect(Collectors.joining(","));
+String sql = ids.stream()
+    .map(id -> "'" + id + "'")
+    .collect(Collectors.joining(", ", "id IN (", ")"));
+
+// non-String stream
+String summary = people.stream()
+    .map(p -> p.name() + ":" + p.age())
+    .collect(Collectors.joining("; "));`,
+  complexity: "O(total length)."
+});
+
+PROBLEMS.push({
+  num: 19, title: "Collectors.groupingBy — group elements by a key", diff: "med",
+  family: "Collectors",
+  problem: "groupingBy(keyFn) returns Map<K, List<T>>. With a downstream collector you can produce Map<K, Long> counts, Map<K, Integer> sums, Map<K, Set<T>> unique buckets, even nested Map<K1, Map<K2, ...>>.",
+  intuition: "groupingBy is the SQL GROUP BY of streams. The downstream collector is the AGGREGATE function — counting, summing, mapping, joining, even nested groupingBy. Two- and three-arg forms cover almost every analytics pattern you'd otherwise hand-write.",
+  hints: [
+    "groupingBy(keyFn) → Map<K, List<T>>.",
+    "groupingBy(keyFn, downstream) — apply downstream collector per group.",
+    "groupingBy(keyFn, mapFactory, downstream) — choose the Map (TreeMap for sorted keys).",
+    "Common downstreams: Collectors.counting() → Long, summingInt(toInt) → Integer, mapping(fn, toList()) → List<R>, toSet().",
+    "Multi-level groupingBy: groupingBy(k1, groupingBy(k2)) → Map<K1, Map<K2, List<T>>>."
+  ],
+  tips: [
+    "groupingBy(...) builds a HashMap by default. Use TreeMap::new as mapFactory for sorted-key iteration.",
+    "Nested groupingBy is fine for small key spaces; for huge data, build the structure imperatively.",
+    "Collectors.partitioningBy(predicate) is the special-case 2-bucket version (true / false)."
+  ],
+  code: `import java.util.*;
+import java.util.stream.Collectors;
+
+// grouping into lists
+Map<String, List<Person>> byDept = people.stream()
+    .collect(Collectors.groupingBy(Person::dept));
+
+// count per group
+Map<String, Long> countByDept = people.stream()
+    .collect(Collectors.groupingBy(Person::dept, Collectors.counting()));
+
+// sum per group
+Map<String, Integer> totalSalaryByDept = employees.stream()
+    .collect(Collectors.groupingBy(Employee::dept, Collectors.summingInt(Employee::salary)));
+
+// nested grouping
+Map<String, Map<String, List<Person>>> byCountryByDept = people.stream()
+    .collect(Collectors.groupingBy(Person::country,
+             Collectors.groupingBy(Person::dept)));
+
+// just names per dept (mapping downstream)
+Map<String, List<String>> namesByDept = people.stream()
+    .collect(Collectors.groupingBy(
+        Person::dept,
+        Collectors.mapping(Person::name, Collectors.toList())));`,
+  complexity: "O(N)."
+});
+
+
+PROBLEMS.push({
+  num: 20, title: "Collectors.partitioningBy — split into two buckets", diff: "easy",
+  family: "Collectors",
+  problem: "partitioningBy(Predicate) returns Map<Boolean, List<T>> with TRUE and FALSE keys, both always present (possibly with empty lists).",
+  intuition: "Special-case groupingBy where the key space is exactly true/false. Slightly faster than groupingBy because the result is a small fixed-size map. Use whenever you split into 'matches' and 'doesn't match'.",
+  hints: [
+    "partitioningBy(p) → Map<Boolean, List<T>>.",
+    "partitioningBy(p, downstream) — combined with counting/summing etc.",
+    "BOTH true and false keys always exist in the result, even if one bucket is empty.",
+    "If you only need the matches, use filter + toList. partitioningBy is for when you want BOTH halves."
+  ],
+  tips: [
+    "Use partitioningBy when downstream code wants both 'good' and 'bad' results in one pass.",
+    "For a true/false count, partitioningBy(..., counting()) is concise.",
+    "Don't reach for partitioningBy when you only care about one bucket — filter is simpler."
+  ],
+  code: `import java.util.*;
+import java.util.stream.Collectors;
+
+Map<Boolean, List<Order>> hiLo = orders.stream()
+    .collect(Collectors.partitioningBy(o -> o.amount() > 1000));
+
+List<Order> high = hiLo.get(true);
+List<Order> low  = hiLo.get(false);
+
+// counts
+Map<Boolean, Long> validCount = events.stream()
+    .collect(Collectors.partitioningBy(Event::isValid, Collectors.counting()));`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 21, title: "Downstream Collectors — mapping / counting / summingInt / averaging / joining", diff: "med",
+  family: "Collectors",
+  problem: "Downstream collectors are the second arg to groupingBy / partitioningBy. They turn a List<T> per group into something else (count, sum, average, joined string, mapped list, set).",
+  intuition: "groupingBy is HOW to bucket. The downstream collector is WHAT to compute per bucket. Compose them like SQL aggregations: 'group by dept, count(*)' is groupingBy(dept, counting()).",
+  hints: [
+    "counting() — Map<K, Long>.",
+    "summingInt(toInt) / summingLong / summingDouble — Map<K, Number>.",
+    "averagingInt(toInt) / averagingDouble — Map<K, Double>.",
+    "mapping(fn, downstream) — transform inputs before the downstream collector.",
+    "filtering(pred, downstream) (Java 9+) — filter elements before the downstream collects.",
+    "minBy(cmp) / maxBy(cmp) — Map<K, Optional<T>>.",
+    "joining(sep) — Map<K, String> when downstream is on a Stream<String>."
+  ],
+  tips: [
+    "filtering is great when you want 'group all, then count only the active ones per group'.",
+    "minBy/maxBy return Optional — you usually want collectingAndThen to unwrap it.",
+    "For summary statistics per group: summarizingInt(toInt) → Map<K, IntSummaryStatistics>."
+  ],
+  code: `import java.util.*;
+import java.util.stream.Collectors;
+
+// average salary per dept
+Map<String, Double> avgSalary = employees.stream()
+    .collect(Collectors.groupingBy(
+        Employee::dept,
+        Collectors.averagingInt(Employee::salary)));
+
+// summary stats per dept
+Map<String, IntSummaryStatistics> stats = employees.stream()
+    .collect(Collectors.groupingBy(
+        Employee::dept,
+        Collectors.summarizingInt(Employee::salary)));
+
+// names per dept, joined
+Map<String, String> rosterByDept = people.stream()
+    .collect(Collectors.groupingBy(
+        Person::dept,
+        Collectors.mapping(Person::name, Collectors.joining(", "))));
+
+// filtering downstream — count only ACTIVE per dept
+Map<String, Long> activeByDept = employees.stream()
+    .collect(Collectors.groupingBy(
+        Employee::dept,
+        Collectors.filtering(Employee::isActive, Collectors.counting())));`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 22, title: "Collectors.teeing — combine two collectors", diff: "hard",
+  family: "Collectors",
+  problem: "teeing(c1, c2, merger) (Java 12+) runs two downstream collectors in a single pass and merges the two results. Compute count + sum, min + max, sum + average, in one stream traversal.",
+  intuition: "Pre-Java-12, computing two aggregates meant either two passes or a hand-rolled mutable accumulator. teeing solves it: declare both Collectors, define how to combine. Cleanest way to compute multiple aggregates over the same stream.",
+  hints: [
+    "teeing(downstream1, downstream2, BiFunction merger) — merger turns the two results into one.",
+    "Both downstreams see every element.",
+    "Only single-pass — same complexity as either alone.",
+    "Returns whatever the merger returns — typically a record or a domain type."
+  ],
+  tips: [
+    "If you find yourself running two pipelines over the same source list, replace them with teeing.",
+    "For more than two simultaneous collectors, nest teeing or use the older Collectors.collectingAndThen pattern (or just write an imperative reducer).",
+    "Available only on Java 12+."
+  ],
+  code: `import java.util.*;
+import java.util.stream.Collectors;
+
+record CountAndAvg(long count, double avg) {}
+
+CountAndAvg r = employees.stream().collect(Collectors.teeing(
+    Collectors.counting(),
+    Collectors.averagingInt(Employee::salary),
+    CountAndAvg::new));
+
+// or: min + max in one pass
+record MinMax(int min, int max) {}
+MinMax mm = numbers.stream().collect(Collectors.teeing(
+    Collectors.minBy(Comparator.naturalOrder()),
+    Collectors.maxBy(Comparator.naturalOrder()),
+    (oMin, oMax) -> new MinMax(oMin.orElseThrow(), oMax.orElseThrow())));`,
+  complexity: "O(N), single pass."
+});
+
+
+/* ===================== PRIMITIVE & PARALLEL ===================== */
+
+PROBLEMS.push({
+  num: 23, title: "IntStream / LongStream / DoubleStream — primitive streams", diff: "med",
+  family: "Primitive",
+  problem: "Specialised streams over primitive int/long/double — no boxing, faster arithmetic, extra methods (sum, min, max, average, summaryStatistics, range).",
+  intuition: "Whenever you do arithmetic on a Stream<Integer>, you're paying a boxing tax. mapToInt converts. range / rangeClosed give cheap loop-style iteration. boxed() goes back to Stream<Integer> when you need a Collection at the end.",
+  hints: [
+    "IntStream.range(0, n) — exclusive end. rangeClosed(0, n) — inclusive.",
+    "stream.mapToInt(toInt) → IntStream.",
+    "intStream.boxed() → Stream<Integer>.",
+    "intStream.asLongStream() / asDoubleStream() — widen.",
+    "summaryStatistics() returns count + min + max + sum + average in one pass.",
+    "All three primitive streams have sum / min / max / average."
+  ],
+  tips: [
+    "Avoid Stream<Integer> on hot paths — boxing is real.",
+    "IntStream.range is the cleanest replacement for `for (int i = 0; i < n; i++)`.",
+    "For BigDecimal sums, you can't use primitive streams — fall back to reduce."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+// classic for-loop replacement
+int[] squares = IntStream.range(0, 10).map(i -> i*i).toArray();
+
+// arithmetic on a Stream<T>
+int total = orders.stream().mapToInt(Order::amount).sum();
+double avg = orders.stream().mapToInt(Order::amount).average().orElse(0);
+
+// when you need a Collection
+List<Integer> list = IntStream.rangeClosed(1, 5).boxed().toList();   // [1,2,3,4,5]
+
+// stats in one pass
+IntSummaryStatistics s = orders.stream().mapToInt(Order::amount).summaryStatistics();`,
+  complexity: "O(N), no boxing."
+});
+
+PROBLEMS.push({
+  num: 24, title: "parallelStream — when (and when not) to parallelise", diff: "hard",
+  family: "Parallel",
+  problem: "parallelStream() splits the work across the common ForkJoinPool. Free at the API level, but not free in real terms — there's setup overhead, the data must split well, and the per-element work must be CPU-bound.",
+  intuition: "Sequential streams use one core. Parallel streams attempt to use all of them. The win shows up only when (1) N is large, (2) per-element cost is high, (3) the source splits cheaply (arrays > ArrayList > LinkedList > unordered streams), and (4) the work is CPU-bound (NOT I/O-bound — that needs different tooling).",
+  hints: [
+    "stream.parallel() and parallelStream() are equivalent.",
+    "Don't use it for I/O — the common pool is small and shared with other parallel work.",
+    "Avoid forEach with shared mutable state — use Collector.",
+    "Reduce/collect must use ASSOCIATIVE accumulators.",
+    "Limit and findFirst force ordered semantics — slower than findAny.",
+    "Some sources split well (ArrayList, arrays). Others don't (LinkedList, IO streams)."
+  ],
+  tips: [
+    "Default to sequential. Switch to parallel only after measuring with JMH or a real benchmark.",
+    "For I/O fan-out (HTTP calls), use ExecutorService + CompletableFuture — NOT parallelStream.",
+    "If you really need parallelism with control, build your own ForkJoinPool: `customPool.submit(() -> stream.parallel().count()).get()`.",
+    "Check the size threshold in your JDK — small streams pay the parallel tax for nothing."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+import java.util.concurrent.*;
+
+// CPU-bound, big data, parallel pays off
+long primes = LongStream.range(2, 1_000_000).parallel()
+    .filter(MyMath::isPrime)
+    .count();
+
+// I/O-bound — DON'T do this with parallelStream
+// urls.parallelStream().forEach(this::httpFetch);   // bad — saturates the common pool
+
+// Use an executor instead
+ExecutorService io = Executors.newFixedThreadPool(20);
+List<CompletableFuture<String>> fs = urls.stream()
+    .map(u -> CompletableFuture.supplyAsync(() -> httpFetch(u), io))
+    .toList();
+List<String> bodies = fs.stream().map(CompletableFuture::join).toList();
+io.shutdown();`,
+  complexity: "Best case: N/cores; worst case: slower than sequential."
+});
+
+PROBLEMS.push({
+  num: 25, title: "Common Stream Pitfalls — the 7 mistakes everyone makes", diff: "med",
+  family: "Pitfalls",
+  problem: "Streams have a small set of repeating bugs. Knowing them up front saves you from each one.",
+  intuition: "These are not 'edge cases' — they are the EVERYDAY mistakes. Learn them once, recognise them in code review, fix them at the source.",
+  hints: [
+    "1. Reusing a consumed stream → IllegalStateException. Build a Supplier<Stream<T>> if you need to iterate twice.",
+    "2. Forgetting the terminal → nothing happens. Pipeline lazy, no terminal = no work.",
+    "3. side effects in map/peek that downstream short-circuits → effects don't run.",
+    "4. parallelStream + shared mutable state → silent data loss.",
+    "5. toMap on duplicates → IllegalStateException. Provide a merge function.",
+    "6. Stream<Integer> + arithmetic → boxing tax. Use mapToInt.",
+    "7. Files.lines without try-with-resources → file descriptor leak."
+  ],
+  tips: [
+    "If a stream produces a wrong answer, suspect parallel + shared state first.",
+    ".toList() (Java 16+) returns unmodifiable. Wrap in new ArrayList<>(...) if callers need to mutate.",
+    "When in doubt, sequential first, parallel later (with measurement).",
+    "Optional.get() is a code smell. Prefer orElse / orElseThrow."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+import java.nio.file.*;
+
+// (1) build a fresh stream for each iteration
+java.util.function.Supplier<Stream<Integer>> src = () -> IntStream.range(0,10).boxed();
+src.get().count();
+src.get().max(Comparator.naturalOrder());
+
+// (4) DON'T do this in parallel
+List<Integer> bad = new ArrayList<>();
+IntStream.range(0,1_000_000).parallel().forEach(bad::add);     // race, lost elements
+
+// fix: use a Collector
+List<Integer> good = IntStream.range(0,1_000_000).parallel().boxed().toList();
+
+// (7) close the file
+try (Stream<String> lines = Files.lines(Path.of("app.log"))) {
+    long n = lines.filter(l -> l.contains("ERROR")).count();
+}`,
+  complexity: "Same as the underlying ops."
+});
+
+
+/* ===================== RECIPES ===================== */
+
+PROBLEMS.push({
+  num: 26, title: "Recipe: Frequency Counting & Top-K", diff: "med",
+  family: "Recipes",
+  problem: "Count occurrences of each item, then take the top K most frequent. Universal log-analysis / leaderboard pattern.",
+  intuition: "Two-step: count with Collectors.groupingBy + counting, then pour the entries through a sort + limit. For large data, swap the sort for a min-heap (PriorityQueue) of size K — O(N log K) instead of O(N log N).",
+  hints: [
+    "Counting: groupingBy(keyFn, counting()) → Map<K, Long>.",
+    "Top-K via sort: stream(entries).sorted(byValue.reversed()).limit(k).",
+    "Top-K via heap: maintain a PriorityQueue of size K with min-heap ordering on value.",
+    "Use entries.stream().toList() at the end to materialise."
+  ],
+  tips: [
+    "If you really only need the top 1, use max(byValue) — no sort needed.",
+    "Map.Entry.comparingByValue() is the comparator you want for sorting entries by value.",
+    "For huge K, sort is fine. For small K (top 10/100) on large N, heap wins."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+// count
+Map<String, Long> counts = words.stream()
+    .collect(Collectors.groupingBy(w -> w, Collectors.counting()));
+
+// top 5 — sort approach
+List<Map.Entry<String, Long>> top5 = counts.entrySet().stream()
+    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+    .limit(5)
+    .toList();
+
+// top 5 — heap approach (better for large N)
+PriorityQueue<Map.Entry<String, Long>> heap =
+    new PriorityQueue<>(Map.Entry.comparingByValue());
+for (var e : counts.entrySet()) {
+    heap.offer(e);
+    if (heap.size() > 5) heap.poll();
+}
+List<Map.Entry<String, Long>> top5b = new ArrayList<>(heap);
+top5b.sort(Map.Entry.<String, Long>comparingByValue().reversed());`,
+  complexity: "O(N log K) with heap; O(N log N) with sort."
+});
+
+PROBLEMS.push({
+  num: 27, title: "Recipe: Group + Aggregate (SQL GROUP BY in one line)", diff: "med",
+  family: "Recipes",
+  problem: "Replace 'init Map → loop → mutate' with one declarative groupingBy. Sum, count, average, or even nested groupings of records by one or more keys.",
+  intuition: "groupingBy + downstream collector is the SQL-shaped answer. Each downstream collector is the aggregate function. For multi-key groupings, nest groupingBy or build a composite key.",
+  hints: [
+    "Sum per group: groupingBy(key, summingInt(toInt)).",
+    "Count per group: groupingBy(key, counting()).",
+    "Multi-aggregate per group: groupingBy(key, teeing(c1, c2, merger)).",
+    "Multi-key: nested groupingBy OR groupingBy(record::compositeKey)."
+  ],
+  tips: [
+    "TreeMap as mapFactory keeps keys sorted: groupingBy(k, TreeMap::new, ...).",
+    "If you want the result as a List<Aggregate>, .entrySet().stream().map(...) at the end.",
+    "summarizingInt gives count + sum + min + max + avg per group in one pass."
+  ],
+  code: `import java.util.*;
+import java.util.stream.Collectors;
+
+record Sale(String region, String product, int amount) {}
+
+List<Sale> sales = ...;
+
+Map<String, Integer> totalByRegion = sales.stream()
+    .collect(Collectors.groupingBy(Sale::region, Collectors.summingInt(Sale::amount)));
+
+Map<String, Map<String, Integer>> byRegionByProduct = sales.stream()
+    .collect(Collectors.groupingBy(Sale::region,
+             Collectors.groupingBy(Sale::product, Collectors.summingInt(Sale::amount))));
+
+Map<String, IntSummaryStatistics> statsByRegion = sales.stream()
+    .collect(Collectors.groupingBy(Sale::region,
+             Collectors.summarizingInt(Sale::amount)));`,
+  complexity: "O(N)."
+});
+
+PROBLEMS.push({
+  num: 28, title: "Recipe: Join two collections (left / inner)", diff: "hard",
+  family: "Recipes",
+  problem: "You have two lists and want to enrich one with data from the other. The streams idiom: index the right side as a Map for O(1) lookup, then map over the left side.",
+  intuition: "Don't do `for each left, for each right`. Build the lookup ONCE (toMap), then run a single pass over the left list. This is the difference between O(L * R) and O(L + R).",
+  hints: [
+    "Index: rights.stream().collect(toMap(R::key, identity(), (a,b) -> a)).",
+    "Inner join: lefts.stream().filter(l -> idx.containsKey(l.key())).map(l -> merge(l, idx.get(l.key()))).",
+    "Left join with default: lefts.stream().map(l -> merge(l, idx.getOrDefault(l.key(), DEFAULT))).",
+    "For one-to-many right side, use groupingBy(R::key) → Map<K, List<R>>, then flatMap over the joined pairs."
+  ],
+  tips: [
+    "If the right side is huge, consider streaming it from disk and writing the index to a file-backed map.",
+    "If keys can be null, filter them out BEFORE indexing.",
+    "For >2 inputs, build all the indexes up front, then a single pass over the primary."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+import java.util.function.Function;
+
+record User(int id, String name) {}
+record Order(int id, int userId, int amount) {}
+record Enriched(int orderId, String userName, int amount) {}
+
+List<User> users = ...;
+List<Order> orders = ...;
+
+Map<Integer, User> usersById = users.stream()
+    .collect(Collectors.toMap(User::id, Function.identity(), (a,b) -> a));
+
+// inner join
+List<Enriched> joined = orders.stream()
+    .filter(o -> usersById.containsKey(o.userId()))
+    .map(o -> new Enriched(o.id(), usersById.get(o.userId()).name(), o.amount()))
+    .toList();
+
+// left join
+List<Enriched> leftJoined = orders.stream()
+    .map(o -> {
+        User u = usersById.getOrDefault(o.userId(), new User(o.userId(), "<unknown>"));
+        return new Enriched(o.id(), u.name(), o.amount());
+    })
+    .toList();`,
+  complexity: "O(L + R)."
+});
+
+PROBLEMS.push({
+  num: 29, title: "Recipe: Process a Big File Without Loading It All", diff: "med",
+  family: "Recipes",
+  problem: "Use Files.lines + try-with-resources to stream a multi-GB file line-by-line, transforming and filtering as you go.",
+  intuition: "readAllLines() loads everything — fine for small configs, fatal for big logs. lines() is lazy: each filter/map operates on one line, then it's gone. Memory is bounded.",
+  hints: [
+    "Files.lines(Path) returns Stream<String>. CLOSE IT (try-with-resources).",
+    "Combine with filter / map / flatMap to extract / transform.",
+    "Write output via Files.write or a BufferedWriter — don't .toList() multi-GB results.",
+    "For non-UTF-8: Files.lines(path, charset).",
+    "For binary, use Files.newInputStream + buffered reader yourself; lines() is text-only."
+  ],
+  tips: [
+    "If lines have variable encoding or split records, consider Scanner with a custom delimiter or a streaming JSON/CSV library.",
+    "For parallel processing of a huge file, split the file by byte-range and process each range — Files.lines doesn't parallelise efficiently.",
+    "Always handle malformed lines defensively — one bad line shouldn't kill the pipeline."
+  ],
+  code: `import java.nio.file.*;
+import java.util.stream.*;
+import java.io.*;
+
+// extract all error timestamps from a 5GB log
+try (Stream<String> in = Files.lines(Path.of("app.log"));
+     BufferedWriter out = Files.newBufferedWriter(Path.of("errors.txt"))) {
+
+    in.filter(l -> l.contains("ERROR"))
+      .map(l -> l.substring(0, 23))    // ISO timestamp prefix
+      .forEachOrdered(line -> {
+          try { out.write(line); out.newLine(); }
+          catch (IOException e) { throw new UncheckedIOException(e); }
+      });
+}`,
+  complexity: "O(file bytes), O(1) memory."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => { stash.push(html); return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001'; };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float','Object','Number',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','LinkedHashMap','LinkedHashSet','EnumMap','EnumSet',
+    'ArrayList','LinkedList','ArrayDeque','Queue','Deque','PriorityQueue','BlockingQueue',
+    'ConcurrentHashMap','ConcurrentSkipListMap',
+    'Stream','IntStream','LongStream','DoubleStream','Collector','Collectors','Optional','OptionalInt','OptionalLong','OptionalDouble',
+    'Function','BiFunction','Predicate','Consumer','BiConsumer','Supplier','BinaryOperator','UnaryOperator','ToIntFunction','ToLongFunction','ToDoubleFunction','IntFunction',
+    'Comparator','Comparable','Objects','Arrays','Collections','Iterator','Iterable',
+    'Path','Paths','Files','BufferedReader','BufferedWriter','InputStream','OutputStream','UncheckedIOException','IOException',
+    'IntSummaryStatistics','LongSummaryStatistics','DoubleSummaryStatistics',
+    'CompletableFuture','ExecutorService','Executors','ForkJoinPool','ThreadLocalRandom','Random',
+    'Person','Order','Item','Employee','User','Sale','Event','Enriched','MyMath'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum','record',
+    'return','if','else','for','while','do','break','continue','switch','case','default','yield',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff).sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) { state.diff = t.dataset.diff; state.idx = 0; render(); }
+    };
+  });
+}
+
+function familyPillClass(family) {
+  if (!family) return '';
+  const f = family.toLowerCase();
+  if (f.includes('source'))    return 'src';
+  if (f.includes('intermed'))  return 'itm';
+  if (f.includes('terminal'))  return 'term';
+  if (f.includes('collector')) return 'coll';
+  if (f.includes('parallel'))  return 'par';
+  if (f.includes('optional'))  return 'opt';
+  return '';
+}
+
+
+function render() {
+  const main = document.getElementById('main');
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}` : '';
+  const formulaBlock = p.formula ? `<div class="section-title">Format / Syntax</div><div class="formula">${escapeHtml(p.formula)}</div>` : '';
+  const familyPill = p.family ? `<span class="pill ${familyPillClass(p.family)}">${escapeHtml(p.family)}</span>` : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+      <div class="section-title">Why You Use It</div>
+      <p>${escapeHtml(p.problem)}</p>
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+      ${formulaBlock}
+      ${cheatBlock}
+      <div class="section-title">Methods &amp; Patterns</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+      <div class="section-title">Tips &amp; Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>`;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent = `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️'; themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙'; themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem('theme', next);
+});
+
+
+function renderBriefView() {
+  const families = [
+    { title: 'Sources',     cmds: [['Collection.stream()','from list/set/map'],['Arrays.stream(arr)','from array'],['Stream.of(...)','varargs literal'],['IntStream.range(lo,hi)','int range'],['Files.lines(path)','file line-by-line'],['Stream.iterate / generate','infinite (use limit)']] },
+    { title: 'Intermediate', cmds: [['filter(p)','keep matches'],['map(fn)','transform 1→1'],['mapToInt/Long/Double','no boxing'],['flatMap(fn)','transform 1→many'],['sorted(cmp)','stateful, O(N log N)'],['distinct','dedup, stateful'],['limit/skip','slice'],['takeWhile/dropWhile','prefix slicing']] },
+    { title: 'Terminals',   cmds: [['toList()','Java 16+, immutable'],['count / sum / avg','aggregations'],['anyMatch / allMatch','short-circuit booleans'],['findFirst / findAny','first / any element'],['reduce(id, op)','custom fold'],['forEach','side effect terminal']] },
+    { title: 'Collectors',  cmds: [['toList / toSet / toMap','materialise'],['groupingBy(k)','SQL GROUP BY'],['partitioningBy(p)','split true/false'],['counting / summingInt','aggregations'],['joining(sep)','string concat'],['mapping(fn, downstream)','transform inside group'],['teeing(c1, c2, merger)','two collectors at once']] },
+    { title: 'Optional',    cmds: [['orElse / orElseGet','default'],['orElseThrow','strict unwrap'],['map / flatMap','chained transform'],['ifPresent / ifPresentOrElse','side effect on value'],['stream()','flatten in stream pipeline']] },
+    { title: 'Parallel',    cmds: [['parallelStream()','split across cores'],['unordered()','allow reordering'],['When to use','CPU-bound + large + splittable'],['When NOT','I/O, small N, shared state']] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> What kind of source?
+   ├── <span class="a">Collection</span>     → <span class="alg">coll.stream()</span>
+   ├── <span class="a">Array</span>          → <span class="alg">Arrays.stream(arr)</span>
+   ├── <span class="a">Range of ints</span>  → <span class="alg">IntStream.range(lo,hi)</span>
+   ├── <span class="a">File lines</span>     → <span class="alg">Files.lines(path)</span>  (close it!)
+   └── <span class="a">Generator</span>      → <span class="alg">Stream.iterate / generate + limit</span>
+
+<span class="q">Q2.</span> What transformation?
+   ├── <span class="a">keep matches</span>   → <span class="alg">filter(p)</span>
+   ├── <span class="a">project field</span>  → <span class="alg">map(T::field)</span>
+   ├── <span class="a">explode lists</span>  → <span class="alg">flatMap(t -> t.items().stream())</span>
+   ├── <span class="a">arithmetic</span>     → <span class="alg">mapToInt(...).sum()/avg()</span>
+   └── <span class="a">prefix slicing</span> → <span class="alg">takeWhile / dropWhile</span>
+
+<span class="q">Q3.</span> What's the output shape?
+   ├── <span class="a">List<T></span>            → <span class="alg">.toList()</span>
+   ├── <span class="a">Set<T></span>             → <span class="alg">collect(toSet())</span>
+   ├── <span class="a">Map<K,V></span>           → <span class="alg">collect(toMap(k, v, merge))</span>
+   ├── <span class="a">Map<K, List<V>></span>    → <span class="alg">collect(groupingBy(k))</span>
+   ├── <span class="a">String</span>             → <span class="alg">collect(joining(sep))</span>
+   ├── <span class="a">single value</span>       → <span class="alg">reduce / sum / count / max / findFirst</span>
+   └── <span class="a">side effect only</span>   → <span class="alg">forEach</span>
+
+<span class="q">Q4.</span> Empty result possible?
+   └── <span class="alg">Optional<T> — orElse / orElseThrow / map / ifPresent</span>
+
+<span class="q">Q5.</span> Should I parallelise?
+   ├── <span class="a">small N or I/O-bound</span>     → <span class="alg">NO — sequential</span>
+   ├── <span class="a">huge + CPU-bound + splittable</span> → <span class="alg">.parallel() — measure first</span>
+   └── <span class="a">unsure</span>                    → <span class="alg">NO — sequential by default</span>
+`;
+
+  const recipeCards = [
+    { b: 'Filter + project',     s: "stream().filter(p).map(fn).toList()" },
+    { b: 'Group by + count',     s: "collect(groupingBy(k, counting()))" },
+    { b: 'Group by + sum',       s: "collect(groupingBy(k, summingInt(v)))" },
+    { b: 'Index by id',          s: "collect(toMap(T::id, identity(), (a,b)->a))" },
+    { b: 'Top-K (small K)',      s: "PriorityQueue size K + map.entries" },
+    { b: 'Sum a column',         s: "stream().mapToInt(T::amount).sum()" },
+    { b: 'Stats in one pass',    s: "stream().mapToInt(...).summaryStatistics()" },
+    { b: 'Join two lists',       s: "build right-Map with toMap, then map left" },
+    { b: 'Join strings',         s: "collect(joining(\", \", \"[\", \"]\"))" },
+    { b: 'Split true / false',   s: "collect(partitioningBy(p))" },
+    { b: 'Count + average',      s: "collect(teeing(counting(), averagingInt(v), pair))" },
+    { b: 'Big file → results',   s: "Files.lines(p) inside try-with-resources" },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.cmds.map(c => `<div class="card-mini"><b>${escapeHtml(c[0])}</b><span>${escapeHtml(c[1])}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const recipes_html = `
+    <div class="panel">
+      <h3>One-Liner Recipes</h3>
+      <div class="grid">
+        ${recipeCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">J A V A &nbsp; S T R E A M S</div>
+        <h1 class="brief-title">Source · Transform · Terminal</h1>
+        <p class="brief-tagline">Lazy pipelines. One terminal. No reuse.</p>
+      </header>
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+      ${recipes_html}
+      ${families_html}
+    </div>`;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

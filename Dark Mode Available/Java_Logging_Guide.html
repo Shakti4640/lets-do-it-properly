@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Java Logging — Frameworks, Patterns &amp; Production Recipes</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #0d9488;          /* teal */
+    --accent2: #4f46e5;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw:  #cf222e;
+    --typ: #6f42c1;
+    --bi:  #b91c1c;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy:  #16a34a;
+    --med:   #d97706;
+    --hard:  #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+  .hamburger { position: fixed; top: 14px; left: 14px; width: 44px; height: 44px; border-radius: 10px; background: #ffffff; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; cursor: pointer; z-index: 1001; }
+  .hamburger span { display: block; width: 22px; height: 2.5px; background: #1e1e25; border-radius: 2px; transition: transform .25s, opacity .2s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 360px; max-width: 90vw; background: #ffffff; border-right: 1px solid var(--border); box-shadow: 2px 0 14px rgba(0,0,0,.06); transform: translateX(-100%); transition: transform .28s ease; overflow-y: auto; z-index: 1000; padding: 70px 18px 32px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 { margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .sidebar .group-title { margin-top: 18px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+  .sidebar a { display: flex; align-items: center; gap: 8px; padding: 7px 8px; margin: 2px 0; text-decoration: none; color: #1f2330; border-radius: 6px; font-size: 13.5px; cursor: pointer; }
+  .sidebar a:hover { background: #ccfbf1; color: var(--accent); }
+  .sidebar a.active { background: #ccfbf1; color: var(--accent); font-weight: 600; }
+  .sidebar a .num { display: inline-block; min-width: 32px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 999; }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .topbar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 18px 24px 0; padding-left: 76px; position: sticky; top: 0; z-index: 50; }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab { padding: 9px 16px; border: 1px solid var(--border); border-bottom: none; background: #f1f3f9; color: var(--muted); border-top-left-radius: 8px; border-top-right-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: background .15s; }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active { background: #ffffff; color: var(--fg); border-bottom: 2px solid #ffffff; margin-bottom: -1px; box-shadow: 0 -2px 0 var(--accent) inset; }
+  .tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 24px 120px; }
+  .problem-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 28px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .problem-card h2 { margin: 0 0 6px; font-size: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .num-tag { background: #ccfbf1; color: var(--accent); padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: "JetBrains Mono", Consolas, monospace; }
+  .badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .05em; }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+  .pill { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #ecfeff; color: #155e75; font-weight: 600; letter-spacing: .03em; }
+  .pill.api  { background:#dcfce7; color:#166534; }
+  .pill.impl { background:#fce7f3; color:#9d174d; }
+  .pill.cfg  { background:#ede9fe; color:#5b21b6; }
+  .pill.lvl  { background:#fef3c7; color:#92400e; }
+  .pill.app  { background:#fee2e2; color:#991b1b; }
+  .pill.fmt  { background:#e0f2fe; color:#075985; }
+  .pill.prod { background:#fff7ed; color:#c2410c; }
+
+  .section-title { font-size: 13.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition { background: #f0fdfa; border-left: 4px solid #14b8a6; border-radius: 6px; padding: 12px 16px; margin: 8px 0; }
+  .formula { background: #ecfeff; border-left: 4px solid #06b6d4; border-radius: 6px; padding: 10px 16px; margin: 8px 0; font-family: "JetBrains Mono", Consolas, monospace; font-size: 13.5px; overflow-x: auto; white-space: pre; }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block { background: #fef9c3; border-left: 4px solid #ca8a04; border-radius: 6px; padding: 10px 16px; margin: 8px 0; }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+  .cheat-table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; font-size: 14px; }
+  .cheat-table th, .cheat-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  .cheat-table th { background: #ccfbf1; color: var(--accent); font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .cheat-table td:first-child { font-family: "JetBrains Mono", Consolas, monospace; background: #f0fdfa; white-space: nowrap; color: #115e59; }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code { background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 6px 0; }
+  pre.code code { font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace; }
+  .kw { color: var(--kw); font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .bi { color: var(--bi); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 60; box-shadow: 0 -2px 8px rgba(0,0,0,.04); }
+  .nav-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--fg); font-weight: 500; }
+  .nav-btn:hover:not(:disabled) { background: #ccfbf1; color: var(--accent); border-color: #5eead4; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd { display: inline-block; border: 1px solid #d0d7de; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; background: #f6f8fa; font-family: monospace; font-size: 11px; color: #444; }
+
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle { font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px; }
+  .brief-root .brief-title { font-size: clamp(28px, 6vw, 48px); font-weight: 900; margin: 0; background: linear-gradient(90deg, #0d9488, #06b6d4, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; }
+  .brief-root .panel h3 { margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .brief-root .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .brief-root .card-mini { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: #f0fdfa; }
+  .brief-root .card-mini b { color: var(--accent); display: block; margin-bottom: 4px; font-size: 13.5px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow { border: 1px dashed var(--border); border-radius: 12px; padding: 16px; background: var(--code-bg); font-family: "JetBrains Mono", Consolas, monospace; font-size: 13px; line-height: 1.9; overflow-x: auto; white-space: pre; margin: 0; color: var(--fg); }
+  .brief-root .flow .q { color: var(--accent); font-weight: 700; }
+  .brief-root .flow .a { color: var(--str); }
+  .brief-root .flow .alg { color: var(--bi); font-weight: 700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+  .theme-toggle { position: fixed; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001; font-size: 20px; line-height: 1; color: var(--fg); transition: background .15s, color .15s, border-color .15s, transform .15s; }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --accent: #2dd4bf;
+    --border: #30363d; --card: #161b22; --code-bg: #0b0f15; --code-fg: #e6edf3;
+    --kw: #ff7b72; --typ: #d2a8ff; --bi: #ffa657; --str: #a5d6ff; --cmt: #8b949e; --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover, [data-theme="dark"] .sidebar a.active { background: rgba(45,212,191,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(45,212,191,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(20,184,166,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(202,138,4,.10); }
+  [data-theme="dark"] .pill { background: rgba(21,94,117,.18); color: #a5f3fc; }
+  [data-theme="dark"] .pill.api  { background: rgba(22,101,52,.18); color: #bbf7d0; }
+  [data-theme="dark"] .pill.impl { background: rgba(157,23,77,.18); color: #fbcfe8; }
+  [data-theme="dark"] .pill.cfg  { background: rgba(91,33,182,.18); color: #ddd6fe; }
+  [data-theme="dark"] .pill.lvl  { background: rgba(146,64,14,.18); color: #fde68a; }
+  [data-theme="dark"] .pill.app  { background: rgba(153,27,27,.18); color: #fecaca; }
+  [data-theme="dark"] .pill.fmt  { background: rgba(7,89,133,.18); color: #bae6fd; }
+  [data-theme="dark"] .pill.prod { background: rgba(194,65,12,.18); color: #fed7aa; }
+  [data-theme="dark"] .nav-bar { background: var(--card); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(45,212,191,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(45,212,191,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: #5eead4; }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .card-mini { background: rgba(45,212,191,.07); }
+</style>
+</head>
+<body>
+<button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar"><h2>Table of Contents</h2><div id="toc"></div></aside>
+<header class="topbar">
+  <h1>Java Logging — Frameworks, Patterns &amp; Production Recipes</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+<main id="main"></main>
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+<script>
+const PROBLEMS = [];
+
+
+PROBLEMS.push({
+  num: 0, title: "The Java Logging Mental Model (read this first)", diff: "veasy",
+  family: "Foundations",
+  problem: "Java logging splits cleanly into two layers. (1) The API your CODE talks to — almost always SLF4J. (2) The IMPLEMENTATION that decides WHERE messages go — Logback, Log4j2, or JUL. SLF4J is the facade; Logback / Log4j2 are the engines. Same code, different bindings, different config files.",
+  intuition: "Code against SLF4J. Pick a backend (Logback by default, Log4j2 if you need its async logger or fancier patterns). Don't reach for System.out.println — it bypasses everything: no levels, no timestamps, no correlation IDs, no log rotation. The whole point of a logging framework is that you can change verbosity, formatting, destinations, retention WITHOUT touching application code.",
+  hints: [
+    "API: SLF4J (org.slf4j.Logger). The interface every modern library logs against.",
+    "Implementations: Logback (default for Spring Boot), Log4j2 (high-perf async), java.util.logging (JUL — built-in, ugly).",
+    "Levels (least → most severe): TRACE < DEBUG < INFO < WARN < ERROR.",
+    "Loggers form a hierarchy by package: 'com.acme' is parent of 'com.acme.api' is parent of 'com.acme.api.UserService'.",
+    "Appenders are sinks (Console, File, RollingFile, Syslog, Kafka, GELF, ...).",
+    "Layouts / Encoders format messages (Pattern, JSON, Logstash-encoded JSON).",
+    "MDC (Mapped Diagnostic Context) — per-thread key/value bag for correlation IDs.",
+    "Don't println. Don't catch + log + rethrow. Don't log secrets."
+  ],
+  tips: [
+    "Always declare loggers as `private static final Logger log = LoggerFactory.getLogger(MyClass.class)` — one per class.",
+    "Use parameterised messages — `log.info(\"user {} logged in\", userId)` — so the toString isn't computed when the level is disabled.",
+    "Don't log AND throw the same error — pick one or you get duplicate noise.",
+    "Set INFO in prod, DEBUG only on the package you're debugging.",
+    "ALWAYS log the exception object as the LAST argument: `log.error(\"failed to load {}\", id, ex)`. Don't string-concat ex.getMessage()."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Layer</th><th>Standard choices</th></tr></thead>
+      <tbody>
+        <tr><td>API (Facade)</td><td>SLF4J — what your code calls. Bridges from JCL, JUL, Log4j 1.x → SLF4J also exist.</td></tr>
+        <tr><td>Implementation</td><td>Logback (default) / Log4j2 (async powerhouse) / JUL (built-in, avoid for new code)</td></tr>
+        <tr><td>Config file</td><td>logback.xml / logback-spring.xml / log4j2.xml / log4j2.yaml</td></tr>
+        <tr><td>Levels</td><td>TRACE → DEBUG → INFO → WARN → ERROR (← most severe)</td></tr>
+        <tr><td>Appenders</td><td>Console, File, RollingFile, Async, Socket, Syslog, Kafka, GELF, OpenTelemetry</td></tr>
+        <tr><td>Encoders</td><td>PatternLayout (text), JsonEncoder / LogstashEncoder (structured)</td></tr>
+        <tr><td>Correlation</td><td>MDC.put(\"requestId\", ...), tracing IDs from OpenTelemetry / Sleuth / Micrometer</td></tr>
+      </tbody>
+    </table>
+    <p><b>Common Maven coordinates:</b></p>
+    <ul class="hints">
+      <li><code>org.slf4j:slf4j-api:2.x</code> — facade.</li>
+      <li><code>ch.qos.logback:logback-classic:1.5.x</code> — Logback (brings slf4j-api transitively).</li>
+      <li><code>org.apache.logging.log4j:log4j-slf4j2-impl:2.x</code> — Log4j2 binding for SLF4J.</li>
+      <li><code>net.logstash.logback:logstash-logback-encoder:7.x</code> — JSON output for Logback.</li>
+    </ul>
+  `,
+  code: `// The two lines on top of every class
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    public User load(String id) {
+        log.debug("loading user {}", id);                       // parameterised
+        try {
+            return repo.findById(id);
+        } catch (RuntimeException ex) {
+            log.error("failed to load user {}", id, ex);        // exception as LAST arg
+            throw ex;
+        }
+    }
+}`,
+  complexity: "Disabled levels: O(1) check, no allocation. Enabled: format + I/O cost."
+});
+
+
+/* ===================== API (SLF4J) ===================== */
+
+PROBLEMS.push({
+  num: 1, title: "SLF4J — the facade everyone codes against", diff: "easy",
+  family: "API",
+  problem: "SLF4J (Simple Logging Facade for Java) is the de-facto API every modern Java library uses. Your code calls it; at runtime, exactly one implementation (Logback / Log4j2 / JUL bridge) provides the actual loggers.",
+  intuition: "The point of a facade is to keep your code free of any one engine. Tomorrow you may swap Logback for Log4j2 — the application doesn't change. SLF4J also normalises the parameterised-message style: `log.info(\"x={}\", x)` works identically across all bindings.",
+  hints: [
+    "Put `slf4j-api` on the classpath as a normal dependency.",
+    "Add EXACTLY ONE binding: logback-classic OR log4j-slf4j2-impl OR slf4j-jdk14.",
+    "If multiple bindings are present, SLF4J prints a warning and picks one — that's a bug.",
+    "Logger creation: `LoggerFactory.getLogger(MyClass.class)`.",
+    "Levels (methods): trace, debug, info, warn, error.",
+    "Each level has an isXxxEnabled() check — usually unnecessary because parameterised messages already avoid work."
+  ],
+  tips: [
+    "Use `Logger log = LoggerFactory.getLogger(MyClass.class)` — class-based, so logger names match the package hierarchy.",
+    "Don't pass a string name unless you have a reason (frameworks sometimes do for runtime-defined loggers).",
+    "Bridges (jcl-over-slf4j, log4j-over-slf4j, jul-to-slf4j) let you ROUTE other frameworks' logs through your single backend — essential for unified logging.",
+    "If you see weird 'No SLF4J providers were found' warnings, your binding is missing or shadowed."
+  ],
+  code: `// pom.xml
+// <dependency>
+//   <groupId>org.slf4j</groupId>
+//   <artifactId>slf4j-api</artifactId>
+//   <version>2.0.13</version>
+// </dependency>
+// <dependency>
+//   <groupId>ch.qos.logback</groupId>
+//   <artifactId>logback-classic</artifactId>
+//   <version>1.5.6</version>
+// </dependency>
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class OrderService {
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
+    public void place(Order o) {
+        log.debug("placing order {}", o.id());
+        // ...
+        log.info("order {} placed amount={}", o.id(), o.amount());
+    }
+}`,
+  complexity: "Negligible per-call when the level is disabled."
+});
+
+PROBLEMS.push({
+  num: 2, title: "Parameterised messages — never string-concat", diff: "easy",
+  family: "API",
+  problem: "Use `log.info(\"x={}, y={}\", x, y)` — the framework formats the string only if the level is enabled. NEVER `log.info(\"x=\" + x + \", y=\" + y)` — that builds the string even when nobody will read it.",
+  intuition: "Logging is hot. Even a 'free' DEBUG call costs you a String.format if you concatenate eagerly. Parameterised forms are also safer — they don't accidentally call toString on a null or an enormous collection unless the level allows.",
+  hints: [
+    "{} is the placeholder. Position-based — no named args.",
+    "Pass the exception as the LAST positional argument. SLF4J detects Throwable in the trailing slot and renders the stack trace.",
+    "log.info(\"a={}, b={}, c={}\", a, b, c) — three placeholders, three args.",
+    "Java 8 lambdas: log.info(\"big={}\", () -> expensiveToString()) — wait, SLF4J 2.0 added log.atInfo().log(...) fluent API for lazy args.",
+    "isDebugEnabled() check is rarely needed — parameterised forms already avoid the toString cost."
+  ],
+  tips: [
+    "Don't slf4j-format in tests using format() yourself — it's the framework's job.",
+    "If a placeholder count and arg count disagree, the message is just wrong. Some IDEs flag this; turn it on.",
+    "For massive objects, check log.isDebugEnabled() and skip the call entirely.",
+    "Don't put secrets, PII, or full request bodies in the format args."
+  ],
+  code: `// BAD — eager string-concat, runs even when DEBUG is off
+log.debug("user " + user.toString() + " has " + user.permissions().size() + " perms");
+
+// GOOD — parameterised, lazy
+log.debug("user {} has {} perms", user, user.permissions().size());
+
+// exception as LAST arg → stack trace rendered
+try {
+    repo.save(user);
+} catch (DataAccessException ex) {
+    log.error("save failed for user {}", user.id(), ex);
+}
+
+// SLF4J 2.0 fluent API — lazy, structured
+log.atInfo()
+    .setMessage("user logged in")
+    .addKeyValue("userId", userId)
+    .addKeyValue("ip", req.ip())
+    .log();`,
+  complexity: "O(1) when the level is off."
+});
+
+
+PROBLEMS.push({
+  num: 3, title: "Log Levels — TRACE / DEBUG / INFO / WARN / ERROR", diff: "easy",
+  family: "Levels",
+  problem: "Choosing the right level is the difference between actionable logs and a noisy haystack. The five levels are ordered by severity; configuring a logger at INFO suppresses TRACE and DEBUG.",
+  intuition: "Think of levels as audience. TRACE is for you when you're stepping through with println-style debugging. DEBUG is for developers reproducing a bug. INFO is for ops to know the system is alive. WARN is 'something is off but recovered'. ERROR is 'a request failed'. FATAL doesn't exist in SLF4J — it would be ERROR + alert.",
+  hints: [
+    "TRACE — extreme detail (entry/exit, every loop iteration). Off in prod, sometimes on briefly during incidents.",
+    "DEBUG — developer-useful detail (variable values, branch decisions). Off in prod by default.",
+    "INFO — high-level lifecycle (startup, shutdown, big state changes). On in prod.",
+    "WARN — recoverable problems (retried request, falling back to default, deprecated path used).",
+    "ERROR — request failed, data inconsistent, must alert on a sustained rate.",
+    "Hierarchy: a child logger inherits its parent's level if it doesn't set its own."
+  ],
+  tips: [
+    "Most prod systems run at INFO. WARN/ERROR for ops alerts. DEBUG selectively turned on per-package during investigations.",
+    "Don't use INFO for things that fire on every request — log volume becomes the problem.",
+    "Don't use ERROR for normal validation failures — that pollutes the alert pipeline. Use WARN or just return 4xx.",
+    "Make per-package levels easy to flip via config, env var, or admin endpoint (Spring Actuator does this)."
+  ],
+  code: `// per-class
+private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+log.trace("entering loadAll() with filter={}", filter);
+log.debug("query plan: {}", plan);
+log.info("server started on port {}", port);
+log.warn("retrying {} in {}ms (attempt {} of {})", url, delay, n, max);
+log.error("could not connect to {} — giving up", url, ex);
+
+// logback.xml
+// <logger name="com.acme"      level="INFO"/>
+// <logger name="com.acme.api"  level="DEBUG"/>     <!-- override one package -->
+// <logger name="org.hibernate.SQL" level="WARN"/>  <!-- silence noisy library -->`,
+  complexity: "Disabled level → ~1ns. Enabled → format + I/O."
+});
+
+PROBLEMS.push({
+  num: 4, title: "Logger Hierarchy — packages as a tree", diff: "easy",
+  family: "Levels",
+  problem: "Logger names form a tree by their dotted prefix. `com.acme.api.UserService` inherits from `com.acme.api`, which inherits from `com.acme`, which inherits from the ROOT logger. Levels and appenders cascade down unless overridden.",
+  intuition: "This is what makes per-package log levels possible. Set ROOT to WARN, then crank `com.acme.api` to DEBUG when you want detail in just that package, without flooding the rest. Same for appenders — children inherit them by default; set additivity=false on a logger to STOP that inheritance.",
+  hints: [
+    "Loggers are named after fully-qualified class names by convention.",
+    "Effective level = closest ancestor with a level set.",
+    "additivity=true (default) — the logger's events also propagate to ancestor appenders. additivity=false — stop at this logger.",
+    "Two common silenced libraries: Hibernate SQL, Spring's RestTemplate noise, AWS SDK retries."
+  ],
+  tips: [
+    "Naming loggers by class is mostly free; you almost never need a custom name.",
+    "If logs are duplicating, you've forgotten additivity=false on a logger that has its own appender.",
+    "Configure third-party libraries to a sane level (WARN or ERROR for HTTP clients, DEBUG only when needed)."
+  ],
+  code: `<!-- logback.xml -->
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder><pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern></encoder>
+    </appender>
+
+    <!-- root: catch-all -->
+    <root level="INFO"><appender-ref ref="STDOUT"/></root>
+
+    <!-- our app: more verbose -->
+    <logger name="com.acme" level="DEBUG"/>
+
+    <!-- silence a chatty library -->
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.apache.http"  level="WARN"/>
+</configuration>`,
+  complexity: "Lookup is O(depth)."
+});
+
+PROBLEMS.push({
+  num: 5, title: "java.util.logging (JUL) — the built-in (and why you don't use it)", diff: "easy",
+  family: "API · Legacy",
+  problem: "JUL is the JDK's built-in logging API. It works without any dependency, but the API is awkward, the levels are different (FINEST/FINE/INFO/WARNING/SEVERE), and configuration is verbose.",
+  intuition: "Use SLF4J + Logback unless there's a hard reason. The exception is when you ARE the JDK or a tiny library that doesn't want to drag dependencies — then JUL is fine. For applications, route JUL through SLF4J (jul-to-slf4j) so the JDK's own logs show up alongside yours.",
+  hints: [
+    "Levels: FINEST < FINER < FINE < CONFIG < INFO < WARNING < SEVERE.",
+    "Logger.getLogger(name).log(Level.INFO, \"msg\") — verbose call sites.",
+    "Default formatter is ugly multi-line; setting a single-line format requires a system property.",
+    "Configuration via -Djava.util.logging.config.file=logging.properties.",
+    "Bridge to SLF4J: include jul-to-slf4j + SLF4JBridgeHandler.install()."
+  ],
+  tips: [
+    "Install the SLF4J bridge AT THE START of main() — otherwise libraries that log on classloading bypass it.",
+    "Don't mix JUL and SLF4J in your own code. Pick one (SLF4J).",
+    "If you maintain a small library, prefer SLF4J anyway — it's the universal expectation."
+  ],
+  code: `// Routing JUL through SLF4J (so the JDK's logs match your format)
+import org.slf4j.bridge.SLF4JBridgeHandler;
+
+public class Main {
+    public static void main(String[] args) {
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+        // now java.util.logging messages flow through SLF4J → Logback
+        startApp(args);
+    }
+}
+
+// Native JUL (avoid in apps)
+import java.util.logging.Logger;
+import java.util.logging.Level;
+private static final Logger log = Logger.getLogger("com.acme.A");
+log.log(Level.INFO, "hello");`,
+  complexity: "Same shape as SLF4J calls — just clunkier."
+});
+
+
+/* ===================== IMPLEMENTATIONS ===================== */
+
+PROBLEMS.push({
+  num: 6, title: "Logback — the default backend", diff: "med",
+  family: "Implementation",
+  problem: "Logback is the default logging implementation for Spring Boot and many other JVM apps. Configured via logback.xml (or logback-spring.xml in Spring Boot for profile-aware loading).",
+  intuition: "Logback gives you appenders (where logs go), encoders (how they look), filters (what gets through), and async wrappers. Composition: a logger fires an event → it visits its appenders → each appender's encoder turns the event into bytes → bytes go to the destination.",
+  hints: [
+    "Lookup order: logback-test.xml → logback.groovy → logback.xml on the classpath.",
+    "Spring Boot uses logback-spring.xml so you can use <springProfile> conditionals.",
+    "Hot reload: <configuration scan=\"true\" scanPeriod=\"30 seconds\"> — re-reads the file periodically.",
+    "Use <variable> + ${var} for env-driven settings.",
+    "Standard appenders: ConsoleAppender, FileAppender, RollingFileAppender, AsyncAppender, SyslogAppender, SocketAppender.",
+    "Encoders are the modern replacement for layouts (PatternLayoutEncoder, JsonEncoder, LogstashEncoder)."
+  ],
+  tips: [
+    "Default to RollingFileAppender + AsyncAppender in production.",
+    "Console at INFO + file at DEBUG is a useful split during development.",
+    "Add <shutdownHook class=\"ch.qos.logback.core.hook.DefaultShutdownHook\"/> so async appenders flush on shutdown.",
+    "Avoid <root level=\"DEBUG\"> in prod — every dependency floods you. INFO root + per-package overrides instead."
+  ],
+  code: `<!-- src/main/resources/logback.xml -->
+<configuration scan="true" scanPeriod="30 seconds">
+    <property name="LOG_DIR" value="\${LOG_DIR:-./logs}"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>\${LOG_DIR}/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>\${LOG_DIR}/app-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>%d %-5level %logger{36} - %msg%n</pattern></encoder>
+    </appender>
+
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="ASYNC_FILE"/>
+    </root>
+    <logger name="com.acme" level="DEBUG"/>
+</configuration>`,
+  complexity: "Synchronous appenders block the caller; async wrappers move I/O off the hot path."
+});
+
+PROBLEMS.push({
+  num: 7, title: "Log4j2 — when async throughput matters", diff: "med",
+  family: "Implementation",
+  problem: "Log4j2 is the other major backend. Its biggest selling point is the LMAX-Disruptor-backed async logger, which on a tuned setup can sustain millions of events per second per thread.",
+  intuition: "If your service is throughput-bound on logging (high-frequency trading, ad-tech, event ingest), Log4j2's async logger is genuinely faster than Logback's AsyncAppender. For most apps, Logback is more than enough. Use the same SLF4J API and just swap bindings.",
+  hints: [
+    "Add log4j-core, log4j-api, log4j-slf4j2-impl. Remove logback-classic.",
+    "Async via 'AsyncLogger' (faster) or 'AsyncAppender' (drop-in similar to Logback).",
+    "Set system prop -Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector for fully async.",
+    "Disruptor is the underlying queue. Tune ringBufferSize when needed.",
+    "log4j2.xml is the default config. Patterns / appenders / loggers like Logback but slightly different XML."
+  ],
+  tips: [
+    "If you have a CVE-paranoia about Log4j (Log4Shell) — that was Log4j 1.x / 2.x BEFORE 2.17. Modern 2.x is safe; keep it patched.",
+    "Don't let two backends coexist on the classpath — pick one.",
+    "For garbage-free logging, enable -Dlog4j2.enable.threadlocals=true and use parameterised messages exclusively."
+  ],
+  code: `<!-- src/main/resources/log4j2.xml -->
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5p [%t] %c{1.} - %m%n"/>
+        </Console>
+        <RollingFile name="File" fileName="logs/app.log"
+                     filePattern="logs/app-%d{yyyy-MM-dd}.%i.log.gz">
+            <PatternLayout pattern="%d %-5p %c{1.} - %m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <TimeBasedTriggeringPolicy/>
+            </Policies>
+            <DefaultRolloverStrategy max="14"/>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <AsyncLogger name="com.acme" level="DEBUG" includeLocation="false"/>
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Configuration>`,
+  complexity: "AsyncLogger is the lowest-overhead JVM logging path."
+});
+
+PROBLEMS.push({
+  num: 8, title: "Appenders — where logs go", diff: "med",
+  family: "Appenders",
+  problem: "An appender is a destination + a write strategy. Console for dev, RollingFile for prod, Async for performance, Syslog for system log servers, Kafka/GELF/HTTP for centralised log shipping.",
+  intuition: "Pick the right combination per environment. Local dev: Console only. Prod: RollingFile + Async + a sink that ships to your log aggregator (Kafka, syslog, Loki, ELK, Datadog, CloudWatch). One backend, many appenders; same logger fires events to all of them.",
+  hints: [
+    "ConsoleAppender — stdout / stderr; the default in containers (your runtime ships stdout to a logging driver).",
+    "RollingFileAppender — write to a file, rotate by size and / or time, optionally gzip old files, cap total disk.",
+    "AsyncAppender (Logback) / AsyncLogger (Log4j2) — wrap a slow appender so application threads don't block on I/O.",
+    "SyslogAppender — UDP or TCP to a syslog server.",
+    "GELF / Logstash / Kafka appenders — ship structured JSON to centralised log systems.",
+    "OpenTelemetry log appenders — emit logs as OTel signals alongside traces and metrics."
+  ],
+  tips: [
+    "In containers (k8s, ECS), prefer Console only — let the platform tail stdout. RollingFile inside a container is wasteful.",
+    "ALWAYS make the file appender async if it's a bottleneck. Throughput on synchronous file I/O is brutal on hot paths.",
+    "Keep the queueSize bounded and have a discard policy you understand — when the queue fills, what gives?",
+    "For shipping to remote systems (Kafka / HTTP), test the failure mode — drop events vs block app threads."
+  ],
+  code: `<!-- async wraps a sync file appender -->
+<appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>1024</queueSize>
+    <discardingThreshold>0</discardingThreshold>     <!-- never drop -->
+    <neverBlock>false</neverBlock>                   <!-- block when full -->
+    <appender-ref ref="FILE"/>
+</appender>
+
+<!-- syslog -->
+<appender name="SYSLOG" class="ch.qos.logback.classic.net.SyslogAppender">
+    <syslogHost>logs.internal</syslogHost>
+    <facility>LOCAL1</facility>
+    <suffixPattern>%logger{36}: %msg</suffixPattern>
+</appender>
+
+<!-- container-friendly: console only, JSON encoded -->
+<appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+</appender>`,
+  complexity: "Append cost depends on the destination. Async hides it from the app thread."
+});
+
+
+/* ===================== FORMAT ===================== */
+
+PROBLEMS.push({
+  num: 9, title: "PatternLayout — text format conversion words", diff: "med",
+  family: "Format",
+  problem: "Pattern strings tell the encoder how to format a log event. Memorise the half-dozen conversion words you'll use every day: %d (date), %level, %thread, %logger, %msg, %n (newline), %ex (exception).",
+  intuition: "PatternLayout is essentially printf for log events. The '-5' and '36' modifiers control width and truncation: `%-5level` left-pads to 5 chars; `%logger{36}` shortens the package path to fit 36 chars. Build your patterns to be greppable: timestamps first, level next, logger short, then the message.",
+  hints: [
+    "%d{HH:mm:ss.SSS} — timestamp.",
+    "%-5level — level, left-padded to 5 chars (INFO , WARN , ERROR).",
+    "%thread or %t — thread name.",
+    "%logger{36} or %c{1.} — logger name, abbreviated.",
+    "%msg or %m — the message.",
+    "%n — platform newline.",
+    "%ex / %xEx — exception (xEx adds package info).",
+    "%mdc / %X{key} — MDC values (see card 11)."
+  ],
+  tips: [
+    "Don't use %F, %M, %L (file, method, line) in production patterns — they trigger expensive stack walking on every log call.",
+    "Keep prod patterns short and structured. Console-pretty-print only in dev.",
+    "For machine consumption, switch the encoder to JSON instead of inventing your own delimiter scheme."
+  ],
+  code: `<!-- compact dev pattern -->
+<pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%t] %cyan(%logger{36}) - %msg%n%ex</pattern>
+
+<!-- production pattern (no colours, ISO timestamp, MDC included) -->
+<pattern>%d{ISO8601} %-5level [%X{requestId:-}] %logger{36} - %msg%n%ex</pattern>
+
+<!-- pattern modifiers -->
+<!-- %-5level   left-justify to width 5 -->
+<!-- %logger{36}  shorten logger name to fit 36 chars -->
+<!-- %.40msg    truncate the message to 40 chars max -->`,
+  complexity: "Each conversion word costs a small amount; %F/%M/%L are noticeably more."
+});
+
+PROBLEMS.push({
+  num: 10, title: "Structured / JSON Logging — for log aggregators", diff: "med",
+  family: "Format",
+  problem: "Production logs go to a central system (ELK, Loki, Splunk, Datadog, CloudWatch). Those systems index FIELDS, not arbitrary text. Emit JSON one-line-per-event and you get instant filtering, aggregation, dashboards.",
+  intuition: "A JSON log line `{\"@timestamp\":..., \"level\":\"INFO\", \"logger\":..., \"message\":..., \"requestId\":..., \"userId\":...}` lets you filter by userId without parsing strings. Use logstash-logback-encoder for Logback, or Log4j2's JsonLayout. Plain stdout in JSON is the container-native pattern.",
+  hints: [
+    "Logback: net.logstash.logback.encoder.LogstashEncoder produces Logstash-style JSON.",
+    "Log4j2: <JsonTemplateLayout/> or <JsonLayout/>.",
+    "Add custom fields: <customFields>{\"service\":\"api\",\"env\":\"prod\"}</customFields>.",
+    "MDC values become top-level fields in JSON output automatically.",
+    "Don't double-encode — emit JSON directly, don't wrap a JSON string inside a text pattern."
+  ],
+  tips: [
+    "Set @timestamp to ISO 8601 with milliseconds — log aggregators expect this.",
+    "Include service / version / env as fixed fields so you can filter by them without parsing.",
+    "Avoid logging huge payloads as a single field — most aggregators truncate at 32–256 KB.",
+    "Use lowercase, dot-separated, snake_case keys consistently. Pick a convention and stick to it."
+  ],
+  code: `<!-- Logback + logstash-encoder -->
+<appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <customFields>{"service":"api","env":"\${ENV:-dev}"}</customFields>
+        <includeMdc>true</includeMdc>
+        <includeContext>false</includeContext>
+    </encoder>
+</appender>
+
+<!-- example output (one line):
+{"@timestamp":"2026-05-24T10:00:01.123Z","level":"INFO","logger":"com.acme.OrderService",
+ "message":"order placed","service":"api","env":"prod","requestId":"abc-123","userId":"u-42"}
+-->`,
+  complexity: "Slightly more CPU than text patterns; offset by faster downstream queries."
+});
+
+PROBLEMS.push({
+  num: 11, title: "MDC — Mapped Diagnostic Context (correlation IDs)", diff: "med",
+  family: "Format",
+  problem: "MDC is a per-thread Map<String,String> that the framework injects into every log line. Put a request-id at the start of a request, and EVERY log line in that thread carries it — the foundation of distributed tracing in logs.",
+  intuition: "Without MDC, you'd thread `requestId` through every method signature. With MDC: set once on the entry point, clear at the end. Logback / Log4j2 both expose it as `%X{key}` in patterns and as a top-level field in JSON output. Combine with OpenTelemetry trace IDs for trace-log correlation.",
+  hints: [
+    "MDC.put(\"requestId\", id) / MDC.get(\"requestId\") / MDC.remove(\"requestId\") / MDC.clear().",
+    "MDC is THREAD-LOCAL — not inherited by child threads by default.",
+    "Spring uses MDC.MDCCloseable: try (var c = MDC.putCloseable(\"requestId\", id)) { ... } — guarantees cleanup.",
+    "For executors / async: use MDCAdapter.copyOfContextMap + setContextMap on the worker thread.",
+    "OpenTelemetry: traceId / spanId are auto-injected into MDC by the otel javaagent."
+  ],
+  tips: [
+    "ALWAYS clear MDC at the end of a request — leaked entries pollute the next request on the same thread.",
+    "Use try-with-resources (MDC.putCloseable) so cleanup happens even on exceptions.",
+    "If you propagate context to a thread pool, copy MDC explicitly — async pools won't do it for you.",
+    "Spring Boot + Sleuth / Micrometer-tracing populate MDC with traceId/spanId out of the box."
+  ],
+  code: `import org.slf4j.MDC;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+
+public class RequestIdFilter implements Filter {
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws IOException, ServletException {
+        String id = ((HttpServletRequest) req).getHeader("X-Request-Id");
+        if (id == null) id = java.util.UUID.randomUUID().toString();
+        try (var c = MDC.putCloseable("requestId", id)) {
+            chain.doFilter(req, res);
+        }
+    }
+}
+
+// pattern uses %X{requestId} → log lines all carry the id
+// JSON encoder includes it as a top-level field automatically
+
+// crossing a thread boundary (executor) — propagate MDC manually
+var copy = MDC.getCopyOfContextMap();
+exec.submit(() -> {
+    if (copy != null) MDC.setContextMap(copy);
+    try { runWork(); } finally { MDC.clear(); }
+});`,
+  complexity: "MDC ops are O(1) per call."
+});
+
+PROBLEMS.push({
+  num: 12, title: "Exceptions — log them ONCE, with the right pattern", diff: "med",
+  family: "Format",
+  problem: "Exception handling in logs has three classic mistakes: (1) catching + logging + rethrowing → duplicate log; (2) `log.error(e)` losing the message; (3) `log.error(\"...\" + e.getMessage())` losing the stack trace. The right way: pass the Throwable as the LAST arg.",
+  intuition: "SLF4J detects a trailing Throwable and renders the full stack trace under the message. Don't string-concat the message — that flattens the cause chain. Don't both log and throw — the upstream catcher will log it again.",
+  hints: [
+    "log.error(\"failed to load user {}\", userId, ex) — Throwable as last arg.",
+    "Don't log AND rethrow. If you can't handle it, just throw. If you can handle it, log + handle.",
+    "Wrap a checked exception with a runtime, preserving the cause: throw new MyException(\"context\", ex).",
+    "%ex prints the stack trace; %xEx adds package info per frame.",
+    "Suppressed exceptions (try-with-resources) are included in the rendered trace automatically."
+  ],
+  tips: [
+    "If a stack trace is huge, your retention will groan. Sample or truncate at the appender level.",
+    "When catching at a top boundary (Spring's @ControllerAdvice / a thread's uncaught handler), log there and DON'T re-log lower in the stack.",
+    "Avoid Throwable#printStackTrace() — it bypasses your logger entirely and writes to System.err.",
+    "Map known errors to clean log lines; treat surprises as ERROR."
+  ],
+  code: `// GOOD
+try {
+    repo.save(user);
+} catch (DataAccessException ex) {
+    log.error("save failed for user={} (sql={})", user.id(), sql, ex);
+    throw new ServiceException("save failed", ex);
+}
+
+// BAD — double log
+try { ... } catch (Ex e) {
+    log.error("oh no", e);
+    throw new RuntimeException(e);   // outer catcher logs it again
+}
+
+// BAD — flattened, no stack
+log.error("oh no: " + e.getMessage());
+
+// BAD — bypasses logging framework entirely
+e.printStackTrace();`,
+  complexity: "Stack trace render cost is real; avoid logging at high rates."
+});
+
+
+/* ===================== CONFIG ===================== */
+
+PROBLEMS.push({
+  num: 13, title: "Spring Boot Logging — application.yml + logback-spring.xml", diff: "med",
+  family: "Configuration",
+  problem: "Spring Boot ships with Logback pre-wired and a small set of properties in application.yml/properties for everyday config. Use logback-spring.xml when you need conditionals on Spring profiles.",
+  intuition: "For 80% of apps, application.yml is enough — set levels, toggle file logging, change the pattern. Reach for logback-spring.xml when you need profile-specific appenders (JSON in prod, pretty in dev), JMX, or shutdown hooks.",
+  hints: [
+    "logging.level.<package>=LEVEL — override per package (or 'root').",
+    "logging.file.name=app.log — turn on file logging.",
+    "logging.file.path=/var/log/app — directory; default file name is spring.log.",
+    "logging.pattern.console / .file — override patterns.",
+    "logging.charset.console / .file — UTF-8 by default.",
+    "logback-spring.xml supports <springProfile name=\"prod\">...</springProfile> for env-specific config."
+  ],
+  tips: [
+    "Spring Boot auto-detects logback.xml OR logback-spring.xml. Prefer the -spring variant for full feature support.",
+    "Dynamic level changes via Actuator: POST /actuator/loggers/com.acme {\"configuredLevel\":\"DEBUG\"}.",
+    "Color is on for ANSI terminals automatically — override with spring.output.ansi.enabled.",
+    "Don't put production secrets into the pattern (no userId-with-password style)."
+  ],
+  code: `# application.yml
+logging:
+  level:
+    root: INFO
+    com.acme: DEBUG
+    org.hibernate.SQL: WARN
+    org.springframework.web: INFO
+  file:
+    name: \${LOG_DIR:./logs}/app.log
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%t] %logger{36} - %msg%n"
+    file:    "%d{ISO8601} %-5level [%X{requestId:-}] %logger{36} - %msg%n"
+
+# Dynamic level change at runtime (with actuator)
+# POST /actuator/loggers/com.acme   body: {"configuredLevel":"DEBUG"}`,
+  complexity: "Configuration parsing once at startup; runtime cost depends on appenders."
+});
+
+PROBLEMS.push({
+  num: 14, title: "Profile-conditional config (logback-spring.xml)", diff: "med",
+  family: "Configuration",
+  problem: "Different envs need different log shapes — dev wants pretty colourful console, prod wants JSON to stdout for the log shipper. logback-spring.xml's <springProfile> tags switch appenders based on the active Spring profile.",
+  intuition: "Same logger calls in code, different output per env. Wrap whole appender refs or even the entire <root> in <springProfile name=\"prod\"> blocks. The application.yml's spring.profiles.active drives the choice.",
+  hints: [
+    "<springProfile name=\"dev\">...</springProfile> — included only when 'dev' is active.",
+    "<springProfile name=\"!prod\"> — included when prod is NOT active.",
+    "<springProperty> reads from Spring's Environment so application.yml values are available in XML.",
+    "Reference appenders by id; keep them defined once and pick which goes into <root> per profile."
+  ],
+  tips: [
+    "Don't duplicate file paths or patterns across profiles — extract to <property> or <springProperty>.",
+    "If two profiles need almost the same config, write the appenders unconditionally and toggle root references.",
+    "logback-spring.xml works EXACTLY like logback.xml outside of <springProfile> — keep one file, one source of truth."
+  ],
+  code: `<!-- logback-spring.xml -->
+<configuration>
+    <springProperty name="appName" source="spring.application.name" defaultValue="app"/>
+
+    <appender name="CONSOLE_PRETTY" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder><pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %logger{36} - %msg%n</pattern></encoder>
+    </appender>
+
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service":"\${appName}"}</customFields>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev,test">
+        <root level="INFO"><appender-ref ref="CONSOLE_PRETTY"/></root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO"><appender-ref ref="CONSOLE_JSON"/></root>
+        <logger name="com.acme" level="INFO"/>
+    </springProfile>
+</configuration>`,
+  complexity: "Same as base Logback."
+});
+
+PROBLEMS.push({
+  num: 15, title: "Filters & Markers — surgical control of what gets logged", diff: "hard",
+  family: "Configuration",
+  problem: "Filters drop or accept events at the appender level (separate from level inheritance). Markers tag events for selective routing — e.g., send AUDIT events to a separate file regardless of level.",
+  intuition: "Levels are coarse; filters are fine. Use a TurboFilter (Logback) to apply a global rule (rate-limit, drop a noisy log line). Use Markers to route specific events to dedicated appenders without changing the logger name.",
+  hints: [
+    "Logback Filter: ch.qos.logback.classic.filter.ThresholdFilter / LevelFilter / EvaluatorFilter.",
+    "Logback TurboFilter — global, applied before the logger hierarchy. Useful for context-based throttling.",
+    "Marker: SLF4J `Marker m = MarkerFactory.getMarker(\"AUDIT\");` then log.info(m, \"msg\").",
+    "Logback MarkerFilter routes events with a given marker to a specific appender.",
+    "Log4j2 has equivalent FilterRefs and Markers."
+  ],
+  tips: [
+    "Use a Marker for cross-cutting concerns: AUDIT, METRICS, SECURITY. Don't pollute the logger hierarchy with per-feature loggers.",
+    "Don't replicate the entire app's events under multiple appenders by accident — set additivity=false.",
+    "Rate-limit with DuplicateMessageFilter to suppress repeating identical lines.",
+    "ThresholdFilter on a console appender = 'console only shows WARN+, file gets everything'."
+  ],
+  code: `<!-- console only WARN+, file everything -->
+<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+        <level>WARN</level>
+    </filter>
+    <encoder><pattern>%d %-5level %msg%n</pattern></encoder>
+</appender>
+
+<!-- AUDIT marker → audit.log only -->
+<appender name="AUDIT" class="ch.qos.logback.core.FileAppender">
+    <file>logs/audit.log</file>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+        <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+            <marker>AUDIT</marker>
+        </evaluator>
+        <onMismatch>DENY</onMismatch>
+        <onMatch>ACCEPT</onMatch>
+    </filter>
+    <encoder><pattern>%d %X{userId:-} %msg%n</pattern></encoder>
+</appender>
+
+// in code
+import org.slf4j.MarkerFactory;
+private static final org.slf4j.Marker AUDIT = MarkerFactory.getMarker("AUDIT");
+log.info(AUDIT, "user {} updated profile", userId);`,
+  complexity: "Filters add a small evaluation cost per event."
+});
+
+
+/* ===================== PRODUCTION ===================== */
+
+PROBLEMS.push({
+  num: 16, title: "Rolling Files — size + time + retention", diff: "med",
+  family: "Production",
+  problem: "Single-file logging fills the disk. Use a rolling policy that rotates by size AND time, gzip-compresses old files, and caps total disk used.",
+  intuition: "SizeAndTimeBasedRollingPolicy is the right default: roll when the file hits 100 MB OR a new day starts, gzip the previous day, keep 14 days, cap at 5 GB total. Aligns with logrotate-style hygiene without external tooling.",
+  hints: [
+    "fileNamePattern with %d{yyyy-MM-dd}.%i and a .gz suffix → rotation + compression.",
+    "maxFileSize — per-segment cap.",
+    "maxHistory — number of historical periods kept.",
+    "totalSizeCap — global ceiling; oldest files pruned first.",
+    "cleanHistoryOnStart=true — useful in tests / dev.",
+    "Ensure the LOG_DIR exists and is writable."
+  ],
+  tips: [
+    "On Kubernetes, prefer Console + the platform's log driver. Files in containers are usually wrong.",
+    "If you DO write files, mount a volume — losing logs on pod restart is no fun during incidents.",
+    "Don't log millions of rows per minute to a SizeBasedTriggeringPolicy without monitoring disk — rotation is fine, but indexing isn't.",
+    "Run logrotate or your platform's equivalent if your runtime can't do gzip itself."
+  ],
+  code: `<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>\${LOG_DIR}/app.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+        <fileNamePattern>\${LOG_DIR}/archive/app-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+        <maxFileSize>100MB</maxFileSize>
+        <maxHistory>14</maxHistory>
+        <totalSizeCap>5GB</totalSizeCap>
+        <cleanHistoryOnStart>false</cleanHistoryOnStart>
+    </rollingPolicy>
+    <encoder><pattern>%d %-5level %logger{36} - %msg%n</pattern></encoder>
+</appender>`,
+  complexity: "Rotation is O(file size) for the gzip step — usually fast and rare."
+});
+
+PROBLEMS.push({
+  num: 17, title: "Async Logging — keep the hot path off I/O", diff: "hard",
+  family: "Production",
+  problem: "Synchronous logging blocks the application thread on every flush. AsyncAppender (Logback) and AsyncLogger (Log4j2) buffer events into a queue and let a background thread do the I/O.",
+  intuition: "If logging shows up in your CPU profiler, you're synchronous. Wrap the file/network appender in async, set a sensible queue size, decide what to do when the queue is full (block? drop?). On Log4j2 the disruptor-based AsyncLogger is the lowest-overhead JVM option.",
+  hints: [
+    "Logback AsyncAppender: queueSize, discardingThreshold (events dropped when queue is X% full unless level is high enough), neverBlock (true = drop instead of block).",
+    "Log4j2 AsyncLogger requires log4j2.contextSelector + Disruptor in classpath.",
+    "Always set queueSize bigger than your peak burst; small queues drop or block under load.",
+    "discardingThreshold=0 → never drop (block instead), good for audit-critical paths.",
+    "On JVM shutdown, async appenders need a flush — use shutdownHooks (Logback) or AsyncLoggerContext (Log4j2)."
+  ],
+  tips: [
+    "Async hides I/O cost but DOESN'T reduce CPU formatting cost. Use parameterised messages and disable expensive layouts.",
+    "If queue fills and the policy is 'block', latency spikes propagate to your app. Profile a load test before trusting async to be 'free'.",
+    "Don't put a SyslogAppender in front of async without a network buffer — UDP loss + queueing don't mix.",
+    "AsyncAppender sometimes drops the call site (file, line) — set includeCallerData=true if you really need it (it's slow)."
+  ],
+  code: `<!-- Logback async wrap -->
+<appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>4096</queueSize>
+    <discardingThreshold>0</discardingThreshold>
+    <neverBlock>false</neverBlock>           <!-- block if queue full -->
+    <includeCallerData>false</includeCallerData>
+    <appender-ref ref="FILE"/>
+</appender>
+
+<!-- Log4j2 async logger -->
+<AsyncLogger name="com.acme" level="DEBUG" includeLocation="false">
+    <AppenderRef ref="File"/>
+</AsyncLogger>`,
+  complexity: "Per-call cost: ring-buffer write + format. Background thread does I/O."
+});
+
+PROBLEMS.push({
+  num: 18, title: "Performance Tips — making logging cheap", diff: "hard",
+  family: "Production",
+  problem: "Logging can become the bottleneck on hot paths. Apply: parameterised messages, level checks before expensive computations, disable caller-data, structured (not stack-walking) patterns, async appenders, and rate-limit repeating events.",
+  intuition: "Most cost comes from three places: building the message (string concat / toString), grabbing the call site (file/method/line via stack walk), and synchronous I/O. Eliminate or defer each one.",
+  hints: [
+    "Parameterised messages defer formatting until the level says yes.",
+    "isXxxEnabled() check around very expensive arg construction (large object dumps).",
+    "Disable %F %M %L %caller in patterns; they trigger stack walks per event.",
+    "Use AsyncAppender / AsyncLogger to move I/O off the hot path.",
+    "DuplicateMessageFilter / RateLimiter to suppress storms of identical errors."
+  ],
+  tips: [
+    "Don't log inside tight loops. Aggregate and log once per batch.",
+    "Don't log the same exception ten times up the call stack — log it ONCE at the boundary.",
+    "Consider separate loggers for hot 'data' lines (audit, metrics) so you can dial them independently.",
+    "Profile! Logging overhead is often invisible until a load test catches it."
+  ],
+  code: `// 1) Parameterised — already lazy
+log.debug("loaded {} rows for {}", rows.size(), userId);
+
+// 2) Guard expensive args
+if (log.isDebugEnabled()) {
+    log.debug("graph: {}", graphRenderer.toAscii(graph));   // expensive call avoided
+}
+
+// 3) Don't trigger stack walks
+//   pattern WITHOUT %F %L %M; AsyncAppender includeCallerData=false
+
+// 4) Suppress repeating noise
+<turboFilter class="ch.qos.logback.classic.turbo.DuplicateMessageFilter">
+    <cacheSize>200</cacheSize>
+    <allowedRepetitions>5</allowedRepetitions>
+</turboFilter>`,
+  complexity: "Disabled level: ~1ns. Enabled + async + parameterised: dozens-hundreds of ns."
+});
+
+PROBLEMS.push({
+  num: 19, title: "Don't Log Secrets — sanitisation patterns", diff: "med",
+  family: "Production",
+  problem: "Logs are plaintext. Anything that touches them — log shippers, aggregators, on-call engineers, backups — sees what you write. Never log passwords, full credit cards, full tokens, or PII you wouldn't want in a leaked dump.",
+  intuition: "Treat logs as PUBLIC inside your company. Build redaction into your structured types: @ToString.Exclude on fields, custom toString that masks values, encoder-level masking patterns. Log identifiers (userId), not the secrets bound to them.",
+  hints: [
+    "Mask: \"Bearer ****\" or last-4 of a card. Never the full value.",
+    "Lombok: @ToString(exclude = {\"password\",\"ssn\"}) on the class.",
+    "Custom Encoder with a regex replacement (\"password\":\"[^\"]*\" → \"password\":\"***\").",
+    "Don't log the entire HTTP request/response body in production.",
+    "Configurable redaction rules — keep the patterns externalised so security can update them."
+  ],
+  tips: [
+    "Add a code-review checklist item: 'no secrets in logs'.",
+    "Run a regex sweep on a log sample before shipping: emails, JWTs, AWS keys.",
+    "If you must log a body for debugging, gate it behind a feature flag and only enable on a single test instance.",
+    "Logs land in error-tracking systems too — make sure exceptions don't carry secrets in their messages."
+  ],
+  code: `// model with safe toString
+record User(String id, String email, @com.fasterxml.jackson.annotation.JsonIgnore String passwordHash) {
+    @Override public String toString() {
+        return "User[id=" + id + ", email=" + email + "]";
+    }
+}
+
+// generic masking encoder snippet (Logback)
+public class MaskingEncoder extends ch.qos.logback.classic.encoder.PatternLayoutEncoder {
+    private static final java.util.regex.Pattern SECRET =
+        java.util.regex.Pattern.compile("(?i)(password|token|secret|authorization)\\\\\"\\\\s*:\\\\s*\\\\\"([^\"]*)\\\\\"");
+    @Override
+    public byte[] encode(ch.qos.logback.classic.spi.ILoggingEvent event) {
+        var raw = new String(super.encode(event));
+        var masked = SECRET.matcher(raw).replaceAll("$1\\\\\":\\\\\"***\\\\\"");
+        return masked.getBytes();
+    }
+}`,
+  complexity: "Negligible if regex is anchored and few; can blow up under heavy traffic if naive."
+});
+
+PROBLEMS.push({
+  num: 20, title: "Testing Logs — capturing output in JUnit", diff: "med",
+  family: "Tests",
+  problem: "When tests need to assert that 'we logged the right thing on this error path', use Logback's ListAppender or a dedicated library (slf4j-test, OutputCaptureExtension in Spring Boot Test).",
+  intuition: "Don't add fake System.out captures or scrape stdout. Attach a list-backed appender to the logger you care about, run the code, then assert on the captured events.",
+  hints: [
+    "Logback ListAppender — programmatic appender that buffers events in a List<ILoggingEvent>.",
+    "Get the logger by class, attach the appender, set level, run, assert, detach.",
+    "Spring Boot test: @ExtendWith(OutputCaptureExtension.class) + CapturedOutput.",
+    "slf4j-test (com.github.valfirst:slf4j-test) — drop-in test binding with assertions.",
+    "Don't assert on exact format strings — assert on level + message + (optional) MDC fields."
+  ],
+  tips: [
+    "Reset / detach appenders in @AfterEach so tests don't pollute each other.",
+    "Capture only the logger you care about — ROOT capture turns into noise.",
+    "Asserting that an ERROR was logged after a thrown exception is a great test for resilient error handling.",
+    "AssertJ has nice list assertions for checking subset / order of log lines."
+  ],
+  code: `import ch.qos.logback.classic.*;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+class UserServiceTest {
+    private Logger logger;
+    private ListAppender<ILoggingEvent> capture;
+
+    @BeforeEach
+    void setUp() {
+        logger = (Logger) LoggerFactory.getLogger(UserService.class);
+        capture = new ListAppender<>();
+        capture.start();
+        logger.addAppender(capture);
+        logger.setLevel(Level.DEBUG);
+    }
+
+    @AfterEach
+    void tearDown() {
+        logger.detachAppender(capture);
+    }
+
+    @Test
+    void logsErrorWhenLoadFails() {
+        // ... arrange + act ...
+        assertThat(capture.list)
+            .anyMatch(e -> e.getLevel() == Level.ERROR &&
+                           e.getFormattedMessage().contains("failed to load"));
+    }
+}`,
+  complexity: "Test-only overhead."
+});
+
+
+/* ===================== RECIPES ===================== */
+
+PROBLEMS.push({
+  num: 21, title: "Recipe: Centralised Logging Pipeline (containers → ELK / Loki / Datadog)", diff: "hard",
+  family: "Recipes",
+  problem: "In modern infra, apps don't write log files — they emit JSON to stdout, the orchestrator (k8s, ECS, Nomad) ships stdout via a log driver, and a log pipeline (Filebeat / Fluent Bit / Vector) forwards into ELK / Loki / Datadog / CloudWatch.",
+  intuition: "Three boxes: APP (JSON to stdout) → COLLECTOR (sidecar / DaemonSet / runtime driver) → STORE (ELK, Loki). Keep the app dumb — one structured line per event, ISO timestamps, MDC fields. The collector adds Kubernetes metadata (pod, namespace, node) and ships it.",
+  hints: [
+    "App: LogstashEncoder → ConsoleAppender. No file appender at all.",
+    "Kubernetes: containerd / CRI-O + Fluent Bit DaemonSet → Elasticsearch / Loki.",
+    "AWS ECS / Fargate: awslogs driver → CloudWatch Logs.",
+    "Don't double-encode: emit JSON once, let the pipeline parse it.",
+    "Always include service / version / env so dashboards filter cleanly."
+  ],
+  tips: [
+    "Buffer at the COLLECTOR, not the app. Fluent Bit / Vector handle backpressure better than your AsyncAppender ever will.",
+    "If the log store goes down, your app should NEVER block on it — that's a recipe for a self-inflicted outage.",
+    "Add a 'log volume' alert: a 10× spike usually means a stuck retry loop or a noisy WARN that escaped review.",
+    "Trace correlation: include traceId/spanId in MDC so jumping from a span to its log lines is one query."
+  ],
+  code: `<!-- logback-spring.xml — production: stdout JSON only -->
+<configuration>
+    <springProperty name="appName" source="spring.application.name"/>
+    <springProperty name="appVersion" source="info.app.version" defaultValue="dev"/>
+
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service":"\${appName}","version":"\${appVersion}"}</customFields>
+            <includeMdc>true</includeMdc>
+        </encoder>
+    </appender>
+
+    <root level="INFO"><appender-ref ref="JSON"/></root>
+    <logger name="com.acme" level="INFO"/>
+</configuration>
+
+# k8s pod spec — log driver picks up stdout
+# spec.containers[0].env:
+#   - name: SPRING_PROFILES_ACTIVE
+#     value: prod
+# (no logVolume mount required)`,
+  complexity: "Application: O(1) per log call. Pipeline: shared with cluster."
+});
+
+PROBLEMS.push({
+  num: 22, title: "Recipe: Request Logging — one INFO per request with timing", diff: "med",
+  family: "Recipes",
+  problem: "Most services should log ONE structured INFO line per HTTP request: method, path, status, latency, requestId, userId. Plus optionally a DEBUG body for diagnostics.",
+  intuition: "Per-request log = the unit of analytics. With one structured line per request you can compute SLOs (p99 latency), error rates, top endpoints, by-user analytics — all from logs. Don't try to log every step inside the request; that's what tracing is for.",
+  hints: [
+    "Spring: a Filter or HandlerInterceptor sits at the boundary, capturing start time + request id; logs once after the response.",
+    "Servlet API: servletRequest.getMethod(), getRequestURI(); response.getStatus().",
+    "Latency: long start = System.nanoTime(); ... TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start).",
+    "Mark health-check / static-asset paths to exclude from the per-request log — otherwise volume explodes.",
+    "Log the EXCEPTION TYPE on errors (not the full stack — that goes elsewhere)."
+  ],
+  tips: [
+    "Use OncePerRequestFilter in Spring so it doesn't double-log on async dispatches.",
+    "Don't log request bodies by default — costly, often sensitive. Gate behind a flag.",
+    "Pair with metrics: every log line should also bump a Micrometer counter / timer for the same dimensions.",
+    "Treat the request log as a contract — downstream dashboards depend on its fields."
+  ],
+  code: `import jakarta.servlet.http.*;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.MDC;
+
+public class AccessLogFilter extends OncePerRequestFilter {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AccessLogFilter.class);
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
+                                    jakarta.servlet.FilterChain chain)
+            throws java.io.IOException, jakarta.servlet.ServletException {
+        long start = System.nanoTime();
+        String id = req.getHeader("X-Request-Id");
+        if (id == null) id = java.util.UUID.randomUUID().toString();
+        try (var c = MDC.putCloseable("requestId", id)) {
+            chain.doFilter(req, res);
+        } finally {
+            long ms = (System.nanoTime() - start) / 1_000_000;
+            log.info("http {} {} {} {}ms",
+                req.getMethod(), req.getRequestURI(), res.getStatus(), ms);
+        }
+    }
+}`,
+  complexity: "One log line per request — negligible vs the request itself."
+});
+
+PROBLEMS.push({
+  num: 23, title: "Recipe: Propagate MDC across Threads / Executors", diff: "hard",
+  family: "Recipes",
+  problem: "MDC is thread-local. Hand a task off to a thread pool and the MDC is gone — the worker thread starts blank. Wrap your Executor / Runnable / Callable to copy the calling MDC into the worker.",
+  intuition: "Wrap once, propagate everywhere. The classic technique: capture the caller's MDC map, then reset it in the worker before running, clear it after. Spring's TaskDecorator or a custom ExecutorService wrapper makes this clean.",
+  hints: [
+    "Map<String,String> copy = MDC.getCopyOfContextMap(); MDC.setContextMap(copy); MDC.clear();",
+    "Spring: register a TaskDecorator on TaskExecutor → all submitted Runnables get wrapped.",
+    "CompletableFuture: use a custom executor that wraps tasks; supplyAsync(() -> ..., wrappedExec).",
+    "Reactor / WebFlux: MDC doesn't fit; use Context-aware logging via Hooks.onEachOperator or hooks.",
+    "Always CLEAR MDC at the end of the worker task — pooled threads survive between tasks."
+  ],
+  tips: [
+    "If you forget to clear, the next task on the same thread inherits stale fields. Hard to debug.",
+    "OpenTelemetry's javaagent automatically maintains traceId / spanId in MDC across hops — enable it instead of rolling your own.",
+    "Reactive frameworks need their own correlation strategy; don't try to bend MDC to fit them.",
+    "If you see log lines with nullified MDC fields under load, check the executor wrapper."
+  ],
+  code: `import org.springframework.core.task.TaskDecorator;
+
+public class MdcTaskDecorator implements TaskDecorator {
+    @Override
+    public Runnable decorate(Runnable runnable) {
+        java.util.Map<String,String> copy = org.slf4j.MDC.getCopyOfContextMap();
+        return () -> {
+            try {
+                if (copy != null) org.slf4j.MDC.setContextMap(copy);
+                runnable.run();
+            } finally {
+                org.slf4j.MDC.clear();
+            }
+        };
+    }
+}
+
+// Wire into Spring's ThreadPoolTaskExecutor
+@org.springframework.context.annotation.Bean
+public org.springframework.core.task.TaskExecutor taskExecutor(MdcTaskDecorator d) {
+    var ex = new org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor();
+    ex.setCorePoolSize(8);
+    ex.setMaxPoolSize(32);
+    ex.setQueueCapacity(1024);
+    ex.setTaskDecorator(d);
+    ex.initialize();
+    return ex;
+}`,
+  complexity: "One small allocation per submitted task."
+});
+
+PROBLEMS.push({
+  num: 24, title: "Common Pitfalls — the 8 mistakes everyone makes", diff: "med",
+  family: "Pitfalls",
+  problem: "Eight repeating bugs that show up in nearly every Java codebase. Learn them once, recognise them in code review.",
+  intuition: "Most logging bugs aren't subtle — they're patterns that get copy-pasted across the codebase. Catch them at PR time and they never reach production.",
+  hints: [
+    "1. System.out.println — bypasses everything. There's never a reason in app code.",
+    "2. log + throw — duplicate log lines. Pick one.",
+    "3. Eager string-concat — runs even when level is disabled.",
+    "4. Throwable as a placeholder arg instead of last positional — message looks like 'failed: java.lang.NPE: null' with no stack.",
+    "5. Logging secrets / PII / full tokens — leaks via every log shipper downstream.",
+    "6. No MDC clear on async tasks — stale fields contaminate the next task.",
+    "7. Two SLF4J bindings on the classpath — random behaviour, runtime warnings.",
+    "8. ROOT level DEBUG in prod — every dependency floods stdout."
+  ],
+  tips: [
+    "Fail the build on multiple SLF4J bindings (mvn dependency:tree, gradle dependencies).",
+    "Static analysis: SonarQube / Error Prone / SpotBugs flag most of these.",
+    "Add a code-review checklist — these eight items take 30 seconds to scan.",
+    "Set up a dashboard for log volume per service; spikes find the leakers."
+  ],
+  code: `// 1. BAD
+System.out.println("hello");                 // bypasses framework
+
+// 2. BAD
+catch (Ex e) {
+    log.error("oh", e);
+    throw e;                                  // upstream catches and logs again
+}
+
+// 3. BAD — runs even when DEBUG is off
+log.debug("user " + user.toString() + " has " + perms.size() + " perms");
+
+// 4. BAD — Throwable in middle, not last
+log.error("failed for {} because {}", id, ex);   // ex toString() with no stack
+
+// GOOD
+log.error("failed for {}", id, ex);
+
+// 5. BAD
+log.info("login: user={} password={}", user, password);   // never
+
+// 6. BAD: missing finally MDC.clear() in async runnable
+
+// 7. BAD: classpath has both logback-classic AND log4j-slf4j-impl
+
+// 8. BAD: <root level="DEBUG"> in production`,
+  complexity: "Each is preventable with one line of vigilance."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => { stash.push(html); return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001'; };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float','Object',
+    'List','Map','Set','HashMap','ArrayList',
+    'Logger','LoggerFactory','MDC','Marker','MarkerFactory','Level','LoggerContext','ListAppender','ILoggingEvent',
+    'Filter','FilterChain','OncePerRequestFilter','HttpServletRequest','HttpServletResponse','ServletRequest','ServletResponse','ServletException',
+    'TaskExecutor','TaskDecorator','ThreadPoolTaskExecutor','Runnable','Callable','ExecutorService','CompletableFuture',
+    'Optional','Stream','Collectors',
+    'SLF4JBridgeHandler','PatternLayoutEncoder',
+    'User','UserService','OrderService','Order','Ex','RuntimeException','DataAccessException','ServiceException','UncheckedIOException','IOException',
+    'NullPointerException','NoSuchElementException','TimeUnit'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum','record',
+    'return','if','else','for','while','do','break','continue','switch','case','default','yield',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff).sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) { state.diff = t.dataset.diff; state.idx = 0; render(); }
+    };
+  });
+}
+
+function familyPillClass(family) {
+  if (!family) return '';
+  const f = family.toLowerCase();
+  if (f.includes('api'))            return 'api';
+  if (f.includes('implementation')) return 'impl';
+  if (f.includes('config'))         return 'cfg';
+  if (f.includes('level'))          return 'lvl';
+  if (f.includes('append'))         return 'app';
+  if (f.includes('format'))         return 'fmt';
+  if (f.includes('production'))     return 'prod';
+  if (f.includes('test'))           return 'cfg';
+  if (f.includes('recipe'))         return 'prod';
+  if (f.includes('pitfall'))        return 'app';
+  return '';
+}
+
+
+function render() {
+  const main = document.getElementById('main');
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}` : '';
+  const formulaBlock = p.formula ? `<div class="section-title">Format / Syntax</div><div class="formula">${escapeHtml(p.formula)}</div>` : '';
+  const familyPill = p.family ? `<span class="pill ${familyPillClass(p.family)}">${escapeHtml(p.family)}</span>` : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+      <div class="section-title">Why You Use It</div>
+      <p>${escapeHtml(p.problem)}</p>
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+      ${formulaBlock}
+      ${cheatBlock}
+      <div class="section-title">Methods &amp; Patterns</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+      <div class="section-title">Tips &amp; Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+      <div class="section-title">Java Code / Config</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+      ${p.complexity ? `<div class="complexity"><b>Complexity / Cost:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>`;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent = `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️'; themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙'; themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem('theme', next);
+});
+
+
+function renderBriefView() {
+  const families = [
+    { title: 'API',           cmds: [['SLF4J','the facade — code calls this'],['Logger.getLogger(Class)','one logger per class'],['{} placeholders','parameterised, lazy'],['log.error(\"...\", ex)','exception as LAST arg'],['JUL bridge','route JDK logs through SLF4J']] },
+    { title: 'Implementations',cmds: [['Logback','default for Spring Boot'],['Log4j2','async powerhouse, disruptor'],['JUL','built-in, avoid for apps']] },
+    { title: 'Levels',        cmds: [['TRACE','step-through detail'],['DEBUG','dev investigations'],['INFO','prod lifecycle (default)'],['WARN','recovered problems'],['ERROR','request failed → alert']] },
+    { title: 'Appenders',     cmds: [['ConsoleAppender','stdout — container default'],['RollingFileAppender','size+time rotation'],['AsyncAppender','wrap I/O off hot path'],['SyslogAppender','UDP/TCP to syslog'],['JSON / Logstash','centralised log shipping']] },
+    { title: 'Format',        cmds: [['PatternLayout','%d %level %logger %msg %n'],['LogstashEncoder','one JSON line per event'],['MDC','per-thread correlation IDs'],['Markers','tag events for routing']] },
+    { title: 'Production',    cmds: [['INFO root + per-pkg DEBUG','sane prod default'],['Async + bounded queue','no blocking I/O'],['JSON to stdout','let platform ship logs'],['Mask secrets at encoder','never log tokens / PII'],['Rotation: 100MB · 14d · 5GB','disk hygiene']] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> What level should this be?
+   ├── <span class="a">step-through detail</span>     → <span class="alg">TRACE</span>
+   ├── <span class="a">developer-useful state</span>  → <span class="alg">DEBUG</span>
+   ├── <span class="a">app-lifecycle event</span>     → <span class="alg">INFO</span>
+   ├── <span class="a">recovered problem</span>       → <span class="alg">WARN</span>
+   └── <span class="a">request failed</span>          → <span class="alg">ERROR (+ exception last)</span>
+
+<span class="q">Q2.</span> Where do logs go?
+   ├── <span class="a">local dev</span>         → <span class="alg">ConsoleAppender (pretty pattern)</span>
+   ├── <span class="a">container in k8s/ECS</span> → <span class="alg">ConsoleAppender (JSON encoder) — platform ships stdout</span>
+   ├── <span class="a">VM with disk</span>      → <span class="alg">RollingFileAppender + AsyncAppender</span>
+   └── <span class="a">syslog server</span>     → <span class="alg">SyslogAppender</span>
+
+<span class="q">Q3.</span> How do I correlate logs to requests?
+   ├── <span class="a">single-service</span>   → <span class="alg">MDC.put(\"requestId\", id) at boundary</span>
+   ├── <span class="a">distributed</span>      → <span class="alg">OpenTelemetry → traceId/spanId in MDC</span>
+   └── <span class="a">async / executor</span> → <span class="alg">TaskDecorator copies MDC into worker</span>
+
+<span class="q">Q4.</span> Logs are too slow / too verbose?
+   ├── <span class="a">CPU on formatting</span>  → <span class="alg">parameterised messages, drop %F %M %L</span>
+   ├── <span class="a">I/O blocking app</span>   → <span class="alg">AsyncAppender / Log4j2 AsyncLogger</span>
+   ├── <span class="a">repeated lines</span>     → <span class="alg">DuplicateMessageFilter</span>
+   └── <span class="a">noisy library</span>      → <span class="alg">per-package level WARN/ERROR</span>
+
+<span class="q">Q5.</span> Tests need to assert log output?
+   ├── <span class="a">single class</span>      → <span class="alg">Logback ListAppender</span>
+   ├── <span class="a">Spring Boot</span>       → <span class="alg">@OutputCaptureExtension + CapturedOutput</span>
+   └── <span class="a">stand-alone unit</span>  → <span class="alg">slf4j-test library</span>
+`;
+
+  const recipeCards = [
+    { b: 'Class-level logger',     s: "Logger log = LoggerFactory.getLogger(Cls.class)" },
+    { b: 'Parameterised + ex',     s: "log.error(\"failed for {}\", id, ex)" },
+    { b: 'MDC scope',              s: "try (var c = MDC.putCloseable(\"k\", v)) { ... }" },
+    { b: 'Exclude noisy lib',      s: "<logger name=\"org.x\" level=\"WARN\"/>" },
+    { b: 'JSON to stdout',         s: "ConsoleAppender + LogstashEncoder" },
+    { b: 'Rolling file',           s: "SizeAndTimeBasedRollingPolicy 100MB · 14d" },
+    { b: 'Async wrap',             s: "<AsyncAppender><appender-ref ref=FILE/>" },
+    { b: 'Audit marker',           s: "log.info(MarkerFactory.getMarker(\"AUDIT\"), \"...\")" },
+    { b: 'Test capture',           s: "ListAppender + assertThat(.list)" },
+    { b: 'Dynamic level (Boot)',   s: "POST /actuator/loggers/com.acme {configuredLevel:DEBUG}" },
+    { b: 'Per-request log',        s: "OncePerRequestFilter + MDC + log INFO at end" },
+    { b: 'Mask secrets',           s: "Custom encoder regex on password|token|secret" },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.cmds.map(c => `<div class="card-mini"><b>${escapeHtml(c[0])}</b><span>${escapeHtml(c[1])}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const recipes_html = `
+    <div class="panel">
+      <h3>One-Liner Recipes</h3>
+      <div class="grid">
+        ${recipeCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">J A V A &nbsp; L O G G I N G</div>
+        <h1 class="brief-title">SLF4J · Backend · Pattern · Pipeline</h1>
+        <p class="brief-tagline">Code against the facade. Configure once. Ship structured.</p>
+      </header>
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+      ${recipes_html}
+      ${families_html}
+    </div>`;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

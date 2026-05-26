@@ -1,0 +1,2267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Java Collections — Cheatsheet, Methods, Use Cases &amp; Problem Patterns</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #ea580c;          /* Java orange */
+    --accent2: #b91c1c;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw:  #cf222e;
+    --typ: #6f42c1;
+    --bi:  #b91c1c;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy:  #16a34a;
+    --med:   #d97706;
+    --hard:  #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #ffedd5; color: var(--accent); }
+  .sidebar a.active { background: #ffedd5; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 32px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p  { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy  .dot { background: var(--easy); }
+  .tab.med   .dot { background: var(--med); }
+  .tab.hard  .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #ffedd5; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy  { background: var(--easy); }
+  .badge.med   { background: var(--med); }
+  .badge.hard  { background: var(--hard); }
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 600;
+    letter-spacing: .03em;
+  }
+  .pill.list { background:#dbeafe; color:#1e40af; }
+  .pill.set  { background:#dcfce7; color:#166534; }
+  .pill.map  { background:#fce7f3; color:#9d174d; }
+  .pill.q    { background:#ede9fe; color:#5b21b6; }
+  .pill.conc { background:#fee2e2; color:#991b1b; }
+  .pill.itf  { background:#e0e7ff; color:#3730a3; }
+  .pill.util { background:#f1f5f9; color:#334155; }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #fff7ed;
+    border-left: 4px solid #fb923c;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .formula {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 13.5px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fef9c3;
+    border-left: 4px solid #ca8a04;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #ffedd5;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: #fffaf0;
+    white-space: nowrap;
+    color: #b45309;
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .bi  { color: var(--bi);  font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #ffedd5; color: var(--accent); border-color: #fdba74; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #ea580c, #b91c1c, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 20px;
+  }
+  .brief-root .panel h3 {
+    margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .brief-root .grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .brief-root .card-mini {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; background: #fffaf0;
+  }
+  .brief-root .card-mini b { color: var(--accent); display:block; margin-bottom:4px; font-size:13.5px;
+    font-family: "JetBrains Mono", Consolas, monospace; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow {
+    border: 1px dashed var(--border); border-radius: 12px;
+    padding: 16px; background: var(--code-bg);
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 13px; line-height: 1.9;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+    color: var(--fg);
+  }
+  .brief-root .flow .q { color: var(--accent); font-weight:700; }
+  .brief-root .flow .a { color: var(--str); }
+  .brief-root .flow .alg { color: var(--bi); font-weight:700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #fb923c;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --bi:  #ffa657;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(251,146,60,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(251,146,60,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(251,146,60,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(202,138,4,.10); }
+  [data-theme="dark"] .pill      { background: rgba(146,64,14,.18);  color: #fde68a; }
+  [data-theme="dark"] .pill.list { background: rgba(30,64,175,.18);  color: #bfdbfe; }
+  [data-theme="dark"] .pill.set  { background: rgba(22,101,52,.18);  color: #bbf7d0; }
+  [data-theme="dark"] .pill.map  { background: rgba(157,23,77,.18);  color: #fbcfe8; }
+  [data-theme="dark"] .pill.q    { background: rgba(91,33,182,.18);  color: #ddd6fe; }
+  [data-theme="dark"] .pill.conc { background: rgba(153,27,27,.18);  color: #fecaca; }
+  [data-theme="dark"] .pill.itf  { background: rgba(55,48,163,.18);  color: #c7d2fe; }
+  [data-theme="dark"] .pill.util { background: rgba(51,65,85,.18);   color: #cbd5e1; }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(251,146,60,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(251,146,60,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: #fed7aa; }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .card-mini { background: rgba(251,146,60,.07); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Java Collections — Cheatsheet, Methods, Use Cases &amp; Problem Patterns</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+const PROBLEMS = [];
+
+
+/* ===================== FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Java Collections Mental Model (read this first)", diff: "veasy",
+  family: "Foundations",
+  problem: "Every Java collection lives under one of four root interfaces: List (ordered, indexed, duplicates allowed), Set (no duplicates), Queue/Deque (front-and-back insertion order), and Map (key→value). The Collections Framework is just a small forest of interfaces, a couple of dozen implementations, and one utility class (java.util.Collections) that operates on them generically.",
+  intuition: "Pick the interface from your access pattern, then pick the implementation from your performance profile. 'I need a list and I'll fetch by index a lot' → ArrayList. 'I need a set and I want it sorted' → TreeSet. 'I need a map and threads will hammer it concurrently' → ConcurrentHashMap. The interface is what your method signatures should accept; the implementation is an implementation detail of the variable that holds it.",
+  hints: [
+    "Program to interfaces: List<String> xs = new ArrayList<>(); — your callers don't need to know it's an ArrayList.",
+    "Generics are erased at runtime. Be careful with arrays of generic types and unchecked casts.",
+    "null handling is uneven across implementations — HashMap allows one null key; TreeMap/ConcurrentHashMap do not.",
+    "equals() + hashCode() contract — all hash-based collections rely on it. Break the contract, lose your data.",
+    "Comparable (natural order) vs Comparator (external) — sorted collections need one or the other.",
+    "Iteration: enhanced for-loop is fine, but use Iterator.remove() (or removeIf) to delete during iteration without ConcurrentModificationException."
+  ],
+  tips: [
+    "Default to ArrayList, HashMap, HashSet — they're the right answer ~80% of the time on tabular work.",
+    "Default to ArrayDeque (not Stack, not LinkedList) for stacks AND queues.",
+    "For thread-safety, prefer ConcurrentHashMap over Collections.synchronizedMap() — far more scalable.",
+    "Java 9+ List.of / Set.of / Map.of give you immutable, compact, fast literal collections — use them aggressively.",
+    "Streams (java.util.stream) compose nicely with collections via Collection.stream() and Collectors.toXxx()."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Interface</th><th>Implementations</th><th>Pick when…</th></tr></thead>
+      <tbody>
+        <tr><td>List</td><td>ArrayList, LinkedList, CopyOnWriteArrayList, Vector*</td><td>order matters, indexed access, duplicates ok</td></tr>
+        <tr><td>Set</td><td>HashSet, LinkedHashSet, TreeSet, EnumSet, CopyOnWriteArraySet</td><td>uniqueness matters; do you also need order?</td></tr>
+        <tr><td>Queue / Deque</td><td>ArrayDeque, LinkedList, PriorityQueue, ArrayBlockingQueue, LinkedBlockingQueue, ConcurrentLinkedDeque</td><td>FIFO / LIFO / priority / producer-consumer</td></tr>
+        <tr><td>Map</td><td>HashMap, LinkedHashMap, TreeMap, EnumMap, IdentityHashMap, WeakHashMap, ConcurrentHashMap, ConcurrentSkipListMap</td><td>key→value lookup; ordered, sorted, or concurrent variants</td></tr>
+      </tbody>
+    </table>
+    <p><b>Big-O reflexes (average case):</b></p>
+    <ul class="hints">
+      <li><b>ArrayList</b>: get O(1), add-at-end O(1) amortised, add-at-middle O(n).</li>
+      <li><b>LinkedList</b>: head/tail ops O(1), get(i) O(n). Almost always slower than ArrayList in practice.</li>
+      <li><b>HashMap / HashSet</b>: O(1) avg, O(log n) worst since Java 8 (treeified buckets).</li>
+      <li><b>TreeMap / TreeSet</b>: all ops O(log n). Sorted iteration in O(n).</li>
+      <li><b>ArrayDeque</b>: O(1) for both ends. Beats Stack and LinkedList.</li>
+      <li><b>PriorityQueue</b>: offer/poll O(log n), peek O(1).</li>
+      <li><b>ConcurrentHashMap</b>: O(1) avg with high concurrency throughput.</li>
+    </ul>
+    <p><b>Primitives:</b> standard collections box (int → Integer). For high-perf primitive collections, look at Eclipse Collections, fastutil, or HPPC.</p>
+  `,
+  code: `import java.util.*;
+
+// 1) Always declare to the interface
+List<String> names = new ArrayList<>();
+Set<String>  ids   = new HashSet<>();
+Map<String, Integer> counts = new HashMap<>();
+
+// 2) Java 9+ immutable factory methods
+List<Integer> primes  = List.of(2, 3, 5, 7, 11);
+Set<String>   colors  = Set.of("R", "G", "B");
+Map<String, Integer> caps = Map.of("US", 50, "IN", 28);
+
+// 3) The generic 5-line skeleton you use every day
+for (String n : names) { /* read */ }
+names.removeIf(s -> s.isEmpty());           // safe in-place delete
+List<String> upper = names.stream()         // streams interop
+    .map(String::toUpperCase)
+    .toList();                              // Java 16+`,
+  complexity: "Knowing which interface to reach for is the 30-second decision. The next 35 cards show you which implementation to pick."
+});
+
+PROBLEMS.push({
+  num: 1, title: "Collection — the root interface", diff: "easy",
+  family: "Interfaces",
+  problem: "Collection is the supertype of List, Set, and Queue. Defines the methods every collection has: add, remove, contains, size, isEmpty, iterator, stream, parallelStream, toArray, removeIf, clear.",
+  intuition: "If your method only needs to iterate, count, or stream, type the parameter as Collection<T>, not List<T> — your callers can pass a List, a Set, a Queue, anything. It's the most powerful generic 'I take any collection' type.",
+  hints: [
+    "add(e) returns boolean — false if the collection rejected the element (e.g., Set already had it).",
+    "addAll, removeAll, retainAll, containsAll for bulk operations.",
+    "removeIf(Predicate) — the cleanest way to delete during iteration.",
+    "stream() / parallelStream() — bridge to java.util.stream.",
+    "toArray(T[]::new) — safe typed conversion (Java 11+ form).",
+    "Collection itself is NOT thread-safe; concurrent variants live in java.util.concurrent."
+  ],
+  tips: [
+    "Prefer 'Collection<? extends T>' for params that only READ; 'Collection<? super T>' for params that only ADD. PECS: producer-extends, consumer-super.",
+    "Don't use addAll for repeated single-add hotspots — direct add() is cheaper inside loops.",
+    "Iteration order is implementation-defined — only a List or LinkedHashXxx promises insertion order; only Tree/PriorityQueue promises sorted order."
+  ],
+  code: `import java.util.*;
+
+void process(Collection<String> items) {            // accept ANY collection
+    if (items.isEmpty()) return;
+
+    int n = items.size();
+    boolean has = items.contains("ERROR");
+
+    items.removeIf(s -> s.startsWith("#"));         // delete during iteration
+
+    String[] arr = items.toArray(new String[0]);    // typed array
+
+    long bigCount = items.stream()                  // stream pipeline
+        .filter(s -> s.length() > 5)
+        .count();
+}`,
+  complexity: "Most defaults are O(n). Specifics depend on the implementation."
+});
+
+PROBLEMS.push({
+  num: 2, title: "Iterable + Iterator + ListIterator", diff: "easy",
+  family: "Interfaces",
+  problem: "Iterable is the contract that lets a class participate in the enhanced for-loop. Iterator is the cursor object it returns. ListIterator extends Iterator with bidirectional traversal and in-place set/add.",
+  intuition: "for-each is just sugar for iter.hasNext() / iter.next(). Use the explicit Iterator when you need to remove during traversal (the only safe way for non-List collections). Use ListIterator when you need to walk a list backward, or modify it as you iterate.",
+  hints: [
+    "for (T x : coll) → uses iterator() under the hood.",
+    "iter.next() then iter.remove() — the canonical safe-delete pattern.",
+    "ListIterator: hasPrevious(), previous(), set(e), add(e). Indexed by listIterator(int i).",
+    "Most non-concurrent collections are FAIL-FAST: structural mutation outside the iterator throws ConcurrentModificationException.",
+    "Concurrent collections (ConcurrentHashMap, CopyOnWriteArrayList) are FAIL-SAFE: weakly consistent snapshots."
+  ],
+  tips: [
+    "removeIf is shorter than iter.remove() for the 'delete by predicate' case — prefer it.",
+    "In a list, iter.remove() is O(n) for ArrayList (shifts) but O(1) for LinkedList — yet ArrayList is usually still faster overall.",
+    "Spliterator (Java 8+) is what streams use under the hood — same idea, optimised for split-and-parallelise."
+  ],
+  code: `import java.util.*;
+
+List<Integer> xs = new ArrayList<>(List.of(1, 2, 3, 4, 5));
+
+// safe in-place removal during iteration
+Iterator<Integer> it = xs.iterator();
+while (it.hasNext()) {
+    if (it.next() % 2 == 0) it.remove();
+}
+// xs == [1, 3, 5]
+
+// or, equivalently:
+xs.removeIf(x -> x % 2 == 0);
+
+// ListIterator: walk backward
+List<Integer> ys = new ArrayList<>(List.of(1,2,3));
+ListIterator<Integer> lit = ys.listIterator(ys.size());
+while (lit.hasPrevious()) System.out.println(lit.previous());`,
+  complexity: "Iteration O(n). Iterator.remove() depends on the collection."
+});
+
+
+/* ===================== LISTS ===================== */
+
+PROBLEMS.push({
+  num: 3, title: "List<E> — the indexed-sequence interface", diff: "easy",
+  family: "List",
+  problem: "An ordered collection that allows duplicates and supports positional access by index. Adds: get(i), set(i, e), add(i, e), remove(i), indexOf, lastIndexOf, subList, sort, replaceAll, listIterator.",
+  intuition: "List is the workhorse — most data you read from a database, parse from JSON, or accumulate in a loop ends up in a List. The standard implementation is ArrayList; reach for LinkedList only with strong evidence (and probably you should still pick ArrayDeque instead).",
+  hints: [
+    "list.subList(from, to) returns a VIEW — mutating it mutates the parent list.",
+    "list.sort(Comparator) sorts in place. Collections.sort(list) uses natural order.",
+    "Collections.reverse, shuffle, fill, swap operate on Lists.",
+    "list.equals(other) compares element-by-element, in order.",
+    "List.copyOf(coll) returns an unmodifiable copy (Java 10+).",
+    "List.of(...) returns an unmodifiable list (Java 9+); throws on add/set/remove."
+  ],
+  tips: [
+    "DO NOT call .add() on a List.of(...) — UnsupportedOperationException. Wrap in `new ArrayList<>(List.of(...))` if you need mutation.",
+    "subList is awesome for slice-style algorithms but be aware of the 'shared backing' surprise.",
+    "Avoid `new ArrayList<>().contains(x)` patterns — that's O(n). Use a Set if you query repeatedly."
+  ],
+  code: `import java.util.*;
+
+List<String> xs = new ArrayList<>();
+xs.add("a"); xs.add("b"); xs.add("c");
+
+xs.add(1, "X");        // ["a","X","b","c"]
+xs.set(0, "A");        // ["A","X","b","c"]
+xs.remove(2);          // ["A","X","c"]   removes by INDEX
+xs.remove("X");        // ["A","c"]       removes by OBJECT (first match)
+
+xs.sort(Comparator.naturalOrder());
+List<String> view = xs.subList(0, 1);     // VIEW — mutates the original
+
+List<Integer> immut = List.of(1, 2, 3);    // unmodifiable
+// immut.add(4); // throws UnsupportedOperationException`,
+  complexity: "Method costs depend on the implementation — see the next two cards."
+});
+
+PROBLEMS.push({
+  num: 4, title: "ArrayList<E> — resizable array (the default List)", diff: "easy",
+  family: "List",
+  problem: "Backed by an Object[] that grows by ~50% when full. The right answer for almost every list need: indexed access, iteration, and append.",
+  intuition: "Random access is O(1) because it's an array under the hood. add(e) is O(1) amortised — most calls are free, occasional ones copy the entire array to a 1.5× larger one. Insertion or deletion in the middle is O(n) because elements shift. Memory-locality is great, so it crushes LinkedList in practice on almost every workload.",
+  hints: [
+    "Constructors: new ArrayList<>(), ArrayList<>(initialCapacity), ArrayList<>(otherCollection).",
+    "Pre-size with initialCapacity if you know roughly how many elements are coming.",
+    "ensureCapacity(n) — grows the backing array to fit n. Useful before a big addAll.",
+    "trimToSize() — shrinks backing array to size(). Use when you've finished filling and want to release memory.",
+    "Iteration through indexed get(i) and through the iterator are both O(n) total."
+  ],
+  tips: [
+    "Pre-sizing avoids 'amortised but spiky' resize copies in latency-sensitive code.",
+    "ArrayList is NOT thread-safe. Use CopyOnWriteArrayList (read-mostly) or Collections.synchronizedList (rarely the right answer).",
+    "For huge int/long/double lists, IntArrayList from Eclipse Collections / fastutil saves 4–8× memory by avoiding boxing."
+  ],
+  code: `import java.util.*;
+
+List<Integer> xs = new ArrayList<>(1_000);   // pre-size
+for (int i = 0; i < 1_000; i++) xs.add(i);
+
+int last = xs.get(xs.size() - 1);
+xs.set(0, -1);
+xs.remove(xs.size() - 1);                    // remove last — O(1)
+xs.remove(0);                                // remove first — O(n)
+xs.removeIf(x -> x < 0);                     // bulk delete by predicate
+
+Collections.binarySearch(xs, 500);           // O(log n) — but list MUST be sorted
+((ArrayList<Integer>) xs).trimToSize();      // shrink backing array`,
+  complexity: "get/set: O(1). add(e): O(1) amortised. add(i,e)/remove(i): O(n)."
+});
+
+PROBLEMS.push({
+  num: 5, title: "LinkedList<E> — doubly-linked list (rarely the answer)", diff: "easy",
+  family: "List",
+  problem: "Doubly-linked list backing a List, Deque, AND Queue. O(1) at both ends; O(n) for indexed access. In modern JVMs, almost always slower than ArrayList for List use and slower than ArrayDeque for queue use.",
+  intuition: "Each node is a separate heap allocation with prev/next pointers — terrible for cache locality. The famous 'O(1) middle insert' assumes you already have a node reference, but if you're calling .add(i, e) you pay O(i) to walk to the position first. Every benchmark on real hardware shows ArrayList beating it for List work and ArrayDeque beating it for queue work.",
+  hints: [
+    "Implements Deque AND List — addFirst/addLast/peekFirst/peekLast all available.",
+    "get(i) walks from the closer end — O(n) worst, O(n/2) average.",
+    "Iterator.remove() is genuinely O(1) (handy for stream-like in-place edits).",
+    "No initial capacity — nothing to pre-size.",
+    "Memory overhead per element is much higher than ArrayList (each node has 2 pointers + object header)."
+  ],
+  tips: [
+    "Pretty much never reach for LinkedList. If you want a queue/deque, use ArrayDeque. If you want a list, use ArrayList.",
+    "If a benchmark shows LinkedList winning, double-check — usually it's because of measurement noise or tiny n.",
+    "The one legit case: very long lists where you do iter.remove() heavily AND don't index — and even then, ArrayList.removeIf is usually fine."
+  ],
+  code: `import java.util.*;
+
+LinkedList<Integer> q = new LinkedList<>();
+q.addFirst(1); q.addLast(2); q.addLast(3);   // [1,2,3]
+int head = q.removeFirst();                   // 1
+int tail = q.removeLast();                    // 3
+
+// As a list:
+q.add(99);                                    // append
+q.get(0);                                     // O(n) — walks the chain`,
+  complexity: "Head/tail ops: O(1). get(i)/add(i,e)/remove(i): O(n)."
+});
+
+PROBLEMS.push({
+  num: 6, title: "CopyOnWriteArrayList<E> — read-mostly, snapshot iteration", diff: "med",
+  family: "List · Concurrent",
+  problem: "Thread-safe List where every mutation copies the underlying array. Reads are lock-free; iterators see a stable snapshot. The right pick when you have many readers and very few writers (event listeners, config caches).",
+  intuition: "Synchronized lists pay the lock on every read. CopyOnWriteArrayList flips it: writes are expensive (whole-array copy), reads are FREE. Iterators don't throw ConcurrentModificationException because they iterate over the snapshot they were created against — even if someone replaces the list mid-iteration.",
+  hints: [
+    "Reads (get, contains, iterator, size) are O(1) / O(n) lock-free.",
+    "Writes (add, set, remove) take a lock AND copy the array — O(n).",
+    "Iteration is over a SNAPSHOT — changes after iterator creation are invisible.",
+    "iterator().remove() throws UnsupportedOperationException — the snapshot is read-only.",
+    "Use addIfAbsent if you want set-like behavior."
+  ],
+  tips: [
+    "Don't use it as a Set substitute for huge lists — addIfAbsent is O(n).",
+    "Classic use case: a list of event listeners that's set up at startup and rarely changed but iterated all the time.",
+    "If writes are frequent, ConcurrentLinkedQueue or a synchronized list will outperform it."
+  ],
+  code: `import java.util.*;
+import java.util.concurrent.*;
+
+CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
+listeners.add(new LogListener());
+
+// Many threads can iterate concurrently with no synchronisation:
+for (Listener l : listeners) l.onEvent(evt);
+
+// A registration thread can mutate without breaking iteration:
+listeners.addIfAbsent(new MetricsListener());`,
+  complexity: "Reads O(1)/O(n) lock-free. Writes O(n) under lock."
+});
+
+PROBLEMS.push({
+  num: 7, title: "Vector / Stack — legacy classes (avoid)", diff: "easy",
+  family: "List · Legacy",
+  problem: "Vector: a synchronized ArrayList from Java 1.0. Stack extends Vector with push/pop/peek. Both are kept for backward compatibility but considered superseded.",
+  intuition: "Vector locks every method, so it's slower than ArrayList AND doesn't even give you composite atomicity (e.g., 'check size then get' is still racy). Stack inherits all of Vector's pain plus ships LIFO methods you should get from ArrayDeque instead.",
+  hints: [
+    "Use ArrayList instead of Vector. Wrap with Collections.synchronizedList if you really need a synchronized list.",
+    "Use ArrayDeque instead of Stack: deque.push, deque.pop, deque.peek.",
+    "Vector has capacityIncrement which can be useful for fixed-step growth — but rarely in modern code."
+  ],
+  tips: [
+    "If you see Vector or Stack in code review, propose replacing them. They're not deprecated, but they're not idiomatic.",
+    "Java's official docs (Stack class) explicitly recommend ArrayDeque as the replacement.",
+    "Mutex-style 'thread-safe-ness' from Vector is often a misleading false sense of safety."
+  ],
+  code: `import java.util.*;
+
+// AVOID
+Stack<Integer> stack = new Stack<>();
+stack.push(1); stack.pop();
+
+// PREFER
+Deque<Integer> stack2 = new ArrayDeque<>();
+stack2.push(1); stack2.pop();`,
+  complexity: "Same as ArrayList, but every method takes a lock."
+});
+
+
+/* ===================== SETS ===================== */
+
+PROBLEMS.push({
+  num: 8, title: "Set<E> — uniqueness as a constraint", diff: "easy",
+  family: "Set",
+  problem: "A Collection that rejects duplicates. add(e) returns false if e was already present. Standard methods inherited from Collection — no positional access.",
+  intuition: "Use a Set whenever 'is this thing in here?' is your hot question, or when the data must be unique by definition (user IDs, visited URLs, seen tokens). The implementation choice is about iteration order and worst-case latency, not API.",
+  hints: [
+    "HashSet — fastest, no order. The default.",
+    "LinkedHashSet — insertion-order iteration with hash-set speed. Tiny memory cost.",
+    "TreeSet — sorted iteration, O(log n) ops, navigation methods (floor/ceiling/headSet/tailSet).",
+    "EnumSet — bitmask-backed Set for enum types. Insanely fast.",
+    "Set.of(...) — Java 9+ immutable literal set. Throws on duplicates at construction."
+  ],
+  tips: [
+    "If 'I have a List and want to dedupe' → `new LinkedHashSet<>(list)` keeps original order.",
+    "Set difference: `a.removeAll(b)` mutates a; for non-mutating, build a new HashSet and removeAll on the copy.",
+    "Set intersection: `a.retainAll(b)`. Union: addAll.",
+    "If your equals/hashCode is wrong, Set will silently let duplicates in or lose elements forever."
+  ],
+  code: `import java.util.*;
+
+Set<String> seen = new HashSet<>();
+boolean fresh = seen.add(token);    // true if newly added
+
+// dedupe a list, preserve original order
+List<String> noDups = new ArrayList<>(new LinkedHashSet<>(input));
+
+// set algebra
+Set<Integer> a = new HashSet<>(List.of(1,2,3,4));
+Set<Integer> b = new HashSet<>(List.of(3,4,5,6));
+
+Set<Integer> union     = new HashSet<>(a); union.addAll(b);     // {1..6}
+Set<Integer> intersect = new HashSet<>(a); intersect.retainAll(b); // {3,4}
+Set<Integer> diff      = new HashSet<>(a); diff.removeAll(b);    // {1,2}`,
+  complexity: "Depends on implementation."
+});
+
+PROBLEMS.push({
+  num: 9, title: "HashSet<E> — fast unordered set (the default)", diff: "easy",
+  family: "Set",
+  problem: "Backed by a HashMap (each element is a key with a sentinel value). add / remove / contains are O(1) average. No iteration order guarantee.",
+  intuition: "Same engine as HashMap, same caveats. Equality and hashing of E must be correct and stable. If E is mutable and its hashCode changes after insertion, the set 'loses' the element — a famous footgun.",
+  hints: [
+    "Constructors: new HashSet<>(initialCapacity, loadFactor).",
+    "Default load factor 0.75. Resizes (rehash) when size > capacity × loadFactor.",
+    "Iteration order is unspecified and can change between JDK versions.",
+    "Java 8+ degenerate buckets become red-black trees → O(log n) worst case instead of O(n).",
+    "Don't use mutable objects as set elements unless you NEVER mutate the fields used in equals/hashCode."
+  ],
+  tips: [
+    "Pre-size: `new HashSet<>((int) (expected / 0.75) + 1)` to avoid rehashing.",
+    "For an unmodifiable set: `Set.copyOf(coll)` (Java 10+).",
+    "If you need primitive-int sets, IntHashSet (Eclipse Collections) saves a ton of memory."
+  ],
+  code: `import java.util.*;
+
+HashSet<String> seen = new HashSet<>(1024);
+seen.add("alice");
+seen.add("alice");        // returns false — already there
+seen.contains("alice");   // true
+seen.size();              // 1
+
+// Track first-seen IPs in a log
+Set<String> firstSeen = new HashSet<>();
+for (String line : log)
+    if (firstSeen.add(extractIp(line)))
+        System.out.println("new: " + line);`,
+  complexity: "add/remove/contains: O(1) avg, O(log n) worst."
+});
+
+PROBLEMS.push({
+  num: 10, title: "LinkedHashSet<E> — insertion-order set", diff: "easy",
+  family: "Set",
+  problem: "HashSet that ALSO maintains a doubly-linked list through its entries — so iteration order = insertion order. Tiny memory cost over HashSet, same big-O.",
+  intuition: "Use whenever the user can see iteration output. 'unique values, in the order I added them' is exactly what you want for: rendering, log dedup, ordered config. It's the answer 90% of the time someone is tempted to write 'List but unique'.",
+  hints: [
+    "Same constructors and methods as HashSet.",
+    "Iteration is exactly insertion order — duplicates don't reset position.",
+    "Slightly slower iteration than HashSet but predictable order is usually worth it."
+  ],
+  tips: [
+    "The 'dedupe a list while preserving order' one-liner: `new ArrayList<>(new LinkedHashSet<>(input))`.",
+    "Great for ordered enum-of-events, breadcrumb trails, recently-seen sets.",
+    "If you also want LRU eviction, use LinkedHashMap with accessOrder=true (card 22)."
+  ],
+  code: `import java.util.*;
+
+Set<String> recent = new LinkedHashSet<>();
+recent.add("home"); recent.add("about"); recent.add("home");
+// Iteration: home, about
+
+// Dedupe in original order
+List<Integer> nums = List.of(3,1,2,3,1,4);
+List<Integer> deduped = new ArrayList<>(new LinkedHashSet<>(nums)); // [3,1,2,4]`,
+  complexity: "Same as HashSet (O(1) avg). Slight memory overhead for the link pointers."
+});
+
+PROBLEMS.push({
+  num: 11, title: "TreeSet<E> — sorted, navigable set", diff: "med",
+  family: "Set",
+  problem: "Red-black tree backing a SortedSet/NavigableSet. Iteration in sorted order. add/remove/contains are O(log n). Adds powerful navigation: first, last, floor, ceiling, lower, higher, headSet, tailSet, subSet.",
+  intuition: "Whenever 'sorted' or 'closest match' is part of the problem, reach for TreeSet. Floor / ceiling answer 'largest ≤ x' / 'smallest ≥ x' in O(log n) — one of the most common interview tricks (event scheduling, autocomplete, range queries).",
+  hints: [
+    "Element type must be Comparable, OR you supply a Comparator at construction.",
+    "first()/last() are O(log n).",
+    "floor(x): greatest element ≤ x. ceiling(x): smallest ≥ x. lower(x): strictly < x. higher(x): strictly > x.",
+    "headSet(x), tailSet(x), subSet(lo, hi) are VIEWS over the underlying tree.",
+    "descendingSet() and descendingIterator() for reverse traversal."
+  ],
+  tips: [
+    "Do NOT mutate elements in a way that changes their compareTo result while they're in the set — same footgun as HashSet's hashCode.",
+    "TreeSet does NOT allow null (unless your Comparator handles it, which it shouldn't).",
+    "If you need both fast contains AND sorted output, TreeSet's O(log n) is fine; HashSet + sort would be O(n) per query."
+  ],
+  code: `import java.util.*;
+
+TreeSet<Integer> tree = new TreeSet<>(List.of(10, 20, 30, 40));
+
+tree.first();        // 10
+tree.last();         // 40
+tree.floor(25);      // 20  (largest ≤ 25)
+tree.ceiling(25);    // 30  (smallest ≥ 25)
+tree.headSet(30);    // [10, 20]   (exclusive)
+tree.tailSet(20);    // [20, 30, 40]
+tree.subSet(15, 35); // [20, 30]
+
+// classic interview pattern: "find first available timeslot ≥ now"
+Integer next = tree.ceiling(currentTimeSlot);`,
+  complexity: "All set operations: O(log n). Iteration: O(n)."
+});
+
+PROBLEMS.push({
+  num: 12, title: "EnumSet<E> — bitmask set for enums", diff: "med",
+  family: "Set · Specialised",
+  problem: "Specialised Set implementation for enum types, internally backed by a long bitmap (or a long[] for >64 constants). 1–2 orders of magnitude faster than HashSet for enums.",
+  intuition: "Enum constants are dense and small (few dozen typically). EnumSet stores them as bits in a long: contains, add, remove are CPU-instruction fast, and iteration is just a popcount loop. Use it ANY time the element type is an enum.",
+  hints: [
+    "EnumSet.of(A, B, C) — literal.",
+    "EnumSet.range(LOW, HIGH) — all constants between two.",
+    "EnumSet.noneOf(MyEnum.class) — empty.",
+    "EnumSet.allOf(MyEnum.class) — full.",
+    "EnumSet.complementOf(other) — set difference vs allOf."
+  ],
+  tips: [
+    "Default for any Set<MyEnum> field. Almost free, much faster, smaller memory.",
+    "Not thread-safe; wrap with Collections.synchronizedSet if needed.",
+    "Iteration order is the natural enum declaration order — handy for predictable serialisation."
+  ],
+  code: `enum Day { MON, TUE, WED, THU, FRI, SAT, SUN }
+
+EnumSet<Day> weekend = EnumSet.of(Day.SAT, Day.SUN);
+EnumSet<Day> weekday = EnumSet.complementOf(weekend);
+EnumSet<Day> midweek = EnumSet.range(Day.TUE, Day.THU);
+
+if (weekend.contains(today)) takeOff();`,
+  complexity: "All ops O(1) for ≤64 constants; O(n/64) otherwise."
+});
+
+
+/* ===================== MAPS ===================== */
+
+PROBLEMS.push({
+  num: 13, title: "Map<K,V> — the key→value interface", diff: "easy",
+  family: "Map",
+  problem: "An association of unique keys to values. Core methods: put, get, remove, containsKey, containsValue, keySet, values, entrySet, size, isEmpty. Java 8 added the killer set: putIfAbsent, getOrDefault, computeIfAbsent, computeIfPresent, compute, merge, forEach.",
+  intuition: "If your problem says 'count by X', 'group by X', 'lookup by X', or 'remember last seen X', you want a Map. The Java 8 functional methods turn 4-line idioms into 1-liners — learn them and your map code shrinks by half.",
+  hints: [
+    "getOrDefault(k, dflt) — read or fallback in one call.",
+    "putIfAbsent(k, v) — put only if key is missing.",
+    "computeIfAbsent(k, fn) — like putIfAbsent but value is computed lazily; great for `Map<K, List<V>>` lookups.",
+    "merge(k, v, BiFunction) — counter / aggregation pattern: `m.merge(k, 1, Integer::sum)`.",
+    "entrySet() is the right way to iterate when you need both K and V.",
+    "Map.of(k, v, ...) up to 10 pairs, or Map.ofEntries(Map.entry(k,v), ...) for bigger literals (Java 9+)."
+  ],
+  tips: [
+    "NEVER use `m.containsKey(k) ? m.get(k) : default` — it's two lookups. Use getOrDefault.",
+    "NEVER use `if (!m.containsKey(k)) m.put(k, new ArrayList<>())` — use computeIfAbsent.",
+    "Don't mutate the map while iterating; use entrySet().removeIf(...) or Iterator.remove().",
+    "Map.of(...) results are immutable — calling put throws."
+  ],
+  code: `import java.util.*;
+
+Map<String, Integer> count = new HashMap<>();
+
+// counting (the merge trick)
+for (String w : words) count.merge(w, 1, Integer::sum);
+
+// grouping into lists (the computeIfAbsent trick)
+Map<String, List<String>> byPrefix = new HashMap<>();
+for (String s : items)
+    byPrefix.computeIfAbsent(s.substring(0,1), k -> new ArrayList<>()).add(s);
+
+// lookup with default
+int n = count.getOrDefault("foo", 0);
+
+// idiomatic iteration
+for (Map.Entry<String,Integer> e : count.entrySet())
+    System.out.println(e.getKey() + " = " + e.getValue());`,
+  complexity: "Depends on implementation."
+});
+
+PROBLEMS.push({
+  num: 14, title: "HashMap<K,V> — the workhorse map", diff: "easy",
+  family: "Map",
+  problem: "Hash-table-backed Map. O(1) average put/get/remove. No iteration order guarantee. Allows one null key and any number of null values. The default Map implementation.",
+  intuition: "Two things to internalise: (1) keys must have stable, well-distributed hashCode and consistent equals; (2) Java 8+ converts long collision chains to red-black trees, so worst case is O(log n) — but you should still aim for hash quality. For 90% of code, just `new HashMap<>()` is right.",
+  hints: [
+    "Default capacity 16, load factor 0.75. Grows by 2× when size > capacity × loadFactor.",
+    "Pre-size with `new HashMap<>(expectedSize / 0.75 + 1)` to skip rehashes.",
+    "Iteration order is unspecified and varies between JDK versions — never rely on it.",
+    "Java 8: buckets with > 8 entries become trees; ↩to a list when they shrink below 6.",
+    "Not thread-safe. Concurrent reads + writes can break the table — use ConcurrentHashMap."
+  ],
+  tips: [
+    "Mutable keys are dangerous — if a field used in hashCode changes after put, you've lost the entry.",
+    "Override equals AND hashCode together. IDE-generated ones are fine.",
+    "If your keys are enums, switch to EnumMap — much faster and zero hash work.",
+    "If you see weird CPU spikes, check for hash-collision hot keys (e.g., String of fixed length with pathological patterns)."
+  ],
+  code: `import java.util.*;
+
+Map<String, Integer> ages = new HashMap<>();
+ages.put("alice", 30);
+ages.put("bob", 25);
+
+ages.get("alice");                // 30
+ages.getOrDefault("carol", -1);   // -1
+ages.containsKey("bob");          // true
+ages.remove("bob");
+
+// counter pattern
+Map<Character, Integer> freq = new HashMap<>();
+for (char c : "mississippi".toCharArray())
+    freq.merge(c, 1, Integer::sum);
+// {m=1, i=4, s=4, p=2}`,
+  complexity: "put/get/remove: O(1) avg, O(log n) worst. Iteration: O(capacity)."
+});
+
+PROBLEMS.push({
+  num: 15, title: "LinkedHashMap<K,V> — predictable iteration + LRU caches", diff: "med",
+  family: "Map",
+  problem: "HashMap that maintains a doubly-linked list of entries. Two modes: insertion-order (default) or access-order (newest-touched goes to the tail). The simplest LRU cache in Java is a one-liner override of LinkedHashMap.",
+  intuition: "Two superpowers in one class. (1) Predictable iteration — perfect for serialising a map deterministically, building ordered configs, or returning JSON in a stable shape. (2) Access-ordering + removeEldestEntry override = a textbook LRU cache without any external library.",
+  hints: [
+    "new LinkedHashMap<>(cap, loadFactor, accessOrder=true) → LRU mode.",
+    "Override removeEldestEntry(Map.Entry e) to evict on a size cap.",
+    "Default mode is insertion-order; iterating gives keys in the order you put them.",
+    "Same big-O as HashMap; tiny extra memory for the link pointers.",
+    "Wrap with Collections.synchronizedMap if you need basic thread-safety; for real concurrent LRU use Caffeine."
+  ],
+  tips: [
+    "For a quick in-process LRU: extend LinkedHashMap and override removeEldestEntry.",
+    "For real LRU at scale (concurrent + stats + expiry), use Caffeine — far more capable.",
+    "If you only want stable iteration over a small immutable map, Map.of preserves order at the source level (Java 9+)."
+  ],
+  code: `import java.util.*;
+
+// 1) Insertion-order: predictable iteration
+Map<String, Integer> ordered = new LinkedHashMap<>();
+ordered.put("a", 1); ordered.put("b", 2); ordered.put("c", 3);
+// iteration: a, b, c (always)
+
+// 2) Access-order: instant LRU cache
+class LRU<K,V> extends LinkedHashMap<K,V> {
+    private final int cap;
+    LRU(int cap) { super(cap, 0.75f, true); this.cap = cap; }
+    @Override protected boolean removeEldestEntry(Map.Entry<K,V> e) {
+        return size() > cap;
+    }
+}
+Map<String, byte[]> cache = new LRU<>(1000);  // keeps the 1000 hottest entries`,
+  complexity: "Same as HashMap (O(1) avg). Slight overhead per entry for the link."
+});
+
+PROBLEMS.push({
+  num: 16, title: "TreeMap<K,V> — sorted, navigable map", diff: "med",
+  family: "Map",
+  problem: "Red-black tree backing a SortedMap/NavigableMap. All operations O(log n). Sorted iteration plus rich navigation: firstKey, lastKey, floorKey, ceilingKey, headMap, tailMap, subMap.",
+  intuition: "TreeMap is the answer when 'closest match' or 'range query' matters. Schedule lookups by timestamp, find the next-greater key, build histograms with sorted bins — TreeMap nails all of these. The floor/ceiling family of methods is one of the most underused superpowers in the standard library.",
+  hints: [
+    "Keys must be Comparable, OR pass a Comparator at construction.",
+    "floorEntry(k) → entry with the greatest key ≤ k.",
+    "ceilingEntry(k) → entry with the smallest key ≥ k.",
+    "headMap(k) / tailMap(k) / subMap(lo, hi) → live VIEWS over a key range.",
+    "descendingMap() / descendingKeySet() for reverse iteration.",
+    "Does NOT allow null keys."
+  ],
+  tips: [
+    "Range queries on TreeMap are O(log n + k) where k is the result size — much faster than scanning a HashMap.",
+    "Don't mutate keys after insertion in a way that changes their compareTo result.",
+    "If you need both fast point lookups AND sorted views with concurrency, see ConcurrentSkipListMap (card 25)."
+  ],
+  code: `import java.util.*;
+
+TreeMap<Integer, String> events = new TreeMap<>();
+events.put(100, "boot");
+events.put(250, "user-login");
+events.put(900, "purchase");
+
+events.firstKey();              // 100
+events.floorKey(300);           // 250  (largest ≤ 300)
+events.ceilingKey(300);         // 900
+events.subMap(200, 800);        // {250=user-login} — live view
+
+// closest-event-before-now
+Map.Entry<Integer,String> last = events.floorEntry(now);`,
+  complexity: "All map ops O(log n). Iteration O(n) in sorted order."
+});
+
+PROBLEMS.push({
+  num: 17, title: "EnumMap<K extends Enum<K>, V> — array-backed map for enums", diff: "med",
+  family: "Map · Specialised",
+  problem: "Map implementation that uses the enum's ordinal as an array index. No hashing, no boxing, no collisions — just a tiny array. Vastly faster than HashMap when the key is an enum.",
+  intuition: "When the key space is a fixed enum (state machines, day-of-week tables, status counters), EnumMap is essentially free. The whole map fits in one Object[] sized to the enum, indexed by ordinal.",
+  hints: [
+    "new EnumMap<>(MyEnum.class) — must specify the key class so the array can be sized.",
+    "Iteration is in the natural enum declaration order — predictable.",
+    "Allows null values, NOT null keys.",
+    "Not synchronized; wrap with Collections.synchronizedMap if needed."
+  ],
+  tips: [
+    "Default to EnumMap any time the key is an enum. The performance win is real and free.",
+    "Pairs beautifully with EnumSet for state-machine modelling.",
+    "Use Map.copyOf to get an immutable snapshot if you need one — though it may copy into a HashMap, not preserve EnumMap-ness."
+  ],
+  code: `enum Status { OPEN, IN_PROGRESS, RESOLVED, CLOSED }
+
+EnumMap<Status, Integer> ticketCounts = new EnumMap<>(Status.class);
+for (Status s : Status.values()) ticketCounts.put(s, 0);
+
+for (Ticket t : tickets) ticketCounts.merge(t.status, 1, Integer::sum);
+
+// Iteration is in declaration order: OPEN, IN_PROGRESS, RESOLVED, CLOSED
+ticketCounts.forEach((s, n) -> System.out.println(s + ": " + n));`,
+  complexity: "O(1) for all map operations. Memory: one Object[] sized to the enum."
+});
+
+PROBLEMS.push({
+  num: 18, title: "ConcurrentHashMap<K,V> — the default concurrent map", diff: "med",
+  family: "Map · Concurrent",
+  problem: "Thread-safe Map with high concurrent throughput. Reads are typically lock-free; writes lock at the bin (node) level. Atomic methods (computeIfAbsent, compute, merge, putIfAbsent) are thread-safe AND atomic per key.",
+  intuition: "ConcurrentHashMap is what you reach for ANY time multiple threads share a Map. Synchronized HashMap (Collections.synchronizedMap) is one big lock and bottlenecks immediately. ConcurrentHashMap shards lock granularity to the bin level and gives you atomic per-key operations.",
+  hints: [
+    "Does NOT allow null keys or null values (different from HashMap).",
+    "computeIfAbsent / compute / merge are atomic with respect to a single key — ideal for counters and lazy initialisation.",
+    "size() is an estimate under concurrent modification; use mappingCount() for a long.",
+    "Iterators are weakly consistent — never throw ConcurrentModificationException, may or may not see concurrent updates.",
+    "newKeySet() returns a thread-safe Set view (Java 8+)."
+  ],
+  tips: [
+    "Default for any shared Map. Don't reach for synchronizedMap.",
+    "Don't do `if (!m.containsKey(k)) m.put(k, v)` — that's racy. Use putIfAbsent or computeIfAbsent.",
+    "compute() inside computeIfAbsent is dangerous (re-entrant updates on the same key) — keep functions short and side-effect-free.",
+    "For concurrent caches with eviction, prefer Caffeine over rolling your own."
+  ],
+  code: `import java.util.concurrent.*;
+
+ConcurrentHashMap<String, Integer> hits = new ConcurrentHashMap<>();
+
+// thread-safe, atomic counter increment
+hits.merge("/api/users", 1, Integer::sum);
+
+// thread-safe lazy init
+ConcurrentMap<String, List<String>> idx = new ConcurrentHashMap<>();
+idx.computeIfAbsent("k", k -> new CopyOnWriteArrayList<>()).add("v");
+
+// thread-safe Set built on top
+Set<String> seen = ConcurrentHashMap.newKeySet();
+seen.add("token");`,
+  complexity: "put/get/remove: O(1) avg with high concurrency."
+});
+
+PROBLEMS.push({
+  num: 19, title: "WeakHashMap<K,V> — keys that vanish when GC'd", diff: "med",
+  family: "Map · Specialised",
+  problem: "HashMap variant whose keys are held by WEAK references. When a key is no longer reachable from anywhere else, the GC reclaims it and the entry quietly disappears.",
+  intuition: "Use it for memoisation / metadata caches keyed by long-lived objects you don't own. As soon as the rest of the app drops the key object, your cache entry goes away — no leak. The classic use is 'attach extra info to an object without preventing it from being collected'.",
+  hints: [
+    "Keys are weak refs; values are strong refs. If a value transitively holds the key, the key never dies.",
+    "Iteration may see fewer entries than size() suggested moments ago — entries can be reclaimed at any time.",
+    "Not thread-safe.",
+    "Don't use String literals as keys — they're interned and never collected.",
+    "If you need a 'weak set', use Collections.newSetFromMap(new WeakHashMap<>())."
+  ],
+  tips: [
+    "Most caches you write are NOT supposed to be WeakHashMap — they want size-bounded LRU. Reach for Caffeine or LinkedHashMap instead.",
+    "If your value points back at the key (e.g., Map<Node, NodeMeta> where NodeMeta keeps a ref to Node), the entry never collects — break that cycle.",
+    "For values held weakly, use a Map<K, WeakReference<V>> manually."
+  ],
+  code: `import java.util.*;
+
+Map<Document, ParsedAst> parseCache = new WeakHashMap<>();
+
+ParsedAst getAst(Document doc) {
+    return parseCache.computeIfAbsent(doc, this::parse);
+}
+// when no other reference to doc exists, the cache entry is freed
+// without you having to track it`,
+  complexity: "Same as HashMap; plus background work from the GC + reference queue."
+});
+
+PROBLEMS.push({
+  num: 20, title: "IdentityHashMap<K,V> — equality by reference, not equals()", diff: "med",
+  family: "Map · Specialised",
+  problem: "Map that uses == (reference equality) and System.identityHashCode instead of equals/hashCode. Two distinct objects that are .equals() are still treated as different keys.",
+  intuition: "Niche but lifesaving. Use it when you specifically need identity semantics — graph traversal where cycles must be detected by reference, IoC frameworks tracking proxied objects, serialisation libraries memoising 'I've already written this exact object'.",
+  hints: [
+    "DO NOT use it as a general-purpose Map — equals/hashCode on most domain objects are what you actually want.",
+    "Iteration order is unspecified.",
+    "Allows null keys and values.",
+    "Memory layout is a single Object[] of alternating key/value slots — quite compact."
+  ],
+  tips: [
+    "If you find yourself fighting equals() to do reference comparison, IdentityHashMap is the answer.",
+    "Java's serialisation (ObjectOutputStream) uses identity-based maps internally for the same reason.",
+    "Don't accidentally pick this — choosing it should be a deliberate, documented decision."
+  ],
+  code: `import java.util.*;
+
+IdentityHashMap<Node, Boolean> visited = new IdentityHashMap<>();
+
+void dfs(Node n) {
+    if (visited.put(n, Boolean.TRUE) != null) return;   // already visited (by reference)
+    for (Node child : n.children()) dfs(child);
+}`,
+  complexity: "O(1) avg, similar to HashMap."
+});
+
+PROBLEMS.push({
+  num: 21, title: "Hashtable / Properties — legacy maps", diff: "easy",
+  family: "Map · Legacy",
+  problem: "Hashtable is the original synchronized map (Java 1.0). Properties extends Hashtable<Object,Object> for key/value config files (.properties). Both are largely superseded.",
+  intuition: "Hashtable's coarse-grained locking makes it strictly worse than ConcurrentHashMap. Properties is still alive and fine for reading .properties files via load(InputStream) / store(OutputStream), but you'd typically copy values into a Map<String,String> for actual use.",
+  hints: [
+    "Use ConcurrentHashMap instead of Hashtable.",
+    "Properties.load(InputStream) → reads key=value lines.",
+    "Properties.store(OutputStream, comment) → writes them back.",
+    "Properties.getProperty(key, default) — convenience accessor that returns String.",
+    "System.getProperties() returns the JVM's properties as a Properties instance."
+  ],
+  tips: [
+    "Don't extend Hashtable. Don't pick it for new code.",
+    "For config files in modern code, look at Spring's Environment, MicroProfile Config, or YAML libs. Properties is fine but old-school.",
+    "Properties stores Object→Object — never put non-String into a Properties instance you intend to .store()."
+  ],
+  code: `import java.util.*;
+import java.io.*;
+
+Properties props = new Properties();
+try (var in = new FileInputStream("app.properties")) {
+    props.load(in);
+}
+String dbUrl = props.getProperty("db.url", "jdbc:h2:mem:test");`,
+  complexity: "Same big-O as Hashtable; every method takes a lock."
+});
+
+/* ===================== QUEUES & DEQUES ===================== */
+
+PROBLEMS.push({
+  num: 22, title: "Queue<E> & Deque<E> — FIFO and double-ended", diff: "easy",
+  family: "Queue",
+  problem: "Queue is a FIFO interface (offer/poll/peek). Deque (double-ended queue) extends it with addFirst/addLast/removeFirst/removeLast, supporting BOTH stack (LIFO) and queue (FIFO) usage.",
+  intuition: "Two method styles: throw-on-failure (add/remove/element) vs return-special-value (offer/poll/peek). Always prefer offer/poll/peek — they don't throw on bounded queues that are full/empty, just return null/false.",
+  hints: [
+    "Queue: offer(e), poll(), peek().",
+    "Deque (front): addFirst, offerFirst, removeFirst, pollFirst, peekFirst.",
+    "Deque (back):  addLast,  offerLast,  removeLast,  pollLast,  peekLast.",
+    "Stack idiom on Deque: push (= addFirst), pop (= removeFirst), peek.",
+    "Default implementation: ArrayDeque (covers both).",
+    "Null is not allowed in most queues (used as 'empty' sentinel)."
+  ],
+  tips: [
+    "Use ArrayDeque for stacks (replaces Stack) AND for unbounded queues (replaces LinkedList).",
+    "If you need a thread-safe queue with backpressure, use a BlockingQueue (card 26).",
+    "If you need ordering by priority, use PriorityQueue."
+  ],
+  code: `import java.util.*;
+
+Deque<Integer> stack = new ArrayDeque<>();
+stack.push(1); stack.push(2); stack.push(3);
+stack.pop();           // 3 (LIFO)
+
+Deque<Integer> queue = new ArrayDeque<>();
+queue.offer(1); queue.offer(2); queue.offer(3);
+queue.poll();          // 1 (FIFO)`,
+  complexity: "Depends on implementation; ArrayDeque is O(1) at both ends."
+});
+
+PROBLEMS.push({
+  num: 23, title: "ArrayDeque<E> — the default deque (and stack and queue)", diff: "easy",
+  family: "Queue",
+  problem: "Resizable circular array implementing Deque. O(1) at both ends. Faster than LinkedList for queue use, faster than Stack for LIFO use. The right answer for both.",
+  intuition: "Same locality and growth story as ArrayList — one contiguous Object[] reused as a ring. Cache-friendly, low overhead, no per-node pointers. Beats LinkedList in essentially every queue benchmark.",
+  hints: [
+    "Default capacity 16, doubles when full.",
+    "Pre-size with new ArrayDeque<>(int) when you know the working set.",
+    "Does NOT allow null elements.",
+    "Iterators are fail-fast; iteration is from head to tail.",
+    "Not thread-safe."
+  ],
+  tips: [
+    "Whenever you typed `new Stack<>()` or `new LinkedList<>()` in 2008, type ArrayDeque<>() in 2026.",
+    "Use as a sliding-window buffer (push to back, pop from front).",
+    "For graph BFS/DFS, ArrayDeque is the canonical frontier."
+  ],
+  code: `import java.util.*;
+
+ArrayDeque<Integer> dq = new ArrayDeque<>();
+dq.offerLast(1); dq.offerLast(2); dq.offerLast(3);
+dq.peekFirst();         // 1
+dq.pollFirst();         // 1, dq=[2,3]
+
+// classic BFS skeleton
+Deque<Node> frontier = new ArrayDeque<>();
+frontier.offer(start);
+while (!frontier.isEmpty()) {
+    Node n = frontier.poll();
+    for (Node nb : n.neighbors()) frontier.offer(nb);
+}`,
+  complexity: "All ends-ops O(1) amortised. Iteration O(n)."
+});
+
+PROBLEMS.push({
+  num: 24, title: "PriorityQueue<E> — min-heap by default", diff: "med",
+  family: "Queue",
+  problem: "Binary-heap-backed Queue. offer/poll are O(log n). peek is O(1). Returns elements in priority order (natural by default, or by Comparator). Min-heap unless you reverse the comparator.",
+  intuition: "When the next element you want is determined by a priority — Dijkstra, top-K, scheduling — PriorityQueue is the answer. Don't try to implement your own heap; the standard one is correct and fast.",
+  hints: [
+    "new PriorityQueue<>() — natural-order min-heap.",
+    "new PriorityQueue<>(Comparator.reverseOrder()) — max-heap.",
+    "new PriorityQueue<>(k+1, Comparator.naturalOrder()) — the top-K trick.",
+    "iterator() does NOT return elements in order — only poll() does.",
+    "Not thread-safe; for concurrent use see PriorityBlockingQueue."
+  ],
+  tips: [
+    "Top-K largest: keep a min-heap of size k, push every element, poll if size > k. End state is the k largest. O(n log k).",
+    "Don't mutate elements after offering — changing the priority does not re-heapify.",
+    "PriorityQueue is unbounded. If you need a bounded one with eviction, do it manually with size tracking."
+  ],
+  code: `import java.util.*;
+
+// k-th largest in a stream — O(n log k)
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+for (int x : stream) {
+    minHeap.offer(x);
+    if (minHeap.size() > k) minHeap.poll();
+}
+int kthLargest = minHeap.peek();
+
+// Dijkstra-style edge frontier
+record Edge(int to, int dist) {}
+PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingInt(Edge::dist));`,
+  complexity: "offer/poll: O(log n). peek: O(1). Building from a collection: O(n)."
+});
+
+PROBLEMS.push({
+  num: 25, title: "ConcurrentLinkedQueue / Deque — non-blocking lock-free queues", diff: "hard",
+  family: "Queue · Concurrent",
+  problem: "Unbounded thread-safe Queue (and Deque) implemented with CAS-based linked nodes. Lock-free, weakly consistent iterators, no backpressure. Useful when threads asynchronously hand off work without producer-side waiting.",
+  intuition: "When you need a thread-safe queue without blocking semantics — e.g., async event collectors, log buffers — ConcurrentLinkedQueue is the right pick. If you need producer-blocking 'wait until space is free', use a BlockingQueue instead.",
+  hints: [
+    "offer / poll / peek are atomic and non-blocking.",
+    "size() walks the chain — O(n), avoid in hot paths; use isEmpty() instead.",
+    "Iterators are weakly consistent — never throw CME, may or may not reflect concurrent updates.",
+    "Unbounded — under load, memory grows until consumers catch up."
+  ],
+  tips: [
+    "If your producers can outrun your consumers, use a BOUNDED BlockingQueue to give backpressure.",
+    "Don't loop on size() to detect 'queue empty' — use a poll loop or condition variable.",
+    "ConcurrentSkipListMap / ConcurrentSkipListSet are the sorted-collection cousins for the same lock-free family."
+  ],
+  code: `import java.util.concurrent.*;
+
+ConcurrentLinkedQueue<Event> events = new ConcurrentLinkedQueue<>();
+
+// any thread can produce
+events.offer(evt);
+
+// any thread can consume
+Event e;
+while ((e = events.poll()) != null) handle(e);`,
+  complexity: "offer/poll: O(1) amortised, lock-free."
+});
+
+PROBLEMS.push({
+  num: 26, title: "BlockingQueue<E> — producer/consumer with backpressure", diff: "hard",
+  family: "Queue · Concurrent",
+  problem: "Thread-safe Queue with put / take that BLOCK when the queue is full / empty. The standard plumbing for producer-consumer pipelines: ArrayBlockingQueue (bounded), LinkedBlockingQueue (optionally bounded), PriorityBlockingQueue, DelayQueue, SynchronousQueue.",
+  intuition: "When threads hand work to other threads, you almost always want a BlockingQueue. The blocking semantics ARE the backpressure mechanism — when consumers fall behind, producers naturally slow down (instead of blowing memory).",
+  hints: [
+    "put(e) — blocks until space. take() — blocks until an element. offer(e, t) / poll(t) — bounded waits.",
+    "ArrayBlockingQueue(capacity) — bounded, FIFO. The default for fixed-size buffers.",
+    "LinkedBlockingQueue(capacity?) — optionally bounded, FIFO, separate locks for head/tail (higher throughput).",
+    "PriorityBlockingQueue — priority order, unbounded.",
+    "DelayQueue<E extends Delayed> — pulls elements only when their delay expires.",
+    "SynchronousQueue — capacity 0; every put waits for a paired take. Used inside Executors.newCachedThreadPool."
+  ],
+  tips: [
+    "Pick BOUNDED. Unbounded queues are how you get OOM under load.",
+    "ExecutorService implementations under the hood use BlockingQueues — `new ThreadPoolExecutor(..., new ArrayBlockingQueue<>(N))` is a common pattern.",
+    "DelayQueue is the simplest in-process scheduler. ScheduledThreadPoolExecutor is built on something equivalent.",
+    "drainTo(Collection) batch-pulls everything available — reduces lock churn in batch consumers."
+  ],
+  code: `import java.util.concurrent.*;
+
+BlockingQueue<Task> q = new ArrayBlockingQueue<>(1024);
+
+// producer
+q.put(task);          // blocks if full
+
+// consumer
+while (true) {
+    Task t = q.take(); // blocks if empty
+    process(t);
+}
+
+// batch drain
+List<Task> batch = new ArrayList<>(64);
+q.drainTo(batch, 64);`,
+  complexity: "put/take: O(1) under contention. Drains are O(min(remaining, batch))."
+});
+
+PROBLEMS.push({
+  num: 27, title: "ConcurrentSkipListMap / Set — sorted + concurrent", diff: "hard",
+  family: "Map · Concurrent",
+  problem: "Skip-list-backed concurrent NavigableMap (and Set). Same sorted/navigation API as TreeMap, but lock-free. The right pick when you need BOTH range queries AND many concurrent threads.",
+  intuition: "ConcurrentHashMap doesn't have ordering. TreeMap isn't thread-safe. ConcurrentSkipListMap is the union — sorted, navigable, lock-free, weakly-consistent iterators. Standard for time-series buffers, leaderboard-style sorted indexes under contention.",
+  hints: [
+    "All NavigableMap methods (floorEntry, ceilingEntry, headMap, tailMap, subMap) are available.",
+    "Operations are O(log n) on average.",
+    "Iterators are weakly consistent (never throw CME).",
+    "Does NOT allow null keys or values.",
+    "ConcurrentSkipListSet is the Set sibling — same trade-offs."
+  ],
+  tips: [
+    "If you don't need ordering or range queries, ConcurrentHashMap is much faster.",
+    "Great for in-memory time-window indexes: subMap(now - window, now) without a lock.",
+    "Be aware that mutation of the keys (changing compareTo) breaks the structure invisibly."
+  ],
+  code: `import java.util.concurrent.*;
+
+ConcurrentSkipListMap<Long, Event> timeline = new ConcurrentSkipListMap<>();
+
+// producer threads
+timeline.put(System.currentTimeMillis(), evt);
+
+// consumer thread, recent-events query
+long now = System.currentTimeMillis();
+var recent = timeline.subMap(now - 60_000, now); // last 60s, lock-free`,
+  complexity: "put/get/remove: O(log n) average. Range query: O(log n + k)."
+});
+
+/* ===================== UTILITIES ===================== */
+
+PROBLEMS.push({
+  num: 28, title: "java.util.Collections — the static utility class", diff: "med",
+  family: "Utilities",
+  problem: "Stateless helper methods that operate on any Collection / List / Map: sort, reverse, shuffle, binarySearch, min, max, frequency, disjoint, swap, fill, nCopies, emptyList/Set/Map, singletonList, unmodifiableXxx, synchronizedXxx.",
+  intuition: "When you don't have a method on the collection itself, look at Collections. It's the Swiss-army-knife static class for cross-collection algorithms.",
+  hints: [
+    "Collections.sort(list[, cmp]) — in place. List.sort is the modern equivalent.",
+    "Collections.reverse, shuffle, swap, fill, nCopies — list mutators.",
+    "Collections.frequency(coll, o) — count occurrences. Collections.disjoint(a, b) — true if no elements in common.",
+    "Collections.binarySearch(sortedList, key) — O(log n); list MUST be sorted by the same comparator.",
+    "Collections.unmodifiableList/Set/Map — read-only VIEW.",
+    "Collections.synchronizedList/Set/Map — coarse-grained thread-safety wrapper. Iteration must be externally synchronized.",
+    "Collections.emptyList(), emptySet(), emptyMap() — canonical empty singletons; cheaper than allocating fresh ones."
+  ],
+  tips: [
+    "Prefer the new factory methods (List.of, Set.of, Map.of) over Collections.unmodifiableXxx for true immutability.",
+    "Collections.synchronizedMap is rarely the right answer — ConcurrentHashMap dominates.",
+    "Collections.frequency is fine for one-off counts; for large multi-key counting, use a Map<K,Integer> with merge."
+  ],
+  code: `import java.util.*;
+
+List<Integer> xs = new ArrayList<>(List.of(3,1,4,1,5,9,2,6));
+Collections.sort(xs);                          // [1,1,2,3,4,5,6,9]
+Collections.reverse(xs);                       // [9,6,5,4,3,2,1,1]
+Collections.shuffle(xs);                       // random order
+int idx = Collections.binarySearch(List.of(1,2,3,4,5), 3);  // 2
+
+int dups = Collections.frequency(xs, 1);       // 2
+boolean none = Collections.disjoint(xs, List.of(100, 200));
+
+List<String> readOnly = Collections.unmodifiableList(new ArrayList<>(names));
+Map<String,Integer> safe = Collections.synchronizedMap(new HashMap<>());`,
+  complexity: "Algorithm-specific (sort: O(n log n), binarySearch: O(log n), etc.)."
+});
+
+PROBLEMS.push({
+  num: 29, title: "Comparator<T> — the modern way to order things", diff: "med",
+  family: "Utilities",
+  problem: "Comparator is a functional interface. Java 8+ provides static + default methods that compose comparators fluently: comparing, comparingInt, thenComparing, reversed, nullsFirst, nullsLast.",
+  intuition: "You almost never write `compare(a, b) -> a.x - b.x` anymore. `Comparator.comparingInt(T::getX).thenComparing(T::getName).reversed()` is more readable, type-safe, and avoids integer-overflow bugs.",
+  hints: [
+    "Comparator.comparing(keyFn) — base.",
+    "Comparator.comparingInt / Long / Double — primitive-specialised, avoids boxing.",
+    "thenComparing(...) — secondary key.",
+    ".reversed() — flip order.",
+    "Comparator.naturalOrder() / reverseOrder().",
+    "Comparator.nullsFirst(cmp) / nullsLast(cmp) — null handling without NPE."
+  ],
+  tips: [
+    "NEVER subtract ints in compare(): `a.x - b.x` overflows. Use Integer.compare(a.x, b.x) or Comparator.comparingInt.",
+    "Comparable defines NATURAL order. Use it sparingly — only when one canonical ordering exists for the type.",
+    "Comparator.reversed() is correct; Collections.reverseOrder() exists too but is less expressive."
+  ],
+  code: `import java.util.*;
+
+record Person(String name, int age, String dept) {}
+
+Comparator<Person> byAge   = Comparator.comparingInt(Person::age);
+Comparator<Person> byDept  = Comparator.comparing(Person::dept, Comparator.nullsLast(Comparator.naturalOrder()));
+Comparator<Person> chained = byDept.thenComparing(byAge.reversed());
+
+List<Person> people = new ArrayList<>(...);
+people.sort(chained);
+
+// or inline
+people.sort(Comparator
+    .comparing(Person::dept)
+    .thenComparingInt(Person::age)
+    .reversed());`,
+  complexity: "Composition is free; sort is O(n log n)."
+});
+
+PROBLEMS.push({
+  num: 30, title: "Immutable Factories — List.of / Set.of / Map.of", diff: "easy",
+  family: "Utilities",
+  problem: "Java 9+ added compact factory methods that return small, immutable, memory-optimised collections. Faster construction, smaller memory, throw on mutation, reject nulls.",
+  intuition: "When you need a literal collection — constants, test data, a config bundle — these factories are the right tool. They're shorter than Arrays.asList / new HashSet<>(List.of(...)) AND give you stronger guarantees.",
+  hints: [
+    "List.of(a, b, c) — fixed-size, immutable list. Up to 10 args via varargs overloads, more via List.of(T[]).",
+    "Set.of(a, b, c) — immutable set; throws on duplicates at construction.",
+    "Map.of(k1, v1, k2, v2, …) — up to 10 pairs.",
+    "Map.ofEntries(Map.entry(k, v), …) — for arbitrarily many pairs.",
+    "All reject null elements/keys/values."
+  ],
+  tips: [
+    "Prefer these for hard-coded data — they're 5–10× more memory-efficient than ArrayList/HashSet for small N.",
+    "Need mutability later? Wrap in `new ArrayList<>(List.of(...))`.",
+    "List.copyOf(coll) / Set.copyOf / Map.copyOf — immutable defensive copies (Java 10+).",
+    "Don't return List.of(...) when callers might add to it — they'll get UnsupportedOperationException."
+  ],
+  code: `import java.util.*;
+
+List<String>  primes  = List.of("2", "3", "5", "7");
+Set<Integer>  flags   = Set.of(1, 2, 4, 8);
+Map<String,Integer> caps = Map.of("US", 50, "IN", 28, "CA", 13);
+
+// many-entry map
+Map<String,String> codes = Map.ofEntries(
+    Map.entry("US","United States"),
+    Map.entry("IN","India"),
+    Map.entry("CA","Canada"));
+
+// defensive copy
+List<String> snapshot = List.copyOf(externalList);`,
+  complexity: "O(n) construction. O(1) lookup for the small specialised forms."
+});
+
+PROBLEMS.push({
+  num: 31, title: "Streams + Collectors — the functional collection API", diff: "med",
+  family: "Utilities",
+  problem: "Stream<T> + java.util.stream.Collectors transform a Collection into another shape with declarative, composable pipelines: filter, map, reduce, collect to list/set/map, group-by, partition, joining.",
+  intuition: "Streams replace the 'init accumulator → loop → mutate accumulator' pattern with a description of WHAT you want. They're not a magic speedup — for most workloads they're slightly slower than a tight for-loop — but they're way more readable for non-trivial transformations.",
+  hints: [
+    "stream() — sequential. parallelStream() — splits across the common ForkJoinPool.",
+    "Collectors.toList() / toUnmodifiableList() / toSet() / toMap(keyFn, valFn[, mergeFn]).",
+    "Collectors.groupingBy(keyFn[, downstream]) — returns Map<K, List<T>> by default; pass `counting()` or `summingInt(...)` for aggregations.",
+    "Collectors.partitioningBy(pred) — splits into Map<Boolean, List<T>>.",
+    "Collectors.joining(\", \", \"[\", \"]\") — string concat with separators.",
+    ".toList() (Java 16+) — preferred terminal; returns an unmodifiable list."
+  ],
+  tips: [
+    "Don't reach for parallelStream by default. It only pays off for CPU-bound, large, easy-to-split workloads. For I/O, use ExecutorService.",
+    "Don't mutate shared state inside a stream — that's a classic correctness bug.",
+    "Collectors.toMap throws on duplicate keys unless you supply a merge function. Always provide one defensively.",
+    "Stream is single-use. Reusing one throws IllegalStateException."
+  ],
+  code: `import java.util.*;
+import java.util.stream.*;
+
+record Order(String customer, String region, int amount) {}
+
+List<Order> orders = ...;
+
+// filter + map + collect
+List<String> bigCustomers = orders.stream()
+    .filter(o -> o.amount() > 1000)
+    .map(Order::customer)
+    .distinct()
+    .sorted()
+    .toList();
+
+// group-by + sum
+Map<String, Integer> totalByRegion = orders.stream()
+    .collect(Collectors.groupingBy(
+        Order::region,
+        Collectors.summingInt(Order::amount)));
+
+// partition true/false
+Map<Boolean, List<Order>> hiLo = orders.stream()
+    .collect(Collectors.partitioningBy(o -> o.amount() > 500));`,
+  complexity: "O(n) for most pipelines. Sorts inside streams add O(n log n)."
+});
+
+/* ===================== PROBLEM PATTERNS ===================== */
+
+PROBLEMS.push({
+  num: 32, title: "Pattern: Frequency Counter", diff: "easy",
+  family: "Patterns",
+  problem: "Count how many times each item appears. Used everywhere — log analysis, anagram detection, top-K, histogram, mode.",
+  intuition: "One Map<T, Integer> with the merge() trick. Don't reach for Apache Commons or guava's Multiset for this — three lines of standard library does the job.",
+  hints: [
+    "map.merge(key, 1, Integer::sum) — atomic, idiomatic, one-line.",
+    "For sorted output by count desc, stream the entrySet and sort by Map.Entry.comparingByValue(reverseOrder()).",
+    "For top-K, pipe the entries through a min-heap of size K (PriorityQueue).",
+    "If keys are characters in a known small alphabet (a-z), an int[26] is faster than a HashMap."
+  ],
+  tips: [
+    "Concurrent counter — switch the Map to ConcurrentHashMap; merge stays atomic.",
+    "If counts can be huge, use Long instead of Integer to avoid overflow.",
+    "Anagrams: two strings are anagrams iff their frequency maps are equal."
+  ],
+  code: `import java.util.*;
+
+Map<String, Integer> counts = new HashMap<>();
+for (String w : words) counts.merge(w, 1, Integer::sum);
+
+// top 5 by count
+List<Map.Entry<String,Integer>> top5 = counts.entrySet().stream()
+    .sorted(Map.Entry.<String,Integer>comparingByValue().reversed())
+    .limit(5)
+    .toList();
+
+// anagram check
+boolean isAnagram(String a, String b) {
+    if (a.length() != b.length()) return false;
+    Map<Character,Integer> m = new HashMap<>();
+    for (char c : a.toCharArray()) m.merge(c, 1, Integer::sum);
+    for (char c : b.toCharArray()) if (m.merge(c, -1, Integer::sum) < 0) return false;
+    return true;
+}`,
+  complexity: "O(n) build. O(n log n) for sorted top-N or O(n log k) for heap-based top-K."
+});
+
+PROBLEMS.push({
+  num: 33, title: "Pattern: Group-By into Map<K, List<V>>", diff: "easy",
+  family: "Patterns",
+  problem: "Bucket items by some key. The default hand-rolled approach is computeIfAbsent + add. The Streams shortcut is Collectors.groupingBy.",
+  intuition: "Two equally idiomatic forms. Use computeIfAbsent inside an existing loop you control; use groupingBy when starting fresh from a Collection.",
+  hints: [
+    "map.computeIfAbsent(k, x -> new ArrayList<>()).add(v) — mutates in place.",
+    "stream().collect(Collectors.groupingBy(keyFn)) — builds a fresh Map<K, List<T>>.",
+    "Collectors.groupingBy(keyFn, mapFactory, downstream) for full control.",
+    "Use TreeMap as the mapFactory if you need sorted-key iteration."
+  ],
+  tips: [
+    "groupingBy returns a HashMap by default. If you need a TreeMap, pass it explicitly.",
+    "Need a Map<K, Set<V>>? Use `groupingBy(keyFn, toSet())`.",
+    "Need a Map<K, Long> count? Use `groupingBy(keyFn, counting())`."
+  ],
+  code: `import java.util.*;
+import java.util.stream.Collectors;
+
+record Person(String dept, String name) {}
+List<Person> people = ...;
+
+// hand-rolled
+Map<String, List<String>> byDept = new HashMap<>();
+for (Person p : people)
+    byDept.computeIfAbsent(p.dept(), k -> new ArrayList<>()).add(p.name());
+
+// streams
+Map<String, List<String>> byDept2 = people.stream()
+    .collect(Collectors.groupingBy(Person::dept,
+                                   Collectors.mapping(Person::name, Collectors.toList())));
+
+// sorted by department, with set of names
+Map<String, Set<String>> sorted = people.stream()
+    .collect(Collectors.groupingBy(
+        Person::dept, TreeMap::new, Collectors.mapping(Person::name, Collectors.toSet())));`,
+  complexity: "O(n)."
+});
+
+PROBLEMS.push({
+  num: 34, title: "Pattern: Top-K with a Heap", diff: "med",
+  family: "Patterns",
+  problem: "Find the K largest (or smallest, or most-frequent) items in a stream of N. The naive 'sort and take K' is O(N log N); a size-K heap does it in O(N log K) with O(K) memory.",
+  intuition: "Keep a min-heap of size K. For 'top-K largest', the smallest of the K candidates is at the heap root. Push every new item; if size > K, poll the root. After processing N items, the heap contains the K largest. The trick is the inverted comparator — for top-K LARGEST, use a MIN-heap.",
+  hints: [
+    "Top-K largest → min-heap (default PriorityQueue).",
+    "Top-K smallest → max-heap (PriorityQueue with Comparator.reverseOrder()).",
+    "Top-K most frequent → count first (Map<T,Integer>), then heap of Map.Entry by value.",
+    "Streaming top-K — same heap pattern, just don't materialise the input."
+  ],
+  tips: [
+    "If N is small or K is close to N, sorting is simpler and fast enough.",
+    "PriorityQueue.iterator() is NOT in heap order — only poll() drains in order.",
+    "Use Comparator.comparingInt for primitive keys to avoid boxing."
+  ],
+  code: `import java.util.*;
+
+int[] topKLargest(int[] xs, int k) {
+    PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+    for (int x : xs) {
+        minHeap.offer(x);
+        if (minHeap.size() > k) minHeap.poll();
+    }
+    int[] out = new int[k];
+    for (int i = k - 1; i >= 0; i--) out[i] = minHeap.poll();
+    return out;
+}
+
+// top-K most-frequent words
+Map<String,Integer> count = new HashMap<>();
+for (String w : words) count.merge(w, 1, Integer::sum);
+
+PriorityQueue<Map.Entry<String,Integer>> heap = new PriorityQueue<>(
+    Map.Entry.comparingByValue());
+for (var e : count.entrySet()) {
+    heap.offer(e);
+    if (heap.size() > k) heap.poll();
+}`,
+  complexity: "O(N log K), space O(K)."
+});
+
+PROBLEMS.push({
+  num: 35, title: "Pattern: LRU Cache with LinkedHashMap", diff: "med",
+  family: "Patterns",
+  problem: "Cache the K hottest items, evicting the least-recently-used when full. The textbook implementation is a 6-line LinkedHashMap subclass; the production answer is Caffeine.",
+  intuition: "LinkedHashMap with accessOrder=true reorders entries on every get/put — newest-touched goes to the tail. Override removeEldestEntry to evict from the head when size exceeds the cap. That's the entire algorithm in standard Java.",
+  hints: [
+    "Constructor: `super(initialCapacity, loadFactor, accessOrder=true)`.",
+    "removeEldestEntry returns true → the head entry is evicted on the NEXT put.",
+    "Not thread-safe. Wrap with Collections.synchronizedMap for a poor-man's concurrent LRU; Caffeine for real concurrent LRU + stats + expiry.",
+    "Each get() reorders the entry — be aware that 'reads' mutate the structure."
+  ],
+  tips: [
+    "For multi-threaded production caches, use Caffeine. It's small, MIT-licensed, and benchmarks better than every other Java cache.",
+    "If you only need TTL-based eviction (not LRU), Caffeine + expireAfterWrite is the simplest pattern.",
+    "If your cache is per-thread, ThreadLocal + LinkedHashMap is fine without locking."
+  ],
+  code: `import java.util.*;
+
+class LRU<K, V> extends LinkedHashMap<K, V> {
+    private final int cap;
+    LRU(int cap) {
+        super(cap, 0.75f, /* accessOrder */ true);
+        this.cap = cap;
+    }
+    @Override protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {
+        return size() > cap;
+    }
+}
+
+Map<String, byte[]> hot = Collections.synchronizedMap(new LRU<>(1000));`,
+  complexity: "get / put: O(1). Evict on overflow: O(1)."
+});
+
+PROBLEMS.push({
+  num: 36, title: "Pattern: Sliding Window with Deque", diff: "hard",
+  family: "Patterns",
+  problem: "Compute a rolling aggregate (max / min / sum / median) over a sliding window of size K in O(N) time. The 'monotonic deque' trick handles max/min in amortised O(1) per step.",
+  intuition: "For sliding-window MAX, keep a deque of indices whose values are STRICTLY DECREASING from front to back. The front is always the current window's max. When you slide: pop from the back any indices with smaller values (they're shadowed forever), push the new index, then drop the front if it's outside the window.",
+  hints: [
+    "Use ArrayDeque<Integer> for indices (not values).",
+    "Front = current answer. Tail = newest candidates.",
+    "addLast(i), removeFirst() if it's out of window, removeLast() while values are dominated.",
+    "For MIN window, flip the comparison to STRICTLY INCREASING.",
+    "For SUM, just maintain a running sum and add/remove the entering/leaving element."
+  ],
+  tips: [
+    "Total work is O(N) because each index is added and removed at most once.",
+    "If K is huge and the window is large compared to N, this beats any heap-based approach.",
+    "For median, use two heaps (max-heap of lower half, min-heap of upper half) and balance — O(log K) per slide."
+  ],
+  code: `import java.util.*;
+
+int[] slidingWindowMax(int[] a, int k) {
+    Deque<Integer> dq = new ArrayDeque<>();    // holds indices
+    int[] out = new int[a.length - k + 1];
+    for (int i = 0; i < a.length; i++) {
+        while (!dq.isEmpty() && dq.peekFirst() <= i - k) dq.pollFirst();    // off-window
+        while (!dq.isEmpty() && a[dq.peekLast()] < a[i]) dq.pollLast();     // dominated
+        dq.offerLast(i);
+        if (i >= k - 1) out[i - k + 1] = a[dq.peekFirst()];
+    }
+    return out;
+}`,
+  complexity: "O(N) time, O(K) space."
+});
+
+PROBLEMS.push({
+  num: 37, title: "Pattern: BFS / DFS with ArrayDeque + HashSet", diff: "med",
+  family: "Patterns",
+  problem: "Graph traversal — shortest path in unweighted graphs (BFS) or full reachability (DFS). The two collections you need: an ArrayDeque (frontier) and a HashSet (visited).",
+  intuition: "BFS uses the deque as a FIFO queue (offer to back, poll from front). DFS uses it as a LIFO stack (push to front, pop from front). The visited set guarantees you don't re-process nodes — without it, cyclic graphs loop forever.",
+  hints: [
+    "BFS: Deque.offer / poll → FIFO order, level-by-level expansion.",
+    "DFS-iterative: Deque.push / pop → LIFO order, depth-first expansion.",
+    "DFS-recursive: visited HashSet still required to avoid cycles.",
+    "For shortest-path with weights: switch to Dijkstra — PriorityQueue + visited set.",
+    "Visited check on PUSH (not POP) — otherwise the same node can be queued many times."
+  ],
+  tips: [
+    "Use a Map<Node, Node> as a 'parent' table to reconstruct the actual path after BFS finds the target.",
+    "If nodes are integers in [0, N), an int[] parent array beats HashMap<Node, Node>.",
+    "For grid problems, encode (row,col) as `row * cols + col` to use int[] / boolean[] visited."
+  ],
+  code: `import java.util.*;
+
+List<Node> bfsShortestPath(Node start, Node target) {
+    Deque<Node> q = new ArrayDeque<>();
+    Map<Node, Node> parent = new HashMap<>();
+    q.offer(start);
+    parent.put(start, null);
+
+    while (!q.isEmpty()) {
+        Node n = q.poll();
+        if (n.equals(target)) break;
+        for (Node nb : n.neighbors())
+            if (!parent.containsKey(nb)) {
+                parent.put(nb, n);
+                q.offer(nb);
+            }
+    }
+    // reconstruct
+    List<Node> path = new ArrayList<>();
+    for (Node n = target; n != null; n = parent.get(n)) path.add(n);
+    Collections.reverse(path);
+    return path;
+}`,
+  complexity: "O(V + E) for unweighted BFS / DFS."
+});
+
+PROBLEMS.push({
+  num: 38, title: "Pattern: Two-Sum / Lookup with HashMap", diff: "easy",
+  family: "Patterns",
+  problem: "For each x, find a partner that satisfies some condition (two-sum, complement, anagram pairs). Replace nested O(N²) scans with one O(N) pass + a HashMap.",
+  intuition: "Walk the input ONCE. For each element, check the map for what would 'complete' it. If found, you have the answer. If not, add the current element to the map keyed by whatever's needed to complete a future one.",
+  hints: [
+    "Two-sum: for each x, look up (target - x) in a Map<Integer, Integer> of value→index.",
+    "Subarray-sum-equals-K: prefix sums + Map<sum, count>.",
+    "Anagram groups: Map<sortedString, List<String>>.",
+    "Pairs (a,b) such that f(a,b)=k: pre-compute f's contribution per element and look up."
+  ],
+  tips: [
+    "Build the map AS YOU GO, not upfront — that way you naturally avoid pairing an element with itself.",
+    "Watch out for duplicates that should pair with themselves (e.g., target = 6, x = 3, and 3 appears twice).",
+    "If you also need to count pairs (not just find one), use Map<value, Integer> for occurrences."
+  ],
+  code: `import java.util.*;
+
+int[] twoSum(int[] nums, int target) {
+    Map<Integer, Integer> idx = new HashMap<>();
+    for (int i = 0; i < nums.length; i++) {
+        int need = target - nums[i];
+        Integer j = idx.get(need);
+        if (j != null) return new int[] { j, i };
+        idx.put(nums[i], i);
+    }
+    return new int[0];
+}
+
+// subarray sum = K (count)
+int subarraySum(int[] nums, int k) {
+    Map<Integer,Integer> seen = new HashMap<>();
+    seen.put(0, 1);
+    int sum = 0, ans = 0;
+    for (int x : nums) {
+        sum += x;
+        ans += seen.getOrDefault(sum - k, 0);
+        seen.merge(sum, 1, Integer::sum);
+    }
+    return ans;
+}`,
+  complexity: "O(N) time, O(N) space."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Java syntax highlighter */
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  // line comments
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // block comments
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // double-quoted strings
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  // char literals
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float','Object','Number','Byte','Short',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','LinkedHashMap','LinkedHashSet','EnumMap','EnumSet',
+    'IdentityHashMap','WeakHashMap','Hashtable','Properties','ArrayList','LinkedList','CopyOnWriteArrayList','Vector','Stack',
+    'ArrayDeque','Queue','Deque','PriorityQueue','BlockingQueue','ArrayBlockingQueue','LinkedBlockingQueue',
+    'PriorityBlockingQueue','DelayQueue','SynchronousQueue','ConcurrentLinkedQueue','ConcurrentLinkedDeque',
+    'ConcurrentHashMap','ConcurrentSkipListMap','ConcurrentSkipListSet','ConcurrentMap','CopyOnWriteArraySet',
+    'StringBuilder','StringBuffer','BitSet','Optional','Stream','IntStream','LongStream','DoubleStream',
+    'Collectors','Collections','Arrays','Math','Comparator','Comparable','Objects','Iterator','ListIterator',
+    'Iterable','Spliterator','Random','ThreadLocalRandom','Function','BiFunction','Predicate','Consumer','Supplier',
+    'TreeNode','Node','Edge','Person','Order','Document','Listener','LogListener','MetricsListener','ParsedAst',
+    'Status','Day','Ticket','Event','Task','LRU'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum','record','sealed','permits',
+    'return','if','else','for','while','do','break','continue','switch','case','default','yield',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  // numbers
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS
+    .filter(p => p.diff === diff)
+    .sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function familyPillClass(family) {
+  if (!family) return '';
+  const f = family.toLowerCase();
+  if (f.includes('list'))   return 'list';
+  if (f.includes('set'))    return 'set';
+  if (f.includes('queue'))  return 'q';
+  if (f.includes('map'))    return 'map';
+  if (f.includes('concurrent')) return 'conc';
+  if (f.includes('interface'))  return 'itf';
+  if (f.includes('utilities'))  return 'util';
+  return '';
+}
+
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  const formulaBlock = p.formula
+    ? `<div class="section-title">Format / Syntax</div><div class="formula">${escapeHtml(p.formula)}</div>`
+    : '';
+
+  const familyPill = p.family
+    ? `<span class="pill ${familyPillClass(p.family)}">${escapeHtml(p.family)}</span>`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+
+      <div class="section-title">Why You Use It</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${formulaBlock}
+      ${cheatBlock}
+
+      <div class="section-title">Methods &amp; Patterns</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips &amp; Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+/* theme toggle */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+
+/* ===== BRIEF MODE: decision flow + family map ===== */
+function renderBriefView() {
+  const families = [
+    { title: 'List',         cmds: [['ArrayList','default · indexed · O(1) get'], ['LinkedList','rarely · doubly-linked'], ['CopyOnWriteArrayList','read-mostly concurrent'], ['Vector / Stack','legacy — avoid']] },
+    { title: 'Set',          cmds: [['HashSet','default · O(1) avg'], ['LinkedHashSet','+ insertion order'], ['TreeSet','sorted · floor/ceiling'], ['EnumSet','enum keys · bitmap']] },
+    { title: 'Map',          cmds: [['HashMap','default · O(1) avg'], ['LinkedHashMap','+ order · LRU mode'], ['TreeMap','sorted · range queries'], ['EnumMap','enum keys · array-backed'], ['WeakHashMap','GC-collectable keys'], ['IdentityHashMap','== equality']] },
+    { title: 'Queue / Deque',cmds: [['ArrayDeque','default queue + stack'], ['PriorityQueue','min-heap'], ['BlockingQueue','producer-consumer'], ['ConcurrentLinkedQueue','lock-free']] },
+    { title: 'Concurrent',   cmds: [['ConcurrentHashMap','shared map · default'], ['ConcurrentSkipListMap','sorted + concurrent'], ['CopyOnWriteArrayList','read-mostly list'], ['ArrayBlockingQueue','bounded buffer'], ['LinkedBlockingQueue','optionally bounded']] },
+    { title: 'Utilities',    cmds: [['Collections','sort/reverse/shuffle/etc'], ['Comparator','comparing · thenComparing'], ['List.of / Set.of / Map.of','immutable literals'], ['Streams + Collectors','functional pipelines']] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> Order matters and duplicates are ok?
+   ├── <span class="a">indexed access</span>      → <span class="alg">ArrayList</span>
+   ├── <span class="a">read-mostly + concurrent</span> → <span class="alg">CopyOnWriteArrayList</span>
+   └── <span class="a">otherwise</span>             → <span class="alg">ArrayList</span>
+
+<span class="q">Q2.</span> Uniqueness matters?
+   ├── no order               → <span class="alg">HashSet</span>
+   ├── insertion order        → <span class="alg">LinkedHashSet</span>
+   ├── sorted / range queries → <span class="alg">TreeSet</span>
+   └── keys are an enum       → <span class="alg">EnumSet</span>
+
+<span class="q">Q3.</span> Key → Value lookup?
+   ├── default                → <span class="alg">HashMap</span>
+   ├── insertion order        → <span class="alg">LinkedHashMap</span>
+   ├── LRU cache              → <span class="alg">LinkedHashMap (accessOrder=true)</span>
+   ├── sorted / floor/ceiling → <span class="alg">TreeMap</span>
+   ├── enum keys              → <span class="alg">EnumMap</span>
+   ├── thread-safe            → <span class="alg">ConcurrentHashMap</span>
+   └── thread-safe + sorted   → <span class="alg">ConcurrentSkipListMap</span>
+
+<span class="q">Q4.</span> Front/back access (FIFO / LIFO / priority)?
+   ├── FIFO / LIFO            → <span class="alg">ArrayDeque</span>
+   ├── priority order         → <span class="alg">PriorityQueue</span>
+   ├── producer/consumer      → <span class="alg">ArrayBlockingQueue</span>
+   └── lock-free async        → <span class="alg">ConcurrentLinkedQueue</span>
+
+<span class="q">Q5.</span> Common problem?
+   ├── count by key           → <span class="alg">HashMap + merge(k,1,Integer::sum)</span>
+   ├── group by key           → <span class="alg">computeIfAbsent  /  Collectors.groupingBy</span>
+   ├── top-K                  → <span class="alg">PriorityQueue size K (min-heap)</span>
+   ├── LRU cache              → <span class="alg">LinkedHashMap subclass</span>
+   ├── sliding window max     → <span class="alg">monotonic ArrayDeque of indices</span>
+   ├── BFS / DFS              → <span class="alg">ArrayDeque + HashSet visited</span>
+   └── two-sum / pair lookup  → <span class="alg">one-pass HashMap</span>
+`;
+
+  const recipeCards = [
+    { b: 'Count occurrences',     s: "map.merge(k, 1, Integer::sum)" },
+    { b: 'Group → list',          s: "map.computeIfAbsent(k, x -> new ArrayList<>()).add(v)" },
+    { b: 'Default value',         s: "map.getOrDefault(k, 0)" },
+    { b: 'Dedup, keep order',     s: "new ArrayList<>(new LinkedHashSet<>(list))" },
+    { b: 'Top K largest',         s: "PriorityQueue size K (min-heap)" },
+    { b: 'Sort by field',         s: "list.sort(Comparator.comparing(T::field))" },
+    { b: 'Multi-key sort',        s: "Comparator.comparing(a).thenComparing(b)" },
+    { b: 'LRU cache',             s: "extends LinkedHashMap with accessOrder=true" },
+    { b: 'Concurrent map',        s: "new ConcurrentHashMap<>()" },
+    { b: 'Range query (sorted)',  s: "treeMap.subMap(lo, hi)" },
+    { b: 'Group by (stream)',     s: "stream().collect(Collectors.groupingBy(...))" },
+    { b: 'Immutable literal',     s: "List.of / Set.of / Map.of" },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.cmds.map(c => `<div class="card-mini"><b>${escapeHtml(c[0])}</b><span>${escapeHtml(c[1])}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const recipes_html = `
+    <div class="panel">
+      <h3>One-Liner Recipes</h3>
+      <div class="grid">
+        ${recipeCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">J A V A &nbsp; C O L L E C T I O N S</div>
+        <h1 class="brief-title">Pick the Interface · Pick the Implementation</h1>
+        <p class="brief-tagline">Access pattern decides the interface. Performance profile decides the class.</p>
+      </header>
+
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+
+      ${recipes_html}
+      ${families_html}
+    </div>
+  `;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

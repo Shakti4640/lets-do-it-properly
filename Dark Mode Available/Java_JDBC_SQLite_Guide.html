@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Java + SQLite (JDBC) — Connect, Insert, Query &amp; Production Recipes</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #4f46e5;          /* indigo */
+    --accent2: #0d9488;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw:  #cf222e;
+    --typ: #6f42c1;
+    --bi:  #b91c1c;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy:  #16a34a;
+    --med:   #d97706;
+    --hard:  #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+  .hamburger { position: fixed; top: 14px; left: 14px; width: 44px; height: 44px; border-radius: 10px; background: #ffffff; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; cursor: pointer; z-index: 1001; }
+  .hamburger span { display: block; width: 22px; height: 2.5px; background: #1e1e25; border-radius: 2px; transition: transform .25s, opacity .2s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 360px; max-width: 90vw; background: #ffffff; border-right: 1px solid var(--border); box-shadow: 2px 0 14px rgba(0,0,0,.06); transform: translateX(-100%); transition: transform .28s ease; overflow-y: auto; z-index: 1000; padding: 70px 18px 32px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 { margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .sidebar .group-title { margin-top: 18px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+  .sidebar a { display: flex; align-items: center; gap: 8px; padding: 7px 8px; margin: 2px 0; text-decoration: none; color: #1f2330; border-radius: 6px; font-size: 13.5px; cursor: pointer; }
+  .sidebar a:hover { background: #e0e7ff; color: var(--accent); }
+  .sidebar a.active { background: #e0e7ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num { display: inline-block; min-width: 32px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 999; }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .topbar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 18px 24px 0; padding-left: 76px; position: sticky; top: 0; z-index: 50; }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab { padding: 9px 16px; border: 1px solid var(--border); border-bottom: none; background: #f1f3f9; color: var(--muted); border-top-left-radius: 8px; border-top-right-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: background .15s; }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active { background: #ffffff; color: var(--fg); border-bottom: 2px solid #ffffff; margin-bottom: -1px; box-shadow: 0 -2px 0 var(--accent) inset; }
+  .tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 24px 120px; }
+  .problem-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 28px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .problem-card h2 { margin: 0 0 6px; font-size: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .num-tag { background: #e0e7ff; color: var(--accent); padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: "JetBrains Mono", Consolas, monospace; }
+  .badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .05em; }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+  .pill { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-weight: 600; letter-spacing: .03em; }
+  .pill.conn { background:#dcfce7; color:#166534; }
+  .pill.crud { background:#fef3c7; color:#92400e; }
+  .pill.tx   { background:#fce7f3; color:#9d174d; }
+  .pill.pool { background:#ede9fe; color:#5b21b6; }
+  .pill.spr  { background:#fee2e2; color:#991b1b; }
+  .pill.orm  { background:#e0f2fe; color:#075985; }
+  .pill.prod { background:#fff7ed; color:#c2410c; }
+
+  .section-title { font-size: 13.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition { background: #eef2ff; border-left: 4px solid #6366f1; border-radius: 6px; padding: 12px 16px; margin: 8px 0; }
+  .formula { background: #ecfeff; border-left: 4px solid #06b6d4; border-radius: 6px; padding: 10px 16px; margin: 8px 0; font-family: "JetBrains Mono", Consolas, monospace; font-size: 13.5px; overflow-x: auto; white-space: pre; }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block { background: #fef9c3; border-left: 4px solid #ca8a04; border-radius: 6px; padding: 10px 16px; margin: 8px 0; }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+  .cheat-table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; font-size: 14px; }
+  .cheat-table th, .cheat-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  .cheat-table th { background: #e0e7ff; color: var(--accent); font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .cheat-table td:first-child { font-family: "JetBrains Mono", Consolas, monospace; background: #eef2ff; white-space: nowrap; color: #3730a3; }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code { background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 6px 0; }
+  pre.code code { font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace; }
+  .kw { color: var(--kw); font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .bi { color: var(--bi); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 60; box-shadow: 0 -2px 8px rgba(0,0,0,.04); }
+  .nav-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--fg); font-weight: 500; }
+  .nav-btn:hover:not(:disabled) { background: #e0e7ff; color: var(--accent); border-color: #a5b4fc; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd { display: inline-block; border: 1px solid #d0d7de; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; background: #f6f8fa; font-family: monospace; font-size: 11px; color: #444; }
+
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle { font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px; }
+  .brief-root .brief-title { font-size: clamp(28px, 6vw, 48px); font-weight: 900; margin: 0; background: linear-gradient(90deg, #4f46e5, #06b6d4, #0d9488); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; }
+  .brief-root .panel h3 { margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .brief-root .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .brief-root .card-mini { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: #eef2ff; }
+  .brief-root .card-mini b { color: var(--accent); display: block; margin-bottom: 4px; font-size: 13.5px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow { border: 1px dashed var(--border); border-radius: 12px; padding: 16px; background: var(--code-bg); font-family: "JetBrains Mono", Consolas, monospace; font-size: 13px; line-height: 1.9; overflow-x: auto; white-space: pre; margin: 0; color: var(--fg); }
+  .brief-root .flow .q { color: var(--accent); font-weight: 700; }
+  .brief-root .flow .a { color: var(--str); }
+  .brief-root .flow .alg { color: var(--bi); font-weight: 700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+  .theme-toggle { position: fixed; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001; font-size: 20px; line-height: 1; color: var(--fg); transition: background .15s, color .15s, border-color .15s, transform .15s; }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --accent: #a5b4fc;
+    --border: #30363d; --card: #161b22; --code-bg: #0b0f15; --code-fg: #e6edf3;
+    --kw: #ff7b72; --typ: #d2a8ff; --bi: #ffa657; --str: #a5d6ff; --cmt: #8b949e; --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover, [data-theme="dark"] .sidebar a.active { background: rgba(165,180,252,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(165,180,252,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(99,102,241,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(202,138,4,.10); }
+  [data-theme="dark"] .pill { background: rgba(55,48,163,.18); color: #c7d2fe; }
+  [data-theme="dark"] .pill.conn { background: rgba(22,101,52,.18); color: #bbf7d0; }
+  [data-theme="dark"] .pill.crud { background: rgba(146,64,14,.18); color: #fde68a; }
+  [data-theme="dark"] .pill.tx   { background: rgba(157,23,77,.18); color: #fbcfe8; }
+  [data-theme="dark"] .pill.pool { background: rgba(91,33,182,.18); color: #ddd6fe; }
+  [data-theme="dark"] .pill.spr  { background: rgba(153,27,27,.18); color: #fecaca; }
+  [data-theme="dark"] .pill.orm  { background: rgba(7,89,133,.18); color: #bae6fd; }
+  [data-theme="dark"] .pill.prod { background: rgba(194,65,12,.18); color: #fed7aa; }
+  [data-theme="dark"] .nav-bar { background: var(--card); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(165,180,252,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(165,180,252,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: #c7d2fe; }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .card-mini { background: rgba(165,180,252,.07); }
+</style>
+</head>
+<body>
+<button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar"><h2>Table of Contents</h2><div id="toc"></div></aside>
+<header class="topbar">
+  <h1>Java + SQLite (JDBC) — Connect, Insert, Query &amp; Production Recipes</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+<main id="main"></main>
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+<script>
+const PROBLEMS = [];
+
+
+PROBLEMS.push({
+  num: 0, title: "How a Java App Talks to a Database (read this first)", diff: "veasy",
+  family: "Foundations",
+  problem: "A Java app talks to a database through THREE moving parts: (1) a JDBC DRIVER (a JAR file specific to that database — sqlite-jdbc, postgresql, mysql-connector-j); (2) a CONNECTION URL (jdbc:sqlite:app.db, jdbc:postgresql://host:5432/mydb); (3) the JDBC API (DriverManager / DataSource → Connection → PreparedStatement → ResultSet). SQLite is the easiest target — it's just a single file on disk, no server to install.",
+  intuition: "JDBC is a thin, generic abstraction over 'send SQL, receive rows'. SQLite is the simplest backend to learn against because there's no daemon, no auth, no networking — `jdbc:sqlite:app.db` and you're in. Once you understand JDBC against SQLite, switching to Postgres or MySQL is just a different driver + URL + dialect quirks. The code shape is identical.",
+  hints: [
+    "Add the driver: Maven `org.xerial:sqlite-jdbc:3.46.x` (or your DB's driver). Modern JDBC drivers register themselves automatically; no Class.forName() needed.",
+    "URL shape: `jdbc:sqlite:path/to/app.db` (file), `jdbc:sqlite::memory:` (in-RAM), `jdbc:sqlite:file::memory:?cache=shared` (shared in-memory).",
+    "Five JDBC types you must know: Connection, Statement, PreparedStatement, ResultSet, SQLException.",
+    "Always use try-with-resources — Connection / PreparedStatement / ResultSet all implement AutoCloseable.",
+    "Always use PreparedStatement with `?` placeholders — never string-concatenate user input into SQL.",
+    "Wrap multi-statement work in a transaction: connection.setAutoCommit(false) → ... → connection.commit() / rollback() in a finally block."
+  ],
+  tips: [
+    "SQLite is ideal for: desktop apps, CLI tools, tests, embedded data, single-process servers, prototypes. NOT ideal for: many-writer concurrent workloads, sharded scale-out, network-shared databases.",
+    "Use a connection POOL (HikariCP) even for SQLite — it reuses connections and serialises writes correctly.",
+    "For SQLite specifically, enable WAL journal mode in production: `PRAGMA journal_mode=WAL;` — readers don't block the writer.",
+    "JDBC types map to Java types via getInt/getString/getTimestamp/etc. Use getObject(col, Type.class) for cleaner code in modern JDBC.",
+    "Spring JDBC, JdbcClient (Spring 6.1+), JOOQ, and Hibernate are higher-level options on top of plain JDBC."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Layer</th><th>What it does · examples</th></tr></thead>
+      <tbody>
+        <tr><td>JDBC Driver</td><td>JAR you add to classpath: sqlite-jdbc, postgresql, mysql-connector-j, ojdbc11.</td></tr>
+        <tr><td>JDBC URL</td><td>jdbc:sqlite:app.db · jdbc:sqlite::memory: · jdbc:postgresql://host/db · jdbc:mysql://host:3306/db</td></tr>
+        <tr><td>DriverManager</td><td>Quick-and-dirty: <code>DriverManager.getConnection(url)</code>. Fine for scripts and tests.</td></tr>
+        <tr><td>DataSource (pooled)</td><td>HikariCP, c3p0, Tomcat JDBC. The right choice for any real app.</td></tr>
+        <tr><td>Connection</td><td>One session with the DB. Auto-commit on by default — turn off for transactions.</td></tr>
+        <tr><td>Statement</td><td>Plain SQL. Avoid for user input — SQL injection.</td></tr>
+        <tr><td>PreparedStatement</td><td>Parameterised SQL with <code>?</code> placeholders. Default for every query that has values.</td></tr>
+        <tr><td>ResultSet</td><td>Forward iterator over rows. Always close it.</td></tr>
+        <tr><td>SQLException</td><td>Checked exception. Wrap in DataAccessException (Spring) or rethrow as runtime in your own code.</td></tr>
+        <tr><td>Higher level</td><td>Spring JdbcTemplate / JdbcClient · JOOQ · Hibernate / JPA · MyBatis</td></tr>
+      </tbody>
+    </table>
+  `,
+  code: `// pom.xml — add the SQLite JDBC driver
+// <dependency>
+//   <groupId>org.xerial</groupId>
+//   <artifactId>sqlite-jdbc</artifactId>
+//   <version>3.46.1.0</version>
+// </dependency>
+
+import java.sql.*;
+
+public class Hello {
+    public static void main(String[] args) throws SQLException {
+        String url = "jdbc:sqlite:app.db";          // file in CWD; created if missing
+
+        // try-with-resources closes everything for you
+        try (Connection c = DriverManager.getConnection(url);
+             Statement s = c.createStatement()) {
+
+            s.executeUpdate("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)");
+            s.executeUpdate("INSERT INTO users(name) VALUES('alice')");
+
+            try (ResultSet rs = s.executeQuery("SELECT id, name FROM users")) {
+                while (rs.next()) {
+                    System.out.println(rs.getInt("id") + " " + rs.getString("name"));
+                }
+            }
+        }
+    }
+}`,
+  complexity: "Single SQLite operation: microseconds. Network DB call: milliseconds + network + driver overhead."
+});
+
+
+/* ===================== SETUP & CONNECT ===================== */
+
+PROBLEMS.push({
+  num: 1, title: "Add the JDBC Driver — Maven / Gradle", diff: "easy",
+  family: "Setup",
+  problem: "JDBC drivers are JAR files. Add the right one for your database to the build. With modern drivers (Java 6+ JDBC 4.0), you DON'T need Class.forName() — they auto-register via the ServiceLoader.",
+  intuition: "One coordinate per database: `org.xerial:sqlite-jdbc` for SQLite, `org.postgresql:postgresql` for Postgres, `com.mysql:mysql-connector-j` for MySQL, `com.oracle.database.jdbc:ojdbc11` for Oracle. Switching backends is mostly a coordinate change + a URL change.",
+  hints: [
+    "Maven: <dependency><groupId>org.xerial</groupId><artifactId>sqlite-jdbc</artifactId><version>3.46.1.0</version></dependency>",
+    "Gradle (Kotlin DSL): implementation(\"org.xerial:sqlite-jdbc:3.46.1.0\")",
+    "Modern drivers self-register. `Class.forName(\"org.sqlite.JDBC\")` is legacy and unnecessary in Java 6+.",
+    "`DriverManager.getDrivers()` lists everything currently registered — useful when debugging 'no suitable driver' errors.",
+    "If you bundle a fat JAR, make sure META-INF/services/java.sql.Driver isn't shaded out by mistake."
+  ],
+  tips: [
+    "Pin the version. `LATEST` / version-range coordinates bite you eventually.",
+    "Two driver JARs for the same DB on the classpath = fights over the URL prefix. Don't.",
+    "If 'No suitable driver found for jdbc:...' shows up, check (a) the JAR is on the classpath, (b) the URL prefix matches.",
+    "Spring Boot starters auto-add the driver based on application.yml config — handy but make sure you know which version is pulled in."
+  ],
+  code: `<!-- pom.xml -->
+<dependencies>
+    <dependency>
+        <groupId>org.xerial</groupId>
+        <artifactId>sqlite-jdbc</artifactId>
+        <version>3.46.1.0</version>
+    </dependency>
+</dependencies>
+
+// build.gradle.kts
+// dependencies {
+//     implementation("org.xerial:sqlite-jdbc:3.46.1.0")
+// }
+
+// no Class.forName needed — driver self-registers
+import java.sql.*;
+Connection c = DriverManager.getConnection("jdbc:sqlite:app.db");`,
+  complexity: "One-time classpath cost."
+});
+
+PROBLEMS.push({
+  num: 2, title: "JDBC URLs — what comes after jdbc:", diff: "easy",
+  family: "Setup",
+  problem: "Every JDBC URL has the shape `jdbc:<subprotocol>:<rest>`. The subprotocol picks the driver; the rest is driver-specific (file path, host, port, db name, query params).",
+  intuition: "Memorise the shapes for the databases you'll touch. SQLite is special because the 'rest' is a file path. Server DBs (Postgres, MySQL) put `host:port/dbName?key=value` after the subprotocol.",
+  hints: [
+    "SQLite file:        jdbc:sqlite:relative/path/app.db  ·  jdbc:sqlite:/abs/path/app.db",
+    "SQLite memory:      jdbc:sqlite::memory:",
+    "SQLite shared mem:  jdbc:sqlite:file::memory:?cache=shared",
+    "Postgres:           jdbc:postgresql://host:5432/mydb?user=u&password=p&sslmode=require",
+    "MySQL:              jdbc:mysql://host:3306/mydb?serverTimezone=UTC&useSSL=true",
+    "H2 (in-memory):     jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
+    "Oracle:             jdbc:oracle:thin:@//host:1521/svc"
+  ],
+  tips: [
+    "For SQLite, a relative path is relative to the JVM's CWD — explicit absolute paths avoid 'where did my db go?' surprises.",
+    "Don't put credentials in the URL for production. Pass username/password to getConnection separately or use a secrets manager.",
+    "Postgres SSL: `sslmode=require` is the safe production default (or `verify-full` with a CA bundle).",
+    "MySQL: `serverTimezone=UTC` avoids server / driver timezone disagreements that silently corrupt timestamps."
+  ],
+  code: `import java.sql.*;
+
+// SQLite — local file, easy mode
+Connection sqlite  = DriverManager.getConnection("jdbc:sqlite:app.db");
+
+// SQLite — in-memory, ideal for tests
+Connection memDb   = DriverManager.getConnection("jdbc:sqlite::memory:");
+
+// Postgres — credentials passed separately (preferred over in-URL)
+Connection pg = DriverManager.getConnection(
+    "jdbc:postgresql://db.internal:5432/orders?sslmode=require",
+    "app_user",
+    System.getenv("DB_PASSWORD"));
+
+// MySQL
+Connection mysql = DriverManager.getConnection(
+    "jdbc:mysql://db.internal:3306/orders?serverTimezone=UTC&useSSL=true",
+    "app_user",
+    System.getenv("DB_PASSWORD"));`,
+  complexity: "Connection establishment: ~1 ms local, 5–50 ms over a network."
+});
+
+PROBLEMS.push({
+  num: 3, title: "DriverManager vs DataSource — pick the right entry point", diff: "easy",
+  family: "Setup",
+  problem: "Two ways to obtain Connections. DriverManager.getConnection(url) is the simple, one-shot path — fine for scripts, tests, and tiny apps. DataSource (typically pooled — HikariCP) is the default for any real app: connections are reused, sized, and recoverable across DB blips.",
+  intuition: "Opening a fresh TCP connection to a server DB takes 5–50 ms; opening a SQLite file is cheap but still real I/O. A connection pool keeps a handful of warm connections ready, hands them out on demand, and reclaims them when you close them. HikariCP is the de-facto standard — fast, small, simple.",
+  hints: [
+    "DriverManager.getConnection(url[, user, pwd]) — instant access; brand-new connection every call. NO pooling.",
+    "DataSource — interface from javax.sql. Implementations: HikariDataSource (the default), Tomcat JDBC, c3p0, Apache DBCP2.",
+    "HikariConfig: jdbcUrl, username, password, maximumPoolSize, connectionTimeout, idleTimeout.",
+    "Spring Boot auto-configures HikariCP if you put spring.datasource.* properties in application.yml.",
+    "Always close() the connection you got from a pool — that returns it; the pool doesn't actually destroy it."
+  ],
+  tips: [
+    "Default to HikariCP. Use DriverManager only for unit tests and quick scripts.",
+    "Pool size: start with 10 for typical web apps. SQLite serialises writes anyway, so 1–4 is enough there.",
+    "Set connectionTimeout (e.g. 5s) so a stuck DB doesn't hang request threads.",
+    "leakDetectionThreshold=30000 logs a warning if a connection is held longer than 30s — finds the 'forgot to close' bugs."
+  ],
+  code: `import com.zaxxer.hikari.*;
+import javax.sql.DataSource;
+import java.sql.*;
+
+HikariConfig cfg = new HikariConfig();
+cfg.setJdbcUrl("jdbc:sqlite:app.db");
+cfg.setMaximumPoolSize(4);
+cfg.setConnectionTimeout(5_000);
+cfg.setLeakDetectionThreshold(30_000);
+DataSource ds = new HikariDataSource(cfg);
+
+// later, anywhere in the app:
+try (Connection c = ds.getConnection();
+     PreparedStatement ps = c.prepareStatement("SELECT name FROM users WHERE id = ?")) {
+    ps.setInt(1, 42);
+    try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) System.out.println(rs.getString(1));
+    }
+}
+// closing returns the connection to the pool — it's NOT destroyed`,
+  complexity: "Pool checkout: ~microseconds. New connection: ~milliseconds."
+});
+
+
+/* ===================== CREATE & SCHEMA ===================== */
+
+PROBLEMS.push({
+  num: 4, title: "CREATE TABLE — the schema your app will use", diff: "easy",
+  family: "Schema",
+  problem: "Define your tables once with `CREATE TABLE IF NOT EXISTS ...`. SQLite is type-flexible (storage classes: NULL, INTEGER, REAL, TEXT, BLOB) but you should still declare types — they document intent and other databases enforce them.",
+  intuition: "Run a small bootstrap step at app startup that creates tables that don't exist. For real schemas use a migration tool (Flyway, Liquibase) — but for prototypes, `CREATE TABLE IF NOT EXISTS` + indexes is enough.",
+  hints: [
+    "Use `CREATE TABLE IF NOT EXISTS` so re-runs don't fail.",
+    "Declare a primary key. SQLite: `id INTEGER PRIMARY KEY` is an alias for ROWID and auto-increments.",
+    "Add NOT NULL on required columns. `DEFAULT` for sensible defaults.",
+    "Foreign keys in SQLite are OFF by default — enable per-connection: `PRAGMA foreign_keys = ON;`.",
+    "Indexes: `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);` — one line, big speedup on lookups.",
+    "Use a migration tool (Flyway/Liquibase) the moment you have more than one schema change in flight."
+  ],
+  tips: [
+    "Pick column types Java maps cleanly to: INTEGER → long, REAL → double, TEXT → String, BLOB → byte[].",
+    "Timestamps in SQLite — store as TEXT in ISO-8601 ('YYYY-MM-DDTHH:MM:SS.SSSZ') for readability, or INTEGER (epoch millis) for arithmetic.",
+    "UNIQUE constraints are how you keep data clean (`email TEXT UNIQUE NOT NULL`).",
+    "NEVER drop a column in SQLite via plain SQL on old versions — it lacks `ALTER TABLE DROP COLUMN` until 3.35. Use a migration tool or rebuild the table."
+  ],
+  code: `import java.sql.*;
+
+public class Schema {
+    public static void init(Connection c) throws SQLException {
+        try (Statement s = c.createStatement()) {
+            s.executeUpdate("PRAGMA foreign_keys = ON");
+
+            s.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id         INTEGER PRIMARY KEY,
+                    email      TEXT    NOT NULL UNIQUE,
+                    name       TEXT    NOT NULL,
+                    created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+                )""");
+
+            s.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS orders (
+                    id        INTEGER PRIMARY KEY,
+                    user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    amount    REAL    NOT NULL CHECK (amount >= 0),
+                    placed_at TEXT    NOT NULL DEFAULT (datetime('now'))
+                )""");
+
+            s.executeUpdate("CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id)");
+        }
+    }
+}`,
+  complexity: "DDL is rare and fast. Indexes pay off on every subsequent SELECT."
+});
+
+PROBLEMS.push({
+  num: 5, title: "Statement vs PreparedStatement — always prepare for parameters", diff: "easy",
+  family: "CRUD",
+  problem: "Statement runs literal SQL strings — fine for fixed DDL, fatal for user input. PreparedStatement uses `?` placeholders that are sent separately from the SQL — safe from injection, faster on repeats, properly typed.",
+  intuition: "If your SQL has any value that isn't hard-coded, use PreparedStatement. The driver sends the SQL once (parsed/cached) and the parameter values separately, with proper type encoding. There is no scenario where string-concatenating a user value into SQL is the right answer.",
+  hints: [
+    "Statement.executeUpdate(\"...\")  — no parameters. DDL only.",
+    "PreparedStatement.setInt/setLong/setString/setDouble/setBytes/setObject(idx, value) — 1-indexed.",
+    "Always set EVERY parameter before execute — missing parameters throw SQLException at execute time.",
+    "executeUpdate() returns int (rows affected). executeQuery() returns ResultSet. execute() returns boolean (true if a ResultSet was produced).",
+    "For 'unknown number of parameters' (IN clauses), generate the right number of `?`s programmatically."
+  ],
+  tips: [
+    "Even if the query has NO parameters but it's user-facing, prepare it anyway — it doesn't hurt and makes habit consistent.",
+    "Don't reuse `?` placeholders — each occurrence is a separate parameter index.",
+    "setObject(idx, val, Types.TIMESTAMP) is the cleanest way to handle nullable typed values.",
+    "Parameter index is 1-based in JDBC. (ResultSet column index is 1-based too.)"
+  ],
+  code: `import java.sql.*;
+
+// BAD — SQL injection: user enters "'; DROP TABLE users; --"
+String email = userInput;
+Statement s = c.createStatement();
+ResultSet bad = s.executeQuery("SELECT * FROM users WHERE email = '" + email + "'");
+
+// GOOD — parameter is escaped + typed by the driver
+try (PreparedStatement ps = c.prepareStatement("SELECT id, name FROM users WHERE email = ?")) {
+    ps.setString(1, email);
+    try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+            System.out.println(rs.getInt("id") + " " + rs.getString("name"));
+        }
+    }
+}`,
+  complexity: "PreparedStatement reuses the parsed plan after the first execution — measurable savings on hot queries."
+});
+
+PROBLEMS.push({
+  num: 6, title: "INSERT — the workhorse write", diff: "easy",
+  family: "CRUD",
+  problem: "Insert one row using a parameterised PreparedStatement. Then optionally fetch the auto-generated key (the new row's id).",
+  intuition: "INSERT INTO t(col1, col2) VALUES(?, ?). Bind parameters, execute, optionally read back the generated key via getGeneratedKeys(). Almost every app starts with this exact shape.",
+  hints: [
+    "ps.executeUpdate() returns the affected-row count (1 for a single INSERT).",
+    "Pass `Statement.RETURN_GENERATED_KEYS` to prepareStatement to enable key retrieval.",
+    "Read the key with ps.getGeneratedKeys() — a tiny ResultSet with one row, one column.",
+    "SQLite's auto-increment is `INTEGER PRIMARY KEY` (the ROWID alias). Don't pass a value for that column on insert.",
+    "For multiple inserts, use addBatch() / executeBatch() (see card 9) — vastly faster than one-at-a-time."
+  ],
+  tips: [
+    "Don't INSERT without specifying column names — column-positional inserts break every time the table changes.",
+    "Surround multi-step inserts with a transaction so partial failures roll back.",
+    "Inserting a NULL: ps.setObject(idx, null) or ps.setNull(idx, Types.VARCHAR).",
+    "If your column is UNIQUE, consider `INSERT OR IGNORE` (SQLite) or `INSERT ... ON CONFLICT DO NOTHING/UPDATE` (Postgres) — see card 13."
+  ],
+  code: `import java.sql.*;
+
+public long insertUser(Connection c, String email, String name) throws SQLException {
+    String sql = "INSERT INTO users(email, name) VALUES(?, ?)";
+    try (PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        ps.setString(1, email);
+        ps.setString(2, name);
+        int rows = ps.executeUpdate();              // returns 1
+        try (ResultSet keys = ps.getGeneratedKeys()) {
+            if (keys.next()) return keys.getLong(1);
+            throw new SQLException("INSERT did not produce a key");
+        }
+    }
+}
+
+// usage
+long id = insertUser(conn, "alice@example.com", "Alice");
+System.out.println("inserted user id=" + id);`,
+  complexity: "Single insert: a few hundred microseconds locally."
+});
+
+
+PROBLEMS.push({
+  num: 7, title: "SELECT + ResultSet — read rows back", diff: "easy",
+  family: "CRUD",
+  problem: "Run a parameterised SELECT, iterate the ResultSet, pull values out with getXxx(). Map to records / DTOs as you go.",
+  intuition: "ResultSet is a forward-only cursor. Call rs.next() in a loop; for each row call rs.getString/getInt/getTimestamp(...). Always close with try-with-resources. Map to a typed record at the boundary so the rest of your code never sees ResultSet.",
+  hints: [
+    "while (rs.next()) { ... } — standard iteration.",
+    "Access columns by INDEX (1-based, fastest) or by NAME (clearer, slightly slower).",
+    "rs.wasNull() tells you whether the previous getInt/getDouble returned 0/0.0 because the value WAS NULL.",
+    "For nullable types, prefer getObject(col, Type.class) — returns Java null on SQL NULL.",
+    "Use Java records / DTOs as the row mapper — keep the JDBC code in one tiny method."
+  ],
+  tips: [
+    "Don't return a ResultSet from a method — it dies the moment its Statement / Connection closes.",
+    "Don't `SELECT *` in production code. List columns by name; you control the mapping order.",
+    "If you only need one row, write the query with `LIMIT 1` and check `rs.next()` once.",
+    "For empty results, the loop simply doesn't execute — no special case needed."
+  ],
+  code: `import java.sql.*;
+import java.util.*;
+
+record User(long id, String email, String name) {}
+
+public Optional<User> findUser(Connection c, long id) throws SQLException {
+    String sql = "SELECT id, email, name FROM users WHERE id = ?";
+    try (PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setLong(1, id);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return Optional.of(new User(rs.getLong("id"), rs.getString("email"), rs.getString("name")));
+            }
+            return Optional.empty();
+        }
+    }
+}
+
+public List<User> recentUsers(Connection c, int limit) throws SQLException {
+    String sql = "SELECT id, email, name FROM users ORDER BY id DESC LIMIT ?";
+    try (PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setInt(1, limit);
+        try (ResultSet rs = ps.executeQuery()) {
+            List<User> out = new ArrayList<>();
+            while (rs.next()) {
+                out.add(new User(rs.getLong(1), rs.getString(2), rs.getString(3)));
+            }
+            return out;
+        }
+    }
+}`,
+  complexity: "O(rows) iteration + O(rows) network/serialisation."
+});
+
+PROBLEMS.push({
+  num: 8, title: "UPDATE & DELETE — modify rows", diff: "easy",
+  family: "CRUD",
+  problem: "UPDATE table SET col = ? WHERE id = ?. DELETE FROM table WHERE id = ?. Both return the count of affected rows from executeUpdate().",
+  intuition: "Same shape as INSERT: build a parameterised statement, bind values, executeUpdate(), inspect the row count. ALWAYS write a WHERE clause — `DELETE FROM users` without WHERE empties the table. ALWAYS test on a single row first.",
+  hints: [
+    "executeUpdate() returns int — number of rows actually affected.",
+    "Use the affected-row count as a sanity check (`if (rows == 0) throw new NotFound()`).",
+    "Compose multi-column updates: `UPDATE t SET a = ?, b = ? WHERE id = ?`.",
+    "DELETE with foreign keys: enable `PRAGMA foreign_keys = ON;` and use ON DELETE CASCADE / RESTRICT in the schema.",
+    "For massive deletes, batch with a LIMIT loop or partition by date."
+  ],
+  tips: [
+    "Soft delete pattern: add `deleted_at TIMESTAMP NULL`; UPDATE that field instead of DELETE — keeps history and audit.",
+    "Always wrap UPDATE/DELETE in a transaction when your operation touches multiple rows or tables (see card 11).",
+    "When the row count is 0, the row didn't exist OR it didn't change — your code probably treats those differently.",
+    "DELETE inside a SELECT iteration is dangerous; collect IDs first, then delete in a separate statement."
+  ],
+  code: `import java.sql.*;
+
+public boolean renameUser(Connection c, long id, String newName) throws SQLException {
+    String sql = "UPDATE users SET name = ? WHERE id = ?";
+    try (PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setString(1, newName);
+        ps.setLong(2, id);
+        return ps.executeUpdate() == 1;
+    }
+}
+
+public boolean deleteUser(Connection c, long id) throws SQLException {
+    String sql = "DELETE FROM users WHERE id = ?";
+    try (PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setLong(1, id);
+        return ps.executeUpdate() == 1;
+    }
+}`,
+  complexity: "Indexed WHERE: O(log n). Non-indexed WHERE: O(n) full scan."
+});
+
+
+/* ===================== BATCHING & TRANSACTIONS ===================== */
+
+PROBLEMS.push({
+  num: 9, title: "Batch INSERT — 100× faster bulk loads", diff: "med",
+  family: "CRUD",
+  problem: "One-by-one inserts are dominated by per-statement round-trip cost. PreparedStatement.addBatch() / executeBatch() submits many parameter sets in a single call. Combined with a transaction, this is the canonical pattern for bulk loads.",
+  intuition: "On SQLite, each commit is an fsync — the slow part. Wrap your batch in a transaction (autoCommit=false → executeBatch → commit) and you commit ONCE. For 100k inserts, this turns minutes into seconds.",
+  hints: [
+    "c.setAutoCommit(false) — turn off implicit commits for this transaction.",
+    "Inside a loop: ps.setX(...); ps.addBatch(); occasionally ps.executeBatch(); ps.clearBatch();",
+    "After the loop: ps.executeBatch(); c.commit();",
+    "On exception: c.rollback();",
+    "Restore: c.setAutoCommit(true) (or just close and use a fresh pooled connection).",
+    "Reasonable batch size: 500–5000 rows per executeBatch — bigger batches sometimes increase memory without speeding things up."
+  ],
+  tips: [
+    "ALWAYS commit per N batches inside huge loads — 1M rows in one transaction can blow memory and the journal.",
+    "executeBatch returns int[] — one count per statement. -2 (Statement.SUCCESS_NO_INFO) is normal in some drivers.",
+    "On SQLite, also consider `PRAGMA synchronous=NORMAL` and `PRAGMA journal_mode=WAL` for bulk-load speed (card 19).",
+    "If you're loading from a CSV, stream it line-by-line into the prepared statement; don't read into memory first."
+  ],
+  code: `import java.sql.*;
+import java.util.List;
+
+public void bulkInsertUsers(Connection c, List<User> users) throws SQLException {
+    String sql = "INSERT INTO users(email, name) VALUES(?, ?)";
+    boolean prevAuto = c.getAutoCommit();
+    c.setAutoCommit(false);
+    try (PreparedStatement ps = c.prepareStatement(sql)) {
+        int i = 0;
+        for (User u : users) {
+            ps.setString(1, u.email());
+            ps.setString(2, u.name());
+            ps.addBatch();
+            if (++i % 1000 == 0) {
+                ps.executeBatch();
+                ps.clearBatch();
+            }
+        }
+        ps.executeBatch();           // any remainder
+        c.commit();
+    } catch (SQLException e) {
+        c.rollback();
+        throw e;
+    } finally {
+        c.setAutoCommit(prevAuto);
+    }
+}`,
+  complexity: "O(n) — but throughput is 50–200× higher than per-row commits."
+});
+
+PROBLEMS.push({
+  num: 10, title: "Auto-commit — what it is and when to turn it off", diff: "med",
+  family: "Transactions",
+  problem: "By default, JDBC auto-commits every statement: each executeUpdate() is its own committed transaction. For multi-step work (transfer money, insert order + items, build a snapshot), you need ONE transaction spanning all of it — turn auto-commit off, then commit() or rollback() at the end.",
+  intuition: "Auto-commit ON = 'one statement, one transaction, instantly durable'. That's safe for unrelated single-row writes; it's WRONG when several statements form one logical operation (you might leave the DB half-updated). Toggle once at the start of the unit of work, restore at the end.",
+  hints: [
+    "c.setAutoCommit(false) — start a transaction (begins on the next statement).",
+    "c.commit() — durable; releases locks; auto-commit stays off until you turn it back on.",
+    "c.rollback() — undo all changes since the last commit.",
+    "Always wrap the whole sequence in try / catch / finally — commit on success, rollback on any exception, restore the auto-commit setting in finally.",
+    "On SQLite: the transaction begins lazily when the first statement runs after autoCommit=false."
+  ],
+  tips: [
+    "Don't forget to restore auto-commit if you're using a pooled connection — the next caller might surprise-inherit it.",
+    "Spring's @Transactional handles all of this declaratively. Plain JDBC needs the boilerplate.",
+    "Long transactions hold locks. Make them short and avoid user-think-time inside.",
+    "On SQLite, BEGIN IMMEDIATE / BEGIN EXCLUSIVE map to txn isolation tweaks — usually unnecessary; default is fine."
+  ],
+  code: `public void transferMoney(Connection c, long fromId, long toId, double amt) throws SQLException {
+    boolean prev = c.getAutoCommit();
+    c.setAutoCommit(false);
+    try (PreparedStatement debit  = c.prepareStatement("UPDATE accounts SET balance = balance - ? WHERE id = ?");
+         PreparedStatement credit = c.prepareStatement("UPDATE accounts SET balance = balance + ? WHERE id = ?")) {
+
+        debit.setDouble(1, amt);  debit.setLong(2, fromId);
+        credit.setDouble(1, amt); credit.setLong(2, toId);
+
+        if (debit.executeUpdate() != 1)  throw new SQLException("source not found");
+        if (credit.executeUpdate() != 1) throw new SQLException("destination not found");
+
+        c.commit();
+    } catch (SQLException ex) {
+        c.rollback();
+        throw ex;
+    } finally {
+        c.setAutoCommit(prev);
+    }
+}`,
+  complexity: "Same number of statements; transaction adds one commit's worth of fsync."
+});
+
+PROBLEMS.push({
+  num: 11, title: "Transaction Isolation & Savepoints", diff: "med",
+  family: "Transactions",
+  problem: "Connection.setTransactionIsolation(level) controls what concurrent transactions can see. Savepoints let you roll back to a named point inside a bigger transaction without throwing the whole thing away.",
+  intuition: "Isolation levels exist because two transactions can collide in subtle ways (dirty reads, non-repeatable reads, phantom reads). SQLite is essentially SERIALIZABLE — there's only ever one writer. Postgres / MySQL default to READ_COMMITTED. Savepoints are a partial-rollback escape hatch — useful for 'try this nested operation; if it fails, undo only that piece'.",
+  hints: [
+    "Connection.TRANSACTION_READ_UNCOMMITTED / READ_COMMITTED / REPEATABLE_READ / SERIALIZABLE.",
+    "On SQLite, all isolation levels collapse to SERIALIZABLE in practice (one writer at a time).",
+    "Postgres default: READ_COMMITTED. MySQL InnoDB default: REPEATABLE_READ.",
+    "Savepoint sp = c.setSavepoint(\"name\"); ... c.rollback(sp); / c.releaseSavepoint(sp);",
+    "Savepoints work on any major DB; cheap; great for 'try-catch around a sub-step'."
+  ],
+  tips: [
+    "Don't change isolation just because StackOverflow said so — measure deadlocks / anomalies first.",
+    "On Postgres/MySQL, SERIALIZABLE costs throughput; reserve for paths that genuinely need it.",
+    "SQLite-specific BEGIN IMMEDIATE acquires a write lock immediately (vs lazy default) — useful when you know you'll write.",
+    "Savepoints fit naturally inside transaction-spanning batch jobs ('skip this bad row, keep going')."
+  ],
+  code: `// savepoint inside a larger transaction
+c.setAutoCommit(false);
+try {
+    insertHeader(c);
+    Savepoint sp = c.setSavepoint("items");
+    try {
+        for (var item : items) insertItem(c, item);
+        c.releaseSavepoint(sp);
+    } catch (SQLException itemErr) {
+        c.rollback(sp);                     // undo only the items, keep the header
+        markPartialOrder(c);
+    }
+    c.commit();
+} catch (SQLException e) {
+    c.rollback();
+    throw e;
+} finally {
+    c.setAutoCommit(true);
+}
+
+// isolation level (Postgres/MySQL — irrelevant on SQLite)
+c.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);`,
+  complexity: "Savepoint overhead: tiny. Higher isolation: throughput cost varies per engine."
+});
+
+
+/* ===================== TYPES, JOINS, UPSERT ===================== */
+
+PROBLEMS.push({
+  num: 12, title: "Java ↔ SQL Types — getXxx / setXxx & timestamps", diff: "med",
+  family: "Types",
+  problem: "JDBC has a fixed set of getXxx/setXxx pairs that map between Java types and SQL types. Get them right or you'll silently lose precision (timestamps, BigDecimal, BLOBs).",
+  intuition: "Use the typed getter that matches the column type. For nullable values, prefer getObject(col, Integer.class) — returns Java null on SQL NULL instead of 0. For timestamps, prefer getObject(col, Instant.class) / getObject(col, LocalDateTime.class) over the legacy getTimestamp() to avoid timezone drift.",
+  hints: [
+    "INTEGER → getInt / getLong",
+    "REAL    → getDouble / getFloat",
+    "TEXT    → getString",
+    "BLOB    → getBytes (small) or getBinaryStream (large)",
+    "BOOLEAN → getBoolean (SQLite stores as INTEGER 0/1)",
+    "TIMESTAMP → getTimestamp / getObject(col, Instant.class) / getObject(col, LocalDateTime.class)",
+    "DECIMAL → getBigDecimal — never getDouble for money",
+    "UUID (Postgres) → getObject(col, UUID.class)",
+    "wasNull() — call right after a primitive getXxx to detect SQL NULL."
+  ],
+  tips: [
+    "For money, ALWAYS BigDecimal. Never double. Never Float.",
+    "SQLite has no native DATE/TIMESTAMP — you store ISO-8601 TEXT or epoch INTEGER. Pick one and stay consistent.",
+    "Postgres timestamptz roundtrips cleanly to Instant.",
+    "Call setObject(idx, val) — JDBC 4.2+ figures out the right type for most modern Java types (Instant, LocalDate, BigDecimal, UUID).",
+    "BLOBs: tiny (a few KB) → byte[] is fine. Big files → store outside the DB and keep just a path/URL."
+  ],
+  code: `import java.sql.*;
+import java.time.*;
+import java.math.BigDecimal;
+
+// modern, type-safe gets
+record Order(long id, BigDecimal amount, Instant placedAt) {}
+
+public Optional<Order> findOrder(Connection c, long id) throws SQLException {
+    String sql = "SELECT id, amount, placed_at FROM orders WHERE id = ?";
+    try (PreparedStatement ps = c.prepareStatement(sql)) {
+        ps.setLong(1, id);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return Optional.of(new Order(
+                    rs.getLong("id"),
+                    rs.getBigDecimal("amount"),
+                    // SQLite stores as TEXT; parse to Instant
+                    Instant.parse(rs.getString("placed_at").replace(" ", "T") + "Z")
+                ));
+            }
+            return Optional.empty();
+        }
+    }
+}
+
+// modern setObject — driver picks the SQL type
+ps.setObject(1, BigDecimal.valueOf(199.99));
+ps.setObject(2, Instant.now());
+ps.setObject(3, java.util.UUID.randomUUID());        // Postgres native UUID`,
+  complexity: "Type conversion is per-column, microsecond-level."
+});
+
+PROBLEMS.push({
+  num: 13, title: "INSERT OR UPDATE — UPSERT patterns per database", diff: "med",
+  family: "CRUD",
+  problem: "When a row may or may not already exist, you want one statement that inserts if missing or updates if present. Each database spells this differently.",
+  intuition: "Don't write 'check then insert' — that's racy. Use the database's native upsert: SQLite/Postgres `INSERT ... ON CONFLICT (col) DO UPDATE SET ... = excluded.col`. MySQL `INSERT ... ON DUPLICATE KEY UPDATE col = VALUES(col)`. SQL Server / Oracle have MERGE.",
+  hints: [
+    "SQLite (3.24+):     INSERT INTO t(...) VALUES(...) ON CONFLICT(col) DO UPDATE SET col = excluded.col",
+    "Postgres:           INSERT INTO t(...) VALUES(...) ON CONFLICT (col) DO UPDATE SET col = EXCLUDED.col",
+    "MySQL:              INSERT INTO t(...) VALUES(...) ON DUPLICATE KEY UPDATE col = VALUES(col)",
+    "SQLite (older):     INSERT OR REPLACE INTO t(...) VALUES(...) — REPLACE deletes-then-inserts (bad for FKs).",
+    "INSERT OR IGNORE — insert if missing, do nothing if conflict (no update).",
+    "The conflict target must be a UNIQUE / PRIMARY KEY constraint."
+  ],
+  tips: [
+    "ON CONFLICT DO UPDATE is the right default. INSERT OR REPLACE is dangerous because it cascades-delete dependent rows.",
+    "`excluded.col` (Postgres `EXCLUDED.col`) refers to the value the INSERT tried to put in — handy for `SET counter = t.counter + excluded.counter`.",
+    "RETURNING (Postgres / SQLite 3.35+) lets you get the upserted row back in one round-trip.",
+    "MySQL's ON DUPLICATE KEY UPDATE has a footgun: the trigger 'duplicate' considers any unique key, not just the one you intended."
+  ],
+  code: `import java.sql.*;
+
+// SQLite: insert a counter row, or increment if it exists
+String sql = """
+    INSERT INTO page_views(path, hits)
+    VALUES(?, 1)
+    ON CONFLICT(path) DO UPDATE SET hits = hits + 1
+    """;
+try (PreparedStatement ps = c.prepareStatement(sql)) {
+    ps.setString(1, "/api/users");
+    ps.executeUpdate();
+}
+
+// SQLite (3.35+) — get the resulting row back
+String sql2 = """
+    INSERT INTO users(email, name) VALUES(?, ?)
+    ON CONFLICT(email) DO UPDATE SET name = excluded.name
+    RETURNING id, name
+    """;`,
+  complexity: "Same as one INSERT/UPDATE — but no race window."
+});
+
+PROBLEMS.push({
+  num: 14, title: "JOINs — fetching parent + children efficiently", diff: "med",
+  family: "Queries",
+  problem: "Avoid the N+1 anti-pattern: don't loop over parents and run a SELECT per child. Use a single JOIN and group rows in Java, or run two queries (parents, then `WHERE parent_id IN (...)`) and stitch.",
+  intuition: "One JOIN query → iterate the flat result → group rows by the parent key into a Map → build parents with their children. The 'IN-list' alternative is two queries: SELECT parents, then SELECT children WHERE parent_id IN (?,?,?...). Both beat N+1 by orders of magnitude on real workloads.",
+  hints: [
+    "INNER JOIN — only rows with a match on both sides.",
+    "LEFT JOIN — every left row, NULL columns on right when no match.",
+    "Group by parent ID in Java with computeIfAbsent into a Map<ParentId, List<Child>>.",
+    "For 'IN (?,?,?)' — generate the right number of placeholders programmatically: String.join(\",\", Collections.nCopies(ids.size(), \"?\")).",
+    "EXPLAIN QUERY PLAN (SQLite) / EXPLAIN ANALYZE (Postgres) tells you whether your indexes are used."
+  ],
+  tips: [
+    "Index every foreign key column. SQLite does NOT auto-index FKs — you must.",
+    "When you only need a count of children, use a single SQL `SELECT parent.*, (SELECT COUNT(*) FROM child WHERE child.parent_id = parent.id) AS n_children FROM parent` to avoid grouping in Java.",
+    "If the result set is huge, stream it (don't materialise into a List) — see card 17.",
+    "JPA / Hibernate's lazy loading is the canonical N+1 generator. Plain JDBC at least makes the queries you run visible."
+  ],
+  code: `import java.sql.*;
+import java.util.*;
+
+record User(long id, String name, List<Order> orders) {}
+record Order(long id, double amount) {}
+
+public List<User> usersWithOrders(Connection c) throws SQLException {
+    String sql = """
+        SELECT u.id AS uid, u.name, o.id AS oid, o.amount
+        FROM users u
+        LEFT JOIN orders o ON o.user_id = u.id
+        ORDER BY u.id
+        """;
+    Map<Long, User> byId = new LinkedHashMap<>();
+    try (PreparedStatement ps = c.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            long uid = rs.getLong("uid");
+            User u = byId.computeIfAbsent(uid,
+                id -> new User(id, "", new ArrayList<>()));
+            // first time we see this user, fill in name
+            if (u.name().isEmpty()) {
+                byId.put(uid, new User(uid, rs.getString("name"), u.orders()));
+            }
+            long oid = rs.getLong("oid");
+            if (!rs.wasNull()) byId.get(uid).orders().add(new Order(oid, rs.getDouble("amount")));
+        }
+    }
+    return new ArrayList<>(byId.values());
+}`,
+  complexity: "JOIN: O(rows in result). Indexed FK: efficient. Without FK index: full scan."
+});
+
+
+/* ===================== ERRORS, STREAMING, TUNING ===================== */
+
+PROBLEMS.push({
+  num: 15, title: "SQLException — codes, sqlState, chained causes", diff: "med",
+  family: "Errors",
+  problem: "SQLException is a checked exception with three useful fields: getMessage(), getSQLState() (5-char standard code), getErrorCode() (vendor-specific int). Multiple errors come back as a chain (getNextException).",
+  intuition: "Don't just `catch (SQLException e) { logger.error(\"oh\"); }`. Inspect sqlState — `23xxx` means integrity violation (unique / FK), `08xxx` means connection error, `40xxx` means transaction rollback. Translate to your own typed exceptions so callers don't import java.sql.",
+  hints: [
+    "e.getSQLState() — 5-char SQLSTATE; portable across vendors.",
+    "e.getErrorCode() — vendor-specific (SQLite: 1=GENERIC, 19=CONSTRAINT, 5=BUSY).",
+    "e.getMessage() — human-readable; never parse it for branching logic.",
+    "for (Throwable t : e) { ... } — JDBC 4.0+ allows iterating chained SQLExceptions.",
+    "Common SQLSTATE prefixes: 23 (integrity), 40 (rollback), 08 (connection), 22 (data type), 42 (syntax).",
+    "On unique-violation, prefer a typed `DuplicateKeyException` over re-throwing SQLException."
+  ],
+  tips: [
+    "Spring's @ControllerAdvice + DataAccessException family does this translation for you.",
+    "On retryable errors (deadlock 40xxx, busy 5xxx in SQLite), retry with backoff before giving up.",
+    "Don't swallow SQLException to 'keep the loop going' — log + decide retry-or-fail per error class.",
+    "Always log e.getSQLState() and e.getErrorCode() — they're how DBAs find the root cause fast."
+  ],
+  code: `import java.sql.*;
+
+public long insertUserSafe(Connection c, String email, String name) {
+    try {
+        return insertUser(c, email, name);
+    } catch (SQLException e) {
+        String state = e.getSQLState();
+        if ("23000".equals(state) || (state != null && state.startsWith("23"))) {
+            throw new DuplicateKeyException("email already exists: " + email, e);
+        }
+        // log every chained exception
+        for (Throwable t : e) {
+            log.error("sql err state={} code={} msg={}",
+                ((SQLException) t).getSQLState(),
+                ((SQLException) t).getErrorCode(),
+                t.getMessage());
+        }
+        throw new RuntimeException("insert failed", e);
+    }
+}
+
+class DuplicateKeyException extends RuntimeException {
+    DuplicateKeyException(String msg, Throwable cause) { super(msg, cause); }
+}`,
+  complexity: "Error path; volume should be low if error path is low."
+});
+
+PROBLEMS.push({
+  num: 16, title: "Streaming Large Result Sets — fetchSize", diff: "hard",
+  family: "Production",
+  problem: "By default many drivers materialise the full result set into client memory. For huge SELECTs (millions of rows), set fetchSize on the Statement so the driver streams rows in batches.",
+  intuition: "Without fetchSize, your JVM may OOM on a `SELECT * FROM events` that returns 50 GB. With fetchSize, the driver pulls N rows at a time over the wire. Specifics differ: Postgres needs fetchSize + autoCommit=false to actually stream; MySQL needs `useCursorFetch=true` or `Statement.setFetchSize(Integer.MIN_VALUE)`. SQLite always streams because the cursor IS the database.",
+  hints: [
+    "ps.setFetchSize(1000) — request batched fetching.",
+    "Postgres: also c.setAutoCommit(false) — otherwise it ignores fetchSize and buffers everything.",
+    "MySQL Connector/J: useCursorFetch=true in URL, OR setFetchSize(Integer.MIN_VALUE) (forward-only stream).",
+    "SQLite: streams natively — fetchSize is a hint, no special setup.",
+    "Process each row inside the while(rs.next()) loop — never accumulate into a giant List."
+  ],
+  tips: [
+    "For ETL-style 'process millions of rows' jobs, treat the ResultSet as a Stream and write outputs as you go.",
+    "If you really need a List, paginate with LIMIT/OFFSET or keyset pagination — don't slurp.",
+    "Don't open multiple statements on one Postgres connection while streaming; the cursor is connection-scoped.",
+    "Watch the `RSS` of your JVM during a streaming load — if it grows linearly, fetchSize isn't doing what you think."
+  ],
+  code: `import java.sql.*;
+
+public void exportAllUsers(Connection c, java.io.PrintWriter out) throws SQLException {
+    boolean prev = c.getAutoCommit();
+    c.setAutoCommit(false);                     // critical for Postgres streaming
+    try (PreparedStatement ps = c.prepareStatement(
+             "SELECT id, email, name FROM users",
+             ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
+        ps.setFetchSize(5_000);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                out.printf("%d,%s,%s%n",
+                    rs.getLong(1), rs.getString(2), rs.getString(3));
+            }
+        }
+    } finally {
+        c.setAutoCommit(prev);
+    }
+}`,
+  complexity: "O(rows). Memory bounded by fetchSize × row size."
+});
+
+PROBLEMS.push({
+  num: 17, title: "SQLite PRAGMAs — making it production-fast", diff: "hard",
+  family: "Production",
+  problem: "SQLite's defaults are conservative (DELETE journal, FULL sync). For real workloads, switch to WAL journal + NORMAL sync — readers don't block the writer, writes are 5–20× faster, durability is still rock-solid up to a power loss.",
+  intuition: "PRAGMAs are SQLite's runtime config. Set them once per connection (or via the URL) right after open. The big four: `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`, `busy_timeout=5000`. With WAL you get readers + one writer concurrently; without WAL all reads block during writes.",
+  hints: [
+    "PRAGMA journal_mode=WAL; — enable Write-Ahead Logging. Persists across connections.",
+    "PRAGMA synchronous=NORMAL; — fast, still durable to OS crashes (loses last commit only on power loss).",
+    "PRAGMA foreign_keys=ON; — must be set per connection.",
+    "PRAGMA busy_timeout=5000; — wait up to 5s for a locked DB before SQLITE_BUSY error.",
+    "PRAGMA temp_store=MEMORY; — keep temp tables in RAM.",
+    "PRAGMA cache_size=-20000; — 20 MB page cache (negative = KB, positive = pages).",
+    "Set them via Properties on getConnection, or via the SQLiteConfig class from the driver."
+  ],
+  tips: [
+    "Apply pragmas inside your DataSource/connection-init hook so EVERY connection gets them — Hikari has connectionInitSql.",
+    "WAL creates two extra files (.wal, .shm). They're normal — don't delete them while the DB is open.",
+    "synchronous=NORMAL is the right default. Use FULL only if you must survive a power loss without losing the last commit.",
+    "If SQLITE_BUSY shows up, your busy_timeout is too low or you have a long-running write transaction blocking readers."
+  ],
+  code: `import com.zaxxer.hikari.*;
+import javax.sql.DataSource;
+
+HikariConfig cfg = new HikariConfig();
+cfg.setJdbcUrl("jdbc:sqlite:app.db");
+cfg.setMaximumPoolSize(4);
+// run these the moment Hikari opens a new connection
+cfg.setConnectionInitSql(
+    "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; "
+  + "PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; "
+  + "PRAGMA temp_store=MEMORY; PRAGMA cache_size=-20000;");
+DataSource ds = new HikariDataSource(cfg);
+
+// alternative: SQLiteConfig from the driver
+import org.sqlite.SQLiteConfig;
+SQLiteConfig conf = new SQLiteConfig();
+conf.setJournalMode(SQLiteConfig.JournalMode.WAL);
+conf.setSynchronous(SQLiteConfig.SynchronousMode.NORMAL);
+conf.enforceForeignKeys(true);
+String url = "jdbc:sqlite:app.db";
+java.sql.Connection c = java.sql.DriverManager.getConnection(url, conf.toProperties());`,
+  complexity: "Pragma calls are constant-time. The throughput win is huge on write-heavy workloads."
+});
+
+
+/* ===================== HIGHER-LEVEL APIS ===================== */
+
+PROBLEMS.push({
+  num: 18, title: "Repository / DAO Pattern — your data layer in plain JDBC", diff: "med",
+  family: "Architecture",
+  problem: "Don't sprinkle JDBC calls across business logic. Encapsulate every table behind a Repository (or DAO) class that exposes typed methods (findById, save, list, update, delete). The rest of the app sees Optional<User>, not ResultSet.",
+  intuition: "Repositories give you ONE place where SQL lives, ONE place that knows the schema, ONE place that translates SQLException → domain errors. Adding an index, switching from SQLite to Postgres, replacing JDBC with JOOQ — all become local edits.",
+  hints: [
+    "Constructor takes a DataSource (or a Connection in tiny apps).",
+    "Each method opens its own try-with-resources Connection — never store one as a field.",
+    "Map ResultSet → record/DTO in a private helper.",
+    "Throw domain exceptions, not SQLException, from public methods.",
+    "Keep transactions OUTSIDE the repository when they span multiple repositories — wire via a TransactionTemplate / @Transactional / a hand-rolled callback."
+  ],
+  tips: [
+    "One Repository per AGGREGATE (User + UserPreferences together), not per table — saves you 10 small classes.",
+    "If your queries grow complex, build a small SQL builder helper (or move to JOOQ).",
+    "For tests, point the same Repository at jdbc:sqlite::memory: — fast, isolated, no Docker needed.",
+    "Resist returning ResultSet or Connection from public methods. Closeable lifetimes leak across boundaries."
+  ],
+  code: `import javax.sql.DataSource;
+import java.sql.*;
+import java.util.*;
+
+public record User(long id, String email, String name) {}
+
+public class UserRepository {
+    private final DataSource ds;
+    public UserRepository(DataSource ds) { this.ds = ds; }
+
+    public Optional<User> findById(long id) {
+        String sql = "SELECT id, email, name FROM users WHERE id = ?";
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(map(rs)) : Optional.empty();
+            }
+        } catch (SQLException e) { throw new RuntimeException(e); }
+    }
+
+    public long save(String email, String name) {
+        String sql = "INSERT INTO users(email,name) VALUES(?,?)";
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, email); ps.setString(2, name);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                keys.next();
+                return keys.getLong(1);
+            }
+        } catch (SQLException e) { throw new RuntimeException(e); }
+    }
+
+    private static User map(ResultSet rs) throws SQLException {
+        return new User(rs.getLong("id"), rs.getString("email"), rs.getString("name"));
+    }
+}`,
+  complexity: "Per call: open + execute + map + close. Negligible without N+1."
+});
+
+PROBLEMS.push({
+  num: 19, title: "Spring JdbcClient / JdbcTemplate — boilerplate-free JDBC", diff: "med",
+  family: "Spring",
+  problem: "Spring's JdbcClient (Spring 6.1+) and the older JdbcTemplate wrap try-with-resources / setX / RowMapper into a fluent API. You write one line per query instead of fifteen.",
+  intuition: "If you're already on Spring Boot, switch to JdbcClient. It handles connection management, parameter binding (named or positional), exception translation (DataAccessException), and row mapping. The mental model is identical to plain JDBC, so card 18's repository shape stays — just shorter.",
+  hints: [
+    "Spring Boot auto-configures JdbcClient when spring-boot-starter-jdbc is on the classpath.",
+    "JdbcClient.sql(\"SELECT ... WHERE id = :id\").param(\"id\", id).query(User.class).optional() — one line.",
+    "Named parameters via :name; positional via ?.",
+    ".query(MyClass.class) uses a built-in record/bean mapper.",
+    ".update() returns affected-row count.",
+    "Older code uses JdbcTemplate.queryForObject / update / query with RowMapper — same idea, more verbose."
+  ],
+  tips: [
+    "JdbcClient (since 6.1) is preferred over JdbcTemplate for new code — friendlier API.",
+    "Exception translation: SQLException → DataAccessException family — much easier to catch DuplicateKeyException directly.",
+    "For multi-step transactions, use @Transactional or TransactionTemplate around the JdbcClient calls.",
+    "If your queries are dynamic, you might still drop to a query builder — JdbcClient is great for static SQL."
+  ],
+  code: `import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Repository;
+import java.util.*;
+
+@Repository
+public class UserRepo {
+    private final JdbcClient db;
+    public UserRepo(JdbcClient db) { this.db = db; }
+
+    public Optional<User> findById(long id) {
+        return db.sql("SELECT id, email, name FROM users WHERE id = :id")
+                 .param("id", id)
+                 .query(User.class)
+                 .optional();
+    }
+
+    public List<User> recent(int n) {
+        return db.sql("SELECT id, email, name FROM users ORDER BY id DESC LIMIT :n")
+                 .param("n", n)
+                 .query(User.class)
+                 .list();
+    }
+
+    public long save(String email, String name) {
+        var keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
+        db.sql("INSERT INTO users(email, name) VALUES(:e, :n)")
+          .param("e", email).param("n", name)
+          .update(keyHolder);
+        return keyHolder.getKey().longValue();
+    }
+}`,
+  complexity: "Identical to plain JDBC; the framework just removes boilerplate."
+});
+
+PROBLEMS.push({
+  num: 20, title: "JPA / Hibernate / Spring Data — entity-level mapping", diff: "hard",
+  family: "ORM",
+  problem: "JPA (Java Persistence API) is a higher abstraction: declare entities with @Entity / @Id, get findById / save / delete for free, write JPQL or Criteria for complex queries. Hibernate is the dominant implementation. Spring Data JPA wraps it in a `Repository<T, ID>` interface where most queries are derived from method names.",
+  intuition: "JPA pays back when your domain has lots of tables with relationships and you'd otherwise hand-write a thousand similar SELECT/INSERT statements. The cost is leaky abstractions: lazy loading, N+1, dirty checking, weird flush timing. Use JPA where it shines (CRUD-heavy enterprise apps); reach for plain JDBC / JdbcClient / JOOQ when query control matters more than entity mapping.",
+  hints: [
+    "@Entity + @Id: minimum to be persisted.",
+    "@OneToMany / @ManyToOne / @ManyToMany — relationships. Default fetch = LAZY for *-to-Many, EAGER for *-to-One. Both are foot-guns.",
+    "Spring Data: extend JpaRepository<User, Long> → findById, findAll, save, delete + derived methods (findByEmail).",
+    "JPQL (`SELECT u FROM User u WHERE u.email = :e`) operates on entities, not tables.",
+    "Native queries via @Query(nativeQuery = true) when JPQL can't express something."
+  ],
+  tips: [
+    "ALWAYS configure spring.jpa.open-in-view=false — otherwise lazy loading silently runs queries inside the view layer.",
+    "Watch for N+1: enable spring.jpa.show-sql=true + assert query counts in tests.",
+    "Use @EntityGraph or fetch joins to load children eagerly when the use case needs them.",
+    "If your queries dominate over entity mappings, JOOQ + @Repository is often a better fit than JPA."
+  ],
+  code: `import jakarta.persistence.*;
+import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+@Entity @Table(name = "users")
+public class UserEntity {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
+    @Column(unique = true, nullable = false) String email;
+    @Column(nullable = false) String name;
+    // getters / setters / constructors
+}
+
+public interface UserRepo extends JpaRepository<UserEntity, Long> {
+    Optional<UserEntity> findByEmail(String email);
+    List<UserEntity> findTop10ByOrderByIdDesc();
+}
+
+// usage
+UserEntity u = new UserEntity();
+u.email = "alice@example.com"; u.name = "Alice";
+userRepo.save(u);                              // INSERT
+userRepo.findByEmail("alice@example.com");     // SELECT WHERE email = ?`,
+  complexity: "Per save/find: comparable to plain JDBC. N+1 is the lurking risk."
+});
+
+
+/* ===================== RECIPES ===================== */
+
+PROBLEMS.push({
+  num: 21, title: "Migrations — Flyway / Liquibase, the right way", diff: "med",
+  family: "Production",
+  problem: "Your schema will change. Hand-edited DDL across environments breaks. A migration tool (Flyway, Liquibase) versions every schema change as a numbered file, runs it once, and tracks what's been applied in a metadata table.",
+  intuition: "Each schema change is a checked-in `V1__init.sql`, `V2__add_email_index.sql`, `V3__rename_column.sql`. On startup the tool reads its metadata table, finds new files, runs them. Same files, same order, every environment — production stays in sync with dev.",
+  hints: [
+    "Flyway: drop SQL files in src/main/resources/db/migration named V<version>__<desc>.sql.",
+    "Spring Boot auto-runs Flyway on startup if spring-boot-starter is on the classpath.",
+    "Manually: Flyway.configure().dataSource(ds).load().migrate().",
+    "Versions must be monotonic; Flyway records what it ran in a `flyway_schema_history` table.",
+    "Repeatable migrations (R__refresh_views.sql) re-run when content changes — for views and stored procedures."
+  ],
+  tips: [
+    "Treat migrations as immutable once they hit `main`. New requirement → new migration, never edit an old one.",
+    "Test migrations against a fresh DB and against a copy of prod schema — they behave differently.",
+    "For SQLite especially, schema changes are limited (no DROP COLUMN until 3.35); migration tools generate the table-rebuild SQL for you.",
+    "Liquibase is more verbose (XML/YAML/JSON) but gives finer control + rollback. Flyway is simpler (just SQL files)."
+  ],
+  code: `# src/main/resources/db/migration/V1__init.sql
+CREATE TABLE users (
+    id         INTEGER PRIMARY KEY,
+    email      TEXT NOT NULL UNIQUE,
+    name       TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+# V2__add_orders.sql
+CREATE TABLE orders (
+    id        INTEGER PRIMARY KEY,
+    user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount    REAL NOT NULL CHECK (amount >= 0),
+    placed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX idx_orders_user ON orders(user_id);
+
+# application.yml
+spring:
+  datasource:
+    url: jdbc:sqlite:app.db
+  flyway:
+    enabled: true
+    locations: classpath:db/migration`,
+  complexity: "Migrations: O(rows touched) on first run, O(1) on subsequent boots."
+});
+
+PROBLEMS.push({
+  num: 22, title: "Complete Recipe: Java + SQLite end-to-end", diff: "med",
+  family: "Recipes",
+  problem: "Putting it all together: a tiny self-contained app that opens a SQLite database, creates a schema, inserts a row, and queries it back — using everything you've seen so far.",
+  intuition: "When you can write this 50-line program from memory, you've internalised the JDBC mental model. From here, scaling up is just (a) replacing DriverManager with a HikariCP DataSource, (b) splitting CRUD methods into a Repository, (c) adding migrations.",
+  hints: [
+    "One DataSource for the whole process. Pass it everywhere.",
+    "PRAGMAs in connectionInitSql so every connection is configured.",
+    "All schema in V*.sql files driven by Flyway (or one bootstrap method early on).",
+    "All queries in Repository classes; business logic never sees ResultSet.",
+    "Tests use jdbc:sqlite::memory: with the same Flyway migrations — fast, deterministic."
+  ],
+  tips: [
+    "If this app evolves, the only file you'd change for production is application.yml — the URL.",
+    "Replace `jdbc:sqlite:app.db` with `jdbc:postgresql://...` and the code shape is identical (with minor SQL dialect tweaks).",
+    "For desktop apps, ship app.db inside the JAR's resources or write to user.home; for servers, mount a volume.",
+    "Add scheduled VACUUM only if your write-delete-write workload fragments — usually unnecessary."
+  ],
+  code: `import com.zaxxer.hikari.*;
+import javax.sql.DataSource;
+import java.sql.*;
+import java.util.*;
+
+record User(long id, String email, String name) {}
+
+public class App {
+    public static void main(String[] args) throws SQLException {
+        DataSource ds = dataSource();
+        bootstrap(ds);
+        UserRepo repo = new UserRepo(ds);
+
+        long id = repo.save("alice@example.com", "Alice");
+        System.out.println("inserted id=" + id);
+        repo.findById(id).ifPresent(u -> System.out.println("read back: " + u));
+    }
+
+    static DataSource dataSource() {
+        HikariConfig cfg = new HikariConfig();
+        cfg.setJdbcUrl("jdbc:sqlite:app.db");
+        cfg.setMaximumPoolSize(4);
+        cfg.setConnectionInitSql(
+            "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; "
+          + "PRAGMA foreign_keys=ON;  PRAGMA busy_timeout=5000;");
+        return new HikariDataSource(cfg);
+    }
+
+    static void bootstrap(DataSource ds) throws SQLException {
+        try (Connection c = ds.getConnection(); Statement s = c.createStatement()) {
+            s.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS users(
+                    id INTEGER PRIMARY KEY,
+                    email TEXT NOT NULL UNIQUE,
+                    name TEXT NOT NULL
+                )""");
+        }
+    }
+}
+
+class UserRepo {
+    private final DataSource ds;
+    UserRepo(DataSource ds) { this.ds = ds; }
+
+    long save(String email, String name) throws SQLException {
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO users(email,name) VALUES(?,?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, email); ps.setString(2, name);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                keys.next();
+                return keys.getLong(1);
+            }
+        }
+    }
+
+    Optional<User> findById(long id) throws SQLException {
+        try (Connection c = ds.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT id, email, name FROM users WHERE id = ?")) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next())
+                    return Optional.of(new User(rs.getLong(1), rs.getString(2), rs.getString(3)));
+                return Optional.empty();
+            }
+        }
+    }
+}`,
+  complexity: "End-to-end: a few milliseconds for the first connection, microseconds per query thereafter."
+});
+
+PROBLEMS.push({
+  num: 23, title: "Common Pitfalls — the 10 mistakes everyone makes", diff: "med",
+  family: "Pitfalls",
+  problem: "Repeating bugs that show up in nearly every JDBC codebase. Catch them in code review and they never reach production.",
+  intuition: "Most JDBC bugs aren't subtle — they're patterns that get copy-pasted. Read this once, recognise them forever.",
+  hints: [
+    "1. String-concatenating user input into SQL → SQL injection. Use PreparedStatement with `?`.",
+    "2. Forgetting to close ResultSet / Statement / Connection → leaks. Use try-with-resources.",
+    "3. One Connection field shared across threads → race conditions. Connections are not thread-safe.",
+    "4. Auto-commit on, multi-statement business op → partial-updates. Wrap in a transaction.",
+    "5. SELECT *, then change the table → silent column-order break. Name your columns.",
+    "6. Storing money as double → precision loss. Use BigDecimal.",
+    "7. N+1 queries (loop calling SELECT) → death by latency. Use JOIN or IN-list.",
+    "8. Missing index on FK / WHERE column → full-table scans. EXPLAIN your queries.",
+    "9. Catching SQLException + swallowing → silent data loss. Log + decide retry-or-fail.",
+    "10. Holding a transaction open during user think-time → blocked writers. Keep transactions short."
+  ],
+  tips: [
+    "Static analysis (SonarQube / Error Prone) catches several of these.",
+    "Run an EXPLAIN on every query you ship — it takes seconds and surfaces missing indexes.",
+    "In tests, count queries — a counter wrapper around the Connection / DataSource catches N+1 regressions.",
+    "If a connection is held longer than a few hundred milliseconds, something's wrong. Set HikariCP leakDetectionThreshold."
+  ],
+  code: `// 1. BAD
+String sql = "SELECT * FROM users WHERE email = '" + email + "'";
+
+// 2. BAD — leak
+ResultSet rs = ps.executeQuery();
+return rs.getString(1);                        // never closes
+
+// 3. BAD
+class Service {
+    private Connection c;                       // shared across threads — racy
+}
+
+// 4. BAD
+ps.executeUpdate("UPDATE a SET ...");
+ps.executeUpdate("UPDATE b SET ...");           // if first commits and second fails: partial state
+
+// 6. BAD
+double balance = rs.getDouble("balance");       // floating-point money
+
+// GOOD
+BigDecimal balance = rs.getBigDecimal("balance");
+
+// 7. BAD — N+1
+for (User u : users) {
+    var orders = repo.ordersFor(u.id());        // one SELECT per user
+}
+
+// GOOD — one JOIN, group in Java`,
+  complexity: "Each pitfall is preventable with one line of vigilance."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => { stash.push(html); return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001'; };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // SQL-style comments inside HTML/template strings are NOT highlighted as comments here.
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float','Object','BigDecimal','UUID',
+    'List','Map','Set','HashMap','LinkedHashMap','ArrayList','Optional','Properties',
+    'Connection','Statement','PreparedStatement','ResultSet','SQLException','SQLWarning','Savepoint','Types',
+    'DriverManager','DataSource','HikariConfig','HikariDataSource','SQLiteConfig',
+    'JdbcClient','JdbcTemplate','GeneratedKeyHolder','DataAccessException','DuplicateKeyException',
+    'JpaRepository','UserEntity','UserRepository','UserRepo','User','Order','App','Schema','Service',
+    'Instant','LocalDateTime','LocalDate','LocalTime','Duration','UUID','Throwable','RuntimeException',
+    'Flyway','Liquibase','PrintWriter'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum','record',
+    'return','if','else','for','while','do','break','continue','switch','case','default','yield',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff).sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => { if (state.diff !== t.dataset.diff) { state.diff = t.dataset.diff; state.idx = 0; render(); } };
+  });
+}
+
+function familyPillClass(family) {
+  if (!family) return '';
+  const f = family.toLowerCase();
+  if (f.includes('setup'))        return 'conn';
+  if (f.includes('schema'))       return 'crud';
+  if (f.includes('crud'))         return 'crud';
+  if (f.includes('query'))        return 'crud';
+  if (f.includes('transaction')) return 'tx';
+  if (f.includes('production'))   return 'prod';
+  if (f.includes('error'))        return 'spr';
+  if (f.includes('type'))         return 'crud';
+  if (f.includes('architecture')) return 'pool';
+  if (f.includes('spring'))       return 'spr';
+  if (f.includes('orm'))          return 'orm';
+  if (f.includes('recipe'))       return 'prod';
+  if (f.includes('pitfall'))      return 'spr';
+  return '';
+}
+
+
+function render() {
+  const main = document.getElementById('main');
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}` : '';
+  const formulaBlock = p.formula ? `<div class="section-title">Format / Syntax</div><div class="formula">${escapeHtml(p.formula)}</div>` : '';
+  const familyPill = p.family ? `<span class="pill ${familyPillClass(p.family)}">${escapeHtml(p.family)}</span>` : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+      <div class="section-title">Why You Use It</div>
+      <p>${escapeHtml(p.problem)}</p>
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+      ${formulaBlock}
+      ${cheatBlock}
+      <div class="section-title">Methods &amp; Patterns</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+      <div class="section-title">Tips &amp; Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+      <div class="section-title">Java / SQL Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+      ${p.complexity ? `<div class="complexity"><b>Complexity / Cost:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>`;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent = `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() { const arr = getProblems(state.diff); if (state.idx < arr.length - 1) { state.idx++; render(); } }
+function prevProblem() { if (state.idx > 0) { state.idx--; render(); } }
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️'; themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙'; themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem('theme', next);
+});
+
+
+function renderBriefView() {
+  const families = [
+    { title: 'Setup',         cmds: [['Driver JAR','org.xerial:sqlite-jdbc:3.46.x'],['JDBC URL','jdbc:sqlite:app.db'],['DriverManager','quick + tests'],['DataSource (Hikari)','default for real apps'],['Class.forName','NOT NEEDED in Java 6+']] },
+    { title: 'Schema',        cmds: [['CREATE IF NOT EXISTS','idempotent bootstrap'],['INTEGER PRIMARY KEY','SQLite auto-increment'],['UNIQUE / NOT NULL','data hygiene'],['CREATE INDEX','speed reads'],['Migrations','Flyway / Liquibase']] },
+    { title: 'CRUD',          cmds: [['PreparedStatement','always for parameters'],['? placeholders','set 1-indexed'],['executeUpdate','rows affected'],['executeQuery','ResultSet'],['getGeneratedKeys','newly inserted id'],['addBatch / executeBatch','bulk load']] },
+    { title: 'Transactions',  cmds: [['setAutoCommit(false)','start txn'],['commit / rollback','always in finally'],['Savepoint','partial rollback'],['Isolation','READ_COMMITTED default'],['Short txns','no user think-time inside']] },
+    { title: 'Production',    cmds: [['HikariCP','connection pool'],['WAL journal mode','readers + writer'],['fetchSize','stream big results'],['EXPLAIN QUERY PLAN','find missing indexes'],['leakDetectionThreshold','catch unclosed connections']] },
+    { title: 'Higher-level',  cmds: [['JdbcClient (Spring 6.1+)','fluent API'],['JdbcTemplate','older Spring'],['JOOQ','type-safe SQL DSL'],['JPA / Hibernate','entity-level'],['MyBatis','SQL-mapper']] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> What's the right database?
+   ├── <span class="a">desktop / CLI / tests / single-process</span> → <span class="alg">SQLite (jdbc:sqlite:app.db)</span>
+   ├── <span class="a">multi-tenant web app</span>                   → <span class="alg">Postgres / MySQL</span>
+   └── <span class="a">in-memory unit test</span>                    → <span class="alg">jdbc:sqlite::memory: or jdbc:h2:mem:test</span>
+
+<span class="q">Q2.</span> How do I get a Connection?
+   ├── <span class="a">script / test</span>     → <span class="alg">DriverManager.getConnection(url)</span>
+   ├── <span class="a">real app</span>          → <span class="alg">HikariCP DataSource</span>
+   └── <span class="a">Spring Boot</span>       → <span class="alg">spring.datasource.* — auto-wired</span>
+
+<span class="q">Q3.</span> Inserting a value?
+   ├── <span class="a">single insert</span>    → <span class="alg">PreparedStatement + setX + executeUpdate</span>
+   ├── <span class="a">need the new id</span>  → <span class="alg">RETURN_GENERATED_KEYS + getGeneratedKeys</span>
+   ├── <span class="a">many rows</span>        → <span class="alg">addBatch / executeBatch + commit once</span>
+   └── <span class="a">may already exist</span>→ <span class="alg">ON CONFLICT(col) DO UPDATE / INSERT OR IGNORE</span>
+
+<span class="q">Q4.</span> Reading rows?
+   ├── <span class="a">one row</span>          → <span class="alg">ps + LIMIT 1, rs.next() once</span>
+   ├── <span class="a">few rows</span>         → <span class="alg">ps + while(rs.next()) → List<Record></span>
+   ├── <span class="a">many rows / streaming</span> → <span class="alg">setFetchSize + autoCommit=false (for Postgres)</span>
+   └── <span class="a">parent + children</span>→ <span class="alg">JOIN once, group in Java by parent id</span>
+
+<span class="q">Q5.</span> Multi-step write?
+   ├── <span class="a">single statement</span> → <span class="alg">auto-commit ON is fine</span>
+   └── <span class="a">two or more</span>      → <span class="alg">setAutoCommit(false) → ... → commit / rollback in finally</span>
+`;
+
+  const recipeCards = [
+    { b: 'Open SQLite',          s: "DriverManager.getConnection(\"jdbc:sqlite:app.db\")" },
+    { b: 'Pool with Hikari',     s: "HikariConfig + setJdbcUrl + setMaximumPoolSize" },
+    { b: 'Parameterised query',  s: "ps.setX(idx, val); ps.executeQuery()" },
+    { b: 'Get inserted id',      s: "prepareStatement(sql, RETURN_GENERATED_KEYS)" },
+    { b: 'Bulk insert',          s: "addBatch + executeBatch + commit once" },
+    { b: 'Manual transaction',   s: "setAutoCommit(false); commit / rollback" },
+    { b: 'Upsert (SQLite/PG)',   s: "ON CONFLICT(col) DO UPDATE SET col = excluded.col" },
+    { b: 'Avoid N+1',            s: "one JOIN + group in Java by parent id" },
+    { b: 'Stream big result',    s: "ps.setFetchSize(1000)" },
+    { b: 'WAL mode (SQLite)',    s: "PRAGMA journal_mode=WAL; synchronous=NORMAL" },
+    { b: 'Migrations',           s: "Flyway: src/main/resources/db/migration/V1__init.sql" },
+    { b: 'Spring JdbcClient',    s: "db.sql(...).param(...).query(T.class).optional()" },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.cmds.map(c => `<div class="card-mini"><b>${escapeHtml(c[0])}</b><span>${escapeHtml(c[1])}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const recipes_html = `
+    <div class="panel">
+      <h3>One-Liner Recipes</h3>
+      <div class="grid">
+        ${recipeCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">J A V A &nbsp; + &nbsp; J D B C &nbsp; + &nbsp; S Q L I T E</div>
+        <h1 class="brief-title">Driver · URL · Connection · Statement · ResultSet</h1>
+        <p class="brief-tagline">Five types. One mental model. Every database.</p>
+      </header>
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+      ${recipes_html}
+      ${families_html}
+    </div>`;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
