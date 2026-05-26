@@ -1,0 +1,2865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Graph Problems in SDE Interviews — A Classification with Templates</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #059669;          /* graph green */
+    --accent2: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw:  #cf222e;
+    --typ: #6f42c1;
+    --bi:  #b91c1c;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy:  #16a34a;
+    --med:   #d97706;
+    --hard:  #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+  .hamburger { position: fixed; top: 14px; left: 14px; width: 44px; height: 44px; border-radius: 10px; background: #ffffff; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; cursor: pointer; z-index: 1001; }
+  .hamburger span { display: block; width: 22px; height: 2.5px; background: #1e1e25; border-radius: 2px; transition: transform .25s, opacity .2s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 360px; max-width: 90vw; background: #ffffff; border-right: 1px solid var(--border); box-shadow: 2px 0 14px rgba(0,0,0,.06); transform: translateX(-100%); transition: transform .28s ease; overflow-y: auto; z-index: 1000; padding: 70px 18px 32px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 { margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .sidebar .group-title { margin-top: 18px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+  .sidebar a { display: flex; align-items: center; gap: 8px; padding: 7px 8px; margin: 2px 0; text-decoration: none; color: #1f2330; border-radius: 6px; font-size: 13.5px; cursor: pointer; }
+  .sidebar a:hover { background: #d1fae5; color: var(--accent); }
+  .sidebar a.active { background: #d1fae5; color: var(--accent); font-weight: 600; }
+  .sidebar a .num { display: inline-block; min-width: 32px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 999; }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .topbar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 18px 24px 0; padding-left: 76px; position: sticky; top: 0; z-index: 50; }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab { padding: 9px 16px; border: 1px solid var(--border); border-bottom: none; background: #f1f3f9; color: var(--muted); border-top-left-radius: 8px; border-top-right-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: background .15s; }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active { background: #ffffff; color: var(--fg); border-bottom: 2px solid #ffffff; margin-bottom: -1px; box-shadow: 0 -2px 0 var(--accent) inset; }
+  .tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  main { max-width: 980px; margin: 0 auto; padding: 28px 24px 120px; }
+  .problem-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 28px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .problem-card h2 { margin: 0 0 6px; font-size: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .num-tag { background: #d1fae5; color: var(--accent); padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: "JetBrains Mono", Consolas, monospace; }
+  .badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .05em; }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+  .pill { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #ecfdf5; color: #065f46; font-weight: 600; letter-spacing: .03em; }
+  .pill.trav { background:#dbeafe; color:#1e40af; }
+  .pill.sp   { background:#fef3c7; color:#92400e; }
+  .pill.topo { background:#ede9fe; color:#5b21b6; }
+  .pill.mst  { background:#fce7f3; color:#9d174d; }
+  .pill.uf   { background:#fee2e2; color:#991b1b; }
+  .pill.cycle{ background:#fff7ed; color:#c2410c; }
+  .pill.bip  { background:#e0f2fe; color:#075985; }
+  .pill.grid { background:#f0fdf4; color:#166534; }
+  .pill.impl { background:#fef9c3; color:#854d0e; }
+  .pill.adv  { background:#f3f4f6; color:#374151; }
+
+  .section-title { font-size: 13.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition { background: #ecfdf5; border-left: 4px solid #10b981; border-radius: 6px; padding: 12px 16px; margin: 8px 0; }
+  .formula { background: #ecfeff; border-left: 4px solid #06b6d4; border-radius: 6px; padding: 10px 16px; margin: 8px 0; font-family: "JetBrains Mono", Consolas, monospace; font-size: 13.5px; overflow-x: auto; white-space: pre; }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block { background: #fef9c3; border-left: 4px solid #ca8a04; border-radius: 6px; padding: 10px 16px; margin: 8px 0; }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+  .cheat-table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; font-size: 14px; }
+  .cheat-table th, .cheat-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  .cheat-table th { background: #d1fae5; color: var(--accent); font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .cheat-table td:first-child { font-family: "JetBrains Mono", Consolas, monospace; background: #ecfdf5; white-space: nowrap; color: #065f46; }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code { background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 6px 0; }
+  pre.code code { font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace; }
+  .kw { color: var(--kw); font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .bi { color: var(--bi); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 60; box-shadow: 0 -2px 8px rgba(0,0,0,.04); }
+  .nav-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--fg); font-weight: 500; }
+  .nav-btn:hover:not(:disabled) { background: #d1fae5; color: var(--accent); border-color: #6ee7b7; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd { display: inline-block; border: 1px solid #d0d7de; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; background: #f6f8fa; font-family: monospace; font-size: 11px; color: #444; }
+
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle { font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px; }
+  .brief-root .brief-title { font-size: clamp(28px, 6vw, 48px); font-weight: 900; margin: 0; background: linear-gradient(90deg, #059669, #2563eb, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; }
+  .brief-root .panel h3 { margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .brief-root .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .brief-root .card-mini { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: #ecfdf5; }
+  .brief-root .card-mini b { color: var(--accent); display: block; margin-bottom: 4px; font-size: 13.5px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow { border: 1px dashed var(--border); border-radius: 12px; padding: 16px; background: var(--code-bg); font-family: "JetBrains Mono", Consolas, monospace; font-size: 13px; line-height: 1.9; overflow-x: auto; white-space: pre; margin: 0; color: var(--fg); }
+  .brief-root .flow .q { color: var(--accent); font-weight: 700; }
+  .brief-root .flow .a { color: var(--str); }
+  .brief-root .flow .alg { color: var(--bi); font-weight: 700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+  .theme-toggle { position: fixed; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001; font-size: 20px; line-height: 1; color: var(--fg); transition: background .15s, color .15s, border-color .15s, transform .15s; }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --accent: #34d399;
+    --border: #30363d; --card: #161b22; --code-bg: #0b0f15; --code-fg: #e6edf3;
+    --kw: #ff7b72; --typ: #d2a8ff; --bi: #ffa657; --str: #a5d6ff; --cmt: #8b949e; --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover, [data-theme="dark"] .sidebar a.active { background: rgba(52,211,153,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(52,211,153,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(16,185,129,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(202,138,4,.10); }
+  [data-theme="dark"] .pill       { background: rgba(6,95,70,.18);  color: #6ee7b7; }
+  [data-theme="dark"] .pill.trav  { background: rgba(30,64,175,.18); color: #bfdbfe; }
+  [data-theme="dark"] .pill.sp    { background: rgba(146,64,14,.18); color: #fde68a; }
+  [data-theme="dark"] .pill.topo  { background: rgba(91,33,182,.18); color: #ddd6fe; }
+  [data-theme="dark"] .pill.mst   { background: rgba(157,23,77,.18); color: #fbcfe8; }
+  [data-theme="dark"] .pill.uf    { background: rgba(153,27,27,.18); color: #fecaca; }
+  [data-theme="dark"] .pill.cycle { background: rgba(194,65,12,.18); color: #fed7aa; }
+  [data-theme="dark"] .pill.bip   { background: rgba(7,89,133,.18); color: #bae6fd; }
+  [data-theme="dark"] .pill.grid  { background: rgba(22,101,52,.18); color: #bbf7d0; }
+  [data-theme="dark"] .pill.impl  { background: rgba(133,77,14,.18); color: #fef08a; }
+  [data-theme="dark"] .pill.adv   { background: rgba(55,65,81,.30); color: #d1d5db; }
+  [data-theme="dark"] .nav-bar { background: var(--card); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(52,211,153,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(52,211,153,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: #6ee7b7; }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .card-mini { background: rgba(52,211,153,.07); }
+</style>
+</head>
+<body>
+<button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar"><h2>Table of Contents</h2><div id="toc"></div></aside>
+<header class="topbar">
+  <h1>Graph Problems in SDE Interviews — A Classification with Templates</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+  </div>
+</header>
+<main id="main"></main>
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+<script>
+const PROBLEMS = [];
+
+
+PROBLEMS.push({
+  num: 0, title: "The Graph Problem Mental Model (read this first)", diff: "veasy",
+  family: "Foundations",
+  problem: "Most graph problems in SDE interviews fall into 12 archetypes. Once you recognise the archetype from the problem statement, the algorithm is almost forced. The skill being tested is rarely 'do you know Dijkstra?' — it's 'can you SEE that this is a Dijkstra problem?'.",
+  intuition: "The 12 archetypes: (1) traversal & connectivity, (2) shortest path, (3) topological / DAG, (4) MST, (5) Union-Find, (6) cycle-related, (7) bipartite / coloring, (8) grid-as-graph, (9) implicit / state-space search, (10) advanced (flow, bridges, 2-SAT, LCA), (11) tree-specific, (12) hard / niche (TSP, coloring). Pattern-matching from the prompt to the archetype is the entire game.",
+  hints: [
+    "Signal: 'shortest' + unweighted     → BFS",
+    "Signal: 'shortest' + non-negative   → Dijkstra",
+    "Signal: 'prerequisites / order'     → Topological sort",
+    "Signal: 'groups / merge / connected'→ Union-Find",
+    "Signal: 'min cost to connect all'   → MST (Kruskal / Prim)",
+    "Signal: 'two groups / colour'       → Bipartite check",
+    "Signal: 'states / configurations'   → BFS on implicit graph",
+    "Signal: 'critical / cannot remove'  → Bridges / articulation",
+    "Signal: 'every pair' with small n   → Floyd-Warshall",
+    "Signal: 'negative weights'          → Bellman-Ford",
+    "Signal: grid + obstacles + shortest → BFS (or Dijkstra if weighted)"
+  ],
+  tips: [
+    "First questions to ask: directed or undirected? weighted? cycles allowed? size of V and E? source(s) and target(s)?",
+    "Build the adjacency list once, reuse across the whole solution. Re-creating it inside a loop is the rookie cost-blower.",
+    "Default representations: adjacency list (List<List<Integer>> or Map<K, List<K>>) for sparse graphs; matrix only for dense or all-pairs.",
+    "Almost every graph algorithm is BFS/DFS plus state. Master those two and most problems collapse.",
+    "When in doubt, start sketching by hand on a 5-node example. Pattern usually clicks within 90 seconds."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Archetype</th><th>Algorithm(s)</th><th>Typical signal</th></tr></thead>
+      <tbody>
+        <tr><td>Traversal / Components</td><td>BFS / DFS / Union-Find</td><td>"reachable", "components", "islands"</td></tr>
+        <tr><td>Shortest Path (unweighted)</td><td>BFS</td><td>"min steps", uniform edges</td></tr>
+        <tr><td>Shortest Path (non-neg)</td><td>Dijkstra</td><td>"min cost", weighted edges</td></tr>
+        <tr><td>Shortest Path (any weights)</td><td>Bellman-Ford</td><td>"negative weights", "arbitrage"</td></tr>
+        <tr><td>All-pairs shortest path</td><td>Floyd-Warshall (V&le;400)</td><td>"every pair", small graph</td></tr>
+        <tr><td>DAG / ordering</td><td>Topological sort</td><td>"prerequisites", "build order"</td></tr>
+        <tr><td>MST</td><td>Kruskal / Prim</td><td>"min cost to connect all"</td></tr>
+        <tr><td>Disjoint set</td><td>Union-Find</td><td>"merge", "are X and Y in same group"</td></tr>
+        <tr><td>Cycle detection (dir)</td><td>3-color DFS / Kahn's</td><td>"is there a cycle", "schedulable"</td></tr>
+        <tr><td>Cycle detection (undir)</td><td>DFS w/ parent / Union-Find</td><td>"redundant edge", "extra connection"</td></tr>
+        <tr><td>Bipartite</td><td>2-color BFS/DFS</td><td>"split into two groups", "possible bipartition"</td></tr>
+        <tr><td>Grid problems</td><td>BFS/DFS w/ 4-dir / 8-dir</td><td>"matrix", "neighbours", "islands"</td></tr>
+        <tr><td>Implicit graph</td><td>BFS over states</td><td>"transformations", "configurations", "moves"</td></tr>
+        <tr><td>Bridges / articulation</td><td>Tarjan's</td><td>"critical connection", "cannot remove"</td></tr>
+        <tr><td>Bipartite matching</td><td>Hungarian / Flow</td><td>"assign", "pair up"</td></tr>
+        <tr><td>Eulerian path</td><td>Hierholzer's</td><td>"use every edge once"</td></tr>
+        <tr><td>Hamiltonian / TSP</td><td>Bitmask DP</td><td>"visit every node once", "min tour"</td></tr>
+      </tbody>
+    </table>
+  `,
+  code: `// The two templates that solve 60% of graph interviews
+import java.util.*;
+
+// 1) BFS — shortest path / level-by-level on unweighted graphs
+int bfs(List<List<Integer>> g, int src, int dst) {
+    int n = g.size();
+    int[] dist = new int[n];
+    Arrays.fill(dist, -1);
+    Deque<Integer> q = new ArrayDeque<>();
+    q.offer(src);
+    dist[src] = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        if (u == dst) return dist[u];
+        for (int v : g.get(u)) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.offer(v);
+            }
+        }
+    }
+    return -1;
+}
+
+// 2) DFS — connectivity / cycles / topological / SCC building block
+boolean[] visited;
+void dfs(List<List<Integer>> g, int u) {
+    visited[u] = true;
+    for (int v : g.get(u))
+        if (!visited[v]) dfs(g, v);
+}`,
+  complexity: "Most graph algorithms run in O(V + E). Dijkstra adds a log factor. Floyd-Warshall is O(V^3)."
+});
+
+
+PROBLEMS.push({
+  num: 0, title: "Graph Representations — directed, undirected, weighted, unweighted + how to access them", diff: "veasy",
+  family: "Foundations",
+  problem: "Before you pick an algorithm, you have to pick a REPRESENTATION. Real interview problems hand you the graph in one of about six shapes: edge list, adjacency list (unweighted), adjacency list (weighted), adjacency matrix, an explicit Node class, or an implicit graph (no explicit data — neighbours generated from problem state). Each form has its own access pattern. The fastest way to lose interview minutes is to wrestle with the representation instead of the algorithm — so build muscle memory for converting between them and iterating through each.",
+  intuition: "Two orthogonal axes describe every graph: directed-vs-undirected and weighted-vs-unweighted. Then there's the storage choice: list, matrix, or implicit. Internalise the four combinations and the conversions, and you can take ANY input — `int[][] edges`, `int n + List<List<Integer>>`, `Node root`, a grid, a Map<String, Set<String>> — and turn it into the form your algorithm wants in 5 lines.",
+  hints: [
+    "DIRECTED vs UNDIRECTED: directed adds (u→v) only; undirected adds BOTH (u→v) and (v→u). The data structure is the same; the build loop differs by one line.",
+    "Undirected = bidirectional. There's no separate 'bidirectional' representation — it's just an undirected graph stored in a way that keeps both directions implicit.",
+    "WEIGHTED: each neighbour is a (node, weight) pair. The standard Java shape is `List<List<int[]>>` where each int[] is {nbr, weight}.",
+    "UNWEIGHTED: neighbour list is just `List<List<Integer>>`. (Or treat every weight as 1 if your algorithm wants weighted form anyway.)",
+    "ADJACENCY LIST: O(V+E) memory; iterate g.get(u) for u's neighbours. The default for sparse graphs.",
+    "ADJACENCY MATRIX: O(V²) memory; m[u][v] != 0 means edge. O(1) edge-existence check; iterate row m[u] for neighbours. Use only when V is small (≤ ~500) or graph is dense.",
+    "EDGE LIST: array of {u, v[, w]}. Best for Kruskal's and Bellman-Ford which iterate ALL edges per pass.",
+    "Node CLASS: graph given as an object reference (TreeNode, Node with `neighbors` field). Iterate node.neighbors and use a HashMap/HashSet on identity for visited.",
+    "IMPLICIT GRAPH: no explicit storage — generate neighbours on the fly inside BFS/DFS (Word Ladder, Sliding Puzzle).",
+    "GRID: a 2D array IS an implicit graph. Each cell is a node; neighbours are 4 (or 8) cardinal cells in bounds matching some predicate."
+  ],
+  tips: [
+    "Always BUILD the representation you want ONCE up-front, before the algorithm starts. Building it inside a loop is the most common quadratic blow-up.",
+    "When the input is `int[][] edges`, your first 5 lines are the converter — memorise them.",
+    "For undirected, write a tiny helper `addUndirected(g, u, v[, w])` that adds both directions — eliminates copy-paste mistakes.",
+    "If the problem says 'graph' but doesn't specify directed or undirected, ASK. The wrong assumption silently breaks correctness.",
+    "If V is in the millions, even an adjacency LIST may strain memory. Look for sparsity patterns or stream the edges (edge list).",
+    "Node-class graphs need a `Map<Node, Boolean> visited` (or `IdentityHashMap`) — primitive array indexing isn't available."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Representation</th><th>Java type</th><th>Best for</th><th>Memory</th></tr></thead>
+      <tbody>
+        <tr><td>Edge list</td><td>int[][] edges = {{u,v[,w]}, ...}</td><td>Kruskal's MST, Bellman-Ford, very sparse storage</td><td>O(E)</td></tr>
+        <tr><td>Adjacency list (unweighted)</td><td>List&lt;List&lt;Integer&gt;&gt;</td><td>BFS, DFS, topo, components, the default</td><td>O(V + E)</td></tr>
+        <tr><td>Adjacency list (weighted)</td><td>List&lt;List&lt;int[]&gt;&gt; — int[]{nbr, w}</td><td>Dijkstra, Prim, weighted DFS</td><td>O(V + E)</td></tr>
+        <tr><td>Adjacency matrix</td><td>int[V][V] / boolean[V][V]</td><td>Floyd-Warshall, dense graphs, O(1) edge query</td><td>O(V²)</td></tr>
+        <tr><td>Node class</td><td>Node root with .neighbors list</td><td>Linked-list/tree-style problems, clone graph</td><td>O(V + E)</td></tr>
+        <tr><td>Implicit / state-space</td><td>generate inside BFS/DFS</td><td>Word Ladder, Sliding Puzzle, Open the Lock</td><td>O(reachable states)</td></tr>
+        <tr><td>Grid</td><td>int[][] grid + dr/dc arrays</td><td>Islands, flood fill, shortest path on grid</td><td>O(R·C)</td></tr>
+      </tbody>
+    </table>
+    <p><b>Access pattern (how to "iterate u's neighbours") per representation:</b></p>
+    <ul class="hints">
+      <li><b>Edge list:</b> <code>for (int[] e : edges) if (e[0] == u) ...</code> — O(E) per query, OK only if you scan all edges.</li>
+      <li><b>Adjacency list (unweighted):</b> <code>for (int v : g.get(u)) ...</code></li>
+      <li><b>Adjacency list (weighted):</b> <code>for (int[] e : g.get(u)) { int v = e[0], w = e[1]; ... }</code></li>
+      <li><b>Adjacency matrix:</b> <code>for (int v = 0; v &lt; n; v++) if (m[u][v] != 0) ...</code></li>
+      <li><b>Node class:</b> <code>for (Node nb : node.neighbors) ...</code></li>
+      <li><b>Implicit / state-space:</b> <code>for (State s : generateNeighbours(cur)) ...</code></li>
+      <li><b>Grid:</b> <code>for (int d = 0; d &lt; 4; d++) { int nr = r + dr[d], nc = c + dc[d]; if (inBounds &amp;&amp; predicate) ... }</code></li>
+    </ul>
+    <p><b>Conversion table (input shape → target shape):</b></p>
+    <table class="cheat-table">
+      <thead><tr><th>From</th><th>To</th><th>How (5-line idea)</th></tr></thead>
+      <tbody>
+        <tr><td>edge list</td><td>adj list (unweighted, undirected)</td><td>for each {u,v}: g[u].add(v); g[v].add(u);</td></tr>
+        <tr><td>edge list</td><td>adj list (unweighted, directed)</td><td>for each {u,v}: g[u].add(v);</td></tr>
+        <tr><td>edge list</td><td>adj list (weighted, undirected)</td><td>for each {u,v,w}: g[u].add({v,w}); g[v].add({u,w});</td></tr>
+        <tr><td>edge list</td><td>adj list (weighted, directed)</td><td>for each {u,v,w}: g[u].add({v,w});</td></tr>
+        <tr><td>edge list</td><td>matrix</td><td>m[u][v] = w; (and m[v][u] = w if undirected)</td></tr>
+        <tr><td>adj list</td><td>edge list</td><td>for each u, for each v in g[u]: emit {u,v}; (de-dupe for undirected)</td></tr>
+        <tr><td>adj list</td><td>matrix</td><td>for each u, for each v in g[u]: m[u][v] = 1; (or weight)</td></tr>
+        <tr><td>matrix</td><td>adj list</td><td>for u in 0..n: for v in 0..n: if m[u][v] != 0 g[u].add(v);</td></tr>
+        <tr><td>matrix</td><td>edge list</td><td>same as above but emit {u,v[,m[u][v]]}</td></tr>
+        <tr><td>directed</td><td>undirected</td><td>for each (u,v) edge, also add (v,u)</td></tr>
+        <tr><td>undirected</td><td>directed (symmetric)</td><td>literally identical structure; just don't add the reverse</td></tr>
+        <tr><td>unweighted</td><td>weighted (uniform)</td><td>treat every weight as 1</td></tr>
+        <tr><td>Node class</td><td>adj list</td><td>BFS the nodes; assign each Node an int ID via HashMap; build g[]</td></tr>
+        <tr><td>Grid</td><td>adj list</td><td>encode (r,c) as r*C+c; for each cell, push 4-neighbour edges</td></tr>
+        <tr><td>Implicit graph</td><td>adj list</td><td>only if the state space is small enough to materialise — usually NOT</td></tr>
+      </tbody>
+    </table>
+  `,
+  code: `import java.util.*;
+
+// =========================================================
+// 1) edge list  →  adjacency list
+// =========================================================
+List<List<Integer>> buildAdjUnweighted(int n, int[][] edges, boolean undirected) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    for (int[] e : edges) {
+        g.get(e[0]).add(e[1]);
+        if (undirected) g.get(e[1]).add(e[0]);
+    }
+    return g;
+}
+
+List<List<int[]>> buildAdjWeighted(int n, int[][] edges, boolean undirected) {
+    List<List<int[]>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    for (int[] e : edges) {
+        g.get(e[0]).add(new int[]{e[1], e[2]});
+        if (undirected) g.get(e[1]).add(new int[]{e[0], e[2]});
+    }
+    return g;
+}
+
+// =========================================================
+// 2) edge list  →  adjacency matrix
+// =========================================================
+int[][] buildMatrix(int n, int[][] edges, boolean undirected) {
+    int[][] m = new int[n][n];
+    for (int[] e : edges) {
+        m[e[0]][e[1]] = e.length >= 3 ? e[2] : 1;
+        if (undirected) m[e[1]][e[0]] = e.length >= 3 ? e[2] : 1;
+    }
+    return m;
+}
+
+// =========================================================
+// 3) adj list  →  edge list (undirected: deduped by u < v)
+// =========================================================
+List<int[]> adjToEdgeListUndirected(List<List<Integer>> g) {
+    List<int[]> out = new ArrayList<>();
+    for (int u = 0; u < g.size(); u++)
+        for (int v : g.get(u))
+            if (u < v) out.add(new int[]{u, v});
+    return out;
+}
+
+// =========================================================
+// 4) Node-class graph  →  int adjacency list
+// =========================================================
+class Node { int val; List<Node> neighbors = new ArrayList<>(); Node(int v){val=v;} }
+
+List<List<Integer>> nodeGraphToAdj(Node start) {
+    Map<Node, Integer> id = new HashMap<>();
+    List<Node> all = new ArrayList<>();
+    Deque<Node> q = new ArrayDeque<>();
+    q.offer(start); id.put(start, 0); all.add(start);
+    while (!q.isEmpty()) {
+        Node cur = q.poll();
+        for (Node nb : cur.neighbors)
+            if (!id.containsKey(nb)) {
+                id.put(nb, id.size());
+                all.add(nb);
+                q.offer(nb);
+            }
+    }
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < all.size(); i++) g.add(new ArrayList<>());
+    for (Node u : all)
+        for (Node v : u.neighbors)
+            g.get(id.get(u)).add(id.get(v));
+    return g;
+}
+
+// =========================================================
+// 5) Grid  →  implicit adjacency (no list built; just iterate)
+// =========================================================
+int[] dr = {-1, 1, 0, 0}, dc = {0, 0, -1, 1};
+void visitNeighbours(int r, int c, int R, int C, int[][] grid) {
+    for (int d = 0; d < 4; d++) {
+        int nr = r + dr[d], nc = c + dc[d];
+        if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
+        // ... your per-neighbour work here ...
+    }
+}
+
+// =========================================================
+// 6) ITERATING (accessing neighbours) by representation
+// =========================================================
+void demo(int u,
+          int[][] edges,                       // edge list
+          List<List<Integer>> adjU,            // adj list, unweighted
+          List<List<int[]>>  adjW,             // adj list, weighted
+          int[][] m,                           // adjacency matrix
+          Node nodeU) {                        // Node-class
+
+    // edge list — full scan; rarely how you query a single u
+    for (int[] e : edges) if (e[0] == u) { int v = e[1]; /* ... */ }
+
+    // adj list, unweighted
+    for (int v : adjU.get(u)) { /* ... */ }
+
+    // adj list, weighted
+    for (int[] e : adjW.get(u)) { int v = e[0], w = e[1]; /* ... */ }
+
+    // matrix — iterate the row
+    for (int v = 0; v < m.length; v++) if (m[u][v] != 0) { /* edge u->v with weight m[u][v] */ }
+
+    // Node class — iterate .neighbors
+    for (Node nb : nodeU.neighbors) { /* ... */ }
+}`,
+  complexity: "Build cost: O(V + E) for lists, O(V²) for matrix. Iterating a single node's neighbours: O(deg(u)) for adj list / Node, O(V) for matrix, O(E) for edge list."
+});
+
+
+/* ========== 1. TRAVERSAL & CONNECTIVITY ========== */
+
+PROBLEMS.push({
+  num: 1, title: "Graph Representation — adjacency list / matrix / edge list", diff: "easy",
+  family: "Traversal & Connectivity",
+  problem: "Pick the representation from V, E, and the operations you'll perform. Adjacency list for almost everything sparse. Matrix only when the graph is dense (E ~ V²) or you need O(1) edge-existence checks. Edge list when you process edges directly (Kruskal, Bellman-Ford).",
+  intuition: "Adjacency list is the universal default. Matrix wastes memory if E is much smaller than V². Edge list is great whenever your algorithm just iterates over edges.",
+  hints: [
+    "Adjacency list: List<List<Integer>>  (or Map<K, List<K>> for non-int nodes).",
+    "Adjacency list with weights: List<int[]>  (each int[] is {neighbour, weight}).",
+    "Matrix: int[V][V] or boolean[V][V].",
+    "Edge list: int[E][3] = {u, v, w}.",
+    "Always build it ONCE up front — never inside an algorithm loop."
+  ],
+  tips: [
+    "For a graph with N nodes labeled 0..N-1, pre-create empty lists in one pass: `for (int i=0;i<N;i++) g.add(new ArrayList<>())`.",
+    "For undirected, add both directions: g.get(u).add(v); g.get(v).add(u);",
+    "For Dijkstra / weighted BFS, the int[]{nbr, w} form is cleaner than two parallel lists.",
+    "For very dense graphs and small N, a matrix is fine — and faster cache-wise."
+  ],
+  code: `// adjacency list — sparse, the default
+List<List<Integer>> g = new ArrayList<>();
+for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+for (int[] e : edges) {
+    g.get(e[0]).add(e[1]);
+    g.get(e[1]).add(e[0]);     // omit for directed
+}
+
+// weighted adjacency list
+List<List<int[]>> wg = new ArrayList<>();
+for (int i = 0; i < n; i++) wg.add(new ArrayList<>());
+for (int[] e : edges)
+    wg.get(e[0]).add(new int[]{e[1], e[2]});
+
+// matrix — dense / O(1) edge lookup
+int[][] m = new int[n][n];
+for (int[] e : edges) m[e[0]][e[1]] = e[2];`,
+  complexity: "List: O(V+E) memory. Matrix: O(V^2) memory. Edge list: O(E)."
+});
+
+PROBLEMS.push({
+  num: 2, title: "BFS & DFS — the two templates that solve 60% of problems", diff: "easy",
+  family: "Traversal & Connectivity",
+  problem: "Internalise these two until they feel automatic. Almost every graph algorithm in this guide is one of them with EXTRA STATE.",
+  intuition: "BFS uses a queue and processes nodes in level order — shortest path on unweighted graphs comes for free. DFS uses recursion (or an explicit stack) and goes deep first — natural fit for connectivity, cycle detection, topological order, articulation points, SCC. The 'visited' set is what prevents infinite loops on cyclic graphs.",
+  hints: [
+    "BFS: Deque (ArrayDeque) + boolean[] visited (mark when ENQUEUEING, not when polling — otherwise duplicates).",
+    "DFS recursive: just check + recurse + (sometimes) post-order work.",
+    "DFS iterative: use a Deque as a stack (push instead of offer).",
+    "BFS naturally yields shortest distance / fewest steps.",
+    "DFS naturally yields a discovery / finish-time ordering — basis for topological sort and SCC."
+  ],
+  tips: [
+    "Mark on push, not on pop — otherwise BFS can enqueue the same node multiple times before visiting it.",
+    "For very deep graphs, recursive DFS overflows the stack. Use the iterative form or bump the thread stack.",
+    "BFS/DFS scaffolding is identical across problems — what changes is the per-node state and what you record.",
+    "Total work is always O(V + E). If yours isn't, you're re-traversing or building the graph inside the loop."
+  ],
+  code: `import java.util.*;
+
+// BFS — shortest path on unweighted graph
+int bfs(List<List<Integer>> g, int src, int dst) {
+    int n = g.size();
+    int[] dist = new int[n];
+    Arrays.fill(dist, -1);
+    Deque<Integer> q = new ArrayDeque<>();
+    q.offer(src);
+    dist[src] = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        for (int v : g.get(u))
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                if (v == dst) return dist[v];
+                q.offer(v);
+            }
+    }
+    return -1;
+}
+
+// DFS recursive — generic visit
+boolean[] visited;
+void dfs(List<List<Integer>> g, int u) {
+    visited[u] = true;
+    for (int v : g.get(u))
+        if (!visited[v]) dfs(g, v);
+}
+
+// DFS iterative
+void dfsIter(List<List<Integer>> g, int src) {
+    boolean[] seen = new boolean[g.size()];
+    Deque<Integer> st = new ArrayDeque<>();
+    st.push(src);
+    while (!st.isEmpty()) {
+        int u = st.pop();
+        if (seen[u]) continue;
+        seen[u] = true;
+        for (int v : g.get(u)) if (!seen[v]) st.push(v);
+    }
+}`,
+  complexity: "Both: O(V + E) time, O(V) space."
+});
+
+PROBLEMS.push({
+  num: 3, title: "Connected Components — count the islands", diff: "easy",
+  family: "Traversal & Connectivity",
+  problem: "Given an undirected graph, count the number of connected components. For each unvisited node, run a DFS/BFS that marks the whole component, then increment the counter.",
+  intuition: "A component is a maximal set of mutually-reachable nodes. The standard 'outer loop + inner BFS/DFS' pattern: scan every node; for each one not yet visited, fire a traversal that paints its entire component. Each node is visited once → O(V+E) total.",
+  hints: [
+    "Initialise visited[] to all false.",
+    "for u in 0..V-1: if !visited[u] { run BFS/DFS from u; count++; }",
+    "Inside the inner traversal, mark every reachable node as visited.",
+    "Union-Find is an alternative — usually slightly slower but elegant when edges arrive online."
+  ],
+  tips: [
+    "If the graph is given as an edge list and you need components, building an adjacency list first is almost always the right move.",
+    "For a GRID problem, the 'graph' is implicit: neighbours are the 4 cardinal cells. Same outer loop pattern.",
+    "Want the SIZE of each component? Have the inner traversal return its count, accumulate into a List<Integer>.",
+    "LeetCode hits: Number of Connected Components, Number of Provinces, Friend Circles."
+  ],
+  code: `import java.util.*;
+
+int countComponents(int n, int[][] edges) {
+    List<List<Integer>> g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    for (int[] e : edges) {
+        g.get(e[0]).add(e[1]);
+        g.get(e[1]).add(e[0]);
+    }
+
+    boolean[] vis = new boolean[n];
+    int count = 0;
+    for (int i = 0; i < n; i++) {
+        if (!vis[i]) {
+            count++;
+            // BFS the whole component
+            Deque<Integer> q = new ArrayDeque<>();
+            q.offer(i); vis[i] = true;
+            while (!q.isEmpty()) {
+                int u = q.poll();
+                for (int v : g.get(u))
+                    if (!vis[v]) { vis[v] = true; q.offer(v); }
+            }
+        }
+    }
+    return count;
+}`,
+  complexity: "O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 4, title: "Strongly Connected Components — Tarjan's & Kosaraju's", diff: "hard",
+  family: "Traversal & Connectivity",
+  problem: "In a DIRECTED graph, an SCC is a maximal set of mutually-reachable nodes. SCCs partition the graph; the resulting condensation is a DAG. Tarjan's (one-pass DFS with lowlink) and Kosaraju's (two-pass DFS, reverse graph) are the two classic algorithms.",
+  intuition: "Kosaraju is easier to remember: (1) DFS on the original graph, push nodes onto a stack in finish order; (2) DFS on the REVERSED graph in stack order — each tree is one SCC. Tarjan does it in one pass with discovery times and a 'lowlink' value. Both are O(V+E).",
+  hints: [
+    "Tarjan: maintain discovery time (disc) and lowlink (low). Use a stack of currently-on-stack nodes. When low[u] == disc[u], pop the stack down to u — that's one SCC.",
+    "Kosaraju: pass 1 fills a stack; pass 2 DFS on reversed graph in stack order.",
+    "Use SCCs to find: cycles in directed graphs, 2-SAT, condensation graph.",
+    "Each SCC of size > 1 contains at least one directed cycle."
+  ],
+  tips: [
+    "For interviews, Kosaraju is usually easier to derive on the spot than Tarjan.",
+    "If the question is just 'are A and B in the same SCC?' — you can also Floyd-Warshall reachability for tiny graphs.",
+    "After computing SCCs, build the CONDENSATION DAG (one node per SCC) — many follow-up problems reduce to DP on this DAG."
+  ],
+  code: `import java.util.*;
+
+// Kosaraju — returns list of SCCs (each as a list of node IDs)
+List<List<Integer>> kosaraju(List<List<Integer>> g) {
+    int n = g.size();
+    boolean[] vis = new boolean[n];
+    Deque<Integer> order = new ArrayDeque<>();
+    // pass 1
+    for (int i = 0; i < n; i++) if (!vis[i]) fill(g, i, vis, order);
+    // build reverse graph
+    List<List<Integer>> r = new ArrayList<>();
+    for (int i = 0; i < n; i++) r.add(new ArrayList<>());
+    for (int u = 0; u < n; u++)
+        for (int v : g.get(u)) r.get(v).add(u);
+    // pass 2
+    Arrays.fill(vis, false);
+    List<List<Integer>> sccs = new ArrayList<>();
+    while (!order.isEmpty()) {
+        int u = order.pop();
+        if (vis[u]) continue;
+        List<Integer> comp = new ArrayList<>();
+        collect(r, u, vis, comp);
+        sccs.add(comp);
+    }
+    return sccs;
+}
+void fill(List<List<Integer>> g, int u, boolean[] vis, Deque<Integer> order) {
+    vis[u] = true;
+    for (int v : g.get(u)) if (!vis[v]) fill(g, v, vis, order);
+    order.push(u);
+}
+void collect(List<List<Integer>> r, int u, boolean[] vis, List<Integer> out) {
+    vis[u] = true; out.add(u);
+    for (int v : r.get(u)) if (!vis[v]) collect(r, v, vis, out);
+}`,
+  complexity: "O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 5, title: "Flood Fill / Island Counting — grid as graph", diff: "easy",
+  family: "Traversal & Connectivity",
+  problem: "Given a 2D grid with '1' (land) and '0' (water), count the number of distinct islands. The grid IS the graph: each cell is a node, edges go to its 4 neighbours of the same kind.",
+  intuition: "Same outer-loop-+-inner-traversal pattern as connected components. The only twist is the implicit edges: instead of g.get(u), iterate the four neighbours (r±1, c±1) staying in bounds and matching the cell type.",
+  hints: [
+    "Iterate every cell; if it's '1' and not visited, increment count + BFS/DFS to sink the entire island.",
+    "Mutate the grid in place ('1' → '0') as your visited marker — saves O(R·C) extra space.",
+    "4-directional vs 8-directional changes only the dx[]/dy[] arrays.",
+    "For 'island PERIMETER' or 'island AREA', track stats during the traversal."
+  ],
+  tips: [
+    "Bound check first when you compute neighbour: `if (r<0||r>=R||c<0||c>=C||grid[r][c]!='1') continue;`.",
+    "Multi-source BFS works the same way — see card 10 (Rotting Oranges, 01 Matrix).",
+    "For 'count distinct island SHAPES', record each island's relative path or normalised shape signature.",
+    "LeetCode classics: Number of Islands, Max Area of Island, Surrounded Regions, Pacific Atlantic."
+  ],
+  code: `import java.util.*;
+
+int numIslands(char[][] g) {
+    int R = g.length, C = g[0].length, count = 0;
+    int[] dr = {-1,1,0,0}, dc = {0,0,-1,1};
+    for (int i = 0; i < R; i++) {
+        for (int j = 0; j < C; j++) {
+            if (g[i][j] != '1') continue;
+            count++;
+            // BFS sink the island
+            Deque<int[]> q = new ArrayDeque<>();
+            q.offer(new int[]{i, j});
+            g[i][j] = '0';
+            while (!q.isEmpty()) {
+                int[] cur = q.poll();
+                for (int d = 0; d < 4; d++) {
+                    int nr = cur[0] + dr[d], nc = cur[1] + dc[d];
+                    if (nr<0||nr>=R||nc<0||nc>=C||g[nr][nc]!='1') continue;
+                    g[nr][nc] = '0';
+                    q.offer(new int[]{nr, nc});
+                }
+            }
+        }
+    }
+    return count;
+}`,
+  complexity: "O(R·C) time, O(R·C) worst-case stack/queue."
+});
+
+
+
+/* ========== 2. SHORTEST PATH ========== */
+
+PROBLEMS.push({
+  num: 6, title: "BFS for Shortest Path — unweighted graphs", diff: "easy",
+  family: "Shortest Path",
+  problem: "On an unweighted graph (every edge costs 1), the SHORTEST distance from src to dst is just the BFS depth at which dst is first dequeued. No fancy algorithm needed.",
+  intuition: "BFS expands level by level. The first time you reach a node, you reach it via the shortest path — guaranteed by the FIFO order. So the only data you need is dist[node] = first time it was enqueued.",
+  hints: [
+    "dist[] = -1 initial; dist[src] = 0; enqueue src.",
+    "On dequeue, for each neighbour v with dist[v] == -1: dist[v] = dist[u]+1, enqueue v.",
+    "Mark visited at ENQUEUE time, never dequeue time.",
+    "If you only need the answer for one specific dst, return as soon as you visit it.",
+    "If you need the actual PATH, also store parent[] = u when you set dist[v]; backtrack from dst to src."
+  ],
+  tips: [
+    "BFS gives correct answers ONLY when all edges cost the same. If the graph has 0/1 weights, see 0-1 BFS (card 10).",
+    "Multi-source BFS: enqueue ALL sources at distance 0 — see card 10 (Rotting Oranges, 01 Matrix).",
+    "For grid problems with uniform step cost, this IS the right algorithm. Don't reach for Dijkstra.",
+    "LeetCode hits: Word Ladder, Shortest Path in Binary Matrix, Open the Lock."
+  ],
+  code: `import java.util.*;
+
+int shortestPath(List<List<Integer>> g, int src, int dst) {
+    int n = g.size();
+    int[] dist = new int[n];
+    Arrays.fill(dist, -1);
+    Deque<Integer> q = new ArrayDeque<>();
+    q.offer(src);
+    dist[src] = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        for (int v : g.get(u)) {
+            if (dist[v] != -1) continue;
+            dist[v] = dist[u] + 1;
+            if (v == dst) return dist[v];
+            q.offer(v);
+        }
+    }
+    return -1;
+}`,
+  complexity: "O(V + E) time, O(V) space."
+});
+
+PROBLEMS.push({
+  num: 7, title: "Dijkstra — non-negative weights", diff: "med",
+  family: "Shortest Path",
+  problem: "Single-source shortest path on a graph where every edge weight is &gt;= 0. Repeatedly extract the unvisited node with the smallest tentative distance and relax its outgoing edges.",
+  intuition: "BFS finds shortest paths because it always expands the nearest unvisited node — and on unweighted graphs, FIFO order = nearest order. Dijkstra generalises that: use a MIN-HEAP keyed by distance instead of a queue. The first time we pop a node, its distance is final.",
+  hints: [
+    "PriorityQueue&lt;int[]&gt; ordered by dist; push {dist, node}.",
+    "dist[] = INF initially, dist[src] = 0; push (0, src).",
+    "On pop, skip if popped distance &gt; current best (lazy deletion).",
+    "For each edge (u, v, w): if dist[u]+w &lt; dist[v], update and push.",
+    "Stop early once you pop dst (single-target query)."
+  ],
+  tips: [
+    "DO NOT use Dijkstra with NEGATIVE edges — it can return wrong answers. Use Bellman-Ford instead (card 8).",
+    "If all edges are 0 or 1, prefer 0-1 BFS — same complexity but no heap (card 10).",
+    "For sparse graphs, binary heap → O((V+E) log V). For very dense, an array-based variant or Fibonacci heap helps.",
+    "Track `parent[]` if you need the actual path, not just the distance."
+  ],
+  code: `import java.util.*;
+
+int[] dijkstra(List<List<int[]>> g, int src) {
+    int n = g.size();
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
+    pq.offer(new int[]{0, src});
+    while (!pq.isEmpty()) {
+        int[] cur = pq.poll();
+        int d = cur[0], u = cur[1];
+        if (d > dist[u]) continue;       // stale entry
+        for (int[] e : g.get(u)) {
+            int v = e[0], w = e[1];
+            if (d + w < dist[v]) {
+                dist[v] = d + w;
+                pq.offer(new int[]{dist[v], v});
+            }
+        }
+    }
+    return dist;
+}`,
+  complexity: "O((V + E) log V) with a binary heap."
+});
+
+PROBLEMS.push({
+  num: 8, title: "Bellman-Ford — handles negative edges & detects negative cycles", diff: "hard",
+  family: "Shortest Path",
+  problem: "Single-source shortest path on a graph that may contain negative-weight edges. Relax every edge V-1 times. If a V-th relaxation still improves any distance, a negative cycle is reachable from the source.",
+  intuition: "After k passes over all edges, dist[v] holds the shortest path using at most k edges. After V-1 passes, every shortest path is final — there are at most V-1 edges in any acyclic shortest path. A V-th pass that still improves something proves a negative cycle.",
+  hints: [
+    "for i in 1..V-1: for each edge (u,v,w): if dist[u]+w &lt; dist[v]: dist[v] = dist[u]+w.",
+    "Final pass: if any relaxation succeeds → negative cycle reachable.",
+    "Initialise dist[src] = 0, others = INF; check for INF before adding w (avoid overflow).",
+    "Useful for currency-arbitrage problems and graphs where some 'costs' are gains."
+  ],
+  tips: [
+    "Slower than Dijkstra (O(V·E)) — only use it when negative edges exist.",
+    "Check INF: if (dist[u] != INF && dist[u]+w < dist[v]). Otherwise INF + w wraps.",
+    "SPFA is a queue-based optimisation that's often faster in practice but with the same worst case.",
+    "LeetCode hits: Cheapest Flights Within K Stops (Bellman-Ford with k-edge limit fits naturally)."
+  ],
+  code: `import java.util.*;
+
+int[] bellmanFord(int n, int[][] edges, int src) {
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+    for (int i = 0; i < n - 1; i++) {
+        for (int[] e : edges) {
+            int u = e[0], v = e[1], w = e[2];
+            if (dist[u] != Integer.MAX_VALUE && dist[u] + w < dist[v])
+                dist[v] = dist[u] + w;
+        }
+    }
+    // negative cycle check
+    for (int[] e : edges) {
+        int u = e[0], v = e[1], w = e[2];
+        if (dist[u] != Integer.MAX_VALUE && dist[u] + w < dist[v])
+            throw new RuntimeException("negative cycle");
+    }
+    return dist;
+}`,
+  complexity: "O(V · E)."
+});
+
+PROBLEMS.push({
+  num: 9, title: "Floyd-Warshall — all-pairs shortest path", diff: "med",
+  family: "Shortest Path",
+  problem: "Compute shortest distance between EVERY pair of nodes in a graph. Triple nested loop. O(V^3) — only practical when V is small (≤ ~400).",
+  intuition: "dp[k][i][j] = shortest path from i to j using only intermediate nodes from {0..k}. Update rule: dp[k][i][j] = min(dp[k-1][i][j], dp[k-1][i][k] + dp[k-1][k][j]). Compress to a 2D array; the k loop is the OUTERMOST. Handles negative edges (no negative cycle); detects negative cycles via dist[i][i] &lt; 0.",
+  hints: [
+    "Initialise dist[i][i]=0; dist[i][j]=w(i,j) if edge exists, INF otherwise.",
+    "Triple loop: for k, for i, for j: dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]).",
+    "Order matters: K is the OUTERMOST loop.",
+    "Negative cycle: if any dist[i][i] &lt; 0.",
+    "Reachability variant: replace min/+ with OR/AND on booleans."
+  ],
+  tips: [
+    "Don't use Floyd-Warshall if V is in the thousands — V^3 is too slow.",
+    "If you only need a few sources, run Dijkstra from each — O(K · (V+E) log V) is usually faster.",
+    "Add INF guard: `if (dist[i][k]==INF || dist[k][j]==INF) continue;` to avoid overflow.",
+    "Great fit for problems with V ≤ 400 (LeetCode constraint signal)."
+  ],
+  code: `import java.util.*;
+
+int[][] floydWarshall(int n, int[][] edges) {
+    int INF = Integer.MAX_VALUE / 2;
+    int[][] d = new int[n][n];
+    for (int[] r : d) Arrays.fill(r, INF);
+    for (int i = 0; i < n; i++) d[i][i] = 0;
+    for (int[] e : edges) d[e[0]][e[1]] = Math.min(d[e[0]][e[1]], e[2]);
+
+    for (int k = 0; k < n; k++)
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (d[i][k] + d[k][j] < d[i][j])
+                    d[i][j] = d[i][k] + d[k][j];
+    return d;
+}`,
+  complexity: "O(V^3) time, O(V^2) space."
+});
+
+PROBLEMS.push({
+  num: 10, title: "Multi-source BFS, 0-1 BFS, Bidirectional BFS", diff: "med",
+  family: "Shortest Path",
+  problem: "Three BFS variants you'll see often. Multi-source: many starting points enqueued at distance 0 (Rotting Oranges, 01 Matrix). 0-1 BFS: edges weighted 0 or 1, use a deque (push 0-weight to FRONT, 1-weight to BACK). Bidirectional: search from both src and dst, meeting in the middle.",
+  intuition: "Multi-source = 'distance to NEAREST source for every node' in O(V+E). 0-1 BFS = poor man's Dijkstra when weights are restricted to {0,1}, same big-O as BFS. Bidirectional BFS roughly halves the exponent of the search tree — branching factor b, depth d → b^(d/2) instead of b^d. Crucial for huge state spaces (Word Ladder).",
+  hints: [
+    "Multi-source: enqueue every source with dist=0; rest of BFS unchanged.",
+    "0-1 BFS: ArrayDeque + offerFirst (cost 0), offerLast (cost 1).",
+    "Bidirectional BFS: maintain two visited sets; alternate expanding the smaller frontier; meeting = answer.",
+    "0-1 BFS is correct because the deque is sorted by distance up to ±1."
+  ],
+  tips: [
+    "Multi-source is the fix for 'compute distance from every source simultaneously' — way better than V separate BFSes.",
+    "0-1 BFS avoids the log factor of Dijkstra when weights are 0/1.",
+    "Bidirectional BFS adds bookkeeping; only use when state space is huge AND you know dst.",
+    "LeetCode hits: 01 Matrix, Rotting Oranges, Walls and Gates (multi-source); Word Ladder II (bidirectional)."
+  ],
+  code: `import java.util.*;
+
+// Multi-source BFS — 01 Matrix style
+int[][] multiSourceBFS(int[][] grid) {
+    int R = grid.length, C = grid[0].length;
+    int[][] dist = new int[R][C];
+    for (int[] r : dist) Arrays.fill(r, -1);
+    Deque<int[]> q = new ArrayDeque<>();
+    for (int i = 0; i < R; i++)
+        for (int j = 0; j < C; j++)
+            if (grid[i][j] == 0) { dist[i][j] = 0; q.offer(new int[]{i, j}); }
+    int[] dr = {-1,1,0,0}, dc = {0,0,-1,1};
+    while (!q.isEmpty()) {
+        int[] cur = q.poll();
+        for (int d = 0; d < 4; d++) {
+            int nr = cur[0]+dr[d], nc = cur[1]+dc[d];
+            if (nr<0||nr>=R||nc<0||nc>=C||dist[nr][nc] != -1) continue;
+            dist[nr][nc] = dist[cur[0]][cur[1]] + 1;
+            q.offer(new int[]{nr, nc});
+        }
+    }
+    return dist;
+}
+
+// 0-1 BFS — edges cost 0 or 1
+int zeroOneBFS(List<List<int[]>> g, int src, int dst) {
+    int n = g.size();
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+    Deque<Integer> dq = new ArrayDeque<>();
+    dq.offerFirst(src);
+    while (!dq.isEmpty()) {
+        int u = dq.pollFirst();
+        for (int[] e : g.get(u)) {
+            int v = e[0], w = e[1];
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                if (w == 0) dq.offerFirst(v); else dq.offerLast(v);
+            }
+        }
+    }
+    return dist[dst];
+}`,
+  complexity: "Multi-source: O(V+E). 0-1 BFS: O(V+E). Bidirectional: O(b^(d/2))."
+});
+
+
+/* ========== 3. TOPOLOGICAL ORDERING & DAGs ========== */
+
+PROBLEMS.push({
+  num: 11, title: "Topological Sort — Kahn's BFS & DFS post-order", diff: "med",
+  family: "Topological / DAG",
+  problem: "Linearise a DAG so that for every edge u→v, u comes before v. Two equivalent approaches: Kahn's (BFS using in-degrees) and DFS post-order (reverse the finish order).",
+  intuition: "Kahn's: repeatedly emit any node whose in-degree is 0 and decrement its neighbours' in-degrees. If you don't emit all V nodes, there was a cycle. DFS post-order: do DFS, push each node onto a stack on the WAY OUT; reverse = topological order.",
+  hints: [
+    "Kahn's: build in-degree[]; enqueue zero-indegree nodes; while queue, poll u → emit u → for each v in g[u]: if --indeg[v] == 0 enqueue v.",
+    "DFS: post-order push to a stack; reverse at the end.",
+    "If the result has fewer than V nodes → cycle, no topological order exists.",
+    "Kahn's also detects cycles for free (count emitted < V → cycle)."
+  ],
+  tips: [
+    "If the problem says 'order', 'prerequisites', 'build dependency' → topo sort. No exceptions.",
+    "Kahn's is usually easier to code under interview pressure (no recursion).",
+    "There can be MANY valid topological orders; the algorithm picks one.",
+    "LeetCode hits: Course Schedule I/II, Alien Dictionary, Parallel Courses, Sequence Reconstruction."
+  ],
+  code: `import java.util.*;
+
+int[] topoKahn(int n, List<List<Integer>> g) {
+    int[] indeg = new int[n];
+    for (int u = 0; u < n; u++) for (int v : g.get(u)) indeg[v]++;
+    Deque<Integer> q = new ArrayDeque<>();
+    for (int i = 0; i < n; i++) if (indeg[i] == 0) q.offer(i);
+    int[] order = new int[n];
+    int k = 0;
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        order[k++] = u;
+        for (int v : g.get(u))
+            if (--indeg[v] == 0) q.offer(v);
+    }
+    if (k != n) return new int[0];   // cycle
+    return order;
+}
+
+// DFS post-order variant
+List<Integer> topoDFS(int n, List<List<Integer>> g) {
+    int[] state = new int[n];        // 0 unseen, 1 in-stack, 2 done
+    Deque<Integer> stack = new ArrayDeque<>();
+    for (int i = 0; i < n; i++) if (state[i] == 0)
+        if (!dfs(i, g, state, stack)) return List.of();    // cycle
+    List<Integer> order = new ArrayList<>(stack);
+    Collections.reverse(order);
+    return order;
+}
+boolean dfs(int u, List<List<Integer>> g, int[] s, Deque<Integer> st) {
+    if (s[u] == 1) return false;     // back edge → cycle
+    if (s[u] == 2) return true;
+    s[u] = 1;
+    for (int v : g.get(u)) if (!dfs(v, g, s, st)) return false;
+    s[u] = 2; st.push(u);
+    return true;
+}`,
+  complexity: "O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 12, title: "Cycle Detection — directed (3-color DFS) vs undirected (parent-tracking)", diff: "med",
+  family: "Topological / DAG",
+  problem: "Two flavours, two algorithms. Directed: WHITE/GRAY/BLACK DFS — a back edge to a GRAY node is a cycle. Undirected: DFS with parent tracking — a visited neighbour that ISN'T your parent is a cycle. Union-Find also detects undirected cycles.",
+  intuition: "In a directed graph, encountering an in-progress (gray) node during DFS means you've found a back edge → cycle. In an undirected graph, every edge appears twice; the parent-check filters out the immediate-back-edge that isn't a real cycle.",
+  hints: [
+    "Directed: state[u] = 0 unseen, 1 visiting, 2 done. If you visit a 'visiting' node → cycle.",
+    "Undirected DFS: dfs(u, parent): for each neighbour v: if !visited recurse(v, u); else if v != parent → cycle.",
+    "Undirected with Union-Find: for each edge, if u and v already share a root → cycle.",
+    "Kahn's BFS also detects directed cycles for free (emitted &lt; V → cycle)."
+  ],
+  tips: [
+    "On a SIMPLE undirected graph, the parent check works as long as no parallel edges. With parallel edges, mark each edge as used.",
+    "Three-color DFS doubles as your topo-sort foundation.",
+    "Union-Find for undirected cycle detection is one of the cleanest interview answers — short, robust.",
+    "LeetCode hits: Course Schedule I (directed), Redundant Connection (undirected, Union-Find), Find Eventual Safe States."
+  ],
+  code: `import java.util.*;
+
+// Directed cycle — 3-color DFS
+boolean hasCycleDirected(int n, List<List<Integer>> g) {
+    int[] state = new int[n];
+    for (int i = 0; i < n; i++) if (state[i] == 0 && dfs(i, g, state)) return true;
+    return false;
+}
+boolean dfs(int u, List<List<Integer>> g, int[] s) {
+    s[u] = 1;
+    for (int v : g.get(u)) {
+        if (s[v] == 1) return true;
+        if (s[v] == 0 && dfs(v, g, s)) return true;
+    }
+    s[u] = 2;
+    return false;
+}
+
+// Undirected cycle — DFS with parent
+boolean hasCycleUndirected(int n, List<List<Integer>> g) {
+    boolean[] vis = new boolean[n];
+    for (int i = 0; i < n; i++)
+        if (!vis[i] && dfsU(i, -1, g, vis)) return true;
+    return false;
+}
+boolean dfsU(int u, int parent, List<List<Integer>> g, boolean[] vis) {
+    vis[u] = true;
+    for (int v : g.get(u)) {
+        if (!vis[v]) { if (dfsU(v, u, g, vis)) return true; }
+        else if (v != parent) return true;
+    }
+    return false;
+}`,
+  complexity: "O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 13, title: "DP on a DAG — longest path, count paths, min/max cost", diff: "med",
+  family: "Topological / DAG",
+  problem: "On a DAG, almost any optimisation problem (longest path, number of paths, min/max sum) becomes linear: topologically sort, then iterate in that order updating dp[u] from already-finalised predecessors.",
+  intuition: "A DAG has NO cycles, so once a node is in topological order, all of its predecessors are already done. dp[u] = aggregate over preds — sum / max / min depending on the problem. This is the same trick Bellman-Ford falls back on when edges are guaranteed acyclic.",
+  hints: [
+    "Topo sort the graph first.",
+    "Iterate nodes in topological order; for each u, for each edge u→v with weight w: dp[v] = combine(dp[v], dp[u] + w).",
+    "Initialise dp[start] = 0 (or whatever the base case is); INF / -INF for the rest depending on min/max.",
+    "Path counting: dp[v] += dp[u] for every edge u→v.",
+    "Longest path on a general (cyclic) graph is NP-hard. Only easy on a DAG."
+  ],
+  tips: [
+    "If the graph is implicit (state transitions form a DAG), topo-order = state-creation order — sometimes you don't need a separate sort pass.",
+    "Watch for unreachable nodes — their dp may stay at INF/-INF, which is fine but easy to accidentally read.",
+    "Many DP-on-grid problems are secretly DP-on-DAG (every cell depends only on top/left neighbours).",
+    "LeetCode hits: Longest Increasing Path in a Matrix, Largest Color Value in a Directed Graph, Count All Possible Paths."
+  ],
+  code: `import java.util.*;
+
+// Longest path in a DAG (edge weights can be negative)
+int longestPath(int n, List<List<int[]>> g, int src) {
+    int[] order = topoKahn(n, toUnweighted(g));
+    long[] dp = new long[n];
+    Arrays.fill(dp, Long.MIN_VALUE);
+    dp[src] = 0;
+    for (int u : order) {
+        if (dp[u] == Long.MIN_VALUE) continue;
+        for (int[] e : g.get(u)) {
+            int v = e[0], w = e[1];
+            dp[v] = Math.max(dp[v], dp[u] + w);
+        }
+    }
+    long best = 0;
+    for (long x : dp) if (x != Long.MIN_VALUE) best = Math.max(best, x);
+    return (int) best;
+}
+
+// Count number of paths from src to dst on a DAG
+long countPaths(int n, List<List<Integer>> g, int src, int dst) {
+    int[] order = topoKahn(n, g);
+    long[] dp = new long[n];
+    dp[src] = 1;
+    for (int u : order) {
+        if (dp[u] == 0) continue;
+        for (int v : g.get(u)) dp[v] += dp[u];
+    }
+    return dp[dst];
+}`,
+  complexity: "O(V + E) once topologically sorted."
+});
+
+
+/* ========== 4. MINIMUM SPANNING TREE ========== */
+
+PROBLEMS.push({
+  num: 14, title: "Kruskal's MST — sort edges + Union-Find", diff: "med",
+  family: "Minimum Spanning Tree",
+  problem: "Pick the minimum-cost subset of edges that keeps the graph connected (V-1 edges, no cycle). Kruskal's: sort all edges by weight, then greedily add each edge if it doesn't form a cycle (check via Union-Find).",
+  intuition: "An MST has exactly V-1 edges. Greedily picking the lightest edge is optimal as long as you never close a cycle — Union-Find makes the cycle check O(α(V)). Stop when you've added V-1 edges.",
+  hints: [
+    "Sort edges by weight ascending.",
+    "Initialise Union-Find with V nodes.",
+    "For each edge (u, v, w): if find(u) != find(v), union them, accumulate w, count++. Stop at count == V-1.",
+    "If you finish the edge list with count &lt; V-1 → graph is disconnected, no MST.",
+    "For a fully-connected graph, this gives the unique MST when all weights are distinct."
+  ],
+  tips: [
+    "Kruskal works directly on the EDGE LIST; no adjacency list needed.",
+    "Nice fit for problems framed as 'minimise cost to connect cities' / 'min cost to connect points'.",
+    "If the input is a complete graph (e.g. distances between points), generate edges first, then sort.",
+    "LeetCode hits: Min Cost to Connect All Points, Connecting Cities With Minimum Cost, Optimize Water Distribution."
+  ],
+  code: `import java.util.*;
+
+int kruskal(int n, int[][] edges) {     // edges = {u, v, w}
+    Arrays.sort(edges, (a, b) -> a[2] - b[2]);
+    int[] parent = new int[n], rank = new int[n];
+    for (int i = 0; i < n; i++) parent[i] = i;
+    int total = 0, used = 0;
+    for (int[] e : edges) {
+        int ru = find(parent, e[0]), rv = find(parent, e[1]);
+        if (ru == rv) continue;
+        // union by rank
+        if (rank[ru] < rank[rv]) parent[ru] = rv;
+        else if (rank[ru] > rank[rv]) parent[rv] = ru;
+        else { parent[rv] = ru; rank[ru]++; }
+        total += e[2];
+        if (++used == n - 1) return total;
+    }
+    return -1;     // disconnected
+}
+int find(int[] p, int x) { return p[x] == x ? x : (p[x] = find(p, p[x])); }`,
+  complexity: "O(E log E) for the sort, near O(E·α(V)) for the unions."
+});
+
+PROBLEMS.push({
+  num: 15, title: "Prim's MST — priority queue from a starting node", diff: "med",
+  family: "Minimum Spanning Tree",
+  problem: "Alternative MST algorithm: start from any node, repeatedly add the cheapest edge that connects a new node to the tree. Min-heap of crossing edges.",
+  intuition: "Where Kruskal grows by edges, Prim grows by nodes. Each iteration: pop the cheapest edge that crosses the current tree boundary; if its other endpoint is new, add it. Same total weight, different bookkeeping.",
+  hints: [
+    "PriorityQueue&lt;int[]&gt; ordered by weight; start with all edges from src.",
+    "boolean[] inTree; mark src; pop edges; if other endpoint in tree → skip.",
+    "For each newly added node, push all its outgoing edges.",
+    "Stop when |inTree| == V (or you've added V-1 edges).",
+    "Adjacency-list-based; benefits when E is small relative to V^2."
+  ],
+  tips: [
+    "Kruskal needs the full edge list pre-sorted — Prim works incrementally — pick based on input shape.",
+    "On dense graphs (E ~ V^2), an O(V^2) array-based Prim sometimes beats Kruskal's sort.",
+    "Same Union-Find trick as Kruskal can replace 'inTree' if you prefer.",
+    "Fibonacci-heap Prim is theoretically O(E + V log V) but never used in practice."
+  ],
+  code: `import java.util.*;
+
+int prim(int n, List<List<int[]>> g, int src) {
+    boolean[] inTree = new boolean[n];
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[2] - b[2]);
+    inTree[src] = true;
+    for (int[] e : g.get(src)) pq.offer(new int[]{src, e[0], e[1]});
+    int total = 0, used = 0;
+    while (!pq.isEmpty() && used < n - 1) {
+        int[] e = pq.poll();
+        int v = e[1], w = e[2];
+        if (inTree[v]) continue;
+        inTree[v] = true; total += w; used++;
+        for (int[] nx : g.get(v))
+            if (!inTree[nx[0]]) pq.offer(new int[]{v, nx[0], nx[1]});
+    }
+    return used == n - 1 ? total : -1;
+}`,
+  complexity: "O((V + E) log V) with a binary heap."
+});
+
+/* ========== 5. UNION-FIND ========== */
+
+PROBLEMS.push({
+  num: 16, title: "Union-Find — path compression + union by rank", diff: "med",
+  family: "Union-Find",
+  problem: "Disjoint-set data structure with two operations: find(x) returns the representative of x's set; union(a, b) merges the two sets. With path compression + union by rank, both operations are nearly O(1) amortised — α(N), the inverse Ackermann.",
+  intuition: "Each node points to a parent; the root represents the set. find walks up to the root and (with path compression) flattens the chain. union picks one root and points the other under it (with rank/size to keep trees shallow).",
+  hints: [
+    "parent[i] = i initially.",
+    "find: if parent[x] != x → parent[x] = find(parent[x]); return parent[x].",
+    "union by rank: rank[ru] vs rank[rv] → smaller hangs under larger; equal → tie-break + rank++.",
+    "Track set count: start at n, decrement on every successful union.",
+    "Track set size when problems ask about component size."
+  ],
+  tips: [
+    "Default to it for: dynamic connectivity, cycle detection in undirected, Kruskal's MST, equation problems.",
+    "α(n) ≤ 4 for any practically large n — treat as O(1).",
+    "Rank vs size: rank tracks tree depth; size tracks element count. Either gives near-O(1); pick based on what the problem asks about.",
+    "Implementation: int[] parent + int[] rank/size + int count. ~30 lines, learn it cold."
+  ],
+  code: `class UnionFind {
+    int[] parent, rank;
+    int count;     // number of disjoint sets
+
+    UnionFind(int n) {
+        parent = new int[n]; rank = new int[n]; count = n;
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+
+    int find(int x) {
+        while (parent[x] != x) { parent[x] = parent[parent[x]]; x = parent[x]; }
+        return x;
+    }
+
+    boolean union(int a, int b) {
+        int ra = find(a), rb = find(b);
+        if (ra == rb) return false;
+        if (rank[ra] < rank[rb]) { parent[ra] = rb; }
+        else if (rank[ra] > rank[rb]) { parent[rb] = ra; }
+        else { parent[rb] = ra; rank[ra]++; }
+        count--;
+        return true;
+    }
+}`,
+  complexity: "Both ops near O(1) amortised: O(α(N)) ≤ 4."
+});
+
+PROBLEMS.push({
+  num: 17, title: "Union-Find Recipes — Accounts Merge, Evaluate Division, Redundant Connection", diff: "med",
+  family: "Union-Find",
+  problem: "Many 'are X and Y in the same group?' / 'merge equivalent things' problems are Union-Find in disguise. Three classics: Accounts Merge (group emails by owner), Evaluate Division (weighted Union-Find), Redundant Connection (find the extra edge in a tree-plus-one).",
+  intuition: "Whenever an interview problem has the shape 'group these things by some equivalence relation' — Union-Find. Weighted variants (Evaluate Division) keep a `weight[]` parallel to `parent[]` so find returns both the root and the cumulative ratio. Redundant Connection is just 'first edge whose union returns false'.",
+  hints: [
+    "Accounts Merge: union all emails that share an account; aggregate by root.",
+    "Evaluate Division: find returns root + ratio(x → root); ratio(x → y) = ratio(x → root) / ratio(y → root).",
+    "Redundant Connection: build edge by edge; first edge that creates a cycle is the redundant one.",
+    "Satisfiability of Equality Equations: union all '==', then check every '!=' has different roots.",
+    "For string keys, map them to int IDs first via a HashMap → Union-Find on ints."
+  ],
+  tips: [
+    "When the problem hints at 'merge', 'group', 'connected', 'same component' — start with Union-Find.",
+    "Weighted Union-Find: maintain weight[i] = ratio (or offset) from i to parent[i]; update both on path compression.",
+    "Storing extra info per root (e.g. min element, sum, count) is a clean way to answer queries about a component.",
+    "LeetCode hits: Accounts Merge, Number of Provinces, Evaluate Division, Redundant Connection, Satisfiability of Equality Equations, Most Stones Removed."
+  ],
+  code: `import java.util.*;
+
+// Redundant Connection — return the FIRST edge that closes a cycle
+int[] findRedundantConnection(int[][] edges) {
+    int n = edges.length;
+    UnionFind uf = new UnionFind(n + 1);
+    for (int[] e : edges)
+        if (!uf.union(e[0], e[1])) return e;
+    return new int[0];
+}
+
+// Accounts Merge sketch
+List<List<String>> accountsMerge(List<List<String>> accounts) {
+    Map<String, Integer> idOf = new HashMap<>();
+    Map<String, String> nameOf = new HashMap<>();
+    int id = 0;
+    for (List<String> acc : accounts) {
+        String name = acc.get(0);
+        for (int i = 1; i < acc.size(); i++) {
+            if (!idOf.containsKey(acc.get(i))) {
+                idOf.put(acc.get(i), id++);
+                nameOf.put(acc.get(i), name);
+            }
+        }
+    }
+    UnionFind uf = new UnionFind(id);
+    for (List<String> acc : accounts)
+        for (int i = 2; i < acc.size(); i++)
+            uf.union(idOf.get(acc.get(1)), idOf.get(acc.get(i)));
+    Map<Integer, List<String>> groups = new HashMap<>();
+    for (var e : idOf.entrySet())
+        groups.computeIfAbsent(uf.find(e.getValue()), k -> new ArrayList<>()).add(e.getKey());
+    List<List<String>> out = new ArrayList<>();
+    for (var emails : groups.values()) {
+        Collections.sort(emails);
+        List<String> row = new ArrayList<>();
+        row.add(nameOf.get(emails.get(0)));
+        row.addAll(emails);
+        out.add(row);
+    }
+    return out;
+}`,
+  complexity: "Per query / merge: O(α(N)) amortised."
+});
+
+
+/* ========== 6. CYCLE-RELATED ========== */
+
+PROBLEMS.push({
+  num: 18, title: "Find / Reconstruct a Cycle — and shortest cycle", diff: "hard",
+  family: "Cycles",
+  problem: "Beyond just detecting a cycle, sometimes you need to RETURN one (the path of nodes), or find the SHORTEST cycle through a given node, or anywhere in the graph.",
+  intuition: "To recover a cycle: during DFS, track parent[] (or stack of nodes); when you discover a back edge u→v, walk parent[] from u back to v, then add the edge. For SHORTEST cycle through s: run BFS from s; if a non-tree edge (u, v) is encountered where dist[u]+dist[v]+1 forms a cycle, that's a candidate. Try each node as s, take min — O(V·(V+E)).",
+  hints: [
+    "Reconstruct: keep a stack of nodes during DFS; on back edge, slice the stack from the back-edge target upward.",
+    "Shortest cycle in unweighted graph: BFS from each node; min over all 'sees a visited non-parent neighbour with dist[v]+dist[u]+1' candidates.",
+    "Shortest cycle in weighted: similar pattern but use Dijkstra; or Floyd-Warshall + check d[i][i] for tiny graphs.",
+    "Longest cycle is NP-hard in general (reduces to Hamiltonian)."
+  ],
+  tips: [
+    "Reconstructing a directed cycle via 3-color DFS: keep parent[]; when DFS hits a GRAY node v from u, walk parent from u back to v.",
+    "Shortest cycle in a directed graph: try removing each edge (u,v) and BFS shortest u→v path with that edge missing — pick min.",
+    "Many real interview problems only need DETECTION; double-check before going for reconstruction.",
+    "LeetCode hits: Find Eventual Safe States (3-color DFS reverse), Find the Town Judge."
+  ],
+  code: `import java.util.*;
+
+// Shortest cycle through node s in an unweighted graph
+int shortestCycleThrough(int s, List<List<Integer>> g) {
+    int n = g.size(), best = Integer.MAX_VALUE;
+    int[] dist = new int[n], parent = new int[n];
+    Arrays.fill(dist, -1); Arrays.fill(parent, -1);
+    Deque<Integer> q = new ArrayDeque<>();
+    dist[s] = 0; q.offer(s);
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        for (int v : g.get(u)) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.offer(v);
+            } else if (v != parent[u]) {
+                best = Math.min(best, dist[u] + dist[v] + 1);
+            }
+        }
+    }
+    return best == Integer.MAX_VALUE ? -1 : best;
+}`,
+  complexity: "Detect: O(V+E). Shortest cycle anywhere: O(V·(V+E))."
+});
+
+PROBLEMS.push({
+  num: 19, title: "Eulerian Path / Circuit — Hierholzer's algorithm", diff: "hard",
+  family: "Cycles",
+  problem: "An Eulerian PATH uses every edge exactly once; an Eulerian CIRCUIT also returns to the start. Hierholzer's builds it by walking edges and splicing in sub-tours.",
+  intuition: "Conditions: (a) connected (ignoring isolated vertices); (b) for circuit — all degrees even (undirected) / in-degree == out-degree (directed); (c) for path — exactly 0 or 2 odd-degree vertices (undirected) / exactly one node with out-in == 1 and one with in-out == 1 (directed). Hierholzer's: greedily walk edges; when stuck, the current node closes a sub-tour, splice it.",
+  hints: [
+    "Maintain a multiset/list of outgoing edges per node; pop them as you traverse.",
+    "DFS-style: while the current node has remaining edges, pick one, recurse; when stuck, append node to result.",
+    "Reverse the result at the end → Eulerian path/circuit.",
+    "For Reconstruct Itinerary: sort destinations, use a min-heap so output is lexicographically smallest."
+  ],
+  tips: [
+    "Distinguish Eulerian (every EDGE once) from Hamiltonian (every NODE once). Eulerian is polynomial; Hamiltonian is NP-hard.",
+    "Iterative Hierholzer (stack-based) avoids deep recursion on long paths.",
+    "Track edge counts, not edge objects, when the graph has parallel edges.",
+    "LeetCode hits: Reconstruct Itinerary, Valid Arrangement of Pairs."
+  ],
+  code: `import java.util.*;
+
+// Reconstruct Itinerary — Hierholzer's with min-heap for lex-smallest path
+List<String> findItinerary(List<List<String>> tickets) {
+    Map<String, PriorityQueue<String>> g = new HashMap<>();
+    for (List<String> t : tickets)
+        g.computeIfAbsent(t.get(0), k -> new PriorityQueue<>()).offer(t.get(1));
+    List<String> route = new ArrayList<>();
+    Deque<String> stack = new ArrayDeque<>();
+    stack.push("JFK");
+    while (!stack.isEmpty()) {
+        String u = stack.peek();
+        if (g.containsKey(u) && !g.get(u).isEmpty()) stack.push(g.get(u).poll());
+        else route.add(stack.pop());
+    }
+    Collections.reverse(route);
+    return route;
+}`,
+  complexity: "O(E log E) for the priority-queue version. O(E) without sorting."
+});
+
+/* ========== 7. BIPARTITE / COLORING ========== */
+
+PROBLEMS.push({
+  num: 20, title: "Bipartite Check — 2-coloring with BFS or DFS", diff: "med",
+  family: "Bipartite",
+  problem: "A graph is bipartite iff it can be 2-colored such that every edge has endpoints of different colors. Equivalently: it has no odd-length cycle. BFS/DFS from each unvisited node, assign alternating colors; conflict → not bipartite.",
+  intuition: "Color the source 0; its neighbours 1; their neighbours 0; alternate. If you ever find an edge between two same-colored nodes, the graph is not bipartite. The COMPONENTS may be checked independently.",
+  hints: [
+    "color[] = -1 initially; for each component, start with color 0.",
+    "BFS or DFS: for each neighbour v of u, if color[v] == -1 set color[v] = 1 - color[u]; else if equal → return false.",
+    "Run from EVERY unvisited node so disconnected components don't get missed.",
+    "Equivalent statement: 'no odd-length cycle' — odd-cycle detection IS bipartiteness."
+  ],
+  tips: [
+    "Bipartite + matching → Hungarian algorithm or max flow (see card 31).",
+    "If the problem says 'split into two groups', 'possible bipartition', 'team assignment with mutual dislikes' → bipartite check.",
+    "Same algorithm for directed graphs by treating edges as undirected.",
+    "LeetCode hits: Is Graph Bipartite, Possible Bipartition."
+  ],
+  code: `import java.util.*;
+
+boolean isBipartite(List<List<Integer>> g) {
+    int n = g.size();
+    int[] color = new int[n];
+    Arrays.fill(color, -1);
+    for (int s = 0; s < n; s++) {
+        if (color[s] != -1) continue;
+        color[s] = 0;
+        Deque<Integer> q = new ArrayDeque<>();
+        q.offer(s);
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            for (int v : g.get(u)) {
+                if (color[v] == -1) {
+                    color[v] = 1 - color[u];
+                    q.offer(v);
+                } else if (color[v] == color[u]) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}`,
+  complexity: "O(V + E)."
+});
+
+/* ========== 8. GRID-AS-GRAPH ========== */
+
+PROBLEMS.push({
+  num: 21, title: "Grids as Graphs — 4/8-directional BFS/DFS templates", diff: "easy",
+  family: "Grid as Graph",
+  problem: "A 2D grid is just a graph in disguise: each cell is a node, edges go to 4 (or 8) neighbouring cells. Most grid problems are BFS/DFS plus a small twist.",
+  intuition: "Memorise dr/dc arrays for 4 / 8 directions and a bounds-check helper. From there, ANY grid problem reduces to: outer loop over cells, inner BFS/DFS, with state that captures whatever the problem asks (visited, color, distance, accumulator).",
+  hints: [
+    "4-dir: int[] dr = {-1,1,0,0}, dc = {0,0,-1,1};",
+    "8-dir: int[] dr = {-1,-1,-1,0,0,1,1,1}, dc = {-1,0,1,-1,1,-1,0,1};",
+    "Bounds + cell-type check in one if: `if (nr<0||nr>=R||nc<0||nc>=C||grid[nr][nc]!=...) continue;`.",
+    "Mutate the grid as the visited marker when allowed.",
+    "Encode (r, c) as r*C+c if you need an int-indexed visited / dist."
+  ],
+  tips: [
+    "If the problem has uniform step cost, BFS gives shortest path. If cells have weights, switch to Dijkstra.",
+    "When the grid is huge (10^6 cells), use int encoding + boolean[] instead of HashMap<Pair> — much faster.",
+    "Diagonal moves and wraparound are common 'gotchas'; read the problem carefully.",
+    "LeetCode hits: Number of Islands, Walls and Gates, Pacific Atlantic, Surrounded Regions, Number of Closed Islands."
+  ],
+  code: `import java.util.*;
+
+int[] dr = {-1, 1, 0, 0}, dc = {0, 0, -1, 1};
+
+void floodFill(int[][] g, int sr, int sc, int target, int replacement) {
+    if (g[sr][sc] != target || target == replacement) return;
+    int R = g.length, C = g[0].length;
+    Deque<int[]> q = new ArrayDeque<>();
+    q.offer(new int[]{sr, sc});
+    g[sr][sc] = replacement;
+    while (!q.isEmpty()) {
+        int[] cur = q.poll();
+        for (int d = 0; d < 4; d++) {
+            int nr = cur[0]+dr[d], nc = cur[1]+dc[d];
+            if (nr<0||nr>=R||nc<0||nc>=C||g[nr][nc] != target) continue;
+            g[nr][nc] = replacement;
+            q.offer(new int[]{nr, nc});
+        }
+    }
+}`,
+  complexity: "O(R · C) per traversal."
+});
+
+
+PROBLEMS.push({
+  num: 22, title: "Multi-State BFS — when state has more than (row, col)", diff: "hard",
+  family: "Grid as Graph",
+  problem: "Some grid problems require state beyond position: keys collected, eliminations remaining, time of day. The graph nodes become tuples (r, c, extra) and BFS proceeds over the expanded state space.",
+  intuition: "If the same cell can be visited in multiple meaningful states, treating only (r, c) as 'visited' loses information. Augment the state with the variable bits (e.g. bitmask of keys collected) and expand the visited set accordingly. Don't worry — state space rarely explodes if the extra dimension is small (≤ 64 for a bitmask).",
+  hints: [
+    "State = (r, c, extra). Encode as r*C*K + c*K + extra (or use HashSet<long>).",
+    "Shortest Path with Obstacle Elimination: state = (r, c, eliminations_used).",
+    "Shortest Path to Get All Keys: state = (r, c, bitmask of keys held).",
+    "Two Pacmans / Two robots: state combines both positions.",
+    "Time-dependent grid (e.g. cells appear/disappear): state includes time mod period."
+  ],
+  tips: [
+    "If your visited set is empty up-front, BFS still runs, but loops cause TLE. Track visited per-state.",
+    "Bitmask key sets fit easily into an int when keys ≤ 6 (rarely more in interview problems).",
+    "If the augmenting variable is monotone (only grows), you might be able to prune harder than naive BFS.",
+    "LeetCode hits: Shortest Path in a Grid with Obstacles Elimination, Shortest Path to Get All Keys, Cut Off Trees for Golf Event."
+  ],
+  code: `import java.util.*;
+
+// Shortest Path with Obstacle Elimination — at most k obstacles can be removed
+int shortestPath(int[][] grid, int k) {
+    int R = grid.length, C = grid[0].length;
+    if (k >= R + C - 2) return R + C - 2;     // can blast through everything
+    boolean[][][] vis = new boolean[R][C][k+1];
+    Deque<int[]> q = new ArrayDeque<>();
+    q.offer(new int[]{0, 0, k, 0});           // r, c, remaining, dist
+    vis[0][0][k] = true;
+    int[] dr = {-1,1,0,0}, dc = {0,0,-1,1};
+    while (!q.isEmpty()) {
+        int[] cur = q.poll();
+        int r = cur[0], c = cur[1], rem = cur[2], d = cur[3];
+        if (r == R - 1 && c == C - 1) return d;
+        for (int dd = 0; dd < 4; dd++) {
+            int nr = r + dr[dd], nc = c + dc[dd];
+            if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
+            int nrem = rem - grid[nr][nc];
+            if (nrem < 0 || vis[nr][nc][nrem]) continue;
+            vis[nr][nc][nrem] = true;
+            q.offer(new int[]{nr, nc, nrem, d + 1});
+        }
+    }
+    return -1;
+}`,
+  complexity: "O(R · C · K) where K is the size of the extra-state alphabet."
+});
+
+/* ========== 9. STATE-SPACE / IMPLICIT GRAPHS ========== */
+
+PROBLEMS.push({
+  num: 23, title: "Word Ladder, Sliding Puzzle — recognising the implicit graph", diff: "med",
+  family: "Implicit Graph",
+  problem: "Some problems don't HAND you a graph — the graph emerges from problem states. A 'configuration' is a node; a 'legal move' is an edge. BFS finds the minimum number of moves between two configurations.",
+  intuition: "If the prompt is 'transform A into B with a series of legal moves; minimum moves?', that's BFS over an implicit graph. Generate neighbours on-the-fly inside BFS — never materialise the whole graph (too big). HashSet/HashMap is your visited.",
+  hints: [
+    "State = whatever uniquely defines a configuration (string, board encoding, tuple).",
+    "Neighbours = all states reachable in one legal move; generate inside BFS.",
+    "visited = HashSet<state>.",
+    "For huge state spaces, use BIDIRECTIONAL BFS (start from both src and dst, meet in the middle).",
+    "If costs differ across moves, switch to Dijkstra over the implicit graph."
+  ],
+  tips: [
+    "Generating neighbours efficiently is often the trickiest part — pre-compute reachability or canonicalise states.",
+    "Word Ladder: bucket words by patterns like '*ot', 'h*t', 'ho*' for O(L) neighbour generation per word.",
+    "Sliding Puzzle / Open the Lock: encode the board/lock as a String to use in HashSet.",
+    "LeetCode hits: Word Ladder, Word Ladder II, Sliding Puzzle, Open the Lock, Minimum Genetic Mutation, Bus Routes."
+  ],
+  code: `import java.util.*;
+
+// Open the Lock — start at "0000", reach target avoiding deadends
+int openLock(String[] deadends, String target) {
+    Set<String> dead = new HashSet<>(Arrays.asList(deadends));
+    if (dead.contains("0000")) return -1;
+    if (target.equals("0000")) return 0;
+    Set<String> seen = new HashSet<>(dead);
+    Deque<String> q = new ArrayDeque<>();
+    q.offer("0000");
+    seen.add("0000");
+    int turns = 0;
+    while (!q.isEmpty()) {
+        turns++;
+        for (int sz = q.size(); sz > 0; sz--) {
+            char[] cur = q.poll().toCharArray();
+            for (int i = 0; i < 4; i++) {
+                char orig = cur[i];
+                for (int delta : new int[]{1, -1}) {
+                    cur[i] = (char) ('0' + (orig - '0' + delta + 10) % 10);
+                    String next = new String(cur);
+                    if (next.equals(target)) return turns;
+                    if (seen.add(next)) q.offer(next);
+                }
+                cur[i] = orig;
+            }
+        }
+    }
+    return -1;
+}`,
+  complexity: "O(|states| · cost-per-neighbour)."
+});
+
+PROBLEMS.push({
+  num: 24, title: "Bidirectional BFS — square-root the search tree", diff: "hard",
+  family: "Implicit Graph",
+  problem: "When src and dst are both known and the branching factor is high, search from BOTH ends and stop when the frontiers meet. This roughly halves the EXPONENT of the search tree size — b^(d/2) instead of b^d.",
+  intuition: "Two BFSes running in parallel. Each step, expand the SMALLER frontier (keeps work balanced). When a node from one side appears in the other side's visited set, you've connected them — total distance = sum of both depths.",
+  hints: [
+    "Maintain two HashSets: front (src side), back (dst side).",
+    "Always expand the smaller one (keeps work balanced).",
+    "On expansion, if any neighbour is in the OTHER set → done, return current depth + 1.",
+    "Track 'visited' globally to avoid re-expanding nodes.",
+    "Doesn't help if branching factor is low or if you DON'T know the target."
+  ],
+  tips: [
+    "Implementation pitfall: if you forget to expand the smaller frontier, you lose the savings.",
+    "Word Ladder is the canonical interview demo for bidirectional BFS.",
+    "For weighted graphs, this generalises to bidirectional Dijkstra (much trickier).",
+    "Compare the answer against straight BFS; both should agree on a small input."
+  ],
+  code: `import java.util.*;
+
+int ladderLength(String beginWord, String endWord, List<String> wordList) {
+    Set<String> dict = new HashSet<>(wordList);
+    if (!dict.contains(endWord)) return 0;
+    Set<String> front = new HashSet<>(), back = new HashSet<>();
+    front.add(beginWord); back.add(endWord);
+    int len = 1;
+    Set<String> seen = new HashSet<>();
+    seen.add(beginWord); seen.add(endWord);
+    while (!front.isEmpty() && !back.isEmpty()) {
+        if (front.size() > back.size()) { var t = front; front = back; back = t; }
+        Set<String> next = new HashSet<>();
+        for (String w : front) {
+            char[] c = w.toCharArray();
+            for (int i = 0; i < c.length; i++) {
+                char orig = c[i];
+                for (char ch = 'a'; ch <= 'z'; ch++) {
+                    if (ch == orig) continue;
+                    c[i] = ch;
+                    String nw = new String(c);
+                    if (back.contains(nw)) return len + 1;
+                    if (dict.contains(nw) && seen.add(nw)) next.add(nw);
+                }
+                c[i] = orig;
+            }
+        }
+        front = next;
+        len++;
+    }
+    return 0;
+}`,
+  complexity: "O(b^(d/2)) where b is branching, d is solution depth."
+});
+
+PROBLEMS.push({
+  num: 25, title: "A* / Greedy Best-First — informed search with a heuristic", diff: "hard",
+  family: "Implicit Graph",
+  problem: "When you have a HEURISTIC h(n) that estimates the remaining distance to the goal, A* explores nodes in order of f(n) = g(n) + h(n). With an admissible (never overestimates) heuristic, A* is optimal.",
+  intuition: "Dijkstra explores by distance from src. A* explores by 'distance from src + estimate to goal' — heading toward the goal first. On grids, Manhattan distance is the standard heuristic. Same priority queue, just different key.",
+  hints: [
+    "f = g + h. Use a min-heap keyed on f.",
+    "Admissible heuristic h ≤ actual remaining distance → A* is optimal.",
+    "Consistent (monotone) heuristic: h(u) ≤ cost(u, v) + h(v) → never re-expand nodes.",
+    "Manhattan distance for 4-dir grids; Euclidean for free-space; 0 for Dijkstra fallback.",
+    "On unweighted graphs with no useful heuristic, A* degenerates to BFS."
+  ],
+  tips: [
+    "A* shines on huge grids where the goal is far and most of the search tree is irrelevant.",
+    "Bad heuristics (overestimating) sacrifice optimality for speed — useful in real-time systems, NOT in interview problems.",
+    "If your A* is slower than Dijkstra, your heuristic is hurting (slow to compute or anti-correlated with actual distance).",
+    "For very small grids, BFS / Dijkstra is simpler and fast enough — don't reach for A* by default."
+  ],
+  code: `import java.util.*;
+
+int aStarGrid(int[][] grid) {
+    int R = grid.length, C = grid[0].length;
+    int[] dr = {-1,1,0,0}, dc = {0,0,-1,1};
+    int[][] gscore = new int[R][C];
+    for (int[] row : gscore) Arrays.fill(row, Integer.MAX_VALUE);
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
+    pq.offer(new int[]{(R-1)+(C-1), 0, 0, 0});  // f, g, r, c
+    gscore[0][0] = 0;
+    while (!pq.isEmpty()) {
+        int[] cur = pq.poll();
+        int g = cur[1], r = cur[2], c = cur[3];
+        if (r == R - 1 && c == C - 1) return g;
+        if (g > gscore[r][c]) continue;
+        for (int d = 0; d < 4; d++) {
+            int nr = r + dr[d], nc = c + dc[d];
+            if (nr<0||nr>=R||nc<0||nc>=C||grid[nr][nc] == 1) continue;
+            int ng = g + 1;
+            if (ng < gscore[nr][nc]) {
+                gscore[nr][nc] = ng;
+                int h = (R-1-nr) + (C-1-nc);     // Manhattan
+                pq.offer(new int[]{ng + h, ng, nr, nc});
+            }
+        }
+    }
+    return -1;
+}`,
+  complexity: "O((V+E) log V) at most; usually much better with a strong heuristic."
+});
+
+
+/* ========== 10. ADVANCED / SPECIALISED ========== */
+
+PROBLEMS.push({
+  num: 26, title: "Articulation Points & Bridges — Tarjan's", diff: "hard",
+  family: "Advanced",
+  problem: "An ARTICULATION POINT (cut vertex) is a node whose removal disconnects the graph. A BRIDGE (cut edge) is an edge whose removal does the same. Tarjan's runs a DFS keeping discovery time and 'lowlink' (lowest reachable disc time via tree + back edges).",
+  intuition: "During DFS, low[u] = min(disc[u], low[v] for tree children v, disc[w] for back edges to w). Bridge: edge (u,v) with low[v] > disc[u]. Articulation: u is articulation if (a) u is the DFS root and has ≥2 tree children, OR (b) u is non-root and has a child v with low[v] >= disc[u].",
+  hints: [
+    "DFS once; maintain disc[] and low[].",
+    "For each tree edge u→v: recurse, then low[u] = min(low[u], low[v]). Bridge if low[v] > disc[u].",
+    "For each back edge u→v: low[u] = min(low[u], disc[v]).",
+    "Pass parent to skip the immediate-parent edge.",
+    "Result: list of bridges / set of articulation points."
+  ],
+  tips: [
+    "Critical Connections (LeetCode) is the canonical 'find all bridges' problem.",
+    "Watch the parent skip — only skip ONE occurrence of the parent edge to handle multi-edges correctly.",
+    "Iterative Tarjan avoids stack overflows on long graphs.",
+    "If the question asks 'which edges, when removed, disconnect the graph?' → bridges.",
+    "If 'which nodes, when removed, disconnect?' → articulation points."
+  ],
+  code: `import java.util.*;
+
+class BridgeFinder {
+    int timer = 0;
+    int[] disc, low;
+    List<List<Integer>> bridges;
+
+    List<List<Integer>> findBridges(int n, List<List<Integer>> g) {
+        disc = new int[n]; low = new int[n];
+        Arrays.fill(disc, -1);
+        bridges = new ArrayList<>();
+        for (int i = 0; i < n; i++) if (disc[i] == -1) dfs(i, -1, g);
+        return bridges;
+    }
+
+    void dfs(int u, int parent, List<List<Integer>> g) {
+        disc[u] = low[u] = timer++;
+        for (int v : g.get(u)) {
+            if (disc[v] == -1) {
+                dfs(v, u, g);
+                low[u] = Math.min(low[u], low[v]);
+                if (low[v] > disc[u])
+                    bridges.add(List.of(u, v));
+            } else if (v != parent) {
+                low[u] = Math.min(low[u], disc[v]);
+            }
+        }
+    }
+}`,
+  complexity: "O(V + E)."
+});
+
+PROBLEMS.push({
+  num: 27, title: "Max Flow / Min Cut — Ford-Fulkerson, Edmonds-Karp, Dinic's", diff: "hard",
+  family: "Advanced",
+  problem: "Push as much flow as possible from source to sink given edge capacities. Three algorithms: Ford-Fulkerson (any augmenting path), Edmonds-Karp (BFS for shortest augmenting path, O(V·E²)), Dinic's (level graph + blocking flow, O(V²·E)).",
+  intuition: "Each augmenting path increases total flow by its bottleneck capacity. The MAX-FLOW MIN-CUT theorem: max flow value = min cut capacity. Many seemingly unrelated problems (bipartite matching, project selection, image segmentation) reduce to max flow.",
+  hints: [
+    "Build a residual graph: for each edge (u,v,c), maintain remaining capacity c[u][v]; pushing f flow does c[u][v] -= f, c[v][u] += f.",
+    "Edmonds-Karp: BFS for shortest path in residual graph, push bottleneck, repeat.",
+    "Dinic's: BFS to build LEVEL graph, DFS to find a BLOCKING flow, repeat.",
+    "Min cut = source-side reachable nodes after max flow saturates.",
+    "For bipartite matching: super-source → left side → right side → super-sink, all capacity 1."
+  ],
+  tips: [
+    "Dinic's is the practical default — fast enough for nearly all interview-scale flow problems.",
+    "Reductions matter more than raw algorithm in interviews. Recognise that a problem IS flow first.",
+    "For unit-capacity bipartite graphs, Hopcroft-Karp runs in O(E·sqrt(V)).",
+    "Real interview frequency is low; if it appears at all, it's at senior+ levels and usually framed as a matching problem."
+  ],
+  code: `import java.util.*;
+
+// Edmonds-Karp — BFS-based max flow
+class MaxFlow {
+    int n;
+    int[][] cap;
+    MaxFlow(int n) { this.n = n; cap = new int[n][n]; }
+    void addEdge(int u, int v, int c) { cap[u][v] += c; }   // += handles parallel
+
+    int maxflow(int s, int t) {
+        int flow = 0;
+        while (true) {
+            int[] parent = new int[n];
+            Arrays.fill(parent, -1);
+            parent[s] = s;
+            Deque<Integer> q = new ArrayDeque<>();
+            q.offer(s);
+            while (!q.isEmpty() && parent[t] == -1) {
+                int u = q.poll();
+                for (int v = 0; v < n; v++)
+                    if (parent[v] == -1 && cap[u][v] > 0) {
+                        parent[v] = u;
+                        q.offer(v);
+                    }
+            }
+            if (parent[t] == -1) return flow;
+            int push = Integer.MAX_VALUE;
+            for (int v = t; v != s; v = parent[v]) push = Math.min(push, cap[parent[v]][v]);
+            for (int v = t; v != s; v = parent[v]) {
+                cap[parent[v]][v] -= push;
+                cap[v][parent[v]] += push;
+            }
+            flow += push;
+        }
+    }
+}`,
+  complexity: "Edmonds-Karp: O(V·E²). Dinic's: O(V²·E). Hopcroft-Karp on bipartite: O(E·sqrt(V))."
+});
+
+PROBLEMS.push({
+  num: 28, title: "Bipartite Matching — Hungarian / Hopcroft-Karp / flow reduction", diff: "hard",
+  family: "Advanced",
+  problem: "Match left-side nodes to right-side nodes such that each node is in at most one edge and the number of matched pairs is maximised (or, with weights, total weight is min/max).",
+  intuition: "Reduce to max flow: super-source → all left nodes (cap 1) → edges between left/right (cap 1) → all right nodes → super-sink (cap 1). Max flow = max matching size. For weighted assignment problems, the Hungarian algorithm gives O(V³). For pure max-cardinality on huge graphs, Hopcroft-Karp gives O(E·sqrt(V)).",
+  hints: [
+    "Cardinality matching: build flow network, run Edmonds-Karp / Dinic's / Hopcroft-Karp.",
+    "Hungarian (Kuhn-Munkres): square cost matrix, polynomial assignment.",
+    "Augmenting-path matching on bipartite graphs: each left node tries to find a free right node or 'kick' a matched right node into trying again.",
+    "Min-vertex-cover on bipartite = max matching (König's theorem).",
+    "Max independent set on bipartite = V - max matching."
+  ],
+  tips: [
+    "If the problem has 'assign people to tasks / items to bins', think bipartite matching first.",
+    "For small inputs, the augmenting-path matching template is short and memorable; reach for that first in interviews.",
+    "Hopcroft-Karp is asymptotically better but rarely needed for n ≤ a few thousand.",
+    "Weighted matching → Hungarian (or min-cost max-flow) is interview-rare."
+  ],
+  code: `import java.util.*;
+
+// Augmenting-path bipartite matching (Hungarian-style, NOT the assignment-cost version)
+class BipartiteMatching {
+    List<List<Integer>> g;   // left -> rights
+    int[] matchR;            // right node -> matched left, or -1
+
+    int maxMatching(int leftN, int rightN, List<List<Integer>> graph) {
+        g = graph;
+        matchR = new int[rightN];
+        Arrays.fill(matchR, -1);
+        int matched = 0;
+        for (int u = 0; u < leftN; u++) {
+            boolean[] seen = new boolean[rightN];
+            if (try_kuhn(u, seen)) matched++;
+        }
+        return matched;
+    }
+
+    boolean try_kuhn(int u, boolean[] seen) {
+        for (int v : g.get(u)) {
+            if (seen[v]) continue;
+            seen[v] = true;
+            if (matchR[v] == -1 || try_kuhn(matchR[v], seen)) {
+                matchR[v] = u;
+                return true;
+            }
+        }
+        return false;
+    }
+}`,
+  complexity: "Augmenting path: O(V·E). Hopcroft-Karp: O(E·sqrt(V))."
+});
+
+PROBLEMS.push({
+  num: 29, title: "2-SAT — implication graph + SCC", diff: "hard",
+  family: "Advanced",
+  problem: "Decide whether a Boolean formula in conjunctive normal form with exactly two literals per clause is satisfiable. Build an implication graph (each clause (a∨b) → ¬a→b and ¬b→a), find SCCs; SAT iff no variable shares an SCC with its negation.",
+  intuition: "Each variable x has two nodes: x and ¬x. Each clause (a∨b) becomes the two implications ¬a→b and ¬b→a. Run SCC on the directed implication graph. If x and ¬x ever land in the same SCC, the formula is UNSAT. Otherwise build an assignment by topological order of the SCCs.",
+  hints: [
+    "Variables 0..n-1; encode x as 2x and ¬x as 2x+1 (or use any 1-1 pairing).",
+    "For each clause (a∨b), add edges ¬a→b and ¬b→a.",
+    "Tarjan / Kosaraju to find SCCs.",
+    "UNSAT iff for some variable i, comp[2i] == comp[2i+1].",
+    "Construct assignment: assign x = true iff comp[¬x] < comp[x] (topological order convention)."
+  ],
+  tips: [
+    "True 2-SAT in interviews is rare. More common: a problem reduces to 2-SAT and you have to spot the reduction.",
+    "Implementation is short once SCC is in your toolkit — memorise SCC first.",
+    "Don't confuse with k-SAT for k≥3 (NP-complete).",
+    "Useful for scheduling / consistency problems with binary decisions and pairwise constraints."
+  ],
+  code: `// Sketch only — relies on a Kosaraju/Tarjan SCC implementation
+// Variables: 0..n-1; literal x -> 2x, ¬x -> 2x+1
+// For clause (a OR b):
+//   addEdge(NOT(a), b);
+//   addEdge(NOT(b), a);
+// After SCC: SAT iff for every i, comp[2i] != comp[2i+1].
+// Assignment: x = true iff comp[NOT(x)] < comp[x] (with reverse-topological component IDs).`,
+  complexity: "O(V + E)."
+});
+
+
+/* ========== 11. TREE-SPECIFIC ========== */
+
+PROBLEMS.push({
+  num: 30, title: "DFS / BFS on Trees — traversal templates", diff: "easy",
+  family: "Trees",
+  problem: "Trees are acyclic connected graphs — every standard graph algorithm specialises nicely. DFS gives pre/in/post-order traversals; BFS gives level-order. The 'no-cycle' guarantee means you DON'T need a visited set if you track the parent.",
+  intuition: "Pre-order: visit, recurse left, recurse right. In-order (binary trees): recurse left, visit, recurse right — yields sorted output for a BST. Post-order: recurse children, then visit — perfect for bottom-up aggregation. BFS = level order, useful for level-by-level reasoning, zigzag, etc.",
+  hints: [
+    "Recursive DFS is the natural fit; iterative with an explicit stack is the fallback for very deep trees.",
+    "Pass `parent` instead of using a visited set for a general (non-binary) tree.",
+    "BFS via Deque + an inner loop sized to the current level for level-by-level processing.",
+    "Serialize/deserialize: pre-order with null markers is the simplest format."
+  ],
+  tips: [
+    "Recursion depth = tree HEIGHT. Skewed trees can blow the stack; iterative form fixes it.",
+    "For a graph that's actually a tree, you can run DFS without 'visited' as long as you skip the parent edge.",
+    "Many tree problems are 'compute a value at each node based on children' — that's post-order (Tree DP, see card 31).",
+    "LeetCode hits: Binary Tree Level Order, Serialize and Deserialize Binary Tree, Path Sum, Diameter of Binary Tree."
+  ],
+  code: `import java.util.*;
+
+// Generic tree (n-ary) — DFS with parent skip
+void dfsTree(int u, int parent, List<List<Integer>> g) {
+    // pre-order work on u
+    for (int v : g.get(u)) {
+        if (v == parent) continue;
+        dfsTree(v, u, g);
+    }
+    // post-order work on u
+}
+
+// Binary tree — level order via BFS
+List<List<Integer>> levelOrder(TreeNode root) {
+    List<List<Integer>> out = new ArrayList<>();
+    if (root == null) return out;
+    Deque<TreeNode> q = new ArrayDeque<>();
+    q.offer(root);
+    while (!q.isEmpty()) {
+        int sz = q.size();
+        List<Integer> level = new ArrayList<>(sz);
+        for (int i = 0; i < sz; i++) {
+            TreeNode n = q.poll();
+            level.add(n.val);
+            if (n.left  != null) q.offer(n.left);
+            if (n.right != null) q.offer(n.right);
+        }
+        out.add(level);
+    }
+    return out;
+}
+class TreeNode { int val; TreeNode left, right; }`,
+  complexity: "O(N) where N is the number of nodes."
+});
+
+PROBLEMS.push({
+  num: 31, title: "Tree DP — diameter, max path sum, House Robber III", diff: "med",
+  family: "Trees",
+  problem: "Compute a value at each node from values at its children. Post-order DFS — each node returns 1 (or a few) numbers; the parent combines them. Used for tree diameter, max path sum, picking nodes with constraints, subtree sizes, etc.",
+  intuition: "Trees are recursive. Tree DP follows: solve children first, combine for parent. Many 'max path through a node' problems track TWO numbers per node: the best path ENDING at this node, and the best path PASSING THROUGH this node — return the former, update a global with the latter.",
+  hints: [
+    "Diameter: at each node, longest path through it = (deepest left chain) + (deepest right chain). Update global max; return max chain to parent.",
+    "Max path sum (LC 124): same shape, but values can be negative — clamp returns at 0.",
+    "House Robber III: each node returns (rob_this, skip_this); parent combines for both options.",
+    "Subtree size, max-depth, sum of distances — all post-order patterns."
+  ],
+  tips: [
+    "Most tree DPs return EXACTLY ONE number to the parent; an additional 'global answer' captures the value not propagated upward.",
+    "Use a wrapper class or int[] of size 2 when you need to return two values.",
+    "For long trees, consider iterative post-order (two-stack trick) to avoid stack overflow.",
+    "LeetCode hits: Diameter of Binary Tree, Binary Tree Maximum Path Sum, House Robber III, Sum of Distances in Tree."
+  ],
+  code: `int answer;
+
+int diameter(TreeNode root) {
+    answer = 0;
+    depth(root);
+    return answer;
+}
+int depth(TreeNode n) {
+    if (n == null) return 0;
+    int l = depth(n.left), r = depth(n.right);
+    answer = Math.max(answer, l + r);   // path through n
+    return 1 + Math.max(l, r);           // longest chain ending at n
+}
+
+// House Robber III — return {rob_this, skip_this}
+int[] rob(TreeNode n) {
+    if (n == null) return new int[]{0, 0};
+    int[] L = rob(n.left), R = rob(n.right);
+    int robThis  = n.val + L[1] + R[1];
+    int skipThis = Math.max(L[0], L[1]) + Math.max(R[0], R[1]);
+    return new int[]{robThis, skipThis};
+}`,
+  complexity: "O(N) — each node visited once."
+});
+
+PROBLEMS.push({
+  num: 32, title: "Lowest Common Ancestor — binary lifting / Euler tour + RMQ", diff: "hard",
+  family: "Trees",
+  problem: "LCA(u, v) is the deepest node ancestor of both u and v. Three approaches: simple DFS for one query (O(N)), BINARY LIFTING for many queries (O(N log N) preprocess, O(log N) query), Euler tour + RMQ for O(N log N) preprocess, O(1) query.",
+  intuition: "Binary lifting: precompute 'up[k][u]' = the 2^k-th ancestor of u. To find LCA: bring u and v to the same depth (jump along powers of 2), then jump both upward in lockstep until they meet. O(log N) per query — perfect when there are many queries.",
+  hints: [
+    "Precompute depth[u] and up[k][u] for k = 0..log2(N).",
+    "Climb the deeper of (u, v) until depths match.",
+    "If u == v, that's the LCA; otherwise jump both up by powers of 2 while up[k][u] != up[k][v]; LCA = up[0][u].",
+    "Tarjan's offline LCA (Union-Find based) processes a batch of queries during one DFS — O((N+Q)·α).",
+    "Euler tour + RMQ on depths: O(N log N) preprocess, O(1) query (sparse table)."
+  ],
+  tips: [
+    "Binary lifting is the most-used in interviews — straightforward to derive, fast enough.",
+    "Once you have LCA, distance(u,v) = depth[u] + depth[v] - 2·depth[LCA(u,v)].",
+    "If queries are offline, Tarjan's offline LCA is elegant but rare in interviews.",
+    "LeetCode hits: Lowest Common Ancestor of a Binary Tree, LCA of a Binary Search Tree, Step-By-Step Directions From a Binary Tree Node to Another."
+  ],
+  code: `import java.util.*;
+
+class LCA {
+    int LOG, n;
+    int[][] up;
+    int[] depth;
+
+    LCA(int n, int root, List<List<Integer>> g) {
+        this.n = n;
+        LOG = (int) Math.ceil(Math.log(n) / Math.log(2)) + 1;
+        up = new int[LOG][n];
+        depth = new int[n];
+        dfs(root, root, g);
+        for (int k = 1; k < LOG; k++)
+            for (int u = 0; u < n; u++) up[k][u] = up[k-1][up[k-1][u]];
+    }
+
+    void dfs(int u, int parent, List<List<Integer>> g) {
+        up[0][u] = parent;
+        for (int v : g.get(u)) if (v != parent) {
+            depth[v] = depth[u] + 1;
+            dfs(v, u, g);
+        }
+    }
+
+    int query(int u, int v) {
+        if (depth[u] < depth[v]) { int t = u; u = v; v = t; }
+        int diff = depth[u] - depth[v];
+        for (int k = 0; k < LOG; k++) if (((diff >> k) & 1) == 1) u = up[k][u];
+        if (u == v) return u;
+        for (int k = LOG - 1; k >= 0; k--)
+            if (up[k][u] != up[k][v]) { u = up[k][u]; v = up[k][v]; }
+        return up[0][u];
+    }
+}`,
+  complexity: "Binary lifting: O(N log N) preprocess, O(log N) per query."
+});
+
+PROBLEMS.push({
+  num: 33, title: "Re-rooting Technique — answer for every node as root", diff: "hard",
+  family: "Trees",
+  problem: "For every node u, compute some value as if u were the root (e.g. sum of distances to all other nodes). Naive: rerun DFS from each node, O(N²). Re-rooting: two DFS passes, O(N).",
+  intuition: "Pass 1 (root anywhere): compute the answer assuming the chosen root. Pass 2: traverse the tree, ADJUSTING the answer as you move from a parent to a child — usually a constant-time tweak using subtree sizes / sums computed in pass 1.",
+  hints: [
+    "Pass 1: classical post-order DFS — compute sub_sum[u] (sum of contributions from u's subtree) and the answer FROM THE ROOT.",
+    "Pass 2: pre-order — for each child v of u, derive ans[v] from ans[u] in O(1) using sub_sum.",
+    "Pre-order order matters because ans[v] depends on ans[u].",
+    "Sum of Distances in Tree (LC 834) is the canonical introduction.",
+    "Counts of subtree types, distance-sum, max-distance variations all fit the pattern."
+  ],
+  tips: [
+    "When you see 'compute X for every node as root' AND naive O(N²) is too slow, suspect re-rooting.",
+    "Derive the per-edge update by hand on a 4-node example before coding.",
+    "Subtree-counts almost always feed the formula.",
+    "LeetCode hits: Sum of Distances in Tree, Maximum Path Sum (variations)."
+  ],
+  code: `import java.util.*;
+
+// Sum of Distances in Tree — answer[u] = sum of distances from u to all other nodes
+int n;
+List<List<Integer>> g;
+int[] count, ans;
+
+int[] sumOfDistancesInTree(int N, int[][] edges) {
+    n = N;
+    g = new ArrayList<>();
+    for (int i = 0; i < n; i++) g.add(new ArrayList<>());
+    for (int[] e : edges) { g.get(e[0]).add(e[1]); g.get(e[1]).add(e[0]); }
+    count = new int[n]; ans = new int[n];
+    Arrays.fill(count, 1);
+    post(0, -1);   // pass 1: anchored at 0
+    pre(0, -1);    // pass 2: re-root
+    return ans;
+}
+void post(int u, int p) {
+    for (int v : g.get(u)) if (v != p) {
+        post(v, u);
+        count[u] += count[v];
+        ans[u]   += ans[v] + count[v];
+    }
+}
+void pre(int u, int p) {
+    for (int v : g.get(u)) if (v != p) {
+        ans[v] = ans[u] - count[v] + (n - count[v]);
+        pre(v, u);
+    }
+}`,
+  complexity: "O(N) — two DFS passes."
+});
+
+PROBLEMS.push({
+  num: 34, title: "Serialize / Deserialize Tree — pre-order with null markers", diff: "med",
+  family: "Trees",
+  problem: "Convert a tree to a string and back. The simplest approach: pre-order DFS with explicit null markers. Robust, easy to remember, works for both binary and n-ary trees.",
+  intuition: "Pre-order with markers is reversible because you read it the same way you wrote it. Comma-separate values; use a sentinel like '#' for null. Deserialize uses an iterator/index over the tokens.",
+  hints: [
+    "Serialize: pre-order DFS, append val + ',' on real nodes; '#,' for null.",
+    "Deserialize: split by ','; recursively pop tokens.",
+    "For huge trees, prefer iterative / streaming serialisation to avoid stack overflow.",
+    "Other formats: BFS level-order with nulls, post-order + in-order pair (only invertible for binary trees)."
+  ],
+  tips: [
+    "Don't trim trailing comma — the deserialiser sees an empty token if you do.",
+    "Watch integer parsing for negative numbers and large values.",
+    "Use a `Deque<String>` as a token queue — simple and fast.",
+    "LeetCode hits: Serialize and Deserialize Binary Tree, Verify Preorder Serialization of a Binary Tree."
+  ],
+  code: `import java.util.*;
+
+class Codec {
+    public String serialize(TreeNode root) {
+        StringBuilder sb = new StringBuilder();
+        ser(root, sb);
+        return sb.toString();
+    }
+    void ser(TreeNode n, StringBuilder sb) {
+        if (n == null) { sb.append("#,"); return; }
+        sb.append(n.val).append(',');
+        ser(n.left, sb);
+        ser(n.right, sb);
+    }
+    public TreeNode deserialize(String data) {
+        Deque<String> q = new ArrayDeque<>(Arrays.asList(data.split(",")));
+        return des(q);
+    }
+    TreeNode des(Deque<String> q) {
+        String tok = q.poll();
+        if (tok.equals("#")) return null;
+        TreeNode n = new TreeNode(Integer.parseInt(tok));
+        n.left  = des(q);
+        n.right = des(q);
+        return n;
+    }
+}
+class TreeNode { int val; TreeNode left, right; TreeNode(int v) { val = v; } }`,
+  complexity: "O(N) time and string size."
+});
+
+
+/* ========== 12. HARD / NICHE ========== */
+
+PROBLEMS.push({
+  num: 35, title: "Hamiltonian Path / TSP — bitmask DP", diff: "hard",
+  family: "Hard / Niche",
+  problem: "Visit EVERY node exactly once. Hamiltonian path = exists? Hamiltonian circuit = + return to start. TSP = + minimise total weight. NP-hard in general; for small n (≤ ~20), bitmask DP solves it in O(n²·2^n).",
+  intuition: "dp[mask][u] = min cost to visit exactly the nodes in mask, ending at u. Transition: dp[mask | (1<<v)][v] = min(dp[mask][u] + cost(u,v)) for v not in mask. Final answer: min over (dp[(1<<n)-1][u] + cost(u, start)) for circuit, or just dp[(1<<n)-1][u] for path.",
+  hints: [
+    "n ≤ 16-20 is the constraint signal — 2^n bitmask is feasible there.",
+    "States: dp[mask][u]. mask has bit i set iff node i is visited. u is the current end node.",
+    "Base: dp[1 << start][start] = 0.",
+    "Transition: for each (mask, u) with bit u in mask, for each v with bit v NOT in mask, update dp[mask | (1<<v)][v].",
+    "For TSP circuit, add cost(u, start) at the end."
+  ],
+  tips: [
+    "Pure Hamiltonian path / TSP is rarely a 'pure' interview question; usually disguised (e.g. 'visit all keys', 'shortest route through k cities').",
+    "If n > 20, you need approximations (Christofides, branch-and-bound, ILP) — out of interview scope.",
+    "DP over subsets is its own pattern; recognise the 'visit every X exactly once with minimum cost' shape.",
+    "LeetCode hits: Find the Shortest Superstring, Shortest Path Visiting All Nodes."
+  ],
+  code: `import java.util.*;
+
+// TSP — minimum-cost Hamiltonian circuit, complete graph with cost matrix
+int tsp(int[][] cost) {
+    int n = cost.length;
+    int INF = Integer.MAX_VALUE / 2;
+    int[][] dp = new int[1 << n][n];
+    for (int[] r : dp) Arrays.fill(r, INF);
+    dp[1][0] = 0;     // start at node 0, only node 0 visited
+    for (int mask = 1; mask < (1 << n); mask++) {
+        for (int u = 0; u < n; u++) {
+            if ((mask & (1 << u)) == 0 || dp[mask][u] == INF) continue;
+            for (int v = 0; v < n; v++) {
+                if ((mask & (1 << v)) != 0) continue;
+                int nmask = mask | (1 << v);
+                dp[nmask][v] = Math.min(dp[nmask][v], dp[mask][u] + cost[u][v]);
+            }
+        }
+    }
+    int ans = INF, full = (1 << n) - 1;
+    for (int u = 1; u < n; u++) ans = Math.min(ans, dp[full][u] + cost[u][0]);
+    return ans;
+}`,
+  complexity: "O(n² · 2^n) time, O(n · 2^n) memory."
+});
+
+PROBLEMS.push({
+  num: 36, title: "Graph Coloring / Steiner Tree / k-Shortest Paths — niche but worth knowing", diff: "hard",
+  family: "Hard / Niche",
+  problem: "Three problems that occasionally appear at senior interviews and have crisp algorithmic identities. Graph k-coloring: NP-hard for k≥3, brute / backtracking for small n. Steiner Tree: minimum tree connecting a SUBSET of nodes (DP over subsets). k-Shortest Paths: Yen's algorithm or Eppstein's.",
+  intuition: "Graph coloring is the classical NP-hard problem; for interviews it's almost always 'check feasibility for 2 colors' (= bipartite). Steiner Tree is the MST relative to a chosen 'terminal' set — DP over subsets is the standard exact approach. k-Shortest Paths: build paths by repeatedly running Dijkstra and forbidding previously-used edges (Yen's).",
+  hints: [
+    "Graph coloring k=2 → bipartite check (card 20).",
+    "Graph coloring k≥3 → backtracking with constraint propagation; only feasible for small n.",
+    "Steiner Tree (Dreyfus-Wagner): O(3^t · n + 2^t · n²), where t is the number of terminals.",
+    "Yen's k-shortest paths: alternates standard Dijkstra with deviation queries; O(k · n · (n log n + m))."
+  ],
+  tips: [
+    "If a 'coloring' problem appears, double-check it's not just bipartite.",
+    "Steiner Tree is a 'minimise connection cost across a subset' problem — easy to confuse with MST. MST connects ALL; Steiner connects a SUBSET (and may use intermediate Steiner points).",
+    "k-Shortest Paths shows up in routing / navigation — usually framed as alternative-routes.",
+    "These rarely appear; recognise the labels so you can name them in a conversation."
+  ],
+  code: `// Sketches only — full implementations are heavy.
+
+// Graph k-coloring — backtracking
+boolean canColor(int[][] g, int[] color, int u, int k) {
+    int n = g.length;
+    if (u == n) return true;
+    for (int c = 0; c < k; c++) {
+        boolean ok = true;
+        for (int v = 0; v < n; v++) if (g[u][v] == 1 && color[v] == c) { ok = false; break; }
+        if (!ok) continue;
+        color[u] = c;
+        if (canColor(g, color, u + 1, k)) return true;
+        color[u] = -1;
+    }
+    return false;
+}
+
+// Yen's k-shortest paths — pseudo
+// 1) Run Dijkstra, store path P0.
+// 2) For i = 1..k-1: for each node along P_(i-1) as a 'spur node':
+//    forbid edges that have appeared at this spur in earlier paths;
+//    run Dijkstra from spur to dst; combine prefix + spur path.
+// 3) Pop the cheapest from a candidate heap as P_i.`,
+  complexity: "Coloring: exponential. Steiner Tree: O(3^t · n). Yen's: O(k · n · (n log n + m))."
+});
+
+/* ========== INTERVIEW PATTERN MATCHING ========== */
+
+PROBLEMS.push({
+  num: 37, title: "Interview Decision Tree — signal in the prompt → algorithm", diff: "easy",
+  family: "Pattern Matching",
+  problem: "When the interviewer reads the problem, certain phrases telegraph the archetype. Build the reflex: phrase → category → algorithm. Most graph interviews are won at this step.",
+  intuition: "Don't start coding until you've named the category. The pattern matcher below is a compressed table of 'if you hear X, think Y' that covers ~95% of interview prompts. Pair it with a quick check of the constraints (V, E, edge weights, directed?) to confirm.",
+  hints: [
+    "'shortest' + unweighted          → BFS (card 6)",
+    "'shortest' + weighted, non-neg   → Dijkstra (card 7)",
+    "'negative weights' / 'arbitrage' → Bellman-Ford (card 8)",
+    "'every pair', V ≤ ~400           → Floyd-Warshall (card 9)",
+    "'prerequisites', 'order'         → Topological sort (card 11)",
+    "'merge', 'connected', 'groups'   → Union-Find (cards 16-17)",
+    "'minimum cost to connect all'    → MST: Kruskal / Prim (cards 14-15)",
+    "'two groups', 'colour'           → Bipartite check (card 20)",
+    "'states', 'configurations'       → BFS on implicit graph (card 23)",
+    "'critical', 'cannot remove'      → Bridges / articulation (card 26)",
+    "'visit every node once'          → Hamiltonian / TSP — bitmask DP (card 35)",
+    "'use every edge once'            → Eulerian — Hierholzer (card 19)"
+  ],
+  tips: [
+    "Always ask: directed? weighted? cycles allowed? size constraints? source/target known?",
+    "Constraint sizes are huge clues. V ≤ 20 → bitmask. V ≤ 400 → Floyd-Warshall. V ~ 10^5 → must be O((V+E) log V) or O(V+E).",
+    "If the input is a GRID, mentally translate to graph + 4-dir / 8-dir BFS.",
+    "Multiple sources / multiple targets often resolve to multi-source BFS.",
+    "If no algorithm fits cleanly, the problem is probably an IMPLICIT graph in disguise — restate the state."
+  ],
+  code: `// No code — this is a decision-tree card.
+//
+// Workflow under interview pressure:
+//
+//   1. Read the prompt twice; underline keywords (shortest / order / merge / connect / colour / state / critical).
+//   2. Match keyword → category (table above).
+//   3. Confirm with constraints (V, E, weights, sign of weights).
+//   4. Pick algorithm + sketch I/O on a 5-node example.
+//   5. Code the template, then add the problem-specific twist.`,
+  complexity: "Decision step: ~30 seconds with practice."
+});
+
+PROBLEMS.push({
+  num: 38, title: "Frequency Tiers — what to drill first", diff: "easy",
+  family: "Pattern Matching",
+  problem: "Not all graph topics are equally common in interviews. Drill by frequency, not by alphabetical order in textbooks.",
+  intuition: "If you have 20 hours to prep for graph problems, spend 12 on the 'very common' tier, 6 on 'common', and 2 on 'occasional'. Skip rare unless your target is a very senior or systems-heavy role.",
+  hints: [
+    "VERY COMMON: BFS, DFS, connected components, topological sort, Union-Find, grid problems.",
+    "COMMON: Dijkstra, cycle detection (directed and undirected), bipartite check, MST.",
+    "OCCASIONAL: Bellman-Ford, Floyd-Warshall, 0-1 BFS, multi-source BFS, bridges & articulation points.",
+    "RARE (senior+): Max flow, 2-SAT, Eulerian paths, Hamiltonian / TSP, Steiner tree.",
+    "TREE-SPECIFIC, COMMON: DFS/BFS on trees, tree DP (diameter, max path sum), serialize/deserialize.",
+    "TREE-SPECIFIC, OCCASIONAL: LCA (binary lifting), re-rooting."
+  ],
+  tips: [
+    "Drill the very-common tier until you can write the templates from memory in under 90 seconds.",
+    "For each common algorithm, do 5-10 LeetCode mediums — pattern emerges.",
+    "Don't go deep on flow / 2-SAT / TSP unless you've already mastered the basics — rare ROI.",
+    "After the templates are solid, the real skill is PATTERN-MATCHING the prompt to the category — practise that explicitly with mock problems."
+  ],
+  code: `// No code — frequency reference.
+//
+// Suggested 20-hour study split:
+//   - 8 hours: BFS / DFS / connected components / topo / Union-Find / grids
+//   - 4 hours: Dijkstra, MST, bipartite, cycle detection
+//   - 3 hours: Bellman-Ford, Floyd-Warshall, multi-source BFS, 0-1 BFS, bridges
+//   - 3 hours: tree DFS, tree DP, LCA, serialize/deserialize
+//   - 2 hours: implicit graph BFS (Word Ladder, Open the Lock, Sliding Puzzle)`,
+  complexity: "Effort allocation rather than algorithmic."
+});
+
+PROBLEMS.push({
+  num: 39, title: "Common Pitfalls — the 10 mistakes everyone makes", diff: "easy",
+  family: "Pattern Matching",
+  problem: "Repeating bugs that cost interview points. Recognise them up-front and they never trip you up.",
+  intuition: "Most graph bugs aren't subtle — they're the same handful of mistakes copy-pasted across problems. Read this once, internalise.",
+  hints: [
+    "1. Forgetting the 'visited' set → infinite loop on cyclic graphs.",
+    "2. Marking visited at POP time instead of PUSH time in BFS → duplicates / wrong distances.",
+    "3. Building the adjacency list inside the algorithm loop → quadratic blow-up.",
+    "4. Using DFS recursion on huge graphs → stack overflow. Switch to iterative.",
+    "5. Using Dijkstra on a graph with negative edges → wrong answer; need Bellman-Ford.",
+    "6. Confusing 'reachable' with 'shortest path' — BFS gives both for unweighted only.",
+    "7. Topological sort on a graph with a cycle returns garbage; check that you emitted all V nodes.",
+    "8. Off-by-one on grid bounds: `r < R` not `r <= R`. Same for `c`.",
+    "9. Treating directed edges as undirected (or vice versa) — silent correctness bug.",
+    "10. Forgetting the parent skip in undirected DFS cycle detection → spurious cycles."
+  ],
+  tips: [
+    "Always test with a tiny example (2-3 nodes, one edge) before scaling up.",
+    "If the answer is wildly wrong, suspect (a) wrong direction handling, (b) wrong visited semantics.",
+    "If TLE, suspect (a) re-creating the graph inside the loop, (b) running BFS from every node when one would do, (c) Dijkstra with a TreeSet you're not popping correctly.",
+    "Drill the canonical templates so under interview pressure you don't reinvent them."
+  ],
+  code: `// 1. BAD — infinite loop on cycle
+void dfsBad(int u, List<List<Integer>> g) {
+    for (int v : g.get(u)) dfsBad(v, g);   // never marks visited
+}
+
+// 2. BAD — mark visited on POP, BFS may enqueue duplicates
+while (!q.isEmpty()) {
+    int u = q.poll();
+    visited[u] = true;                     // late
+    for (int v : g.get(u)) if (!visited[v]) q.offer(v);
+}
+
+// 5. BAD — Dijkstra with negative weights
+// Use Bellman-Ford instead.
+
+// 8. BAD — off-by-one
+if (r <= R || c <= C) ...                  // should be < not <=
+
+// 10. BAD — undirected DFS without parent tracking
+void dfsUndirBad(int u, boolean[] vis, List<List<Integer>> g) {
+    vis[u] = true;
+    for (int v : g.get(u)) {
+        if (vis[v]) reportCycle();         // false positive: every edge appears twice
+        else dfsUndirBad(v, vis, g);
+    }
+}`,
+  complexity: "Each pitfall is preventable with one line of vigilance."
+});
+
+
+PROBLEMS.push({
+  num: 40, title: "Complexity Cheat Sheet — pick the algorithm that fits the constraint", diff: "easy",
+  family: "Pattern Matching",
+  problem: "Constraints (V, E, query count) telegraph which complexities are allowed. Knowing the max-feasible inputs for each algorithm collapses choices fast.",
+  intuition: "Java does ~10^8 simple operations per second comfortably. So O(V+E) is fine to ~10^7 nodes/edges; Dijkstra to ~10^6; Bellman-Ford to ~10^4 nodes; Floyd-Warshall to ~400 nodes; bitmask DP to ~20 nodes. Match the input size to the algorithm before you start coding.",
+  hints: [
+    "V ≤ 20            → bitmask DP feasible (2^20 ≈ 10^6).",
+    "V ≤ 400           → Floyd-Warshall (V^3 ≈ 6·10^7).",
+    "V·E ≤ 10^7        → Bellman-Ford.",
+    "V + E ≤ 10^6      → BFS / DFS / topo / Union-Find / Dijkstra all fine.",
+    "Many queries on a tree → preprocess (LCA binary lifting / Euler tour).",
+    "V·E·k ≤ 10^7      → Cheapest Flights with K stops via Bellman-Ford-with-k-relax."
+  ],
+  tips: [
+    "If your algorithm exceeds these by 10×, it'll still likely TLE — Java's constant factors aren't that small.",
+    "When you suspect TLE, count the work explicitly and reach for a faster algorithm before optimising constants.",
+    "If V is huge but the graph is SPARSE, exploit that. If the graph is DENSE, matrix-based algorithms become competitive.",
+    "Memory matters too: V^2 ≥ 10^8 ints means ~400 MB — won't fit."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Algorithm</th><th>Time</th><th>Max input ~10^8 ops/sec</th></tr></thead>
+      <tbody>
+        <tr><td>BFS / DFS</td><td>O(V+E)</td><td>V+E up to ~10^7</td></tr>
+        <tr><td>Topological sort</td><td>O(V+E)</td><td>same</td></tr>
+        <tr><td>Union-Find</td><td>O((V+E)·α)</td><td>same</td></tr>
+        <tr><td>Dijkstra (binary heap)</td><td>O((V+E) log V)</td><td>~10^6 nodes/edges</td></tr>
+        <tr><td>Bellman-Ford</td><td>O(V·E)</td><td>V·E ≤ 10^7</td></tr>
+        <tr><td>Floyd-Warshall</td><td>O(V^3)</td><td>V ≤ ~400</td></tr>
+        <tr><td>MST (Kruskal)</td><td>O(E log E)</td><td>E ≤ ~10^6</td></tr>
+        <tr><td>Bridges / articulation (Tarjan)</td><td>O(V+E)</td><td>V+E up to ~10^7</td></tr>
+        <tr><td>SCC (Tarjan / Kosaraju)</td><td>O(V+E)</td><td>same</td></tr>
+        <tr><td>Bipartite matching (augmenting)</td><td>O(V·E)</td><td>V·E ≤ 10^7</td></tr>
+        <tr><td>Hopcroft-Karp</td><td>O(E·sqrt(V))</td><td>E·sqrt(V) ≤ 10^7</td></tr>
+        <tr><td>Max flow (Dinic's)</td><td>O(V²·E)</td><td>moderate scale</td></tr>
+        <tr><td>LCA (binary lifting)</td><td>O((V+Q) log V)</td><td>millions of queries</td></tr>
+        <tr><td>Bitmask DP (TSP)</td><td>O(n²·2^n)</td><td>n ≤ ~20</td></tr>
+      </tbody>
+    </table>
+  `,
+  code: `// No code — reference card. Use it to pick the algorithm BEFORE you start coding.`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 41, title: "LeetCode Hit-List by Archetype — what to actually solve", diff: "easy",
+  family: "Pattern Matching",
+  problem: "A focused practice set, organised by archetype. Solving 2-3 from each list will cement the pattern. The order is roughly easiest to hardest within each group.",
+  intuition: "Don't grind randomly. Pick a category, do 3-4 problems at increasing difficulty, then move on. After the full sweep, do mixed sets to practise PATTERN-MATCHING the archetype from the prompt — that's the actual interview skill.",
+  hints: [
+    "TRAVERSAL / COMPONENTS: Number of Islands · Number of Connected Components · Keys and Rooms · Surrounded Regions",
+    "SHORTEST PATH (UNWEIGHTED BFS): Word Ladder · Shortest Path in Binary Matrix · Open the Lock · Rotting Oranges",
+    "DIJKSTRA: Network Delay Time · Cheapest Flights Within K Stops · Path with Minimum Effort · Swim in Rising Water",
+    "BELLMAN-FORD: Cheapest Flights Within K Stops · Currency Conversion / Arbitrage (custom)",
+    "FLOYD-WARSHALL: Find the City With the Smallest Number of Neighbors · Course Schedule IV",
+    "TOPOLOGICAL SORT: Course Schedule I/II · Alien Dictionary · Sequence Reconstruction · Parallel Courses",
+    "UNION-FIND: Number of Provinces · Redundant Connection · Accounts Merge · Most Stones Removed · Satisfiability of Equality Equations · Evaluate Division",
+    "MST: Min Cost to Connect All Points · Connecting Cities With Minimum Cost · Optimize Water Distribution",
+    "BIPARTITE: Is Graph Bipartite · Possible Bipartition",
+    "GRID-AS-GRAPH: Walls and Gates · Pacific Atlantic Water Flow · Number of Closed Islands · 01 Matrix",
+    "MULTI-STATE BFS: Shortest Path with Obstacle Elimination · Shortest Path to Get All Keys · Cut Off Trees for Golf Event",
+    "BRIDGES / ARTICULATION: Critical Connections in a Network",
+    "TREE DP / LCA: Diameter of Binary Tree · Binary Tree Maximum Path Sum · Sum of Distances in Tree · LCA of Binary Tree",
+    "EULERIAN: Reconstruct Itinerary",
+    "BITMASK DP: Shortest Path Visiting All Nodes · Find the Shortest Superstring"
+  ],
+  tips: [
+    "If you bomb a problem, ALWAYS revisit it 24-48 hours later — pattern stickiness needs spaced repetition.",
+    "Practise WRITING THE TEMPLATE FIRST, problem twist second. The template is the reusable bit.",
+    "Time yourself on later attempts: target ≤ 15 minutes for easy, ≤ 25 for medium, ≤ 40 for hard.",
+    "For senior interviews, do at least one problem from each of the 'advanced' archetypes (flow, bridges, 2-SAT, LCA)."
+  ],
+  code: `// No code — practice list.`,
+  complexity: "Practice ROI: pattern recognition is the goal, not algorithm trivia."
+});
+
+PROBLEMS.push({
+  num: 42, title: "Constraint-Driven Algorithm Picker — quick reflex", diff: "easy",
+  family: "Pattern Matching",
+  problem: "Given the problem's constraints (V, E, weight properties, query count), the algorithm is often forced. Use this reflex to narrow choices in 30 seconds.",
+  intuition: "Sometimes the prompt is ambiguous (multiple categories could fit). The CONSTRAINTS disambiguate. 'V ≤ 12' screams bitmask. 'V ≤ 500, weighted' screams Floyd-Warshall. 'V ≤ 10^5, weighted, non-neg' screams Dijkstra. Build the reflex.",
+  hints: [
+    "n ≤ 12-20 + 'visit all'           → bitmask DP (TSP / Hamiltonian).",
+    "n ≤ 100, dense weighted         → Floyd-Warshall.",
+    "n ≤ 500, dense, all-pairs       → Floyd-Warshall.",
+    "n ≤ 10^4, sparse, neg weights   → Bellman-Ford.",
+    "n ≤ 10^5, sparse, non-neg       → Dijkstra.",
+    "n ≤ 10^6, unweighted            → BFS.",
+    "Tree, many queries on (u, v)    → LCA preprocessing (binary lifting).",
+    "Streaming edges, dynamic        → Union-Find.",
+    "Implicit huge state, src+dst    → Bidirectional BFS / A*."
+  ],
+  tips: [
+    "Always glance at constraints BEFORE reading the body of the problem — saves time.",
+    "If constraints are missing (open-ended interview question), ask. The interviewer expects this.",
+    "When in doubt, default to the safest bet that still passes — BFS over Dijkstra when weights are 0/1, plain DFS over Tarjan when you only need detection.",
+    "If a brute-force O(n^k) fits, use it — clearer code, fewer bugs."
+  ],
+  code: `// No code — quick-reference reflex.
+//
+// Walk-through:
+//   read constraints first → eliminate impossible classes →
+//   read prompt → pick the surviving class → confirm with examples → code template.`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 43, title: "How to Talk About a Graph Problem in an Interview", diff: "easy",
+  family: "Pattern Matching",
+  problem: "Beyond solving it, you also need to talk about it well. Articulate the archetype, justify the algorithm, state complexity, and offer alternatives — interviewers care about THIS as much as the code.",
+  intuition: "A 4-step verbalisation pattern works for almost every graph question. Practising it makes the difference between 'solved with hints' and 'solved cleanly' on the rubric.",
+  hints: [
+    "1. RESTATE: 'So I need to find shortest path from S to T on a directed graph with non-negative weights, V up to 10^5.'",
+    "2. CLASSIFY: 'This is a single-source shortest-path problem with non-negative weights — Dijkstra.'",
+    "3. JUSTIFY: 'BFS doesn't work because weights are non-uniform. Bellman-Ford works but is slower; Dijkstra is O((V+E) log V) which fits the constraints.'",
+    "4. ALTERNATIVES: 'If weights were 0/1 only, I'd use 0-1 BFS. If negative, Bellman-Ford. If all-pairs, Floyd-Warshall.'",
+    "5. EDGE CASES: 'Self-loops, disconnected components, no source/target, parallel edges.'",
+    "6. COMPLEXITY: 'O((V+E) log V) time, O(V) extra space.'"
+  ],
+  tips: [
+    "Volunteer the alternatives even if the interviewer doesn't ask — shows depth.",
+    "If you reach for plain BFS when the right answer is Dijkstra, the interviewer may probe — be ready to defend the choice.",
+    "Don't say 'I think' when you know — be definite. Interviewers value calibrated confidence.",
+    "If you genuinely don't know, say so plainly and propose: 'Let me think out loud about what tools could fit.'"
+  ],
+  code: `// No code — communication pattern.
+//
+// Practice answer template:
+//   Restate → Classify → Justify → Alternatives → Edge cases → Complexity → Code → Test`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 44, title: "Putting It All Together — a worked example walkthrough", diff: "med",
+  family: "Pattern Matching",
+  problem: "Take a fresh problem and walk it through the entire pipeline: restate → classify → pick algorithm → code → test. The example below uses 'Cheapest Flights Within K Stops' to show every step.",
+  intuition: "Real interview rhythm: 30 seconds to restate + classify, 60 seconds to justify + sketch, 5-10 minutes to code, 2-3 minutes to test on examples. Use the algorithm-and-data-structure menu in your head; resist the urge to start typing first.",
+  hints: [
+    "PROBLEM: 'Find cheapest price from src to dst with at most K stops on a directed weighted graph.' V ≤ 100, E ≤ 10^4, K ≤ V.",
+    "RESTATE: shortest weighted path with an EDGE-COUNT constraint.",
+    "CLASSIFY: shortest path + 'at most K edges' — Bellman-Ford-style relax (one round per allowed edge).",
+    "JUSTIFY: pure Dijkstra doesn't naturally handle 'at most K edges'. Modified Bellman-Ford does it cleanly: K+1 rounds, copy dist between rounds.",
+    "EDGE CASES: K=0 (only direct flights), src == dst (cost 0), no path (return -1).",
+    "COMPLEXITY: O(K · E)."
+  ],
+  tips: [
+    "Always run the algorithm by HAND on the smallest provided example — it catches off-by-ones.",
+    "When a constraint says 'at most K stops', that's almost always a Bellman-Ford-style edge-rounds limit OR a layered BFS with state (node, edges_used).",
+    "Verbalise the test as you run it: 'After round 1, dist[city] = ...; after round 2, ...'",
+    "Once it works on the small example, cover edge cases explicitly before claiming correctness."
+  ],
+  code: `import java.util.*;
+
+int findCheapestPrice(int n, int[][] flights, int src, int dst, int K) {
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+    for (int i = 0; i <= K; i++) {
+        int[] tmp = dist.clone();
+        for (int[] f : flights) {
+            int u = f[0], v = f[1], w = f[2];
+            if (dist[u] == Integer.MAX_VALUE) continue;
+            if (dist[u] + w < tmp[v]) tmp[v] = dist[u] + w;
+        }
+        dist = tmp;
+    }
+    return dist[dst] == Integer.MAX_VALUE ? -1 : dist[dst];
+}`,
+  complexity: "O(K · E) time, O(V) space."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => { stash.push(html); return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001'; };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float','Object',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','LinkedHashMap','LinkedHashSet',
+    'ArrayList','LinkedList','ArrayDeque','Queue','Deque','PriorityQueue','BlockingQueue',
+    'StringBuilder','Optional','Comparator','Comparable','Objects','Arrays','Collections','Iterator','Iterable',
+    'Math','Random','TreeNode','Node','Edge','UnionFind','Codec','LCA','MaxFlow','BridgeFinder','BipartiteMatching',
+    'RuntimeException','NoSuchElementException'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum','record',
+    'return','if','else','for','while','do','break','continue','switch','case','default','yield',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff).sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'brief', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => { if (state.diff !== t.dataset.diff) { state.diff = t.dataset.diff; state.idx = 0; render(); } };
+  });
+}
+
+function familyPillClass(family) {
+  if (!family) return '';
+  const f = family.toLowerCase();
+  if (f.includes('traversal'))           return 'trav';
+  if (f.includes('shortest'))            return 'sp';
+  if (f.includes('topological'))         return 'topo';
+  if (f.includes('minimum spanning'))    return 'mst';
+  if (f.includes('union-find'))          return 'uf';
+  if (f.includes('cycle'))               return 'cycle';
+  if (f.includes('bipartite'))           return 'bip';
+  if (f.includes('grid'))                return 'grid';
+  if (f.includes('implicit'))            return 'impl';
+  if (f.includes('advanced'))            return 'adv';
+  if (f.includes('tree'))                return 'topo';
+  if (f.includes('hard / niche'))        return 'adv';
+  if (f.includes('pattern'))             return 'impl';
+  return '';
+}
+
+
+function render() {
+  const main = document.getElementById('main');
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}` : '';
+  const formulaBlock = p.formula ? `<div class="section-title">Format / Syntax</div><div class="formula">${escapeHtml(p.formula)}</div>` : '';
+  const familyPill = p.family ? `<span class="pill ${familyPillClass(p.family)}">${escapeHtml(p.family)}</span>` : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+      <div class="section-title">What &amp; Why</div>
+      <p>${escapeHtml(p.problem)}</p>
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+      ${formulaBlock}
+      ${cheatBlock}
+      <div class="section-title">Patterns &amp; Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+      <div class="section-title">Tips &amp; Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+      <div class="section-title">Java Template</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>`;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent = `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() { const arr = getProblems(state.diff); if (state.idx < arr.length - 1) { state.idx++; render(); } }
+function prevProblem() { if (state.idx > 0) { state.idx--; render(); } }
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️'; themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙'; themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem('theme', next);
+});
+
+
+function renderBriefView() {
+  const families = [
+    { title: '1. Traversal & Connectivity', cmds: [['BFS / DFS','core templates'],['Connected components','outer + inner traversal'],['SCC (directed)','Tarjan / Kosaraju'],['Flood fill / islands','grid as graph']] },
+    { title: '2. Shortest Path',            cmds: [['BFS','unweighted'],['Dijkstra','non-negative weights'],['Bellman-Ford','negative / detects cycle'],['Floyd-Warshall','all pairs, V ≤ 400'],['0-1 BFS','weights ∈ {0,1}'],['Multi-source BFS','many starts at d=0']] },
+    { title: '3. Topological / DAG',        cmds: [['Topo sort','Kahn / DFS post-order'],['Cycle detection (dir)','3-color DFS'],['DP on DAG','longest / count / cost']] },
+    { title: '4. MST',                      cmds: [['Kruskal','sort + Union-Find'],['Prim','heap from a node']] },
+    { title: '5. Union-Find',               cmds: [['Path compression + rank','near O(1)'],['Equation problems','Accounts Merge etc'],['Cycle detection (undir)','same-root check']] },
+    { title: '6. Cycle-related',            cmds: [['Eulerian path','Hierholzer'],['Find / shortest cycle','BFS variants']] },
+    { title: '7. Bipartite / Coloring',     cmds: [['2-coloring BFS / DFS','no odd cycle']] },
+    { title: '8. Grid as Graph',            cmds: [['4 / 8-dir BFS / DFS','islands / regions / paths'],['Multi-state BFS','keys, eliminations, time']] },
+    { title: '9. Implicit Graph',           cmds: [['Word Ladder','letter swaps as edges'],['Open the Lock','board as state'],['Bidirectional BFS','meet in the middle'],['A*','informed search']] },
+    { title: '10. Advanced',                cmds: [['Bridges / articulation','Tarjan'],['Max flow / min cut','Dinic / Edmonds-Karp'],['Bipartite matching','augmenting / Hopcroft-Karp'],['2-SAT','impl graph + SCC']] },
+    { title: '11. Trees',                   cmds: [['Tree DFS / BFS','traversal'],['Tree DP','diameter / max path / robber'],['LCA','binary lifting'],['Re-rooting','answer for every node']] },
+    { title: '12. Hard / Niche',            cmds: [['TSP / Hamiltonian','bitmask DP n ≤ 20'],['Graph coloring','backtracking'],['Steiner tree','DP over subsets'],['k-shortest paths','Yen']] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> What KIND of question is this?
+   ├── <span class="a">"reachable / connected / components"</span>     → <span class="alg">BFS · DFS · Union-Find</span>
+   ├── <span class="a">"shortest"</span>                              → <span class="alg">BFS / Dijkstra / Bellman-Ford / Floyd-Warshall</span>
+   ├── <span class="a">"prerequisites / order / dependencies"</span>   → <span class="alg">Topological sort</span>
+   ├── <span class="a">"min cost to connect all"</span>               → <span class="alg">MST (Kruskal / Prim)</span>
+   ├── <span class="a">"merge / group / equivalence"</span>           → <span class="alg">Union-Find</span>
+   ├── <span class="a">"two groups / colour / bipartition"</span>     → <span class="alg">Bipartite check</span>
+   ├── <span class="a">"states / configurations / transformations"</span> → <span class="alg">BFS on implicit graph</span>
+   ├── <span class="a">"critical edge / cannot remove"</span>         → <span class="alg">Bridges (Tarjan)</span>
+   ├── <span class="a">"every pair, V ≤ 400"</span>                   → <span class="alg">Floyd-Warshall</span>
+   ├── <span class="a">"negative weights / arbitrage"</span>          → <span class="alg">Bellman-Ford</span>
+   ├── <span class="a">"visit every node once"</span>                 → <span class="alg">Bitmask DP / TSP (n ≤ 20)</span>
+   └── <span class="a">"use every edge once"</span>                   → <span class="alg">Hierholzer's</span>
+
+<span class="q">Q2.</span> What about the GRAPH itself?
+   ├── directed or undirected?
+   ├── weighted / non-neg / can-be-negative?
+   ├── connected guaranteed?
+   ├── cycles allowed?
+   └── size of V, E, query count?
+
+<span class="q">Q3.</span> What does the CONSTRAINT say?
+   ├── n ≤ 20             → <span class="alg">bitmask DP feasible</span>
+   ├── n ≤ 400            → <span class="alg">Floyd-Warshall</span>
+   ├── n ≤ 10^4           → <span class="alg">Bellman-Ford</span>
+   ├── n ≤ 10^5, sparse   → <span class="alg">Dijkstra / BFS / Union-Find</span>
+   └── n ≤ 10^6           → <span class="alg">linear: BFS / DFS / topo</span>
+
+<span class="q">Q4.</span> Are queries online or offline?
+   ├── one-shot              → run the algorithm
+   ├── many on same graph    → preprocess (LCA, distances, components)
+   └── streaming edges       → Union-Find / dynamic connectivity
+
+<span class="q">Q5.</span> If no algorithm fits cleanly, look for an IMPLICIT graph
+   └── nodes = states, edges = legal transitions → BFS / Dijkstra / A*
+`;
+
+  const recipeCards = [
+    { b: 'BFS shortest path',         s: "Deque + dist[] = -1 + mark on push" },
+    { b: 'DFS connected components',  s: "outer loop + inner BFS/DFS + counter" },
+    { b: 'Topological order',         s: "Kahn: in-degree + queue, emit zeros" },
+    { b: 'Cycle in directed graph',   s: "3-color DFS — back edge = cycle" },
+    { b: 'Cycle in undirected',       s: "DFS w/ parent OR Union-Find same-root" },
+    { b: 'Dijkstra',                  s: "PQ keyed on dist + relax neighbours" },
+    { b: 'Bellman-Ford',              s: "V-1 relax-all + V-th detects neg cycle" },
+    { b: 'Floyd-Warshall',            s: "k outer; d[i][j] = min(d[i][j], d[i][k]+d[k][j])" },
+    { b: 'MST Kruskal',               s: "sort edges + Union-Find skip cycles" },
+    { b: 'Union-Find',                s: "path compression + union by rank" },
+    { b: 'Bipartite check',           s: "BFS 2-coloring; conflict ⇒ false" },
+    { b: 'Multi-source BFS',          s: "enqueue ALL sources at distance 0" },
+    { b: 'Bridges (Tarjan)',          s: "DFS + disc/low; low[v] > disc[u]" },
+    { b: 'Tree DP diameter',          s: "post-order: max chain + global update" },
+    { b: 'LCA binary lifting',        s: "up[k][u] = 2^k-th ancestor" },
+    { b: 'TSP bitmask',               s: "dp[mask][end] = min cost; final OR back to start" },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.cmds.map(c => `<div class="card-mini"><b>${escapeHtml(c[0])}</b><span>${escapeHtml(c[1])}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const recipes_html = `
+    <div class="panel">
+      <h3>One-Liner Recipes</h3>
+      <div class="grid">
+        ${recipeCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">G R A P H &nbsp; P R O B L E M S</div>
+        <h1 class="brief-title">12 Archetypes · One Decision Tree</h1>
+        <p class="brief-tagline">Read the prompt. Match the archetype. Apply the template. Win the interview.</p>
+      </header>
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+      ${recipes_html}
+      ${families_html}
+    </div>`;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
