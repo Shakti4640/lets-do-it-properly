@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Low Level Design (LLD) — Amazon SDE Interview Complete Cheat Sheet (A3)</title>
+<style>
+  /* ---------- Print-first, A3 friendly ---------- */
+  @page { size: A3; margin: 12mm; }
+  html, body {
+    background: #ffffff;
+    color: #111;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt;
+    line-height: 1.35;
+    margin: 0;
+    padding: 0;
+  }
+  .wrap { max-width: 1650px; margin: 0 auto; padding: 14px 18px 40px 18px; }
+  h1 {
+    font-size: 26pt;
+    margin: 4px 0 2px 0;
+    letter-spacing: 0.3px;
+    border-bottom: 3px solid #111;
+    padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: #444; margin-left: 10px; }
+  h2 {
+    font-size: 16pt;
+    margin: 22px 0 6px 0;
+    padding: 6px 10px;
+    background: #f2f2f2;
+    border-left: 6px solid #111;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12.5pt;
+    margin: 14px 0 4px 0;
+    color: #222;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11.5pt;
+    margin: 10px 0 3px 0;
+    color: #333;
+    page-break-after: avoid;
+  }
+  p, li { margin: 4px 0; }
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10.5pt;
+    background: #f6f6f6;
+    border: 1px solid #e2e2e2;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #222;
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10.25pt;
+    line-height: 1.5;
+    background: #ffffff;
+    color: #24292e;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  pre .kw  { color: #cf222e; font-weight: 600; }
+  pre .typ { color: #953800; }
+  pre .str { color: #0a3069; }
+  pre .num { color: #0550ae; }
+  pre .cmt { color: #6e7781; font-style: italic; }
+  pre .ann { color: #116329; font-weight: 600; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 6px 0 10px 0;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 6px 8px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th { background: #eaeaea; font-weight: 600; }
+  .wrong { background: #fff2f2; }
+  .right { background: #f0fbf1; }
+  .wrong td:first-child, .right td:first-child { font-weight: 600; width: 18%; }
+  .col-wrong { color: #a40000; }
+  .col-right { color: #116611; }
+
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: #fbe8e8; color: #7a0000; }
+  table.compare th:nth-child(3) { width: 39%; background: #e5f7e8; color: #0b5d16; }
+  table.compare td:nth-child(2) { background: #fff6f6; }
+  table.compare td:nth-child(3) { background: #f4fbf5; }
+
+  .tips {
+    border: 1px dashed #888;
+    background: #fffdf4;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .tips b { color: #6a4a00; }
+
+  .tricky {
+    border: 1px solid #333;
+    background: #fafaff;
+    padding: 10px 12px;
+    margin: 10px 0 16px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+
+  details > summary {
+    cursor: pointer;
+    color: #005a9e;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  details[open] > summary { color: #111; }
+  details .hint {
+    margin-top: 4px;
+    padding: 6px 8px;
+    background: #eef3ff;
+    border-left: 4px solid #005a9e;
+    border-radius: 3px;
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 9.5pt;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .pill.bad   { background: #a40000; color: #fff; }
+  .pill.good  { background: #116611; color: #fff; }
+  .pill.tip   { background: #b08100; color: #fff; }
+  .pill.amzn  { background: #ff9900; color: #111; }
+  .pill.must  { background: #5a189a; color: #fff; }
+
+  /* LP callout for Amazon Leadership Principles */
+  .lp {
+    border-left: 5px solid #ff9900;
+    background: #fff8ec;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 3px;
+    page-break-inside: avoid;
+  }
+  .lp b { color: #b76e00; }
+
+  /* Approach / framework callout */
+  .frame {
+    border: 1px solid #5a189a;
+    background: #f7f0ff;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .frame b { color: #5a189a; }
+
+  @media print {
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+    .noprint { display: none !important; }
+  }
+
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px 14px;
+    font-size: 10.5pt;
+    margin: 6px 0 0 0;
+  }
+  .toc a { color: #005a9e; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  .legend { font-size: 10pt; margin: 6px 0 10px 0; }
+  .small  { font-size: 9.5pt; color: #555; }
+
+  .ascii-uml {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10pt;
+    background: #fafafa;
+    border: 1px dashed #888;
+    padding: 8px 10px;
+    white-space: pre;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+
+  /* ---------- Dark-mode toggle button ---------- */
+  .theme-toggle {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    z-index: 9999;
+    padding: 6px 12px;
+    border: 1px solid #555;
+    background: #fff;
+    color: #111;
+    border-radius: 18px;
+    font-size: 10pt;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .theme-toggle:hover { background: #f0f0f0; }
+  @media print { .theme-toggle { display: none; } }
+
+  /* ---------- Dark mode (screen only; print stays light) ---------- */
+  @media screen {
+    body.dark { background: #0e1116; color: #d6deea; }
+    body.dark .wrap { background: #0e1116; }
+    body.dark h1   { border-bottom-color: #d6deea; color: #f3f6fb; }
+    body.dark h1 .sub { color: #9aa6b4; }
+    body.dark h2 {
+      background: #1b2230;
+      color: #f3f6fb;
+      border-left-color: #ff9900;
+    }
+    body.dark h3, body.dark h4 { color: #e5ecf5; }
+    body.dark p, body.dark li { color: #d0d8e3; }
+
+    body.dark code {
+      background: #1b2230;
+      border-color: #2c3645;
+      color: #ffd07b;
+    }
+    body.dark pre {
+      background: #0b0f15;
+      color: #d6deea;
+      border-color: #2c3645;
+    }
+    body.dark pre .kw  { color: #ff7b72; }
+    body.dark pre .typ { color: #ffa657; }
+    body.dark pre .str { color: #a5d6ff; }
+    body.dark pre .num { color: #79c0ff; }
+    body.dark pre .cmt { color: #8b949e; }
+    body.dark pre .ann { color: #7ee787; }
+
+    body.dark table  { border-color: #2c3645; }
+    body.dark th, body.dark td { border-color: #2c3645; color: #d6deea; }
+    body.dark th     { background: #1b2230; color: #f3f6fb; }
+    body.dark .wrong { background: #2a1518; }
+    body.dark .right { background: #14271a; }
+    body.dark .col-wrong { color: #ff8a8a; }
+    body.dark .col-right { color: #7fdf94; }
+
+    body.dark table.compare th:nth-child(2) { background: #3a1d22; color: #ffb3b3; }
+    body.dark table.compare th:nth-child(3) { background: #173322; color: #a4e8b3; }
+    body.dark table.compare td:nth-child(2) { background: #25151a; }
+    body.dark table.compare td:nth-child(3) { background: #102218; }
+
+    body.dark .tips     { background: #2a230f; border-color: #6e5a1e; color: #f0e0a8; }
+    body.dark .tips b   { color: #ffd07b; }
+    body.dark .tricky   { background: #141826; border-color: #2c3645; }
+    body.dark details > summary { color: #79c0ff; }
+    body.dark details[open] > summary { color: #f3f6fb; }
+    body.dark details .hint { background: #112033; border-left-color: #58a6ff; color: #d6deea; }
+
+    body.dark .lp     { background: #2a1f08; border-left-color: #ff9900; color: #f0d9a8; }
+    body.dark .lp b   { color: #ffb84d; }
+    body.dark .frame  { background: #1c1430; border-color: #b794f6; color: #e8def8; }
+    body.dark .frame b{ color: #c8a6ff; }
+
+    body.dark .ascii-uml { background: #0b0f15; border-color: #4a5161; color: #d6deea; }
+    body.dark .toc a     { color: #79c0ff; }
+    body.dark .small     { color: #8b949e; }
+    body.dark .legend    { color: #d6deea; }
+
+    body.dark .theme-toggle {
+      background: #1b2230;
+      color: #f3f6fb;
+      border-color: #4a5161;
+    }
+    body.dark .theme-toggle:hover { background: #2a3344; }
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
+<script>
+  (function () {
+    var saved = localStorage.getItem('lldTheme');
+    if (saved === 'dark') document.documentElement.dataset.preDark = '1';
+  })();
+</script>
+<div class="wrap">
+
+<h1>Low Level Design (LLD) — Amazon SDE Cheat Sheet
+  <span class="sub">Framework · SOLID · Patterns · 12 fully-coded problems · Tricky Qs · LP-aligned</span>
+</h1>
+
+<div class="legend">
+  <span class="pill bad">Anti-pattern</span>
+  <span class="pill good">Best Practice</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="pill amzn">Amazon-specific</span>
+  <span class="pill must">Must-know for SDE-1/SDE-2</span>
+  <span class="small">All code in Java. Click "Reveal hint" on screen; hints auto-expand on print.</span>
+</div>
+
+<div class="toc">
+  <a href="#s0">0. What LLD Interviews Test</a>
+  <a href="#s1">1. The 7-Step LLD Framework</a>
+  <a href="#s2">2. Requirements: Functional vs Non-Functional</a>
+  <a href="#s3">3. UML Cheat Sheet (Class &amp; Sequence)</a>
+  <a href="#s4">4. SOLID — Deep Dive with Code</a>
+  <a href="#s5">5. DRY · KISS · YAGNI · LoD</a>
+  <a href="#s6">6. Creational Patterns</a>
+  <a href="#s7">7. Structural Patterns</a>
+  <a href="#s8">8. Behavioral Patterns</a>
+  <a href="#s9">9. Concurrency Building Blocks</a>
+  <a href="#s10">10. Common Anti-Patterns</a>
+  <a href="#p1">P1. Parking Lot</a>
+  <a href="#p2">P2. Splitwise</a>
+  <a href="#p3">P3. Elevator System</a>
+  <a href="#p4">P4. LRU Cache</a>
+  <a href="#p5">P5. Vending Machine</a>
+  <a href="#p6">P6. Library Management</a>
+  <a href="#p7">P7. Tic-Tac-Toe</a>
+  <a href="#p8">P8. ATM</a>
+  <a href="#p9">P9. Logger / Rate Limiter</a>
+  <a href="#p10">P10. Notification System</a>
+  <a href="#p11">P11. BookMyShow</a>
+  <a href="#p12">P12. Amazon Order Mgmt (mini)</a>
+  <a href="#tq">T. Tricky Questions Bank</a>
+  <a href="#cl">C. 60-min Interview Checklist</a>
+</div>
+
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What LLD Interviews Actually Test</h2>
+
+<p>An Amazon LLD round (called "Object-Oriented Design" or "Coding + Design") is 45–60 minutes. The interviewer does <b>not</b> want a giant class diagram. They want to see you <b>turn an ambiguous problem into clean, working, extensible code</b>, while talking through trade-offs.</p>
+
+<table>
+  <thead><tr><th>What is graded</th><th>Weight</th><th>What "good" looks like</th></tr></thead>
+  <tbody>
+    <tr><td>Requirement gathering &amp; scoping</td><td>~20%</td><td>Asks 3–5 sharp questions, lists in/out of scope, calls out NFRs (concurrency, scale).</td></tr>
+    <tr><td>Class / object identification</td><td>~20%</td><td>Right-sized classes (no God class, no anemic models), proper relationships (composition vs inheritance).</td></tr>
+    <tr><td>Use of OOP &amp; SOLID</td><td>~20%</td><td>Encapsulation, dependency inversion, interfaces over implementations.</td></tr>
+    <tr><td>Design patterns (used, not name-dropped)</td><td>~15%</td><td>Strategy, Factory, Observer, State applied where they actually help.</td></tr>
+    <tr><td>Working code in the language of choice</td><td>~15%</td><td>Compiles in your head. Methods have bodies. Edge cases handled.</td></tr>
+    <tr><td>Extensibility &amp; trade-off articulation</td><td>~10%</td><td>"If we add X tomorrow, only class Y changes — here is why."</td></tr>
+  </tbody>
+</table>
+
+<div class="lp">
+  <b>Amazon LP signal:</b> <i>Are Right, A Lot</i> + <i>Dive Deep</i> show up when you justify a class boundary. <i>Invent and Simplify</i> shows up when you reject over-engineering ("I won't add Visitor here — it adds two classes and we have one operation"). <i>Customer Obsession</i> shows up when you frame requirements in user terms, not table terms.
+</div>
+
+<div class="tips">
+  <b>Tip — common SDE-1 trap:</b> jumping straight to code. <span class="pill bad">Anti-pattern</span> If you start typing within 60 seconds, you skipped requirements. Spend 5–8 minutes on requirements + entity sketch <i>before</i> the first class.
+</div>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. The 7-Step LLD Framework (use this every single time)</h2>
+
+<div class="frame">
+<b>The 7 steps — write these on the whiteboard / shared doc first:</b>
+<ol>
+  <li><b>Clarify Requirements</b> — functional + non-functional. Get scope locked.</li>
+  <li><b>Identify Core Entities (Nouns)</b> — pull nouns from the problem statement.</li>
+  <li><b>Identify Operations / Use Cases (Verbs)</b> — what does each actor do?</li>
+  <li><b>Define Relationships</b> — association, aggregation, composition, inheritance.</li>
+  <li><b>Apply SOLID + Patterns</b> — only where they earn their keep.</li>
+  <li><b>Code the Skeleton</b> — interfaces first, then concrete classes, then a small <code>main</code> demo.</li>
+  <li><b>Discuss Extensions &amp; Trade-offs</b> — concurrency, persistence, "what if we add Z?".</li>
+</ol>
+</div>
+
+<h3>Verbal opening template (memorize)</h3>
+<pre>
+"Before I jump in, let me clarify scope. I'll assume the system is X with users Y and Z.
+Out of scope: payments, auth, persistence — unless you'd like otherwise.
+I'll list entities, then sketch interfaces, then implement core flows in Java,
+and we'll close with extension points and concurrency."
+</pre>
+
+<div class="tips">
+  <b>Tip:</b> Saying "out of scope" out loud is huge. It signals product thinking and prevents the interviewer from holding missing features against you later.
+</div>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Requirements — Functional vs Non-Functional</h2>
+
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Functional Requirements (FR)</th><th>Non-Functional Requirements (NFR)</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Question</td>
+      <td>"What must the system <i>do</i>?"</td>
+      <td>"How well must it do it?"</td>
+    </tr>
+    <tr>
+      <td>Examples (Parking Lot)</td>
+      <td>Park / unpark a vehicle, calculate fee, find nearest spot.</td>
+      <td>Thread-safe spot allocation, p99 latency &lt; 50ms, 10k spots.</td>
+    </tr>
+    <tr>
+      <td>Drives</td>
+      <td>Class APIs, methods, return types.</td>
+      <td>Concurrency primitives, data structures, caching.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>The 5 questions to always ask (steal these)</h3>
+<ol>
+  <li><b>Who are the actors / users?</b> (admin, end-user, system)</li>
+  <li><b>What are the core operations?</b> (3–5 verbs max for the happy path)</li>
+  <li><b>Single-instance or distributed?</b> (in-memory vs persisted)</li>
+  <li><b>Concurrency expected?</b> (single thread vs many)</li>
+  <li><b>What is explicitly out of scope?</b> (state it; don't ask)</li>
+</ol>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. UML Cheat Sheet (Class &amp; Sequence)</h2>
+
+<h3>Relationship arrows you must draw correctly</h3>
+<table>
+  <thead><tr><th>Relation</th><th>Arrow</th><th>Lifetime</th><th>Java example</th></tr></thead>
+  <tbody>
+    <tr><td>Association</td><td><code>A ── B</code></td><td>Independent</td><td><code>class Order { Customer c; }</code></td></tr>
+    <tr><td>Aggregation (has-a, weak)</td><td><code>A ──◇ B</code></td><td>B can outlive A</td><td><code>class Team { List&lt;Player&gt; ps; }</code> — players exist without team</td></tr>
+    <tr><td>Composition (has-a, strong)</td><td><code>A ──◆ B</code></td><td>B dies with A</td><td><code>class House { Room[] rooms; }</code> — destroying house destroys rooms</td></tr>
+    <tr><td>Inheritance (is-a)</td><td><code>A ──▷ B</code></td><td>—</td><td><code>class Car extends Vehicle</code></td></tr>
+    <tr><td>Realization (implements)</td><td><code>A ┄┄▷ I</code></td><td>—</td><td><code>class CreditCard implements PaymentMethod</code></td></tr>
+    <tr><td>Dependency (uses temporarily)</td><td><code>A ┄┄&gt; B</code></td><td>—</td><td><code>void pay(PaymentGateway g)</code></td></tr>
+  </tbody>
+</table>
+
+<h3>ASCII class diagram you can draw fast on a whiteboard</h3>
+<div class="ascii-uml">
++-------------------+         +-------------------+
+|   ParkingLot      |◆--------|   ParkingFloor    |
++-------------------+ 1   *   +-------------------+
+| - floors          |         | - spots           |
+| + park(v)         |         | + getSpot(t)      |
+| + unpark(t)       |         +-------------------+
++-------------------+                  ◆
+                                       | 1
+                                       | *
+                                +-------------------+
+                                |   ParkingSpot     |&lt;--abstract
+                                +-------------------+
+                                       △
+                          +------------+------------+
+                          |            |            |
+                    CarSpot       BikeSpot      TruckSpot
+</div>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. SOLID — Deep Dive with Java Code</h2>
+
+<h3>S — Single Responsibility Principle (SRP)</h3>
+<p>One class = one reason to change. Don't fuse business logic with persistence with notification.</p>
+
+<table class="compare">
+  <thead><tr><th>Concept</th><th>Wrong (one class doing everything)</th><th>Right (split by reason to change)</th></tr></thead>
+  <tbody>
+    <tr><td>Code</td>
+    <td>
+<pre>
+<span class="kw">class</span> <span class="typ">Invoice</span> {
+  <span class="kw">double</span> total;
+  <span class="kw">void</span> calculate() { ... }
+  <span class="kw">void</span> saveToDB() { ... }     <span class="cmt">// persistence</span>
+  <span class="kw">void</span> emailCustomer(){ ... }  <span class="cmt">// I/O + comms</span>
+  <span class="kw">void</span> printPDF()    { ... }   <span class="cmt">// rendering</span>
+}
+</pre>
+    </td>
+    <td>
+<pre>
+<span class="kw">class</span> <span class="typ">Invoice</span>           { <span class="kw">double</span> calculate(); }
+<span class="kw">class</span> <span class="typ">InvoiceRepository</span> { <span class="kw">void</span> save(Invoice i); }
+<span class="kw">class</span> <span class="typ">InvoiceMailer</span>     { <span class="kw">void</span> email(Invoice i); }
+<span class="kw">class</span> <span class="typ">InvoicePrinter</span>    { <span class="kw">void</span> print(Invoice i); }
+</pre>
+    </td></tr>
+  </tbody>
+</table>
+
+<h3>O — Open/Closed Principle (OCP)</h3>
+<p>Open for extension, closed for modification. Adding a new payment type should not require editing existing code.</p>
+<pre>
+<span class="cmt">// WRONG — every new method = edit this class (closed for extension)</span>
+<span class="kw">class</span> <span class="typ">PaymentService</span> {
+  <span class="kw">void</span> pay(<span class="typ">String</span> type, <span class="kw">double</span> amt) {
+    <span class="kw">if</span> (type.equals(<span class="str">"CARD"</span>)) { ... }
+    <span class="kw">else if</span> (type.equals(<span class="str">"UPI"</span>))  { ... }
+    <span class="kw">else if</span> (type.equals(<span class="str">"COD"</span>))  { ... }
+    <span class="cmt">// adding "WALLET" forces editing here</span>
+  }
+}
+
+<span class="cmt">// RIGHT — Strategy + polymorphism. Add new class, edit nothing.</span>
+<span class="kw">interface</span> <span class="typ">PaymentMethod</span> { <span class="kw">void</span> pay(<span class="kw">double</span> amt); }
+<span class="kw">class</span> <span class="typ">CardPayment</span>   <span class="kw">implements</span> <span class="typ">PaymentMethod</span> { <span class="kw">public void</span> pay(<span class="kw">double</span> a){...} }
+<span class="kw">class</span> <span class="typ">UpiPayment</span>    <span class="kw">implements</span> <span class="typ">PaymentMethod</span> { <span class="kw">public void</span> pay(<span class="kw">double</span> a){...} }
+<span class="kw">class</span> <span class="typ">WalletPayment</span> <span class="kw">implements</span> <span class="typ">PaymentMethod</span> { <span class="kw">public void</span> pay(<span class="kw">double</span> a){...} }
+</pre>
+
+<h3>L — Liskov Substitution Principle (LSP)</h3>
+<p>Subtype must be usable wherever the base type is expected, without surprises.</p>
+<pre>
+<span class="cmt">// CLASSIC LSP violation: Square extends Rectangle</span>
+<span class="kw">class</span> <span class="typ">Rectangle</span> { <span class="kw">int</span> w, h;  <span class="kw">void</span> setW(<span class="kw">int</span> w){...}  <span class="kw">void</span> setH(<span class="kw">int</span> h){...} }
+<span class="kw">class</span> <span class="typ">Square</span> <span class="kw">extends</span> <span class="typ">Rectangle</span> {
+  <span class="ann">@Override</span> <span class="kw">void</span> setW(<span class="kw">int</span> w){ this.w = w; this.h = w; }   <span class="cmt">// surprise!</span>
+  <span class="ann">@Override</span> <span class="kw">void</span> setH(<span class="kw">int</span> h){ this.w = h; this.h = h; }
+}
+<span class="cmt">// Code that expects Rectangle behavior breaks: r.setW(5); r.setH(10); area is 100, not 50.</span>
+
+<span class="cmt">// FIX: don't model "is-a" by IDE inheritance — model by behavior. Both implement Shape.</span>
+<span class="kw">interface</span> <span class="typ">Shape</span> { <span class="kw">int</span> area(); }
+<span class="kw">class</span> <span class="typ">Rectangle</span> <span class="kw">implements</span> <span class="typ">Shape</span> { ... }
+<span class="kw">class</span> <span class="typ">Square</span>    <span class="kw">implements</span> <span class="typ">Shape</span> { ... }
+</pre>
+
+<h3>I — Interface Segregation Principle (ISP)</h3>
+<p>Many small interfaces beat one fat interface. Clients should not be forced to depend on methods they don't use.</p>
+<pre>
+<span class="cmt">// WRONG — one fat interface</span>
+<span class="kw">interface</span> <span class="typ">Worker</span> { <span class="kw">void</span> work(); <span class="kw">void</span> eat(); <span class="kw">void</span> sleep(); }
+<span class="kw">class</span> <span class="typ">RobotWorker</span> <span class="kw">implements</span> <span class="typ">Worker</span> {
+  <span class="kw">public void</span> work(){...}
+  <span class="kw">public void</span> eat() { <span class="kw">throw new</span> <span class="typ">UnsupportedOperationException</span>(); }  <span class="cmt">// smell!</span>
+  <span class="kw">public void</span> sleep(){ <span class="kw">throw new</span> <span class="typ">UnsupportedOperationException</span>(); }
+}
+
+<span class="cmt">// RIGHT — split by capability</span>
+<span class="kw">interface</span> <span class="typ">Workable</span>  { <span class="kw">void</span> work(); }
+<span class="kw">interface</span> <span class="typ">Eatable</span>   { <span class="kw">void</span> eat(); }
+<span class="kw">interface</span> <span class="typ">Sleepable</span> { <span class="kw">void</span> sleep(); }
+<span class="kw">class</span> <span class="typ">Human</span>       <span class="kw">implements</span> <span class="typ">Workable</span>, <span class="typ">Eatable</span>, <span class="typ">Sleepable</span> { ... }
+<span class="kw">class</span> <span class="typ">RobotWorker</span> <span class="kw">implements</span> <span class="typ">Workable</span> { ... }
+</pre>
+
+<h3>D — Dependency Inversion Principle (DIP)</h3>
+<p>Depend on abstractions, not concretes. High-level modules don't know about low-level ones.</p>
+<pre>
+<span class="cmt">// WRONG — OrderService is welded to MySQLOrderRepo</span>
+<span class="kw">class</span> <span class="typ">OrderService</span> {
+  <span class="kw">private</span> <span class="typ">MySQLOrderRepo</span> repo = <span class="kw">new</span> <span class="typ">MySQLOrderRepo</span>();   <span class="cmt">// hard dependency</span>
+}
+
+<span class="cmt">// RIGHT — depend on the interface, inject the concrete</span>
+<span class="kw">interface</span> <span class="typ">OrderRepo</span> { <span class="kw">void</span> save(Order o); Order find(<span class="typ">String</span> id); }
+<span class="kw">class</span> <span class="typ">OrderService</span> {
+  <span class="kw">private final</span> <span class="typ">OrderRepo</span> repo;
+  <span class="kw">public</span> OrderService(<span class="typ">OrderRepo</span> repo) { <span class="kw">this</span>.repo = repo; }   <span class="cmt">// constructor injection</span>
+}
+<span class="cmt">// Now MySQL, Postgres, in-memory, mock — all swap in without touching OrderService.</span>
+</pre>
+
+<div class="tips">
+  <b>Interview line that scores:</b> "I'll inject the repository through the constructor — it makes <code>OrderService</code> trivially testable with an in-memory fake."
+</div>
+
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. DRY · KISS · YAGNI · Law of Demeter</h2>
+
+<table>
+  <thead><tr><th>Principle</th><th>Meaning</th><th>Smell when violated</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><b>DRY</b> — Don't Repeat Yourself</td><td>Each piece of knowledge has one source of truth.</td><td>Same validation copied across services.</td><td>Extract to a utility / base class / shared module.</td></tr>
+    <tr><td><b>KISS</b> — Keep It Simple</td><td>Choose the simplest design that meets requirements.</td><td>Three layers of indirection for one method call.</td><td>Inline; remove unused abstractions.</td></tr>
+    <tr><td><b>YAGNI</b> — You Aren't Gonna Need It</td><td>Don't build for hypothetical future needs.</td><td>Generic <code>Manager&lt;T,U,V&gt;</code> with one user.</td><td>Delete; add when truly needed.</td></tr>
+    <tr><td><b>LoD</b> — Law of Demeter</td><td>Talk only to immediate friends. <code>a.getB().getC().doX()</code> is a smell.</td><td>Train wrecks of <code>.</code> calls.</td><td>Add a method on the immediate object that does the work.</td></tr>
+  </tbody>
+</table>
+
+<pre>
+<span class="cmt">// LoD violation — train wreck</span>
+order.getCustomer().getAddress().getCity().toUpperCase();
+
+<span class="cmt">// Better — Order knows how to expose what callers need</span>
+order.getShippingCity();
+</pre>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Creational Patterns (the "make me an object" patterns)</h2>
+
+<h3>Singleton — exactly one instance</h3>
+<p>Most-asked LLD pattern. Get the thread-safe version right.</p>
+<pre>
+<span class="cmt">// Best Java idiom: enum singleton — thread-safe, serialization-safe, reflection-safe</span>
+<span class="kw">public enum</span> <span class="typ">Logger</span> {
+  INSTANCE;
+  <span class="kw">public void</span> log(<span class="typ">String</span> msg) { System.out.println(msg); }
+}
+<span class="cmt">// Usage: Logger.INSTANCE.log("hi");</span>
+
+<span class="cmt">// Lazy + thread-safe alternative: double-checked locking</span>
+<span class="kw">public class</span> <span class="typ">Config</span> {
+  <span class="kw">private static volatile</span> <span class="typ">Config</span> instance;       <span class="cmt">// volatile is mandatory</span>
+  <span class="kw">private</span> Config() {}
+  <span class="kw">public static</span> <span class="typ">Config</span> get() {
+    <span class="kw">if</span> (instance == <span class="kw">null</span>) {
+      <span class="kw">synchronized</span> (Config.<span class="kw">class</span>) {
+        <span class="kw">if</span> (instance == <span class="kw">null</span>) instance = <span class="kw">new</span> Config();
+      }
+    }
+    <span class="kw">return</span> instance;
+  }
+}
+</pre>
+<div class="tips"><b>Trick Q:</b> "Why <code>volatile</code>?" → without it, another thread could see a partially constructed object due to JVM reordering of <code>new</code> + assignment.</div>
+
+<h3>Factory Method — defer instantiation to subclasses</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">Notification</span> { <span class="kw">void</span> send(); }
+<span class="kw">class</span> <span class="typ">EmailNotif</span> <span class="kw">implements</span> <span class="typ">Notification</span> { <span class="kw">public void</span> send(){...} }
+<span class="kw">class</span> <span class="typ">SmsNotif</span>   <span class="kw">implements</span> <span class="typ">Notification</span> { <span class="kw">public void</span> send(){...} }
+
+<span class="kw">class</span> <span class="typ">NotificationFactory</span> {
+  <span class="kw">public static</span> <span class="typ">Notification</span> create(<span class="typ">String</span> type) {
+    <span class="kw">switch</span> (type) {
+      <span class="kw">case</span> <span class="str">"EMAIL"</span>: <span class="kw">return new</span> EmailNotif();
+      <span class="kw">case</span> <span class="str">"SMS"</span>:   <span class="kw">return new</span> SmsNotif();
+      <span class="kw">default</span>:        <span class="kw">throw new</span> <span class="typ">IllegalArgumentException</span>(type);
+    }
+  }
+}
+</pre>
+
+<h3>Abstract Factory — family of related products</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">Button</span> { <span class="kw">void</span> render(); }
+<span class="kw">interface</span> <span class="typ">Checkbox</span> { <span class="kw">void</span> render(); }
+<span class="kw">interface</span> <span class="typ">UIFactory</span> { Button btn(); Checkbox cb(); }
+
+<span class="kw">class</span> <span class="typ">DarkUIFactory</span>  <span class="kw">implements</span> <span class="typ">UIFactory</span> { <span class="kw">public</span> Button btn(){<span class="kw">return new</span> DarkBtn();} <span class="kw">public</span> Checkbox cb(){<span class="kw">return new</span> DarkCb();} }
+<span class="kw">class</span> <span class="typ">LightUIFactory</span> <span class="kw">implements</span> <span class="typ">UIFactory</span> { ... }
+</pre>
+
+<h3>Builder — many optional params, immutable result</h3>
+<pre>
+<span class="kw">public class</span> <span class="typ">Pizza</span> {
+  <span class="kw">private final</span> <span class="typ">String</span> size;
+  <span class="kw">private final boolean</span> cheese, pepperoni, olives;
+
+  <span class="kw">private</span> Pizza(Builder b) { size=b.size; cheese=b.cheese; pepperoni=b.pepperoni; olives=b.olives; }
+
+  <span class="kw">public static class</span> <span class="typ">Builder</span> {
+    <span class="kw">private</span> <span class="typ">String</span> size; <span class="kw">private boolean</span> cheese, pepperoni, olives;
+    <span class="kw">public</span> Builder size(<span class="typ">String</span> s){ size=s; <span class="kw">return this</span>; }
+    <span class="kw">public</span> Builder cheese()    { cheese=<span class="kw">true</span>; <span class="kw">return this</span>; }
+    <span class="kw">public</span> Builder pepperoni() { pepperoni=<span class="kw">true</span>; <span class="kw">return this</span>; }
+    <span class="kw">public</span> Builder olives()    { olives=<span class="kw">true</span>; <span class="kw">return this</span>; }
+    <span class="kw">public</span> Pizza build()      { <span class="kw">return new</span> Pizza(<span class="kw">this</span>); }
+  }
+}
+<span class="cmt">// Pizza p = new Pizza.Builder().size("L").cheese().olives().build();</span>
+</pre>
+
+<h3>Prototype — clone an existing object</h3>
+<p>Useful when constructing from scratch is expensive (DB hit, network call). Implement <code>Cloneable</code> or write your own <code>copy()</code>.</p>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Structural Patterns</h2>
+
+<h3>Adapter — make incompatible interfaces talk</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">UsbC</span>     { <span class="kw">void</span> chargeUsbC(); }
+<span class="kw">class</span> <span class="typ">OldUsbA</span> { <span class="kw">public void</span> chargeUsbA(){...} }
+
+<span class="kw">class</span> <span class="typ">UsbAtoCAdapter</span> <span class="kw">implements</span> <span class="typ">UsbC</span> {
+  <span class="kw">private final</span> OldUsbA oldDevice;
+  <span class="kw">public</span> UsbAtoCAdapter(OldUsbA d){ <span class="kw">this</span>.oldDevice=d; }
+  <span class="kw">public void</span> chargeUsbC() { oldDevice.chargeUsbA(); }
+}
+</pre>
+
+<h3>Decorator — add behavior without subclassing</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">Coffee</span> { <span class="kw">double</span> cost(); <span class="typ">String</span> desc(); }
+<span class="kw">class</span> <span class="typ">SimpleCoffee</span> <span class="kw">implements</span> <span class="typ">Coffee</span> { <span class="kw">public double</span> cost(){<span class="kw">return</span> 5;} <span class="kw">public</span> <span class="typ">String</span> desc(){<span class="kw">return</span> <span class="str">"coffee"</span>;} }
+
+<span class="kw">abstract class</span> <span class="typ">CoffeeDecorator</span> <span class="kw">implements</span> <span class="typ">Coffee</span> {
+  <span class="kw">protected final</span> Coffee inner;
+  <span class="kw">public</span> CoffeeDecorator(Coffee c){ inner=c; }
+}
+<span class="kw">class</span> <span class="typ">Milk</span>  <span class="kw">extends</span> CoffeeDecorator { <span class="kw">public</span> Milk(Coffee c){<span class="kw">super</span>(c);}  <span class="kw">public double</span> cost(){<span class="kw">return</span> inner.cost()+1.5;} <span class="kw">public</span> <span class="typ">String</span> desc(){<span class="kw">return</span> inner.desc()+<span class="str">"+milk"</span>;} }
+<span class="kw">class</span> <span class="typ">Sugar</span> <span class="kw">extends</span> CoffeeDecorator { <span class="kw">public</span> Sugar(Coffee c){<span class="kw">super</span>(c);} <span class="kw">public double</span> cost(){<span class="kw">return</span> inner.cost()+0.5;} <span class="kw">public</span> <span class="typ">String</span> desc(){<span class="kw">return</span> inner.desc()+<span class="str">"+sugar"</span>;} }
+<span class="cmt">// new Sugar(new Milk(new SimpleCoffee())).cost() == 7.0;</span>
+</pre>
+
+<h3>Facade — one front door for a tangle of subsystems</h3>
+<pre>
+<span class="kw">class</span> <span class="typ">VideoConverterFacade</span> {
+  <span class="kw">public</span> File convert(File src, <span class="typ">String</span> targetFormat) {
+    <span class="kw">var</span> codec  = <span class="kw">new</span> CodecFactory().pick(targetFormat);
+    <span class="kw">var</span> reader = <span class="kw">new</span> VideoReader(src);
+    <span class="kw">var</span> buf    = <span class="kw">new</span> Compressor().compress(reader.read(), codec);
+    <span class="kw">return new</span> Writer().write(buf, targetFormat);
+  }
+}
+<span class="cmt">// Caller does: facade.convert(f, "mp4");  no knowledge of codecs/buffers/etc.</span>
+</pre>
+
+<h3>Composite — tree of part-whole objects treated uniformly</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">FsNode</span> { <span class="kw">long</span> size(); }
+<span class="kw">class</span> <span class="typ">FileNode</span> <span class="kw">implements</span> <span class="typ">FsNode</span> { <span class="kw">long</span> bytes; <span class="kw">public long</span> size(){<span class="kw">return</span> bytes;} }
+<span class="kw">class</span> <span class="typ">DirNode</span>  <span class="kw">implements</span> <span class="typ">FsNode</span> {
+  List&lt;FsNode&gt; children = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+  <span class="kw">public long</span> size() { <span class="kw">return</span> children.stream().mapToLong(FsNode::size).sum(); }
+}
+</pre>
+
+<h3>Proxy · Bridge · Flyweight (one-liners)</h3>
+<ul>
+  <li><b>Proxy</b> — same interface, controls access (lazy load, auth check, remote call).</li>
+  <li><b>Bridge</b> — split abstraction from implementation so they vary independently. <code>Shape</code> hierarchy × <code>Renderer</code> hierarchy.</li>
+  <li><b>Flyweight</b> — share fine-grained immutable state to save memory (e.g., glyphs in a text editor; <code>Integer.valueOf()</code> cache).</li>
+</ul>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Behavioral Patterns (the ones that actually win interviews)</h2>
+
+<h3>Strategy — interchangeable algorithms (most useful pattern in LLD)</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">SortStrategy</span> { <span class="kw">void</span> sort(<span class="kw">int</span>[] a); }
+<span class="kw">class</span> <span class="typ">QuickSort</span>  <span class="kw">implements</span> <span class="typ">SortStrategy</span> { <span class="kw">public void</span> sort(<span class="kw">int</span>[] a){...} }
+<span class="kw">class</span> <span class="typ">MergeSort</span>  <span class="kw">implements</span> <span class="typ">SortStrategy</span> { <span class="kw">public void</span> sort(<span class="kw">int</span>[] a){...} }
+
+<span class="kw">class</span> <span class="typ">Sorter</span> {
+  <span class="kw">private</span> SortStrategy s;
+  <span class="kw">public</span> Sorter(SortStrategy s){ <span class="kw">this</span>.s = s; }
+  <span class="kw">public void</span> setStrategy(SortStrategy s){ <span class="kw">this</span>.s = s; }
+  <span class="kw">public void</span> sort(<span class="kw">int</span>[] a){ s.sort(a); }
+}
+</pre>
+
+<h3>Observer — publish/subscribe</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">Observer</span>&lt;T&gt; { <span class="kw">void</span> onEvent(T event); }
+<span class="kw">class</span> <span class="typ">EventBus</span>&lt;T&gt; {
+  <span class="kw">private final</span> List&lt;Observer&lt;T&gt;&gt; subs = <span class="kw">new</span> <span class="typ">CopyOnWriteArrayList</span>&lt;&gt;();
+  <span class="kw">public void</span> subscribe(Observer&lt;T&gt; o){ subs.add(o); }
+  <span class="kw">public void</span> publish(T e){ <span class="kw">for</span> (<span class="kw">var</span> s : subs) s.onEvent(e); }
+}
+</pre>
+<div class="tips"><b>Why <code>CopyOnWriteArrayList</code>:</b> publish iterates while subscribers may register/unregister. CoW gives a snapshot iterator with no <code>ConcurrentModificationException</code>.</div>
+
+<h3>State — object behavior changes with internal state</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">OrderState</span> { <span class="kw">void</span> next(OrderContext c); <span class="kw">void</span> cancel(OrderContext c); }
+<span class="kw">class</span> <span class="typ">PlacedState</span>    <span class="kw">implements</span> <span class="typ">OrderState</span> { <span class="kw">public void</span> next(<span class="kw">var</span> c){ c.setState(<span class="kw">new</span> ShippedState()); } <span class="kw">public void</span> cancel(<span class="kw">var</span> c){ c.setState(<span class="kw">new</span> CancelledState()); } }
+<span class="kw">class</span> <span class="typ">ShippedState</span>   <span class="kw">implements</span> <span class="typ">OrderState</span> { <span class="kw">public void</span> next(<span class="kw">var</span> c){ c.setState(<span class="kw">new</span> DeliveredState()); } <span class="kw">public void</span> cancel(<span class="kw">var</span> c){ <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Already shipped"</span>); } }
+<span class="kw">class</span> <span class="typ">DeliveredState</span> <span class="kw">implements</span> <span class="typ">OrderState</span> { ... }
+<span class="kw">class</span> <span class="typ">CancelledState</span> <span class="kw">implements</span> <span class="typ">OrderState</span> { ... }
+</pre>
+
+<h3>Command — encapsulate a request as an object (undo/redo, queues)</h3>
+<pre>
+<span class="kw">interface</span> <span class="typ">Command</span> { <span class="kw">void</span> execute(); <span class="kw">void</span> undo(); }
+<span class="kw">class</span> <span class="typ">AddTextCmd</span> <span class="kw">implements</span> <span class="typ">Command</span> {
+  <span class="kw">private final</span> Editor ed; <span class="kw">private final</span> <span class="typ">String</span> text;
+  <span class="kw">public</span> AddTextCmd(Editor e, <span class="typ">String</span> t){ ed=e; text=t; }
+  <span class="kw">public void</span> execute(){ ed.append(text); }
+  <span class="kw">public void</span> undo()   { ed.delete(text.length()); }
+}
+</pre>
+
+<h3>Template Method — fix the algorithm skeleton, vary the steps</h3>
+<pre>
+<span class="kw">abstract class</span> <span class="typ">Report</span> {
+  <span class="kw">public final void</span> generate() { fetch(); transform(); render(); }   <span class="cmt">// final: skeleton frozen</span>
+  <span class="kw">protected abstract void</span> fetch();
+  <span class="kw">protected abstract void</span> transform();
+  <span class="kw">protected void</span> render(){ <span class="cmt">/* default impl */</span> }
+}
+</pre>
+
+<h3>Chain of Responsibility — pass request along until someone handles it</h3>
+<pre>
+<span class="kw">abstract class</span> <span class="typ">LogHandler</span> {
+  <span class="kw">protected</span> LogHandler next;
+  <span class="kw">public</span> LogHandler chain(LogHandler n){ <span class="kw">this</span>.next=n; <span class="kw">return</span> n; }
+  <span class="kw">public void</span> handle(Log log){ <span class="kw">if</span> (canHandle(log)) write(log); <span class="kw">else if</span> (next!=<span class="kw">null</span>) next.handle(log); }
+  <span class="kw">protected abstract boolean</span> canHandle(Log l);
+  <span class="kw">protected abstract void</span> write(Log l);
+}
+</pre>
+
+<h3>Iterator · Mediator · Memento · Visitor (one-liners)</h3>
+<ul>
+  <li><b>Iterator</b> — sequential access without exposing internals (<code>Iterable&lt;T&gt;</code>).</li>
+  <li><b>Mediator</b> — central object coordinates peers (chat room, air-traffic control). Reduces N×N coupling to N×1.</li>
+  <li><b>Memento</b> — snapshot state for restore (undo). Pair with Command.</li>
+  <li><b>Visitor</b> — add operations to a class hierarchy without modifying it. Heavy; use only if hierarchy is stable but operations grow.</li>
+</ul>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Concurrency Building Blocks (interviewers love these)</h2>
+
+<table>
+  <thead><tr><th>Need</th><th>Tool</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Mutual exclusion</td><td><code>synchronized</code> / <code>ReentrantLock</code></td><td>ReentrantLock allows <code>tryLock</code>, fairness, multiple condition vars.</td></tr>
+    <tr><td>Many readers, few writers</td><td><code>ReadWriteLock</code></td><td>Parallel reads, exclusive writes.</td></tr>
+    <tr><td>Visibility flag</td><td><code>volatile boolean</code> / <code>AtomicBoolean</code></td><td>Cross-thread read consistency without locking.</td></tr>
+    <tr><td>Counter / sequence</td><td><code>AtomicInteger</code>, <code>LongAdder</code></td><td>Lock-free CAS. <code>LongAdder</code> wins under heavy contention.</td></tr>
+    <tr><td>Thread-safe map</td><td><code>ConcurrentHashMap</code></td><td>Segment-level locking; never <code>Hashtable</code>.</td></tr>
+    <tr><td>Producer-consumer</td><td><code>BlockingQueue</code> (<code>ArrayBlockingQueue</code>, <code>LinkedBlockingQueue</code>)</td><td>Built-in <code>put/take</code> blocking semantics.</td></tr>
+    <tr><td>Wait for N events</td><td><code>CountDownLatch</code> (one-shot) / <code>CyclicBarrier</code> (reusable)</td><td>Coordinate phases.</td></tr>
+    <tr><td>Limit concurrency</td><td><code>Semaphore</code></td><td>Permit pool — perfect for connection pools, rate limiters.</td></tr>
+    <tr><td>Run async tasks</td><td><code>ExecutorService</code> / <code>CompletableFuture</code></td><td>Never <code>new Thread()</code> in interview code.</td></tr>
+    <tr><td>Per-thread state</td><td><code>ThreadLocal</code></td><td>User context, request IDs. Always <code>remove()</code> on exit.</td></tr>
+  </tbody>
+</table>
+
+<h3>Thread-safe Singleton (worth memorizing)</h3>
+<pre>
+<span class="kw">public class</span> <span class="typ">DbPool</span> {
+  <span class="kw">private static class</span> <span class="typ">Holder</span> { <span class="kw">static final</span> DbPool I = <span class="kw">new</span> DbPool(); }   <span class="cmt">// "initialization-on-demand holder"</span>
+  <span class="kw">public static</span> DbPool get(){ <span class="kw">return</span> Holder.I; }
+}
+<span class="cmt">// JLS guarantees Holder is loaded once, lazily, and thread-safely. Cleaner than DCL.</span>
+</pre>
+
+<h3>Producer-consumer skeleton</h3>
+<pre>
+BlockingQueue&lt;Task&gt; q = <span class="kw">new</span> <span class="typ">LinkedBlockingQueue</span>&lt;&gt;(1000);
+ExecutorService pool = Executors.newFixedThreadPool(8);
+pool.submit(() -&gt; { <span class="kw">while</span> (!Thread.currentThread().isInterrupted()) { Task t = q.take(); t.run(); } });
+q.put(<span class="kw">new</span> Task());
+</pre>
+
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Common LLD Anti-Patterns (kill these on sight)</h2>
+
+<table>
+  <thead><tr><th>Anti-pattern</th><th>Smell</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><b>God Class</b></td><td>One class with 30 methods doing parsing, persistence, business logic, UI.</td><td>Split by SRP — one reason to change per class.</td></tr>
+    <tr><td><b>Anemic Domain Model</b></td><td>Entities are just getters/setters; logic lives in <code>*Service</code>.</td><td>Push behavior onto the entity (<code>order.cancel()</code>, not <code>orderService.cancel(order)</code>).</td></tr>
+    <tr><td><b>Switch on type</b></td><td><code>if (type=="A") ... else if (type=="B")</code> sprinkled everywhere.</td><td>Polymorphism (Strategy / State).</td></tr>
+    <tr><td><b>Inheritance for code reuse</b></td><td><code>class Stack extends ArrayList</code> — exposes wrong API.</td><td>Composition. Extend only when "is-a" is honest.</td></tr>
+    <tr><td><b>Primitive obsession</b></td><td><code>String</code> for currency, <code>double</code> for money, <code>int</code> for ID.</td><td>Wrap in value objects: <code>Money</code>, <code>OrderId</code>.</td></tr>
+    <tr><td><b>Feature envy</b></td><td>Method on A reads / mutates B's fields more than its own.</td><td>Move method to B.</td></tr>
+    <tr><td><b>Shotgun surgery</b></td><td>One change touches 12 classes.</td><td>Cohesion is wrong; refactor responsibilities.</td></tr>
+    <tr><td><b>Hidden temporal coupling</b></td><td>You must call <code>init()</code> before <code>start()</code> or it explodes.</td><td>Constructor takes everything needed, or use Builder.</td></tr>
+    <tr><td><b>Returning <code>null</code></b></td><td>Caller forgets to check, NPE in prod.</td><td><code>Optional&lt;T&gt;</code>, empty collection, or throw.</td></tr>
+    <tr><td><b>Public mutable fields</b></td><td><code>public List&lt;Item&gt; items;</code></td><td><code>private final</code> + return <code>Collections.unmodifiableList(items)</code>.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= P1 — Parking Lot ============================= -->
+<h2 id="p1">P1. Parking Lot — the canonical Amazon LLD problem</h2>
+
+<h3>Step 1 — Requirements (FR + NFR)</h3>
+<ul>
+  <li><b>FR:</b> park a vehicle (Bike / Car / Truck), unpark with ticket, calculate fee by hours, multiple floors with multiple spot types, find nearest available spot.</li>
+  <li><b>NFR:</b> thread-safe (two cars can't claim the same spot), O(1) park / unpark, single-process.</li>
+  <li><b>Out of scope:</b> reservations, license-plate OCR, payments — state explicitly.</li>
+</ul>
+
+<h3>Step 2 — Entities &amp; relationships</h3>
+<div class="ascii-uml">
+ParkingLot ◆── ParkingFloor ◆── ParkingSpot &lt;|-- {CarSpot, BikeSpot, TruckSpot}
+Vehicle    &lt;|-- {Car, Bike, Truck}
+Ticket     -- references --&gt; ParkingSpot, Vehicle, entryTime
+FeeStrategy &lt;|-- {HourlyFeeStrategy, FlatFeeStrategy}    // Strategy pattern
+</div>
+
+<h3>Step 3 — Code (compilable Java skeleton)</h3>
+<pre>
+<span class="kw">enum</span> <span class="typ">VehicleType</span> { BIKE, CAR, TRUCK }
+
+<span class="kw">abstract class</span> <span class="typ">Vehicle</span> {
+  <span class="kw">private final</span> <span class="typ">String</span> plate; <span class="kw">private final</span> VehicleType type;
+  <span class="kw">protected</span> Vehicle(<span class="typ">String</span> p, VehicleType t){ plate=p; type=t; }
+  <span class="kw">public</span> VehicleType getType(){ <span class="kw">return</span> type; }
+  <span class="kw">public</span> <span class="typ">String</span> getPlate(){ <span class="kw">return</span> plate; }
+}
+<span class="kw">class</span> <span class="typ">Car</span>   <span class="kw">extends</span> Vehicle { <span class="kw">public</span> Car  (<span class="typ">String</span> p){ <span class="kw">super</span>(p, VehicleType.CAR);   } }
+<span class="kw">class</span> <span class="typ">Bike</span>  <span class="kw">extends</span> Vehicle { <span class="kw">public</span> Bike (<span class="typ">String</span> p){ <span class="kw">super</span>(p, VehicleType.BIKE);  } }
+<span class="kw">class</span> <span class="typ">Truck</span> <span class="kw">extends</span> Vehicle { <span class="kw">public</span> Truck(<span class="typ">String</span> p){ <span class="kw">super</span>(p, VehicleType.TRUCK); } }
+
+<span class="kw">abstract class</span> <span class="typ">ParkingSpot</span> {
+  <span class="kw">private final</span> <span class="typ">String</span> id;
+  <span class="kw">private final</span> VehicleType allowed;
+  <span class="kw">private</span> Vehicle parked;             <span class="cmt">// null = free</span>
+  <span class="kw">protected</span> ParkingSpot(<span class="typ">String</span> id, VehicleType a){ <span class="kw">this</span>.id=id; <span class="kw">this</span>.allowed=a; }
+  <span class="kw">public synchronized boolean</span> tryPark(Vehicle v){
+    <span class="kw">if</span> (parked != <span class="kw">null</span> || v.getType() != allowed) <span class="kw">return false</span>;
+    parked = v; <span class="kw">return true</span>;
+  }
+  <span class="kw">public synchronized</span> Vehicle remove(){ Vehicle v=parked; parked=<span class="kw">null</span>; <span class="kw">return</span> v; }
+  <span class="kw">public synchronized boolean</span> isFree(){ <span class="kw">return</span> parked == <span class="kw">null</span>; }
+  <span class="kw">public</span> <span class="typ">String</span> id(){ <span class="kw">return</span> id; }
+}
+<span class="kw">class</span> <span class="typ">CarSpot</span>   <span class="kw">extends</span> ParkingSpot { <span class="kw">public</span> CarSpot  (<span class="typ">String</span> id){ <span class="kw">super</span>(id, VehicleType.CAR);   } }
+<span class="kw">class</span> <span class="typ">BikeSpot</span>  <span class="kw">extends</span> ParkingSpot { <span class="kw">public</span> BikeSpot (<span class="typ">String</span> id){ <span class="kw">super</span>(id, VehicleType.BIKE);  } }
+<span class="kw">class</span> <span class="typ">TruckSpot</span> <span class="kw">extends</span> ParkingSpot { <span class="kw">public</span> TruckSpot(<span class="typ">String</span> id){ <span class="kw">super</span>(id, VehicleType.TRUCK); } }
+
+<span class="kw">class</span> <span class="typ">Ticket</span> {
+  <span class="kw">final</span> <span class="typ">String</span> id; <span class="kw">final</span> ParkingSpot spot; <span class="kw">final</span> Vehicle vehicle; <span class="kw">final</span> Instant entry;
+  Ticket(ParkingSpot s, Vehicle v){ id=UUID.randomUUID().toString(); spot=s; vehicle=v; entry=Instant.now(); }
+}
+
+<span class="kw">interface</span> <span class="typ">FeeStrategy</span> { <span class="kw">double</span> compute(Ticket t, Instant exit); }
+<span class="kw">class</span> <span class="typ">HourlyFeeStrategy</span> <span class="kw">implements</span> <span class="typ">FeeStrategy</span> {
+  <span class="kw">private final</span> Map&lt;VehicleType, Double&gt; rates = Map.of(VehicleType.BIKE,10.0, VehicleType.CAR,20.0, VehicleType.TRUCK,40.0);
+  <span class="kw">public double</span> compute(Ticket t, Instant exit) {
+    <span class="kw">long</span> hrs = Math.max(1, Duration.between(t.entry, exit).toHours());
+    <span class="kw">return</span> hrs * rates.get(t.vehicle.getType());
+  }
+}
+
+<span class="kw">class</span> <span class="typ">ParkingFloor</span> {
+  <span class="kw">private final</span> Map&lt;VehicleType, Deque&lt;ParkingSpot&gt;&gt; freeSpots = <span class="kw">new</span> EnumMap&lt;&gt;(VehicleType.<span class="kw">class</span>);
+  <span class="kw">public</span> ParkingFloor(List&lt;ParkingSpot&gt; spots){
+    <span class="kw">for</span> (<span class="kw">var</span> t : VehicleType.values()) freeSpots.put(t, <span class="kw">new</span> ArrayDeque&lt;&gt;());
+    <span class="kw">for</span> (<span class="kw">var</span> s : spots) freeSpots.get(s instanceof CarSpot ? VehicleType.CAR : s instanceof BikeSpot ? VehicleType.BIKE : VehicleType.TRUCK).add(s);
+  }
+  <span class="kw">public synchronized</span> Optional&lt;ParkingSpot&gt; assign(Vehicle v){
+    <span class="kw">var</span> q = freeSpots.get(v.getType());
+    <span class="kw">while</span> (!q.isEmpty()) {
+      ParkingSpot s = q.poll();
+      <span class="kw">if</span> (s.tryPark(v)) <span class="kw">return</span> Optional.of(s);
+    }
+    <span class="kw">return</span> Optional.empty();
+  }
+  <span class="kw">public synchronized void</span> release(ParkingSpot s){ s.remove(); freeSpots.get(s instanceof CarSpot ? VehicleType.CAR : s instanceof BikeSpot ? VehicleType.BIKE : VehicleType.TRUCK).add(s); }
+}
+
+<span class="kw">class</span> <span class="typ">ParkingLot</span> {
+  <span class="kw">private final</span> List&lt;ParkingFloor&gt; floors;
+  <span class="kw">private final</span> FeeStrategy fees;
+  <span class="kw">private final</span> Map&lt;<span class="typ">String</span>, Ticket&gt; active = <span class="kw">new</span> ConcurrentHashMap&lt;&gt;();
+  <span class="kw">public</span> ParkingLot(List&lt;ParkingFloor&gt; f, FeeStrategy fs){ floors=f; fees=fs; }
+
+  <span class="kw">public</span> Ticket park(Vehicle v) {
+    <span class="kw">for</span> (ParkingFloor f : floors) {
+      <span class="kw">var</span> spot = f.assign(v);
+      <span class="kw">if</span> (spot.isPresent()) {
+        Ticket t = <span class="kw">new</span> Ticket(spot.get(), v);
+        active.put(t.id, t);
+        <span class="kw">return</span> t;
+      }
+    }
+    <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Lot full for "</span> + v.getType());
+  }
+  <span class="kw">public double</span> unpark(<span class="typ">String</span> ticketId) {
+    Ticket t = active.remove(ticketId);
+    <span class="kw">if</span> (t == <span class="kw">null</span>) <span class="kw">throw new</span> <span class="typ">IllegalArgumentException</span>(<span class="str">"Bad ticket"</span>);
+    <span class="kw">double</span> fee = fees.compute(t, Instant.now());
+    floors.stream().filter(f -&gt; <span class="kw">true</span>).findFirst().ifPresent(f -&gt; f.release(t.spot));   <span class="cmt">// in real code, track spot→floor</span>
+    <span class="kw">return</span> fee;
+  }
+}
+</pre>
+
+<div class="tips">
+  <b>Trade-offs to mention out loud:</b>
+  <ul>
+    <li>Used <code>Deque</code> for O(1) free-spot retrieval. Could swap to <code>PriorityQueue</code> if "nearest to entrance" is required (just add distance to spot).</li>
+    <li>Spot-level <code>synchronized</code> + floor-level <code>synchronized</code> = fine for thousands of spots; for millions use lock striping or per-spot <code>AtomicReference&lt;Vehicle&gt;</code> with CAS.</li>
+    <li><code>FeeStrategy</code> isolates pricing — adding "weekend rate" or "VIP" only adds a class.</li>
+  </ul>
+</div>
+
+<!-- ============================= P2 — Splitwise ============================= -->
+<h2 id="p2">P2. Splitwise / Expense Sharing</h2>
+
+<h3>Requirements</h3>
+<ul>
+  <li>Users can add expenses split <b>equally</b>, <b>exactly</b> (custom amounts), or by <b>percent</b>.</li>
+  <li>Show running balance: who owes whom, how much.</li>
+  <li>Support groups (subset of users).</li>
+</ul>
+
+<h3>Patterns used</h3>
+<ul>
+  <li><b>Strategy</b> for split type (equal / exact / percent).</li>
+  <li><b>Domain model</b>: <code>User</code>, <code>Group</code>, <code>Expense</code>, <code>Split</code>, <code>BalanceSheet</code>.</li>
+</ul>
+
+<pre>
+<span class="kw">enum</span> <span class="typ">SplitType</span> { EQUAL, EXACT, PERCENT }
+
+<span class="kw">class</span> <span class="typ">User</span> { <span class="kw">final</span> <span class="typ">String</span> id, name, email; ... }
+
+<span class="kw">class</span> <span class="typ">Split</span> { User user; <span class="kw">double</span> amount; }   <span class="cmt">// who owes how much for one expense</span>
+
+<span class="kw">interface</span> <span class="typ">SplitStrategy</span> {
+  List&lt;Split&gt; split(<span class="kw">double</span> total, List&lt;User&gt; participants, <span class="kw">double</span>[] weights);
+}
+<span class="kw">class</span> <span class="typ">EqualSplit</span> <span class="kw">implements</span> <span class="typ">SplitStrategy</span> {
+  <span class="kw">public</span> List&lt;Split&gt; split(<span class="kw">double</span> total, List&lt;User&gt; ps, <span class="kw">double</span>[] _w) {
+    <span class="kw">double</span> share = round(total / ps.size());
+    <span class="kw">return</span> ps.stream().map(u -&gt; { <span class="kw">var</span> s=<span class="kw">new</span> Split(); s.user=u; s.amount=share; <span class="kw">return</span> s;}).toList();
+  }
+  <span class="kw">private double</span> round(<span class="kw">double</span> x){ <span class="kw">return</span> Math.round(x*100.0)/100.0; }
+}
+<span class="kw">class</span> <span class="typ">ExactSplit</span>  <span class="kw">implements</span> <span class="typ">SplitStrategy</span> { <span class="cmt">/* assert sum(weights)==total */</span> ... }
+<span class="kw">class</span> <span class="typ">PercentSplit</span> <span class="kw">implements</span> <span class="typ">SplitStrategy</span> { <span class="cmt">/* assert sum(weights)==100  */</span> ... }
+
+<span class="kw">class</span> <span class="typ">Expense</span> {
+  <span class="kw">final</span> <span class="typ">String</span> id; <span class="kw">final</span> User paidBy; <span class="kw">final double</span> amount; <span class="kw">final</span> List&lt;Split&gt; splits;
+}
+
+<span class="kw">class</span> <span class="typ">BalanceSheet</span> {
+  <span class="cmt">// balances[a][b] = a owes b</span>
+  <span class="kw">private final</span> Map&lt;<span class="typ">String</span>, Map&lt;<span class="typ">String</span>, Double&gt;&gt; b = <span class="kw">new</span> ConcurrentHashMap&lt;&gt;();
+
+  <span class="kw">public synchronized void</span> add(Expense e) {
+    <span class="kw">for</span> (Split s : e.splits) {
+      <span class="kw">if</span> (s.user.id.equals(e.paidBy.id)) <span class="kw">continue</span>;
+      add(s.user.id, e.paidBy.id,  s.amount);   <span class="cmt">// s.user owes paidBy</span>
+      add(e.paidBy.id, s.user.id, -s.amount);   <span class="cmt">// mirror</span>
+    }
+  }
+  <span class="kw">private void</span> add(<span class="typ">String</span> a, <span class="typ">String</span> b1, <span class="kw">double</span> amt){
+    b.computeIfAbsent(a, k -&gt; <span class="kw">new</span> ConcurrentHashMap&lt;&gt;()).merge(b1, amt, Double::sum);
+  }
+  <span class="kw">public</span> Map&lt;<span class="typ">String</span>, Double&gt; balancesOf(<span class="typ">String</span> userId){ <span class="kw">return</span> b.getOrDefault(userId, Map.of()); }
+}
+</pre>
+
+<div class="tips"><b>Trick Q:</b> "How would you simplify debts so the minimum number of transactions settle everyone?" → Reduce to: for each user compute net balance; then greedily match max creditor with max debtor. Mention <code>O(n log n)</code> with a max-heap.</div>
+
+
+<!-- ============================= P3 — Elevator ============================= -->
+<h2 id="p3">P3. Elevator System</h2>
+
+<h3>Requirements</h3>
+<ul>
+  <li>N elevators, M floors. External requests (UP / DOWN button on a floor) and internal requests (button inside cabin).</li>
+  <li>Pick the "best" elevator for an external call. Optimize for least travel.</li>
+  <li>States: IDLE, MOVING_UP, MOVING_DOWN, STOPPED, MAINTENANCE.</li>
+</ul>
+
+<h3>Pattern map</h3>
+<ul>
+  <li><b>State</b> for elevator state machine.</li>
+  <li><b>Strategy</b> for dispatch algorithm (nearest-car, scan/look).</li>
+  <li><b>Observer</b> for floor displays subscribing to elevator events.</li>
+</ul>
+
+<pre>
+<span class="kw">enum</span> <span class="typ">Direction</span> { UP, DOWN, IDLE }
+
+<span class="kw">class</span> <span class="typ">Request</span> { <span class="kw">final int</span> floor; <span class="kw">final</span> Direction dir; }
+
+<span class="kw">class</span> <span class="typ">Elevator</span> {
+  <span class="kw">final int</span> id; <span class="kw">int</span> currentFloor; Direction dir = Direction.IDLE;
+  <span class="kw">final</span> NavigableSet&lt;Integer&gt; upStops   = <span class="kw">new</span> TreeSet&lt;&gt;();           <span class="cmt">// pending up stops</span>
+  <span class="kw">final</span> NavigableSet&lt;Integer&gt; downStops = <span class="kw">new</span> TreeSet&lt;&gt;(Comparator.reverseOrder());
+
+  <span class="kw">public synchronized void</span> addStop(<span class="kw">int</span> floor, Direction d){
+    (d == Direction.UP ? upStops : downStops).add(floor);
+  }
+
+  <span class="kw">public synchronized void</span> step() {
+    <span class="kw">if</span> (dir == Direction.UP && upStops.isEmpty()) dir = downStops.isEmpty() ? Direction.IDLE : Direction.DOWN;
+    <span class="kw">if</span> (dir == Direction.DOWN && downStops.isEmpty()) dir = upStops.isEmpty() ? Direction.IDLE : Direction.UP;
+    <span class="kw">if</span> (dir == Direction.IDLE) <span class="kw">return</span>;
+    <span class="kw">var</span> stops = dir == Direction.UP ? upStops : downStops;
+    Integer next = stops.first();
+    currentFloor += dir == Direction.UP ? 1 : -1;
+    <span class="kw">if</span> (currentFloor == next) stops.pollFirst();   <span class="cmt">// arrived; open doors</span>
+  }
+}
+
+<span class="kw">interface</span> <span class="typ">DispatchStrategy</span> { Elevator pick(List&lt;Elevator&gt; pool, Request r); }
+<span class="kw">class</span> <span class="typ">NearestCarStrategy</span> <span class="kw">implements</span> <span class="typ">DispatchStrategy</span> {
+  <span class="kw">public</span> Elevator pick(List&lt;Elevator&gt; pool, Request r) {
+    <span class="kw">return</span> pool.stream()
+        .min(Comparator.comparingInt(e -&gt; cost(e, r)))
+        .orElseThrow();
+  }
+  <span class="kw">private int</span> cost(Elevator e, Request r) {
+    <span class="kw">int</span> d = Math.abs(e.currentFloor - r.floor);
+    <span class="kw">if</span> (e.dir == Direction.IDLE) <span class="kw">return</span> d;
+    <span class="kw">if</span> (e.dir == Direction.UP   && r.floor &gt;= e.currentFloor && r.dir == Direction.UP)   <span class="kw">return</span> d;
+    <span class="kw">if</span> (e.dir == Direction.DOWN && r.floor &lt;= e.currentFloor && r.dir == Direction.DOWN) <span class="kw">return</span> d;
+    <span class="kw">return</span> d + 100;   <span class="cmt">// penalty: must reverse direction</span>
+  }
+}
+
+<span class="kw">class</span> <span class="typ">ElevatorController</span> {
+  <span class="kw">private final</span> List&lt;Elevator&gt; pool;
+  <span class="kw">private final</span> DispatchStrategy strategy;
+  <span class="kw">public synchronized void</span> handleExternal(<span class="kw">int</span> floor, Direction d){
+    Elevator e = strategy.pick(pool, <span class="kw">new</span> Request(){{ <span class="kw">this</span>.floor=floor; <span class="kw">this</span>.dir=d; }});
+    e.addStop(floor, d);
+  }
+}
+</pre>
+
+<!-- ============================= P4 — LRU Cache ============================= -->
+<h2 id="p4">P4. LRU Cache (the eternal LLD warm-up)</h2>
+
+<h3>Requirements</h3>
+<ul>
+  <li>O(1) <code>get</code> and <code>put</code>. Evict least-recently-used when capacity exceeded.</li>
+  <li>Thread-safe (extension).</li>
+</ul>
+
+<h3>Trick:</h3> doubly-linked list (for O(1) move-to-front + remove-tail) + HashMap (for O(1) lookup).
+
+<pre>
+<span class="kw">public class</span> <span class="typ">LRUCache</span>&lt;K, V&gt; {
+  <span class="kw">private static class</span> <span class="typ">Node</span>&lt;K, V&gt; { K k; V v; Node&lt;K,V&gt; prev, next; Node(K k, V v){this.k=k; this.v=v;} }
+
+  <span class="kw">private final int</span> cap;
+  <span class="kw">private final</span> Map&lt;K, Node&lt;K,V&gt;&gt; map = <span class="kw">new</span> HashMap&lt;&gt;();
+  <span class="kw">private final</span> Node&lt;K,V&gt; head = <span class="kw">new</span> Node&lt;&gt;(<span class="kw">null</span>,<span class="kw">null</span>), tail = <span class="kw">new</span> Node&lt;&gt;(<span class="kw">null</span>,<span class="kw">null</span>);
+
+  <span class="kw">public</span> LRUCache(<span class="kw">int</span> cap){ <span class="kw">this</span>.cap = cap; head.next = tail; tail.prev = head; }
+
+  <span class="kw">public synchronized</span> V get(K k) {
+    Node&lt;K,V&gt; n = map.get(k);
+    <span class="kw">if</span> (n == <span class="kw">null</span>) <span class="kw">return null</span>;
+    moveToFront(n);
+    <span class="kw">return</span> n.v;
+  }
+  <span class="kw">public synchronized void</span> put(K k, V v) {
+    Node&lt;K,V&gt; n = map.get(k);
+    <span class="kw">if</span> (n != <span class="kw">null</span>) { n.v = v; moveToFront(n); <span class="kw">return</span>; }
+    n = <span class="kw">new</span> Node&lt;&gt;(k, v);
+    map.put(k, n);
+    addFront(n);
+    <span class="kw">if</span> (map.size() &gt; cap) {
+      Node&lt;K,V&gt; lru = tail.prev;
+      remove(lru);
+      map.remove(lru.k);
+    }
+  }
+
+  <span class="kw">private void</span> remove(Node&lt;K,V&gt; n){ n.prev.next = n.next; n.next.prev = n.prev; }
+  <span class="kw">private void</span> addFront(Node&lt;K,V&gt; n){ n.next = head.next; n.prev = head; head.next.prev = n; head.next = n; }
+  <span class="kw">private void</span> moveToFront(Node&lt;K,V&gt; n){ remove(n); addFront(n); }
+}
+</pre>
+
+<div class="tips">
+  <b>Java cheat:</b> <code>LinkedHashMap</code> with <code>accessOrder=true</code> + <code>removeEldestEntry</code> override is a 5-line LRU. Mention it as the "production answer" but write the manual version because that's what the interviewer wants to see.
+</div>
+
+<!-- ============================= P5 — Vending Machine ============================= -->
+<h2 id="p5">P5. Vending Machine (best showcase for State pattern)</h2>
+
+<h3>States</h3>
+<p><code>IdleState</code> → <code>HasMoneyState</code> → <code>DispensingState</code> → <code>SoldOutState</code>.</p>
+
+<pre>
+<span class="kw">interface</span> <span class="typ">VmState</span> {
+  <span class="kw">void</span> insertCoin(VendingMachine m, Coin c);
+  <span class="kw">void</span> selectItem(VendingMachine m, <span class="typ">String</span> code);
+  <span class="kw">void</span> dispense(VendingMachine m);
+}
+
+<span class="kw">class</span> <span class="typ">VendingMachine</span> {
+  VmState state;
+  <span class="kw">final</span> Inventory inv;
+  <span class="kw">double</span> credit = 0;
+  Item selected;
+  <span class="kw">public</span> VendingMachine(Inventory i){ inv=i; state = <span class="kw">new</span> IdleState(); }
+  <span class="kw">public void</span> setState(VmState s){ state = s; }
+  <span class="kw">public void</span> insertCoin(Coin c){ state.insertCoin(<span class="kw">this</span>, c); }
+  <span class="kw">public void</span> selectItem(<span class="typ">String</span> code){ state.selectItem(<span class="kw">this</span>, code); }
+  <span class="kw">public void</span> dispense(){ state.dispense(<span class="kw">this</span>); }
+}
+
+<span class="kw">class</span> <span class="typ">IdleState</span> <span class="kw">implements</span> <span class="typ">VmState</span> {
+  <span class="kw">public void</span> insertCoin(VendingMachine m, Coin c){ m.credit += c.value(); m.setState(<span class="kw">new</span> HasMoneyState()); }
+  <span class="kw">public void</span> selectItem(VendingMachine m, <span class="typ">String</span> code){ <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Insert coin first"</span>); }
+  <span class="kw">public void</span> dispense(VendingMachine m){ <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Nothing selected"</span>); }
+}
+<span class="kw">class</span> <span class="typ">HasMoneyState</span> <span class="kw">implements</span> <span class="typ">VmState</span> {
+  <span class="kw">public void</span> insertCoin(VendingMachine m, Coin c){ m.credit += c.value(); }
+  <span class="kw">public void</span> selectItem(VendingMachine m, <span class="typ">String</span> code){
+    Item it = m.inv.get(code);
+    <span class="kw">if</span> (it == <span class="kw">null</span> || m.inv.stock(code) == 0) { m.setState(<span class="kw">new</span> SoldOutState()); <span class="kw">return</span>; }
+    <span class="kw">if</span> (m.credit &lt; it.price()) <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Not enough money"</span>);
+    m.selected = it;
+    m.setState(<span class="kw">new</span> DispensingState());
+  }
+  <span class="kw">public void</span> dispense(VendingMachine m){ <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Select first"</span>); }
+}
+<span class="kw">class</span> <span class="typ">DispensingState</span> <span class="kw">implements</span> <span class="typ">VmState</span> { <span class="cmt">/* ... dispense, return change, go to Idle ... */</span> }
+<span class="kw">class</span> <span class="typ">SoldOutState</span>    <span class="kw">implements</span> <span class="typ">VmState</span> { <span class="cmt">/* refund only */</span> }
+</pre>
+
+<!-- ============================= P6 — Library Management ============================= -->
+<h2 id="p6">P6. Library Management System</h2>
+
+<h3>Entities</h3>
+<p><code>Book</code>, <code>BookItem</code> (a physical copy), <code>Member</code>, <code>Librarian</code> (extends <code>Account</code>), <code>Loan</code>, <code>Reservation</code>, <code>Fine</code>, <code>Catalog</code>.</p>
+
+<div class="tips">
+  <b>Common confusion:</b> <code>Book</code> vs <code>BookItem</code>. <code>Book</code> = abstract title (ISBN, author, title). <code>BookItem</code> = a physical copy on the shelf (barcode, condition). One <code>Book</code>, many <code>BookItem</code>s. Calling this out wins points.
+</div>
+
+<pre>
+<span class="kw">enum</span> <span class="typ">BookStatus</span> { AVAILABLE, RESERVED, LOANED, LOST }
+
+<span class="kw">class</span> <span class="typ">Book</span> { <span class="kw">final</span> <span class="typ">String</span> isbn, title; <span class="kw">final</span> List&lt;<span class="typ">String</span>&gt; authors; }
+<span class="kw">class</span> <span class="typ">BookItem</span> {
+  <span class="kw">final</span> <span class="typ">String</span> barcode; <span class="kw">final</span> Book book; BookStatus status = BookStatus.AVAILABLE;
+}
+
+<span class="kw">class</span> <span class="typ">Catalog</span> {
+  <span class="kw">private final</span> Map&lt;<span class="typ">String</span>, Book&gt; byIsbn = <span class="kw">new</span> ConcurrentHashMap&lt;&gt;();
+  <span class="kw">private final</span> Map&lt;<span class="typ">String</span>, List&lt;BookItem&gt;&gt; copies = <span class="kw">new</span> ConcurrentHashMap&lt;&gt;();
+  <span class="kw">public</span> List&lt;Book&gt; searchByTitle(<span class="typ">String</span> q){ <span class="kw">return</span> byIsbn.values().stream().filter(b -&gt; b.title.toLowerCase().contains(q.toLowerCase())).toList(); }
+  <span class="kw">public</span> Optional&lt;BookItem&gt; firstAvailable(<span class="typ">String</span> isbn){
+    <span class="kw">return</span> copies.getOrDefault(isbn, List.of()).stream().filter(c -&gt; c.status == BookStatus.AVAILABLE).findFirst();
+  }
+}
+
+<span class="kw">class</span> <span class="typ">Loan</span> { <span class="kw">final</span> Member m; <span class="kw">final</span> BookItem item; <span class="kw">final</span> Instant issued, due; }
+
+<span class="kw">class</span> <span class="typ">LibraryService</span> {
+  <span class="kw">private final</span> Catalog catalog; <span class="kw">private final</span> Map&lt;<span class="typ">String</span>, List&lt;Loan&gt;&gt; loansByMember = <span class="kw">new</span> ConcurrentHashMap&lt;&gt;();
+  <span class="kw">private final int</span> MAX_BOOKS = 5; <span class="kw">private final</span> Duration LOAN_PERIOD = Duration.ofDays(14);
+
+  <span class="kw">public synchronized</span> Loan checkout(Member m, <span class="typ">String</span> isbn) {
+    <span class="kw">if</span> (loansByMember.getOrDefault(m.id, List.of()).size() &gt;= MAX_BOOKS)
+      <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Max books reached"</span>);
+    BookItem item = catalog.firstAvailable(isbn).orElseThrow(() -&gt; <span class="kw">new</span> <span class="typ">IllegalStateException</span>(<span class="str">"None available"</span>));
+    item.status = BookStatus.LOANED;
+    Loan l = <span class="kw">new</span> Loan(m, item, Instant.now(), Instant.now().plus(LOAN_PERIOD));
+    loansByMember.computeIfAbsent(m.id, k -&gt; <span class="kw">new</span> ArrayList&lt;&gt;()).add(l);
+    <span class="kw">return</span> l;
+  }
+}
+</pre>
+
+<!-- ============================= P7 — Tic Tac Toe ============================= -->
+<h2 id="p7">P7. Tic-Tac-Toe (warm-up; show clean OOP fast)</h2>
+
+<pre>
+<span class="kw">enum</span> <span class="typ">Symbol</span> { X, O, EMPTY }
+
+<span class="kw">class</span> <span class="typ">Board</span> {
+  <span class="kw">private final</span> Symbol[][] g;
+  <span class="kw">private final int</span> n;
+  <span class="kw">public</span> Board(<span class="kw">int</span> n){ <span class="kw">this</span>.n=n; g=<span class="kw">new</span> Symbol[n][n]; <span class="kw">for</span>(<span class="kw">var</span> r:g) Arrays.fill(r, Symbol.EMPTY); }
+  <span class="kw">public boolean</span> place(<span class="kw">int</span> r, <span class="kw">int</span> c, Symbol s){
+    <span class="kw">if</span> (g[r][c] != Symbol.EMPTY) <span class="kw">return false</span>;
+    g[r][c] = s; <span class="kw">return true</span>;
+  }
+  <span class="kw">public boolean</span> isWin(Symbol s){
+    <span class="kw">for</span> (<span class="kw">int</span> i=0;i&lt;n;i++) <span class="kw">if</span> (rowAll(i,s) || colAll(i,s)) <span class="kw">return true</span>;
+    <span class="kw">return</span> diagAll(s) || antiDiagAll(s);
+  }
+  <span class="cmt">// rowAll, colAll, diagAll, antiDiagAll trivial</span>
+}
+
+<span class="kw">class</span> <span class="typ">Player</span> { <span class="kw">final</span> <span class="typ">String</span> name; <span class="kw">final</span> Symbol s; }
+
+<span class="kw">class</span> <span class="typ">Game</span> {
+  <span class="kw">private final</span> Board board; <span class="kw">private final</span> Deque&lt;Player&gt; turnQueue = <span class="kw">new</span> ArrayDeque&lt;&gt;();
+  <span class="kw">public</span> Game(Player p1, Player p2, <span class="kw">int</span> n){ board=<span class="kw">new</span> Board(n); turnQueue.add(p1); turnQueue.add(p2); }
+  <span class="kw">public</span> Optional&lt;Player&gt; play(<span class="kw">int</span> r, <span class="kw">int</span> c){
+    Player cur = turnQueue.poll();
+    <span class="kw">if</span> (!board.place(r, c, cur.s)) { turnQueue.addFirst(cur); <span class="kw">throw new</span> <span class="typ">IllegalArgumentException</span>(<span class="str">"Cell taken"</span>); }
+    <span class="kw">if</span> (board.isWin(cur.s)) <span class="kw">return</span> Optional.of(cur);
+    turnQueue.addLast(cur);
+    <span class="kw">return</span> Optional.empty();
+  }
+}
+</pre>
+
+<div class="tips"><b>Why <code>Deque</code> for turn order:</b> O(1) rotate, easy to extend to N players. Beats <code>currentPlayerIndex</code> + modulo arithmetic.</div>
+
+
+<!-- ============================= P8 — ATM ============================= -->
+<h2 id="p8">P8. ATM</h2>
+
+<h3>Patterns</h3>
+<ul>
+  <li><b>State</b> — IDLE → CARD_INSERTED → AUTHENTICATED → TRANSACTION_SELECTED → DISPENSING.</li>
+  <li><b>Strategy</b> — different transaction types (Withdraw, Deposit, BalanceInquiry, Transfer).</li>
+  <li><b>Chain of Responsibility</b> — cash dispenser: try ₹2000 → ₹500 → ₹100 notes in order.</li>
+</ul>
+
+<pre>
+<span class="kw">interface</span> <span class="typ">Transaction</span> { <span class="kw">void</span> execute(AtmContext c); }
+<span class="kw">class</span> <span class="typ">Withdraw</span>      <span class="kw">implements</span> <span class="typ">Transaction</span> { <span class="kw">double</span> amt; <span class="kw">public void</span> execute(AtmContext c){...} }
+<span class="kw">class</span> <span class="typ">Deposit</span>       <span class="kw">implements</span> <span class="typ">Transaction</span> { ... }
+<span class="kw">class</span> <span class="typ">BalanceQuery</span>  <span class="kw">implements</span> <span class="typ">Transaction</span> { ... }
+
+<span class="cmt">// Cash dispenser — Chain of Responsibility</span>
+<span class="kw">abstract class</span> <span class="typ">CashDispenser</span> {
+  <span class="kw">protected</span> CashDispenser next;
+  <span class="kw">protected final int</span> denomination;
+  <span class="kw">protected int</span> count;
+  <span class="kw">public abstract void</span> dispense(<span class="kw">int</span> amount);
+  <span class="kw">public</span> CashDispenser setNext(CashDispenser n){ next=n; <span class="kw">return</span> n; }
+}
+<span class="kw">class</span> <span class="typ">DefaultDispenser</span> <span class="kw">extends</span> CashDispenser {
+  <span class="kw">public</span> DefaultDispenser(<span class="kw">int</span> d, <span class="kw">int</span> c){ denomination=d; count=c; }
+  <span class="kw">public synchronized void</span> dispense(<span class="kw">int</span> amount) {
+    <span class="kw">if</span> (amount &gt;= denomination) {
+      <span class="kw">int</span> num = Math.min(amount / denomination, count);
+      count -= num;
+      amount -= num * denomination;
+    }
+    <span class="kw">if</span> (amount &gt; 0) {
+      <span class="kw">if</span> (next == <span class="kw">null</span>) <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Cannot dispense exact amount"</span>);
+      next.dispense(amount);
+    }
+  }
+}
+<span class="cmt">// var d = new DefaultDispenser(2000, 100); d.setNext(new DefaultDispenser(500, 200)).setNext(new DefaultDispenser(100, 500));</span>
+</pre>
+
+<!-- ============================= P9 — Logger / Rate Limiter ============================= -->
+<h2 id="p9">P9. Logger + Rate Limiter</h2>
+
+<h3>P9a. Logger (Singleton + Chain + Strategy)</h3>
+<pre>
+<span class="kw">enum</span> <span class="typ">LogLevel</span> { DEBUG(0), INFO(1), WARN(2), ERROR(3); <span class="kw">final int</span> rank; LogLevel(<span class="kw">int</span> r){rank=r;} }
+
+<span class="kw">interface</span> <span class="typ">Appender</span> { <span class="kw">void</span> append(LogLevel l, <span class="typ">String</span> msg); }
+<span class="kw">class</span> <span class="typ">ConsoleAppender</span> <span class="kw">implements</span> <span class="typ">Appender</span> { <span class="kw">public void</span> append(LogLevel l, <span class="typ">String</span> m){ System.out.println(l+<span class="str">" "</span>+m); } }
+<span class="kw">class</span> <span class="typ">FileAppender</span>    <span class="kw">implements</span> <span class="typ">Appender</span> { ... }
+
+<span class="kw">public enum</span> <span class="typ">Logger</span> {
+  INSTANCE;
+  <span class="kw">private volatile</span> LogLevel threshold = LogLevel.INFO;
+  <span class="kw">private final</span> List&lt;Appender&gt; appenders = <span class="kw">new</span> CopyOnWriteArrayList&lt;&gt;();
+  <span class="kw">public void</span> setLevel(LogLevel l){ threshold = l; }
+  <span class="kw">public void</span> addAppender(Appender a){ appenders.add(a); }
+  <span class="kw">public void</span> log(LogLevel lvl, <span class="typ">String</span> msg) {
+    <span class="kw">if</span> (lvl.rank &lt; threshold.rank) <span class="kw">return</span>;
+    <span class="kw">for</span> (Appender a : appenders) a.append(lvl, msg);
+  }
+}
+</pre>
+
+<h3>P9b. Rate Limiter — Token Bucket (most common ask)</h3>
+<pre>
+<span class="kw">public class</span> <span class="typ">TokenBucket</span> {
+  <span class="kw">private final</span> <span class="kw">long</span> capacity;          <span class="cmt">// max tokens</span>
+  <span class="kw">private final double</span> refillPerMs;       <span class="cmt">// e.g. 10 req/sec = 0.01 tokens/ms</span>
+  <span class="kw">private double</span> tokens;
+  <span class="kw">private long</span> lastRefill;
+
+  <span class="kw">public</span> TokenBucket(<span class="kw">long</span> cap, <span class="kw">double</span> tokensPerSec) {
+    capacity = cap; refillPerMs = tokensPerSec / 1000.0;
+    tokens = cap; lastRefill = System.currentTimeMillis();
+  }
+
+  <span class="kw">public synchronized boolean</span> tryAcquire() {
+    refill();
+    <span class="kw">if</span> (tokens &gt;= 1) { tokens -= 1; <span class="kw">return true</span>; }
+    <span class="kw">return false</span>;
+  }
+  <span class="kw">private void</span> refill() {
+    <span class="kw">long</span> now = System.currentTimeMillis();
+    tokens = Math.min(capacity, tokens + (now - lastRefill) * refillPerMs);
+    lastRefill = now;
+  }
+}
+</pre>
+
+<table class="compare">
+  <thead><tr><th>Algorithm</th><th>Token Bucket</th><th>Sliding Window Log</th></tr></thead>
+  <tbody>
+    <tr><td>Idea</td><td>Refill tokens at fixed rate; consume on each request.</td><td>Track timestamps of last N requests; reject if window full.</td></tr>
+    <tr><td>Memory</td><td>O(1)</td><td>O(N) per user</td></tr>
+    <tr><td>Burst</td><td>Allowed up to capacity</td><td>Strictly enforced</td></tr>
+    <tr><td>Use when</td><td>You want bursty traffic OK.</td><td>You need exact request count per window.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= P10 — Notification System ============================= -->
+<h2 id="p10">P10. Notification System</h2>
+
+<h3>Patterns</h3>
+<ul>
+  <li><b>Strategy</b> for channel (Email / SMS / Push / Slack).</li>
+  <li><b>Observer</b> for "subscribe to event type X".</li>
+  <li><b>Decorator</b> for cross-cutting concerns (retry, throttle, audit).</li>
+  <li><b>Builder</b> for the message itself.</li>
+</ul>
+
+<pre>
+<span class="kw">interface</span> <span class="typ">NotificationChannel</span> { <span class="kw">void</span> send(User u, <span class="typ">String</span> subject, <span class="typ">String</span> body); }
+<span class="kw">class</span> <span class="typ">EmailChannel</span> <span class="kw">implements</span> <span class="typ">NotificationChannel</span> { <span class="kw">public void</span> send(User u, <span class="typ">String</span> s, <span class="typ">String</span> b){...} }
+<span class="kw">class</span> <span class="typ">SmsChannel</span>   <span class="kw">implements</span> <span class="typ">NotificationChannel</span> { ... }
+<span class="kw">class</span> <span class="typ">PushChannel</span>  <span class="kw">implements</span> <span class="typ">NotificationChannel</span> { ... }
+
+<span class="cmt">// Decorator: add retry with exponential backoff to ANY channel</span>
+<span class="kw">class</span> <span class="typ">RetryingChannel</span> <span class="kw">implements</span> <span class="typ">NotificationChannel</span> {
+  <span class="kw">private final</span> NotificationChannel inner; <span class="kw">private final int</span> max;
+  <span class="kw">public</span> RetryingChannel(NotificationChannel c, <span class="kw">int</span> m){ inner=c; max=m; }
+  <span class="kw">public void</span> send(User u, <span class="typ">String</span> s, <span class="typ">String</span> b){
+    Exception last = <span class="kw">null</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i=0; i&lt;max; i++) {
+      <span class="kw">try</span> { inner.send(u, s, b); <span class="kw">return</span>; }
+      <span class="kw">catch</span> (Exception e) { last=e; sleep(1L &lt;&lt; i); }
+    }
+    <span class="kw">throw new</span> RuntimeException(<span class="str">"Failed after retries"</span>, last);
+  }
+  <span class="kw">private void</span> sleep(<span class="kw">long</span> s){ <span class="kw">try</span>{ Thread.sleep(s*100); }<span class="kw">catch</span>(InterruptedException e){ Thread.currentThread().interrupt(); } }
+}
+
+<span class="cmt">// Observer: events → subscriptions</span>
+<span class="kw">class</span> <span class="typ">NotificationService</span> {
+  <span class="kw">private final</span> Map&lt;<span class="typ">String</span>, List&lt;Subscription&gt;&gt; topics = <span class="kw">new</span> ConcurrentHashMap&lt;&gt;();
+  <span class="kw">public void</span> subscribe(<span class="typ">String</span> topic, User u, NotificationChannel ch){
+    topics.computeIfAbsent(topic, k -&gt; <span class="kw">new</span> CopyOnWriteArrayList&lt;&gt;()).add(<span class="kw">new</span> Subscription(u, ch));
+  }
+  <span class="kw">public void</span> publish(<span class="typ">String</span> topic, <span class="typ">String</span> subject, <span class="typ">String</span> body){
+    <span class="kw">for</span> (<span class="kw">var</span> s : topics.getOrDefault(topic, List.of()))
+      s.channel.send(s.user, subject, body);
+  }
+  <span class="kw">record</span> Subscription(User user, NotificationChannel channel) {}
+}
+</pre>
+
+<div class="tips">
+  <b>Trade-off to call out:</b> <code>publish</code> is currently synchronous — slow channel blocks all subscribers. Production fix: hand off to an <code>ExecutorService</code> per channel, or push to a <code>BlockingQueue</code> drained by a worker pool.
+</div>
+
+<!-- ============================= P11 — BookMyShow ============================= -->
+<h2 id="p11">P11. BookMyShow / Movie Booking</h2>
+
+<h3>Hard part: concurrent seat booking — two users tap "Book" on the same seat at the same time</h3>
+
+<pre>
+<span class="kw">enum</span> <span class="typ">SeatStatus</span> { AVAILABLE, HELD, BOOKED }
+
+<span class="kw">class</span> <span class="typ">Seat</span> {
+  <span class="kw">final</span> <span class="typ">String</span> id; <span class="kw">final</span> SeatType type;
+  <span class="kw">private final</span> AtomicReference&lt;SeatStatus&gt; status = <span class="kw">new</span> AtomicReference&lt;&gt;(SeatStatus.AVAILABLE);
+  <span class="kw">private volatile</span> <span class="typ">String</span> heldBy;
+  <span class="kw">private volatile</span> Instant heldUntil;
+
+  <span class="kw">public boolean</span> tryHold(<span class="typ">String</span> userId, Duration ttl) {
+    <span class="kw">if</span> (status.compareAndSet(SeatStatus.AVAILABLE, SeatStatus.HELD)) {
+      heldBy = userId; heldUntil = Instant.now().plus(ttl);
+      <span class="kw">return true</span>;
+    }
+    <span class="cmt">// release expired hold</span>
+    <span class="kw">if</span> (status.get() == SeatStatus.HELD && heldUntil.isBefore(Instant.now())) {
+      status.set(SeatStatus.AVAILABLE);
+      <span class="kw">return</span> tryHold(userId, ttl);
+    }
+    <span class="kw">return false</span>;
+  }
+  <span class="kw">public boolean</span> confirm(<span class="typ">String</span> userId) {
+    <span class="kw">if</span> (!userId.equals(heldBy)) <span class="kw">return false</span>;
+    <span class="kw">return</span> status.compareAndSet(SeatStatus.HELD, SeatStatus.BOOKED);
+  }
+}
+
+<span class="kw">class</span> <span class="typ">Show</span> { <span class="kw">final</span> Movie movie; <span class="kw">final</span> Screen screen; <span class="kw">final</span> Instant startAt; <span class="kw">final</span> Map&lt;<span class="typ">String</span>, Seat&gt; seats; }
+
+<span class="kw">class</span> <span class="typ">BookingService</span> {
+  <span class="kw">public</span> Booking book(User u, Show show, List&lt;<span class="typ">String</span>&gt; seatIds) {
+    List&lt;Seat&gt; held = <span class="kw">new</span> ArrayList&lt;&gt;();
+    <span class="kw">for</span> (<span class="typ">String</span> id : seatIds) {
+      Seat s = show.seats.get(id);
+      <span class="kw">if</span> (!s.tryHold(u.id, Duration.ofMinutes(5))) {
+        held.forEach(h -&gt; h.confirm(<span class="kw">null</span>));   <span class="cmt">// rollback holds</span>
+        <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Seat "</span>+id+<span class="str">" unavailable"</span>);
+      }
+      held.add(s);
+    }
+    <span class="cmt">// payment...</span>
+    held.forEach(s -&gt; s.confirm(u.id));
+    <span class="kw">return new</span> Booking(u, show, held);
+  }
+}
+</pre>
+
+<div class="tips">
+  <b>Why CAS over <code>synchronized</code>:</b> CAS gives lock-free behavior — a slow "payment provider" call doesn't hold a lock on the seat. Only the state transition is atomic.
+</div>
+
+<!-- ============================= P12 — Amazon Order Mgmt ============================= -->
+<h2 id="p12">P12. Mini Amazon Order Management <span class="pill amzn">Amazon-specific</span></h2>
+
+<p>This is the most popular SDE-2 LLD scenario. Combines almost every pattern.</p>
+
+<h3>Entities</h3>
+<p><code>Customer</code>, <code>Address</code>, <code>Product</code>, <code>SKU</code>, <code>Inventory</code>, <code>Cart</code>, <code>Order</code>, <code>OrderItem</code>, <code>Payment</code>, <code>Shipment</code>, <code>OrderState</code>.</p>
+
+<h3>Patterns at play</h3>
+<ul>
+  <li><b>Builder</b> for <code>Order</code>.</li>
+  <li><b>State</b> for order lifecycle (PLACED → PAID → PACKED → SHIPPED → DELIVERED, with branches for CANCELLED, RETURNED, REFUNDED).</li>
+  <li><b>Strategy</b> for <code>PricingStrategy</code> (regular / Prime / lightning deal) and <code>ShippingStrategy</code> (standard / 2-day / same-day).</li>
+  <li><b>Observer</b> for order status change → notifications, analytics, fulfillment.</li>
+  <li><b>Repository</b> abstraction (DIP) for <code>OrderRepository</code> so service is DB-agnostic.</li>
+</ul>
+
+<pre>
+<span class="kw">class</span> <span class="typ">Money</span> { <span class="kw">final long</span> minor; <span class="kw">final</span> Currency cur; <span class="cmt">/* never use double for money */</span> }
+
+<span class="kw">class</span> <span class="typ">SKU</span> { <span class="kw">final</span> <span class="typ">String</span> id, productId; <span class="kw">final</span> Money price; <span class="kw">final</span> Map&lt;<span class="typ">String</span>,<span class="typ">String</span>&gt; attrs; }
+
+<span class="kw">class</span> <span class="typ">Cart</span> {
+  <span class="kw">private final</span> Map&lt;<span class="typ">String</span>, Integer&gt; lines = <span class="kw">new</span> ConcurrentHashMap&lt;&gt;();
+  <span class="kw">public void</span> add(<span class="typ">String</span> skuId, <span class="kw">int</span> qty){ lines.merge(skuId, qty, Integer::sum); }
+  <span class="kw">public void</span> remove(<span class="typ">String</span> skuId){ lines.remove(skuId); }
+}
+
+<span class="kw">interface</span> <span class="typ">PricingStrategy</span> { Money quote(SKU sku, <span class="kw">int</span> qty, Customer c); }
+<span class="kw">interface</span> <span class="typ">ShippingStrategy</span> { Money cost(Order o); Duration eta(Order o); }
+<span class="kw">interface</span> <span class="typ">Inventory</span>        { <span class="kw">boolean</span> reserve(<span class="typ">String</span> sku, <span class="kw">int</span> qty); <span class="kw">void</span> release(<span class="typ">String</span> sku, <span class="kw">int</span> qty); }
+<span class="kw">interface</span> <span class="typ">OrderRepository</span>  { <span class="kw">void</span> save(Order o); Order load(<span class="typ">String</span> id); }
+<span class="kw">interface</span> <span class="typ">PaymentGateway</span>   { Payment charge(Customer c, Money m); }
+
+<span class="kw">enum</span> <span class="typ">OrderStatus</span> { PLACED, PAID, PACKED, SHIPPED, DELIVERED, CANCELLED, RETURNED }
+
+<span class="kw">class</span> <span class="typ">Order</span> {
+  <span class="kw">final</span> <span class="typ">String</span> id; <span class="kw">final</span> Customer customer; <span class="kw">final</span> List&lt;OrderItem&gt; items;
+  Money total; OrderStatus status = OrderStatus.PLACED;
+  <span class="kw">final</span> List&lt;OrderObserver&gt; observers = <span class="kw">new</span> CopyOnWriteArrayList&lt;&gt;();
+
+  <span class="kw">public synchronized void</span> transitionTo(OrderStatus next){
+    <span class="kw">if</span> (!isValid(<span class="kw">this</span>.status, next)) <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(status+<span class="str">"→"</span>+next);
+    OrderStatus old = <span class="kw">this</span>.status; <span class="kw">this</span>.status = next;
+    observers.forEach(o -&gt; o.onChange(<span class="kw">this</span>, old, next));
+  }
+  <span class="kw">private boolean</span> isValid(OrderStatus from, OrderStatus to){
+    <span class="kw">return switch</span> (from) {
+      <span class="kw">case</span> PLACED    -&gt; to == OrderStatus.PAID || to == OrderStatus.CANCELLED;
+      <span class="kw">case</span> PAID      -&gt; to == OrderStatus.PACKED || to == OrderStatus.CANCELLED;
+      <span class="kw">case</span> PACKED    -&gt; to == OrderStatus.SHIPPED || to == OrderStatus.CANCELLED;
+      <span class="kw">case</span> SHIPPED   -&gt; to == OrderStatus.DELIVERED;
+      <span class="kw">case</span> DELIVERED -&gt; to == OrderStatus.RETURNED;
+      <span class="kw">default</span>        -&gt; <span class="kw">false</span>;
+    };
+  }
+}
+
+<span class="kw">interface</span> <span class="typ">OrderObserver</span> { <span class="kw">void</span> onChange(Order o, OrderStatus from, OrderStatus to); }
+<span class="kw">class</span> <span class="typ">EmailObserver</span>      <span class="kw">implements</span> <span class="typ">OrderObserver</span> { <span class="kw">public void</span> onChange(...) {<span class="cmt">/* notify */</span>} }
+<span class="kw">class</span> <span class="typ">FulfillmentObserver</span><span class="kw">implements</span> <span class="typ">OrderObserver</span> { <span class="kw">public void</span> onChange(...) {<span class="cmt">/* hand off to FC */</span>} }
+<span class="kw">class</span> <span class="typ">AnalyticsObserver</span>  <span class="kw">implements</span> <span class="typ">OrderObserver</span> { <span class="kw">public void</span> onChange(...) {<span class="cmt">/* metrics */</span>} }
+
+<span class="kw">class</span> <span class="typ">OrderService</span> {
+  <span class="kw">private final</span> Inventory inv; <span class="kw">private final</span> PaymentGateway pg;
+  <span class="kw">private final</span> PricingStrategy pricer; <span class="kw">private final</span> ShippingStrategy shipper;
+  <span class="kw">private final</span> OrderRepository repo;
+  <span class="kw">private final</span> List&lt;OrderObserver&gt; obs;
+
+  <span class="kw">public</span> OrderService(Inventory i, PaymentGateway g, PricingStrategy ps, ShippingStrategy ss, OrderRepository r, List&lt;OrderObserver&gt; o){
+    inv=i; pg=g; pricer=ps; shipper=ss; repo=r; obs=o;
+  }
+
+  <span class="kw">public</span> Order place(Customer c, Cart cart) {
+    <span class="cmt">// 1. reserve inventory atomically; rollback on partial failure</span>
+    List&lt;OrderItem&gt; items = <span class="kw">new</span> ArrayList&lt;&gt;();
+    <span class="kw">for</span> (<span class="kw">var</span> e : cart.lines.entrySet()) {
+      <span class="kw">if</span> (!inv.reserve(e.getKey(), e.getValue())) {
+        items.forEach(it -&gt; inv.release(it.skuId, it.qty));
+        <span class="kw">throw new</span> <span class="typ">IllegalStateException</span>(<span class="str">"Out of stock: "</span>+e.getKey());
+      }
+      items.add(<span class="kw">new</span> OrderItem(e.getKey(), e.getValue()));
+    }
+    Order o = <span class="kw">new</span> Order.Builder().customer(c).items(items).build();
+    obs.forEach(o.observers::add);
+    repo.save(o);
+
+    <span class="cmt">// 2. payment</span>
+    <span class="kw">try</span> {
+      Money total = items.stream().map(OrderItem::lineTotal).reduce(Money.ZERO, Money::add);
+      pg.charge(c, total.add(shipper.cost(o)));
+      o.transitionTo(OrderStatus.PAID);
+      repo.save(o);
+    } <span class="kw">catch</span> (Exception e) {
+      o.transitionTo(OrderStatus.CANCELLED);
+      items.forEach(it -&gt; inv.release(it.skuId, it.qty));
+      repo.save(o);
+      <span class="kw">throw</span> e;
+    }
+    <span class="kw">return</span> o;
+  }
+}
+</pre>
+
+<div class="lp">
+  <b>Amazon LP signal in this design:</b>
+  <ul>
+    <li><i>Customer Obsession</i> — explicit cancellation path with inventory rollback so customer never gets a charge for unfulfilled items.</li>
+    <li><i>Ownership</i> — observers handle their own concerns (email, fulfillment, analytics) — adding a new concern is a new class, not a code edit.</li>
+    <li><i>Insist on the Highest Standards</i> — <code>Money</code> is a value object, not a <code>double</code>. State machine prevents <code>DELIVERED → PLACED</code> nonsense.</li>
+  </ul>
+</div>
+
+
+<!-- ============================= TRICKY QUESTIONS ============================= -->
+<h2 id="tq">T. Tricky Questions Bank — with hints (auto-revealed in print)</h2>
+
+<div class="tricky">
+  <div class="q">T1. "When would you choose composition over inheritance?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Default to composition. Use inheritance only when (a) a true <i>is-a</i> relationship exists, (b) the subclass needs polymorphic substitution, and (c) the parent's contract is stable. Inheritance leaks parent internals (fragile-base-class problem). Mention Effective Java Item 18: "Favor composition over inheritance."
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T2. "Why is <code>HashMap</code> not thread-safe? What's wrong with using <code>Hashtable</code>?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      <code>HashMap</code> resize during concurrent <code>put</code> historically created cyclic linked lists → infinite loop on <code>get</code>. <code>Hashtable</code> locks the whole map per op → terrible throughput. <code>ConcurrentHashMap</code> uses bucket-level / CAS-based striping; reads are usually lock-free.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T3. "Two threads call <code>singleton.getInstance()</code> simultaneously without DCL. What can go wrong?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Two instances created (broken contract). With DCL but no <code>volatile</code>, one thread can see a partially-initialized object because JVM may reorder <code>allocate → assign → run-constructor</code>. <code>volatile</code> establishes happens-before. Better: enum singleton or holder idiom.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T4. "How does Strategy differ from State?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Same UML almost. Difference is intent: Strategy = client picks the algorithm, strategies are unaware of each other. State = the object itself transitions between states; states often know about other states (<code>setState(next)</code>).
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T5. "Why are factory methods static?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Because callers don't have an instance yet — that's literally what they're asking the factory to make. Static is just the language convention; the deeper reason is that the factory has no per-instance state to depend on.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T6. "Difference between <code>equals</code> and <code>==</code>? Why must <code>hashCode</code> be overridden when <code>equals</code> is?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      <code>==</code> = reference equality (same object in heap). <code>equals</code> = logical equality. Contract: equal objects must have equal hashCodes. Violating it breaks <code>HashMap</code>, <code>HashSet</code> — entries become "lost" because the bucket lookup uses hashCode.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T7. "How would you make your <code>Money</code> class safe?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Immutable, <code>final</code> class, <code>final</code> fields, no setters. Store amount as <code>long</code> in minor units (paise, cents) to avoid IEEE-754 floating-point error. Currency-aware: <code>Money.add</code> throws if currencies differ. Use a factory method <code>Money.of("12.50", "USD")</code> for clarity.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T8. "Why prefer <code>Optional&lt;T&gt;</code> over <code>null</code>?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Forces the caller to acknowledge "no value" at the type system level — eliminates whole NPE class of bugs. Caveats: don't use <code>Optional</code> as a field, parameter, or in collections — it's for return types only.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T9. "How do you avoid the constructor explosion (telescoping constructors)?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Builder pattern. Or static factory methods with descriptive names. JavaBeans-style setters break immutability. With ≥4 optional params, Builder wins.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T10. "Two threads deposit to the same account. Show three increasingly correct designs."</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      (1) <code>balance += amt</code> — broken, lost updates. (2) <code>synchronized void deposit</code> — correct, serial. (3) <code>AtomicLong balance</code> + <code>balance.addAndGet(amt)</code> — correct, lock-free, scales better. For multi-field invariants prefer <code>StampedLock</code> or short critical sections.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T11. "Design an in-memory cache. What's hard about thread-safety here?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      <code>ConcurrentHashMap</code> alone isn't enough — eviction touches both the map and the order tracker. Use <code>computeIfAbsent</code> for atomic load-on-miss; for LRU pair a <code>ConcurrentHashMap</code> with a <code>ConcurrentLinkedDeque</code> guarded by a single lock for the order, OR use Caffeine which already does this lock-striped.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T12. "What's wrong with <code>throw new RuntimeException(e.getMessage())</code>?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      You lose the cause and the stack trace of the original exception. Always wrap: <code>throw new BusinessException("context", e)</code>. Never swallow exceptions silently.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T13. "Designing an <code>Order</code> class: should <code>cancel()</code> live on <code>Order</code> or <code>OrderService</code>?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      <code>order.cancel()</code> when behavior depends only on <code>Order</code>'s own state (validation: not yet shipped). <code>orderService.cancel(order)</code> when the operation needs collaborators (refund gateway, inventory). Don't make Order an anemic bag — push behavior in unless you genuinely need orchestration.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T14. "When would you NOT use a design pattern?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      When it adds indirection without adding flexibility you'll actually use. A 3-line <code>switch</code> beats a 5-class Strategy hierarchy when there are exactly 3 cases that never grow. <i>Invent and Simplify.</i>
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T15. "Singleton has a config that needs to change at runtime. How?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Don't replace the singleton — that breaks references already held. Make the singleton hold an <code>AtomicReference&lt;Config&gt;</code> (or <code>volatile Config</code>) and provide <code>refresh(newConfig)</code>. Readers always read the latest snapshot atomically.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T16. "Should <code>Stack</code> extend <code>ArrayList</code>?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      No — Java's <code>Stack extends Vector</code> is a notorious mistake. It exposes <code>add(int index, E element)</code> which violates LIFO. Composition: <code>class Stack&lt;T&gt; { private final Deque&lt;T&gt; d; }</code>. Better still, just use <code>ArrayDeque</code> directly.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T17. "Why is the Visitor pattern controversial?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      It pushes changes the wrong way — adding a new <i>visitor</i> is easy, but adding a new <i>element</i> requires editing every visitor. Use only when your hierarchy is stable and you expect many independent operations (compilers, AST tools).
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T18. "Two ways to handle a <code>Book</code> with multiple physical copies — which?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Don't model <code>Book</code> with <code>int copyCount</code> — you lose per-copy state (condition, location, barcode). Two classes: <code>Book</code> = catalog metadata, <code>BookItem</code> = physical instance. The relationship is <code>Book 1 ──◆ * BookItem</code>.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T19. "Why <code>CopyOnWriteArrayList</code> for observer lists, not <code>ArrayList</code>?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Notify iterates while observers may register / unregister. Plain <code>ArrayList</code> throws <code>ConcurrentModificationException</code>. CoW gives a stable snapshot for the iteration; writes copy the underlying array. OK for observer lists — read-heavy, write-rare.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T20. "Interview gives you 'design X'. What are the first 90 seconds?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Repeat the problem in your own words. Ask 3 scoping questions (who, what, NFRs). State 2 things that are out of scope. Write the noun list and the verb list. Only then start drawing classes. Talk through, do not type silently.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T21. "What's a 'God object' and why is it bad? Give a real fix."</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      A class that knows / does too much (e.g., <code>OrderManager</code> with parsing, validation, persistence, email, analytics, retry). Symptoms: thousands of LOC, every change touches it, untestable. Fix by SRP split: <code>OrderValidator</code>, <code>OrderRepository</code>, <code>OrderNotifier</code>, <code>OrderService</code> (thin orchestrator).
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T22. "Why might Builder be a bad fit?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      With ≤3 params and no optional ones, it's overhead. With required-vs-optional asymmetry, prefer named factory methods or a record + sane defaults. Builder shines when there are 4+ optional fields or you want a fluent DSL.
+    </div>
+  </details>
+</div>
+
+<!-- ============================= 60-min CHECKLIST ============================= -->
+<h2 id="cl">C. The 60-minute Interview Checklist</h2>
+
+<table>
+  <thead><tr><th>Time</th><th>Activity</th><th>Output</th></tr></thead>
+  <tbody>
+    <tr><td>0–2 min</td><td>Restate problem; confirm scope.</td><td>1 sentence summary, 3 in-scope items, 2 out-of-scope items.</td></tr>
+    <tr><td>2–7 min</td><td>Functional + non-functional requirements.</td><td>Bulleted FR list (5±) + 2–3 NFRs (concurrency, scale).</td></tr>
+    <tr><td>7–12 min</td><td>Nouns → entities. Verbs → operations.</td><td>Class names + 1-line responsibility each.</td></tr>
+    <tr><td>12–17 min</td><td>Sketch UML / relationships. Pick patterns.</td><td>ASCII class diagram + named patterns ("Strategy for fees, State for order").</td></tr>
+    <tr><td>17–45 min</td><td>Code interfaces, then concrete classes, then a small demo flow.</td><td>Compilable Java skeleton. Edge cases: empty, full, concurrent.</td></tr>
+    <tr><td>45–55 min</td><td>Trade-offs &amp; extensions.</td><td>"To add X, only class Y changes." Concurrency story. Persistence story.</td></tr>
+    <tr><td>55–60 min</td><td>Recap + your questions.</td><td>1-minute summary; 1 thoughtful question for the interviewer.</td></tr>
+  </tbody>
+</table>
+
+<div class="lp">
+  <b>Final LP-aligned closer:</b><br>
+  "If I had more time, I'd add <i>(persistence layer / metrics / X)</i>. The current design isolates that change to <i>(class Y)</i> via <i>(interface Z)</i>, so it's a swap, not a rewrite."
+</div>
+
+<div class="tips">
+  <b>Three sentences that consistently raise an SDE LLD score:</b>
+  <ol>
+    <li>"Let me confirm what's in and out of scope before I start designing."</li>
+    <li>"I'll depend on the interface and inject the concrete implementation, so this is testable."</li>
+    <li>"If we add <i>(new variant)</i>, the change is one new class implementing <i>(interface)</i> — existing code doesn't change."</li>
+  </ol>
+</div>
+
+</div>
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var body = document.body;
+    function apply(theme) {
+      if (theme === 'dark') { body.classList.add('dark'); btn.textContent = '☀ Light'; }
+      else                  { body.classList.remove('dark'); btn.textContent = '🌙 Dark'; }
+    }
+    var initial = localStorage.getItem('lldTheme')
+      || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    apply(initial);
+    btn.addEventListener('click', function () {
+      var next = body.classList.contains('dark') ? 'light' : 'dark';
+      localStorage.setItem('lldTheme', next);
+      apply(next);
+    });
+  })();
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

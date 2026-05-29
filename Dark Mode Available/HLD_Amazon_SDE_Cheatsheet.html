@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>High Level Design (HLD) — Amazon SDE Interview Complete Cheat Sheet (A3)</title>
+<style>
+  /* ---------- Print-first, A3 friendly ---------- */
+  @page { size: A3; margin: 12mm; }
+  html, body {
+    background: #ffffff;
+    color: #111;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt;
+    line-height: 1.35;
+    margin: 0;
+    padding: 0;
+  }
+  .wrap { max-width: 1650px; margin: 0 auto; padding: 14px 18px 40px 18px; }
+  h1 {
+    font-size: 26pt;
+    margin: 4px 0 2px 0;
+    letter-spacing: 0.3px;
+    border-bottom: 3px solid #111;
+    padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: #444; margin-left: 10px; }
+  h2 {
+    font-size: 16pt;
+    margin: 22px 0 6px 0;
+    padding: 6px 10px;
+    background: #f2f2f2;
+    border-left: 6px solid #111;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12.5pt;
+    margin: 14px 0 4px 0;
+    color: #222;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11.5pt;
+    margin: 10px 0 3px 0;
+    color: #333;
+    page-break-after: avoid;
+  }
+  p, li { margin: 4px 0; }
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10.5pt;
+    background: #f6f6f6;
+    border: 1px solid #e2e2e2;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #222;
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10.25pt;
+    line-height: 1.5;
+    background: #ffffff;
+    color: #24292e;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  pre .kw  { color: #cf222e; font-weight: 600; }
+  pre .typ { color: #953800; }
+  pre .str { color: #0a3069; }
+  pre .num { color: #0550ae; }
+  pre .cmt { color: #6e7781; font-style: italic; }
+  pre .ann { color: #116329; font-weight: 600; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 6px 0 10px 0;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 6px 8px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th { background: #eaeaea; font-weight: 600; }
+  .wrong { background: #fff2f2; }
+  .right { background: #f0fbf1; }
+  .col-wrong { color: #a40000; }
+  .col-right { color: #116611; }
+
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: #fbe8e8; color: #7a0000; }
+  table.compare th:nth-child(3) { width: 39%; background: #e5f7e8; color: #0b5d16; }
+  table.compare td:nth-child(2) { background: #fff6f6; }
+  table.compare td:nth-child(3) { background: #f4fbf5; }
+
+  .tips {
+    border: 1px dashed #888;
+    background: #fffdf4;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .tips b { color: #6a4a00; }
+
+  .tricky {
+    border: 1px solid #333;
+    background: #fafaff;
+    padding: 10px 12px;
+    margin: 10px 0 16px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+
+  details > summary {
+    cursor: pointer;
+    color: #005a9e;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  details[open] > summary { color: #111; }
+  details .hint {
+    margin-top: 4px;
+    padding: 6px 8px;
+    background: #eef3ff;
+    border-left: 4px solid #005a9e;
+    border-radius: 3px;
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 9.5pt;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .pill.bad   { background: #a40000; color: #fff; }
+  .pill.good  { background: #116611; color: #fff; }
+  .pill.tip   { background: #b08100; color: #fff; }
+  .pill.amzn  { background: #ff9900; color: #111; }
+  .pill.must  { background: #5a189a; color: #fff; }
+  .pill.aws   { background: #232f3e; color: #ff9900; }
+
+  .lp {
+    border-left: 5px solid #ff9900;
+    background: #fff8ec;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 3px;
+    page-break-inside: avoid;
+  }
+  .lp b { color: #b76e00; }
+
+  .frame {
+    border: 1px solid #5a189a;
+    background: #f7f0ff;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .frame b { color: #5a189a; }
+
+  @media print {
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+    .noprint { display: none !important; }
+  }
+
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px 14px;
+    font-size: 10.5pt;
+    margin: 6px 0 0 0;
+  }
+  .toc a { color: #005a9e; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  .legend { font-size: 10pt; margin: 6px 0 10px 0; }
+  .small  { font-size: 9.5pt; color: #555; }
+
+  .ascii-uml {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10pt;
+    background: #fafafa;
+    border: 1px dashed #888;
+    padding: 8px 10px;
+    white-space: pre;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+
+  /* ---------- Dark-mode toggle ---------- */
+  .theme-toggle {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    z-index: 9999;
+    padding: 6px 12px;
+    border: 1px solid #555;
+    background: #fff;
+    color: #111;
+    border-radius: 18px;
+    font-size: 10pt;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .theme-toggle:hover { background: #f0f0f0; }
+  @media print { .theme-toggle { display: none; } }
+
+  @media screen {
+    body.dark { background: #0e1116; color: #d6deea; }
+    body.dark .wrap { background: #0e1116; }
+    body.dark h1 { border-bottom-color: #d6deea; color: #f3f6fb; }
+    body.dark h1 .sub { color: #9aa6b4; }
+    body.dark h2 { background: #1b2230; color: #f3f6fb; border-left-color: #ff9900; }
+    body.dark h3, body.dark h4 { color: #e5ecf5; }
+    body.dark p, body.dark li { color: #d0d8e3; }
+    body.dark code { background: #1b2230; border-color: #2c3645; color: #ffd07b; }
+    body.dark pre { background: #0b0f15; color: #d6deea; border-color: #2c3645; }
+    body.dark pre .kw { color: #ff7b72; }
+    body.dark pre .typ { color: #ffa657; }
+    body.dark pre .str { color: #a5d6ff; }
+    body.dark pre .num { color: #79c0ff; }
+    body.dark pre .cmt { color: #8b949e; }
+    body.dark pre .ann { color: #7ee787; }
+    body.dark table { border-color: #2c3645; }
+    body.dark th, body.dark td { border-color: #2c3645; color: #d6deea; }
+    body.dark th { background: #1b2230; color: #f3f6fb; }
+    body.dark .wrong { background: #2a1518; }
+    body.dark .right { background: #14271a; }
+    body.dark .col-wrong { color: #ff8a8a; }
+    body.dark .col-right { color: #7fdf94; }
+    body.dark table.compare th:nth-child(2) { background: #3a1d22; color: #ffb3b3; }
+    body.dark table.compare th:nth-child(3) { background: #173322; color: #a4e8b3; }
+    body.dark table.compare td:nth-child(2) { background: #25151a; }
+    body.dark table.compare td:nth-child(3) { background: #102218; }
+    body.dark .tips { background: #2a230f; border-color: #6e5a1e; color: #f0e0a8; }
+    body.dark .tips b { color: #ffd07b; }
+    body.dark .tricky { background: #141826; border-color: #2c3645; }
+    body.dark details > summary { color: #79c0ff; }
+    body.dark details[open] > summary { color: #f3f6fb; }
+    body.dark details .hint { background: #112033; border-left-color: #58a6ff; color: #d6deea; }
+    body.dark .lp { background: #2a1f08; border-left-color: #ff9900; color: #f0d9a8; }
+    body.dark .lp b { color: #ffb84d; }
+    body.dark .frame { background: #1c1430; border-color: #b794f6; color: #e8def8; }
+    body.dark .frame b { color: #c8a6ff; }
+    body.dark .ascii-uml { background: #0b0f15; border-color: #4a5161; color: #d6deea; }
+    body.dark .toc a { color: #79c0ff; }
+    body.dark .small { color: #8b949e; }
+    body.dark .legend { color: #d6deea; }
+    body.dark .theme-toggle { background: #1b2230; color: #f3f6fb; border-color: #4a5161; }
+    body.dark .theme-toggle:hover { background: #2a3344; }
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode">🌙 Dark</button>
+<div class="wrap">
+
+<h1>High Level Design (HLD) — Amazon SDE Cheat Sheet
+  <span class="sub">Framework · Capacity math · Building blocks · 14 worked designs · Tricky Qs · LP-aligned</span>
+</h1>
+
+<div class="legend">
+  <span class="pill bad">Anti-pattern</span>
+  <span class="pill good">Best Practice</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="pill amzn">Amazon-specific</span>
+  <span class="pill aws">AWS service</span>
+  <span class="pill must">Must-know for SDE-2/SDE-3</span>
+  <span class="small">Click "Reveal hint" on screen; hints auto-expand on print. Toggle dark mode top-right.</span>
+</div>
+
+<div class="toc">
+  <a href="#s0">0. What HLD Interviews Test</a>
+  <a href="#s1">1. The RESHADED Framework</a>
+  <a href="#s2">2. Capacity Estimation Numbers</a>
+  <a href="#s3">3. CAP &amp; PACELC</a>
+  <a href="#s4">4. Consistency Models</a>
+  <a href="#s5">5. Scaling Strategies</a>
+  <a href="#s6">6. Load Balancers</a>
+  <a href="#s7">7. Caching Deep Dive</a>
+  <a href="#s8">8. Databases — SQL vs NoSQL</a>
+  <a href="#s9">9. Sharding &amp; Replication</a>
+  <a href="#s10">10. Indexes &amp; Storage Engines</a>
+  <a href="#s11">11. Message Queues / Streams</a>
+  <a href="#s12">12. Consensus (Raft, Paxos)</a>
+  <a href="#s13">13. API Design (REST/gRPC/GraphQL)</a>
+  <a href="#s14">14. Microservices Patterns</a>
+  <a href="#s15">15. Rate Limiting &amp; Idempotency</a>
+  <a href="#s16">16. Search Systems</a>
+  <a href="#s17">17. Observability (Logs/Metrics/Trace)</a>
+  <a href="#s18">18. Security in HLD</a>
+  <a href="#s19">19. AWS Cheat Sheet</a>
+  <a href="#p1">P1. URL Shortener (TinyURL)</a>
+  <a href="#p2">P2. Twitter / News Feed</a>
+  <a href="#p3">P3. WhatsApp / Chat</a>
+  <a href="#p4">P4. YouTube / Netflix</a>
+  <a href="#p5">P5. Uber / Lyft</a>
+  <a href="#p6">P6. S3-like Blob Storage</a>
+  <a href="#p7">P7. Distributed Cache</a>
+  <a href="#p8">P8. Web Crawler</a>
+  <a href="#p9">P9. Rate Limiter (Distributed)</a>
+  <a href="#p10">P10. Notification System</a>
+  <a href="#p11">P11. Top K / Trending</a>
+  <a href="#p12">P12. Amazon Cart &amp; Checkout</a>
+  <a href="#p13">P13. Amazon Inventory</a>
+  <a href="#p14">P14. Amazon Order Mgmt</a>
+  <a href="#tq">T. Tricky Questions Bank</a>
+  <a href="#cl">C. 60-min Interview Checklist</a>
+</div>
+
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What HLD Interviews Actually Test</h2>
+
+<p>Amazon's "System Design" round (sometimes called "Distributed System Design" for SDE-2/3) is 60 minutes. The interviewer is <b>not</b> looking for the "perfect" architecture; they're checking whether you can drive a vague problem into a defensible system, justify each component, and call out the trade-offs.</p>
+
+<table>
+  <thead><tr><th>Signal</th><th>Weight (SDE-2 / SDE-3)</th><th>"Strong" looks like</th></tr></thead>
+  <tbody>
+    <tr><td>Requirement clarification &amp; scoping</td><td>15% / 10%</td><td>3–5 sharp questions, explicit FR + NFR list, clear out-of-scope.</td></tr>
+    <tr><td>Capacity estimation (back-of-envelope)</td><td>10% / 10%</td><td>QPS, storage/yr, bandwidth — to one significant figure, fast.</td></tr>
+    <tr><td>API design</td><td>10% / 5%</td><td>3–5 endpoints with concrete request/response shape.</td></tr>
+    <tr><td>Data model &amp; storage choice</td><td>15% / 15%</td><td>Picks SQL vs NoSQL with one-line justification; partition key chosen on access pattern.</td></tr>
+    <tr><td>High-level architecture</td><td>20% / 25%</td><td>Boxes-and-arrows: client → LB → service → cache → DB → queue → workers. Each box has a reason.</td></tr>
+    <tr><td>Deep dive on bottlenecks</td><td>20% / 25%</td><td>Picks the hottest component, explains contention, fixes with sharding / cache / async.</td></tr>
+    <tr><td>Trade-offs &amp; failure modes</td><td>10% / 10%</td><td>"If region X fails… if Redis evicts hot key… if write QPS doubles…"</td></tr>
+  </tbody>
+</table>
+
+<div class="lp">
+  <b>Amazon LP signal in HLD:</b>
+  <ul>
+    <li><i>Customer Obsession</i> — frame NFRs in customer terms ("p99 cart-add latency &lt; 100 ms").</li>
+    <li><i>Dive Deep</i> — when interviewer says "tell me more about the cache", do not stay surface-level.</li>
+    <li><i>Are Right, A Lot</i> — defend choices, but pivot fast when the interviewer surfaces a constraint you missed.</li>
+    <li><i>Bias for Action</i> — propose v1 first, then evolve. Don't try to design the final state in one shot.</li>
+    <li><i>Ownership</i> — call out monitoring, alarms, runbooks. SDE-3 candidates lose points without an ops story.</li>
+  </ul>
+</div>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. The RESHADED Framework — drive every HLD with this</h2>
+
+<div class="frame">
+<b>R-E-S-H-A-D-E-D</b> — write these on the whiteboard first, then walk through them in order:
+<ol>
+  <li><b>R</b>equirements — functional + non-functional, in/out of scope.</li>
+  <li><b>E</b>stimation — QPS, storage, bandwidth.</li>
+  <li><b>S</b>chema / data model — entities + relationships + partition key.</li>
+  <li><b>H</b>igh-level diagram — boxes &amp; arrows.</li>
+  <li><b>A</b>PI design — 3–5 endpoints, concrete payloads.</li>
+  <li><b>D</b>eep dive — pick the hottest component, redesign it.</li>
+  <li><b>E</b>dge cases &amp; failure modes — what dies, what degrades.</li>
+  <li><b>D</b>ecisions &amp; trade-offs — why these choices, what changes for v2.</li>
+</ol>
+</div>
+
+<h3>Verbal opening template (memorize)</h3>
+<pre>
+"Before I jump in, let me confirm scope. I'll assume the system supports A, B, C
+for users U with N daily actives. Out of scope: payments, mobile-app UI, ML ranking.
+I'll do quick capacity math, sketch the API, then the architecture, and we'll deep-
+dive into whichever bottleneck you find most interesting."
+</pre>
+
+<h3>The 5 questions you must always ask</h3>
+<ol>
+  <li><b>Read-heavy or write-heavy?</b> Read:write ratio drives the whole architecture.</li>
+  <li><b>Strong or eventual consistency?</b> Money? Strong. Likes count? Eventual.</li>
+  <li><b>Latency targets?</b> p50 / p99 — sub-100 ms forces caching + co-located data.</li>
+  <li><b>Scale today and in 1 year?</b> 1k users vs 100M users → different stack.</li>
+  <li><b>Geographic distribution?</b> Single region vs multi-region changes everything.</li>
+</ol>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Capacity Estimation — the numbers every Amazon SDE memorizes</h2>
+
+<h3>Latency &amp; throughput numbers (Jeff Dean's "numbers every engineer should know")</h3>
+<table>
+  <thead><tr><th>Operation</th><th>Time</th><th>Implication</th></tr></thead>
+  <tbody>
+    <tr><td>L1 cache reference</td><td>~0.5 ns</td><td>Free.</td></tr>
+    <tr><td>Branch mispredict</td><td>~5 ns</td><td>Free.</td></tr>
+    <tr><td>L2 cache reference</td><td>~7 ns</td><td>—</td></tr>
+    <tr><td>Mutex lock/unlock</td><td>~25 ns</td><td>Avoid in hot loops.</td></tr>
+    <tr><td>Main memory reference</td><td>~100 ns</td><td>—</td></tr>
+    <tr><td>Compress 1 KB (Snappy)</td><td>~3 µs</td><td>Cheap; do it before network.</td></tr>
+    <tr><td>Send 1 KB over 1 Gbps net</td><td>~10 µs</td><td>—</td></tr>
+    <tr><td>Read 4 KB from SSD</td><td>~150 µs</td><td>~10k random IOPS / disk.</td></tr>
+    <tr><td>Read 1 MB from memory</td><td>~250 µs</td><td>—</td></tr>
+    <tr><td>Round-trip in same DC</td><td>~500 µs</td><td>p99 budget for cache hit.</td></tr>
+    <tr><td>Read 1 MB from SSD</td><td>~1 ms</td><td>—</td></tr>
+    <tr><td>Disk seek (HDD)</td><td>~10 ms</td><td>Avoid for OLTP.</td></tr>
+    <tr><td>Read 1 MB from network</td><td>~10 ms</td><td>—</td></tr>
+    <tr><td>Read 1 MB from HDD</td><td>~30 ms</td><td>—</td></tr>
+    <tr><td>CA → Netherlands round-trip</td><td>~150 ms</td><td>Why we need edge / CDN / multi-region.</td></tr>
+  </tbody>
+</table>
+
+<h3>Storage / bandwidth conversions</h3>
+<table>
+  <thead><tr><th>Conversion</th><th>Mental shortcut</th></tr></thead>
+  <tbody>
+    <tr><td>1 day in seconds</td><td>~86,400 s ≈ <b>10⁵</b></td></tr>
+    <tr><td>1 month</td><td>~30 × 86,400 ≈ <b>2.6 × 10⁶</b></td></tr>
+    <tr><td>1 year</td><td>~3.15 × 10⁷</td></tr>
+    <tr><td>1 KB</td><td>10³ B (use 10³ not 1024 for back-of-envelope)</td></tr>
+    <tr><td>1 MB</td><td>10⁶ B</td></tr>
+    <tr><td>1 GB</td><td>10⁹ B</td></tr>
+    <tr><td>1 TB</td><td>10¹² B</td></tr>
+  </tbody>
+</table>
+
+<h3>Worked example — Twitter-scale capacity</h3>
+<pre>
+Daily active users (DAU)              = 200 M
+Avg tweets per user per day           = 0.5  → writes/day = 100 M
+Read:write ratio (timeline reads)     = 100:1 → reads/day = 10 B
+
+Write QPS = 100 M / 86,400 s         ≈ 1.2 K QPS  (peak ≈ 3 K)
+Read  QPS = 10 B  / 86,400 s         ≈ 115 K QPS (peak ≈ 350 K)
+
+Tweet size                            = 280 B text + 200 B metadata = 0.5 KB
+Storage per day                       = 100 M × 0.5 KB = 50 GB
+Storage per year                      = 50 GB × 365   ≈ 18 TB
+With media (10% of tweets, 200 KB)    ≈ 2 PB / year
+</pre>
+
+<div class="tips">
+  <b>Trick:</b> always compute QPS first, then multiply by payload size for bandwidth, then by retention for storage. State assumptions out loud — "I'll assume 200 M DAU" — and the interviewer will correct you if it matters.
+</div>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. CAP and PACELC — what they actually mean</h2>
+
+<p><b>CAP theorem:</b> in the presence of a network <b>P</b>artition, you must trade <b>C</b>onsistency for <b>A</b>vailability. CP = stop serving to stay correct. AP = keep serving but possibly serve stale data.</p>
+
+<table class="compare">
+  <thead><tr><th>System</th><th>CP example (consistent under partition)</th><th>AP example (available under partition)</th></tr></thead>
+  <tbody>
+    <tr><td>Database</td><td>HBase, MongoDB (with majority writes), Spanner, etcd</td><td>DynamoDB (default), Cassandra, Riak, CouchDB</td></tr>
+    <tr><td>What dies in a partition</td><td>Some clients get errors / timeouts</td><td>Some clients see stale data; reconciliation later</td></tr>
+    <tr><td>Use when</td><td>Money, inventory, identity, locks</td><td>Likes, view counts, shopping cart, social feeds</td></tr>
+  </tbody>
+</table>
+
+<p><b>PACELC</b> extends CAP: even when there is <i>no</i> Partition, you still trade <b>L</b>atency for <b>C</b>onsistency. DynamoDB is "PA / EL" — chooses Availability under partition, Latency in normal operation.</p>
+
+<div class="tips"><b>Interview line:</b> "Strict CAP is binary, but in practice systems tune per request — DynamoDB lets you ask for strongly-consistent reads on critical paths only, paying ~2× cost."</div>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Consistency Models — pick deliberately</h2>
+
+<table>
+  <thead><tr><th>Model</th><th>Guarantee</th><th>When to use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Strong (linearizable)</b></td><td>Reads see the latest committed write, globally ordered.</td><td>Inventory decrement, money debit, leader-election state.</td></tr>
+    <tr><td><b>Sequential</b></td><td>All clients see the same order of writes (not necessarily real-time).</td><td>Distributed logs, replication streams.</td></tr>
+    <tr><td><b>Causal</b></td><td>Cause-before-effect ordering preserved per chain.</td><td>Comments under a post, chat threads.</td></tr>
+    <tr><td><b>Read-your-writes</b></td><td>A client always sees its own writes.</td><td>User edits their own profile, expects to see it instantly.</td></tr>
+    <tr><td><b>Monotonic reads</b></td><td>If you read X=5, you'll never later read an older X.</td><td>Timeline browsing.</td></tr>
+    <tr><td><b>Eventual</b></td><td>If writes stop, all replicas converge.</td><td>Likes, view counts, DNS.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Pattern:</b> route the <i>same user's reads</i> to the primary replica for "read-your-writes" without requiring full strong consistency globally. This is how DynamoDB / Aurora session-affinity works in practice.</div>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Scaling Strategies — vertical → horizontal → split</h2>
+
+<table>
+  <thead><tr><th>Step</th><th>What</th><th>When you outgrow it</th></tr></thead>
+  <tbody>
+    <tr><td>1. Vertical scaling</td><td>Bigger box. r5.24xlarge. RDS instance class up.</td><td>Hits hardware ceiling; single point of failure.</td></tr>
+    <tr><td>2. Horizontal scaling (stateless)</td><td>Run N copies behind a load balancer.</td><td>State (sessions, sticky data) becomes the bottleneck.</td></tr>
+    <tr><td>3. Caching</td><td>Read-through cache for hot data.</td><td>Cache stampede / hot-key problems.</td></tr>
+    <tr><td>4. Read replicas</td><td>1 primary + N read replicas.</td><td>Primary becomes write bottleneck.</td></tr>
+    <tr><td>5. Sharding (partitioning)</td><td>Split data by key across many primaries.</td><td>Cross-shard queries become expensive.</td></tr>
+    <tr><td>6. CDN / edge</td><td>Cache static / semi-static content closer to user.</td><td>Cache invalidation becomes hard.</td></tr>
+    <tr><td>7. Async / queues</td><td>Decouple write paths; smooth bursts.</td><td>Eventual consistency lag visible to user.</td></tr>
+    <tr><td>8. Multi-region active-active</td><td>Per-region writes; global replication.</td><td>Conflict resolution becomes the hard problem.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Load Balancers — L4 vs L7, algorithms</h2>
+
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>L4 (transport)</th><th>L7 (application)</th></tr></thead>
+  <tbody>
+    <tr><td>Sees</td><td>IP + TCP port</td><td>HTTP path, headers, cookies, body</td></tr>
+    <tr><td>Examples</td><td>AWS NLB, IPVS, HAProxy TCP mode</td><td>AWS ALB, Nginx, Envoy, HAProxy HTTP mode</td></tr>
+    <tr><td>Latency</td><td>Lower (no TLS termination needed)</td><td>Slightly higher (parses every request)</td></tr>
+    <tr><td>Routing</td><td>By IP / port</td><td>By URL path, host header, cookie, JWT claim</td></tr>
+    <tr><td>Use when</td><td>Pure TCP services, ultra-low latency, gaming</td><td>HTTP microservices, A/B routing, sticky sessions</td></tr>
+  </tbody>
+</table>
+
+<h3>Algorithms</h3>
+<ul>
+  <li><b>Round-robin</b> — simple, ignores load.</li>
+  <li><b>Least connections</b> — sends to the box with fewest active connections.</li>
+  <li><b>Least response time</b> — fewest connections × latency.</li>
+  <li><b>IP hash / consistent hash</b> — same client → same backend (sticky without cookies). Mandatory for distributed caches.</li>
+  <li><b>Weighted</b> — bigger box gets more traffic. Used during canary deploys.</li>
+  <li><b>Random + power-of-two-choices</b> — pick 2, send to less-loaded — good in practice with low coordination cost.</li>
+</ul>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Caching — the most-asked HLD topic</h2>
+
+<h3>Strategies (interviewer expects you to name these by name)</h3>
+<table>
+  <thead><tr><th>Strategy</th><th>Read</th><th>Write</th><th>Pros / Cons</th></tr></thead>
+  <tbody>
+    <tr><td><b>Cache-aside (lazy)</b></td><td>App checks cache; on miss, app reads DB and populates.</td><td>App writes DB; invalidates / updates cache.</td><td>Simple, resilient. Race: stale write between miss and load.</td></tr>
+    <tr><td><b>Read-through</b></td><td>App asks cache; cache loads from DB on miss.</td><td>Same as cache-aside.</td><td>Cleaner client code. Cache must know schema.</td></tr>
+    <tr><td><b>Write-through</b></td><td>Read from cache.</td><td>App writes cache; cache writes DB synchronously.</td><td>Cache always consistent. Slow writes.</td></tr>
+    <tr><td><b>Write-behind (write-back)</b></td><td>Read from cache.</td><td>App writes cache; cache flushes DB async.</td><td>Fast writes. Risk: data loss on cache crash.</td></tr>
+    <tr><td><b>Refresh-ahead</b></td><td>Cache predicts hot keys, refreshes proactively.</td><td>—</td><td>Avoids cache miss. Wasted work for non-popular keys.</td></tr>
+  </tbody>
+</table>
+
+<h3>Cache layers (talk in this order)</h3>
+<ol>
+  <li><b>Browser cache</b> — HTTP headers (<code>Cache-Control</code>, <code>ETag</code>).</li>
+  <li><b>CDN</b> — CloudFront, Akamai. Static + cacheable API responses.</li>
+  <li><b>Edge / API gateway cache</b> — short TTL, per-region.</li>
+  <li><b>Application cache</b> — in-process (Caffeine, Guava). ns-fast.</li>
+  <li><b>Distributed cache</b> — Redis, Memcached, ElastiCache.</li>
+  <li><b>DB query cache</b> — buffer pool, Redis-as-DB-buffer, materialized views.</li>
+</ol>
+
+<h3>Eviction policies</h3>
+<table>
+  <thead><tr><th>Policy</th><th>Idea</th><th>Best for</th></tr></thead>
+  <tbody>
+    <tr><td>LRU</td><td>Evict least-recently-used.</td><td>Default; recency = future use.</td></tr>
+    <tr><td>LFU</td><td>Evict least-frequently-used.</td><td>Strong popularity skew (top-K).</td></tr>
+    <tr><td>FIFO</td><td>Insertion order.</td><td>Simple; rarely best.</td></tr>
+    <tr><td>TTL</td><td>Time-bounded.</td><td>Rate-limit counters, sessions.</td></tr>
+    <tr><td>W-TinyLFU</td><td>Hybrid LRU + LFU + admission.</td><td>What Caffeine uses; near-optimal hit rate.</td></tr>
+  </tbody>
+</table>
+
+<h3>Cache pathologies (and fixes)</h3>
+<table>
+  <thead><tr><th>Problem</th><th>Symptom</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><b>Cache stampede</b> (thundering herd)</td><td>Hot key expires; 1000 concurrent clients all miss → DB melts.</td><td>Single-flight (in-process lock + load-once); request coalescing; "stale-while-revalidate".</td></tr>
+    <tr><td><b>Hot key</b></td><td>One key (celebrity ID) takes 80% of traffic.</td><td>Replicate hot key to N shards; client picks random replica; or local in-process cache layered over Redis.</td></tr>
+    <tr><td><b>Cache penetration</b></td><td>Many requests for keys that don't exist (attack or bad client).</td><td>Cache "not-found" with short TTL; Bloom filter front-door.</td></tr>
+    <tr><td><b>Cache avalanche</b></td><td>Many keys expire at the same time → DB spike.</td><td>Jitter TTLs (±20%); pre-warm; tiered TTL.</td></tr>
+    <tr><td><b>Stale data</b></td><td>Cache and DB diverge after a write.</td><td>Invalidate on write (delete, not update); use versioned keys.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Two cache rules of thumb:</b> (1) prefer <i>delete</i> on write over <i>update</i> — fewer race conditions. (2) Always set a TTL even when you don't think you need to — prevents drift across the system.</div>
+
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Databases — SQL vs NoSQL (and which NoSQL)</h2>
+
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>SQL (Postgres, MySQL, Aurora)</th><th>NoSQL (DynamoDB, Cassandra, Mongo, etc.)</th></tr></thead>
+  <tbody>
+    <tr><td>Schema</td><td>Strict, enforced.</td><td>Flexible, per-document.</td></tr>
+    <tr><td>Joins</td><td>First-class.</td><td>Avoid; denormalize instead.</td></tr>
+    <tr><td>Transactions</td><td>Strong ACID across rows / tables.</td><td>Usually single-item ACID; cross-item via app-level sagas.</td></tr>
+    <tr><td>Scaling</td><td>Vertical first; read replicas; sharding is hard.</td><td>Horizontal by design.</td></tr>
+    <tr><td>Consistency</td><td>Strong (default).</td><td>Tunable (eventual / strong / quorum).</td></tr>
+    <tr><td>Best fit</td><td>Financial ledger, OMS, inventory ledger, anything that needs <code>SELECT … JOIN … GROUP BY</code>.</td><td>Sessions, feeds, IoT, catalog, time-series, write-heavy at scale.</td></tr>
+  </tbody>
+</table>
+
+<h3>NoSQL families — pick the right one</h3>
+<table>
+  <thead><tr><th>Family</th><th>Examples</th><th>Use when</th></tr></thead>
+  <tbody>
+    <tr><td>Key-Value</td><td>DynamoDB, Redis, Riak</td><td>Lookup by primary key. Sessions, profiles, carts.</td></tr>
+    <tr><td>Wide-Column</td><td>Cassandra, ScyllaDB, HBase, Bigtable</td><td>Massive write throughput, time-series, large rows.</td></tr>
+    <tr><td>Document</td><td>MongoDB, DocumentDB, Couchbase</td><td>JSON-shaped entities, flexible schema, secondary indexes.</td></tr>
+    <tr><td>Graph</td><td>Neo4j, Neptune, JanusGraph</td><td>Many-hop traversals (social graph, fraud rings, recommendations).</td></tr>
+    <tr><td>Search</td><td>Elasticsearch, OpenSearch, Solr</td><td>Full-text search, faceting, log analytics.</td></tr>
+    <tr><td>Time-series</td><td>InfluxDB, Timestream, Prometheus</td><td>Metrics, IoT, monotonically increasing time keys.</td></tr>
+    <tr><td>Object</td><td>S3, GCS, Azure Blob</td><td>Files, blobs, immutable artifacts.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>Decision shortcut:</b> "Do I need joins or transactions across multiple entities?" → SQL. "Do I know the access pattern in advance and need scale?" → DynamoDB / Cassandra. "Do I need full-text or aggregations on free-form text?" → Elasticsearch as a secondary index.</div>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Sharding &amp; Replication</h2>
+
+<h3>Sharding strategies</h3>
+<table>
+  <thead><tr><th>Strategy</th><th>How</th><th>Pro</th><th>Con</th></tr></thead>
+  <tbody>
+    <tr><td><b>Range-based</b></td><td><code>shard = f(key range)</code></td><td>Range scans are fast.</td><td>Hot shards (e.g., latest timestamps).</td></tr>
+    <tr><td><b>Hash-based</b></td><td><code>shard = hash(key) % N</code></td><td>Even load.</td><td>Resharding requires moving most data.</td></tr>
+    <tr><td><b>Consistent hashing</b></td><td>Hash ring + virtual nodes.</td><td>Adding/removing a shard moves only <code>1/N</code> of keys.</td><td>Slightly more complex to implement.</td></tr>
+    <tr><td><b>Geo / directory</b></td><td>Lookup table maps key → shard.</td><td>Maximum flexibility, region affinity.</td><td>Lookup table is itself a SPOF; cache it.</td></tr>
+  </tbody>
+</table>
+
+<h3>Replication patterns</h3>
+<table>
+  <thead><tr><th>Pattern</th><th>Writes</th><th>Reads</th><th>Trade-off</th></tr></thead>
+  <tbody>
+    <tr><td>Single-leader</td><td>To leader only.</td><td>Leader (strong) or replicas (stale).</td><td>Simple. Leader = SPOF until failover.</td></tr>
+    <tr><td>Multi-leader</td><td>Any region's leader.</td><td>Local.</td><td>Conflict resolution required (LWW, CRDT).</td></tr>
+    <tr><td>Leaderless (Dynamo-style)</td><td>To <code>W</code> replicas.</td><td>From <code>R</code> replicas. Quorum: <code>R + W &gt; N</code>.</td><td>Tunable C/A. Read repair + Merkle trees handle drift.</td></tr>
+  </tbody>
+</table>
+
+<h3>Replication lag — what to say in interview</h3>
+<ul>
+  <li>"Read your own writes" → route post-write reads to leader for a TTL, or sticky-session to leader, or include a write-token version in the read.</li>
+  <li>"Monotonic reads" → pin a user to the same replica.</li>
+  <li>"Causal consistency" → use vector clocks or version vectors.</li>
+</ul>
+
+<div class="tips"><b>Resharding pain:</b> hash-mod sharding looks elegant but doubles your migration pain on every <i>add a shard</i>. <b>Default to consistent hashing</b> with virtual nodes (typical: 100–256 vnodes/shard). Cassandra and DynamoDB both do this internally.</div>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Indexes &amp; Storage Engines</h2>
+
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>B-Tree (Postgres, MySQL InnoDB)</th><th>LSM-Tree (Cassandra, RocksDB, DynamoDB, LevelDB)</th></tr></thead>
+  <tbody>
+    <tr><td>Write path</td><td>In-place update; random I/O.</td><td>Append-only memtable → flush SSTable; sequential I/O.</td></tr>
+    <tr><td>Read path</td><td>One tree traversal, ~O(log n).</td><td>Check memtable + multiple SSTables (Bloom filter helps).</td></tr>
+    <tr><td>Best for</td><td>Read-heavy, point + range queries.</td><td>Write-heavy, time-series, append logs.</td></tr>
+    <tr><td>Compaction</td><td>—</td><td>Background merge of SSTables; can cause spikes.</td></tr>
+  </tbody>
+</table>
+
+<h3>Index types worth naming</h3>
+<ul>
+  <li><b>Primary / clustered</b> — table is physically sorted by this key.</li>
+  <li><b>Secondary</b> — extra index, points back to the row.</li>
+  <li><b>Composite</b> — leftmost-prefix matters; <code>(a, b)</code> serves <code>WHERE a=…</code> and <code>WHERE a=… AND b=…</code>, NOT <code>WHERE b=…</code>.</li>
+  <li><b>Covering index</b> — query satisfied entirely from the index (no row lookup). Big win.</li>
+  <li><b>Inverted index</b> — token → list of doc IDs. Foundation of search engines.</li>
+  <li><b>Geo / R-tree / Quadtree / S2 / Geohash</b> — spatial queries (Uber, Yelp).</li>
+  <li><b>Bloom filter</b> — probabilistic "is this key absent?" — cheap negative test before disk read.</li>
+</ul>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. Message Queues &amp; Streaming</h2>
+
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Queue (SQS, RabbitMQ)</th><th>Log / Stream (Kafka, Kinesis)</th></tr></thead>
+  <tbody>
+    <tr><td>Semantics</td><td>Each message consumed once, then deleted.</td><td>Durable log; consumers track offsets independently.</td></tr>
+    <tr><td>Replay</td><td>No.</td><td>Yes, by offset / timestamp.</td></tr>
+    <tr><td>Ordering</td><td>FIFO optional, often per-queue.</td><td>Strict per-partition.</td></tr>
+    <tr><td>Fan-out</td><td>One consumer per message (or via SNS topic).</td><td>Many consumer groups read independently.</td></tr>
+    <tr><td>Best for</td><td>Task queues, decoupling, retry.</td><td>Event sourcing, analytics, pub-sub at scale.</td></tr>
+  </tbody>
+</table>
+
+<h3>Delivery guarantees</h3>
+<table>
+  <thead><tr><th>Guarantee</th><th>Behavior</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>At-most-once</td><td>0 or 1 delivery; loss possible.</td><td>Fire and forget, no ack.</td></tr>
+    <tr><td>At-least-once</td><td>≥1 delivery; duplicates possible.</td><td>Ack after processing; redeliver on no-ack.</td></tr>
+    <tr><td>Exactly-once</td><td>1 delivery, no duplicates.</td><td>Idempotent processing + transactional offset commit (Kafka EOS) — usually "effectively once".</td></tr>
+  </tbody>
+</table>
+
+<h3>Patterns</h3>
+<ul>
+  <li><b>Outbox pattern</b> — write business row + outbox row in same DB transaction; a poller publishes outbox to Kafka. Solves the dual-write problem.</li>
+  <li><b>Dead-letter queue (DLQ)</b> — after N retries, park the message. Always have one.</li>
+  <li><b>Saga</b> — long-running multi-service transaction via a sequence of local transactions + compensating actions.</li>
+  <li><b>CQRS</b> — separate write model (commands) from read model (queries, projections).</li>
+  <li><b>Event sourcing</b> — store state as an append-only log of events; rebuild current state by replay.</li>
+</ul>
+
+<div class="tips"><b>Interview line that scores:</b> "I'll use the outbox pattern so the OrderPlaced event is published if-and-only-if the row is committed — no dual-write race."</div>
+
+<!-- ============================= 12 ============================= -->
+<h2 id="s12">12. Consensus — Raft, Paxos, Two-Phase Commit</h2>
+
+<table>
+  <thead><tr><th>Algorithm</th><th>What it does</th><th>Used by</th></tr></thead>
+  <tbody>
+    <tr><td><b>Paxos</b></td><td>Agree on a single value despite faults.</td><td>Google Chubby, Spanner.</td></tr>
+    <tr><td><b>Multi-Paxos / Raft</b></td><td>Agree on an ordered log of values (replicated state machine).</td><td>etcd, Consul, CockroachDB, TiKV, MongoDB (modified Raft), Kafka KRaft.</td></tr>
+    <tr><td><b>2PC (Two-Phase Commit)</b></td><td>Coordinator polls participants → prepare, commit / abort.</td><td>XA transactions. <span class="pill bad">Blocking</span> if coordinator dies.</td></tr>
+    <tr><td><b>3PC</b></td><td>Adds a pre-commit phase to avoid 2PC blocking.</td><td>Rare; 2PC + timeouts is more common in practice.</td></tr>
+  </tbody>
+</table>
+
+<h3>Raft in 5 bullets (interview-ready)</h3>
+<ol>
+  <li>Cluster has 1 leader at any term; followers replicate the leader's log.</li>
+  <li>Leader election: nodes timeout, increment term, request votes; majority wins.</li>
+  <li>Log replication: leader appends, replicates, commits when majority acks.</li>
+  <li>Safety: only nodes with the most up-to-date log can become leader.</li>
+  <li>Quorum = ⌊N/2⌋ + 1. Tolerates ⌊(N−1)/2⌋ failures (3 nodes → 1 failure, 5 nodes → 2).</li>
+</ol>
+
+<div class="tips"><b>Don't say "we'll use Paxos."</b> Say "we'll use Raft (or an off-the-shelf system like etcd) for leader election and metadata replication." Implementing consensus from scratch is a red flag in an interview.</div>
+
+<!-- ============================= 13 ============================= -->
+<h2 id="s13">13. API Design — REST vs gRPC vs GraphQL</h2>
+
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>REST (JSON / HTTP)</th><th>gRPC (Protobuf / HTTP/2)</th></tr></thead>
+  <tbody>
+    <tr><td>Use when</td><td>Public API, browser clients, broad ecosystem.</td><td>Internal service-to-service, low latency, streaming.</td></tr>
+    <tr><td>Schema</td><td>OpenAPI (optional, often outdated).</td><td>Protobuf — compile-time contract, codegen.</td></tr>
+    <tr><td>Streaming</td><td>SSE / WebSockets bolted on.</td><td>Native bidirectional streaming.</td></tr>
+    <tr><td>Versioning</td><td>URI (<code>/v1</code>) or header.</td><td>Field numbers in proto; never re-use.</td></tr>
+  </tbody>
+</table>
+
+<h3>REST design rules</h3>
+<ul>
+  <li>Nouns, not verbs: <code>POST /orders</code>, not <code>POST /createOrder</code>.</li>
+  <li>HTTP methods: GET (safe, idempotent), POST (create), PUT (full replace, idempotent), PATCH (partial), DELETE (idempotent).</li>
+  <li>Status codes: 2xx success, 4xx client error, 5xx server error. Do not return 200 with an error body.</li>
+  <li>Pagination: cursor-based for big sets (<code>?after=opaqueToken</code>); offset-based only for small, stable sets.</li>
+  <li>Idempotency: accept an <code>Idempotency-Key</code> header on POST so retries are safe.</li>
+  <li>Filtering / sorting: <code>?status=open&amp;sort=-createdAt</code>.</li>
+  <li>Errors: structured body — <code>{code, message, requestId}</code>.</li>
+</ul>
+
+<h3>GraphQL — when worth it</h3>
+<p>Useful when many clients (web, iOS, Android) need different field subsets from the same data graph. Cost: query complexity, N+1 problems (mitigate with DataLoader), caching is harder than REST.</p>
+
+<!-- ============================= 14 ============================= -->
+<h2 id="s14">14. Microservices — Patterns &amp; Anti-Patterns</h2>
+
+<h3>Patterns to mention</h3>
+<table>
+  <thead><tr><th>Pattern</th><th>Purpose</th><th>One-liner</th></tr></thead>
+  <tbody>
+    <tr><td>API Gateway</td><td>Single entry; auth, rate limit, routing.</td><td>Don't let clients fan out to 20 services.</td></tr>
+    <tr><td>BFF (Backend for Frontend)</td><td>Per-client gateway.</td><td>Web BFF and Mobile BFF have different aggregation needs.</td></tr>
+    <tr><td>Service Discovery</td><td>Find healthy instance of a service.</td><td>Consul, Eureka, AWS Cloud Map. DNS + health checks usually enough.</td></tr>
+    <tr><td>Circuit Breaker</td><td>Fail fast when downstream is down.</td><td>Hystrix-style: closed → open → half-open.</td></tr>
+    <tr><td>Bulkhead</td><td>Isolate resource pools per dependency.</td><td>Slow service A doesn't drain all threads from caller.</td></tr>
+    <tr><td>Retry + Backoff + Jitter</td><td>Survive transient errors.</td><td>Exponential backoff with full jitter — never lockstep.</td></tr>
+    <tr><td>Sidecar / Service Mesh</td><td>Move cross-cutting concerns out of app.</td><td>Envoy, Istio, App Mesh handle TLS, retries, metrics.</td></tr>
+    <tr><td>Saga</td><td>Multi-service transactions.</td><td>Choreography (events) or orchestration (central coordinator).</td></tr>
+  </tbody>
+</table>
+
+<h3>Anti-patterns</h3>
+<ul>
+  <li><b>Distributed monolith</b> — services that must deploy together.</li>
+  <li><b>Shared database</b> — two services writing the same table; coupling at the data layer.</li>
+  <li><b>Chatty RPC</b> — N+1 calls per request; batch or cache.</li>
+  <li><b>Synchronous chains</b> — A → B → C → D; one slow service kills the whole chain. Add async / events where you can.</li>
+</ul>
+
+<!-- ============================= 15 ============================= -->
+<h2 id="s15">15. Rate Limiting &amp; Idempotency</h2>
+
+<table>
+  <thead><tr><th>Algorithm</th><th>Idea</th><th>Pros / Cons</th></tr></thead>
+  <tbody>
+    <tr><td>Token Bucket</td><td>Refill at fixed rate; consume per request.</td><td>+ Bursty OK. − Slightly bursty even when you don't want it.</td></tr>
+    <tr><td>Leaky Bucket</td><td>Fixed-rate drain queue.</td><td>+ Smooth output. − Adds latency.</td></tr>
+    <tr><td>Fixed Window</td><td>Counter per minute / second.</td><td>+ Simple. − Edge bursts at window boundary (2× limit).</td></tr>
+    <tr><td>Sliding Window Log</td><td>Timestamps in last window.</td><td>+ Exact. − O(N) memory per user.</td></tr>
+    <tr><td>Sliding Window Counter</td><td>Weighted blend of two fixed windows.</td><td>+ O(1) memory, near-exact. — interview favorite.</td></tr>
+  </tbody>
+</table>
+
+<h3>Distributed rate limiter — Redis recipe</h3>
+<pre>
+<span class="cmt">-- INCR + EXPIRE atomically; reject if over limit</span>
+<span class="kw">local</span> count = redis.call(<span class="str">'INCR'</span>, KEYS[1])
+<span class="kw">if</span> count == 1 <span class="kw">then</span> redis.call(<span class="str">'EXPIRE'</span>, KEYS[1], ARGV[1]) <span class="kw">end</span>
+<span class="kw">if</span> count > <span class="kw">tonumber</span>(ARGV[2]) <span class="kw">then return</span> 0 <span class="kw">end</span>
+<span class="kw">return</span> 1
+</pre>
+
+<h3>Idempotency</h3>
+<ul>
+  <li>Client sends <code>Idempotency-Key: &lt;uuid&gt;</code> on each <code>POST</code>.</li>
+  <li>Server stores key → response in Redis with TTL (e.g., 24h).</li>
+  <li>On retry with same key + same body, return the stored response. Different body → 409.</li>
+  <li>Stripe and AWS SDKs do exactly this.</li>
+</ul>
+
+<!-- ============================= 16 ============================= -->
+<h2 id="s16">16. Search Systems</h2>
+
+<h3>Pipeline</h3>
+<div class="ascii-uml">
+[Source DB] -> [CDC / Outbox] -> [Indexer] -> [Inverted Index Shards] -> [Query Service] -> [Ranker]
+                                                                               ↑
+                                                                       [Cache, suggester]
+</div>
+
+<ul>
+  <li><b>Tokenization</b> — break text into terms (language-aware).</li>
+  <li><b>Normalization</b> — lowercase, stemming, synonyms.</li>
+  <li><b>Inverted index</b> — term → posting list of doc IDs (with positions, term frequency).</li>
+  <li><b>Scoring</b> — BM25 / TF-IDF, then a learned ranker (LTR) on top features.</li>
+  <li><b>Sharding</b> — by doc ID (scatter-gather) or by term (partitioned).</li>
+  <li><b>Near-real-time</b> — use a write-ahead log + segment refresh interval (Elasticsearch's 1s default).</li>
+</ul>
+
+<!-- ============================= 17 ============================= -->
+<h2 id="s17">17. Observability — Logs, Metrics, Traces</h2>
+
+<table>
+  <thead><tr><th>Pillar</th><th>Best for</th><th>Tooling</th></tr></thead>
+  <tbody>
+    <tr><td><b>Metrics</b></td><td>"Is anything wrong?" — aggregate, low-cardinality.</td><td>Prometheus, CloudWatch, Datadog. RED/USE method.</td></tr>
+    <tr><td><b>Logs</b></td><td>"What happened with this request?"</td><td>CloudWatch Logs, ELK, Splunk. Structured JSON, correlation IDs.</td></tr>
+    <tr><td><b>Traces</b></td><td>"Where did latency go?"</td><td>X-Ray, Jaeger, OpenTelemetry. Span per service hop.</td></tr>
+  </tbody>
+</table>
+
+<h3>Golden signals (Google SRE)</h3>
+<ul>
+  <li><b>Latency</b> — p50, p99, p99.9 of successful requests (separate from errors).</li>
+  <li><b>Traffic</b> — requests per second.</li>
+  <li><b>Errors</b> — error rate (4xx vs 5xx).</li>
+  <li><b>Saturation</b> — how full the system is (CPU, queue depth, connection pool).</li>
+</ul>
+
+<div class="tips"><b>Always answer "how do you debug a production issue?" with:</b> "metrics tell me <i>something</i> is wrong, traces tell me <i>where</i>, logs tell me <i>why</i>."</div>
+
+<!-- ============================= 18 ============================= -->
+<h2 id="s18">18. Security in HLD</h2>
+
+<ul>
+  <li><b>AuthN</b> — OAuth 2 + OIDC for users; mTLS or signed JWT for services.</li>
+  <li><b>AuthZ</b> — RBAC for simple, ABAC / policy engine (OPA, Cedar) for complex.</li>
+  <li><b>Encryption in transit</b> — TLS 1.2+ everywhere, including service-to-service.</li>
+  <li><b>Encryption at rest</b> — KMS-managed keys; envelope encryption for blob storage.</li>
+  <li><b>Secrets</b> — Secrets Manager / Vault, never env files, never in git.</li>
+  <li><b>Input validation</b> — schema-validate at the edge; never trust the client.</li>
+  <li><b>Rate limiting + WAF</b> — at the gateway / CDN, not just app.</li>
+  <li><b>Tenant isolation</b> — separate data per tenant (DB schema, KMS key per tenant for high-trust).</li>
+</ul>
+
+<!-- ============================= 19 ============================= -->
+<h2 id="s19">19. AWS Cheat Sheet (Amazon-specific)</h2>
+
+<table>
+  <thead><tr><th>Need</th><th>Service</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Compute (containers)</td><td>ECS / EKS / Fargate</td><td>Fargate = serverless containers.</td></tr>
+    <tr><td>Compute (functions)</td><td>Lambda</td><td>Spiky workloads, glue code, cron.</td></tr>
+    <tr><td>Object storage</td><td>S3</td><td>11×9 durability. Versioning, lifecycle, CRR.</td></tr>
+    <tr><td>Block storage</td><td>EBS</td><td>Per-EC2 volume.</td></tr>
+    <tr><td>File storage</td><td>EFS / FSx</td><td>Multi-AZ NFS.</td></tr>
+    <tr><td>Key-value</td><td>DynamoDB</td><td>Single-digit-ms; on-demand or provisioned; streams for CDC.</td></tr>
+    <tr><td>Relational</td><td>Aurora (Postgres / MySQL) / RDS</td><td>Aurora = managed, multi-AZ, auto-scaling storage.</td></tr>
+    <tr><td>Cache</td><td>ElastiCache (Redis / Memcached)</td><td>Cluster mode for shard + replicate.</td></tr>
+    <tr><td>Search</td><td>OpenSearch</td><td>Forked Elasticsearch.</td></tr>
+    <tr><td>Queue</td><td>SQS</td><td>Standard (at-least-once) vs FIFO (exactly-once, lower TPS).</td></tr>
+    <tr><td>Pub/Sub</td><td>SNS</td><td>Fan-out to SQS, Lambda, HTTP.</td></tr>
+    <tr><td>Stream</td><td>Kinesis Data Streams / MSK</td><td>MSK = managed Kafka.</td></tr>
+    <tr><td>Workflow</td><td>Step Functions</td><td>Sagas, retries, parallel state machines.</td></tr>
+    <tr><td>CDN</td><td>CloudFront</td><td>Edge cache + Lambda@Edge for compute.</td></tr>
+    <tr><td>API Gateway</td><td>API Gateway / ALB</td><td>API GW for HTTP/WebSocket; ALB for L7 routing.</td></tr>
+    <tr><td>Auth</td><td>Cognito / IAM</td><td>Cognito for end-users; IAM for service-to-service.</td></tr>
+    <tr><td>Observability</td><td>CloudWatch / X-Ray</td><td>X-Ray = distributed tracing.</td></tr>
+    <tr><td>Config / Secrets</td><td>Parameter Store / Secrets Manager</td><td>Use Secrets Manager for rotated secrets.</td></tr>
+  </tbody>
+</table>
+
+<div class="lp">
+  <b>Amazon-flavored phrasing that lands well:</b> "I'd put DynamoDB in front of S3 for the metadata, with DynamoDB Streams driving Lambda fan-out to a SQS queue per consumer." This is the canonical Amazon pattern; using these names by themselves signals familiarity.
+</div>
+
+
+<!-- ============================= P1 — URL Shortener ============================= -->
+<h2 id="p1">P1. URL Shortener (TinyURL / bit.ly) — the canonical warm-up</h2>
+
+<h3>Step 1 — Requirements</h3>
+<ul>
+  <li><b>FR:</b> shorten a URL → return a short code; redirect short code → original URL; analytics on click counts; optional custom alias and expiration.</li>
+  <li><b>NFR:</b> read-heavy (~100:1 reads:writes); p99 redirect &lt; 50 ms; durable; high availability.</li>
+</ul>
+
+<h3>Step 2 — Capacity</h3>
+<ul>
+  <li>500M new URLs / month → ~200 writes/sec.</li>
+  <li>100:1 read ratio → ~20K reads/sec; peak 5×.</li>
+  <li>Storage: 500B / row × 500M / month × 12 = ~3 TB/year.</li>
+  <li>Short code length: 6 chars × base62 = 56 billion codes — plenty.</li>
+</ul>
+
+<h3>Step 3 — High-Level Diagram</h3>
+<div class="ascii-uml">
+[Client] → [CDN] → [API Gateway] → [Write Service] → [DynamoDB / Mongo (long↔short)]
+                                          ↓                            ↑
+                                  [Counter / KGS]                       │
+                                          ↓                             │
+                                    [Analytics Q] → [Kinesis] → [Click DB]
+[Client GET /xyz] → [CDN] → [Read Service / Redis cache] ─────────────┘
+</div>
+
+<h3>Step 4 — Key code generation (KGS) — the interesting part</h3>
+<table class="compare">
+  <thead><tr><th>Approach</th><th>Hash of URL (MD5 → base62 → take 7 chars)</th><th>Pre-generated KGS (key generation service)</th></tr></thead>
+  <tbody>
+    <tr><td>How</td><td>Compute hash; check collision; retry.</td><td>A service pre-generates billions of keys offline; hands one out per request.</td></tr>
+    <tr><td>Concurrency</td><td>Collisions on duplicate URLs.</td><td>No collisions — each key issued once.</td></tr>
+    <tr><td>Hot path</td><td>Hash compute on every shorten.</td><td>O(1) lookup of next free key.</td></tr>
+    <tr><td>Verdict</td><td>Simple; fine for low scale.</td><td>What real systems do.</td></tr>
+  </tbody>
+</table>
+
+<h3>Step 5 — Read path</h3>
+<ol>
+  <li>Edge cache (CloudFront) → cache short→long with TTL = expiry-or-7days.</li>
+  <li>Cache miss → Redis lookup.</li>
+  <li>Cache miss → DynamoDB GetItem on short code (PK).</li>
+  <li>Return <code>301</code> (permanent) or <code>302</code> (so analytics still capture each hit).</li>
+</ol>
+
+<h3>Step 6 — Trade-offs to mention</h3>
+<ul>
+  <li>301 vs 302 — 301 caches in browser → fewer analytics; 302 hits the server every time.</li>
+  <li>Custom alias collisions — handle with conditional write (DynamoDB <code>attribute_not_exists</code>).</li>
+  <li>Click analytics async via Kinesis to avoid slowing redirects.</li>
+</ul>
+
+<!-- ============================= P2 — Twitter / Feed ============================= -->
+<h2 id="p2">P2. Twitter / News Feed</h2>
+
+<h3>Requirements</h3>
+<ul>
+  <li>Post a tweet (text, images), follow users, see a timeline of tweets from people you follow.</li>
+  <li>500M users, 200M DAU, ~5K tweets/sec average, p99 timeline &lt; 200 ms.</li>
+</ul>
+
+<h3>The fundamental design choice — fan-out</h3>
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Fan-out on read (pull)</th><th>Fan-out on write (push)</th></tr></thead>
+  <tbody>
+    <tr><td>How</td><td>On timeline read, query each followee's tweets, merge, sort.</td><td>On post, write a copy to each follower's timeline cache.</td></tr>
+    <tr><td>Read</td><td>Slow (scatter-gather, merges).</td><td>Fast (single timeline read).</td></tr>
+    <tr><td>Write</td><td>Cheap.</td><td>Expensive — celebrity with 100M followers = 100M writes.</td></tr>
+    <tr><td>Best for</td><td>Users with many followees.</td><td>Most users.</td></tr>
+  </tbody>
+</table>
+
+<h3>Hybrid (what real Twitter does)</h3>
+<ul>
+  <li>Push for normal users (median ~200 followers).</li>
+  <li>Pull for celebrities (followers &gt; 1M). Their tweets are merged at read time.</li>
+  <li>Threshold tunable per user; flagged in user metadata.</li>
+</ul>
+
+<h3>Components</h3>
+<div class="ascii-uml">
+[Client] → [API GW] → [Tweet Service] → [Tweets DB (Cassandra, partition by userId)]
+                                  ↓
+                              [Kafka]
+                                  ↓
+                       [Fan-out Service] → [Timeline Cache (Redis, list per user, capped at 800)]
+                                  ↓
+                        [Celebrity? skip; pulled at read]
+[Client] → [Timeline Service] → Redis → fallback to Tweets DB
+</div>
+
+<h3>What to call out</h3>
+<ul>
+  <li><b>Storage:</b> Cassandra for tweets — write-heavy, partition by user_id, sort by timestamp DESC.</li>
+  <li><b>Cache:</b> Redis sorted set per user, capped at ~800 (= 1 month of timeline).</li>
+  <li><b>Search:</b> Elasticsearch via CDC from Kafka; not the source of truth.</li>
+  <li><b>Media:</b> S3 + CloudFront; tweet stores only the URL.</li>
+</ul>
+
+<!-- ============================= P3 — Chat / WhatsApp ============================= -->
+<h2 id="p3">P3. WhatsApp / 1:1 + Group Chat</h2>
+
+<h3>Requirements</h3>
+<ul>
+  <li>Send / receive messages, delivery + read receipts, online presence, group chats up to 256, optional E2E encryption.</li>
+  <li>2B users, ~100B messages/day.</li>
+</ul>
+
+<h3>Connection layer</h3>
+<ul>
+  <li><b>Persistent WebSocket</b> per online client. Long-lived TCP. ~100M concurrent connections globally.</li>
+  <li><b>Connection servers</b> are stateless about <i>routing</i>: a session table (Redis) maps <code>userId → connectionServerId</code>.</li>
+  <li>Send: clientA → connServer1 → lookup B → forward to connServer2 → clientB.</li>
+</ul>
+
+<h3>Storage</h3>
+<table>
+  <thead><tr><th>Concern</th><th>Choice</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Message store</td><td>Wide-column (HBase / Cassandra), partition by chat_id, sort by message_id.</td><td>Append-heavy, range read by chat.</td></tr>
+    <tr><td>User → device map</td><td>DynamoDB / Redis</td><td>Hot lookup on every send.</td></tr>
+    <tr><td>Media</td><td>S3 with pre-signed URLs</td><td>Don't ship blobs through chat servers.</td></tr>
+    <tr><td>Offline queue</td><td>Per-device inbox in Cassandra; deleted after ack.</td><td>Reliable delivery on reconnect.</td></tr>
+  </tbody>
+</table>
+
+<h3>Receipts &amp; presence</h3>
+<ul>
+  <li><b>Sent / Delivered / Read</b> are separate ack events flowing back through the same channel.</li>
+  <li><b>Presence</b> is high-write, low-value; store in Redis with TTL refreshed by heartbeat. Don't put it in your durable DB.</li>
+</ul>
+
+<h3>Group fan-out</h3>
+<p>Server-side fan-out: for a 256-member group, the message is replicated to 256 inboxes. Cap group size to keep this bounded.</p>
+
+<div class="tips"><b>E2E encryption note:</b> Signal protocol — server only routes ciphertext. Server cannot do server-side search; clients search locally.</div>
+
+<!-- ============================= P4 — YouTube / Netflix ============================= -->
+<h2 id="p4">P4. YouTube / Netflix — Video Streaming</h2>
+
+<h3>Two pipelines</h3>
+<ol>
+  <li><b>Upload &amp; transcode</b> (write path).</li>
+  <li><b>Playback</b> (read path) — what most viewers exercise.</li>
+</ol>
+
+<h3>Upload pipeline</h3>
+<div class="ascii-uml">
+[Client] -- multipart upload --> [Upload Service] → [S3 raw bucket]
+                                          ↓
+                            [SQS] → [Transcoding workers (Fargate / Spot fleet)]
+                                          ↓
+                           [HLS / DASH segments per resolution] → [S3] → [CloudFront]
+                                          ↓
+                                   [Metadata DB: DynamoDB / Aurora]
+                                          ↓
+                                 [Search index: OpenSearch via CDC]
+</div>
+
+<h3>Playback</h3>
+<ul>
+  <li>Adaptive bitrate (HLS / DASH) — manifest lists multiple bitrates; client picks based on bandwidth.</li>
+  <li>Pre-positioning at edge (CDN) — popular videos cached close to viewers; predictive replication for new releases.</li>
+  <li>DRM (Widevine / FairPlay / PlayReady) issued by license server.</li>
+  <li>Recommendation service generates personalized rows offline; served from a feature store at request time.</li>
+</ul>
+
+<h3>Storage layout</h3>
+<table>
+  <thead><tr><th>Bucket / Tier</th><th>Use</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>S3 Standard</td><td>Originals + 24-hour transcode buffer</td><td>11×9 durability</td></tr>
+    <tr><td>S3 Intelligent-Tiering</td><td>Long-tail videos</td><td>Auto move to IA / Glacier</td></tr>
+    <tr><td>CloudFront</td><td>Hot segments</td><td>Hours/days TTL; segments are ~6s of video</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= P5 — Uber ============================= -->
+<h2 id="p5">P5. Uber / Lyft — Ride-Hailing</h2>
+
+<h3>The hard problem: real-time geo-matching</h3>
+<ul>
+  <li>~5M drivers globally publishing location every 4s = ~1.25M location updates/sec at peak.</li>
+  <li>On rider request, find nearby available drivers and dispatch.</li>
+</ul>
+
+<h3>Geospatial index choices</h3>
+<table>
+  <thead><tr><th>Index</th><th>How</th><th>Used by</th></tr></thead>
+  <tbody>
+    <tr><td>Geohash</td><td>Encode lat/lng as a string; prefix length = precision; query a cell + neighbors.</td><td>Redis GEO commands.</td></tr>
+    <tr><td>Quadtree</td><td>Recursive 4-split of space until cell density ≤ threshold.</td><td>Common in older systems.</td></tr>
+    <tr><td>S2 cells (Hilbert curve)</td><td>Sphere-aware cells; preserves locality on a curve.</td><td>Google, Uber's H3 is similar.</td></tr>
+    <tr><td>H3 (Uber)</td><td>Hexagonal hierarchical grid.</td><td>Hex cells = uniform neighbor distance — better for travel-time.</td></tr>
+  </tbody>
+</table>
+
+<h3>Components</h3>
+<div class="ascii-uml">
+[Driver app] -- WebSocket -→ [Location Service] -→ [Kafka] -→ [Dispatch / Geo Index (Redis or in-memory)]
+[Rider app]  --   request  -→ [Trip Service] -→ ask Dispatch for top-K nearby drivers
+                                                       ↓
+                                        [Match / offer / accept / state machine] -→ [Trip DB]
+                                                       ↓
+                                        [ETA, pricing, surge services]
+</div>
+
+<h3>State machine for a Trip</h3>
+<p><code>REQUESTED → MATCHED → DRIVER_ARRIVING → IN_PROGRESS → COMPLETED</code> with branches <code>CANCELLED_BY_RIDER</code> / <code>CANCELLED_BY_DRIVER</code>. Persist transitions; emit events for billing, fraud, ETA refinement.</p>
+
+<h3>Surge pricing</h3>
+<ul>
+  <li>Stream of supply (drivers) and demand (requests) per H3 cell; multiplier function (often piecewise) updates every minute.</li>
+  <li>Stored as a small geo-keyed map served from Redis.</li>
+</ul>
+
+<!-- ============================= P6 — S3-like ============================= -->
+<h2 id="p6">P6. S3-Like Object Storage</h2>
+
+<h3>Requirements</h3>
+<ul>
+  <li>PUT / GET / DELETE objects (key → blob), buckets, versioning, multi-part upload, 11×9 durability.</li>
+</ul>
+
+<h3>Architecture</h3>
+<div class="ascii-uml">
+[Client] → [API LB] → [Front-End API] → [Metadata Service: bucket/key → object_id, versions]
+                                                ↓
+                                     [Coordinator] → [Storage Nodes (3-way replicated, erasure-coded)]
+                                                ↓
+                                       [GC / Compaction / Repair]
+</div>
+
+<h3>Key design points</h3>
+<ul>
+  <li><b>Metadata vs Data split.</b> Metadata = small, transactional, sharded by bucket (Spanner / Aurora / DynamoDB). Data = immutable blobs on storage nodes.</li>
+  <li><b>Erasure coding</b> (e.g., Reed-Solomon 10+4) — store across 14 nodes, tolerate 4 losses; ~1.4× storage overhead vs 3× for pure replication.</li>
+  <li><b>Multi-part upload</b> — client splits, each part uploaded independently; metadata stitches them on <code>CompleteMultipartUpload</code>.</li>
+  <li><b>Eventual consistency for list, strong for read-after-write</b> (modern S3 is read-after-write strong).</li>
+  <li><b>Lifecycle policies</b> — async tier mover.</li>
+  <li><b>Hot keys</b> — randomize key prefix to spread across partitions.</li>
+</ul>
+
+<!-- ============================= P7 — Distributed Cache ============================= -->
+<h2 id="p7">P7. Distributed Cache (Memcached / Redis Cluster)</h2>
+
+<h3>Core decisions</h3>
+<table>
+  <thead><tr><th>Concern</th><th>Choice</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Sharding</td><td>Consistent hashing with 256 vnodes per node.</td><td>Adding/removing a node moves only 1/N of keys.</td></tr>
+    <tr><td>Replication</td><td>Async primary→replica per shard.</td><td>Survive node loss; stale reads OK for cache.</td></tr>
+    <tr><td>Eviction</td><td>LRU per node (Memcached) or LRU/LFU/W-TinyLFU (Caffeine on app side).</td><td>Bounded memory.</td></tr>
+    <tr><td>Client</td><td>Smart client computes shard locally; no proxy hop.</td><td>Lower latency.</td></tr>
+    <tr><td>Failure detection</td><td>Gossip; node marked dead after N missed heartbeats.</td><td>Avoid false positives.</td></tr>
+  </tbody>
+</table>
+
+<h3>Stampede protection</h3>
+<ul>
+  <li>Per-key in-process lock — only one thread fetches from origin; others wait on the future.</li>
+  <li>"Stale-while-revalidate" — serve slightly stale value while refreshing in background.</li>
+  <li>Probabilistic early refresh — refresh slightly before TTL with probability that grows as TTL approaches.</li>
+</ul>
+
+<!-- ============================= P8 — Web Crawler ============================= -->
+<h2 id="p8">P8. Web Crawler (Googlebot-style)</h2>
+
+<h3>Goals</h3>
+<ul>
+  <li>Crawl the web politely (respect robots.txt, rate-limit per host).</li>
+  <li>Avoid duplicates; discover new pages; refresh frequently changing pages more often.</li>
+</ul>
+
+<h3>Architecture</h3>
+<div class="ascii-uml">
+[Seed URLs] → [URL Frontier (priority queues)]
+                       ↓
+            [Fetcher pool] → [DNS cache] → [HTTP client]
+                       ↓
+            [Parser] → [Content Store (S3, dedup by content hash)]
+                       ↓
+            [URL extractor] → [URL filter / dedup (Bloom filter + DB)]
+                       ↓
+            [URL Frontier]   ← (loop)
+</div>
+
+<h3>Key tricks</h3>
+<ul>
+  <li><b>Politeness</b>: per-host queue + min-delay-between-requests; one fetcher per host at a time.</li>
+  <li><b>Dedup at scale</b>: Bloom filter (memory) for fast "seen?" check + persistent DB for the truth.</li>
+  <li><b>Content dedup</b>: SHA-256 of normalized HTML; 30% of the web is duplicates.</li>
+  <li><b>Refresh policy</b>: change-rate estimation per page; crawl high-change pages more often.</li>
+  <li><b>Trap detection</b>: bound crawl depth, URL length, repeating patterns (calendar pages).</li>
+</ul>
+
+<!-- ============================= P9 — Distributed Rate Limiter ============================= -->
+<h2 id="p9">P9. Distributed Rate Limiter</h2>
+
+<h3>Where does it live?</h3>
+<ul>
+  <li>At the API gateway — cheapest, blocks early.</li>
+  <li>At each service — defense in depth; protects against authenticated misuse.</li>
+</ul>
+
+<h3>Distributed challenge</h3>
+<p>Counters must be shared across N gateway nodes. Options:</p>
+<table>
+  <thead><tr><th>Option</th><th>How</th><th>Trade-off</th></tr></thead>
+  <tbody>
+    <tr><td>Centralized Redis</td><td><code>INCR key + EXPIRE</code> via Lua script.</td><td>Network hop per request. ~1 ms p99.</td></tr>
+    <tr><td>Local + sync</td><td>Each node keeps a local counter; periodically syncs.</td><td>Faster but counters drift.</td></tr>
+    <tr><td>Token-leasing</td><td>Node leases N tokens from a coordinator.</td><td>Best of both; modest complexity.</td></tr>
+  </tbody>
+</table>
+
+<h3>Sliding-window-counter algorithm in Redis</h3>
+<pre>
+<span class="cmt">// pseudo-code</span>
+now    = nowSeconds()
+window = 60
+key    = userId + <span class="str">":"</span> + (now / window)
+prev   = userId + <span class="str">":"</span> + (now / window - 1)
+prevC  = redis.get(prev) or 0
+currC  = redis.incr(key); redis.expire(key, 2*window)
+weight = (window - now % window) / window
+estimate = prevC * weight + currC
+allow  = estimate &lt;= LIMIT
+</pre>
+
+<!-- ============================= P10 — Notification System ============================= -->
+<h2 id="p10">P10. Notification System (Email / SMS / Push)</h2>
+
+<h3>Components</h3>
+<div class="ascii-uml">
+[Producer service] -→ [Notification API] -→ [SQS / Kafka topic per channel]
+                                                         ↓
+                                              [Channel workers]
+                                                         ↓
+                            [Email (SES) / SMS (Twilio, SNS) / Push (FCM, APNs)]
+                                                         ↓
+                                              [Status callback DB]
+                                                         ↓
+                                       [Retry queue, DLQ, suppression list]
+</div>
+
+<h3>Hard parts</h3>
+<ul>
+  <li><b>Idempotency</b> — same notification ID processed twice must not send twice. Use a dedup key in DynamoDB (TTL 7 days).</li>
+  <li><b>Throttling</b> — provider quotas (SES 14 mail/sec by default). Token bucket per provider.</li>
+  <li><b>User preferences</b> — channel opt-in / quiet hours / locale; check before sending.</li>
+  <li><b>Templates</b> — versioned, reviewed, A/B tested.</li>
+  <li><b>Bounce / complaint handling</b> — auto-suppress addresses with hard bounces.</li>
+  <li><b>Priority lanes</b> — separate queues for transactional (OTP) vs marketing.</li>
+</ul>
+
+<!-- ============================= P11 — Top K ============================= -->
+<h2 id="p11">P11. Top-K / Trending (e.g., trending hashtags, top-selling products)</h2>
+
+<h3>Approach 1 — Lambda (offline + online)</h3>
+<ul>
+  <li>Streams of events go to Kafka.</li>
+  <li>Spark / Flink job computes per-minute counts → writes to Cassandra.</li>
+  <li>Top-K query: scan last N minutes, sum, sort. Acceptable for ~1000 candidate keys.</li>
+</ul>
+
+<h3>Approach 2 — Count-Min Sketch + Min-Heap</h3>
+<p>For high-cardinality streams (millions of candidate keys):</p>
+<ul>
+  <li><b>Count-Min Sketch</b> in memory: <code>O(1)</code> increment, <code>O(1)</code> approximate count, sub-linear memory.</li>
+  <li><b>Min-Heap of size K</b> tracks the current top K.</li>
+  <li>Multiple sketches per time window; merge for "top-K in last hour".</li>
+</ul>
+
+<pre>
+<span class="cmt">// Approximate top-K with bounded memory</span>
+<span class="kw">on</span> event(key) {
+  cms.add(key);                       <span class="cmt">// O(1)</span>
+  est = cms.estimate(key);
+  <span class="kw">if</span> (heap.size &lt; K) heap.add({key, est});
+  <span class="kw">else if</span> (est &gt; heap.peek().est) {
+    heap.replaceTop({key, est});
+  }
+}
+</pre>
+
+<!-- ============================= P12 — Cart & Checkout ============================= -->
+<h2 id="p12">P12. Amazon Cart &amp; Checkout <span class="pill amzn">Amazon-specific</span></h2>
+
+<h3>Why this is interesting</h3>
+<p>Cart is read-heavy (every page render shows item count); checkout is write-heavy and money-touching. They have very different requirements.</p>
+
+<h3>Cart Service</h3>
+<ul>
+  <li><b>Storage:</b> DynamoDB, partition key = <code>customer_id</code>. Single-digit-ms reads at any scale.</li>
+  <li><b>Cache:</b> Redis with the cart JSON; invalidate on write.</li>
+  <li><b>Persistence:</b> guest carts in cookie + Redis (TTL 30d); signed-in carts merge on login.</li>
+  <li><b>Stock check at cart-add</b> is "best-effort" — final reservation happens at checkout. Avoids holding inventory for browsers.</li>
+</ul>
+
+<h3>Checkout Service</h3>
+<ol>
+  <li><b>Validate cart</b> — re-fetch latest prices, check availability per FC (fulfillment center).</li>
+  <li><b>Reserve inventory</b> — conditional update: <code>SET available = available - qty WHERE available &gt;= qty</code>. Use Inventory service, not cart's view.</li>
+  <li><b>Calculate totals</b> — taxes, promotions, shipping options.</li>
+  <li><b>Place order</b> — write Order row + Outbox event in one DB transaction.</li>
+  <li><b>Charge</b> — call payment service with idempotency key. On failure: compensate (release inventory).</li>
+  <li><b>Emit OrderPlaced</b> — drives fulfillment, email, analytics, fraud screening.</li>
+</ol>
+
+<h3>Sequence of writes — all idempotent</h3>
+<pre>
+<span class="cmt">// each step has idempotencyKey = orderId-stepName</span>
+reserveInventory(orderId, items)         <span class="cmt">// PutIf</span>
+chargePayment(orderId, total)            <span class="cmt">// idempotencyKey = orderId</span>
+createOrderRow(orderId, ...)             <span class="cmt">// PutIf attribute_not_exists</span>
+publishOrderPlaced(orderId)              <span class="cmt">// outbox -→ Kafka</span>
+</pre>
+
+<div class="lp"><b>LP signal:</b> "Customer Obsession" → never charge a customer for an item we can't fulfill. Inventory reserve must succeed before payment is authorized; payment failure must release inventory via a saga.</div>
+
+<!-- ============================= P13 — Inventory ============================= -->
+<h2 id="p13">P13. Amazon Inventory Service <span class="pill amzn">Amazon-specific</span></h2>
+
+<h3>Why this is hard</h3>
+<p>Same SKU may have stock in 100+ FCs. Reads are global ("can I ship 1 unit of SKU X to ZIP 560001?") and writes are local (FC scans, returns, restocks). Strong consistency required for "available count" — overselling is a lawsuit.</p>
+
+<h3>Architecture</h3>
+<div class="ascii-uml">
+[FC scanners / Receiving] -→ [Inventory Service per FC]
+                                       ↓
+                              [DynamoDB per-FC table]
+                                       ↓                              [Order placement]
+                              [DynamoDB Streams]                              ↓
+                                       ↓                            [Inventory API]
+                            [Aggregation Service]               ←-→ [Reservation Service]
+                                       ↓                              ↑
+                            [Global Aggregate Table]                  │
+                                       ↓                              │
+                                       └──── read by API ─────────────┘
+</div>
+
+<h3>Reservation flow (the key piece)</h3>
+<ul>
+  <li><b>Atomic reserve via conditional write:</b> <code>UPDATE … SET available = available - qty WHERE available &gt;= qty</code>. DynamoDB does this with a condition expression; failure means stockout.</li>
+  <li><b>TTL on reservation</b> — if checkout doesn't complete in 15 min, auto-release.</li>
+  <li><b>Per-FC pessimistic; cross-FC optimistic</b> — fan out attempts to FCs ranked by ETA; first that confirms wins.</li>
+  <li><b>Hot SKU</b> (Prime Day Echo Dot) → shard the SKU into N "buckets" of inventory; reserve from random bucket to spread contention.</li>
+</ul>
+
+<!-- ============================= P14 — Order Mgmt ============================= -->
+<h2 id="p14">P14. Amazon Order Management (full lifecycle) <span class="pill amzn">Amazon-specific</span></h2>
+
+<h3>Scope</h3>
+<p>Track an order from placement through delivery / return / refund. State changes over days; many services participate.</p>
+
+<h3>Architecture</h3>
+<div class="ascii-uml">
+[Checkout] -→ OrderPlaced -→ [Order Service (DynamoDB, PK orderId)] -→ [DynamoDB Streams]
+                                              ↓                                ↓
+                                     [State Machine — Step Functions]   [Search index, BI]
+                                              ↓
+              ┌─── ┌── Fulfillment ──→ FC pick/pack/ship event ─→ Order: SHIPPED
+              │    │                                                     ↓
+              │    └── Shipping carrier webhook ──→ Order: DELIVERED
+              │
+              └── Cancellation / Return / Refund flows (sagas)
+</div>
+
+<h3>State machine</h3>
+<pre>
+PLACED → PAID → PROCESSING → PACKED → SHIPPED → DELIVERED
+   ↘                                           ↘
+   CANCELLED                                  RETURN_REQUESTED → RETURNED → REFUNDED
+</pre>
+
+<h3>Why an event-sourced log + projection works well here</h3>
+<ul>
+  <li>Append-only event log (Kafka or DynamoDB Streams) is the source of truth for order history.</li>
+  <li>Order Service projects events into the current-state row.</li>
+  <li>Other services (search, analytics, customer-care UI) build their own projections from the same log → no shared DB.</li>
+</ul>
+
+<h3>Failure handling</h3>
+<ul>
+  <li><b>Idempotent updates</b> — every state transition keyed by event ID.</li>
+  <li><b>Compensation</b> — refund failure triggers a manual queue; never silently retry forever.</li>
+  <li><b>Customer-facing read consistency</b> — after the customer hits "cancel" we route their next read to the leader to avoid showing the old state.</li>
+</ul>
+
+<div class="lp"><b>Closing LP:</b> "Ownership" — Order Service owns the order's truth. Other services own derived projections. Adding a new consumer (e.g., loyalty points) is a new projection, not a code change in Order Service.</div>
+
+
+<!-- ============================= TRICKY QUESTIONS ============================= -->
+<h2 id="tq">T. Tricky HLD Questions Bank — with hints (auto-revealed in print)</h2>
+
+<div class="tricky">
+  <div class="q">T1. "How would you make a write succeed if the leader is down?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      You can't, in a CP system — by design. Either fail the write (CP) or accept the write on a replica and merge later (AP, conflict resolution required). What you <i>can</i> do: detect leader failure quickly (heartbeats), elect a new one (Raft), and resume — usually within seconds. Mention RTO / RPO numbers.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T2. "Pick: DynamoDB or Aurora for an order ledger?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Aurora wins if you need joins, ad-hoc analytics, or multi-row ACID transactions (typical for an OMS). DynamoDB wins for predictable per-key access at huge scale (carts, sessions, IoT). For Amazon's actual order ledger: relational makes sense for the financial truth; DynamoDB shines for the fast read views.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T3. "What's wrong with using <code>now() % N</code> for sharding?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Time-based keys send all current writes to one shard — hot shard. For time-series, use <code>(entityId, time)</code> composite key partitioned by <code>entityId</code>. Or bucket by <code>floor(time / interval)</code> and prefix with a hash to spread.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T4. "Two services need the same data. Should they share the database?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      No. Shared DB = tightest possible coupling; one's index choice affects the other. Either consolidate the services (if they really are one bounded context) or expose an API / replicate via CDC into a read store the second service owns.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T5. "Your service's p99 latency doubles every Black Friday. What design changes?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Pre-warm caches, raise TTLs for stable data, scale stateless tier horizontally before the event, throttle non-critical features (recommendations, reviews) before customer-critical ones, isolate critical paths (cart / checkout) on separate fleets, replicate hot keys, queue writes that don't need to be sync (analytics, notifications). Most importantly — load test at 2× actual peak.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T6. "Why use Kafka over a database table as a queue?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      DB-as-queue: every consumer hits the same row → contention on the "claim" update. Kafka: append-only log, consumer offsets are independent, throughput scales with partitions. DB-as-queue is OK for low-volume task queues; for ≥10K msg/sec or replay needs, Kafka.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T7. "How do you ensure exactly-once processing?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      You don't, strictly. You make processing <b>idempotent</b> + use deduplication keys: producer-side (Kafka idempotent producer with PIDs), consumer-side (dedup key in a TTL store, transactional offset commit with output write). Result is "effectively once."
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T8. "Why not run everything on Lambda?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Cold starts (10s–1s) for low-traffic functions. Concurrency limits per account. Long-running connections (WebSocket, gRPC streaming, DB pools) don't fit. Cost crosses over containers above a steady ~50% utilization.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T9. "Strong vs eventual consistency — which for a like counter?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Eventual is fine — users tolerate "1.2M likes" lagging by seconds. Use sharded counters (e.g., 100 counters per post; sum on read). Strong consistency would serialize all writers on one row → throughput ceiling.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T10. "How do you keep cache and DB in sync?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Cache-aside + delete-on-write. On write: update DB, then DELETE cache key (don't UPDATE — race). Reader on next miss repopulates. For absolute correctness, use CDC: DB → Kafka → cache invalidator. Avoid write-through across multiple writers.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T11. "Estimate QPS for a service before designing."</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      DAU × actions/day / 86400 = avg QPS. Multiply by 3–5 for peak. Multiply by 2 for safety. Show the math out loud — interviewers care about the framework more than the number.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T12. "Read-heavy vs write-heavy — what changes?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Read-heavy: cache aggressively, replicate, denormalize; pick B-tree storage; CDN for static. Write-heavy: pick LSM-tree storage (Cassandra, RocksDB); shard early; batch / async writes; no read replicas help write throughput.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T13. "Why not put a database behind a load balancer?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Stateful sessions (transactions, prepared statements). Connection pools are sized per app instance. The DB does its own load balancing via leaders / replicas; a TCP LB in front confuses failover. Use the DB driver's built-in routing (e.g., Aurora cluster endpoint).
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T14. "Designing pagination for a feed — offset or cursor?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Cursor. Offset performance degrades with depth (skip-N), and offset can return duplicates / gaps when the underlying list mutates. Cursor = "give me items after this opaque token" — stable under inserts, O(1) per page.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T15. "Two-phase commit across services — should you?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Almost never. 2PC blocks if the coordinator dies between phases. For service-to-service: use a saga (sequence of local transactions + compensations) with eventual consistency. Banks, airlines, Amazon checkout — all sagas, not 2PC.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T16. "How do you scale WebSockets to 100M concurrent connections?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Stateless connection servers (~100K connections each → 1000 servers). Session table (Redis / DynamoDB) maps user → server. Horizontal scaling via consistent hashing on user ID. Heartbeat every 30s; reconnect on drop. Use sticky LB only for the initial handshake; routing is done in app via the session table.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T17. "What's wrong with synchronous calls A → B → C → D?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Latency adds; one slow link breaks the chain; failure modes multiply (anything along the path). Mitigations: caching, async events for non-essentials, circuit breakers, timeouts decreasing along the chain (A 1000ms, B 800ms, C 600ms…), bulkheads.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T18. "How do you do schema migration in a live system?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Expand-migrate-contract: (1) add new column / table, deploy code that reads old + writes both. (2) Backfill async. (3) Switch reads to new. (4) Remove old. Never combine schema change + code change in one deploy. For Cassandra/Dynamo, create new table + dual-write + migrate.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T19. "Hot partition — how do you spread it?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Add a random suffix to the key (e.g., <code>celebId#0..9</code>) and write to one bucket; on read, fan out to all buckets and aggregate. Or move that one entity to a dedicated dataset. DynamoDB calls this "write sharding."
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T20. "When would you choose CP over AP?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      CP for systems where stale reads cost money or violate invariants — payments, inventory deduction, voting / consensus, distributed locks. AP for everything where seconds-old data is fine — feeds, search, recommendations, analytics dashboards.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T21. "Designing for multiple regions — what changes?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Latency budget — clients should hit nearest region. Data partitioning — pick "data has a home region" (GDPR-style) or "global tables" (DynamoDB / Spanner) accepting last-write-wins or vector-clock conflicts. Cross-region replication delay 100ms+ → can't do strong-consistency cross-region. Failover plan: DNS + health checks (Route 53) + warm standby.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T22. "How do you load-test a new service?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      (1) Define SLOs (p99 latency, error rate). (2) Replay realistic traffic shape, not uniform — diurnal + bursts. (3) Ramp to 2× expected peak. (4) Shadow real production traffic if possible. (5) Find the breaking point intentionally (chaos engineering). (6) Verify dashboards alert correctly during the test.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T23. "Why ‘delete on write' instead of ‘update on write' for cache?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Update can lose to a concurrent write that completes earlier — final cache value reflects the older DB state. Delete forces the next read to repopulate from DB → guaranteed to read the latest. Slightly higher miss rate is the cost.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T24. "Designing the 'this user already followed' check at scale."</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      DB lookup works to ~10K QPS. Above that, Bloom filter in front: "definitely not followed" → return false instantly; "might be" → DB confirms. False positive rate tunable (typically 1%). Refresh sketch periodically.
+    </div>
+  </details>
+</div>
+
+<div class="tricky">
+  <div class="q">T25. "Open question — what would you do differently if we 10×'d traffic next week?"</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">
+      Be specific: "I'd add a layer of CDN caching in front of the read API, scale the stateless tier 5× (it's already fronted by an LB), shard the hot Postgres table by user_id, replace the synchronous notification call with an SQS handoff, and pre-warm the cache from the last 7 days of access logs." Show that you've thought through each component.
+    </div>
+  </details>
+</div>
+
+<!-- ============================= 60-min CHECKLIST ============================= -->
+<h2 id="cl">C. The 60-minute HLD Interview Checklist</h2>
+
+<table>
+  <thead><tr><th>Time</th><th>Activity</th><th>Output</th></tr></thead>
+  <tbody>
+    <tr><td>0–3 min</td><td>Restate the problem; confirm scope.</td><td>1-sentence summary, 3 in-scope features, 2 out-of-scope.</td></tr>
+    <tr><td>3–8 min</td><td>Functional + non-functional requirements.</td><td>Bulleted FR list (5±) + NFRs (latency target, scale, consistency).</td></tr>
+    <tr><td>8–12 min</td><td>Capacity estimation.</td><td>QPS, storage/year, bandwidth — show the math.</td></tr>
+    <tr><td>12–18 min</td><td>API sketch + data model.</td><td>3–5 endpoints; primary keys; access patterns.</td></tr>
+    <tr><td>18–35 min</td><td>High-level architecture; pick components and justify each.</td><td>Boxes-and-arrows; named tech (DynamoDB, Kafka, Redis); replication / sharding choices.</td></tr>
+    <tr><td>35–48 min</td><td>Deep dive on the hardest 1–2 components.</td><td>Concrete algorithm or data structure (e.g., consistent hashing, sliding-window counter, Raft).</td></tr>
+    <tr><td>48–55 min</td><td>Trade-offs, scaling, failure modes.</td><td>"Hot key, cache stampede, region failure" — one bullet per scenario with mitigation.</td></tr>
+    <tr><td>55–60 min</td><td>Recap + your questions.</td><td>1-min summary; 1 thoughtful question for the interviewer.</td></tr>
+  </tbody>
+</table>
+
+<div class="lp">
+  <b>Three sentences that consistently raise an HLD score:</b>
+  <ol>
+    <li>"Let me write down the QPS and storage estimate before I pick technologies."</li>
+    <li>"For this access pattern, I'd choose DynamoDB because <i>(specific reason tied to PK / scale)</i>; the trade-off is <i>(no joins / eventual GSI)</i>."</li>
+    <li>"To handle <i>(failure mode)</i>, I'd add <i>(retry/DLQ/circuit breaker/saga)</i> — the worst case is <i>(specific user impact)</i>."</li>
+  </ol>
+</div>
+
+<div class="tips">
+  <b>Three classic LP-aligned closers for an HLD round:</b>
+  <ul>
+    <li><i>Customer Obsession</i> — "If degraded, the customer-critical path (place order) stays up; we shed reviews / recommendations first."</li>
+    <li><i>Are Right, A Lot</i> — "I'm trading consistency for availability here because <i>(specific user impact)</i>; in a different scenario I'd flip it."</li>
+    <li><i>Invent and Simplify</i> — "I'd start with managed services (DynamoDB, SQS, S3) and only build custom infrastructure when a metric justifies it."</li>
+  </ul>
+</div>
+
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var body = document.body;
+    function apply(theme) {
+      if (theme === 'dark') { body.classList.add('dark'); btn.textContent = '☀ Light'; }
+      else                  { body.classList.remove('dark'); btn.textContent = '🌙 Dark'; }
+    }
+    var initial = localStorage.getItem('hldTheme')
+      || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    apply(initial);
+    btn.addEventListener('click', function () {
+      var next = body.classList.contains('dark') ? 'light' : 'dark';
+      localStorage.setItem('hldTheme', next);
+      apply(next);
+    });
+  })();
+</script>
+
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
