@@ -1,0 +1,3301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Java OOP &amp; Composition — From Basics to Advanced (with lots of examples)</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #b91c1c;          /* Java red */
+    --accent2: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw:  #cf222e;
+    --typ: #6f42c1;
+    --bi:  #b91c1c;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy:  #16a34a;
+    --med:   #d97706;
+    --hard:  #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+  .hamburger { position: fixed; top: 14px; left: 14px; width: 44px; height: 44px; border-radius: 10px; background: #ffffff; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; cursor: pointer; z-index: 1001; }
+  .hamburger span { display: block; width: 22px; height: 2.5px; background: #1e1e25; border-radius: 2px; transition: transform .25s, opacity .2s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 360px; max-width: 90vw; background: #ffffff; border-right: 1px solid var(--border); box-shadow: 2px 0 14px rgba(0,0,0,.06); transform: translateX(-100%); transition: transform .28s ease; overflow-y: auto; z-index: 1000; padding: 70px 18px 32px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 { margin: 0 0 12px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .sidebar .group-title { margin-top: 18px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+  .sidebar a { display: flex; align-items: center; gap: 8px; padding: 7px 8px; margin: 2px 0; text-decoration: none; color: #1f2330; border-radius: 6px; font-size: 13.5px; cursor: pointer; }
+  .sidebar a:hover { background: #fee2e2; color: var(--accent); }
+  .sidebar a.active { background: #fee2e2; color: var(--accent); font-weight: 600; }
+  .sidebar a .num { display: inline-block; min-width: 32px; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.25); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 999; }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .topbar { background: #ffffff; border-bottom: 1px solid var(--border); padding: 18px 24px 0; padding-left: 76px; position: sticky; top: 0; z-index: 50; }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab { padding: 9px 16px; border: 1px solid var(--border); border-bottom: none; background: #f1f3f9; color: var(--muted); border-top-left-radius: 8px; border-top-right-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: background .15s; }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active { background: #ffffff; color: var(--fg); border-bottom: 2px solid #ffffff; margin-bottom: -1px; box-shadow: 0 -2px 0 var(--accent) inset; }
+  .tab .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  main { max-width: 1020px; margin: 0 auto; padding: 28px 24px 120px; }
+  .problem-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 28px; box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .problem-card h2 { margin: 0 0 6px; font-size: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .num-tag { background: #fee2e2; color: var(--accent); padding: 3px 10px; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: "JetBrains Mono", Consolas, monospace; }
+  .badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 999px; color: #fff; font-weight: 700; letter-spacing: .05em; }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+  .pill { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; background: #fee2e2; color: #991b1b; font-weight: 600; letter-spacing: .03em; }
+  .pill.fnd  { background:#fce7f3; color:#9d174d; }
+  .pill.cls  { background:#dbeafe; color:#1e40af; }
+  .pill.inh  { background:#fef3c7; color:#92400e; }
+  .pill.com  { background:#dcfce7; color:#166534; }
+  .pill.adv  { background:#ede9fe; color:#5b21b6; }
+  .pill.pat  { background:#e0f2fe; color:#075985; }
+  .pill.ant  { background:#fff7ed; color:#c2410c; }
+
+  .section-title { font-size: 13.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition { background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 6px; padding: 12px 16px; margin: 8px 0; }
+  .formula { background: #ecfeff; border-left: 4px solid #06b6d4; border-radius: 6px; padding: 10px 16px; margin: 8px 0; font-family: "JetBrains Mono", Consolas, monospace; font-size: 13.5px; overflow-x: auto; white-space: pre; }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block { background: #fef9c3; border-left: 4px solid #ca8a04; border-radius: 6px; padding: 10px 16px; margin: 8px 0; }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+  .cheat-table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; font-size: 14px; }
+  .cheat-table th, .cheat-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  .cheat-table th { background: #fee2e2; color: var(--accent); font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .cheat-table td:first-child { font-family: "JetBrains Mono", Consolas, monospace; background: #fef2f2; white-space: nowrap; color: #991b1b; }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  pre.code { background: var(--code-bg); color: var(--code-fg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 6px 0; }
+  pre.code code { font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace; }
+  .kw { color: var(--kw); font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .bi { color: var(--bi); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  .nav-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #ffffff; border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; z-index: 60; box-shadow: 0 -2px 8px rgba(0,0,0,.04); }
+  .nav-btn { display: inline-flex; align-items: center; gap: 8px; background: #ffffff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--fg); font-weight: 500; }
+  .nav-btn:hover:not(:disabled) { background: #fee2e2; color: var(--accent); border-color: #fca5a5; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd { display: inline-block; border: 1px solid #d0d7de; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; background: #f6f8fa; font-family: monospace; font-size: 11px; color: #444; }
+
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle { font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px; }
+  .brief-root .brief-title { font-size: clamp(28px, 6vw, 48px); font-weight: 900; margin: 0; background: linear-gradient(90deg, #b91c1c, #2563eb, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel { background: var(--card); border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 20px; }
+  .brief-root .panel h3 { margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .brief-root .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .brief-root .card-mini { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: #fef2f2; }
+  .brief-root .card-mini b { color: var(--accent); display: block; margin-bottom: 4px; font-size: 13.5px; font-family: "JetBrains Mono", Consolas, monospace; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow { border: 1px dashed var(--border); border-radius: 12px; padding: 16px; background: var(--code-bg); font-family: "JetBrains Mono", Consolas, monospace; font-size: 13px; line-height: 1.9; overflow-x: auto; white-space: pre; margin: 0; color: var(--fg); }
+  .brief-root .flow .q { color: var(--accent); font-weight: 700; }
+  .brief-root .flow .a { color: var(--str); }
+  .brief-root .flow .alg { color: var(--bi); font-weight: 700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+  .theme-toggle { position: fixed; top: 14px; right: 14px; width: 44px; height: 44px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001; font-size: 20px; line-height: 1; color: var(--fg); transition: background .15s, color .15s, border-color .15s, transform .15s; }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+
+  [data-theme="dark"] {
+    --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --accent: #f87171;
+    --border: #30363d; --card: #161b22; --code-bg: #0b0f15; --code-fg: #e6edf3;
+    --kw: #ff7b72; --typ: #d2a8ff; --bi: #ffa657; --str: #a5d6ff; --cmt: #8b949e; --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover, [data-theme="dark"] .sidebar a.active { background: rgba(248,113,113,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(248,113,113,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(239,68,68,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(202,138,4,.10); }
+  [data-theme="dark"] .pill     { background: rgba(153,27,27,.18);  color: #fecaca; }
+  [data-theme="dark"] .pill.fnd { background: rgba(157,23,77,.18);  color: #fbcfe8; }
+  [data-theme="dark"] .pill.cls { background: rgba(30,64,175,.18);  color: #bfdbfe; }
+  [data-theme="dark"] .pill.inh { background: rgba(146,64,14,.18);  color: #fde68a; }
+  [data-theme="dark"] .pill.com { background: rgba(22,101,52,.18);  color: #bbf7d0; }
+  [data-theme="dark"] .pill.adv { background: rgba(91,33,182,.18);  color: #ddd6fe; }
+  [data-theme="dark"] .pill.pat { background: rgba(7,89,133,.18);   color: #bae6fd; }
+  [data-theme="dark"] .pill.ant { background: rgba(194,65,12,.18);  color: #fed7aa; }
+  [data-theme="dark"] .nav-bar { background: var(--card); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(248,113,113,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(248,113,113,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: #fecaca; }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+  [data-theme="dark"] .brief-root .card-mini { background: rgba(248,113,113,.07); }
+</style>
+</head>
+<body>
+<button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+<aside class="sidebar" id="sidebar"><h2>Table of Contents</h2><div id="toc"></div></aside>
+<header class="topbar">
+  <h1>Java OOP &amp; Composition — From Basics to Advanced</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+  </div>
+</header>
+<main id="main"></main>
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+<script>
+const PROBLEMS = [];
+
+
+PROBLEMS.push({
+  num: 0, title: "OOP Mental Model — class, object, state, behaviour", diff: "veasy",
+  family: "Foundations",
+  problem: "Object-oriented programming organises code around OBJECTS — bundles of state (fields) and behaviour (methods) that interact with each other. A CLASS is the blueprint; an OBJECT is an instance.",
+  intuition: "Procedural code: you have data, then functions that act on it. OOP: each piece of data IS the object that knows how to act on itself. Bank.deposit(account, x) becomes account.deposit(x). Code lives close to data; mutation is encapsulated; behaviour is composable.",
+  hints: [
+    "CLASS — blueprint defining fields + methods.",
+    "OBJECT — instance created with `new`. Lives on the heap.",
+    "STATE — values held by an object's fields.",
+    "BEHAVIOUR — what an object does (its methods).",
+    "IDENTITY — every object has a unique reference, even if equal in value.",
+    "Java's 4 OOP pillars: ENCAPSULATION, INHERITANCE, POLYMORPHISM, ABSTRACTION."
+  ],
+  tips: [
+    "Don't conflate 'class' and 'object'. The class is the recipe; the object is the meal.",
+    "Java is class-based and reference-typed. Variables hold REFERENCES to heap objects, never the objects themselves (except primitives).",
+    "OOP isn't always the right tool. For data-only structs, records are cleaner. For pure transformations, functions/streams.",
+    "Modern Java (records, sealed classes, switch patterns) makes OOP lighter without losing the model."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Concept</th><th>One-liner</th><th>Java keyword(s)</th></tr></thead>
+      <tbody>
+        <tr><td>Encapsulation</td><td>hide state behind methods</td><td>private, public, protected</td></tr>
+        <tr><td>Inheritance</td><td>child IS-A parent</td><td>extends</td></tr>
+        <tr><td>Polymorphism</td><td>one type, many forms</td><td>override, interface</td></tr>
+        <tr><td>Abstraction</td><td>focus on what, not how</td><td>abstract, interface</td></tr>
+        <tr><td>Composition</td><td>object HAS-A object</td><td>(field of another type)</td></tr>
+        <tr><td>Aggregation</td><td>HAS-A but loosely owned</td><td>(field, often shared)</td></tr>
+      </tbody>
+    </table>
+  `,
+  code: `// Smallest meaningful class
+public class Counter {
+    private int value;                       // state
+    public Counter() { this.value = 0; }     // constructor
+    public void increment() { value++; }     // behaviour
+    public int get() { return value; }       // accessor
+}
+
+// Using it
+Counter c = new Counter();      // class is the blueprint; c is an object
+c.increment();
+c.increment();
+System.out.println(c.get());    // 2
+
+// Identity vs equality
+Counter a = new Counter();
+Counter b = new Counter();
+System.out.println(a == b);          // false (different objects)
+System.out.println(a.get() == b.get());  // true (both 0)`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 1, title: "Encapsulation — private fields, public methods", diff: "veasy",
+  family: "Foundations",
+  problem: "Encapsulation hides an object's INTERNAL state behind a controlled API. Fields are private; access goes through methods. Callers depend on the contract, not the layout.",
+  intuition: "Public fields couple every caller to your storage choice. Make them private and you can change `int balance` to `BigDecimal` later without breaking anyone. Encapsulation = freedom to refactor.",
+  hints: [
+    "Default to `private` for fields. Open them via getters / setters only when needed.",
+    "Better than getters: methods that express intent — `transfer(x)` instead of `setBalance(getBalance() - x)`.",
+    "Validate inside setters / mutators: throw on bad input rather than silently accepting.",
+    "Immutable objects don't need setters at all — fields are private + final, set once in the constructor.",
+    "Records (Java 14+) are concise immutable data carriers with auto-generated accessors."
+  ],
+  tips: [
+    "Avoid 'anaemic' classes that are just bag-of-getters. Behaviour belongs IN the class, not in a service that pokes its data.",
+    "If a setter feels weird (negative balance, future timestamp), it probably IS weird. Validate.",
+    "Don't return mutable internals (`return this.list`) — return defensive copies or unmodifiable views.",
+    "Lombok's `@Getter` / `@Setter` reduce boilerplate; records eliminate it for value types."
+  ],
+  code: `// BAD — fields exposed; any caller can corrupt the state
+class BankAccountBad {
+    public double balance;
+}
+BankAccountBad a = new BankAccountBad();
+a.balance = -1_000_000;  // nothing stops this nonsense
+
+// GOOD — encapsulation
+public class BankAccount {
+    private double balance;
+
+    public void deposit(double amount) {
+        if (amount <= 0) throw new IllegalArgumentException("amount must be > 0");
+        balance += amount;
+    }
+    public void withdraw(double amount) {
+        if (amount <= 0) throw new IllegalArgumentException();
+        if (amount > balance) throw new IllegalStateException("insufficient funds");
+        balance -= amount;
+    }
+    public double getBalance() { return balance; }
+}
+
+// Defensive copy when returning collections
+public class Roster {
+    private final List<String> members = new ArrayList<>();
+    public List<String> getMembers() { return List.copyOf(members); }   // immutable view
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 2, title: "The Four Pillars — Encapsulation, Inheritance, Polymorphism, Abstraction", diff: "veasy",
+  family: "Foundations",
+  problem: "Every OOP textbook lists the same four pillars. Knowing them is table-stakes; knowing WHEN each helps and when each hurts is the actual skill.",
+  intuition: "Encapsulation hides state. Abstraction hides implementation. Inheritance reuses behaviour through IS-A. Polymorphism uses one interface for many types. The first two are nearly always good. The last two need a 'why' — used badly, they make code worse, not better.",
+  hints: [
+    "ENCAPSULATION: data + behaviour in one place; visibility modifiers enforce the boundary.",
+    "ABSTRACTION: callers see WHAT it does, not HOW. Interface and abstract class are Java's tools.",
+    "INHERITANCE: `class Dog extends Animal` — Dog IS-A Animal. Use SPARINGLY; favour composition first.",
+    "POLYMORPHISM: same call site, different runtime behaviour. Achieved via overriding (subtype) or interface (ad-hoc).",
+    "Polymorphism + abstraction = Strategy / Template / Bridge — most design patterns."
+  ],
+  tips: [
+    "Default mental model: 'compose objects, code to interfaces, inherit only when there's a real IS-A'.",
+    "Inheritance is a TIGHT coupling — every superclass change ripples to subclasses. Composition is loose.",
+    "Polymorphism via interfaces is great. Polymorphism via deep inheritance trees is a maintenance trap.",
+    "Abstraction without consumers (interfaces with one implementor) is over-engineering."
+  ],
+  code: `// All four pillars in one tiny system
+//
+// ENCAPSULATION: balance is private; API is small
+// ABSTRACTION:   PaymentMethod is an interface; callers don't know the concrete type
+// INHERITANCE:   SavingsAccount IS-A Account
+// POLYMORPHISM:  pay() accepts ANY PaymentMethod
+
+interface PaymentMethod { void pay(double amount); }            // ABSTRACTION
+
+abstract class Account {                                        // INHERITANCE
+    protected double balance;                                   // ENCAPSULATION (subclasses only)
+    public abstract String type();
+    public final double getBalance() { return balance; }
+}
+
+class SavingsAccount extends Account {                          // INHERITANCE
+    public String type() { return "SAVINGS"; }
+}
+
+class CardPayment implements PaymentMethod {
+    public void pay(double a) { /* charge card */ }
+}
+class UpiPayment implements PaymentMethod {
+    public void pay(double a) { /* UPI flow */ }
+}
+
+class Cashier {
+    public void charge(PaymentMethod m, double amount) {        // POLYMORPHISM
+        m.pay(amount);                                          // same call, different impl
+    }
+}`,
+  complexity: "—"
+});
+
+
+/* ========== CLASS BASICS ========== */
+
+PROBLEMS.push({
+  num: 3, title: "Constructors — initialise the object once, correctly", diff: "easy",
+  family: "Class Basics",
+  problem: "A constructor runs ONCE per object, immediately after allocation. Its job is to leave the new object in a VALID, complete state. Multiple constructors (overloads) handle different starting points.",
+  intuition: "After `new Account(...)` returns, the object MUST be ready to use. Validation belongs in the constructor: bad input → throw, never let an invalid object exist. `this(...)` chains overloaded constructors so validation lives in ONE place.",
+  hints: [
+    "Default no-arg constructor is auto-generated only if you write NONE yourself.",
+    "Overload constructors with different parameter lists.",
+    "Use `this(...)` to delegate to another constructor in the same class.",
+    "Use `super(...)` to call the parent's constructor — must be the FIRST statement.",
+    "Validate inputs in the constructor; throw IllegalArgumentException on bad values.",
+    "Builder pattern beats long constructors with many optional args (card 38)."
+  ],
+  tips: [
+    "A constructor with too many args is a smell. > 4 → builder or step-builder.",
+    "Don't 'leak this' (pass `this` to other code) inside the constructor — the object isn't fully built yet.",
+    "Don't call overridable methods from a constructor — subclasses see a half-built parent.",
+    "For records, the canonical constructor lets you validate compactly: `Person { if (age < 0) throw ... }`."
+  ],
+  code: `public class Person {
+    private final String name;
+    private final int age;
+
+    // Primary constructor with full validation
+    public Person(String name, int age) {
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("name");
+        if (age < 0 || age > 150)           throw new IllegalArgumentException("age");
+        this.name = name;
+        this.age = age;
+    }
+
+    // Overload — delegate to primary via this(...)
+    public Person(String name) { this(name, 0); }
+
+    public String getName() { return name; }
+    public int getAge()     { return age; }
+}
+
+// Records — same shape, near-zero boilerplate
+public record PersonR(String name, int age) {
+    // Compact canonical constructor — validation only
+    public PersonR {
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("name");
+        if (age < 0 || age > 150)           throw new IllegalArgumentException("age");
+    }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 4, title: "this and Constructor Chaining", diff: "easy",
+  family: "Class Basics",
+  problem: "`this` references the current object. It also lets one constructor call another (`this(...)`), keeping initialisation logic in ONE place.",
+  intuition: "When a method's parameter shadows a field (`this.name = name`), `this` disambiguates. When two constructors share validation, route both to one definitive constructor via `this(args)`.",
+  hints: [
+    "`this.field = value` — assign to the field, not the parameter.",
+    "`this()` — call another constructor in the same class. Must be FIRST line.",
+    "`this::method` — method reference bound to the current object.",
+    "`return this;` — fluent builders return `this` to chain calls.",
+    "Inside a non-static method, `this` is the receiver."
+  ],
+  tips: [
+    "If a method NEVER references `this`, mark it `static`.",
+    "Don't pass `this` out of the constructor (anti-pattern: 'this escape').",
+    "In inner classes, `OuterClass.this` accesses the enclosing instance's `this`.",
+    "Builder fluent style: every setter ends with `return this;`."
+  ],
+  code: `public class Rectangle {
+    private final int width, height;
+
+    public Rectangle(int side)            { this(side, side); }      // square
+    public Rectangle(int w, int h)        {
+        if (w <= 0 || h <= 0) throw new IllegalArgumentException();
+        this.width = w;                                                // 'this' disambiguates
+        this.height = h;
+    }
+    public int width()  { return width; }
+    public int height() { return height; }
+    public int area()   { return width * height; }
+}
+
+// Fluent setter pattern uses 'return this'
+public class QueryBuilder {
+    private String table;
+    private String where;
+    public QueryBuilder from(String t)  { this.table = t; return this; }
+    public QueryBuilder where(String w) { this.where = w; return this; }
+    public String build()               { return "SELECT * FROM " + table + " WHERE " + where; }
+}
+String sql = new QueryBuilder().from("users").where("active = 1").build();`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 5, title: "Static — class-level vs instance-level", diff: "easy",
+  family: "Class Basics",
+  problem: "`static` belongs to the CLASS, not to any instance. Static fields are shared by all instances; static methods don't have access to `this`.",
+  intuition: "Use `static` for things that aren't tied to a specific object: utility methods (`Math.max`), constants, factory methods, shared counters. NEVER for logic that depends on per-instance state.",
+  hints: [
+    "Static field — one copy per CLASS, accessed as `ClassName.field`.",
+    "Static method — no `this`. Can only reach instance state if you pass an instance in.",
+    "`static final` — class-level constant; capitalise (`MAX_RETRIES`).",
+    "Static initialiser block: `static { ... }` runs once when the class is loaded.",
+    "Static nested class — independent of the outer instance; common for builders, comparators, simple holders."
+  ],
+  tips: [
+    "Static method that 'feels like' it should be a method on a parameter is often a smell — make it instance.",
+    "Heavy static state = global mutable state = testing nightmare. Avoid.",
+    "Don't shadow static methods in subclasses (it's HIDING, not OVERRIDING — confusing).",
+    "Util classes: `final class Foo { private Foo(){} static ... }` — nobody can instantiate."
+  ],
+  code: `public final class MathUtils {
+    private MathUtils() {}                              // prevent instantiation
+    public static int clamp(int v, int lo, int hi) {
+        return Math.max(lo, Math.min(hi, v));
+    }
+}
+int x = MathUtils.clamp(7, 0, 5);   // 5
+
+public class Product {
+    private static final int MAX_NAME = 100;            // class-level constant
+    private static int instanceCount = 0;               // shared counter
+    private final String name;
+
+    public Product(String name) {
+        if (name.length() > MAX_NAME) throw new IllegalArgumentException();
+        this.name = name;
+        instanceCount++;
+    }
+    public static int instanceCount() { return instanceCount; }   // class-level access
+    public String getName() { return name; }
+}
+
+// Static nested class — Comparator that doesn't need an outer instance
+public class User {
+    public static class ByName implements java.util.Comparator<User> {
+        public int compare(User a, User b) { return a.name.compareTo(b.name); }
+    }
+    private final String name;
+    public User(String n) { this.name = n; }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 6, title: "Access Modifiers — public, protected, package, private", diff: "easy",
+  family: "Class Basics",
+  problem: "Java has four levels of visibility, in widening order: private (this class only) → package-private (default, same package) → protected (package + subclasses) → public (everyone). Choose narrow first; widen only when needed.",
+  intuition: "Tight visibility = small public API = freedom to refactor. The smaller your public surface, the less code outside your class can break when you change internals.",
+  hints: [
+    "private — visible inside THIS class only (and inner classes within it).",
+    "(default) — visible inside the same PACKAGE; written by omitting the modifier.",
+    "protected — package + any subclass anywhere.",
+    "public — visible everywhere.",
+    "Module system (Java 9+): `module-info.java` controls what's truly public across modules."
+  ],
+  tips: [
+    "Default to `private` fields; widen on demand.",
+    "Don't auto-public your getters — only expose what callers genuinely need.",
+    "`protected` fields are a coupling trap; subclasses become silently dependent on the layout.",
+    "Use package-private for collaboration WITHIN a package without leaking it to the world."
+  ],
+  code: `package com.acme.shop;
+
+public class Order {                            // public — visible to other packages
+    private final String id;                    // private — only this class
+    String customerEmail;                       // package-private — same package only
+    protected double amount;                    // protected — subclasses + package
+
+    public String getId() { return id; }        // public method, narrow private field
+    Order(String id) { this.id = id; }          // package-private constructor
+}
+
+// Same package: free access to package-private + protected
+class OrderRepo {
+    void save(Order o) {
+        System.out.println(o.customerEmail);    // ok, package-private
+    }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 7, title: "equals(), hashCode() and toString() — the contract", diff: "easy",
+  family: "Class Basics",
+  problem: "Three methods every value-like class should override. `equals` defines logical equality; `hashCode` MUST be consistent with `equals`; `toString` produces a debug-friendly representation.",
+  intuition: "Default `equals` checks reference identity (==). Default `hashCode` is the memory address. For value types (Money, Coordinate, Email), override BOTH to compare by content. Break this contract → HashSet / HashMap silently lose data.",
+  hints: [
+    "Equal objects MUST produce the same hashCode. Reverse isn't required.",
+    "equals contract: reflexive, symmetric, transitive, consistent, x.equals(null) == false.",
+    "Use `Objects.equals` and `Objects.hash` to handle nulls cleanly.",
+    "If you override equals, override hashCode TOO. The compiler won't warn.",
+    "Records auto-generate canonical equals / hashCode / toString.",
+    "Don't use mutable fields in hashCode — once placed in a HashMap, mutation 'loses' the entry."
+  ],
+  tips: [
+    "Lombok `@EqualsAndHashCode` generates these for you.",
+    "Don't override only `equals` — IDE / linter usually warns; ignoring it leads to silent bugs.",
+    "Inheriting equals across subclasses is tricky (asymmetry). For inheritable equals, check `getClass()` not `instanceof`.",
+    "toString is for debugging — don't rely on it for serialisation. Use a real serialiser."
+  ],
+  code: `import java.util.Objects;
+
+public final class Money {
+    private final long cents;
+    private final String currency;
+
+    public Money(long cents, String currency) {
+        this.cents = cents;
+        this.currency = Objects.requireNonNull(currency);
+    }
+    public long cents()        { return cents; }
+    public String currency()   { return currency; }
+
+    @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Money m)) return false;
+        return cents == m.cents && currency.equals(m.currency);
+    }
+    @Override public int hashCode() {
+        return Objects.hash(cents, currency);
+    }
+    @Override public String toString() {
+        return cents + " " + currency;
+    }
+}
+
+// Equivalent record — auto generates all three correctly
+public record MoneyR(long cents, String currency) {
+    public MoneyR { Objects.requireNonNull(currency); }
+}`,
+  complexity: "—"
+});
+
+
+/* ========== INHERITANCE & POLYMORPHISM ========== */
+
+PROBLEMS.push({
+  num: 8, title: "Inheritance — extends and the IS-A test", diff: "easy",
+  family: "Inheritance",
+  problem: "`class Dog extends Animal` says Dog IS-A Animal. The subclass inherits non-private fields and methods, can override behaviour, and adds its own. Used carefully, inheritance is a powerful reuse mechanism.",
+  intuition: "Use inheritance only when a TRUE IS-A holds. 'Stack IS-A Vector' (in old Java) is a famous violation — Stack has push/pop semantics, Vector exposes get(i) which lets callers break Stack's invariants. Composition is safer: 'Stack HAS-A Vector' would prevent leakage.",
+  hints: [
+    "Java has SINGLE inheritance for classes — one direct parent.",
+    "Multiple inheritance happens through INTERFACES (next card).",
+    "`super(...)` in a constructor calls the parent's constructor.",
+    "`super.method()` calls the parent's version of an overridden method.",
+    "All classes implicitly extend `Object` if no explicit parent.",
+    "Use `final class` to forbid further inheritance."
+  ],
+  tips: [
+    "Apply the IS-A test STRICTLY. If you're hesitating, you probably want composition (HAS-A).",
+    "Deep inheritance trees (>3 levels) are usually a smell. Prefer flat hierarchies + composition.",
+    "Always think: 'will every method on the parent make sense on this subclass?' If not, IS-A fails.",
+    "Effective Java item: 'Favor composition over inheritance.' Internalise this."
+  ],
+  code: `class Animal {
+    protected final String name;
+    public Animal(String name) { this.name = name; }
+    public String speak() { return "..."; }
+    public String getName() { return name; }
+}
+
+class Dog extends Animal {
+    public Dog(String name) { super(name); }            // call parent constructor
+    @Override public String speak() { return "Woof"; }  // override behaviour
+    public void fetch() { System.out.println(name + " fetches!"); }
+}
+
+class Puppy extends Dog {
+    public Puppy(String name) { super(name); }
+    @Override public String speak() { return "Yip"; }   // further specialisation
+}
+
+Animal a = new Dog("Rex");
+System.out.println(a.speak());     // "Woof" — runtime type wins (polymorphism)
+
+// Final class — no further inheritance
+final class String_Like {
+    private final String value;
+    public String_Like(String v) { this.value = v; }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 9, title: "Method Overriding — same signature, different behaviour", diff: "easy",
+  family: "Inheritance",
+  problem: "When a subclass declares a method with the SAME signature as the parent, it OVERRIDES. The runtime dispatches to the subclass version even when the reference type is the parent.",
+  intuition: "Overriding is the engine of polymorphism. The compiler binds the call site to the static type; the JVM dispatches to the runtime type's method. Same call, different behaviour — clean extension without touching old code.",
+  hints: [
+    "`@Override` annotation: compile-time check that you really did override (catches typos).",
+    "Override rules: same name, same params, same / covariant return, no NEW checked exceptions, ≥ visibility.",
+    "Cannot override `final`, `private`, or `static` methods.",
+    "`super.foo()` calls the parent's version inside an override.",
+    "Constructors are NOT overridden (each class has its own); `super(...)` chains them."
+  ],
+  tips: [
+    "ALWAYS use `@Override`. The few seconds save many bug hours.",
+    "Don't make overrides MORE restrictive than the parent (e.g. throwing where parent doesn't).",
+    "Don't 'break the contract' — overrides should follow Liskov Substitution.",
+    "Final methods in a non-final class let you lock specific behaviour while allowing extension elsewhere."
+  ],
+  code: `class Shape {
+    public double area() { return 0; }
+    public String describe() { return "Shape with area " + area(); }
+}
+
+class Circle extends Shape {
+    private final double r;
+    public Circle(double r) { this.r = r; }
+    @Override public double area() { return Math.PI * r * r; }   // override
+}
+
+class Square extends Shape {
+    private final double side;
+    public Square(double s) { this.side = s; }
+    @Override public double area() { return side * side; }
+}
+
+// Polymorphism in action
+Shape[] shapes = { new Circle(3), new Square(4) };
+for (Shape s : shapes) {
+    System.out.println(s.describe());        // calls the right area() at runtime
+}
+
+// Overload != override
+class Calc {
+    int  add(int a, int b)       { return a + b; }
+    long add(long a, long b)     { return a + b; }       // overload — different params
+    // double add(int a, int b)  // ERROR — same params, different return type
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 10, title: "Abstract Classes — partial implementation + contract", diff: "easy",
+  family: "Inheritance",
+  problem: "An abstract class can hold state and concrete methods, but also declare ABSTRACT methods that subclasses must implement. Cannot be instantiated directly.",
+  intuition: "Use abstract classes when you want to share STATE + COMMON BEHAVIOUR but defer some specifics to subclasses. The Template Method pattern is the canonical use: parent defines the algorithm skeleton, subclasses fill in the gaps.",
+  hints: [
+    "`abstract class Foo` — cannot `new Foo()`.",
+    "`abstract void bar();` — declared but not implemented; subclass must override.",
+    "Can have constructors (called via `super(...)`), fields, concrete methods.",
+    "Subclass MUST implement all inherited abstract methods, or itself be abstract.",
+    "Used for Template Method pattern; some skeletal implementations in JDK (`AbstractList`, `AbstractMap`)."
+  ],
+  tips: [
+    "Modern preference: small interfaces with default methods often beat fat abstract classes.",
+    "If you have shared STATE (fields), abstract class wins. Pure behaviour → interface.",
+    "Avoid abstract classes with ONLY abstract methods — that's an interface in disguise.",
+    "Don't expose protected fields unless subclasses genuinely need write access."
+  ],
+  code: `abstract class Report {                         // can't be instantiated directly
+    protected final String title;
+    protected Report(String t) { this.title = t; }
+
+    // Template Method — defines the skeleton
+    public final String render() {
+        return header() + "\\n" + body() + "\\n" + footer();
+    }
+
+    private String header() { return "=== " + title + " ==="; }
+    protected abstract String body();                // subclass MUST implement
+    protected String footer() { return "Generated " + java.time.LocalDate.now(); }
+}
+
+class SalesReport extends Report {
+    private final double total;
+    public SalesReport(double t) { super("Sales"); this.total = t; }
+    @Override protected String body() { return "Total: $" + total; }
+}
+
+Report r = new SalesReport(12345.67);
+System.out.println(r.render());`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 11, title: "Interfaces — pure contract + multiple implementation", diff: "easy",
+  family: "Inheritance",
+  problem: "An interface is a pure CONTRACT: methods (and constants) without state. A class can implement many interfaces, giving Java its multiple-inheritance-of-behaviour.",
+  intuition: "Interfaces are the dominant abstraction in modern Java. They're cheap, explicit, and unlike abstract classes you can have any number of them. Code TO interfaces; the implementation is an internal choice.",
+  hints: [
+    "All methods are public abstract by default (Java 7 and earlier).",
+    "Java 8+: `default` methods (concrete implementations), `static` methods, `private` helper methods.",
+    "Java 9+: private interface methods.",
+    "A class can `implements I, J, K, ...` — multiple interfaces ok.",
+    "Marker interfaces (`Serializable`, `Cloneable`) carry no methods, just type-tag.",
+    "Functional interfaces (one abstract method) can be expressed via lambdas."
+  ],
+  tips: [
+    "Default methods let you ADD a method to an interface without breaking implementors. Use them sparingly.",
+    "Diamond problem (two parents define same default method) is rejected at compile time → resolve manually.",
+    "Don't put state in interfaces (constants ok, fields no).",
+    "Sealed interfaces (Java 17+) restrict implementors — pairs nicely with switch patterns."
+  ],
+  code: `// Pure contract
+interface Drivable {
+    void drive();
+    default void honk() { System.out.println("Beep!"); }    // Java 8 default method
+    static Drivable demo() { return () -> System.out.println("driving"); }
+}
+
+interface Sellable {
+    double price();
+}
+
+// Multiple inheritance of TYPE (not state)
+class Car implements Drivable, Sellable {
+    private final double price;
+    public Car(double p) { this.price = p; }
+    public void drive() { System.out.println("vroom"); }
+    public double price() { return price; }
+}
+
+// Functional interface — single abstract method → lambda
+@FunctionalInterface
+interface PriceTransformer { double apply(double in); }
+
+PriceTransformer doubleIt = p -> p * 2;
+System.out.println(doubleIt.apply(50));   // 100`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 12, title: "Polymorphism in Action — same call, many forms", diff: "easy",
+  family: "Inheritance",
+  problem: "Polymorphism = one reference type holding objects of MANY runtime types, each behaving differently when the same method is called. Fundamental to extensible OOP code.",
+  intuition: "If your code works with `Shape`, it works with every Shape subclass past, present, and future. The compiler doesn't know or care which Shape it's calling — the JVM dispatches at runtime via the v-table.",
+  hints: [
+    "Subtype polymorphism (the OOP kind): subclass overrides parent method.",
+    "Ad-hoc polymorphism: method overloading by parameter types.",
+    "Parametric polymorphism: generics (`List<T>`).",
+    "Dynamic dispatch (virtual call): runtime selects the method based on the actual object's class.",
+    "Java instance methods are virtual by DEFAULT — `final` opts out."
+  ],
+  tips: [
+    "Code to the WIDEST useful type. `void process(List<X>)` beats `void process(ArrayList<X>)`.",
+    "If your method does `if (obj instanceof X) ... else if (...) ...`, you're missing polymorphism.",
+    "instanceof patterns (Java 16+) make safe casting clean: `if (o instanceof Dog d) d.bark();`.",
+    "Visitor pattern is double-dispatch on top of polymorphism — handy when you can't add methods to types."
+  ],
+  code: `interface Notifier { void send(String message); }
+
+class EmailNotifier implements Notifier {
+    public void send(String m) { System.out.println("EMAIL: " + m); }
+}
+class SmsNotifier implements Notifier {
+    public void send(String m) { System.out.println("SMS: " + m); }
+}
+class PushNotifier implements Notifier {
+    public void send(String m) { System.out.println("PUSH: " + m); }
+}
+
+class AlertSystem {
+    private final java.util.List<Notifier> notifiers;
+    public AlertSystem(java.util.List<Notifier> n) { this.notifiers = n; }
+    public void alert(String m) {
+        for (Notifier n : notifiers) n.send(m);    // POLYMORPHIC dispatch
+    }
+}
+
+new AlertSystem(java.util.List.of(new EmailNotifier(), new SmsNotifier(), new PushNotifier()))
+    .alert("Server down!");
+// Adding PagerDutyNotifier later requires zero changes to AlertSystem.`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 13, title: "Liskov Substitution — when inheritance is honest", diff: "med",
+  family: "Inheritance",
+  problem: "Liskov: if S extends T, you should be able to substitute an S anywhere a T is expected without surprises. The famous Square-extends-Rectangle is the canonical violation.",
+  intuition: "Inheritance creates a SEMANTIC contract, not just structural. If `setWidth` is supposed to leave height alone, but Square's overridden setWidth changes both — every caller assuming the contract breaks. The fix is composition or a different abstraction.",
+  hints: [
+    "Override behaviour, don't WEAKEN preconditions or STRENGTHEN postconditions.",
+    "Override should accept everything the parent accepts (same or wider input).",
+    "Override should produce no MORE side effects than the parent.",
+    "Don't throw NEW unchecked exceptions the parent never threw (callers are unprepared).",
+    "If a method's contract genuinely doesn't fit a subclass, you've over-inherited."
+  ],
+  tips: [
+    "Run the LSP test in your head: 'if I had a List<Parent> and added a new Subclass, would EVERY existing caller still behave correctly?'",
+    "Square / Rectangle is the meme example — solve by NOT making Square extend Rectangle.",
+    "Tagging fields like `isReadOnly` to fake LSP via runtime checks is a bigger smell than 'wrong' inheritance.",
+    "If LSP fails, you almost always want COMPOSITION (next chunk)."
+  ],
+  code: `// LSP violation
+class Rectangle {
+    protected int width, height;
+    public void setWidth(int w)  { this.width = w; }
+    public void setHeight(int h) { this.height = h; }
+    public int area() { return width * height; }
+}
+class Square extends Rectangle {
+    @Override public void setWidth(int w)  { this.width = w; this.height = w; }    // SURPRISE
+    @Override public void setHeight(int h) { this.width = h; this.height = h; }
+}
+
+void demo(Rectangle r) {
+    r.setWidth(5); r.setHeight(3);
+    assert r.area() == 15;        // FAILS for Square — its overrides break the assumption
+}
+
+// LSP-honest fix: avoid the false IS-A; abstract over a common interface
+interface Shape { int area(); }
+class Rect2  implements Shape { /* ... */ public int area() { return 0; } }
+class Square2 implements Shape { /* ... */ public int area() { return 0; } }`,
+  complexity: "—"
+});
+
+
+/* ========== COMPOSITION ========== */
+
+PROBLEMS.push({
+  num: 14, title: "Composition — HAS-A instead of IS-A", diff: "easy",
+  family: "Composition",
+  problem: "Composition models 'has-a' relationships: a Car HAS-A Engine, an Order HAS-A Customer, a Document HAS-A list of Sections. The outer object holds a reference to the inner; behaviour comes from delegation, not from inheriting a parent.",
+  intuition: "Inheritance creates a permanent, compile-time relationship. Composition is a runtime relationship — easier to change, swap, or extend. 'Composition over inheritance' is the most-cited rule in Effective Java because it almost always pays back: looser coupling, simpler tests, more flexible runtime behaviour.",
+  hints: [
+    "Composition: outer class has a field whose type is another class / interface.",
+    "Behaviour is provided by DELEGATING to the inner object — `engine.start()`, `address.format()`.",
+    "Composed components are typically passed in via constructor — Dependency Injection.",
+    "Composed objects can be SWAPPED at runtime; subclasses cannot.",
+    "Composition is also called 'object composition' or 'aggregation' (when ownership is loose)."
+  ],
+  tips: [
+    "Default to composition. Reach for inheritance only when IS-A is unmistakable AND you've ruled out composition.",
+    "Composition + interfaces = the Strategy pattern by another name.",
+    "Inject dependencies via constructor → makes objects easy to test, easy to mock, easy to swap.",
+    "When an inheritance hierarchy gets >3 deep, a composition refactor usually simplifies it dramatically."
+  ],
+  code: `// COMPOSITION — Car HAS-A Engine
+class Engine {
+    private final int hp;
+    public Engine(int hp) { this.hp = hp; }
+    public void start() { System.out.println("vroom (" + hp + " hp)"); }
+}
+
+class Car {
+    private final Engine engine;        // HAS-A — composed
+    private final String model;
+    public Car(String model, Engine engine) {
+        this.model = model;
+        this.engine = engine;
+    }
+    public void drive() {
+        engine.start();                 // delegate
+        System.out.println(model + " is moving");
+    }
+}
+
+// At runtime we can swap engines without touching Car
+Car c1 = new Car("Civic", new Engine(140));
+Car c2 = new Car("Civic-Type-R", new Engine(316));
+c1.drive(); c2.drive();
+
+// Compare to a hypothetical INHERITANCE alternative — clunky:
+//   class GasCar extends Engine { ... }   // NO — a Car ISN'T an Engine
+//
+// Inheritance forces the outer thing to BE an Engine, which is wrong.`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 15, title: "Why Composition Beats Inheritance — five concrete reasons", diff: "easy",
+  family: "Composition",
+  problem: "'Favour composition over inheritance.' Most-quoted rule in Effective Java. Knowing the WHY makes you reach for it instinctively, not as a chant.",
+  intuition: "Inheritance is a lock-in: once you extend, the entire parent's API is yours forever. Composition is a delegation: you expose only what you want. Five concrete reasons composition typically wins.",
+  hints: [
+    "1. LOOSER COUPLING. Composed components can be swapped at runtime; subclasses are compile-time fixed.",
+    "2. NO FRAGILE BASE CLASS. Adding methods to a parent can silently break subclasses; composition is unaffected.",
+    "3. NO LSP TRAPS. Composition has no 'is-a' contract to honour.",
+    "4. MULTIPLE BEHAVIOURS. A class can compose many things; it can extend only ONE class.",
+    "5. ENCAPSULATION FRIENDLY. Inheritance exposes parent's protected internals; composition doesn't."
+  ],
+  tips: [
+    "Inheritance still wins in: small leaf hierarchies, pure interface implementation, framework hooks (Servlet / AbstractList).",
+    "Anti-pattern: extending java.util.Properties, Stack, Date — all bequeath API you don't actually want.",
+    "When in doubt, sketch BOTH versions on paper. The composition version usually has fewer classes and clearer boundaries.",
+    "Effective Java item 18: 'Favor composition over inheritance.' Item 19: 'Design and document for inheritance or else prohibit it.' Memorise both."
+  ],
+  code: `// FRAGILE BASE CLASS DEMO — extending HashSet to count adds
+import java.util.*;
+
+class CountingSetBad<E> extends HashSet<E> {
+    private int adds = 0;
+    @Override public boolean add(E e) { adds++; return super.add(e); }
+    @Override public boolean addAll(Collection<? extends E> c) {
+        adds += c.size();                         // problem: addAll calls add() internally
+        return super.addAll(c);                    // → each element is counted TWICE
+    }
+    public int adds() { return adds; }
+}
+CountingSetBad<Integer> bad = new CountingSetBad<>();
+bad.addAll(List.of(1, 2, 3));
+System.out.println(bad.adds());     // 6, not 3 — fragile-base-class bug
+
+// COMPOSITION FIX — wrap the set, expose only what we want
+class CountingSetGood<E> {
+    private final Set<E> delegate;
+    private int adds = 0;
+    public CountingSetGood(Set<E> delegate) { this.delegate = delegate; }
+    public boolean add(E e) { adds++; return delegate.add(e); }
+    public boolean addAll(Collection<? extends E> c) {
+        boolean changed = false;
+        for (E e : c) changed |= add(e);          // counted exactly once
+        return changed;
+    }
+    public int adds() { return adds; }
+    public int size() { return delegate.size(); }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 16, title: "Composition Example: Order with Customer + Address + LineItems", diff: "easy",
+  family: "Composition",
+  problem: "Real-world domain modelling almost always means composition: an Order has a Customer, who has an Address; the Order has a list of LineItems, each holding a Product reference + quantity.",
+  intuition: "Each entity is a small, focused class. Outer aggregates DELEGATE to inner ones for specifics. Total price isn't computed inside Order; it's `sum of LineItem.subtotal()`. That keeps each class small and testable.",
+  hints: [
+    "Aggregate Root: Order owns the lifecycle of LineItems; the outside world goes through Order.",
+    "Each composed type has its own validation in its constructor.",
+    "Mutation flows top-down — Order#addItem; LineItems are not mutated from outside.",
+    "Read-only accessors return immutable views (List.copyOf or Collections.unmodifiableList).",
+    "Equality / hashCode meaningful for Address, Money, Product (value types), not Order (entity)."
+  ],
+  tips: [
+    "Don't put `total()` logic in a service; let Order own it because Order has the data.",
+    "Don't expose the internal `List<LineItem>` mutably — callers will bypass invariants.",
+    "Records work GREAT for Address, Product, Money. Order is more entity-like and may stay a class.",
+    "If you need cross-aggregate operations (transfer items between two Orders), put that in a domain service."
+  ],
+  code: `import java.util.*;
+import java.math.BigDecimal;
+
+public record Address(String street, String city, String zip) {}        // value object
+public record Money(BigDecimal amount, String currency) {}              // value object
+
+public class Customer {
+    private final String id;
+    private final String name;
+    private final Address billingAddress;        // HAS-A
+    public Customer(String id, String name, Address billingAddress) {
+        this.id = Objects.requireNonNull(id);
+        this.name = Objects.requireNonNull(name);
+        this.billingAddress = Objects.requireNonNull(billingAddress);
+    }
+    public Address billingAddress() { return billingAddress; }
+    public String name() { return name; }
+}
+
+public record Product(String sku, String name, Money price) {}          // value object
+
+public class LineItem {
+    private final Product product;               // HAS-A
+    private final int qty;
+    public LineItem(Product p, int qty) {
+        if (qty <= 0) throw new IllegalArgumentException();
+        this.product = Objects.requireNonNull(p);
+        this.qty = qty;
+    }
+    public Money subtotal() {
+        return new Money(product.price().amount().multiply(BigDecimal.valueOf(qty)),
+                         product.price().currency());
+    }
+}
+
+public class Order {
+    private final String id;
+    private final Customer customer;             // HAS-A Customer
+    private final List<LineItem> items = new ArrayList<>();    // HAS-A list
+    public Order(String id, Customer c) { this.id = id; this.customer = c; }
+
+    public void addItem(LineItem li) { items.add(li); }
+    public List<LineItem> items() { return List.copyOf(items); }    // immutable view
+
+    public Money total() {
+        BigDecimal sum = BigDecimal.ZERO;
+        String currency = null;
+        for (LineItem li : items) {
+            currency = li.subtotal().currency();
+            sum = sum.add(li.subtotal().amount());
+        }
+        return new Money(sum, currency == null ? "USD" : currency);
+    }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 17, title: "Composition Example: Email System — Builder + Decorator-style chaining", diff: "med",
+  family: "Composition",
+  problem: "Build emails from independent pieces: header, body, attachments, signature. Composition lets you build a flexible Email by ASSEMBLING objects rather than inheriting a tower of EmailWithSignatureAndAttachments classes.",
+  intuition: "Each part — Header, Body, Attachment — is a small composable class. The Email holds them as fields. Adding a feature (PGP signature, HTML body) means a new tiny class that plugs in, not a new subclass that inherits everything.",
+  hints: [
+    "Email aggregates Header + Body + List<Attachment> + optional Signature.",
+    "Each part has a focused interface (toMimePart()).",
+    "Email uses a Builder for construction with optional pieces.",
+    "Adding a new attachment type = new class implementing Attachment; no edits to Email.",
+    "Signing the email = wrap the body with a SignedBody — composition."
+  ],
+  tips: [
+    "Compare with the inheritance alternative: Email → SignedEmail → EncryptedSignedEmail → ...",
+    "Attachment polymorphism (PDF / Image / generic) is composition + polymorphism, not inheritance.",
+    "Email itself stays small because every concern lives in its own class.",
+    "Builder + Composition is a winning combo for flexible construction with optional parts."
+  ],
+  code: `import java.util.*;
+
+public record Header(String from, String to, String subject) {}
+
+interface Body { String render(); }
+class TextBody implements Body {
+    private final String text;
+    public TextBody(String t) { this.text = t; }
+    public String render() { return text; }
+}
+class HtmlBody implements Body {
+    private final String html;
+    public HtmlBody(String h) { this.html = h; }
+    public String render() { return "<html>" + html + "</html>"; }
+}
+class SignedBody implements Body {                    // wraps another body
+    private final Body inner;
+    private final String signer;
+    public SignedBody(Body inner, String signer) { this.inner = inner; this.signer = signer; }
+    public String render() { return inner.render() + "\\n--\\nSigned: " + signer; }
+}
+
+interface Attachment { String name(); byte[] data(); }
+class FileAttachment implements Attachment {
+    private final String name; private final byte[] data;
+    public FileAttachment(String n, byte[] d) { this.name = n; this.data = d; }
+    public String name() { return name; } public byte[] data() { return data; }
+}
+
+public class Email {
+    private final Header header;
+    private final Body body;
+    private final List<Attachment> attachments;
+    private Email(Builder b) {
+        this.header = b.header; this.body = b.body;
+        this.attachments = List.copyOf(b.attachments);
+    }
+    public String toMime() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("From: ").append(header.from()).append("\\nTo: ").append(header.to()).append("\\n");
+        sb.append("Subject: ").append(header.subject()).append("\\n\\n").append(body.render());
+        for (Attachment a : attachments)
+            sb.append("\\n\\n[ATTACHMENT ").append(a.name()).append(" ").append(a.data().length).append(" bytes]");
+        return sb.toString();
+    }
+
+    public static class Builder {
+        private Header header;
+        private Body body;
+        private final List<Attachment> attachments = new ArrayList<>();
+        public Builder header(Header h)   { this.header = h; return this; }
+        public Builder body(Body b)       { this.body = b; return this; }
+        public Builder sign(String who)   { this.body = new SignedBody(body, who); return this; }
+        public Builder attach(Attachment a) { attachments.add(a); return this; }
+        public Email build()              { return new Email(this); }
+    }
+}
+
+// Usage — we COMPOSE the email from independent parts
+Email e = new Email.Builder()
+    .header(new Header("alice@x", "bob@y", "Hello"))
+    .body(new HtmlBody("<b>Hi Bob!</b>"))
+    .sign("alice")
+    .attach(new FileAttachment("report.pdf", new byte[]{1,2,3}))
+    .build();`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 18, title: "Composition Example: PaymentProcessor with Strategy + Validator + Logger", diff: "med",
+  family: "Composition",
+  problem: "A payment processor must (1) validate input, (2) call a payment provider, (3) log every attempt, (4) emit events. Composition wires these as separate components, each independently testable.",
+  intuition: "If we INHERITED, we'd end up with PaymentProcessorWithLoggingWithRetryWithValidation — a 7-deep tree. With composition, each concern is its own class plugged into PaymentProcessor's constructor. New concern = new component, no edits to existing code.",
+  hints: [
+    "Each concern is a tiny interface with one method.",
+    "PaymentProcessor's constructor takes all of them — Dependency Injection.",
+    "Each concern is independently mockable in tests.",
+    "Adding a new step (FraudCheck, BalanceCheck) means a new field, not a new subclass.",
+    "Order is encoded in the orchestrator, not in a hierarchy."
+  ],
+  tips: [
+    "Constructor with 4-5 deps is fine. >5 → split the orchestrator into smaller orchestrators.",
+    "Spring-style frameworks make this DI mechanical, but pure-Java composition is just constructor args.",
+    "Each component is a SOLID-friendly Single Responsibility class.",
+    "If a 'strategy' has only one implementation, you don't need an interface yet — extract on second usage."
+  ],
+  code: `interface Validator<T>      { void validate(T t); }
+interface PaymentGateway   { String charge(String account, double amount); }
+interface AuditLogger      { void log(String message); }
+interface EventBus         { void publish(String event, Object payload); }
+
+public class PaymentProcessor {
+    private final Validator<PaymentRequest> validator;
+    private final PaymentGateway gateway;
+    private final AuditLogger logger;
+    private final EventBus events;
+
+    public PaymentProcessor(Validator<PaymentRequest> v, PaymentGateway g,
+                            AuditLogger l, EventBus e) {
+        this.validator = v; this.gateway = g; this.logger = l; this.events = e;
+    }
+
+    public String process(PaymentRequest req) {
+        validator.validate(req);                   // STEP 1 — composition
+        logger.log("Processing " + req.id);        // STEP 2
+        String txnId = gateway.charge(req.account, req.amount);   // STEP 3
+        events.publish("PaymentSucceeded", txnId);                 // STEP 4
+        return txnId;
+    }
+}
+
+class PaymentRequest { String id; String account; double amount; }
+
+// CONCRETE COMPONENTS
+class StripeGateway implements PaymentGateway {
+    public String charge(String a, double m) { return "stripe-" + System.currentTimeMillis(); }
+}
+class ConsoleLogger implements AuditLogger { public void log(String m) { System.out.println(m); } }
+
+// WIRING
+PaymentProcessor pp = new PaymentProcessor(
+    req -> { if (req.amount <= 0) throw new IllegalArgumentException(); },
+    new StripeGateway(),
+    new ConsoleLogger(),
+    (event, payload) -> { /* publish to Kafka */ }
+);
+// Easy to swap any component — say, SwitchToPayPalGateway in tests`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 19, title: "Composition Example: Beverage with Decorators (toppings)", diff: "med",
+  family: "Composition",
+  problem: "Build coffee orders by stacking toppings. Each topping wraps a base beverage and adds its own cost / description. Pure composition — no inheritance tree of CappuccinoWithMilkAndSugar.",
+  intuition: "Decorator pattern: every wrapper IS-A Beverage AND HAS-A Beverage. Wrapping is endless: Sugar(Milk(Cinnamon(Espresso()))). Each wrapper adds its slice of cost and description; the base beverage is the bottom of the stack.",
+  hints: [
+    "Beverage interface: cost() + description().",
+    "Concrete: Espresso, Latte, Tea (the base drinks).",
+    "Abstract Topping holds a Beverage; cost() and description() add to whatever's wrapped.",
+    "Concrete toppings: Milk, Sugar, Cinnamon — each adds its slice.",
+    "Order matters? It might (Sugar(Cinnamon(...)) vs Cinnamon(Sugar(...))) — but for cost it usually doesn't."
+  ],
+  tips: [
+    "Decorator works when each wrapper is a true 'feature' added to the base.",
+    "Watch ordering for non-commutative wraps (e.g. Encrypt then Compress vs Compress then Encrypt — different output).",
+    "java.io's stream wrappers are textbook Decorators: BufferedInputStream wraps FileInputStream wraps GZIPInputStream.",
+    "If wrappers have different APIs, they're not decorators anymore — closer to Adapter or Facade."
+  ],
+  code: `interface Beverage {
+    double cost();
+    String description();
+}
+
+class Espresso implements Beverage {
+    public double cost()       { return 2.50; }
+    public String description(){ return "espresso"; }
+}
+class Tea implements Beverage {
+    public double cost()       { return 1.50; }
+    public String description(){ return "tea"; }
+}
+
+abstract class Topping implements Beverage {
+    protected final Beverage base;
+    protected Topping(Beverage b) { this.base = b; }
+}
+
+class Milk extends Topping {
+    public Milk(Beverage b) { super(b); }
+    public double cost()       { return base.cost() + 0.50; }
+    public String description(){ return base.description() + ", milk"; }
+}
+class Sugar extends Topping {
+    public Sugar(Beverage b) { super(b); }
+    public double cost()       { return base.cost() + 0.20; }
+    public String description(){ return base.description() + ", sugar"; }
+}
+class Cinnamon extends Topping {
+    public Cinnamon(Beverage b) { super(b); }
+    public double cost()       { return base.cost() + 0.30; }
+    public String description(){ return base.description() + ", cinnamon"; }
+}
+
+// Build any combination via composition
+Beverage drink = new Cinnamon(new Sugar(new Milk(new Espresso())));
+System.out.println(drink.description());  // espresso, milk, sugar, cinnamon
+System.out.println(drink.cost());         // 3.50`,
+  complexity: "—"
+});
+
+
+PROBLEMS.push({
+  num: 20, title: "Composition Example: Game Character with Equipment + Skills", diff: "med",
+  family: "Composition",
+  problem: "Model a game character: name + health + a Weapon + Armor + a list of Skills. Each piece is independent. Swapping a sword for a bow is a runtime change, not a class change.",
+  intuition: "An inheritance design ('SwordWielder', 'BowWielder') would lock the character to one weapon at compile time. Composition keeps the character class generic and the equipment data-driven. New weapon = new Weapon class; new skill = new Skill class. Character code never changes.",
+  hints: [
+    "Character HAS-A Weapon, Armor, List<Skill>.",
+    "Each component is its own class with its own attack / defend / use logic.",
+    "Combat is the orchestrator: character.attack() delegates to weapon.use().",
+    "Adding a Spell: implement Skill; plug into the character's skill list.",
+    "Persistence is easy too — each component serialises independently."
+  ],
+  tips: [
+    "Composition makes content-driven games trivial. New weapons = data, not code.",
+    "If multiple characters share a weapon, share the reference — that's aggregation.",
+    "Don't mutate the character's equipment directly from the outside; expose `equip(Weapon)`.",
+    "Inheritance might still appear at the WeaponType level (Sword extends MeleeWeapon) — fine if IS-A holds."
+  ],
+  code: `import java.util.*;
+
+interface Weapon { int damage(); String name(); }
+class Sword implements Weapon {
+    public int damage() { return 10; }
+    public String name(){ return "sword"; }
+}
+class Bow implements Weapon {
+    public int damage() { return 7; }
+    public String name(){ return "bow"; }
+}
+
+interface Armor { int defense(); }
+class Leather implements Armor { public int defense() { return 3; } }
+class Plate   implements Armor { public int defense() { return 8; } }
+
+interface Skill { String use(GameCharacter caster); }
+class Heal     implements Skill { public String use(GameCharacter c) { c.heal(20); return "healed"; } }
+class Fireball implements Skill { public String use(GameCharacter c) { return "fireball cast"; } }
+
+public class GameCharacter {
+    private final String name;
+    private int hp = 100;
+    private Weapon weapon;                            // HAS-A — swappable
+    private Armor armor;
+    private final List<Skill> skills = new ArrayList<>();
+
+    public GameCharacter(String name, Weapon w, Armor a) {
+        this.name = name; this.weapon = w; this.armor = a;
+    }
+    public void equip(Weapon w) { this.weapon = w; }
+    public void wear(Armor a)   { this.armor  = a; }
+    public void learn(Skill s)  { skills.add(s); }
+    public int  attack()        { return weapon.damage(); }
+    public int  takeHit(int dmg){ int real = Math.max(0, dmg - armor.defense()); hp -= real; return real; }
+    public void heal(int amount){ hp += amount; }
+    public String castSkill(int idx) { return skills.get(idx).use(this); }
+    public int hp() { return hp; }
+    public String name() { return name; }
+}
+
+GameCharacter hero = new GameCharacter("Aragorn", new Sword(), new Leather());
+hero.learn(new Heal());
+hero.equip(new Bow());                                 // runtime weapon swap
+System.out.println(hero.attack());                     // 7
+hero.takeHit(15);
+hero.castSkill(0);                                     // heal`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 21, title: "Aggregation vs Composition — ownership and lifetime", diff: "med",
+  family: "Composition",
+  problem: "Both are 'has-a', but they differ in OWNERSHIP. Composition: the outer object exclusively owns the inner one; the inner dies when the outer does. Aggregation: the inner is shared / external; killing the outer doesn't kill the inner.",
+  intuition: "Composition = 'composed of' (Engine inside a Car — when the Car is scrapped, that Engine goes with it). Aggregation = 'aggregates' (Course has Students — students survive the course). The boundary affects equality, persistence, and concurrent use.",
+  hints: [
+    "Composition: typical when you `new` the inner inside the outer's constructor.",
+    "Aggregation: typical when the inner is passed in by reference and shared.",
+    "Composition forms a STRICT tree of ownership. Aggregation can form a graph.",
+    "UML notation: filled diamond = composition; open diamond = aggregation.",
+    "In Java the difference is mostly conceptual — both look like fields."
+  ],
+  tips: [
+    "Don't sweat UML purity. Document ownership semantics as a comment / field name.",
+    "Aggregation ofen means defensive copies / immutable views are needed.",
+    "If two outer objects share an inner mutable one, you have a 'shared mutable state' problem — synchronise or make it immutable.",
+    "Records and immutables blur the line beautifully — sharing an immutable Address with 1000 customers is fine."
+  ],
+  code: `// COMPOSITION — Car owns its Engine
+class Engine { private final int hp; public Engine(int hp){this.hp=hp;} }
+class Car {
+    private final Engine engine = new Engine(120);     // born + dies with the Car
+    // no setter for engine — strict ownership
+}
+
+// AGGREGATION — Course aggregates Students; students live independently
+class Student {
+    private final String id;
+    public Student(String id) { this.id = id; }
+    public String id() { return id; }
+}
+class Course {
+    private final List<Student> roster;        // SHARED references
+    public Course(List<Student> students) { this.roster = students; }
+    public int size() { return roster.size(); }
+}
+
+// Same student in two courses — pure aggregation
+Student s1 = new Student("S001");
+Course math    = new Course(List.of(s1));
+Course physics = new Course(List.of(s1));
+// s1 lives even if both courses are deleted
+
+import java.util.*;`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 22, title: "Delegation Pattern — composition with selective forwarding", diff: "med",
+  family: "Composition",
+  problem: "Delegation: an outer object holds an inner one and forwards SOME calls to it, while adding its own behaviour around the rest. The caller sees the outer's API; the inner stays hidden.",
+  intuition: "Inheritance forces you to inherit the WHOLE parent API. Delegation lets you expose only the bits you want. Used heavily for cross-cutting concerns (logging, caching, retry) and to wrap collection types without inheriting their full surface.",
+  hints: [
+    "Outer holds a private final field of the inner type.",
+    "Outer's public methods either (a) forward as-is, (b) modify, or (c) suppress.",
+    "Common idiom: `class CachingRepo implements Repo { Repo delegate; ... }`.",
+    "Java has `default` methods + composition, but no first-class delegation keyword (Kotlin does — `by`).",
+    "A delegating implementation can be wrapped further; delegations stack like decorators."
+  ],
+  tips: [
+    "Delegation + interface = clean, swappable dependency injection.",
+    "Don't mix delegation with inheritance of the same interface — confusing diamond-like behaviour.",
+    "Lombok's `@Delegate` generates forwarding methods automatically.",
+    "If you delegate every method as-is, you've just renamed the inner object — consider whether the wrapper is needed."
+  ],
+  code: `interface Repo {
+    String find(String id);
+    void   save(String id, String value);
+}
+
+class DbRepo implements Repo {
+    private final Map<String, String> db = new HashMap<>();
+    public String find(String id) { return db.get(id); }
+    public void   save(String id, String v) { db.put(id, v); }
+}
+
+// Caching layer via DELEGATION (composition)
+class CachingRepo implements Repo {
+    private final Repo delegate;                      // composed
+    private final Map<String, String> cache = new HashMap<>();
+    public CachingRepo(Repo delegate) { this.delegate = delegate; }
+    public String find(String id) {
+        return cache.computeIfAbsent(id, delegate::find);
+    }
+    public void save(String id, String v) {
+        delegate.save(id, v);
+        cache.put(id, v);
+    }
+}
+
+// Logging layer via DELEGATION (composition)
+class LoggingRepo implements Repo {
+    private final Repo delegate;
+    public LoggingRepo(Repo delegate) { this.delegate = delegate; }
+    public String find(String id) { System.out.println("find " + id); return delegate.find(id); }
+    public void save(String id, String v) { System.out.println("save " + id); delegate.save(id, v); }
+}
+
+// Stack them
+Repo repo = new LoggingRepo(new CachingRepo(new DbRepo()));
+repo.save("k1", "v1");
+repo.find("k1");
+
+import java.util.*;`,
+  complexity: "—"
+});
+
+/* ========== ADVANCED OOP ========== */
+
+PROBLEMS.push({
+  num: 23, title: "Generics — type-safe parametric polymorphism", diff: "med",
+  family: "Advanced OOP",
+  problem: "Generics let you parameterise classes and methods with TYPES so the same code works on many element types with full compile-time safety. `List<String>` vs `List<Integer>` — the compiler enforces the difference.",
+  intuition: "Pre-generics, you cast: `(String) list.get(0)` — runtime ClassCastException waiting. With generics, the compiler tracks the type. PECS (Producer Extends, Consumer Super) keeps wildcards usable: `? extends T` reads, `? super T` writes.",
+  hints: [
+    "Generic class: `class Box<T> { T item; }`.",
+    "Generic method: `<T> T identity(T t) { return t; }`.",
+    "Bounded type parameter: `<T extends Comparable<T>>` — T must be Comparable.",
+    "Wildcards: `List<? extends Animal>` can hold List<Dog>, List<Cat>; you can READ Animals but not write.",
+    "Type erasure: at runtime, `List<String>` and `List<Integer>` are both `List`. No `new T()`.",
+    "Records can be generic: `record Pair<A, B>(A first, B second) {}`."
+  ],
+  tips: [
+    "Generics are about COMPILE-TIME safety. At runtime they're erased.",
+    "PECS rule: 'Producer Extends, Consumer Super'. Memorise.",
+    "Generic arrays don't quite work (`new T[10]` is illegal). Use `(T[]) new Object[10]` with a cast warning.",
+    "Don't over-genericise. If you only use `<T>` in one place, you may not need it."
+  ],
+  code: `// Generic class — Box of any type
+public class Box<T> {
+    private T item;
+    public Box(T item) { this.item = item; }
+    public T get() { return item; }
+    public void set(T item) { this.item = item; }
+}
+Box<String>  s = new Box<>("hi");
+Box<Integer> i = new Box<>(42);
+
+// Generic method
+public static <T> T firstNonNull(T a, T b) {
+    return a != null ? a : b;
+}
+
+// Bounded type parameter
+public static <T extends Comparable<T>> T max(List<T> xs) {
+    T best = xs.get(0);
+    for (T x : xs) if (x.compareTo(best) > 0) best = x;
+    return best;
+}
+max(List.of(3, 1, 4, 1, 5));
+
+// PECS — Producer extends
+public static double sum(List<? extends Number> nums) {
+    double s = 0;
+    for (Number n : nums) s += n.doubleValue();
+    return s;
+}
+sum(List.of(1, 2, 3));        // List<Integer> ok
+sum(List.of(1.5, 2.5));       // List<Double>  ok
+
+// PECS — Consumer super
+public static <T> void copyAll(List<T> src, List<? super T> dst) {
+    for (T t : src) dst.add(t);
+}
+import java.util.*;`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 24, title: "Inner Classes — static nested, inner, local, anonymous", diff: "med",
+  family: "Advanced OOP",
+  problem: "Java has four kinds of nested classes: STATIC NESTED (no implicit outer ref), INNER (holds outer ref), LOCAL (declared inside a method), ANONYMOUS (one-shot subclass / interface impl). Each has a niche.",
+  intuition: "Inner classes existed long before lambdas, mostly to provide instance-level callbacks. Modern Java prefers lambdas / static nested classes for clarity. Anonymous inner classes still appear as one-off Comparators or Runnables in older code.",
+  hints: [
+    "Static nested: like a top-level class scoped to its outer; no outer reference.",
+    "Inner (non-static): implicit reference to enclosing instance — `OuterClass.this`.",
+    "Local: declared inside a method, visible only there.",
+    "Anonymous: `new Runnable() { public void run() {...} }` — superseded by lambdas.",
+    "Builders, Comparators, Iterators are common static-nested classes."
+  ],
+  tips: [
+    "Default to STATIC nested. Inner classes leak the outer reference (memory leaks in long-lived listeners).",
+    "Local + anonymous classes can capture EFFECTIVELY FINAL local variables.",
+    "For functional interfaces (one method), prefer lambdas — shorter and clearer.",
+    "Don't deeply nest. >2 levels of nesting is hard to read."
+  ],
+  code: `public class Tree {
+    private Node root;
+
+    // STATIC NESTED — independent of the outer instance
+    public static class Node {
+        int value;
+        Node left, right;
+        Node(int v) { this.value = v; }
+    }
+
+    // INNER — holds an implicit Tree.this reference
+    public class InOrderIterator implements java.util.Iterator<Integer> {
+        private final java.util.Deque<Node> stack = new java.util.ArrayDeque<>();
+        private Node cur = root;          // accesses outer's root
+        public boolean hasNext() { return cur != null || !stack.isEmpty(); }
+        public Integer next() {
+            while (cur != null) { stack.push(cur); cur = cur.left; }
+            Node n = stack.pop(); cur = n.right; return n.value;
+        }
+    }
+
+    // LOCAL — defined inside a method
+    public java.util.Optional<Integer> findFirstEven() {
+        class EvenFinder {
+            Integer search(Node n) {
+                if (n == null) return null;
+                Integer left = search(n.left);
+                if (left != null) return left;
+                if (n.value % 2 == 0) return n.value;
+                return search(n.right);
+            }
+        }
+        return java.util.Optional.ofNullable(new EvenFinder().search(root));
+    }
+}
+
+// ANONYMOUS class — old-school
+Runnable r = new Runnable() {
+    public void run() { System.out.println("hi"); }
+};
+// ...replaced by lambda
+Runnable r2 = () -> System.out.println("hi");`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 25, title: "Records — concise immutable data carriers (Java 14+)", diff: "easy",
+  family: "Advanced OOP",
+  problem: "A record is a class for HOLDING DATA: final fields, auto-generated constructor, accessors, equals, hashCode, toString. One line replaces 30 of boilerplate.",
+  intuition: "Use records for value types: Point, Address, Money, DTOs returned from APIs. They're immutable, terse, and pattern-friendly. Don't use records for entities with identity (User, Order) — they need mutable state.",
+  hints: [
+    "`record Point(int x, int y) {}` — that's the entire class.",
+    "Auto-generated: canonical constructor, accessors x(), y(), equals/hashCode/toString.",
+    "Compact constructor for validation: `record Person(String name) { public Person { Objects.requireNonNull(name); } }`.",
+    "Records can implement interfaces.",
+    "Records cannot extend classes (already implicitly extend java.lang.Record). Composition still works.",
+    "Records are FINAL — no inheritance from a record."
+  ],
+  tips: [
+    "Default to records for immutable data classes.",
+    "Pattern matching on records (Java 21 sealed + pattern switch) is a killer feature.",
+    "Don't use records when you need mutation, identity, or framework requirements (JPA entities).",
+    "Records with collection fields: take a defensive `List.copyOf` in the compact constructor."
+  ],
+  code: `// Record — 1 line replaces ~30
+public record Point(int x, int y) {}
+
+// Compact constructor for validation
+public record Person(String name, int age) {
+    public Person {
+        java.util.Objects.requireNonNull(name);
+        if (age < 0) throw new IllegalArgumentException();
+    }
+}
+
+// Records implement interfaces
+public interface Printable { default void print() { System.out.println(this); } }
+public record Pair<A, B>(A first, B second) implements Printable {}
+
+// Defensive copy on collection field
+public record Roster(String name, List<String> members) {
+    public Roster {
+        members = List.copyOf(members);    // immutable
+    }
+}
+
+// Pattern matching with records (Java 21)
+sealed interface Shape permits Circle, Square {}
+record Circle(double r) implements Shape {}
+record Square(double s) implements Shape {}
+
+double area(Shape s) {
+    return switch (s) {
+        case Circle c -> Math.PI * c.r() * c.r();
+        case Square q -> q.s() * q.s();
+    };
+}
+
+import java.util.List;`,
+  complexity: "—"
+});
+
+
+PROBLEMS.push({
+  num: 26, title: "Sealed Classes & Interfaces (Java 17+)", diff: "med",
+  family: "Advanced OOP",
+  problem: "`sealed` lets a class or interface restrict WHO can extend / implement it. The author lists `permits Foo, Bar, Baz`. The compiler can then exhaustively check switch-pattern cases.",
+  intuition: "Sealed types fill the gap between 'final' (no subclass) and 'open' (anyone can subclass). They model a closed set of variants — Shape: Circle, Square, Triangle. Combined with switch patterns and records, they bring algebraic data types to Java.",
+  hints: [
+    "`public sealed interface Shape permits Circle, Square, Triangle {}`.",
+    "Each permitted subclass must declare itself `final`, `sealed` (further restricting), or `non-sealed` (open).",
+    "Switch on a sealed type with pattern matching is exhaustive — no default needed.",
+    "Pairs naturally with records.",
+    "Enables compile-time exhaustiveness for the Visitor pattern alternative."
+  ],
+  tips: [
+    "Use sealed for a CLOSED universe of variants. If new variants might appear from outside, sealed is the wrong tool.",
+    "Combine: `sealed interface` + `record` per variant + `switch (s) { case ... }`.",
+    "Migration: change `interface` to `sealed interface permits ...` to lock down a hierarchy.",
+    "If the JDK adds a variant later, your switch becomes non-exhaustive — handle gracefully."
+  ],
+  code: `// Sealed family of shapes
+public sealed interface Shape permits Circle, Square, Triangle {}
+public record Circle  (double r)                  implements Shape {}
+public record Square  (double s)                  implements Shape {}
+public record Triangle(double base, double h)    implements Shape {}
+
+// Exhaustive switch — compiler enforces all variants are handled
+public static double area(Shape s) {
+    return switch (s) {
+        case Circle   c -> Math.PI * c.r() * c.r();
+        case Square   q -> q.s() * q.s();
+        case Triangle t -> 0.5 * t.base() * t.h();
+    };
+}
+
+// Adding Hexagon to permits would make the switch a compile error → forces you to update.
+
+// Sealed class hierarchy with non-sealed escape hatch
+public sealed class Vehicle permits Car, Truck, Motorbike {}
+public final class Car implements Cloneable {}                // final — closed
+// public sealed class Truck extends Vehicle permits ... {}   // sealed — further restricted
+// public non-sealed class Motorbike extends Vehicle {}       // non-sealed — anyone can extend`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 27, title: "Enums as Classes — full OOP power", diff: "med",
+  family: "Advanced OOP",
+  problem: "Java enums are FULL-FLEDGED CLASSES. Each constant can override methods, hold its own state, and implement interfaces. Used for Strategy lookup, state machines, and singletons.",
+  intuition: "Enums aren't just named integers. Each constant is its own subclass, can hold fields, override methods, and implement interfaces. The Enum singleton (Effective Java item 3) is the safest singleton form in Java.",
+  hints: [
+    "Enums can have constructors and fields.",
+    "Each constant can OVERRIDE methods inline: `RED { public int rgb() { return 0xFF0000; } }`.",
+    "Enums implement interfaces — strategies become enum values.",
+    "EnumSet and EnumMap are bitmap-fast collections (cards #12 in the Collections guide).",
+    "Enum singleton: `enum LoggerSingleton { INSTANCE; ... }` — serialisation-safe and reflection-safe."
+  ],
+  tips: [
+    "When the universe of options is small + finite + known at compile time → enum.",
+    "Enums replace 'magic strings / int constants' with type-safe alternatives.",
+    "Don't store mutable state on enum instances unless you really need it.",
+    "Pattern-match on enums in switch — compile-time exhaustiveness."
+  ],
+  code: `// Enum with state + behaviour
+public enum Operation {
+    PLUS  ("+") { public int apply(int a, int b) { return a + b; } },
+    MINUS ("-") { public int apply(int a, int b) { return a - b; } },
+    TIMES ("*") { public int apply(int a, int b) { return a * b; } },
+    DIVIDE("/") { public int apply(int a, int b) { return a / b; } };
+
+    private final String symbol;
+    Operation(String s) { this.symbol = s; }
+    public String symbol() { return symbol; }
+    public abstract int apply(int a, int b);
+}
+System.out.println(Operation.PLUS.apply(2, 3));     // 5
+
+// Enum singleton (Effective Java item 3)
+public enum AppRegistry {
+    INSTANCE;
+
+    private final java.util.Map<String, Object> map = new java.util.HashMap<>();
+    public void register(String key, Object value) { map.put(key, value); }
+    public Object lookup(String key) { return map.get(key); }
+}
+AppRegistry.INSTANCE.register("db", new Object());
+
+// Enum implementing an interface
+interface Currency { String code(); int decimals(); }
+public enum Iso4217 implements Currency {
+    USD { public int decimals() { return 2; } },
+    JPY { public int decimals() { return 0; } },
+    BTC { public int decimals() { return 8; } };
+    public String code() { return name(); }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 28, title: "Abstract Class vs Interface — when to pick which", diff: "med",
+  family: "Advanced OOP",
+  problem: "Both define abstractions; their use cases overlap a lot. The pragmatic distinction: ABSTRACT CLASS when you share state + partial implementation; INTERFACE when you define a pure capability that any class might offer.",
+  intuition: "Java 8 made interfaces nearly as powerful as abstract classes (default methods). The remaining gap: abstract classes hold INSTANCE STATE; interfaces don't. If you need shared fields, abstract class. If you only need shared METHODS, interface.",
+  hints: [
+    "Interface: pure contract; methods only (default methods allowed since Java 8); no instance state.",
+    "Abstract class: state + behaviour + abstract methods; one parent only.",
+    "Interfaces: a class can implement many.",
+    "Default methods let interfaces add methods without breaking implementors.",
+    "Templated common behaviour with shared FIELDS → abstract class.",
+    "Capabilities scattered across unrelated types → interface."
+  ],
+  tips: [
+    "Modern Java leans heavily on interfaces. Abstract classes mostly remain for skeletal implementations (AbstractList).",
+    "If your abstract class has only abstract methods, replace with interface.",
+    "Default methods are great for adding optional behaviour but can complicate the diamond — use sparingly.",
+    "Sealed interfaces give you closed-world abstractions without abstract classes."
+  ],
+  code: `// INTERFACE — pure contract; capability that any class can offer
+interface Printable {
+    void print();
+    default void printTwice() { print(); print(); }     // shared via default
+}
+
+// ABSTRACT CLASS — shared state + partial implementation
+abstract class HttpClient {
+    protected final java.net.http.HttpClient client;     // shared state
+    protected HttpClient() { this.client = java.net.http.HttpClient.newHttpClient(); }
+    public abstract String request(String url);
+    protected void log(String msg) { System.out.println(msg); }    // shared behaviour
+}
+
+class GetClient extends HttpClient {
+    public String request(String url) {
+        log("GET " + url);
+        // ... use this.client
+        return "...";
+    }
+}
+
+// COMBINE: abstract class implements interface
+abstract class JsonHttp extends HttpClient implements Printable {
+    public void print() { log("Active JSON HTTP client"); }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 29, title: "Immutability — final fields, no setters, defensive copies", diff: "med",
+  family: "Advanced OOP",
+  problem: "An immutable object can NEVER change after construction. Immutable objects are thread-safe, easy to reason about, hash-stable, and great as map keys. Records are immutable by default.",
+  intuition: "Mutation is the source of most subtle bugs. If you can rule it out, the object becomes inherently safe. Strings are immutable for a reason — no String you receive will ever change under your feet.",
+  hints: [
+    "Mark the class `final` (no subclass can break immutability).",
+    "Mark all fields `private final`.",
+    "Don't expose mutators (setters).",
+    "Defensive copy mutable inputs (lists, dates) in the constructor.",
+    "Defensive copy on output too (or return immutable views).",
+    "Records do most of this for you — except defensive copies of collections."
+  ],
+  tips: [
+    "Immutability + value-equality + hashCode = great map keys.",
+    "Concurrent code: immutable objects need ZERO synchronization.",
+    "Performance: immutable doesn't always mean slow — JIT optimises beautifully.",
+    "When you need 'mutate then reuse', return a NEW object (`withName(...)`) — wither methods."
+  ],
+  code: `import java.util.*;
+
+public final class ImmutableUser {
+    private final String id;
+    private final String name;
+    private final List<String> roles;       // final, but the LIST it points to could mutate
+
+    public ImmutableUser(String id, String name, List<String> roles) {
+        this.id = id;
+        this.name = name;
+        this.roles = List.copyOf(roles);    // defensive copy → unmodifiable
+    }
+    public String id()              { return id; }
+    public String name()            { return name; }
+    public List<String> roles()     { return roles; }   // already unmodifiable
+
+    // 'with' methods — return new instance instead of mutating
+    public ImmutableUser withName(String newName) {
+        return new ImmutableUser(this.id, newName, this.roles);
+    }
+}
+
+ImmutableUser u = new ImmutableUser("u1", "Alice", List.of("admin"));
+ImmutableUser u2 = u.withName("Alicia");
+
+// Equivalent record (with defensive copy in compact ctor)
+public record ImmutableUserR(String id, String name, List<String> roles) {
+    public ImmutableUserR { roles = List.copyOf(roles); }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 30, title: "Exceptions — checked, unchecked, custom", diff: "med",
+  family: "Advanced OOP",
+  problem: "Exceptions are objects that signal abnormal flow. CHECKED (extend Exception) must be declared / caught — for recoverable errors. UNCHECKED (extend RuntimeException) don't — for programming errors. Custom exceptions express domain failures.",
+  intuition: "Checked exceptions are Java's compile-time 'you must handle this'. They're contentious: kept for recoverable I/O failures, often avoided for routine errors. Modern code leans toward unchecked + thoughtful boundaries.",
+  hints: [
+    "extends Exception → CHECKED (must handle or declare).",
+    "extends RuntimeException → UNCHECKED (no compiler enforcement).",
+    "extends Error → JVM-level fatal (don't catch).",
+    "Custom exceptions: extend RuntimeException (or Exception) and add domain context.",
+    "Try-with-resources auto-closes AutoCloseable resources.",
+    "Multi-catch: `catch (IOException | SQLException e)`."
+  ],
+  tips: [
+    "Don't catch Exception or Throwable broadly — you'll swallow programmer errors.",
+    "Don't use exceptions for control flow (NumberFormatException to test 'is this an int?' is slow).",
+    "When wrapping a lower-level exception, preserve the cause: `new MyException(msg, ex)`.",
+    "Translate framework / library exceptions at the boundary so callers don't import third-party types."
+  ],
+  code: `// Custom domain exception
+public class InsufficientFundsException extends RuntimeException {
+    private final String accountId;
+    public InsufficientFundsException(String accountId, String msg) {
+        super(msg);
+        this.accountId = accountId;
+    }
+    public String accountId() { return accountId; }
+}
+
+// Try-with-resources — auto-closes
+try (var reader = new java.io.BufferedReader(new java.io.FileReader("a.txt"))) {
+    System.out.println(reader.readLine());
+} catch (java.io.IOException e) {
+    throw new RuntimeException("read failed", e);   // wrap, preserve cause
+}
+
+// Multi-catch
+try {
+    risky();
+} catch (java.io.IOException | java.sql.SQLException e) {
+    /* shared handling */
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 31, title: "Object Lifecycle — construction, finalization, and the Cleaner API", diff: "med",
+  family: "Advanced OOP",
+  problem: "Java objects are created via `new`, used, then garbage-collected when unreachable. `finalize()` is deprecated and never called reliably. Modern resource cleanup uses AutoCloseable + try-with-resources, with `Cleaner` for last-resort GC-tied cleanup.",
+  intuition: "Don't fight the GC. Hold resources via AutoCloseable, use try-with-resources to close deterministically, and reach for Cleaner ONLY when you're wrapping a native resource (file handle, off-heap buffer) and need a safety net.",
+  hints: [
+    "Constructor → use → out of scope → unreachable → eventually GC'd.",
+    "Don't override finalize(); it's deprecated and unreliable.",
+    "AutoCloseable: implement `close()` and use try-with-resources.",
+    "java.lang.ref.Cleaner: register a cleanup action tied to GC.",
+    "WeakReference / SoftReference / PhantomReference: control GC eligibility for caches.",
+    "Avoid lapsed listeners and outer-class references → memory leaks."
+  ],
+  tips: [
+    "Resources: ALWAYS use try-with-resources. Close-in-finally is verbose and error-prone.",
+    "Cleaner is a niche tool for native handles. If you don't have a native handle, you don't need it.",
+    "Finalizer ressurection / non-determinism made finalize useless. Just don't.",
+    "Long-lived caches with strong refs leak. WeakHashMap or Caffeine with sized eviction."
+  ],
+  code: `// AutoCloseable + try-with-resources — preferred resource cleanup
+public class Connection implements AutoCloseable {
+    public Connection() { System.out.println("opened"); }
+    public void close() { System.out.println("closed"); }
+}
+
+try (Connection c = new Connection()) {
+    // use c
+}   // close() invoked automatically
+
+// Cleaner — last-resort cleanup tied to GC
+import java.lang.ref.Cleaner;
+public class NativeHandle implements AutoCloseable {
+    private static final Cleaner CLEANER = Cleaner.create();
+    private final Cleaner.Cleanable cleanable;
+
+    public NativeHandle() {
+        long ptr = allocateNative();
+        cleanable = CLEANER.register(this, () -> freeNative(ptr));
+    }
+    public void close() { cleanable.clean(); }
+
+    private static long allocateNative() { return 0; }
+    private static void freeNative(long p) { /* JNI call */ }
+}`,
+  complexity: "—"
+});
+
+
+/* ========== SOLID & DESIGN PATTERNS ========== */
+
+PROBLEMS.push({
+  num: 32, title: "SOLID — five principles applied to Java", diff: "med",
+  family: "SOLID",
+  problem: "SOLID is the design vocabulary for OOP at scale. Five principles, one idea: decouple things that change at different rates.",
+  intuition: "Every principle nudges you toward smaller classes, narrower interfaces, dependency on abstractions. Together they make code resilient: a new requirement should mean adding a class, not editing 30.",
+  hints: [
+    "S — Single Responsibility: one class, one reason to change.",
+    "O — Open/Closed: open for extension via new classes; closed for modification.",
+    "L — Liskov Substitution: subtypes substitutable for their parents.",
+    "I — Interface Segregation: many small interfaces beat one fat one.",
+    "D — Dependency Inversion: depend on abstractions, not concretions."
+  ],
+  tips: [
+    "SOLID is a guide, not a religion. Don't apply mechanically.",
+    "If a class touches the database AND formats output AND validates input, you've blown SRP.",
+    "OCP is the design payoff for using polymorphism (Strategy/Decorator).",
+    "DI usually means 'constructor accepts an interface'. Spring just automates that wiring."
+  ],
+  code: `// O — Open/Closed: pricing strategies extend without modifying PaymentProcessor
+interface PricingStrategy { double price(double base); }
+class StandardPricing implements PricingStrategy { public double price(double b) { return b; } }
+class HolidayPricing  implements PricingStrategy { public double price(double b) { return b * 0.8; } }
+
+class CartCheckout {
+    private final PricingStrategy pricing;       // depends on abstraction (DIP)
+    public CartCheckout(PricingStrategy p) { this.pricing = p; }
+    public double finalPrice(double base) { return pricing.price(base); }
+}
+
+// I — Interface segregation
+interface Reader<T>  { T read(String id); }
+interface Writer<T>  { void save(T t); }
+class UserReader implements Reader<String> { public String read(String id) { return "u-" + id; } }
+
+// L — Liskov: a Bird subtype shouldn't break callers
+interface FlyingBird { void fly(); }
+interface Bird       { void chirp(); }
+class Sparrow  implements Bird, FlyingBird { public void chirp(){} public void fly(){} }
+class Penguin  implements Bird            { public void chirp(){} }    // doesn't claim FlyingBird`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 33, title: "Strategy Pattern — pluggable algorithms", diff: "med",
+  family: "Design Patterns",
+  problem: "When the SAME high-level operation can be done in MULTIPLE ways, encapsulate each way as an interface implementation. The host class delegates to whichever strategy was injected.",
+  intuition: "Strategy = polymorphism with a name. Replaces if/else chains with composition. Adding a new variant means a new class, not edits to existing code (Open/Closed).",
+  hints: [
+    "Define an interface for the variable behaviour.",
+    "Implement N concrete strategies.",
+    "The host takes the interface in its constructor; calls strategy.execute().",
+    "Often paired with a Factory or registry to pick the strategy at runtime.",
+    "Replaces switch chains over an enum-like type."
+  ],
+  tips: [
+    "Strategy is the most-used 'composition over inheritance' pattern.",
+    "If you only ever have one strategy, it's not a strategy — it's just a concrete class.",
+    "Functional Java: a single-method strategy can be a `Function<X, Y>` lambda — no interface needed.",
+    "Pair with Spring DI or a simple Map<Key, Strategy> for runtime selection."
+  ],
+  code: `interface SortStrategy { <T extends Comparable<T>> void sort(java.util.List<T> xs); }
+
+class QuickSort implements SortStrategy {
+    public <T extends Comparable<T>> void sort(java.util.List<T> xs) { java.util.Collections.sort(xs); }
+}
+class BubbleSort implements SortStrategy {
+    public <T extends Comparable<T>> void sort(java.util.List<T> xs) {
+        int n = xs.size();
+        for (int i = 0; i < n - 1; i++)
+            for (int j = 0; j < n - 1 - i; j++)
+                if (xs.get(j).compareTo(xs.get(j + 1)) > 0) java.util.Collections.swap(xs, j, j + 1);
+    }
+}
+
+class Sorter {
+    private final SortStrategy strategy;
+    public Sorter(SortStrategy s) { this.strategy = s; }
+    public <T extends Comparable<T>> void sort(java.util.List<T> xs) { strategy.sort(xs); }
+}
+
+new Sorter(new QuickSort()).sort(java.util.Arrays.asList(3, 1, 2));`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 34, title: "Observer Pattern — broadcast state changes", diff: "med",
+  family: "Design Patterns",
+  problem: "When ONE object's state change should notify N other objects without coupling them. Subject keeps a list of observers; on change, iterates and calls each observer's onEvent.",
+  intuition: "Pub/sub at the object level. Loose coupling — Subject doesn't know what observers DO; observers don't know about each other. Roll-your-own works fine for in-process; for cross-process pub/sub, the same pattern scales to Kafka / SNS / SQS.",
+  hints: [
+    "Subject: addObserver, removeObserver, fireEvent.",
+    "Observer interface: single onEvent method.",
+    "CopyOnWriteArrayList for thread-safe observer list.",
+    "Catch exceptions inside the iteration so one bad observer doesn't break the rest.",
+    "Java's java.util.Observable is deprecated; roll your own or use Guava EventBus."
+  ],
+  tips: [
+    "Beware OBSERVER LEAKS — if observers don't unregister, memory leaks + duplicate firing.",
+    "If observers care about a SUBSET of events, key by event type: Map<EventType, List<Observer>>.",
+    "Synchronous observers can slow the subject. Async via a queue is the upgrade.",
+    "Spring's ApplicationEventPublisher is exactly this pattern with auto-discovery."
+  ],
+  code: `import java.util.concurrent.CopyOnWriteArrayList;
+
+interface OrderObserver { void onStatusChange(Order o); }
+
+class Order {
+    private String id;
+    private OrderStatus status;
+    private final CopyOnWriteArrayList<OrderObserver> observers = new CopyOnWriteArrayList<>();
+    public void register(OrderObserver o)   { observers.add(o); }
+    public void unregister(OrderObserver o) { observers.remove(o); }
+    public void setStatus(OrderStatus s) {
+        this.status = s;
+        for (OrderObserver o : observers) {
+            try { o.onStatusChange(this); } catch (Exception e) { /* log */ }
+        }
+    }
+    public OrderStatus status() { return status; }
+}
+
+enum OrderStatus { PLACED, SHIPPED, DELIVERED }
+
+class EmailNotifier implements OrderObserver {
+    public void onStatusChange(Order o) { System.out.println("email: " + o.status()); }
+}
+class AnalyticsRecorder implements OrderObserver {
+    public void onStatusChange(Order o) { /* push to Kinesis */ }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 35, title: "Factory & Builder — object construction patterns", diff: "med",
+  family: "Design Patterns",
+  problem: "FACTORY: hide which concrete class to create behind a method (replaces scattered `new X()`). BUILDER: construct complex objects with many optional fields readably.",
+  intuition: "Factory centralises 'how do I build a X?'. Builder turns 8-arg constructors into self-documenting fluent calls. Builder is the right answer the moment you have 4+ optional parameters.",
+  hints: [
+    "Simple Factory: static method on a Factory class returns the right concrete type by input.",
+    "Factory Method: subclass overrides a creator method (used in templates).",
+    "Builder: fluent setters return `this`; `build()` validates + constructs.",
+    "Static nested Builder class is the Java idiom.",
+    "Records (compact constructor) replace many builder use cases for value types."
+  ],
+  tips: [
+    "Constructor with > 4 args + optional ones → use Builder.",
+    "Lombok `@Builder` auto-generates this — handy in real code.",
+    "Don't builder-ify everything. Records often suffice.",
+    "Step-builder (typed phases) is overkill in interviews; mention if relevant."
+  ],
+  code: `// FACTORY
+class VehicleFactory {
+    public static Vehicle create(VehicleType t) {
+        return switch (t) {
+            case CAR  -> new Car();
+            case BIKE -> new Bike();
+            case TRUCK-> new Truck();
+        };
+    }
+}
+enum VehicleType { CAR, BIKE, TRUCK }
+abstract class Vehicle {} class Car extends Vehicle {} class Bike extends Vehicle {} class Truck extends Vehicle {}
+
+// BUILDER
+public class Pizza {
+    private final Size size;
+    private final boolean cheese;
+    private final java.util.List<String> toppings;
+
+    private Pizza(Builder b) {
+        this.size = b.size; this.cheese = b.cheese; this.toppings = java.util.List.copyOf(b.toppings);
+    }
+
+    public static class Builder {
+        private Size size;
+        private boolean cheese = false;
+        private final java.util.List<String> toppings = new java.util.ArrayList<>();
+        public Builder size(Size s)             { this.size = s; return this; }
+        public Builder cheese(boolean c)        { this.cheese = c; return this; }
+        public Builder addTopping(String t)     { toppings.add(t); return this; }
+        public Pizza build() {
+            if (size == null) throw new IllegalStateException("size required");
+            return new Pizza(this);
+        }
+    }
+}
+enum Size { S, M, L }
+
+Pizza p = new Pizza.Builder().size(Size.L).cheese(true).addTopping("mushroom").build();`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 36, title: "Singleton — and why enum is the right way", diff: "med",
+  family: "Design Patterns",
+  problem: "Singleton: ensure exactly ONE instance of a class exists for the lifetime of the JVM. Three common implementations: lazy with double-checked locking, eager static, and the elegant ENUM-based one.",
+  intuition: "Most 'I need a singleton' situations are really 'I need a single instance MANAGED by my framework' — Spring beans, application config. True singletons (LoggerFactory, runtime registry) benefit from the Enum approach: serialization-safe, reflection-safe, lazily-initialised.",
+  hints: [
+    "ENUM-based: `public enum Foo { INSTANCE; ... }` — best for true singletons (Effective Java item 3).",
+    "Eager static: `public static final Foo INSTANCE = new Foo();` — simple, no lazy.",
+    "Bill Pugh holder: `private static class Holder { static final Foo I = new Foo(); }` — lazy + thread-safe.",
+    "Don't use double-checked locking unless you really know what you're doing.",
+    "Singleton is over-applied. If your tests need to mock it, you have the wrong shape."
+  ],
+  tips: [
+    "Default for testability: a single instance MANAGED by Spring/DI, not enforced by Singleton.",
+    "Singletons hide dependencies and complicate tests. Use sparingly.",
+    "Enum singleton handles serialization correctly (other forms can be defeated).",
+    "If you need lazy + thread-safe + non-enum, Bill Pugh holder is the cleanest pattern."
+  ],
+  code: `// ENUM SINGLETON — recommended
+public enum Logger {
+    INSTANCE;
+    public void log(String msg) { System.out.println(msg); }
+}
+Logger.INSTANCE.log("hello");
+
+// EAGER STATIC — simple
+public class Config {
+    public static final Config INSTANCE = new Config();
+    private Config() {}
+}
+
+// BILL PUGH (lazy + thread-safe without locks)
+public class HeavyCache {
+    private HeavyCache() { /* expensive init */ }
+    private static class Holder {
+        static final HeavyCache I = new HeavyCache();
+    }
+    public static HeavyCache get() { return Holder.I; }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 37, title: "State, Adapter, Composite, Facade — quick reference", diff: "med",
+  family: "Design Patterns",
+  problem: "Four more patterns that show up regularly. Each in 60 seconds. STATE (lifecycle phases as classes), ADAPTER (interface conversion), COMPOSITE (tree of uniform parts), FACADE (single front-door over a subsystem).",
+  intuition: "You don't need all 23 GoF patterns. Master these 8-10 that recur in real Java codebases; recognise the rest. Each is a small idea — recognising the SHAPE matters more than memorising the textbook.",
+  hints: [
+    "STATE: object delegates behaviour to a current-state object; transitions swap the state. (Order: PLACED → SHIPPED → DELIVERED.)",
+    "ADAPTER: wrap incompatible interface to fit caller's expectation. (Old PaymentLib → new PaymentService.)",
+    "COMPOSITE: tree where leaves and containers share an interface. (Filesystem: File and Folder both have getSize.)",
+    "FACADE: simple API hiding a complex subsystem. (HomeTheaterFacade.watchMovie() turns on TV + AV + lights.)",
+    "Strategy vs State: Strategy chosen once; State changes during the object's lifetime."
+  ],
+  tips: [
+    "Composite is the universal answer for 'design a file system / company org / menu hierarchy'.",
+    "Facade is what your service classes naturally become — high-level methods over multiple repositories / clients.",
+    "Adapter shines at integration boundaries — wrapping legacy or third-party libraries.",
+    "Don't combine 5 patterns in one tiny class. Pick the few that genuinely solve problems."
+  ],
+  code: `// STATE — Order lifecycle
+interface OrderState { void cancel(Order o); void ship(Order o); }
+class PlacedState implements OrderState {
+    public void cancel(Order o){ o.setState(new CancelledState()); }
+    public void ship(Order o)  { o.setState(new ShippedState()); }
+}
+class ShippedState implements OrderState {
+    public void cancel(Order o){ throw new IllegalStateException("can't cancel shipped"); }
+    public void ship(Order o)  { /* idempotent */ }
+}
+class CancelledState implements OrderState { /* terminal */ public void cancel(Order o){} public void ship(Order o){} }
+
+class Order {
+    private OrderState state = new PlacedState();
+    public void setState(OrderState s) { this.state = s; }
+    public void cancel() { state.cancel(this); }
+    public void ship()   { state.ship(this); }
+}
+
+// ADAPTER — fit old API into a new contract
+interface ModernPaymentService { void charge(String account, double amount); }
+class LegacyPaymentLib { public void doPayment(String acct, int cents) { /* ... */ } }
+
+class LegacyAdapter implements ModernPaymentService {
+    private final LegacyPaymentLib legacy;
+    public LegacyAdapter(LegacyPaymentLib l) { this.legacy = l; }
+    public void charge(String account, double amount) {
+        legacy.doPayment(account, (int)(amount * 100));
+    }
+}
+
+// COMPOSITE — file system tree
+interface FsNode { long size(); }
+class FileNode implements FsNode {
+    private final long bytes; public FileNode(long b){this.bytes=b;} public long size(){return bytes;}
+}
+class FolderNode implements FsNode {
+    private final java.util.List<FsNode> kids = new java.util.ArrayList<>();
+    public void add(FsNode n) { kids.add(n); }
+    public long size() { return kids.stream().mapToLong(FsNode::size).sum(); }
+}
+
+// FACADE — simple API over a complex subsystem
+class HomeTheaterFacade {
+    private final TV tv; private final Lights lights; private final Speaker speaker;
+    public HomeTheaterFacade(TV tv, Lights l, Speaker s) { this.tv = tv; this.lights = l; this.speaker = s; }
+    public void watchMovie() { lights.dim(50); tv.on(); speaker.surround(); }
+    public void endMovie()   { speaker.off(); tv.off(); lights.bright(); }
+}
+class TV { public void on(){} public void off(){} }
+class Lights { public void dim(int p){} public void bright(){} }
+class Speaker { public void surround(){} public void off(){} }`,
+  complexity: "—"
+});
+
+
+/* ========== ANTI-PATTERNS & GOTCHAS ========== */
+
+PROBLEMS.push({
+  num: 38, title: "OOP Anti-patterns — what to STOP doing", diff: "easy",
+  family: "Anti-patterns",
+  problem: "Common mistakes that look like 'good OOP' but bite later. Anaemic domain models, god classes, deep inheritance, leaky abstractions, train-wreck calls.",
+  intuition: "OOP rewards small, focused classes. The anti-patterns share a theme: classes that DO TOO MUCH or DON'T DO ENOUGH. Knowing the smells lets you fix them before they spread.",
+  hints: [
+    "ANAEMIC DOMAIN: classes are bags of getters/setters with all logic in 'service' classes.",
+    "GOD CLASS: one class that 'manages everything'. >500 lines, 30+ methods.",
+    "DEEP INHERITANCE: 5+ levels of `extends`. Refactor toward composition.",
+    "TRAIN WRECK: `a.getB().getC().getD().doIt()` — Law of Demeter violation.",
+    "PRIMITIVE OBSESSION: passing String for IDs / amounts everywhere instead of typed wrappers (CustomerId, Money).",
+    "FEATURE ENVY: a method that uses another class's data more than its own."
+  ],
+  tips: [
+    "Anaemic fix: move behaviour onto the entity that owns the data.",
+    "God class fix: extract sub-classes by responsibility.",
+    "Train wreck fix: ask the inner object directly OR add a method on the outer object.",
+    "Primitive obsession fix: small value records (record CustomerId(String value){})."
+  ],
+  code: `// ANAEMIC (smell)
+class Order { private double amount; public double getAmount(){return amount;} public void setAmount(double a){amount=a;} }
+class OrderService { public void applyDiscount(Order o, double pct) { o.setAmount(o.getAmount() * (1 - pct)); } }
+
+// RICH MODEL (better)
+class OrderRich {
+    private double amount;
+    public void applyDiscount(double pct) { this.amount *= (1 - pct); }
+}
+
+// TRAIN WRECK (smell)
+// String city = order.getCustomer().getAddress().getCity();
+
+// LAW OF DEMETER (better)
+class OrderLOD {
+    private final Customer customer;
+    public OrderLOD(Customer c) { this.customer = c; }
+    public String customerCity() { return customer.city(); }   // ask, don't reach in
+}
+class Customer {
+    private final Address address;
+    public Customer(Address a) { this.address = a; }
+    public String city() { return address.city(); }
+}
+record Address(String city) {}
+
+// PRIMITIVE OBSESSION (smell)
+// void transfer(String fromAcct, String toAcct, double amount, String currency)
+
+// TYPED WRAPPERS (better)
+record AccountId(String value) {}
+record Money(java.math.BigDecimal amount, String currency) {}
+class TransferService {
+    public void transfer(AccountId from, AccountId to, Money amount) { /* ... */ }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 39, title: "Dependency Injection — composition's best friend", diff: "med",
+  family: "Composition",
+  problem: "Don't `new` your dependencies inside a class — accept them via the constructor. The class becomes free of construction concerns; tests can pass mocks; the wiring is centralised.",
+  intuition: "DI is just composition with discipline. Every class declares its NEEDS via constructor parameters, and someone (Spring, your main method) provides them. Removing `new SomeImpl()` from the body lets you swap implementations freely.",
+  hints: [
+    "CONSTRUCTOR INJECTION: pass deps as constructor parameters; assign to final fields. The default.",
+    "Setter injection: setX(...) — looser; allows construction without all deps. Avoid for required deps.",
+    "Field injection (Spring `@Autowired` on fields): popular but harder to test (no constructor to call from a test).",
+    "Manual wiring: pure-Java, no framework — `new App(new RepoImpl(...), new ClientImpl(...))`.",
+    "Frameworks (Spring, Guice, Dagger) automate the wiring."
+  ],
+  tips: [
+    "ALWAYS prefer constructor injection. Final fields, no surprise mutations.",
+    "If a class has > 5 constructor deps, it's doing too much — split it.",
+    "Tests: pass mocks/fakes via the constructor. No `@Autowired` needed.",
+    "Spring is often a heavy hammer for small projects; manual wiring in `main()` works fine."
+  ],
+  code: `// CONSTRUCTOR INJECTION — preferred
+public class CheckoutService {
+    private final InventoryRepo inventory;
+    private final PaymentGateway payments;
+    private final NotificationService notifications;
+
+    public CheckoutService(InventoryRepo inv, PaymentGateway pg, NotificationService ns) {
+        this.inventory = inv; this.payments = pg; this.notifications = ns;
+    }
+
+    public void checkout(Order o) {
+        inventory.reserve(o);
+        payments.charge(o);
+        notifications.send(o);
+    }
+}
+
+// Manual wiring — no framework needed
+CheckoutService svc = new CheckoutService(
+    new MysqlInventoryRepo(),
+    new StripeGateway(),
+    new EmailNotificationService()
+);
+
+// Spring equivalent (constructor injection auto-wired since 4.3)
+@Service
+public class CheckoutServiceSpring {
+    private final InventoryRepo inventory;
+    private final PaymentGateway payments;
+    public CheckoutServiceSpring(InventoryRepo i, PaymentGateway p) { this.inventory = i; this.payments = p; }
+}
+
+interface InventoryRepo { void reserve(Order o); }
+interface PaymentGateway { void charge(Order o); }
+interface NotificationService { void send(Order o); }
+class MysqlInventoryRepo implements InventoryRepo { public void reserve(Order o){} }
+class StripeGateway implements PaymentGateway { public void charge(Order o){} }
+class EmailNotificationService implements NotificationService { public void send(Order o){} }`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 40, title: "Composition Example: Servlet Filter Chain (real-world Decorator)", diff: "med",
+  family: "Composition",
+  problem: "HTTP request handling is a chain of cross-cutting concerns: logging, auth, rate limit, gzip, the actual handler. Each is a Filter; they're composed into a chain; the request walks through them in order.",
+  intuition: "This is decorator + responsibility chain in production code. Each filter wraps the next one. Adding a new concern means writing a new filter and adding it to the chain — zero changes to existing filters.",
+  hints: [
+    "Filter interface: handle(req, chain). Each filter does pre-work, calls chain.next(req), does post-work.",
+    "FilterChain holds the list and walks it.",
+    "The actual handler is the LAST step.",
+    "Pure-Java FilterChain is simple; servlet API formalises this.",
+    "Same pattern: Express middleware (Node), AWS Lambda layers, gRPC interceptors."
+  ],
+  tips: [
+    "ORDER MATTERS. Auth before business logic. Logging at the outer edge to capture timings.",
+    "Build the chain ONCE at startup; reuse for every request.",
+    "Each filter is independently testable.",
+    "Don't put business logic in filters; only cross-cutting concerns."
+  ],
+  code: `import java.util.*;
+
+interface Request { String path(); }
+interface Response { int status(); String body(); }
+record SimpleResponse(int status, String body) implements Response {}
+
+interface Filter {
+    Response handle(Request req, FilterChain chain);
+}
+
+class FilterChain {
+    private final List<Filter> filters;
+    private final Filter terminal;       // the actual handler
+    private int idx = 0;
+    public FilterChain(List<Filter> filters, Filter terminal) { this.filters = filters; this.terminal = terminal; }
+    public Response next(Request req) {
+        if (idx < filters.size()) return filters.get(idx++).handle(req, this);
+        return terminal.handle(req, this);
+    }
+}
+
+// FILTERS
+class LoggingFilter implements Filter {
+    public Response handle(Request r, FilterChain c) {
+        long t0 = System.nanoTime();
+        Response res = c.next(r);
+        long ms = (System.nanoTime() - t0) / 1_000_000;
+        System.out.println(r.path() + " → " + res.status() + " in " + ms + "ms");
+        return res;
+    }
+}
+class AuthFilter implements Filter {
+    public Response handle(Request r, FilterChain c) {
+        if (!r.path().startsWith("/public")) {
+            // check token, etc.
+        }
+        return c.next(r);
+    }
+}
+class RateLimitFilter implements Filter {
+    public Response handle(Request r, FilterChain c) {
+        // check counter
+        return c.next(r);
+    }
+}
+
+// Wire the chain
+Filter handler = (req, chain) -> new SimpleResponse(200, "Hello " + req.path());
+List<Filter> filters = List.of(new LoggingFilter(), new AuthFilter(), new RateLimitFilter());
+Response r = new FilterChain(new ArrayList<>(filters), handler).next(() -> "/api/users");`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 41, title: "Composition Example: Event Bus (in-process pub/sub)", diff: "med",
+  family: "Composition",
+  problem: "An event bus lets parts of an application talk WITHOUT depending on each other. Publishers emit events; subscribers handle them. Composition wires them up at startup; runtime stays loosely coupled.",
+  intuition: "Event-driven architecture in miniature. Each subscriber is a small focused class. New behaviour = new subscriber. Publishers don't know who's listening; subscribers don't know who's publishing.",
+  hints: [
+    "EventBus has subscribe(EventClass, handler) + publish(event).",
+    "Per-event-class list of handlers.",
+    "Synchronous bus is easy; async bus uses an Executor.",
+    "Compose with a Logger / DLQ subscriber for cross-cutting concerns.",
+    "For cross-process, the same pattern scales to Kafka / SNS topics."
+  ],
+  tips: [
+    "Don't overuse — every event handler is a hidden coupling.",
+    "Make events IMMUTABLE records.",
+    "If a subscriber throws, log + continue. One bad subscriber should not break the bus.",
+    "Async bus + DLQ is the upgrade path when sync handlers slow publishers."
+  ],
+  code: `import java.util.*;
+import java.util.function.Consumer;
+
+class EventBus {
+    private final Map<Class<?>, List<Consumer<Object>>> subs = new HashMap<>();
+
+    public <T> void subscribe(Class<T> type, Consumer<T> handler) {
+        subs.computeIfAbsent(type, k -> new ArrayList<>())
+            .add((Consumer<Object>) handler);
+    }
+    public void publish(Object event) {
+        List<Consumer<Object>> handlers = subs.getOrDefault(event.getClass(), List.of());
+        for (Consumer<Object> h : handlers) {
+            try { h.accept(event); } catch (Exception e) { /* log */ }
+        }
+    }
+}
+
+// Events as immutable records
+record OrderPlaced(String orderId, double amount) {}
+record InventoryReserved(String orderId, String sku, int qty) {}
+
+// SUBSCRIBERS — small focused classes
+class EmailSender {
+    public void onOrder(OrderPlaced e) { System.out.println("emailing for " + e.orderId()); }
+}
+class Analytics {
+    public void onOrder(OrderPlaced e) { /* push to Kinesis */ }
+}
+
+// WIRE
+EventBus bus = new EventBus();
+EmailSender email = new EmailSender();
+Analytics analytics = new Analytics();
+bus.subscribe(OrderPlaced.class, email::onOrder);
+bus.subscribe(OrderPlaced.class, analytics::onOrder);
+
+bus.publish(new OrderPlaced("o-1", 99.99));`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 42, title: "Composition Example: HTTP Client with Interceptors", diff: "hard",
+  family: "Composition",
+  problem: "Most production HTTP clients (OkHttp, Apache HttpClient, Spring WebClient) expose an INTERCEPTOR chain — a list of small composable units that wrap the actual call. Build one from scratch.",
+  intuition: "Same shape as the servlet filter chain (card 40), but for outbound HTTP. Interceptors do auth headers, retries, logging, metrics, request signing, gzip — each independently. The actual transport is the bottom of the stack.",
+  hints: [
+    "Interceptor: process(Request, Chain) → Response.",
+    "Chain: walks the list, with the network call as the terminal.",
+    "AuthInterceptor: adds Authorization header.",
+    "RetryInterceptor: retries on 5xx with backoff.",
+    "LoggingInterceptor: prints request and response.",
+    "Order of composition is the order of execution."
+  ],
+  tips: [
+    "OkHttp's design is the canonical Java reference. Read its source after this card.",
+    "Async variants exist; same composition pattern with CompletableFuture.",
+    "Each interceptor is pure-Java testable in isolation.",
+    "If you need conditional inclusion (only-in-prod), wire selectively at startup."
+  ],
+  code: `import java.util.*;
+
+record HttpRequest(String url, Map<String, String> headers, String body) {}
+record HttpResponse(int status, String body) {}
+
+interface Interceptor {
+    HttpResponse intercept(HttpRequest req, Chain chain);
+    interface Chain { HttpResponse proceed(HttpRequest req); }
+}
+
+class AuthInterceptor implements Interceptor {
+    private final String token;
+    public AuthInterceptor(String t) { this.token = t; }
+    public HttpResponse intercept(HttpRequest req, Chain chain) {
+        Map<String, String> h = new HashMap<>(req.headers());
+        h.put("Authorization", "Bearer " + token);
+        return chain.proceed(new HttpRequest(req.url(), h, req.body()));
+    }
+}
+
+class LoggingInterceptor implements Interceptor {
+    public HttpResponse intercept(HttpRequest req, Chain chain) {
+        System.out.println("→ " + req.url());
+        long t0 = System.nanoTime();
+        HttpResponse res = chain.proceed(req);
+        long ms = (System.nanoTime() - t0) / 1_000_000;
+        System.out.println("← " + res.status() + " in " + ms + "ms");
+        return res;
+    }
+}
+
+class RetryInterceptor implements Interceptor {
+    private final int max;
+    public RetryInterceptor(int max) { this.max = max; }
+    public HttpResponse intercept(HttpRequest req, Chain chain) {
+        for (int i = 0; i < max - 1; i++) {
+            HttpResponse r = chain.proceed(req);
+            if (r.status() < 500) return r;
+        }
+        return chain.proceed(req);
+    }
+}
+
+// CLIENT
+class HttpClient {
+    private final List<Interceptor> interceptors;
+    public HttpClient(List<Interceptor> i) { this.interceptors = i; }
+
+    public HttpResponse send(HttpRequest req) {
+        return new RealChain(interceptors, 0).proceed(req);
+    }
+
+    private record RealChain(List<Interceptor> interceptors, int idx) implements Interceptor.Chain {
+        public HttpResponse proceed(HttpRequest req) {
+            if (idx < interceptors.size())
+                return interceptors.get(idx).intercept(req, new RealChain(interceptors, idx + 1));
+            // terminal — actual network call
+            return new HttpResponse(200, "OK");
+        }
+    }
+}
+
+HttpClient c = new HttpClient(List.of(
+    new LoggingInterceptor(),
+    new AuthInterceptor("abc123"),
+    new RetryInterceptor(3)
+));
+c.send(new HttpRequest("https://api.x/users", Map.of(), null));`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 43, title: "Composition Example: Document Editor (Composite + Command)", diff: "hard",
+  family: "Composition",
+  problem: "A document editor has a tree of elements (Section → Paragraph → Run), and every user action is a Command that can be applied and undone. Composition + Command = clean undo/redo and arbitrarily nested content.",
+  intuition: "Composite gives the document its tree shape. Command gives every action a uniform face: execute(), undo(). Editor maintains an undo stack of commands and a redo stack. Adding a new action = new Command class; the editor is unchanged.",
+  hints: [
+    "Composite tree: DocElement interface; Section, Paragraph, Run all implement it.",
+    "Each user action = a Command with execute() + undo().",
+    "Editor: apply(cmd) → cmd.execute(), undo.push(cmd), redo.clear().",
+    "Undo: undo.pop() → cmd.undo(), redo.push(cmd).",
+    "Macro commands: a Command that holds a list of other Commands; execute/undo iterate."
+  ],
+  tips: [
+    "Don't snapshot the entire document on every keystroke — Command.undo() inverts that one change.",
+    "Macro/composite commands let you group 'select line + bold + italic' as one undoable step.",
+    "The editor never imports specific commands — only the Command interface.",
+    "Add a CommandLog persisted to disk for crash-resilient editors."
+  ],
+  code: `import java.util.*;
+
+interface DocElement {}
+class Run implements DocElement {
+    String text; boolean bold;
+    public Run(String t) { this.text = t; }
+}
+class Paragraph implements DocElement {
+    final List<Run> runs = new ArrayList<>();
+}
+
+interface Command { void execute(); void undo(); }
+
+class InsertText implements Command {
+    private final Paragraph p; private final int pos; private final Run r;
+    public InsertText(Paragraph p, int pos, String text) { this.p = p; this.pos = pos; this.r = new Run(text); }
+    public void execute() { p.runs.add(pos, r); }
+    public void undo()    { p.runs.remove(r); }
+}
+
+class ToggleBold implements Command {
+    private final Run r; private boolean before;
+    public ToggleBold(Run r) { this.r = r; }
+    public void execute() { before = r.bold; r.bold = !r.bold; }
+    public void undo()    { r.bold = before; }
+}
+
+class MacroCommand implements Command {
+    private final List<Command> cmds;
+    public MacroCommand(List<Command> c) { this.cmds = c; }
+    public void execute() { for (Command c : cmds) c.execute(); }
+    public void undo()    { for (int i = cmds.size() - 1; i >= 0; i--) cmds.get(i).undo(); }
+}
+
+class Editor {
+    private final Deque<Command> undo = new ArrayDeque<>();
+    private final Deque<Command> redo = new ArrayDeque<>();
+    public void apply(Command c) { c.execute(); undo.push(c); redo.clear(); }
+    public void undo() { if (undo.isEmpty()) return; Command c = undo.pop(); c.undo(); redo.push(c); }
+    public void redo() { if (redo.isEmpty()) return; Command c = redo.pop(); c.execute(); undo.push(c); }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 44, title: "Composition Example: Plugin System with Strategy Registry", diff: "hard",
+  family: "Composition",
+  problem: "A plugin system lets users register new behaviours at runtime — file format readers, payment providers, chart types. Each plugin is a Strategy; a Registry maps a key to a Strategy; the host picks the right one at call time.",
+  intuition: "This is composition + Strategy + a tiny lookup table. The host code stays open to extension but closed to modification. Adding a new plugin = adding a new class + one registry call.",
+  hints: [
+    "Each plugin implements a common interface.",
+    "Registry: Map<Key, Plugin>. Plugins register themselves at startup.",
+    "Service Loader (java.util.ServiceLoader) auto-discovers plugins on the classpath.",
+    "Host code: registry.get(key).process(input) — never knows the concrete class.",
+    "Plugins can be packaged as separate JARs."
+  ],
+  tips: [
+    "ServiceLoader is the JDK's way; for Spring apps, `Map<String, Bean>` autowiring works.",
+    "Beware plugin-loading races at startup; build the registry once and freeze.",
+    "Versioning: include a metadata interface so the host can reject incompatible plugin versions.",
+    "Sandboxing untrusted plugins is a bigger topic (security manager, classloader isolation)."
+  ],
+  code: `import java.util.*;
+
+interface FormatReader {
+    String formatId();             // 'json', 'xml', 'yaml'
+    Map<String, Object> read(String content);
+}
+
+class JsonReader implements FormatReader {
+    public String formatId() { return "json"; }
+    public Map<String, Object> read(String s) { return Map.of(); /* parse */ }
+}
+class XmlReader implements FormatReader {
+    public String formatId() { return "xml"; }
+    public Map<String, Object> read(String s) { return Map.of(); /* parse */ }
+}
+
+class FormatRegistry {
+    private final Map<String, FormatReader> readers = new HashMap<>();
+    public void register(FormatReader r) { readers.put(r.formatId(), r); }
+    public FormatReader get(String id) {
+        FormatReader r = readers.get(id);
+        if (r == null) throw new IllegalArgumentException("no reader for " + id);
+        return r;
+    }
+}
+
+class FileLoader {
+    private final FormatRegistry registry;
+    public FileLoader(FormatRegistry r) { this.registry = r; }
+    public Map<String, Object> load(String formatId, String content) {
+        return registry.get(formatId).read(content);
+    }
+}
+
+// Wire
+FormatRegistry registry = new FormatRegistry();
+registry.register(new JsonReader());
+registry.register(new XmlReader());
+// Plugin author later: registry.register(new YamlReader());
+
+FileLoader loader = new FileLoader(registry);
+loader.load("json", "{\\"a\\":1}");
+
+// JDK ServiceLoader alternative — auto-discovers FormatReader implementations on classpath
+// (META-INF/services/com.acme.FormatReader)
+// java.util.ServiceLoader.load(FormatReader.class).forEach(registry::register);`,
+  complexity: "—"
+});
+
+
+PROBLEMS.push({
+  num: 45, title: "Mixins via default methods — composition of behaviour", diff: "hard",
+  family: "Advanced OOP",
+  problem: "Java's interface DEFAULT methods enable a mixin-like style: small interfaces add focused capabilities; a class can wear several. Useful for cross-cutting traits like Comparable, Auditable, Loggable.",
+  intuition: "Pre-Java-8, you couldn't add a method to an interface without breaking everyone. Default methods unlocked compositional behaviour mixing — implement a marker-style interface and inherit utility methods. Use them for SHARED BEHAVIOUR with no SHARED STATE.",
+  hints: [
+    "Interface with `default void log() {...}` provides a shared method.",
+    "Multiple mixin interfaces can be implemented by one class.",
+    "Diamond default-method conflict: compiler forces you to override and pick one (or compose).",
+    "Mixins + records: records can implement many interfaces, getting default methods 'for free'.",
+    "Don't put state in default methods (interfaces have no instance fields)."
+  ],
+  tips: [
+    "Mixins are great for OPTIONAL features. Don't force every type to implement everything.",
+    "If a default method needs state, you really want an abstract class — not an interface.",
+    "Beware diamond problem; resolve via explicit override.",
+    "Lombok @Mixin, Manifold and similar libraries push this idea further."
+  ],
+  code: `interface Loggable {
+    default void log(String msg) {
+        System.out.println("[" + getClass().getSimpleName() + "] " + msg);
+    }
+}
+interface Auditable {
+    default String auditInfo() {
+        return "auditable@" + Integer.toHexString(System.identityHashCode(this));
+    }
+}
+interface Comparable2<T> extends Comparable<T> {
+    default boolean lessThan(T other) { return compareTo(other) < 0; }
+    default boolean greaterThan(T other) { return compareTo(other) > 0; }
+}
+
+// MIXIN ALL THREE
+public class Order implements Loggable, Auditable, Comparable2<Order> {
+    private final long id;
+    public Order(long id) { this.id = id; }
+    public int compareTo(Order o) { return Long.compare(this.id, o.id); }
+}
+
+Order a = new Order(1), b = new Order(2);
+a.log("created");
+a.lessThan(b);
+a.auditInfo();
+
+// Diamond resolution — two interfaces with same default method
+interface A { default String name() { return "A"; } }
+interface B { default String name() { return "B"; } }
+class AB implements A, B {
+    @Override public String name() { return A.super.name(); }   // explicit choice
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 46, title: "Variance in Generics — covariance, contravariance, invariance", diff: "hard",
+  family: "Advanced OOP",
+  problem: "`List<Dog>` is NOT a subtype of `List<Animal>` even though Dog is a subtype of Animal — that's INVARIANCE. Wildcards (`? extends`, `? super`) introduce covariance and contravariance to make generics flexible.",
+  intuition: "If `List<Dog>` were a subtype of `List<Animal>`, you could add a Cat to a List<Dog> via the Animal view → broken. Java keeps generics invariant by default. Wildcards re-open the door safely: `? extends T` for reading (covariant), `? super T` for writing (contravariant). PECS rule.",
+  hints: [
+    "INVARIANT: List<Dog> is not List<Animal>. Default and safe.",
+    "COVARIANT: List<? extends Animal> can hold List<Dog>; you can READ Animals out, but cannot ADD anything except null.",
+    "CONTRAVARIANT: List<? super Dog> can hold List<Animal>; you can ADD a Dog, but READS only give you Object.",
+    "PECS — Producer Extends, Consumer Super. Method PARAMETER that produces T → `? extends T`; that consumes T → `? super T`.",
+    "Arrays in Java are covariant (legacy); generics are not — historic mistake."
+  ],
+  tips: [
+    "When a method only READS from a generic parameter, use `? extends T`.",
+    "When a method only WRITES to a generic parameter, use `? super T`.",
+    "Most local-variable generic types should NOT use wildcards; use the concrete parameter.",
+    "Streams + Collectors use these wildcards heavily — read their signatures and PECS clicks."
+  ],
+  code: `import java.util.*;
+
+class Animal {} class Dog extends Animal {} class Cat extends Animal {}
+
+// COVARIANT — read from a list of any subtype of Animal
+void printAll(List<? extends Animal> animals) {
+    for (Animal a : animals) System.out.println(a);
+    // animals.add(new Dog()); // COMPILE ERROR — can't write
+}
+printAll(new ArrayList<Dog>());      // ok
+printAll(new ArrayList<Cat>());      // ok
+
+// CONTRAVARIANT — write into a list of any supertype of Dog
+void addDog(List<? super Dog> sink) {
+    sink.add(new Dog());
+    // Object o = sink.get(0); // can read but only as Object
+}
+addDog(new ArrayList<Animal>());
+addDog(new ArrayList<Object>());
+
+// PECS — Producer Extends, Consumer Super
+public static <T> void copy(List<? extends T> src, List<? super T> dst) {   // src produces, dst consumes
+    for (T t : src) dst.add(t);
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 47, title: "Thread-safe Composition — immutable, synchronised, concurrent", diff: "hard",
+  family: "Advanced OOP",
+  problem: "Composition + concurrency: a thread-safe outer class often relies on thread-safe inner components. Three strategies: IMMUTABLE objects, SYNCHRONISED methods, or CONCURRENT data structures.",
+  intuition: "Immutable objects need ZERO synchronization. For mutable state, prefer concurrent collections (ConcurrentHashMap, AtomicInteger) over manual locks. Synchronised methods are the simplest tool for whole-object exclusion but block everyone — fine for low contention.",
+  hints: [
+    "Immutable: final class, final fields, defensive copies. Inherently thread-safe.",
+    "synchronized methods / blocks: coarse-grained mutual exclusion.",
+    "ReentrantLock / ReadWriteLock: finer control, tryLock with timeouts.",
+    "ConcurrentHashMap: safe map for concurrent put/get without external locking.",
+    "AtomicInteger / AtomicReference: lock-free CAS primitives.",
+    "volatile: visibility guarantee, not atomicity."
+  ],
+  tips: [
+    "Default to immutable when feasible. It removes an entire class of bugs.",
+    "Don't use Hashtable / Vector — outdated. ConcurrentHashMap / synchronisedList instead.",
+    "Avoid synchronized on `this` when callers can also lock on `this` (deadlock risk). Use a private lock object.",
+    "Document thread-safety in Javadoc (`@ThreadSafe`)."
+  ],
+  code: `import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+
+// IMMUTABLE — thread-safe by design
+public final class Money {
+    private final long cents;
+    private final String currency;
+    public Money(long c, String cur) { this.cents = c; this.currency = cur; }
+    public Money plus(Money other) { return new Money(this.cents + other.cents, currency); }
+}
+
+// SYNCHRONIZED — coarse lock
+public class Counter {
+    private long count;
+    public synchronized void inc() { count++; }
+    public synchronized long get() { return count; }
+}
+
+// CONCURRENT — lock-free for simple cases
+public class CounterLockFree {
+    private final AtomicLong count = new AtomicLong();
+    public void inc() { count.incrementAndGet(); }
+    public long get() { return count.get(); }
+}
+
+// CONCURRENT MAP — safer composition
+public class TopK {
+    private final ConcurrentHashMap<String, AtomicLong> hits = new ConcurrentHashMap<>();
+    public void hit(String key) {
+        hits.computeIfAbsent(key, k -> new AtomicLong()).incrementAndGet();
+    }
+    public long count(String key) { return hits.getOrDefault(key, new AtomicLong()).get(); }
+}`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 48, title: "Common Interview Q&A — Java OOP edition", diff: "easy",
+  family: "Interview Practice",
+  problem: "Recurring interview questions on Java OOP. Memorise the crisp 30-second answers; the interviewer will probe deeper if you signal you understand.",
+  intuition: "Most OOP interview questions test the SAME 5 ideas — composition vs inheritance, abstract vs interface, equals/hashCode, immutability, design patterns. A solid 60-second answer to each is the bar.",
+  hints: [
+    "Q: composition vs inheritance? — composition: HAS-A, runtime, swappable. Inheritance: IS-A, compile-time, stricter coupling. Default to composition.",
+    "Q: abstract class vs interface? — abstract class for shared STATE + behaviour; interface for capability + multiple inheritance.",
+    "Q: equals + hashCode contract? — equal objects MUST have same hashCode; reverse not required. Used by HashMap/HashSet for correctness.",
+    "Q: why immutable? — thread-safe; hash-stable; no aliasing bugs; great map keys.",
+    "Q: name 5 design patterns you use? — Strategy, Observer, Factory, Builder, Decorator. Have a code example ready for each.",
+    "Q: SOLID? — Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion.",
+    "Q: how do you handle nulls? — Optional return; defensive null checks at boundaries; @Nullable / @NonNull annotations; objects > primitives by default."
+  ],
+  tips: [
+    "Always pair a definition with an EXAMPLE. 'Strategy is X. For instance, in a payment processor we used X to swap providers without changing the orchestrator.'",
+    "Tie answers to YOUR experience. 'I refactored Y from a 4-level inheritance tree to composition; tests went from 200 to 40.'",
+    "Don't recite Wikipedia. Pause, give a clean 1-line summary, then enrich.",
+    "Be ready for follow-ups: 'why prefer composition?', 'what's a real LSP violation you saw?', 'when would you reach for inheritance?'"
+  ],
+  code: `// 30-SECOND ANSWERS YOU SHOULD HAVE READY
+//
+// "Why favour composition over inheritance?"
+//   - Looser coupling — components are swappable at runtime.
+//   - No fragile-base-class trap.
+//   - Multiple capabilities — extend ONE class, compose MANY.
+//   - Encapsulation — composition doesn't expose parent internals.
+//   - Tests are simpler — pass mocks via constructor.
+//
+// "How would you make a class immutable?"
+//   - final class, final fields, no setters.
+//   - Defensive copies of mutable inputs in constructor.
+//   - Defensive copies (or unmodifiable views) on output.
+//   - Or use a record.
+//
+// "Implement equals + hashCode for a value class."
+//   - Override BOTH together.
+//   - Use Objects.equals + Objects.hash for null-safety.
+//   - Be consistent: equal objects have same hashCode.
+//   - Easier path: record (auto-generated correctly).`,
+  complexity: "—"
+});
+
+PROBLEMS.push({
+  num: 49, title: "Final Cheatsheet — when to reach for what", diff: "easy",
+  family: "Interview Practice",
+  problem: "A condensed lookup table mapping situations to OOP tools. Use this as a last-minute review before an interview or design session.",
+  intuition: "The right tool for the right job. This is the 'when' guide; the 'what' is in the earlier cards.",
+  hints: [
+    "Need to share STATE + behaviour across siblings → abstract class.",
+    "Need to define a CAPABILITY any class might offer → interface.",
+    "Need IS-A for a tight family → inheritance (carefully).",
+    "Need HAS-A flexibility → composition + DI.",
+    "Need swappable algorithm at runtime → Strategy.",
+    "Need to add behaviour to existing objects → Decorator.",
+    "Need lifecycle phases → State.",
+    "Need to wrap a legacy / third-party API → Adapter.",
+    "Need a tree of like things → Composite.",
+    "Need a simpler API on top of a subsystem → Facade.",
+    "Need to construct complex object with many optional fields → Builder.",
+    "Need ONE instance globally → Enum singleton (if you really must)."
+  ],
+  tips: [
+    "Most code needs MORE composition and FEWER inheritance trees than people instinctively reach for.",
+    "Most code needs FEWER design patterns than people sprinkle in.",
+    "Records + sealed interfaces + switch patterns are the modern path for closed-world data + polymorphism.",
+    "Prefer immutability + DI + small interfaces. Most other rules follow."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Situation</th><th>Tool</th><th>Sample card</th></tr></thead>
+      <tbody>
+        <tr><td>Shared state + partial implementation</td><td>abstract class</td><td>#10</td></tr>
+        <tr><td>Pure capability, multiple implementation</td><td>interface</td><td>#11</td></tr>
+        <tr><td>HAS-A relationship</td><td>composition</td><td>#14</td></tr>
+        <tr><td>Swappable algorithm at runtime</td><td>Strategy</td><td>#33</td></tr>
+        <tr><td>Pub/sub on state changes</td><td>Observer</td><td>#34</td></tr>
+        <tr><td>Complex constructor</td><td>Builder</td><td>#35</td></tr>
+        <tr><td>One instance globally</td><td>Enum singleton</td><td>#36</td></tr>
+        <tr><td>Lifecycle phases</td><td>State</td><td>#37</td></tr>
+        <tr><td>Adapt legacy API</td><td>Adapter</td><td>#37</td></tr>
+        <tr><td>Tree of uniform parts</td><td>Composite</td><td>#37</td></tr>
+        <tr><td>Stack behaviour</td><td>Decorator</td><td>#19</td></tr>
+        <tr><td>Cross-cutting wrapper chain</td><td>Filter / Interceptor</td><td>#40, #42</td></tr>
+        <tr><td>In-process pub/sub</td><td>EventBus</td><td>#41</td></tr>
+        <tr><td>Plugins / runtime extension</td><td>Strategy + Registry</td><td>#44</td></tr>
+        <tr><td>Immutable data carrier</td><td>record</td><td>#25</td></tr>
+        <tr><td>Closed family of variants</td><td>sealed interface + records</td><td>#26</td></tr>
+        <tr><td>Strategy lookup with state</td><td>enum with abstract methods</td><td>#27</td></tr>
+        <tr><td>Resource cleanup</td><td>AutoCloseable + try-with-resources</td><td>#31</td></tr>
+        <tr><td>Cross-cutting trait</td><td>interface + default methods</td><td>#45</td></tr>
+        <tr><td>Thread-safe state</td><td>immutable / Concurrent / Atomic</td><td>#47</td></tr>
+      </tbody>
+    </table>
+  `,
+  code: `// PRINCIPLES TO INTERNALISE
+//
+// 1. Compose. Don't extend.
+// 2. Code to interfaces. Inject implementations.
+// 3. Make objects immutable when possible.
+// 4. Put behaviour where the data is.
+// 5. Hide everything; expose only what callers need.
+// 6. Constructors leave objects in a valid state.
+// 7. equals + hashCode together; never alone.
+// 8. Records for data. Classes for entities. Enums for closed sets.
+// 9. Defensive copies on the boundaries.
+// 10. Tests pass mocks via constructor — that's DI.
+//
+// If your code follows these, you're already 80th percentile in any Java OOP review.`,
+  complexity: "—"
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => { stash.push(html); return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001'; };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float','Object','BigDecimal','UUID',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','LinkedHashMap','LinkedHashSet',
+    'ArrayList','LinkedList','ArrayDeque','Queue','Deque','PriorityQueue',
+    'ConcurrentHashMap','ConcurrentMap','CopyOnWriteArrayList','AtomicLong','AtomicReference','AtomicInteger',
+    'StringBuilder','Optional','Comparator','Comparable','Comparable2','Objects','Arrays','Collections','Iterator','Iterable',
+    'Math','Random','Cleaner','AutoCloseable','Throwable','Exception','RuntimeException','Error',
+    'Counter','Person','PersonR','Money','MoneyR','BankAccount','Roster','Animal','Dog','Cat','Sparrow','Penguin','Puppy',
+    'Vehicle','Car','Bike','Truck','Engine','Order','OrderRich','OrderLOD','OrderObserver','OrderState','OrderStatus','OrderEvent',
+    'PlacedState','ShippedState','CancelledState','Customer','Address','Product','LineItem','Pizza','Size',
+    'Beverage','Espresso','Tea','Topping','Milk','Sugar','Cinnamon','Header','Body','TextBody','HtmlBody','SignedBody','Attachment','FileAttachment','Email',
+    'Validator','PaymentGateway','AuditLogger','EventBus','PaymentProcessor','PaymentRequest','StripeGateway','ConsoleLogger','LegacyAdapter','LegacyPaymentLib','ModernPaymentService',
+    'GameCharacter','Weapon','Sword','Bow','Armor','Leather','Plate','Skill','Heal','Fireball','Student','Course',
+    'Rectangle','Square','Triangle','Circle','Shape','Rect2','Square2','TV','Lights','Speaker','HomeTheaterFacade',
+    'FsNode','FileNode','FolderNode','File1','Folder',
+    'PaymentMethod','CardPayment','UpiPayment','Account','SavingsAccount',
+    'Repo','DbRepo','CachingRepo','LoggingRepo',
+    'EmailNotifier','SmsNotifier','PushNotifier','Notifier','AlertSystem','AnalyticsRecorder',
+    'Tree','Node','InOrderIterator','EvenFinder',
+    'TrieNode','UnionFind','LRUCache','Trie','PriceTransformer','HttpClient','HttpRequest','HttpResponse','Interceptor','RealChain','Chain','AuthInterceptor','LoggingInterceptor','RetryInterceptor',
+    'Filter','FilterChain','Request','Response','SimpleResponse','LoggingFilter','AuthFilter','RateLimitFilter',
+    'OrderPlaced','InventoryReserved','EmailSender','Analytics','EventBus',
+    'FormatReader','JsonReader','XmlReader','FormatRegistry','FileLoader',
+    'DocElement','Run','Paragraph','Section','InsertText','ToggleBold','MacroCommand','Editor','Command',
+    'AppRegistry','Operation','Iso4217','Currency','Logger','LoggerSingleton','HeavyCache','Config','Holder','NativeHandle',
+    'Connection','InventoryRepo','NotificationService','MysqlInventoryRepo','EmailNotificationService','CheckoutService','CheckoutServiceSpring',
+    'ImmutableUser','ImmutableUserR','InsufficientFundsException','SortStrategy','QuickSort','BubbleSort','Sorter',
+    'PricingStrategy','StandardPricing','HolidayPricing','CartCheckout','Reader','Writer','UserReader',
+    'CountingSetBad','CountingSetGood','VehicleFactory','VehicleType','Loadable','Auditable','Drivable','Sellable',
+    'Box','Pair','Calc','TopK','Counter','CounterLockFree','GetClient','HttpClient','JsonHttp',
+    'IllegalStateException','IllegalArgumentException','NoSuchElementException','InterruptedException',
+    'IOException','SQLException','ClassCastException','NullPointerException','UnsupportedOperationException',
+    'ServiceLoader'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum','record','sealed','non-sealed','permits',
+    'return','if','else','for','while','do','break','continue','switch','case','default','yield',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof','var','synchronized','volatile','transient'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(0x[0-9A-Fa-f_]+L?|\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff).sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'brief', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => { if (state.diff !== t.dataset.diff) { state.diff = t.dataset.diff; state.idx = 0; render(); } };
+  });
+}
+
+function familyPillClass(family) {
+  if (!family) return '';
+  const f = family.toLowerCase();
+  if (f.includes('foundations'))   return 'fnd';
+  if (f.includes('class basics'))  return 'cls';
+  if (f.includes('inheritance'))   return 'inh';
+  if (f.includes('composition'))   return 'com';
+  if (f.includes('advanced'))      return 'adv';
+  if (f.includes('solid'))         return 'pat';
+  if (f.includes('design pattern'))return 'pat';
+  if (f.includes('anti'))          return 'ant';
+  if (f.includes('practice'))      return 'pat';
+  return '';
+}
+
+
+function render() {
+  const main = document.getElementById('main');
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}` : '';
+  const formulaBlock = p.formula ? `<div class="section-title">Format / Syntax</div><div class="formula">${escapeHtml(p.formula)}</div>` : '';
+  const familyPill = p.family ? `<span class="pill ${familyPillClass(p.family)}">${escapeHtml(p.family)}</span>` : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+      <div class="section-title">Concept</div>
+      <p>${escapeHtml(p.problem)}</p>
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+      ${formulaBlock}
+      ${cheatBlock}
+      <div class="section-title">Key Points</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+      <div class="section-title">Tips &amp; Trade-offs</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+      ${p.complexity ? `<div class="complexity"><b>Notes:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>`;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.diff === state.diff));
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent = `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() { const arr = getProblems(state.diff); if (state.idx < arr.length - 1) { state.idx++; render(); } }
+function prevProblem() { if (state.idx > 0) { state.idx--; render(); } }
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️'; themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙'; themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next); localStorage.setItem('theme', next);
+});
+
+
+function renderBriefView() {
+  const families = [
+    { title: 'Foundations',         cmds: [['Class & Object','blueprint vs instance'],['4 Pillars','encap · inh · poly · abst'],['Encapsulation','private fields, methods'],['equals + hashCode','contract']] },
+    { title: 'Class Basics',        cmds: [['Constructor','validate, leave object valid'],['this / super','disambiguate, chain'],['static','class-level'],['Access modifiers','private → public']] },
+    { title: 'Inheritance',         cmds: [['extends','IS-A relationship'],['Override','same sig, different impl'],['Abstract class','state + abstract methods'],['Interface','pure contract'],['Polymorphism','one type, many forms'],['Liskov','subtypes substitutable']] },
+    { title: 'Composition',         cmds: [['HAS-A','outer holds inner'],['Why beats inheritance','5 reasons'],['Aggregation','HAS-A but loosely owned'],['Delegation','forward selectively'],['DI','accept deps via constructor']] },
+    { title: 'Advanced',            cmds: [['Generics','parametric types'],['Inner classes','static, inner, local, anonymous'],['Records','immutable data carriers'],['Sealed types','closed family of variants'],['Enums as classes','full OOP power'],['Variance','? extends, ? super'],['Mixins','interface default methods'],['Thread-safe','immutable / Concurrent / Atomic']] },
+    { title: 'SOLID & Patterns',    cmds: [['SRP','one reason to change'],['OCP','extend without modifying'],['LSP','subtypes substitutable'],['ISP','small interfaces'],['DIP','depend on abstractions'],['Strategy','swappable algorithms'],['Observer','pub/sub'],['Decorator','stack behaviour'],['Builder','complex construction'],['Singleton','use enum'],['State','lifecycle phases'],['Adapter','interface conversion'],['Composite','tree of uniform parts'],['Facade','front door over subsystem']] },
+    { title: 'Anti-patterns',       cmds: [['Anaemic domain','data with no behaviour'],['God class','too many responsibilities'],['Train wreck','a.b().c().d()'],['Primitive obsession','String for everything'],['Deep inheritance','>3 levels = smell']] },
+    { title: 'Composition Examples',cmds: [['Order + Address','#16'],['Email Builder','#17'],['Payment Processor','#18'],['Beverage Decorators','#19'],['Game Character','#20'],['Servlet Filters','#40'],['Event Bus','#41'],['HTTP Interceptors','#42'],['Document Editor','#43'],['Plugin Registry','#44']] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> Modelling a relationship between classes
+   ├── <span class="a">"X is a Y"</span>          → <span class="alg">Inheritance (carefully)</span>
+   ├── <span class="a">"X has a Y"</span>         → <span class="alg">Composition</span>
+   └── <span class="a">"X can do Y"</span>        → <span class="alg">Interface</span>
+
+<span class="q">Q2.</span> Need shared behaviour?
+   ├── <span class="a">+ shared STATE</span>      → <span class="alg">Abstract class</span>
+   ├── <span class="a">+ default impl only</span> → <span class="alg">Interface with default methods</span>
+   └── <span class="a">+ swap at runtime</span>   → <span class="alg">Composition + Strategy</span>
+
+<span class="q">Q3.</span> Constructing complex objects?
+   ├── <span class="a">few args</span>            → <span class="alg">Constructor</span>
+   ├── <span class="a">many optional args</span>  → <span class="alg">Builder</span>
+   ├── <span class="a">picking from variants</span>→ <span class="alg">Factory</span>
+   └── <span class="a">immutable data</span>      → <span class="alg">Record</span>
+
+<span class="q">Q4.</span> Need polymorphism?
+   ├── <span class="a">many concrete types</span> → <span class="alg">Strategy / Polymorphic interface</span>
+   ├── <span class="a">closed family</span>       → <span class="alg">Sealed interface + records</span>
+   └── <span class="a">enum-bound options</span>  → <span class="alg">Enum with abstract methods</span>
+
+<span class="q">Q5.</span> Cross-cutting concerns?
+   ├── <span class="a">add behaviour</span>       → <span class="alg">Decorator (composition)</span>
+   ├── <span class="a">notify others</span>       → <span class="alg">Observer / EventBus</span>
+   ├── <span class="a">wrap legacy API</span>     → <span class="alg">Adapter</span>
+   ├── <span class="a">simplify subsystem</span>  → <span class="alg">Facade</span>
+   └── <span class="a">filter / interceptor</span>→ <span class="alg">Chain of Responsibility</span>
+`;
+
+  const recipeCards = [
+    { b: 'Encapsulation',         s: "private fields + public methods" },
+    { b: 'Composition over inh',  s: "HAS-A is more flexible than IS-A" },
+    { b: 'Open/Closed',           s: "interface + new class per variant" },
+    { b: 'Liskov test',           s: "subtype must work where parent expected" },
+    { b: 'Builder',               s: "fluent setters + build() validate" },
+    { b: 'Strategy',              s: "interface + impls + DI" },
+    { b: 'Observer',              s: "subject + List<Observer>" },
+    { b: 'Decorator',             s: "wrapper IS-A and HAS-A target" },
+    { b: 'State',                 s: "delegate to current state object" },
+    { b: 'Singleton',             s: "enum SINGLE { INSTANCE; }" },
+    { b: 'Immutable',             s: "final class + final fields + copies" },
+    { b: 'equals + hashCode',     s: "Objects.equals + Objects.hash" },
+    { b: 'Record for value',      s: "record Money(BigDecimal amt, String c) {}" },
+    { b: 'Sealed family',         s: "sealed interface + records permits" },
+    { b: 'PECS',                  s: "Producer Extends, Consumer Super" },
+    { b: 'DI',                    s: "constructor takes interfaces" },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.cmds.map(c => `<div class="card-mini"><b>${escapeHtml(c[0])}</b><span>${escapeHtml(c[1])}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const recipes_html = `
+    <div class="panel">
+      <h3>One-Liner Recipes</h3>
+      <div class="grid">
+        ${recipeCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">J A V A &nbsp; O O P &nbsp; + &nbsp; C O M P O S I T I O N</div>
+        <h1 class="brief-title">Compose · Don't Extend · Code to Interfaces</h1>
+        <p class="brief-tagline">50 cards · Basics → Advanced · Heavy on real-world Composition examples</p>
+      </header>
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+      ${recipes_html}
+      ${families_html}
+    </div>`;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
