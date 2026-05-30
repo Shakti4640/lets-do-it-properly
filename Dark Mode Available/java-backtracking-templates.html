@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Backtracking Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-sub: #39d0a8;
+    --c-com: #58a6ff;
+    --c-per: #bc8cff;
+    --c-grd: #f0883e;
+    --c-pal: #d29922;
+    --c-cnt: #e06c75;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-bt   { background: rgba(57,208,168,0.1); color: var(--c-sub); border-color: rgba(57,208,168,0.25); }
+
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="sub"].on { color: var(--c-sub); border-bottom-color: var(--c-sub); }
+  .tab[data-id="com"].on { color: var(--c-com); border-bottom-color: var(--c-com); }
+  .tab[data-id="per"].on { color: var(--c-per); border-bottom-color: var(--c-per); }
+  .tab[data-id="grd"].on { color: var(--c-grd); border-bottom-color: var(--c-grd); }
+  .tab[data-id="pal"].on { color: var(--c-pal); border-bottom-color: var(--c-pal); }
+  .tab[data-id="cnt"].on { color: var(--c-cnt); border-bottom-color: var(--c-cnt); }
+
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.on { display: block; }
+
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Backtracking Templates</h1>
+    <p>// 6 patterns · 4 steps each · choose-explore-unchoose</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">☕ Java</span>
+    <span class="badge badge-bt">↩ Backtracking</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">BacktrackingTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-sub)">
+      <h3>Subsets</h3>
+      <div class="cheat-row"><span>State</span><span>start index + path</span></div>
+      <div class="cheat-row"><span>Branching</span><span>include / exclude each</span></div>
+      <div class="cheat-row"><span>Count</span><span>2ⁿ subsets</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Subsets, Subsets II</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-com)">
+      <h3>Combinations</h3>
+      <div class="cheat-row"><span>State</span><span>start index + path</span></div>
+      <div class="cheat-row"><span>Branching</span><span>pick / skip from start</span></div>
+      <div class="cheat-row"><span>Prune</span><span>length == k</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Combinations, Sum I-III</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-per)">
+      <h3>Permutations</h3>
+      <div class="cheat-row"><span>State</span><span>used[] + path</span></div>
+      <div class="cheat-row"><span>Branching</span><span>each unused element</span></div>
+      <div class="cheat-row"><span>Count</span><span>n! permutations</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Permutations I/II</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-grd)">
+      <h3>Grid / Word Search</h3>
+      <div class="cheat-row"><span>State</span><span>(r, c) + visited</span></div>
+      <div class="cheat-row"><span>Branching</span><span>4 cardinal directions</span></div>
+      <div class="cheat-row"><span>Trick</span><span>mutate grid as visited</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Word Search, N-Queens</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-pal)">
+      <h3>Partition / Palindrome</h3>
+      <div class="cheat-row"><span>State</span><span>start index + path</span></div>
+      <div class="cheat-row"><span>Branching</span><span>every valid prefix</span></div>
+      <div class="cheat-row"><span>Prune</span><span>isPalindrome check</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Palindrome Partition</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cnt)">
+      <h3>Constraint (Sudoku)</h3>
+      <div class="cheat-row"><span>State</span><span>position to fill</span></div>
+      <div class="cheat-row"><span>Branching</span><span>each valid value</span></div>
+      <div class="cheat-row"><span>Prune</span><span>row/col/box conflict</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Sudoku, N-Queens</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+const types = [
+  {
+    id:'sub', label:'Subsets',
+    steps:[
+      { label:'Define state',
+        hint:'State = (start index, current path). At each call, every choice from start to n is a candidate to include or skip.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(start, path) — explore all subsets that begin with prefix path')}
+${C('// and pick further elements from index "start" onward')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> result = ${K('new')} ${T('ArrayList')}<>();
+${T('List')}<${T('Integer')}> path     = ${K('new')} ${T('ArrayList')}<>();
+
+${C('// nums = the input array')}
+${C('// path = the subset built so far')}
+${C('// start = index from which we may pick the next element')}
+`
+      },
+      { label:'Base case',
+        hint:'Every node of the recursion tree is itself a valid subset — record it on entry.',
+        code:`${C('// Step 2 — Record each path as a subset')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('Integer')}> path) {
+    ${C('// Every recursion node is a valid subset')}
+    result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+
+    ${C('// No explicit base case needed; the loop below stops naturally')}
+    ${C('// when start == nums.length and there are no more candidates.')}
+}
+`
+      },
+      { label:'Choose / explore / unchoose',
+        hint:'For each i ≥ start: add nums[i] to path, recurse with start = i+1, then pop. The 3-line ritual.',
+        code:`${C('// Step 3 — Branch on every remaining candidate')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('Integer')}> path) {
+    result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+
+    ${K('for')} (${K('int')} i = start; i < nums.length; i++) {
+        ${C('// CHOOSE  → add nums[i]')}
+        path.${F('add')}(nums[i]);
+
+        ${C('// EXPLORE → recurse with start = i + 1')}
+        ${F('dfs')}(i + ${N('1')}, path);
+
+        ${C('// UNCHOOSE → backtrack: remove nums[i]')}
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+`
+      },
+      { label:'Skip duplicates',
+        hint:'For Subsets II: sort first, then skip nums[i] when nums[i] == nums[i-1] AND i > start.',
+        code:`${C('// Step 4 — Handle duplicates (Subsets II)')}
+
+${T('Arrays')}.${F('sort')}(nums); ${C('// MUST sort first so duplicates are adjacent')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('Integer')}> path) {
+    result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+
+    ${K('for')} (${K('int')} i = start; i < nums.length; i++) {
+
+        ${C('// Skip the SECOND, third, ... occurrence at this depth.')}
+        ${C('// i > start ensures we only skip SIBLINGS, not children.')}
+        ${K('if')} (i > start && nums[i] == nums[i - ${N('1')}]) ${K('continue')};
+
+        path.${F('add')}(nums[i]);
+        ${F('dfs')}(i + ${N('1')}, path);
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+
+${C('// Time:  O(n · 2ⁿ)')}
+${C('// Space: O(n) recursion + O(n · 2ⁿ) output')}
+`
+      }
+    ]
+  },
+  {
+    id:'com', label:'Combinations',
+    steps:[
+      { label:'Define state',
+        hint:'Same shape as subsets, but stop only when path.size() == k. Goal is choose k of n.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(start, path) — pick k elements from nums[start..n-1]')}
+${C('// Classic: Combinations, Combination Sum I-III')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> result = ${K('new')} ${T('ArrayList')}<>();
+${T('List')}<${T('Integer')}> path     = ${K('new')} ${T('ArrayList')}<>();
+
+${K('int')} n;            ${C('// total candidates')}
+${K('int')} k;            ${C('// target combination size')}
+`
+      },
+      { label:'Base case',
+        hint:'When path size hits k, record and return. Don\'t keep adding.',
+        code:`${C('// Step 2 — Stop when we have k elements')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('Integer')}> path) {
+    ${K('if')} (path.${F('size')}() == k) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+
+    ${C('// Otherwise we still need more elements — fall through to the loop below.')}
+}
+`
+      },
+      { label:'Branch + prune',
+        hint:'Pruning: if remaining slots > available candidates, return early. Massive speedup.',
+        code:`${C('// Step 3 — Branch with early pruning')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('Integer')}> path) {
+    ${K('if')} (path.${F('size')}() == k) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+
+    ${C('// Pruning — not enough candidates left to finish')}
+    ${K('int')} need   = k - path.${F('size')}();
+    ${K('int')} remain = n - start;
+    ${K('if')} (remain < need) ${K('return')};
+
+    ${K('for')} (${K('int')} i = start; i < n; i++) {
+        path.${F('add')}(i + ${N('1')});            ${C('// 1-indexed values')}
+        ${F('dfs')}(i + ${N('1')}, path);
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+`
+      },
+      { label:'Combination Sum',
+        hint:'Same skeleton; track running sum + target. Pass start = i (not i+1) when reuse is allowed.',
+        code:`${C('// Step 4 — Combination Sum (allows reuse of same number)')}
+
+${T('Arrays')}.${F('sort')}(candidates); ${C('// for early termination')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${K('int')} remain,
+         ${T('List')}<${T('Integer')}> path,
+         ${T('List')}<${T('List')}<${T('Integer')}>> out) {
+
+    ${K('if')} (remain == ${N('0')}) { out.${F('add')}(${K('new')} ${T('ArrayList')}<>(path)); ${K('return')}; }
+
+    ${K('for')} (${K('int')} i = start; i < candidates.length; i++) {
+
+        ${C('// Sorted → if this is too big, all later are too')}
+        ${K('if')} (candidates[i] > remain) ${K('break')};
+
+        path.${F('add')}(candidates[i]);
+
+        ${C('// Pass i (NOT i + 1) — same element can be reused')}
+        ${F('dfs')}(i, remain - candidates[i], path, out);
+
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+
+${C('// For Combination Sum II (no reuse, may have duplicates):')}
+${C('//   - sort the input')}
+${C('//   - pass i + 1 to recursive call')}
+${C('//   - skip: if (i > start && c[i] == c[i-1]) continue;')}
+`
+      }
+    ]
+  },
+  {
+    id:'per', label:'Permutations',
+    steps:[
+      { label:'Define state',
+        hint:'State = (used[] flags, current path). Each level picks any unused element.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(used, path) — extend the partial permutation')}
+${C('// path holds the prefix; used[] tells which indices are taken')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> result = ${K('new')} ${T('ArrayList')}<>();
+${T('List')}<${T('Integer')}> path     = ${K('new')} ${T('ArrayList')}<>();
+${K('boolean')}[] used      = ${K('new')} ${K('boolean')}[nums.length];
+
+${C('// Permutations need all n elements every time → no start index')}
+${C('// At each level, ANY unused element can be appended next.')}
+`
+      },
+      { label:'Base case',
+        hint:'When path size equals n, we\'ve placed every element — record and return.',
+        code:`${C('// Step 2 — Record full permutations')}
+
+${K('void')} ${F('dfs')}(${T('List')}<${T('Integer')}> path, ${K('boolean')}[] used) {
+    ${K('if')} (path.${F('size')}() == nums.length) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+
+    ${C('// Otherwise extend by one of the unused elements (next step).')}
+}
+`
+      },
+      { label:'Choose unused',
+        hint:'Iterate every index. If unused, mark it used, recurse, then unmark + pop. Standard 3-line ritual.',
+        code:`${C('// Step 3 — Branch on every unused index')}
+
+${K('void')} ${F('dfs')}(${T('List')}<${T('Integer')}> path, ${K('boolean')}[] used) {
+    ${K('if')} (path.${F('size')}() == nums.length) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+
+    ${K('for')} (${K('int')} i = ${N('0')}; i < nums.length; i++) {
+        ${K('if')} (used[i]) ${K('continue')};
+
+        ${C('// CHOOSE')}
+        used[i] = ${K('true')};
+        path.${F('add')}(nums[i]);
+
+        ${C('// EXPLORE')}
+        ${F('dfs')}(path, used);
+
+        ${C('// UNCHOOSE')}
+        used[i] = ${K('false')};
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+
+${C('// Time:  O(n · n!)')}
+${C('// Space: O(n) recursion + O(n · n!) output')}
+`
+      },
+      { label:'Permutations II (duplicates)',
+        hint:'Sort. At each level, skip nums[i] if nums[i] == nums[i-1] AND used[i-1] is false (the previous duplicate is unused at this depth).',
+        code:`${C('// Step 4 — Permutations II — duplicates allowed in input')}
+
+${T('Arrays')}.${F('sort')}(nums); ${C('// duplicates must be adjacent')}
+
+${K('void')} ${F('dfs')}(${T('List')}<${T('Integer')}> path, ${K('boolean')}[] used) {
+    ${K('if')} (path.${F('size')}() == nums.length) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+
+    ${K('for')} (${K('int')} i = ${N('0')}; i < nums.length; i++) {
+        ${K('if')} (used[i]) ${K('continue')};
+
+        ${C('// Skip duplicate ONLY if its left neighbour is unused at this level.')}
+        ${C('// That ensures duplicates are picked in left-to-right order →')}
+        ${C('// no two recursion paths produce the same permutation.')}
+        ${K('if')} (i > ${N('0')} && nums[i] == nums[i - ${N('1')}] && !used[i - ${N('1')}])
+            ${K('continue')};
+
+        used[i] = ${K('true')};
+        path.${F('add')}(nums[i]);
+
+        ${F('dfs')}(path, used);
+
+        used[i] = ${K('false')};
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+`
+      }
+    ]
+  },
+  {
+    id:'grd', label:'Grid / Word Search',
+    steps:[
+      { label:'Define state',
+        hint:'State = (r, c, idx into target). Each call tries to extend the path one cell deeper.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(r, c, idx) — does board[r][c] continue word from index idx?')}
+${C('// Classic: Word Search, Rat in Maze, all-paths grid problems')}
+
+${K('int')} R = board.length, ${K('int')} C = board[${N('0')}].length;
+${K('int')}[] dr = { -${N('1')}, ${N('1')}, ${N('0')}, ${N('0')} };  ${C('// 4-directional moves')}
+${K('int')}[] dc = {  ${N('0')}, ${N('0')}, -${N('1')}, ${N('1')} };
+
+${C('// Two states to track:')}
+${C('//   1. position (r, c)')}
+${C('//   2. progress in the target — index into the word, or path length')}
+`
+      },
+      { label:'Base case',
+        hint:'Two failures + one success: out of bounds, mismatch, already-visited → false; full match → true.',
+        code:`${C('// Step 2 — Base cases')}
+
+${K('boolean')} ${F('dfs')}(${K('int')} r, ${K('int')} c, ${K('int')} idx, ${T('String')} word) {
+
+    ${C('// SUCCESS — every char matched')}
+    ${K('if')} (idx == word.${F('length')}()) ${K('return')} ${K('true')};
+
+    ${C('// FAILURE — out of bounds')}
+    ${K('if')} (r < ${N('0')} || r >= R || c < ${N('0')} || c >= C)
+        ${K('return')} ${K('false')};
+
+    ${C('// FAILURE — wrong character or already visited (we use # marker)')}
+    ${K('if')} (board[r][c] != word.${F('charAt')}(idx)) ${K('return')} ${K('false')};
+
+    ${C('// — fall through to recursion (next step)')}
+}
+`
+      },
+      { label:'Mark, recurse, unmark',
+        hint:'Trick: mutate the grid IN PLACE as the visited marker — saves a separate boolean[][].',
+        code:`${C('// Step 3 — In-place visited marker + 4-directional recursion')}
+
+${K('boolean')} ${F('dfs')}(${K('int')} r, ${K('int')} c, ${K('int')} idx, ${T('String')} word) {
+
+    ${K('if')} (idx == word.${F('length')}()) ${K('return')} ${K('true')};
+    ${K('if')} (r < ${N('0')} || r >= R || c < ${N('0')} || c >= C) ${K('return')} ${K('false')};
+    ${K('if')} (board[r][c] != word.${F('charAt')}(idx)) ${K('return')} ${K('false')};
+
+    ${C('// MARK visited — save original char for restore')}
+    ${K('char')} saved = board[r][c];
+    board[r][c] = ${S("'#'")};
+
+    ${C('// EXPLORE four neighbours')}
+    ${K('boolean')} found = ${F('dfs')}(r - ${N('1')}, c, idx + ${N('1')}, word) ||
+                    ${F('dfs')}(r + ${N('1')}, c, idx + ${N('1')}, word) ||
+                    ${F('dfs')}(r, c - ${N('1')}, idx + ${N('1')}, word) ||
+                    ${F('dfs')}(r, c + ${N('1')}, idx + ${N('1')}, word);
+
+    ${C('// UNMARK — restore the cell')}
+    board[r][c] = saved;
+
+    ${K('return')} found;
+}
+`
+      },
+      { label:'N-Queens skeleton',
+        hint:'Same idea on a row-by-row sweep. Track three sets: column, diag (r+c), anti-diag (r-c).',
+        code:`${C('// Step 4 — N-Queens — backtracking on a grid with constraints')}
+
+${K('int')} n;                                        ${C('// board size')}
+${T('List')}<${T('List')}<${T('String')}>> result = ${K('new')} ${T('ArrayList')}<>();
+${K('boolean')}[] cols  = ${K('new')} ${K('boolean')}[n];
+${K('boolean')}[] diag1 = ${K('new')} ${K('boolean')}[${N('2')} * n];   ${C('// r + c')}
+${K('boolean')}[] diag2 = ${K('new')} ${K('boolean')}[${N('2')} * n];   ${C('// r - c + n')}
+${T('int')}[] queens = ${K('new')} ${K('int')}[n];
+
+${K('void')} ${F('dfs')}(${K('int')} row) {
+    ${K('if')} (row == n) { ${F('record')}(); ${K('return')}; }
+
+    ${K('for')} (${K('int')} col = ${N('0')}; col < n; col++) {
+        ${K('if')} (cols[col] || diag1[row + col] || diag2[row - col + n])
+            ${K('continue')};
+
+        ${C('// CHOOSE')}
+        queens[row] = col;
+        cols[col] = diag1[row + col] = diag2[row - col + n] = ${K('true')};
+
+        ${C('// EXPLORE')}
+        ${F('dfs')}(row + ${N('1')});
+
+        ${C('// UNCHOOSE')}
+        cols[col] = diag1[row + col] = diag2[row - col + n] = ${K('false')};
+    }
+}
+`
+      }
+    ]
+  },
+  {
+    id:'pal', label:'Partition / Palindrome',
+    steps:[
+      { label:'Define state',
+        hint:'State = (start index, current path of substrings). Try every prefix from start; recurse on the suffix.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(start, path) — partition s[start..n-1] into palindromic pieces')}
+${C('// Classic: Palindrome Partitioning, Word Break II, Restore IP Addresses')}
+
+${T('List')}<${T('List')}<${T('String')}>> result = ${K('new')} ${T('ArrayList')}<>();
+${T('List')}<${T('String')}> path     = ${K('new')} ${T('ArrayList')}<>();
+
+${K('int')} n = s.length();
+${C('// At each level, choose a valid prefix s[start..end] and recurse on s[end+1..n-1]')}
+`
+      },
+      { label:'Base case',
+        hint:'Reaching the end of the string with a complete partition is success — record path.',
+        code:`${C('// Step 2 — Base case')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('String')}> path) {
+    ${C('// Reached the end → path is a complete partition')}
+    ${K('if')} (start == n) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+
+    ${C('// Otherwise extend with every valid prefix (next step).')}
+}
+`
+      },
+      { label:'Branch on prefixes',
+        hint:'Try every end ≥ start. If s[start..end] is a palindrome, choose it, recurse, unchoose.',
+        code:`${C('// Step 3 — For each valid prefix, recurse')}
+
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('String')}> path) {
+    ${K('if')} (start == n) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+
+    ${K('for')} (${K('int')} end = start; end < n; end++) {
+
+        ${K('if')} (!${F('isPalindrome')}(s, start, end)) ${K('continue')};
+
+        ${C('// CHOOSE the prefix s[start..end]')}
+        path.${F('add')}(s.${F('substring')}(start, end + ${N('1')}));
+
+        ${C('// EXPLORE the rest')}
+        ${F('dfs')}(end + ${N('1')}, path);
+
+        ${C('// UNCHOOSE')}
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+
+${K('boolean')} ${F('isPalindrome')}(${T('String')} s, ${K('int')} l, ${K('int')} r) {
+    ${K('while')} (l < r) ${K('if')} (s.${F('charAt')}(l++) != s.${F('charAt')}(r--)) ${K('return')} ${K('false')};
+    ${K('return')} ${K('true')};
+}
+`
+      },
+      { label:'Optimisation: pre-compute palindromes',
+        hint:'For repeated isPalindrome checks: build a boolean[n][n] table once with O(n²) DP, then queries are O(1).',
+        code:`${C('// Step 4 — Pre-compute pal[i][j] in O(n²) so isPalindrome is O(1)')}
+
+${K('boolean')}[][] pal = ${K('new')} ${K('boolean')}[n][n];
+${K('for')} (${K('int')} i = n - ${N('1')}; i >= ${N('0')}; i--) {
+    ${K('for')} (${K('int')} j = i; j < n; j++) {
+        pal[i][j] = (s.${F('charAt')}(i) == s.${F('charAt')}(j))
+                    && (j - i < ${N('2')} || pal[i + ${N('1')}][j - ${N('1')}]);
+    }
+}
+
+${C('// In dfs, replace isPalindrome(s, start, end) with pal[start][end]')}
+${K('void')} ${F('dfs')}(${K('int')} start, ${T('List')}<${T('String')}> path) {
+    ${K('if')} (start == n) {
+        result.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+        ${K('return')};
+    }
+    ${K('for')} (${K('int')} end = start; end < n; end++) {
+        ${K('if')} (!pal[start][end]) ${K('continue')};
+        path.${F('add')}(s.${F('substring')}(start, end + ${N('1')}));
+        ${F('dfs')}(end + ${N('1')}, path);
+        path.${F('remove')}(path.${F('size')}() - ${N('1')});
+    }
+}
+
+${C('// Same shape works for Word Break II (replace pal with dictionary lookup)')}
+${C('// and Restore IP Addresses (replace with isValidIPSegment + 4-segment cap)')}
+`
+      }
+    ]
+  },
+  {
+    id:'cnt', label:'Constraint (Sudoku)',
+    steps:[
+      { label:'Define state',
+        hint:'State = the next empty cell. Recursion advances cell-by-cell; success = no more empties.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(board) — fill the next empty cell, recurse, undo on failure')}
+${C('// Classic: Sudoku Solver, Cryptarithmetic, constraint puzzles')}
+
+${C('// We could pass (row, col) but scanning for the next empty')}
+${C('// cell from scratch each call keeps the code simple.')}
+
+${C('// Or pre-build candidate sets:')}
+${K('boolean')}[][] rowUsed = ${K('new')} ${K('boolean')}[${N('9')}][${N('10')}];
+${K('boolean')}[][] colUsed = ${K('new')} ${K('boolean')}[${N('9')}][${N('10')}];
+${K('boolean')}[][] boxUsed = ${K('new')} ${K('boolean')}[${N('9')}][${N('10')}];
+`
+      },
+      { label:'Base case',
+        hint:'No more empty cells → board is fully solved. Return true to short-circuit the recursion.',
+        code:`${C('// Step 2 — Find the next empty cell')}
+
+${K('boolean')} ${F('dfs')}(${K('char')}[][] board) {
+    ${K('for')} (${K('int')} r = ${N('0')}; r < ${N('9')}; r++) {
+        ${K('for')} (${K('int')} c = ${N('0')}; c < ${N('9')}; c++) {
+
+            ${K('if')} (board[r][c] != ${S("'.'")}) ${K('continue')}; ${C('// already filled')}
+
+            ${C('// found an empty cell — try every valid digit (next step)')}
+            ${C('// ...')}
+
+            ${K('return')} ${K('false')}; ${C('// no digit worked → caller must backtrack')}
+        }
+    }
+    ${K('return')} ${K('true')}; ${C('// no empty cells → solved!')}
+}
+`
+      },
+      { label:'Branch on digits',
+        hint:'For each digit 1..9, check the row, column, and 3×3 box. Place, recurse, on failure undo.',
+        code:`${C('// Step 3 — Try each digit; recurse; undo on failure')}
+
+${K('boolean')} ${F('dfs')}(${K('char')}[][] board) {
+    ${K('for')} (${K('int')} r = ${N('0')}; r < ${N('9')}; r++) {
+        ${K('for')} (${K('int')} c = ${N('0')}; c < ${N('9')}; c++) {
+
+            ${K('if')} (board[r][c] != ${S("'.'")}) ${K('continue')};
+
+            ${K('for')} (${K('char')} d = ${S("'1'")}; d <= ${S("'9'")}; d++) {
+                ${K('if')} (!${F('isValid')}(board, r, c, d)) ${K('continue')};
+
+                ${C('// CHOOSE')}
+                board[r][c] = d;
+
+                ${C('// EXPLORE')}
+                ${K('if')} (${F('dfs')}(board)) ${K('return')} ${K('true')};
+
+                ${C('// UNCHOOSE')}
+                board[r][c] = ${S("'.'")};
+            }
+
+            ${K('return')} ${K('false')}; ${C('// no digit fit → trigger upstream backtrack')}
+        }
+    }
+    ${K('return')} ${K('true')};
+}
+
+${K('boolean')} ${F('isValid')}(${K('char')}[][] b, ${K('int')} r, ${K('int')} c, ${K('char')} d) {
+    ${K('for')} (${K('int')} i = ${N('0')}; i < ${N('9')}; i++) {
+        ${K('if')} (b[r][i] == d) ${K('return')} ${K('false')};               ${C('// row')}
+        ${K('if')} (b[i][c] == d) ${K('return')} ${K('false')};               ${C('// col')}
+        ${K('if')} (b[${N('3')}*(r/${N('3')}) + i/${N('3')}][${N('3')}*(c/${N('3')}) + i%${N('3')}] == d) ${C('// box')}
+            ${K('return')} ${K('false')};
+    }
+    ${K('return')} ${K('true')};
+}
+`
+      },
+      { label:'Faster with bitmasks / used arrays',
+        hint:'Maintain three boolean arrays (rowUsed, colUsed, boxUsed). Each placement updates O(1); validity is O(1) per digit.',
+        code:`${C('// Step 4 — O(1) placement / validity check via auxiliary used[] arrays')}
+
+${K('boolean')}[][] row = ${K('new')} ${K('boolean')}[${N('9')}][${N('10')}];
+${K('boolean')}[][] col = ${K('new')} ${K('boolean')}[${N('9')}][${N('10')}];
+${K('boolean')}[][] box = ${K('new')} ${K('boolean')}[${N('9')}][${N('10')}];
+
+${C('// Pre-fill from the given board')}
+${K('for')} (${K('int')} r = ${N('0')}; r < ${N('9')}; r++)
+  ${K('for')} (${K('int')} c = ${N('0')}; c < ${N('9')}; c++)
+    ${K('if')} (board[r][c] != ${S("'.'")}) {
+        ${K('int')} d = board[r][c] - ${S("'0'")};
+        row[r][d] = col[c][d] = box[(r/${N('3')})*${N('3')} + c/${N('3')}][d] = ${K('true')};
+    }
+
+${K('boolean')} ${F('dfs')}(${K('char')}[][] board) {
+    ${K('for')} (${K('int')} r = ${N('0')}; r < ${N('9')}; r++)
+      ${K('for')} (${K('int')} c = ${N('0')}; c < ${N('9')}; c++)
+        ${K('if')} (board[r][c] == ${S("'.'")}) {
+            ${K('int')} bIdx = (r/${N('3')})*${N('3')} + c/${N('3')};
+
+            ${K('for')} (${K('int')} d = ${N('1')}; d <= ${N('9')}; d++) {
+                ${K('if')} (row[r][d] || col[c][d] || box[bIdx][d]) ${K('continue')};
+
+                board[r][c] = (${K('char')}) (${S("'0'")} + d);
+                row[r][d] = col[c][d] = box[bIdx][d] = ${K('true')};
+
+                ${K('if')} (${F('dfs')}(board)) ${K('return')} ${K('true')};
+
+                board[r][c] = ${S("'.'")};
+                row[r][d] = col[c][d] = box[bIdx][d] = ${K('false')};
+            }
+            ${K('return')} ${K('false')};
+        }
+    ${K('return')} ${K('true')};
+}
+
+${C('// Same idea applies to N-Queens (cols / diag1 / diag2 arrays)')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

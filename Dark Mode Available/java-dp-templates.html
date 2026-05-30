@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java DP Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-lin: #39d0a8;
+    --c-kna: #58a6ff;
+    --c-lcs: #bc8cff;
+    --c-int: #f0883e;
+    --c-dag: #d29922;
+    --c-bit: #e06c75;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-dp   { background: rgba(188,140,255,0.1); color: #bc8cff; border-color: rgba(188,140,255,0.25); }
+
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="lin"].on { color: var(--c-lin); border-bottom-color: var(--c-lin); }
+  .tab[data-id="kna"].on { color: var(--c-kna); border-bottom-color: var(--c-kna); }
+  .tab[data-id="lcs"].on { color: var(--c-lcs); border-bottom-color: var(--c-lcs); }
+  .tab[data-id="int"].on { color: var(--c-int); border-bottom-color: var(--c-int); }
+  .tab[data-id="dag"].on { color: var(--c-dag); border-bottom-color: var(--c-dag); }
+  .tab[data-id="bit"].on { color: var(--c-bit); border-bottom-color: var(--c-bit); }
+
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.on { display: block; }
+
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java DP Templates</h1>
+    <p>// 6 patterns · 4 steps each · recurrence ready</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">☕ Java</span>
+    <span class="badge badge-dp">∿ Dynamic Programming</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">DPTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-lin)">
+      <h3>Linear DP</h3>
+      <div class="cheat-row"><span>State</span><span>dp[i] = best for first i</span></div>
+      <div class="cheat-row"><span>Depends on</span><span>dp[i-1], dp[i-2]</span></div>
+      <div class="cheat-row"><span>Space opt</span><span>Two variables</span></div>
+      <div class="cheat-row"><span>Examples</span><span>House robber, stairs</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-kna)">
+      <h3>0/1 Knapsack</h3>
+      <div class="cheat-row"><span>State</span><span>dp[i][w]</span></div>
+      <div class="cheat-row"><span>Depends on</span><span>dp[i-1][w], dp[i-1][w-wt]</span></div>
+      <div class="cheat-row"><span>Space opt</span><span>1D, iterate reverse</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Knapsack, subset sum</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-lcs)">
+      <h3>2-Sequence (LCS)</h3>
+      <div class="cheat-row"><span>State</span><span>dp[i][j] two prefixes</span></div>
+      <div class="cheat-row"><span>Depends on</span><span>diagonal or adjacent cell</span></div>
+      <div class="cheat-row"><span>Space opt</span><span>Two rows</span></div>
+      <div class="cheat-row"><span>Examples</span><span>LCS, edit distance</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-int)">
+      <h3>Interval DP</h3>
+      <div class="cheat-row"><span>State</span><span>dp[i][j] range [i,j]</span></div>
+      <div class="cheat-row"><span>Fill order</span><span>Short → long intervals</span></div>
+      <div class="cheat-row"><span>Complexity</span><span>O(n³) time, O(n²) space</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Matrix chain, balloons</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-dag)">
+      <h3>DP on DAG</h3>
+      <div class="cheat-row"><span>State</span><span>dp[node] best path</span></div>
+      <div class="cheat-row"><span>Fill order</span><span>Topological order</span></div>
+      <div class="cheat-row"><span>LIS fast</span><span>O(n log n) binary search</span></div>
+      <div class="cheat-row"><span>Examples</span><span>LIS, longest DAG path</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-bit)">
+      <h3>Bitmask DP</h3>
+      <div class="cheat-row"><span>State</span><span>dp[mask] subset</span></div>
+      <div class="cheat-row"><span>Complexity</span><span>O(2ⁿ · n)</span></div>
+      <div class="cheat-row"><span>Constraint</span><span>n ≤ 20 typically</span></div>
+      <div class="cheat-row"><span>Examples</span><span>TSP, task assignment</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+const types = [
+  {
+    id:'lin', label:'Linear DP',
+    steps:[
+      { label:'Define state',
+        hint:'dp[i] = best answer considering the first i elements. Always ask: what does one index represent?',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dp[i] = max/min/count for the first i elements')}
+${C('// Classic: max sum subarray, house robber, climbing stairs')}
+
+${K('int')}[] dp = ${K('new')} ${K('int')}[n + ${N('1')}];
+
+${C('// Each index represents a prefix of the input.')}
+${C('// dp[0] is the base case (empty prefix).')}
+${C('// dp[i] depends only on dp[i-1] (or a few prior states).')}
+`
+      },
+      { label:'Base case',
+        hint:'Seed dp[0] (and dp[1] if needed). Wrong base cases are the #1 source of off-by-one bugs.',
+        code:`${C('// Step 2 — Base case')}
+dp[${N('0')}] = ${N('0')};        ${C('// empty prefix — no choice yet')}
+dp[${N('1')}] = nums[${N('0')}]; ${C('// first element, no decision needed')}
+
+${C('// Example: House Robber')}
+${C('// dp[0] = 0         (no houses)')}
+${C('// dp[1] = nums[0]   (only one house, take it)')}
+`
+      },
+      { label:'Transition',
+        hint:'The recurrence is the heart. Write it in plain English first, then code it.',
+        code:`${C('// Step 3 — Fill the DP table (transition)')}
+${K('for')} (${K('int')} i = ${N('2')}; i <= n; i++) {
+
+    ${C('// House Robber: rob this house OR skip it')}
+    dp[i] = ${T('Math')}.${F('max')}(
+        dp[i - ${N('1')}],              ${C('// skip house i')}
+        dp[i - ${N('2')}] + nums[i - ${N('1')}]  ${C('// rob house i')}
+    );
+
+    ${C('// Swap pattern for other problems:')}
+    ${C('// Climbing stairs:  dp[i] = dp[i-1] + dp[i-2]')}
+    ${C('// Max subarray:     dp[i] = max(nums[i], dp[i-1] + nums[i])')}
+}
+`
+      },
+      { label:'Return answer',
+        hint:'Usually dp[n]. For problems like max-subarray, track a running max inside the loop instead.',
+        code:`${C('// Step 4 — Extract the answer')}
+${K('return')} dp[n];
+
+${C('// If the answer is anywhere in the table, not just dp[n]:')}
+${K('int')} ans = ${T('Integer')}.MIN_VALUE;
+${K('for')} (${K('int')} v : dp) ans = ${T('Math')}.${F('max')}(ans, v);
+${K('return')} ans;
+
+${C('// Space optimisation — when only dp[i-1] and dp[i-2] are needed:')}
+${K('int')} prev2 = ${N('0')}, prev1 = nums[${N('0')}];
+${K('for')} (${K('int')} i = ${N('2')}; i <= n; i++) {
+    ${K('int')} cur = ${T('Math')}.${F('max')}(prev1, prev2 + nums[i - ${N('1')}]);
+    prev2 = prev1;  prev1 = cur;
+}
+${K('return')} prev1;
+`
+      }
+    ]
+  },
+  {
+    id:'kna', label:'0/1 Knapsack',
+    steps:[
+      { label:'Define state',
+        hint:'dp[i][w] = best value using first i items with capacity w. Two axes: items and capacity.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dp[i][w] = max value using first i items, capacity w')}
+${C('// Classic: 0/1 Knapsack, subset sum, partition equal subset')}
+
+${K('int')} n = weights.length;
+${K('int')}[][] dp = ${K('new')} ${K('int')}[n + ${N('1')}][W + ${N('1')}];
+
+${C('// Axis 0 → items (0..n)')}
+${C('// Axis 1 → remaining capacity (0..W)')}
+${C('// Item i has weight weights[i-1] and value values[i-1]')}
+`
+      },
+      { label:'Base case',
+        hint:'Zero items OR zero capacity → zero value. The entire first row and column are 0.',
+        code:`${C('// Step 2 — Base case (Java default-initialises int[][] to 0)')}
+${C('// dp[0][w] = 0  for all w  (no items → no value)')}
+${C('// dp[i][0] = 0  for all i  (no capacity → no value)')}
+
+${C('// Nothing to code — zero-initialisation covers it.')}
+${C('// If using a 1D rolling array, still no seeding needed.')}
+`
+      },
+      { label:'Transition',
+        hint:'For each item, decide: skip it (copy row above) or take it (subtract weight, add value).',
+        code:`${C('// Step 3 — Transition')}
+${K('for')} (${K('int')} i = ${N('1')}; i <= n; i++) {
+    ${K('int')} w = weights[i - ${N('1')}], v = values[i - ${N('1')}];
+
+    ${K('for')} (${K('int')} cap = ${N('0')}; cap <= W; cap++) {
+        ${C('// Skip item i')}
+        dp[i][cap] = dp[i - ${N('1')}][cap];
+
+        ${C('// Take item i (only if it fits)')}
+        ${K('if')} (cap >= w)
+            dp[i][cap] = ${T('Math')}.${F('max')}(dp[i][cap],
+                              dp[i - ${N('1')}][cap - w] + v);
+    }
+}
+`
+      },
+      { label:'Return answer',
+        hint:'dp[n][W] is the answer. For 1D space optimisation, iterate capacity in reverse to avoid reusing an item.',
+        code:`${C('// Step 4 — Answer is dp[n][W]')}
+${K('return')} dp[n][W];
+
+${C('// ─── Space-optimised 1D version ───')}
+${K('int')}[] dp1 = ${K('new')} ${K('int')}[W + ${N('1')}];
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('int')} w = weights[i], v = values[i];
+
+    ${C('// Iterate BACKWARDS so each item is used at most once')}
+    ${K('for')} (${K('int')} cap = W; cap >= w; cap--)
+        dp1[cap] = ${T('Math')}.${F('max')}(dp1[cap], dp1[cap - w] + v);
+}
+${K('return')} dp1[W];
+`
+      }
+    ]
+  },
+  {
+    id:'lcs', label:'2-Sequence (LCS)',
+    steps:[
+      { label:'Define state',
+        hint:'dp[i][j] = answer for prefix s1[0..i-1] and s2[0..j-1]. Two strings, two axes.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dp[i][j] = LCS length of s1[0..i-1] and s2[0..j-1]')}
+${C('// Classic: LCS, edit distance, shortest common supersequence')}
+
+${K('int')} m = s1.length(), n = s2.length();
+${K('int')}[][] dp = ${K('new')} ${K('int')}[m + ${N('1')}][n + ${N('1')}];
+
+${C('// Row i → first i chars of s1')}
+${C('// Col j → first j chars of s2')}
+`
+      },
+      { label:'Base case',
+        hint:'Empty prefix of either string → length 0. First row and column are all 0 (Java default).',
+        code:`${C('// Step 2 — Base case')}
+${C('// dp[0][j] = 0  (empty s1 vs any s2 prefix → LCS = 0)')}
+${C('// dp[i][0] = 0  (any s1 prefix vs empty s2 → LCS = 0)')}
+
+${C('// Zero-initialisation covers it for LCS.')}
+${C('// Edit distance needs different seeding:')}
+${K('for')} (${K('int')} i = ${N('0')}; i <= m; i++) dp[i][${N('0')}] = i; ${C('// delete all of s1')}
+${K('for')} (${K('int')} j = ${N('0')}; j <= n; j++) dp[${N('0')}][j] = j; ${C('// insert all of s2')}
+`
+      },
+      { label:'Transition',
+        hint:'If characters match, extend the diagonal. If not, take the best of drop-from-s1 or drop-from-s2.',
+        code:`${C('// Step 3 — Transition')}
+${K('for')} (${K('int')} i = ${N('1')}; i <= m; i++) {
+    ${K('for')} (${K('int')} j = ${N('1')}; j <= n; j++) {
+
+        ${K('if')} (s1.${F('charAt')}(i - ${N('1')}) == s2.${F('charAt')}(j - ${N('1')})) {
+            ${C('// Characters match — extend diagonal')}
+            dp[i][j] = dp[i - ${N('1')}][j - ${N('1')}] + ${N('1')};
+        } ${K('else')} {
+            ${C('// No match — best of skipping one char from either string')}
+            dp[i][j] = ${T('Math')}.${F('max')}(dp[i - ${N('1')}][j], dp[i][j - ${N('1')}]);
+
+            ${C('// Edit distance instead:')}
+            ${C('// dp[i][j] = 1 + Math.min(dp[i-1][j],   // delete')}
+            ${C('//                          dp[i][j-1],   // insert')}
+            ${C('//                          dp[i-1][j-1]); // replace')}
+        }
+    }
+}
+`
+      },
+      { label:'Return answer',
+        hint:'dp[m][n] is the answer. To reconstruct the actual LCS string, backtrack from dp[m][n] following diagonal matches.',
+        code:`${C('// Step 4 — Answer')}
+${K('return')} dp[m][n];
+
+${C('// Backtrack to reconstruct the LCS string:')}
+${T('StringBuilder')} sb = ${K('new')} ${T('StringBuilder')}();
+${K('int')} i = m, j = n;
+${K('while')} (i > ${N('0')} && j > ${N('0')}) {
+    ${K('if')} (s1.${F('charAt')}(i - ${N('1')}) == s2.${F('charAt')}(j - ${N('1')})) {
+        sb.${F('insert')}(${N('0')}, s1.${F('charAt')}(i - ${N('1')}));
+        i--;  j--;
+    } ${K('else')} ${K('if')} (dp[i - ${N('1')}][j] > dp[i][j - ${N('1')}]) i--;
+    ${K('else')} j--;
+}
+${K('return')} sb.${F('toString')}();
+`
+      }
+    ]
+  },
+  {
+    id:'int', label:'Interval DP',
+    steps:[
+      { label:'Define state',
+        hint:'dp[i][j] = answer for the subproblem on range [i, j]. Fill short intervals first, then expand.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dp[i][j] = optimal cost/value on subarray [i..j]')}
+${C('// Classic: matrix chain multiply, burst balloons, palindrome partition')}
+
+${K('int')} n = arr.length;
+${K('int')}[][] dp = ${K('new')} ${K('int')}[n][n];
+
+${C('// dp[i][i] = base (single element)')}
+${C('// dp[i][j] built by trying every split point k in [i, j-1]')}
+`
+      },
+      { label:'Base case',
+        hint:'Length-1 intervals are always the base. Seed dp[i][i] for all i.',
+        code:`${C('// Step 2 — Base case: single elements')}
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+    dp[i][i] = ${N('0')};   ${C('// one element — no cost (e.g. no split needed)')}
+
+${C('// For palindrome problems, also seed length-2:')}
+${K('for')} (${K('int')} i = ${N('0')}; i < n - ${N('1')}; i++)
+    dp[i][i + ${N('1')}] = (s.${F('charAt')}(i) == s.${F('charAt')}(i + ${N('1')})) ? ${N('0')} : ${N('1')};
+`
+      },
+      { label:'Transition',
+        hint:'Outer loop is interval length. Inner loop is left boundary i. Try every split point k.',
+        code:`${C('// Step 3 — Fill by increasing interval length')}
+${K('for')} (${K('int')} len = ${N('2')}; len <= n; len++) {       ${C('// length of interval')}
+    ${K('for')} (${K('int')} i = ${N('0')}; i <= n - len; i++) {   ${C('// left boundary')}
+        ${K('int')} j = i + len - ${N('1')};                ${C('// right boundary')}
+        dp[i][j] = ${T('Integer')}.MAX_VALUE;
+
+        ${K('for')} (${K('int')} k = i; k < j; k++) {     ${C('// try every split point')}
+            ${K('int')} cost = dp[i][k] + dp[k + ${N('1')}][j]
+                       + ${F('mergeCost')}(i, k, j); ${C('// problem-specific')}
+            dp[i][j] = ${T('Math')}.${F('min')}(dp[i][j], cost);
+        }
+    }
+}
+`
+      },
+      { label:'Return answer',
+        hint:'dp[0][n-1] covers the entire array. Time complexity is O(n³) — the three nested loops.',
+        code:`${C('// Step 4 — Answer spans the full interval')}
+${K('return')} dp[${N('0')}][n - ${N('1')}];
+
+${C('// Complexity: O(n³) time, O(n²) space — typical for interval DP')}
+
+${C('// Problem-specific mergeCost examples:')}
+${C('// Matrix chain:   dims[i] * dims[k+1] * dims[j+1]')}
+${C('// Burst balloons: nums[i-1] * nums[k] * nums[j+1]')}
+${C('// Stone merge:    prefix sum of [i..j]')}
+`
+      }
+    ]
+  },
+  {
+    id:'dag', label:'DP on DAG',
+    steps:[
+      { label:'Define state',
+        hint:'dp[node] = optimal answer (longest/shortest/count) ending at or passing through this node.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dp[node] = best path value ending at this node')}
+${C('// Classic: LIS, longest path in DAG, number of paths')}
+
+${K('int')} n = numNodes;
+${K('int')}[] dp = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(dp, ${N('1')}); ${C('// each node alone = length 1 (for LIS-style)')}
+
+${C('// Build adjacency list from edges')}
+${T('List')}<${T('List')}<${T('Integer')}>> adj = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) adj.${F('add')}(${K('new')} ${T('ArrayList')}<>());
+`
+      },
+      { label:'Base case',
+        hint:'Source nodes (no incoming edges) have dp = 1 (or 0 for count problems seeded at target).',
+        code:`${C('// Step 2 — Base case')}
+
+${C('// For LIS (each element starts a sequence of length 1):')}
+${T('Arrays')}.${F('fill')}(dp, ${N('1')});
+
+${C('// For counting paths to target, seed the target:')}
+${K('int')}[] ways = ${K('new')} ${K('int')}[n];
+ways[target] = ${N('1')};
+
+${C('// For shortest path from source, seed the source:')}
+${K('int')}[] dist = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(dist, ${T('Integer')}.MAX_VALUE);
+dist[source] = ${N('0')};
+`
+      },
+      { label:'Transition',
+        hint:'Process nodes in topological order. For LIS, the sorted order IS the topo order.',
+        code:`${C('// Step 3 — Process in topological order')}
+
+${C('// ─── LIS (O(n²) version) ───')}
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('for')} (${K('int')} j = ${N('0')}; j < i; j++) {
+        ${K('if')} (nums[j] < nums[i])          ${C('// valid extension')}
+            dp[i] = ${T('Math')}.${F('max')}(dp[i], dp[j] + ${N('1')});
+    }
+}
+
+${C('// ─── Generic DAG (explicit topo order) ───')}
+${K('for')} (${K('int')} u : topoOrder) {
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        dp[v] = ${T('Math')}.${F('max')}(dp[v], dp[u] + ${N('1')});
+    }
+}
+`
+      },
+      { label:'Return answer',
+        hint:'Max over all dp[i] for longest path. For LIS, binary search reduces this to O(n log n).',
+        code:`${C('// Step 4 — Answer')}
+${K('int')} ans = ${N('0')};
+${K('for')} (${K('int')} v : dp) ans = ${T('Math')}.${F('max')}(ans, v);
+${K('return')} ans;
+
+${C('// ─── O(n log n) LIS via patience sort ───')}
+${T('List')}<${T('Integer')}> tails = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} num : nums) {
+    ${K('int')} pos = ${T('Collections')}.${F('binarySearch')}(tails, num);
+    ${K('if')} (pos < ${N('0')}) pos = -(pos + ${N('1')});
+    ${K('if')} (pos == tails.${F('size')}()) tails.${F('add')}(num);
+    ${K('else')} tails.${F('set')}(pos, num);
+}
+${K('return')} tails.${F('size')}();
+`
+      }
+    ]
+  },
+  {
+    id:'bit', label:'Bitmask DP',
+    steps:[
+      { label:'Define state',
+        hint:'dp[mask] = best answer when the set of visited/used elements is described by the bits in mask.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dp[mask] = optimal cost/value for the subset encoded by mask')}
+${C('// Classic: TSP, assign tasks to workers, cover all nodes')}
+
+${K('int')} n = items.length;          ${C('// must be small — n ≤ 20 typically')}
+${K('int')} FULL = (${N('1')} << n) - ${N('1')};  ${C('// all bits set = all elements used')}
+${K('int')}[] dp = ${K('new')} ${K('int')}[${N('1')} << n];
+${T('Arrays')}.${F('fill')}(dp, ${T('Integer')}.MAX_VALUE);
+
+${C('// Bit trick: check if bit i is set in mask')}
+${C('// (mask >> i) & 1  ==  1')}
+`
+      },
+      { label:'Base case',
+        hint:'Empty set (mask = 0) is the starting point. For TSP: start at node 0, so dp[1][0] = 0.',
+        code:`${C('// Step 2 — Base case')}
+dp[${N('0')}] = ${N('0')};    ${C('// empty subset — zero cost')}
+
+${C('// For TSP (also tracks last-visited node):')}
+${K('int')}[][] tsp = ${K('new')} ${K('int')}[${N('1')} << n][n];
+${K('for')} (${K('int')}[] row : tsp) ${T('Arrays')}.${F('fill')}(row, ${T('Integer')}.MAX_VALUE);
+tsp[${N('1')}][${N('0')}] = ${N('0')};   ${C('// start at node 0, only node 0 visited')}
+`
+      },
+      { label:'Transition',
+        hint:'Iterate over all masks. For each, try adding every element not yet in the mask.',
+        code:`${C('// Step 3 — Transition: expand each subset')}
+${K('for')} (${K('int')} mask = ${N('0')}; mask < (${N('1')} << n); mask++) {
+    ${K('if')} (dp[mask] == ${T('Integer')}.MAX_VALUE) ${K('continue')};
+
+    ${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+        ${K('if')} ((mask >> i & ${N('1')}) == ${N('1')}) ${K('continue')}; ${C('// i already in set')}
+
+        ${K('int')} next = mask | (${N('1')} << i);
+        dp[next] = ${T('Math')}.${F('min')}(dp[next],
+                        dp[mask] + ${F('cost')}(mask, i)); ${C('// problem-specific')}
+    }
+}
+
+${C('// Useful: Integer.bitCount(mask) = number of bits set')}
+`
+      },
+      { label:'Return answer',
+        hint:'dp[FULL] = answer using all elements. For TSP, also add the return-to-start edge cost.',
+        code:`${C('// Step 4 — Answer')}
+${K('return')} dp[FULL];
+
+${C('// TSP — answer is min cost to visit all nodes and return to 0:')}
+${K('int')} minTSP = ${T('Integer')}.MAX_VALUE;
+${K('for')} (${K('int')} last = ${N('1')}; last < n; last++) {
+    ${K('if')} (tsp[FULL][last] != ${T('Integer')}.MAX_VALUE)
+        minTSP = ${T('Math')}.${F('min')}(minTSP,
+                     tsp[FULL][last] + dist[last][${N('0')}]);
+}
+${K('return')} minTSP;
+
+${C('// Complexity: O(2ⁿ · n) time and space — feasible up to n ≈ 20')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

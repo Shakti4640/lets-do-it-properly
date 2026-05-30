@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Graph Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f12;
+    --bg2:       #13161b;
+    --bg3:       #1a1e25;
+    --bg4:       #21262f;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.13);
+    --text:      #c9d1d9;
+    --text2:     #8b949e;
+    --text3:     #4d5566;
+    --accent:    #58a6ff;
+    --green:     #3fb950;
+    --amber:     #d29922;
+    --coral:     #f0883e;
+    --purple:    #bc8cff;
+    --teal:      #39d0a8;
+
+    --kw:   #ff7b72;
+    --ty:   #79c0ff;
+    --cm:   #4d5566;
+    --st:   #a5d6a7;
+    --fn:   #d2a679;
+    --nu:   #79c0ff;
+
+    --tab-active-grid:   #3fb950;
+    --tab-active-adj:    #58a6ff;
+    --tab-active-mat:    #d29922;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+
+  /* ─── Header ─── */
+  header {
+    max-width: 900px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #e6edf3;
+    line-height: 1.2;
+  }
+  .header-left p {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-bfs  { background: rgba(88,166,255,0.1);  color: var(--accent); border-color: rgba(88,166,255,0.25); }
+
+  /* ─── Main card ─── */
+  .card {
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  /* ─── Window chrome ─── */
+  .window-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name {
+    margin-left: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* ─── Tabs ─── */
+  .tab-row {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .tab {
+    padding: 11px 22px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+    user-select: none;
+    letter-spacing: 0.2px;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active-grid  { color: var(--tab-active-grid); border-bottom-color: var(--tab-active-grid); }
+  .tab.active-adj   { color: var(--tab-active-adj);  border-bottom-color: var(--tab-active-adj); }
+  .tab.active-mat   { color: var(--tab-active-mat);  border-bottom-color: var(--tab-active-mat); }
+
+  /* ─── Step bar ─── */
+  .step-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1;
+    min-width: 130px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text3);
+    background: none;
+    border: none;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+    text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.active { background: var(--bg4); color: var(--text); }
+  .step-btn .step-num {
+    display: block;
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 2px;
+  }
+  .step-btn.active .step-num { color: var(--accent); }
+
+  /* ─── Panels ─── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ─── Code area ─── */
+  .code-wrap {
+    padding: 24px 28px;
+    overflow-x: auto;
+    background: var(--bg2);
+    min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--text);
+    tab-size: 4;
+  }
+  .kw  { color: var(--kw); }
+  .ty  { color: var(--ty); }
+  .cm  { color: var(--cm); font-style: italic; }
+  .st  { color: var(--st); }
+  .fn  { color: var(--fn); }
+  .nu  { color: var(--nu); }
+
+  /* ─── Note bar ─── */
+  .note-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 24px;
+    background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.6;
+  }
+  .note-bar::before {
+    content: '//';
+    color: var(--cm);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ─── Cheat sheet ─── */
+  .cheat {
+    max-width: 900px;
+    margin: 24px auto 0;
+  }
+  .cheat-title {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 600px) { .cheat-grid { grid-template-columns: 1fr; } }
+  .cheat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border-top: 3px solid;
+  }
+  .cheat-card.grid-card { border-top-color: var(--tab-active-grid); }
+  .cheat-card.adj-card  { border-top-color: var(--tab-active-adj); }
+  .cheat-card.mat-card  { border-top-color: var(--tab-active-mat); }
+  .cheat-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e6edf3;
+    margin-bottom: 8px;
+  }
+  .cheat-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Graph Templates</h1>
+    <p>// 3 representations · 4 steps each · BFS/DFS ready</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">☕ Java</span>
+    <span class="badge badge-bfs">⬡ Graph Traversal</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">GraphTemplate.java</span>
+  </div>
+
+  <div class="tab-row">
+    <div class="tab active-grid" data-tab="grid" onclick="switchTab('grid')">Grid (2D Array)</div>
+    <div class="tab" data-tab="adj"  onclick="switchTab('adj')">Adjacency List</div>
+    <div class="tab" data-tab="mat"  onclick="switchTab('mat')">Adjacency Matrix</div>
+  </div>
+
+  <!-- GRID -->
+  <div id="panel-grid" class="panel active">
+    <div class="step-bar" id="steps-grid"></div>
+    <div class="code-wrap"><pre id="code-grid"></pre></div>
+    <div class="note-bar" id="note-grid"></div>
+  </div>
+
+  <!-- ADJ LIST -->
+  <div id="panel-adj" class="panel">
+    <div class="step-bar" id="steps-adj"></div>
+    <div class="code-wrap"><pre id="code-adj"></pre></div>
+    <div class="note-bar" id="note-adj"></div>
+  </div>
+
+  <!-- ADJ MATRIX -->
+  <div id="panel-mat" class="panel">
+    <div class="step-bar" id="steps-mat"></div>
+    <div class="code-wrap"><pre id="code-mat"></pre></div>
+    <div class="note-bar" id="note-mat"></div>
+  </div>
+</div>
+
+<!-- Cheat sheet -->
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card grid-card">
+      <h3>Grid (2D Array)</h3>
+      <div class="cheat-row"><span>Use when</span><span>2D char/int grid input</span></div>
+      <div class="cheat-row"><span>Neighbor lookup</span><span>4/8 directional</span></div>
+      <div class="cheat-row"><span>Space</span><span>O(rows × cols)</span></div>
+      <div class="cheat-row"><span>Classic problems</span><span>Islands, flood fill</span></div>
+    </div>
+    <div class="cheat-card adj-card">
+      <h3>Adjacency List</h3>
+      <div class="cheat-row"><span>Use when</span><span>Sparse graph / edges input</span></div>
+      <div class="cheat-row"><span>Neighbor lookup</span><span>Iterate list O(deg)</span></div>
+      <div class="cheat-row"><span>Space</span><span>O(V + E)</span></div>
+      <div class="cheat-row"><span>Classic problems</span><span>BFS shortest path</span></div>
+    </div>
+    <div class="cheat-card mat-card">
+      <h3>Adjacency Matrix</h3>
+      <div class="cheat-row"><span>Use when</span><span>Dense graph / small n</span></div>
+      <div class="cheat-row"><span>Neighbor lookup</span><span>Scan row O(n)</span></div>
+      <div class="cheat-row"><span>Space</span><span>O(n²)</span></div>
+      <div class="cheat-row"><span>Classic problems</span><span>Floyd-Warshall</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K = s => `<span class="kw">${s}</span>`;
+const T = s => `<span class="ty">${s}</span>`;
+const C = s => `<span class="cm">${s}</span>`;
+const S = s => `<span class="st">${s}</span>`;
+const F = s => `<span class="fn">${s}</span>`;
+const N = s => `<span class="nu">${s}</span>`;
+
+const data = {
+  grid: {
+    steps: [
+      {
+        label: 'Input & Grid',
+        note: 'Parse rows/cols and build the char grid from the String array input.',
+        code: `${C('// Step 1 — Parse input & build the grid')}
+${K('int')} rows = grid.length;
+${K('int')} cols = grid[${N('0')}].length();
+
+${C('// 4-directional moves (up, down, left, right)')}
+${K('int')}[][] dirs = {{-${N('1')},${N('0')}},{${N('1')},${N('0')}},{${N('0')},-${N('1')}},{${N('0')},${N('1')}}};\n`
+      },
+      {
+        label: 'State & Queue',
+        note: 'Mark visited cells in-place (or a separate boolean[][] to avoid mutation).',
+        code: `${C('// Step 2 — Visited array + BFS queue')}
+${K('boolean')}[][] visited = ${K('new')} ${K('boolean')}[rows][cols];
+${T('Queue')}<${K('int')}[]> queue = ${K('new')} ${T('LinkedList')}<>();
+
+${C('// Seed: push all starting cells (e.g. all \'1\' for islands)')}
+${K('for')} (${K('int')} r = ${N('0')}; r < rows; r++) {
+    ${K('for')} (${K('int')} c = ${N('0')}; c < cols; c++) {
+        ${K('if')} (grid[r].${F('charAt')}(c) == ${S('\'1\'')}) {
+            queue.${F('offer')}(${K('new')} ${K('int')}{r, c});
+            visited[r][c] = ${K('true')};
+        }
+    }
+}\n`
+      },
+      {
+        label: 'BFS / DFS',
+        note: 'Explore neighbors within bounds, skipping walls and visited cells.',
+        code: `${C('// Step 3 — BFS traversal (swap for DFS with a Stack)')}
+${K('while')} (!queue.${F('isEmpty')}()) {
+    ${K('int')}[] cell = queue.${F('poll')}();
+    ${K('int')} r = cell[${N('0')}], c = cell[${N('1')}];
+
+    ${K('for')} (${K('int')}[] d : dirs) {
+        ${K('int')} nr = r + d[${N('0')}], nc = c + d[${N('1')}];
+
+        ${C('// bounds check + wall check + visited check')}
+        ${K('if')} (nr >= ${N('0')} && nr < rows && nc >= ${N('0')} && nc < cols
+                && !visited[nr][nc]
+                && grid[nr].${F('charAt')}(nc) != ${S('\'#\'')}) {
+
+            visited[nr][nc] = ${K('true')};
+            queue.${F('offer')}(${K('new')} ${K('int')}{nr, nc});
+        }
+    }
+}\n`
+      },
+      {
+        label: 'Return Result',
+        note: 'Collect your answer after the traversal — count, distance, path, etc.',
+        code: `${C('// Step 4 — Aggregate and return')}
+
+${C('// Example: count connected components (islands)')}
+${K('int')} components = ${N('0')};
+${K('boolean')}[][] seen = ${K('new')} ${K('boolean')}[rows][cols];
+
+${K('for')} (${K('int')} r = ${N('0')}; r < rows; r++) {
+    ${K('for')} (${K('int')} c = ${N('0')}; c < cols; c++) {
+        ${K('if')} (grid[r].${F('charAt')}(c) == ${S('\'1\'')} && !seen[r][c]) {
+            ${F('bfs')}(grid, seen, r, c);   ${C('// helper using Step 3 logic')}
+            components++;
+        }
+    }
+}
+${K('return')} components;\n`
+      }
+    ]
+  },
+
+  adj: {
+    steps: [
+      {
+        label: 'Build Graph',
+        note: 'Create an adjacency list — one List<Integer> per node. For weighted graphs, store int[] {neighbor, weight}.',
+        code: `${C('// Step 1 — Build adjacency list from edge input')}
+${K('int')} n = numNodes;
+${T('List')}<${T('List')}<${T('Integer')}>> graph = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+    graph.${F('add')}(${K('new')} ${T('ArrayList')}<>());
+
+${K('for')} (${K('int')}[] edge : edges) {
+    graph.${F('get')}(edge[${N('0')}]).${F('add')}(edge[${N('1')}]);
+    graph.${F('get')}(edge[${N('1')}]).${F('add')}(edge[${N('0')}]);  ${C('// remove for directed')}
+}\n`
+      },
+      {
+        label: 'State & Queue',
+        note: 'Visited boolean[] prevents revisiting. Seed the queue with the source node.',
+        code: `${C('// Step 2 — Visited array + BFS queue')}
+${K('boolean')}[] visited = ${K('new')} ${K('boolean')}[n];
+${T('Queue')}<${T('Integer')}> queue = ${K('new')} ${T('LinkedList')}<>();
+
+${K('int')} source = ${N('0')};
+queue.${F('offer')}(source);
+visited[source] = ${K('true')};
+
+${C('// For shortest path: also keep a dist[] array')}
+${K('int')}[] dist = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(dist, -${N('1')});
+dist[source] = ${N('0')};\n`
+      },
+      {
+        label: 'BFS / DFS',
+        note: 'Poll from the queue, iterate over neighbors, push unvisited ones.',
+        code: `${C('// Step 3 — BFS traversal')}
+${K('while')} (!queue.${F('isEmpty')}()) {
+    ${K('int')} node = queue.${F('poll')}();
+
+    ${K('for')} (${K('int')} neighbor : graph.${F('get')}(node)) {
+        ${K('if')} (!visited[neighbor]) {
+            visited[neighbor] = ${K('true')};
+            dist[neighbor] = dist[node] + ${N('1')};
+            queue.${F('offer')}(neighbor);
+        }
+    }
+}
+
+${C('// DFS alternative — just replace Queue+poll with Stack+pop')}
+${C('// or use recursive DFS:')}
+${C('// void dfs(int node, boolean[] vis, List<List<Integer>> g) {')}
+${C('//   vis[node] = true;')}
+${C('//   for (int nb : g.get(node)) if (!vis[nb]) dfs(nb, vis, g);')}
+${C('// }')}\n`
+      },
+      {
+        label: 'Return Result',
+        note: 'Use dist[] for shortest paths, visited[] for connectivity, or accumulate during traversal for cycle detection, topo sort, etc.',
+        code: `${C('// Step 4 — Return result')}
+
+${C('// Shortest path to target node:')}
+${K('return')} dist[target];   ${C('// -1 if unreachable')}
+
+${C('// Count unreachable nodes:')}
+${K('int')} unreachable = ${N('0')};
+${K('for')} (${K('boolean')} v : visited) ${K('if')} (!v) unreachable++;
+${K('return')} unreachable;
+
+${C('// Check all nodes connected:')}
+${K('for')} (${K('boolean')} v : visited)
+    ${K('if')} (!v) ${K('return')} ${K('false')};
+${K('return')} ${K('true')};\n`
+      }
+    ]
+  },
+
+  mat: {
+    steps: [
+      {
+        label: 'Build Matrix',
+        note: 'O(n²) space — only practical for dense graphs or when n is small (≤ 1000).',
+        code: `${C('// Step 1 — Build n×n adjacency matrix')}
+${K('int')} n = numNodes;
+${K('int')}[][] mat = ${K('new')} ${K('int')}[n][n];
+
+${K('for')} (${K('int')}[] edge : edges) {
+    mat[edge[${N('0')}]][edge[${N('1')}]] = ${N('1')};
+    mat[edge[${N('1')}]][edge[${N('0')}]] = ${N('1')};  ${C('// remove for directed')}
+}
+
+${C('// For weighted graph, store the weight instead of 1:')}
+${C('// mat[u][v] = weight;')}\n`
+      },
+      {
+        label: 'State & Queue',
+        note: 'Same visited[] and queue setup as adjacency list — the representation only changes how you find neighbors.',
+        code: `${C('// Step 2 — Visited array + BFS queue')}
+${K('boolean')}[] visited = ${K('new')} ${K('boolean')}[n];
+${T('Queue')}<${T('Integer')}> queue = ${K('new')} ${T('LinkedList')}<>();
+
+${K('int')} source = ${N('0')};
+queue.${F('offer')}(source);
+visited[source] = ${K('true')};
+
+${C('// Optional: distance tracking')}
+${K('int')}[] dist = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(dist, ${T('Integer')}.MAX_VALUE);
+dist[source] = ${N('0')};\n`
+      },
+      {
+        label: 'BFS / DFS',
+        note: 'The only difference vs adjacency list: neighbors are found by scanning the full row of the matrix.',
+        code: `${C('// Step 3 — BFS (scan matrix row to find neighbors)')}
+${K('while')} (!queue.${F('isEmpty')}()) {
+    ${K('int')} node = queue.${F('poll')}();
+
+    ${C('// scan entire row — O(n) per node, O(n²) total')}
+    ${K('for')} (${K('int')} neighbor = ${N('0')}; neighbor < n; neighbor++) {
+        ${K('if')} (mat[node][neighbor] == ${N('1')} && !visited[neighbor]) {
+            visited[neighbor] = ${K('true')};
+            dist[neighbor] = dist[node] + ${N('1')};
+            queue.${F('offer')}(neighbor);
+        }
+    }
+}\n`
+      },
+      {
+        label: 'Return Result',
+        note: 'Matrix shines for O(1) edge existence checks: if (mat[u][v] == 1). Also useful for Floyd-Warshall all-pairs shortest paths.',
+        code: `${C('// Step 4 — Return result')}
+
+${C('// O(1) edge existence check (matrix advantage):')}
+${K('boolean')} hasEdge = mat[u][v] == ${N('1')};
+
+${C('// Shortest distance to target:')}
+${K('return')} dist[target] == ${T('Integer')}.MAX_VALUE ? -${N('1')} : dist[target];
+
+${C('// Floyd-Warshall seed (all-pairs shortest path):')}
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+    ${K('for')} (${K('int')} j = ${N('0')}; j < n; j++)
+        ${K('if')} (mat[i][j] == ${N('0')} && i != j)
+            mat[i][j] = ${T('Integer')}.MAX_VALUE;  ${C('// ∞ = no edge')}\n`
+      }
+    ]
+  }
+};
+
+let activeTab = 'grid';
+const stepIdx = { grid: 0, adj: 0, mat: 0 };
+
+function render(type) {
+  const d = data[type];
+  const sb = document.getElementById('steps-' + type);
+  sb.innerHTML = d.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[type] ? 'active' : ''}" onclick="setStep('${type}', ${i})">
+      <span class="step-num">Step ${i + 1}</span>${s.label}
+    </button>`
+  ).join('');
+  document.getElementById('code-' + type).innerHTML = d.steps[stepIdx[type]].code;
+  document.getElementById('note-' + type).textContent = d.steps[stepIdx[type]].note;
+}
+
+function setStep(type, idx) {
+  stepIdx[type] = idx;
+  render(type);
+}
+
+function switchTab(type) {
+  activeTab = type;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.className = 'tab';
+    if (t.dataset.tab === type) t.classList.add('active-' + type);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + type).classList.add('active');
+  render(type);
+}
+
+render('grid'); render('adj'); render('mat');
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
