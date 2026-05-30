@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Merge Intervals Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-mer: #58a6ff;
+    --c-ins: #39d0a8;
+    --c-ovl: #f0883e;
+    --c-swl: #bc8cff;
+    --c-min: #d29922;
+    --c-two: #e06c75;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-iv   { background: rgba(88,166,255,0.1); color: var(--c-mer); border-color: rgba(88,166,255,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="mer"].on { color: var(--c-mer); border-bottom-color: var(--c-mer); }
+  .tab[data-id="ins"].on { color: var(--c-ins); border-bottom-color: var(--c-ins); }
+  .tab[data-id="ovl"].on { color: var(--c-ovl); border-bottom-color: var(--c-ovl); }
+  .tab[data-id="swl"].on { color: var(--c-swl); border-bottom-color: var(--c-swl); }
+  .tab[data-id="min"].on { color: var(--c-min); border-bottom-color: var(--c-min); }
+  .tab[data-id="two"].on { color: var(--c-two); border-bottom-color: var(--c-two); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Merge Intervals Templates</h1>
+    <p>// 6 patterns &middot; 4 steps each &middot; sort &middot; sweep &middot; greedy</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-iv">&#x25AC; Intervals</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">IntervalTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-mer)">
+      <h3>Sort &amp; Merge</h3>
+      <div class="cheat-row"><span>Sort by</span><span>start ascending</span></div>
+      <div class="cheat-row"><span>Merge if</span><span>cur.start &le; last.end</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(n log n)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Merge Intervals, Summary Ranges</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-ins)">
+      <h3>Insert Interval</h3>
+      <div class="cheat-row"><span>Input</span><span>sorted, no overlap</span></div>
+      <div class="cheat-row"><span>Three phases</span><span>before, merge, after</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(n) one pass</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Insert Interval (LC 57)</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-ovl)">
+      <h3>Non-Overlapping</h3>
+      <div class="cheat-row"><span>Sort by</span><span>end ascending (greedy)</span></div>
+      <div class="cheat-row"><span>Keep if</span><span>start &ge; last.end</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(n log n)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Erase Overlap, Arrows</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-swl)">
+      <h3>Sweep Line</h3>
+      <div class="cheat-row"><span>Build</span><span>+1 at start, -1 at end</span></div>
+      <div class="cheat-row"><span>Sort</span><span>events by time</span></div>
+      <div class="cheat-row"><span>Track</span><span>running count of active</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Car Pooling, Skyline</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-min)">
+      <h3>Min Rooms (Heap)</h3>
+      <div class="cheat-row"><span>Sort by</span><span>start ascending</span></div>
+      <div class="cheat-row"><span>Heap holds</span><span>end times of active</span></div>
+      <div class="cheat-row"><span>Pop if</span><span>top.end &le; cur.start</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Meeting Rooms II, CPU Tasks</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-two)">
+      <h3>Two Lists Intersect</h3>
+      <div class="cheat-row"><span>Inputs</span><span>both pre-sorted</span></div>
+      <div class="cheat-row"><span>Overlap</span><span>max(a.s,b.s) &le; min(a.e,b.e)</span></div>
+      <div class="cheat-row"><span>Advance</span><span>smaller end pointer</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Interval List Intersections</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'mer', label:'Sort & Merge',
+    steps:[
+      { label:'Define state',
+        hint:'After sorting by start, walk left to right and keep a list of merged intervals. The last item is the current candidate.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// merged = list of disjoint intervals built so far')}
+${C('// Each new candidate either extends merged.last or appends fresh')}
+${C('// Classic: Merge Intervals (LC 56), Summary Ranges')}
+
+${T('List')}<${K('int')}[]> merged = ${K('new')} ${T('ArrayList')}<>();
+
+${C('// Sort intervals by start ascending — single most important step')}
+${T('Arrays')}.${F('sort')}(intervals, (a, b) -> a[${N('0')}] - b[${N('0')}]);
+`
+      },
+      { label:'Base case',
+        hint:'Empty input returns an empty array. Otherwise the first interval seeds the merged list.',
+        code:`${C('// Step 2 — Base case')}
+${K('if')} (intervals.length == ${N('0')})
+    ${K('return')} ${K('new')} ${K('int')}[${N('0')}][${N('0')}];
+
+${C('// Seed merged with the first (already sorted) interval')}
+merged.${F('add')}(intervals[${N('0')}]);
+`
+      },
+      { label:'Merge or append',
+        hint:'If current.start <= last.end the two overlap — extend last.end. Otherwise current is disjoint and joins as a new entry.',
+        code:`${C('// Step 3 — One pass through the sorted intervals')}
+${K('for')} (${K('int')} i = ${N('1')}; i < intervals.length; i++) {
+    ${K('int')}[] cur  = intervals[i];
+    ${K('int')}[] last = merged.${F('get')}(merged.${F('size')}() - ${N('1')});
+
+    ${K('if')} (cur[${N('0')}] <= last[${N('1')}]) {
+        ${C('// Overlap — stretch the right edge of last')}
+        last[${N('1')}] = ${T('Math')}.${F('max')}(last[${N('1')}], cur[${N('1')}]);
+    } ${K('else')} {
+        ${C('// Disjoint — start a new merged block')}
+        merged.${F('add')}(cur);
+    }
+}
+`
+      },
+      { label:'Return answer',
+        hint:'Convert the list to a 2D array. The result is sorted and disjoint by construction.',
+        code:`${C('// Step 4 — Materialise the result')}
+${K('return')} merged.${F('toArray')}(${K('new')} ${K('int')}[merged.${F('size')}()][]);
+
+${C('// Variant — Summary Ranges on a sorted int[]:')}
+${T('List')}<${T('String')}> out = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('int')} start = nums[i];
+    ${K('while')} (i + ${N('1')} < n && nums[i + ${N('1')}] == nums[i] + ${N('1')}) i++;
+    out.${F('add')}(start == nums[i] ? "" + start : start + "->" + nums[i]);
+}
+${K('return')} out;
+`
+      }
+    ]
+  },
+  {
+    id:'ins', label:'Insert Interval',
+    steps:[
+      { label:'Define state',
+        hint:'Input is already sorted and disjoint. Build the result in three clear phases: before, merge, after.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// out = result we build in one pass')}
+${C('// newInt = the interval to insert (mutable as we merge into it)')}
+${C('// Classic: Insert Interval (LC 57)')}
+
+${T('List')}<${K('int')}[]> out = ${K('new')} ${T('ArrayList')}<>();
+${K('int')} i = ${N('0')}, n = intervals.length;
+
+${C('// Three phases:')}
+${C('//   1) before  — strictly left of newInt')}
+${C('//   2) merge   — overlaps with newInt')}
+${C('//   3) after   — strictly right of newInt')}
+`
+      },
+      { label:'Phase 1 — before',
+        hint:'Copy any interval that ends strictly before newInt starts. These cannot overlap with anything we will produce.',
+        code:`${C('// Step 2 — Phase 1: intervals that end before newInt starts')}
+${K('while')} (i < n && intervals[i][${N('1')}] < newInt[${N('0')}]) {
+    out.${F('add')}(intervals[i]);
+    i++;
+}
+
+${C('// At this point every remaining interval either overlaps')}
+${C('// newInt or starts strictly after newInt ends.')}
+`
+      },
+      { label:'Phase 2 — merge',
+        hint:'Any interval whose start is <= newInt.end overlaps. Absorb it by widening newInt on both sides.',
+        code:`${C('// Step 3 — Phase 2: absorb overlapping intervals into newInt')}
+${K('while')} (i < n && intervals[i][${N('0')}] <= newInt[${N('1')}]) {
+    newInt[${N('0')}] = ${T('Math')}.${F('min')}(newInt[${N('0')}], intervals[i][${N('0')}]);
+    newInt[${N('1')}] = ${T('Math')}.${F('max')}(newInt[${N('1')}], intervals[i][${N('1')}]);
+    i++;
+}
+out.${F('add')}(newInt);
+
+${C('// newInt now spans the entire merged block')}
+`
+      },
+      { label:'Phase 3 + return',
+        hint:'Anything left starts strictly after newInt ends. Append the rest as is.',
+        code:`${C('// Step 4 — Phase 3: tail intervals (already disjoint and sorted)')}
+${K('while')} (i < n) {
+    out.${F('add')}(intervals[i]);
+    i++;
+}
+
+${K('return')} out.${F('toArray')}(${K('new')} ${K('int')}[out.${F('size')}()][]);
+
+${C('// Time:  O(n) — single pass')}
+${C('// Space: O(n) — output only')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'ovl', label:'Non-Overlapping (Greedy)',
+    steps:[
+      { label:'Define state',
+        hint:'Greedy by earliest END picks intervals that leave the most room for future picks. The opposite of sort-by-start.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// kept = intervals chosen so far (number, not list)')}
+${C('// lastEnd = end of the last interval we kept')}
+${C('// Classic: Non-overlapping Intervals (LC 435), Burst Balloons (LC 452)')}
+
+${C('// CRITICAL: sort by END, not start')}
+${T('Arrays')}.${F('sort')}(intervals, (a, b) -> a[${N('1')}] - b[${N('1')}]);
+
+${K('int')} kept = ${N('0')};
+${K('int')} lastEnd = ${T('Integer')}.MIN_VALUE;
+`
+      },
+      { label:'Base case',
+        hint:'Empty input — nothing to remove, zero picks. Otherwise the first interval (smallest end) is always kept.',
+        code:`${C('// Step 2 — Base case')}
+${K('if')} (intervals.length == ${N('0')}) ${K('return')} ${N('0')};
+
+${C('// Pick the very first sorted interval (smallest end)')}
+kept    = ${N('1')};
+lastEnd = intervals[${N('0')}][${N('1')}];
+`
+      },
+      { label:'Greedy scan',
+        hint:'For each interval, keep it if its start is at least lastEnd. Otherwise it overlaps and must be dropped.',
+        code:`${C('// Step 3 — Greedy keep-or-drop')}
+${K('for')} (${K('int')} i = ${N('1')}; i < intervals.length; i++) {
+    ${K('if')} (intervals[i][${N('0')}] >= lastEnd) {
+        ${C('// No overlap — keep this interval')}
+        kept++;
+        lastEnd = intervals[i][${N('1')}];
+    }
+    ${C('// else: overlaps — drop it (do not move lastEnd)')}
+}
+
+${C('// Strict vs touching:')}
+${C('//   intervals[i][0] >= lastEnd  — touch is OK (Erase Overlap)')}
+${C('//   intervals[i][0] >  lastEnd  — touch counts as overlap (Arrows)')}
+`
+      },
+      { label:'Return answer',
+        hint:'For erase-overlap return n - kept. For arrows-balloons return kept itself (each kept group needs one arrow).',
+        code:`${C('// Step 4 — Translate to the final answer')}
+
+${C('// LC 435 — minimum intervals to remove')}
+${K('return')} intervals.length - kept;
+
+${C('// LC 452 — minimum arrows to burst balloons')}
+${C('// Same scan, but use strict > and return kept directly:')}
+${C('// for each i: if (start > lastEnd) { kept++; lastEnd = end; }')}
+${C('// return kept;')}
+
+${C('// Time:  O(n log n) — sorting dominates')}
+${C('// Space: O(1) — counters only')}
+`
+      }
+    ]
+  },
+  {
+    id:'swl', label:'Sweep Line',
+    steps:[
+      { label:'Define state',
+        hint:'Convert intervals to events: +1 at start, -1 at end. Sort by time. A running sum is the count of currently-active intervals.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// events = array of (time, delta) pairs')}
+${C('// active = running count of intervals open at the current time')}
+${C('// Classic: Car Pooling (LC 1094), Meeting Rooms II, Skyline')}
+
+${T('List')}<${K('int')}[]> events = ${K('new')} ${T('ArrayList')}<>();
+
+${C('// For each [start, end] add two events:')}
+${C('//   +1 at start  — interval opens')}
+${C('//   -1 at end    — interval closes')}
+`
+      },
+      { label:'Build events',
+        hint:'Push start with +load and end with -load (load = 1 for plain count). Endpoint convention matters — closed-open vs closed-closed.',
+        code:`${C('// Step 2 — Build the event list')}
+${K('for')} (${K('int')}[] iv : intervals) {
+    events.${F('add')}(${K('new')} ${K('int')}[]{ iv[${N('0')}],  ${N('1')} });   ${C('// open')}
+    events.${F('add')}(${K('new')} ${K('int')}[]{ iv[${N('1')}], -${N('1')} });   ${C('// close')}
+}
+
+${C('// Sort by time. Tie-break: close BEFORE open (a meeting that')}
+${C('// ends at t and another that starts at t do NOT overlap).')}
+events.${F('sort')}((a, b) -> a[${N('0')}] != b[${N('0')}]
+                            ? a[${N('0')}] - b[${N('0')}]
+                            : a[${N('1')}] - b[${N('1')}]);
+`
+      },
+      { label:'Sweep',
+        hint:'Walk events in order. Track running sum and the maximum it reaches. The peak is the answer for many problems.',
+        code:`${C('// Step 3 — Linear sweep')}
+${K('int')} active = ${N('0')}, peak = ${N('0')};
+${K('for')} (${K('int')}[] e : events) {
+    active += e[${N('1')}];
+    peak = ${T('Math')}.${F('max')}(peak, active);
+}
+
+${C('// Car Pooling variant — events carry passenger counts:')}
+${C('//   +numPassengers at from')}
+${C('//   -numPassengers at to')}
+${C('// Return active <= capacity throughout the sweep.')}
+`
+      },
+      { label:'Return answer',
+        hint:'Peak = min rooms needed (Meeting Rooms II) or max overlap. Capacity-style problems instead check active <= cap during the sweep.',
+        code:`${C('// Step 4 — Final answer depends on the question')}
+
+${C('// Meeting Rooms II — minimum rooms required')}
+${K('return')} peak;
+
+${C('// Car Pooling — feasibility check')}
+${K('int')} active2 = ${N('0')};
+${K('for')} (${K('int')}[] e : events) {
+    active2 += e[${N('1')}];
+    ${K('if')} (active2 > capacity) ${K('return')} ${K('false')};
+}
+${K('return')} ${K('true')};
+
+${C('// Time:  O(n log n) — sort')}
+${C('// Space: O(n) — events array')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'min', label:'Min Rooms (Heap)',
+    steps:[
+      { label:'Define state',
+        hint:'A min-heap of end times tells you the earliest-finishing active room. Heap size at any moment = number of active rooms.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// heap = min-heap of end times of currently active rooms')}
+${C('// heap.size() = number of rooms in use right now')}
+${C('// Classic: Meeting Rooms II (LC 253), Minimum CPUs')}
+
+${C('// Sort intervals by START')}
+${T('Arrays')}.${F('sort')}(intervals, (a, b) -> a[${N('0')}] - b[${N('0')}]);
+
+${T('PriorityQueue')}<${T('Integer')}> heap = ${K('new')} ${T('PriorityQueue')}<>();
+`
+      },
+      { label:'Base case',
+        hint:'Empty input — zero rooms. Otherwise the heap will fill up as we walk through sorted starts.',
+        code:`${C('// Step 2 — Base case')}
+${K('if')} (intervals.length == ${N('0')}) ${K('return')} ${N('0')};
+
+${C('// First meeting always opens room #1 — the loop will push it.')}
+${C('// No special seeding required.')}
+`
+      },
+      { label:'Allocate or reuse',
+        hint:'For each meeting, pop ends that finish at or before the new start. Then push this meeting end. Heap size grows only when no room is free.',
+        code:`${C('// Step 3 — Walk meetings in start order')}
+${K('for')} (${K('int')}[] iv : intervals) {
+
+    ${C('// Free up rooms whose meeting already ended')}
+    ${K('while')} (!heap.${F('isEmpty')}() && heap.${F('peek')}() <= iv[${N('0')}])
+        heap.${F('poll')}();
+
+    ${C('// This meeting takes some room — record its end time')}
+    heap.${F('offer')}(iv[${N('1')}]);
+}
+
+${C('// Touching boundaries: <= treats meetings ending at t and')}
+${C('// starting at t as compatible (one room can serve both).')}
+${C('// Use < if simultaneous endpoints DO conflict.')}
+`
+      },
+      { label:'Return answer',
+        hint:'The heap never shrinks below the peak number of simultaneously open rooms — its size at the end IS the answer.',
+        code:`${C('// Step 4 — Heap size = minimum rooms used in parallel')}
+${K('return')} heap.${F('size')}();
+
+${C('// Variation — assign exact room IDs:')}
+${C('// Use a heap of (endTime, roomId) and a counter for new IDs.')}
+
+${C('// Time:  O(n log n) — sort + n heap ops')}
+${C('// Space: O(n)       — heap of end times')}
+
+${C('// Two-array trick (no heap):')}
+${K('int')}[] starts = ${K('new')} ${K('int')}[n], ends = ${K('new')} ${K('int')}[n];
+${C('// fill, sort both, two pointers — same answer in O(n log n)')}
+`
+      }
+    ]
+  },
+  {
+    id:'two', label:'Two Lists Intersect',
+    steps:[
+      { label:'Define state',
+        hint:'Two pointers, one in each pre-sorted list. The intersection is the candidate window where both intervals overlap.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// i = index into list A,  j = index into list B')}
+${C('// Both lists are sorted and internally disjoint')}
+${C('// Classic: Interval List Intersections (LC 986)')}
+
+${K('int')} i = ${N('0')}, j = ${N('0')};
+${T('List')}<${K('int')}[]> out = ${K('new')} ${T('ArrayList')}<>();
+`
+      },
+      { label:'Compute overlap',
+        hint:'Overlap of [a0,a1] and [b0,b1] is [max(a0,b0), min(a1,b1)] — valid only if low <= high.',
+        code:`${C('// Step 2 — Inside the loop, compute the candidate overlap')}
+${K('while')} (i < A.length && j < B.length) {
+
+    ${K('int')} lo = ${T('Math')}.${F('max')}(A[i][${N('0')}], B[j][${N('0')}]);
+    ${K('int')} hi = ${T('Math')}.${F('min')}(A[i][${N('1')}], B[j][${N('1')}]);
+
+    ${K('if')} (lo <= hi) {
+        out.${F('add')}(${K('new')} ${K('int')}[]{ lo, hi });
+    }
+    ${C('// Continue to step 3 — advance pointers')}
+}
+`
+      },
+      { label:'Advance pointer',
+        hint:'Drop the interval with the smaller end — it cannot intersect anything later in the other list.',
+        code:`${C('// Step 3 — Advance the smaller-end pointer')}
+${C('// (place these lines INSIDE the while loop above)')}
+
+    ${K('if')} (A[i][${N('1')}] < B[j][${N('1')}]) i++;
+    ${K('else')}                       j++;
+
+${C('// Why? Whichever interval ends first cannot overlap any')}
+${C('// further interval in the other list, so we are done with it.')}
+
+${C('// If A[i].end == B[j].end, advancing either is fine — pick one.')}
+`
+      },
+      { label:'Return answer',
+        hint:'Each iteration is O(1) and advances at least one pointer, so total time is O(m + n).',
+        code:`${C('// Step 4 — Materialise')}
+${K('return')} out.${F('toArray')}(${K('new')} ${K('int')}[out.${F('size')}()][]);
+
+${C('// Time:  O(m + n) — linear')}
+${C('// Space: O(m + n) — output')}
+
+${C('// Related — Employee Free Time (LC 759):')}
+${C('//   1) merge ALL employee intervals via min-heap by start')}
+${C('//   2) gaps between merged outputs are the free intervals')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

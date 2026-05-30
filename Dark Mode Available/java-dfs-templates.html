@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java DFS Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-trv: #39d0a8;
+    --c-tdp: #58a6ff;
+    --c-cmp: #bc8cff;
+    --c-cyc: #f0883e;
+    --c-grd: #d29922;
+    --c-itr: #e06c75;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-dfs  { background: rgba(57,208,168,0.1); color: var(--c-trv); border-color: rgba(57,208,168,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="trv"].on { color: var(--c-trv); border-bottom-color: var(--c-trv); }
+  .tab[data-id="tdp"].on { color: var(--c-tdp); border-bottom-color: var(--c-tdp); }
+  .tab[data-id="cmp"].on { color: var(--c-cmp); border-bottom-color: var(--c-cmp); }
+  .tab[data-id="cyc"].on { color: var(--c-cyc); border-bottom-color: var(--c-cyc); }
+  .tab[data-id="grd"].on { color: var(--c-grd); border-bottom-color: var(--c-grd); }
+  .tab[data-id="itr"].on { color: var(--c-itr); border-bottom-color: var(--c-itr); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java DFS Templates</h1>
+    <p>// 6 patterns &middot; 4 steps each &middot; trees &amp; graphs &middot; recursion based</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-dfs">&#x21B3; DFS</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">DfsTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-trv)">
+      <h3>Tree Traversal</h3>
+      <div class="cheat-row"><span>Pre / in / post</span><span>visit before / between / after</span></div>
+      <div class="cheat-row"><span>Stack</span><span>O(h) recursion</span></div>
+      <div class="cheat-row"><span>Visited</span><span>not needed</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Inorder, Preorder, Postorder</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-tdp)">
+      <h3>Tree DP (Postorder)</h3>
+      <div class="cheat-row"><span>Recur returns</span><span>info needed by parent</span></div>
+      <div class="cheat-row"><span>Combine</span><span>at the current node</span></div>
+      <div class="cheat-row"><span>Update global</span><span>through current node</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Diameter, Max Path Sum</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cmp)">
+      <h3>Graph Components</h3>
+      <div class="cheat-row"><span>Visited</span><span>boolean[] / Set</span></div>
+      <div class="cheat-row"><span>Outer loop</span><span>over all nodes</span></div>
+      <div class="cheat-row"><span>Each call</span><span>= one component</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Number of Islands, Provinces</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cyc)">
+      <h3>Cycle Detect (Directed)</h3>
+      <div class="cheat-row"><span>Three colours</span><span>WHITE / GRAY / BLACK</span></div>
+      <div class="cheat-row"><span>Cycle</span><span>edge to GRAY</span></div>
+      <div class="cheat-row"><span>Topo</span><span>postorder reversed</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Course Schedule I/II</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-grd)">
+      <h3>Grid DFS / Flood Fill</h3>
+      <div class="cheat-row"><span>Bounds</span><span>r,c in [0,R) x [0,C)</span></div>
+      <div class="cheat-row"><span>Mark</span><span>mutate cell or visited[]</span></div>
+      <div class="cheat-row"><span>Recurse</span><span>4 / 8 directions</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Islands, Surrounded Regions</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-itr)">
+      <h3>Iterative DFS</h3>
+      <div class="cheat-row"><span>Stack</span><span>Deque (push/pop end)</span></div>
+      <div class="cheat-row"><span>Use when</span><span>recursion depth too big</span></div>
+      <div class="cheat-row"><span>Iterative inorder</span><span>explicit stack + cur ptr</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Inorder iteratively, Big graphs</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'trv', label:'Tree Traversal',
+    steps:[
+      { label:'Define state',
+        hint:'A DFS function takes the current node. The visit point inside the function determines pre / in / post order.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(node) walks the subtree rooted at node')}
+${C('// Where you call visit(node) decides the traversal order')}
+${C('// Classic: Preorder, Inorder, Postorder, Boundary, Path Printing')}
+
+${K('class')} ${T('TreeNode')} {
+    ${K('int')} val;
+    ${T('TreeNode')} left, right;
+}
+${T('List')}<${T('Integer')}> out = ${K('new')} ${T('ArrayList')}<>();
+`
+      },
+      { label:'Base case',
+        hint:'Null node returns immediately — nothing to do, no values to add.',
+        code:`${C('// Step 2 — Base case')}
+${K('void')} ${F('dfs')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')};
+
+    ${C('// continued in step 3 ...')}
+}
+
+${C('// Trees never have cycles → no visited set required.')}
+${C('// The implicit recursion stack carries the path from root to n.')}
+`
+      },
+      { label:'Pre / in / post',
+        hint:'Pre = act before children. In = between left and right (sorted output for a BST). Post = after both children (most tree DP).',
+        code:`${C('// Step 3 — Three traversal flavours')}
+
+${C('// PREORDER — top-down')}
+${F('visit')}(n);
+${F('dfs')}(n.left);
+${F('dfs')}(n.right);
+
+${C('// INORDER — left, self, right (BST → ascending values)')}
+${F('dfs')}(n.left);
+${F('visit')}(n);
+${F('dfs')}(n.right);
+
+${C('// POSTORDER — children first, then self (delete-tree, tree DP)')}
+${F('dfs')}(n.left);
+${F('dfs')}(n.right);
+${F('visit')}(n);
+`
+      },
+      { label:'Variants + return',
+        hint:'Returning a value from dfs is what makes "tree DP" work. Returning void with a side-effect collector is fine for traversal.',
+        code:`${C('// Step 4 — Common variants')}
+
+${C('// Collect all values via inorder')}
+${K('void')} ${F('inorder')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')};
+    ${F('inorder')}(n.left);
+    out.${F('add')}(n.val);
+    ${F('inorder')}(n.right);
+}
+
+${C('// Boundary — preorder over left side, then leaves, then post-right')}
+${C('// Path strings — pass a StringBuilder, undo on return')}
+
+${C('// Mirror tree (top-down rebuild)')}
+${T('TreeNode')} ${F('mirror')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('null')};
+    ${T('TreeNode')} l = ${F('mirror')}(n.left);
+    ${T('TreeNode')} r = ${F('mirror')}(n.right);
+    n.left  = r;
+    n.right = l;
+    ${K('return')} n;
+}
+
+${C('// Time:  O(n)')}
+${C('// Space: O(h) recursion (h = height; balanced ≈ log n, skewed = n)')}
+`
+      }
+    ]
+  },
+  {
+    id:'tdp', label:'Tree DP (Postorder)',
+    steps:[
+      { label:'Define state',
+        hint:'Each call returns the smallest piece of info the parent needs — usually a number. A class field stores the global best.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(node) returns one number describing this subtree')}
+${C('// A class-level field captures the global answer')}
+${C('// Classic: Diameter (LC 543), Max Path Sum (LC 124),')}
+${C('//          House Robber III (LC 337), Longest Univalue Path (LC 687)')}
+
+${K('class')} ${T('Solution')} {
+    ${K('int')} ans = ${N('0')};   ${C('// global best — paths bend through some node')}
+}
+`
+      },
+      { label:'Base case',
+        hint:'Null returns the identity element: 0 for length/sum, {0,0} for "rob/notRob", -infinity if you must distinguish "no path".',
+        code:`${C('// Step 2 — Base case')}
+${K('int')} ${F('dfs')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${N('0')};
+    ${C('// 0-height / 0-sum / 0-length subtree')}
+}
+
+${C('// House Robber III — return both states')}
+${K('int')}[] ${F('robDfs')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('new')} ${K('int')}[]{ ${N('0')}, ${N('0')} };
+    ${C('// {notRob, rob}')}
+}
+`
+      },
+      { label:'Recurse + update global',
+        hint:'Recurse on both kids. Combine the results AT the current node, then update the global if a path bending here is the best so far.',
+        code:`${C('// Step 3 — Postorder + combine + global update')}
+
+${C('// DIAMETER — longest path through any node')}
+${K('int')} L = ${F('dfs')}(n.left);
+${K('int')} R = ${F('dfs')}(n.right);
+ans = ${T('Math')}.${F('max')}(ans, L + R);  ${C('// edges through this node')}
+
+${C('// MAX PATH SUM — clip negatives so they never drag the path down')}
+${K('int')} l = ${T('Math')}.${F('max')}(${F('dfs2')}(n.left),  ${N('0')});
+${K('int')} r = ${T('Math')}.${F('max')}(${F('dfs2')}(n.right), ${N('0')});
+ans = ${T('Math')}.${F('max')}(ans, l + r + n.val);
+`
+      },
+      { label:'Return up',
+        hint:'Return only what the parent can extend — usually a single arm (max(L,R) + 1), never two arms (that would double-count).',
+        code:`${C('// Step 4 — Return ONE arm to the parent')}
+
+${C('// DIAMETER — height to extend with')}
+${K('return')} ${T('Math')}.${F('max')}(L, R) + ${N('1')};
+
+${C('// MAX PATH SUM — best single-arm sum to extend')}
+${K('return')} n.val + ${T('Math')}.${F('max')}(l, r);
+
+${C('// HOUSE ROBBER III — return both decisions, parent picks')}
+${K('int')}[] ll = ${F('robDfs')}(n.left);
+${K('int')}[] rr = ${F('robDfs')}(n.right);
+${K('int')} notRob = ${T('Math')}.${F('max')}(ll[${N('0')}], ll[${N('1')}])
+            + ${T('Math')}.${F('max')}(rr[${N('0')}], rr[${N('1')}]);
+${K('int')} rob    = n.val + ll[${N('0')}] + rr[${N('0')}];
+${K('return')} ${K('new')} ${K('int')}[]{ notRob, rob };
+
+${C('// Final answer:')}
+${C('//   dfs(root); return ans;             // diameter / max path sum')}
+${C('//   int[] r = robDfs(root); return Math.max(r[0], r[1]);')}
+
+${C('// Time:  O(n)   Space: O(h) recursion')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'cmp', label:'Graph Components',
+    steps:[
+      { label:'Define state',
+        hint:'Adjacency list + visited[]. Outer loop kicks off one DFS per unvisited node — each kickoff IS a component.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// adj      = adjacency list (List<List<Integer>>)')}
+${C('// visited  = boolean[] — graphs have cycles, must guard')}
+${C('// Outer loop iterates EVERY node so disconnected pieces are reached')}
+${C('// Classic: Number of Connected Components (LC 323), Number of Provinces (LC 547),')}
+${C('//          Number of Islands (LC 200, grid as graph)')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> adj;
+${K('boolean')}[] visited = ${K('new')} ${K('boolean')}[n];
+${K('int')} components = ${N('0')};
+`
+      },
+      { label:'Base case',
+        hint:'Inside the recursive dfs, the first thing is "skip if already visited". Outside, skip already-visited nodes as starting points.',
+        code:`${C('// Step 2 — Base case in the recursive dfs')}
+${K('void')} ${F('dfs')}(${K('int')} u) {
+    ${K('if')} (visited[u]) ${K('return')};   ${C('// guard: no re-visit')}
+    visited[u] = ${K('true')};
+
+    ${C('// continued in step 3 ...')}
+}
+
+${C('// Why mark IMMEDIATELY upon entering?')}
+${C('//   Sibling recursive calls would otherwise re-enter u via a back edge.')}
+${C('//   Marking first prevents stack explosion and infinite recursion.')}
+`
+      },
+      { label:'Recurse on neighbours',
+        hint:'For each neighbour, call dfs. The visited check at the top handles the "already explored" case cleanly.',
+        code:`${C('// Step 3 — Recurse into all neighbours')}
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        ${F('dfs')}(v);
+    }
+
+${C('// Outer driver — one DFS = one component')}
+${K('for')} (${K('int')} s = ${N('0')}; s < n; s++) {
+    ${K('if')} (!visited[s]) {
+        components++;
+        ${F('dfs')}(s);
+    }
+}
+`
+      },
+      { label:'Return / variants',
+        hint:'For islands, run DFS over the grid; for provinces, work on an n×n adjacency matrix.',
+        code:`${C('// Step 4 — Common variants')}
+${K('return')} components;
+
+${C('// LC 200 Number of Islands — grid version, mutate cell to mark visited:')}
+${K('void')} ${F('dfsGrid')}(${K('char')}[][] g, ${K('int')} r, ${K('int')} c) {
+    ${K('if')} (r < ${N('0')} || c < ${N('0')} || r >= g.length || c >= g[${N('0')}].length) ${K('return')};
+    ${K('if')} (g[r][c] != '1') ${K('return')};
+    g[r][c] = '0';   ${C('// mark in-place')}
+    ${F('dfsGrid')}(g, r + ${N('1')}, c);
+    ${F('dfsGrid')}(g, r - ${N('1')}, c);
+    ${F('dfsGrid')}(g, r, c + ${N('1')});
+    ${F('dfsGrid')}(g, r, c - ${N('1')});
+}
+
+${C('// LC 547 Number of Provinces — adjacency matrix isConnected[i][j]:')}
+${C('//   for v in [0..n-1]: if (isConnected[u][v] == 1 && !visited[v]) dfs(v);')}
+
+${C('// SIZE of biggest component — make dfs return a count:')}
+${C('//   int dfs(u) { if (visited[u]) return 0; ...; int s = 1; for v: s += dfs(v); return s; }')}
+
+${C('// Time:  O(V + E)')}
+${C('// Space: O(V) recursion + visited')}
+`
+      }
+    ]
+  },
+  {
+    id:'cyc', label:'Cycle Detect / Topo (Directed)',
+    steps:[
+      { label:'Define state',
+        hint:'Three colours: WHITE (unseen) = 0, GRAY (in current DFS stack) = 1, BLACK (fully done) = 2. A back-edge to a GRAY node is a cycle.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// state[u]:  0 = unvisited (WHITE)')}
+${C('//            1 = in current DFS path (GRAY)')}
+${C('//            2 = fully explored (BLACK)')}
+${C('// Cycle = encountering a GRAY neighbour during DFS')}
+${C('// Classic: Course Schedule I (LC 207), Course Schedule II (LC 210)')}
+
+${K('int')}[] state = ${K('new')} ${K('int')}[n];
+${T('List')}<${T('Integer')}> order = ${K('new')} ${T('ArrayList')}<>();   ${C('// for topo sort')}
+${T('List')}<${T('List')}<${T('Integer')}>> adj;
+`
+      },
+      { label:'Base case',
+        hint:'Entering a GRAY node = cycle, return false (or throw). Entering BLACK = already proven acyclic from here, return true (memoised).',
+        code:`${C('// Step 2 — Base case in dfs')}
+${K('boolean')} ${F('dfs')}(${K('int')} u) {
+    ${K('if')} (state[u] == ${N('1')}) ${K('return')} ${K('false')};   ${C('// GRAY → cycle')}
+    ${K('if')} (state[u] == ${N('2')}) ${K('return')} ${K('true')};    ${C('// BLACK → already cleared')}
+
+    state[u] = ${N('1')};                  ${C('// mark GRAY before recursing')}
+    ${C('// continued in step 3 ...')}
+}
+`
+      },
+      { label:'Recurse + post-mark',
+        hint:'After recursing all children, mark BLACK. For topological sort, push the node into a list at this BLACK point — final order is the reverse.',
+        code:`${C('// Step 3 — Recurse, then close out the node')}
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        ${K('if')} (!${F('dfs')}(v)) ${K('return')} ${K('false')};   ${C('// propagate cycle')}
+    }
+
+    state[u] = ${N('2')};                ${C('// done — mark BLACK')}
+    order.${F('add')}(u);                ${C('// for topo sort (postorder)')}
+    ${K('return')} ${K('true')};
+}
+
+${C('// Caller — try every node, skip visited ones')}
+${K('for')} (${K('int')} s = ${N('0')}; s < n; s++) {
+    ${K('if')} (state[s] == ${N('0')} && !${F('dfs')}(s)) ${K('return')} ${K('new')} ${K('int')}[${N('0')}];
+}
+`
+      },
+      { label:'Return / variants',
+        hint:'For Course Schedule I, return whether DFS succeeded everywhere. For II, reverse the post-order list.',
+        code:`${C('// Step 4 — Translate to the answer')}
+
+${C('// LC 207 Course Schedule — "can finish?":')}
+${C('//   if any dfs returned false → cycle → return false')}
+${C('//   otherwise → return true')}
+
+${C('// LC 210 Course Schedule II — return a valid order:')}
+${T('Collections')}.${F('reverse')}(order);
+${K('int')}[] result = ${K('new')} ${K('int')}[order.${F('size')}()];
+${K('for')} (${K('int')} i = ${N('0')}; i < result.length; i++) result[i] = order.${F('get')}(i);
+${K('return')} result;
+
+${C('// Why postorder reversed = topological order?')}
+${C('//   A node enters BLACK only after ALL its descendants are BLACK.')}
+${C('//   So in postorder, children come BEFORE parents — reverse it for')}
+${C('//   the standard "prerequisites first" definition.')}
+
+${C('// UNDIRECTED cycle — different recipe (parent-tracking DFS):')}
+${C('//   dfs(u, parent): for each neighbor v: if v == parent skip; ')}
+${C('//                   else if visited[v] -> cycle; else dfs(v, u).')}
+
+${C('// Time:  O(V + E)   Space: O(V)')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'grd', label:'Grid DFS / Flood Fill',
+    steps:[
+      { label:'Define state',
+        hint:'A grid IS a graph — neighbours come from a direction array. Either mutate the cell to mark visited or carry a separate visited[][].',
+        code:`${C('// Step 1 — Define the state')}
+${C('// grid    = 2D char or int array')}
+${C('// dfs(r,c) explores the connected region containing (r, c)')}
+${C('// Mark visited by mutating the cell or via a parallel visited[][]')}
+${C('// Classic: Number of Islands (LC 200), Max Area of Island (LC 695),')}
+${C('//          Surrounded Regions (LC 130), Pacific Atlantic (LC 417)')}
+
+${K('int')}[][] DIR = {{${N('1')},${N('0')}},{-${N('1')},${N('0')}},{${N('0')},${N('1')}},{${N('0')},-${N('1')}}};
+`
+      },
+      { label:'Base case',
+        hint:'Three guards on entry: out-of-bounds, already visited (or "wrong" cell), and the marker cell itself.',
+        code:`${C('// Step 2 — Base case: bounds + visited + cell-type check')}
+${K('int')} ${F('dfs')}(${K('char')}[][] g, ${K('int')} r, ${K('int')} c) {
+    ${K('if')} (r < ${N('0')} || r >= g.length ||
+        c < ${N('0')} || c >= g[${N('0')}].length) ${K('return')} ${N('0')};
+
+    ${K('if')} (g[r][c] != '1') ${K('return')} ${N('0')};   ${C('// water or already visited')}
+
+    g[r][c] = '0';                       ${C('// mark IN-PLACE before recursing')}
+
+    ${C('// continued in step 3 ...')}
+}
+`
+      },
+      { label:'Recurse 4-directionally',
+        hint:'Recurse on all four neighbours. Sum their returns when counting area; AND/OR them when checking properties.',
+        code:`${C('// Step 3 — Recurse in 4 (or 8) directions')}
+    ${K('int')} area = ${N('1')};
+    ${K('for')} (${K('int')}[] d : DIR) {
+        area += ${F('dfs')}(g, r + d[${N('0')}], c + d[${N('1')}]);
+    }
+    ${K('return')} area;
+}
+
+${C('// Driver — count islands / find biggest island')}
+${K('int')} count = ${N('0')}, maxA = ${N('0')};
+${K('for')} (${K('int')} r = ${N('0')}; r < g.length; r++) {
+    ${K('for')} (${K('int')} c = ${N('0')}; c < g[${N('0')}].length; c++) {
+        ${K('if')} (g[r][c] == '1') {
+            count++;
+            maxA = ${T('Math')}.${F('max')}(maxA, ${F('dfs')}(g, r, c));
+        }
+    }
+}
+`
+      },
+      { label:'Variants + return',
+        hint:'For Surrounded Regions, run DFS from BORDER zeros and mark survivors; for Pacific Atlantic do two passes from each ocean.',
+        code:`${C('// Step 4 — Variants')}
+
+${C('// LC 130 Surrounded Regions — flip captured Os to X, keep border-connected Os')}
+${C('//   1) DFS from each border O, mark them with a sentinel like "#"')}
+${C('//   2) flip remaining O → X')}
+${C('//   3) flip "#" back to O')}
+
+${C('// LC 417 Pacific Atlantic — two reachability sweeps')}
+${C('//   1) DFS from every Pacific-edge cell, fill pac[][]')}
+${C('//   2) DFS from every Atlantic-edge cell, fill atl[][]')}
+${C('//   3) collect cells where both pac && atl are true')}
+
+${C('// 8-DIRECTIONAL — replace DIR:')}
+${K('int')}[][] DIR8 = {
+    {${N('1')},${N('0')}},{-${N('1')},${N('0')}},{${N('0')},${N('1')}},{${N('0')},-${N('1')}},
+    {${N('1')},${N('1')}},{${N('1')},-${N('1')}},{-${N('1')},${N('1')}},{-${N('1')},-${N('1')}}
+};
+
+${C('// Time:  O(R * C)   Space: O(R * C) recursion in the worst case')}
+`
+      }
+    ]
+  },
+  {
+    id:'itr', label:'Iterative DFS',
+    steps:[
+      { label:'Define state',
+        hint:'Recursion can blow the stack on huge graphs. An explicit Deque acts as the stack — push to add, pop from the same end.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// stack = ArrayDeque used as a LIFO stack')}
+${C('// visited / state same as recursive DFS')}
+${C('// Classic: any large-graph DFS where recursion depth > ~10⁴ on the JVM')}
+${C('//          Iterative Inorder traversal (LC 94), Validate BST iteratively')}
+
+${T('Deque')}<${T('Integer')}> stack = ${K('new')} ${T('ArrayDeque')}<>();
+${K('boolean')}[] visited = ${K('new')} ${K('boolean')}[n];
+`
+      },
+      { label:'Base case',
+        hint:'Push the start node, mark it visited, then loop until the stack is empty.',
+        code:`${C('// Step 2 — Seed')}
+stack.${F('push')}(src);
+visited[src] = ${K('true')};
+
+${C('// For multi-component DFS, wrap this in an outer loop:')}
+${C('//   for (int s = 0; s < n; s++)')}
+${C('//     if (!visited[s]) { stack.push(s); ... }')}
+`
+      },
+      { label:'Pop + push neighbours',
+        hint:'Each loop iteration pops one node and pushes its unvisited neighbours. Mark on push to avoid duplicates in the stack.',
+        code:`${C('// Step 3 — Iterative DFS expansion')}
+${K('while')} (!stack.${F('isEmpty')}()) {
+    ${K('int')} u = stack.${F('pop')}();
+
+    ${F('visit')}(u);
+
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        ${K('if')} (!visited[v]) {
+            visited[v] = ${K('true')};
+            stack.${F('push')}(v);
+        }
+    }
+}
+
+${C('// Order vs recursive DFS:')}
+${C('//   Pushing neighbours in iteration order makes the LAST one come out FIRST,')}
+${C('//   so the visit order is the reverse of recursive DFS. Push in reverse for parity.')}
+`
+      },
+      { label:'Iterative inorder + variants',
+        hint:'Iterative inorder uses a "go-left-as-far-as-possible" loop, then visit, then go right. The classic explicit-stack tree pattern.',
+        code:`${C('// Step 4 — Iterative inorder (LC 94)')}
+${T('List')}<${T('Integer')}> out = ${K('new')} ${T('ArrayList')}<>();
+${T('Deque')}<${T('TreeNode')}> st = ${K('new')} ${T('ArrayDeque')}<>();
+${T('TreeNode')} cur = root;
+
+${K('while')} (cur != ${K('null')} || !st.${F('isEmpty')}()) {
+
+    ${K('while')} (cur != ${K('null')}) {           ${C('// dive left')}
+        st.${F('push')}(cur);
+        cur = cur.left;
+    }
+
+    cur = st.${F('pop')}();
+    out.${F('add')}(cur.val);                ${C('// visit between left and right')}
+    cur = cur.right;
+}
+
+${C('// ITERATIVE POSTORDER — use two stacks or a single stack with a')}
+${C('// "lastVisited" pointer. Or: do reversed-preorder and reverse the output.')}
+
+${C('// Iterative DFS pays in code complexity but never overflows the JVM stack.')}
+${C('// Time:  O(V + E)   Space: O(V)')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

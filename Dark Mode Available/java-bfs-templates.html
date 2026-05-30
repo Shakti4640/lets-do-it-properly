@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java BFS Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-tlv: #39d0a8;
+    --c-tvw: #58a6ff;
+    --c-grp: #bc8cff;
+    --c-msb: #f0883e;
+    --c-bid: #d29922;
+    --c-z01: #e06c75;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-bfs  { background: rgba(57,208,168,0.1); color: var(--c-tlv); border-color: rgba(57,208,168,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="tlv"].on { color: var(--c-tlv); border-bottom-color: var(--c-tlv); }
+  .tab[data-id="tvw"].on { color: var(--c-tvw); border-bottom-color: var(--c-tvw); }
+  .tab[data-id="grp"].on { color: var(--c-grp); border-bottom-color: var(--c-grp); }
+  .tab[data-id="msb"].on { color: var(--c-msb); border-bottom-color: var(--c-msb); }
+  .tab[data-id="bid"].on { color: var(--c-bid); border-bottom-color: var(--c-bid); }
+  .tab[data-id="z01"].on { color: var(--c-z01); border-bottom-color: var(--c-z01); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java BFS Templates</h1>
+    <p>// 6 patterns &middot; 4 steps each &middot; trees &amp; graphs &middot; queue based</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-bfs">&#x2934;&#xFE0F; BFS</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">BfsTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-tlv)">
+      <h3>Tree Level Order</h3>
+      <div class="cheat-row"><span>Queue</span><span>ArrayDeque&lt;TreeNode&gt;</span></div>
+      <div class="cheat-row"><span>Level fence</span><span>queue.size() snapshot</span></div>
+      <div class="cheat-row"><span>Visited</span><span>not needed (tree)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Level Order, Min Depth</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-tvw)">
+      <h3>Tree Variants</h3>
+      <div class="cheat-row"><span>Right view</span><span>last node per level</span></div>
+      <div class="cheat-row"><span>Zigzag</span><span>flip alternate levels</span></div>
+      <div class="cheat-row"><span>Connect</span><span>cur.next = q.peek()</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Right Side View, Zigzag</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-grp)">
+      <h3>Graph BFS</h3>
+      <div class="cheat-row"><span>Visited</span><span>boolean[] or Set</span></div>
+      <div class="cheat-row"><span>Distance</span><span>= levels expanded</span></div>
+      <div class="cheat-row"><span>Mark when</span><span>enqueueing (not popping)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Shortest Path Unweighted</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-msb)">
+      <h3>Multi-Source BFS</h3>
+      <div class="cheat-row"><span>Seed queue</span><span>all sources at once</span></div>
+      <div class="cheat-row"><span>Distance</span><span>min from any source</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(V + E)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Rotting Oranges, 01 Matrix</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-bid)">
+      <h3>Bidirectional BFS</h3>
+      <div class="cheat-row"><span>Two frontiers</span><span>start &amp; end</span></div>
+      <div class="cheat-row"><span>Expand</span><span>smaller frontier each step</span></div>
+      <div class="cheat-row"><span>Stop when</span><span>frontiers meet</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Word Ladder</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-z01)">
+      <h3>0-1 BFS (Deque)</h3>
+      <div class="cheat-row"><span>Deque</span><span>ArrayDeque</span></div>
+      <div class="cheat-row"><span>Edge weight 0</span><span>addFirst (cheap)</span></div>
+      <div class="cheat-row"><span>Edge weight 1</span><span>addLast (costly)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Min Obstacle Removal</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'tlv', label:'Tree Level Order',
+    steps:[
+      { label:'Define state',
+        hint:'A queue of TreeNodes. Snapshot queue.size() at the top of each round to fence one level off from the next.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// queue holds the next nodes to visit')}
+${C('// out collects one inner list per level')}
+${C('// Classic: Binary Tree Level Order Traversal (LC 102), Min Depth (LC 111)')}
+
+${T('Deque')}<${T('TreeNode')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+${T('List')}<${T('List')}<${T('Integer')}>> out = ${K('new')} ${T('ArrayList')}<>();
+
+${C('// Trees do NOT need a visited set — there are no cycles.')}
+`
+      },
+      { label:'Base case',
+        hint:'Empty tree returns an empty list. Otherwise seed the queue with the root.',
+        code:`${C('// Step 2 — Base case')}
+${K('if')} (root == ${K('null')}) ${K('return')} out;
+
+q.${F('offer')}(root);
+
+${C('// Initialise any per-level container BEFORE entering the loop')}
+${C('// so we can append to it as the BFS unfolds.')}
+`
+      },
+      { label:'Drain by level',
+        hint:'Outer loop drains the queue. Inner loop runs exactly size times — that fence is what cleanly separates levels.',
+        code:`${C('// Step 3 — Process one level per outer iteration')}
+${K('while')} (!q.${F('isEmpty')}()) {
+
+    ${K('int')} size = q.${F('size')}();          ${C('// nodes on THIS level')}
+    ${T('List')}<${T('Integer')}> level = ${K('new')} ${T('ArrayList')}<>(size);
+
+    ${K('for')} (${K('int')} i = ${N('0')}; i < size; i++) {
+        ${T('TreeNode')} cur = q.${F('poll')}();
+        level.${F('add')}(cur.val);
+
+        ${K('if')} (cur.left  != ${K('null')}) q.${F('offer')}(cur.left);
+        ${K('if')} (cur.right != ${K('null')}) q.${F('offer')}(cur.right);
+    }
+    out.${F('add')}(level);
+}
+`
+      },
+      { label:'Return / variants',
+        hint:'Return the list. For min-depth, exit as soon as a leaf appears. For bottom-up traversal, reverse out.',
+        code:`${C('// Step 4 — Return / common variants')}
+${K('return')} out;
+
+${C('// LC 107 Bottom-up Level Order — flip the result:')}
+${T('Collections')}.${F('reverse')}(out);
+${K('return')} out;
+
+${C('// LC 111 Minimum Depth — return depth at first leaf:')}
+${K('int')} depth = ${N('0')};
+${K('while')} (!q.${F('isEmpty')}()) {
+    depth++;
+    ${K('int')} sz = q.${F('size')}();
+    ${K('for')} (${K('int')} i = ${N('0')}; i < sz; i++) {
+        ${T('TreeNode')} c = q.${F('poll')}();
+        ${K('if')} (c.left == ${K('null')} && c.right == ${K('null')}) ${K('return')} depth;
+        ${K('if')} (c.left  != ${K('null')}) q.${F('offer')}(c.left);
+        ${K('if')} (c.right != ${K('null')}) q.${F('offer')}(c.right);
+    }
+}
+
+${C('// Time:  O(n) — each node enqueued/dequeued once')}
+${C('// Space: O(w) — w = max width of the tree')}
+`
+      }
+    ]
+  },
+  {
+    id:'tvw', label:'Tree Variants',
+    steps:[
+      { label:'Right side view',
+        hint:'During each level, the LAST node we dequeue is the one visible from the right.',
+        code:`${C('// Step 1 — Right Side View (LC 199)')}
+${T('List')}<${T('Integer')}> view = ${K('new')} ${T('ArrayList')}<>();
+${K('if')} (root == ${K('null')}) ${K('return')} view;
+
+${T('Deque')}<${T('TreeNode')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+q.${F('offer')}(root);
+
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} size = q.${F('size')}();
+    ${K('for')} (${K('int')} i = ${N('0')}; i < size; i++) {
+        ${T('TreeNode')} cur = q.${F('poll')}();
+        ${K('if')} (i == size - ${N('1')}) view.${F('add')}(cur.val);   ${C('// rightmost on this level')}
+        ${K('if')} (cur.left  != ${K('null')}) q.${F('offer')}(cur.left);
+        ${K('if')} (cur.right != ${K('null')}) q.${F('offer')}(cur.right);
+    }
+}
+${K('return')} view;
+`
+      },
+      { label:'Zigzag traversal',
+        hint:'Same shape as level-order, but reverse the per-level list on every other level.',
+        code:`${C('// Step 2 — Zigzag Level Order (LC 103)')}
+${T('List')}<${T('List')}<${T('Integer')}>> out = ${K('new')} ${T('ArrayList')}<>();
+${K('if')} (root == ${K('null')}) ${K('return')} out;
+
+${T('Deque')}<${T('TreeNode')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+q.${F('offer')}(root);
+${K('boolean')} ltr = ${K('true')};
+
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} size = q.${F('size')}();
+    ${T('Deque')}<${T('Integer')}> row = ${K('new')} ${T('ArrayDeque')}<>();
+    ${K('for')} (${K('int')} i = ${N('0')}; i < size; i++) {
+        ${T('TreeNode')} cur = q.${F('poll')}();
+        ${K('if')} (ltr) row.${F('addLast')}(cur.val);
+        ${K('else')}      row.${F('addFirst')}(cur.val);
+        ${K('if')} (cur.left  != ${K('null')}) q.${F('offer')}(cur.left);
+        ${K('if')} (cur.right != ${K('null')}) q.${F('offer')}(cur.right);
+    }
+    out.${F('add')}(${K('new')} ${T('ArrayList')}<>(row));
+    ltr = !ltr;
+}
+${K('return')} out;
+`
+      },
+      { label:'Average / max per level',
+        hint:'Anything reducible per level (avg, max, sum) drops cleanly into the inner-loop body.',
+        code:`${C('// Step 3 — Average / Max value per level')}
+${T('List')}<${T('Double')}> avgs = ${K('new')} ${T('ArrayList')}<>();
+${T('List')}<${T('Integer')}> maxes = ${K('new')} ${T('ArrayList')}<>();
+
+${T('Deque')}<${T('TreeNode')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+q.${F('offer')}(root);
+
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} size = q.${F('size')}();
+    ${K('long')} sum = ${N('0')};
+    ${K('int')} mx = ${T('Integer')}.MIN_VALUE;
+    ${K('for')} (${K('int')} i = ${N('0')}; i < size; i++) {
+        ${T('TreeNode')} c = q.${F('poll')}();
+        sum += c.val;
+        mx = ${T('Math')}.${F('max')}(mx, c.val);
+        ${K('if')} (c.left  != ${K('null')}) q.${F('offer')}(c.left);
+        ${K('if')} (c.right != ${K('null')}) q.${F('offer')}(c.right);
+    }
+    avgs.${F('add')}(sum / (${K('double')}) size);
+    maxes.${F('add')}(mx);
+}
+`
+      },
+      { label:'Connect next right',
+        hint:'For Populating Next Right Pointers, link cur.next to whatever is currently at the front of the queue (still on this level).',
+        code:`${C('// Step 4 — Connect Next Right Pointers (LC 116/117)')}
+${K('if')} (root == ${K('null')}) ${K('return')} root;
+
+${T('Deque')}<${T('Node')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+q.${F('offer')}(root);
+
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} size = q.${F('size')}();
+    ${K('for')} (${K('int')} i = ${N('0')}; i < size; i++) {
+        ${T('Node')} cur = q.${F('poll')}();
+
+        ${C('// q.peek() is the next node ON THIS LEVEL (since we have not')}
+        ${C('// finished iterating it). Last node leaves cur.next = null.')}
+        ${K('if')} (i < size - ${N('1')}) cur.next = q.${F('peek')}();
+
+        ${K('if')} (cur.left  != ${K('null')}) q.${F('offer')}(cur.left);
+        ${K('if')} (cur.right != ${K('null')}) q.${F('offer')}(cur.right);
+    }
+}
+${K('return')} root;
+
+${C('// Time: O(n)  Space: O(w)')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'grp', label:'Graph BFS',
+    steps:[
+      { label:'Define state',
+        hint:'Adjacency list + a visited set/array. BFS gives shortest path length in number of edges (unweighted graph).',
+        code:`${C('// Step 1 — Define the state')}
+${C('// adj      = adjacency list, each adj[u] is the list of neighbours of u')}
+${C('// visited  = boolean[] guarding against re-enqueue (graph has cycles)')}
+${C('// queue    = ArrayDeque<Integer> of node ids')}
+${C('// Classic: Shortest Path in Unweighted Graph, Open the Lock,')}
+${C('//          Number of Islands (grid as graph)')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> adj;
+${K('boolean')}[] visited = ${K('new')} ${K('boolean')}[n];
+${T('Deque')}<${T('Integer')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+`
+      },
+      { label:'Base case',
+        hint:'Seed the queue with the source. Mark visited WHEN ENQUEUEING — never when dequeueing — to avoid duplicates.',
+        code:`${C('// Step 2 — Base case')}
+q.${F('offer')}(src);
+visited[src] = ${K('true')};         ${C('// mark on enqueue, not on poll')}
+
+${C('// dist[v] = -1 means unreachable; dist[src] = 0.')}
+${K('int')}[] dist = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(dist, -${N('1')});
+dist[src] = ${N('0')};
+
+${C('// Why mark on enqueue?')}
+${C('//   Marking on poll lets the same node be enqueued twice from')}
+${C('//   different neighbours, exploding the queue and breaking levels.')}
+`
+      },
+      { label:'Expand level by level',
+        hint:'For shortest distance, increment dist[v] = dist[u] + 1 when discovering v. The fence-by-size pattern is optional here.',
+        code:`${C('// Step 3 — BFS expansion')}
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} u = q.${F('poll')}();
+
+    ${K('if')} (u == target) ${K('return')} dist[u];   ${C('// early exit, optional')}
+
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        ${K('if')} (!visited[v]) {
+            visited[v] = ${K('true')};
+            dist[v] = dist[u] + ${N('1')};
+            q.${F('offer')}(v);
+        }
+    }
+}
+
+${C('// Grid as graph — neighbours come from a direction array:')}
+${C('//   int[][] DIR = {{1,0},{-1,0},{0,1},{0,-1}};')}
+${C('//   for each (dx,dy): nx = x+dx, ny = y+dy; bounds + visited check.')}
+`
+      },
+      { label:'Return / variants',
+        hint:'Return dist[target] (or -1 if never reached). For "all components" wrap the BFS in an outer loop that picks any unvisited node.',
+        code:`${C('// Step 4 — Return / variants')}
+${K('return')} dist[target];
+
+${C('// COUNT CONNECTED COMPONENTS — outer loop over all nodes:')}
+${K('int')} components = ${N('0')};
+${K('for')} (${K('int')} s = ${N('0')}; s < n; s++) {
+    ${K('if')} (!visited[s]) {
+        components++;
+        ${C('// run a full BFS rooted at s, marking everything reachable')}
+        ${T('Deque')}<${T('Integer')}> queue = ${K('new')} ${T('ArrayDeque')}<>();
+        queue.${F('offer')}(s); visited[s] = ${K('true')};
+        ${K('while')} (!queue.${F('isEmpty')}()) {
+            ${K('int')} u = queue.${F('poll')}();
+            ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+                ${K('if')} (!visited[v]) { visited[v] = ${K('true')}; queue.${F('offer')}(v); }
+            }
+        }
+    }
+}
+${K('return')} components;
+
+${C('// Time:  O(V + E)')}
+${C('// Space: O(V) for visited and queue')}
+`
+      }
+    ]
+  },
+  {
+    id:'msb', label:'Multi-Source BFS',
+    steps:[
+      { label:'Define state',
+        hint:'Same queue + visited as plain BFS. The trick: seed the queue with EVERY source at once. dist[v] becomes the min distance from any source.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dist[r][c] = min distance from ANY source to cell (r, c)')}
+${C('// Sources are all cells matching some predicate (rotten orange, gate, ...)')}
+${C('// Classic: Rotting Oranges (LC 994), 01 Matrix (LC 542), Walls and Gates')}
+
+${K('int')} R = grid.length, Cn = grid[${N('0')}].length;
+${K('int')}[][] dist = ${K('new')} ${K('int')}[R][Cn];
+${K('for')} (${K('int')}[] row : dist) ${T('Arrays')}.${F('fill')}(row, ${T('Integer')}.MAX_VALUE);
+${T('Deque')}<${K('int')}[]> q = ${K('new')} ${T('ArrayDeque')}<>();
+${K('int')}[][] DIR = {{${N('1')},${N('0')}},{-${N('1')},${N('0')}},{${N('0')},${N('1')}},{${N('0')},-${N('1')}}};
+`
+      },
+      { label:'Seed all sources',
+        hint:'Iterate the grid once and push every source with distance 0. This is what turns single-source BFS into multi-source.',
+        code:`${C('// Step 2 — Seed every source at distance 0')}
+${K('for')} (${K('int')} r = ${N('0')}; r < R; r++) {
+    ${K('for')} (${K('int')} c = ${N('0')}; c < Cn; c++) {
+        ${K('if')} (${F('isSource')}(grid[r][c])) {
+            dist[r][c] = ${N('0')};
+            q.${F('offer')}(${K('new')} ${K('int')}[]{ r, c });
+        }
+    }
+}
+
+${C('// Predicate isSource depends on the problem:')}
+${C('//   Rotting Oranges → grid[r][c] == 2')}
+${C('//   01 Matrix       → grid[r][c] == 0')}
+${C('//   Walls and Gates → grid[r][c] == 0  (gate)')}
+`
+      },
+      { label:'BFS expansion',
+        hint:'Standard BFS but every source contributes simultaneously. dist[v] is computed exactly once on first arrival.',
+        code:`${C('// Step 3 — BFS, sources expand in lockstep')}
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')}[] cell = q.${F('poll')}();
+    ${K('int')} r = cell[${N('0')}], c = cell[${N('1')}];
+
+    ${K('for')} (${K('int')}[] d : DIR) {
+        ${K('int')} nr = r + d[${N('0')}], nc = c + d[${N('1')}];
+
+        ${K('if')} (nr < ${N('0')} || nc < ${N('0')} || nr >= R || nc >= Cn) ${K('continue')};
+        ${K('if')} (dist[nr][nc] != ${T('Integer')}.MAX_VALUE) ${K('continue')};
+        ${K('if')} (${F('isBlocked')}(grid[nr][nc])) ${K('continue')};
+
+        dist[nr][nc] = dist[r][c] + ${N('1')};
+        q.${F('offer')}(${K('new')} ${K('int')}[]{ nr, nc });
+    }
+}
+`
+      },
+      { label:'Return / variants',
+        hint:'For Rotting Oranges, the answer is the maximum dist over fresh oranges (or -1 if any remain MAX_VALUE).',
+        code:`${C('// Step 4 — Aggregate the answer')}
+
+${C('// LC 994 Rotting Oranges — max distance over fresh oranges')}
+${K('int')} ans = ${N('0')};
+${K('for')} (${K('int')} r = ${N('0')}; r < R; r++) {
+    ${K('for')} (${K('int')} c = ${N('0')}; c < Cn; c++) {
+        ${K('if')} (grid[r][c] == ${N('1')}) {                  ${C('// fresh')}
+            ${K('if')} (dist[r][c] == ${T('Integer')}.MAX_VALUE) ${K('return')} -${N('1')};
+            ans = ${T('Math')}.${F('max')}(ans, dist[r][c]);
+        }
+    }
+}
+${K('return')} ans;
+
+${C('// LC 542 01 Matrix — return dist itself, fixing unreachable cells:')}
+${C('//   for each cell where dist == MAX_VALUE: dist = 0 (or per the problem)')}
+
+${C('// Time:  O(V + E)  — same as single-source BFS')}
+${C('// Space: O(V)      — dist array + queue')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'bid', label:'Bidirectional BFS',
+    steps:[
+      { label:'Define state',
+        hint:'Two frontiers as Sets — one growing from start, one from end. Always expand whichever is smaller next.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// front  = words reachable in the current "from-start" wave')}
+${C('// back   = words reachable in the current "from-end"   wave')}
+${C('// visited = global guard so neither side re-explores')}
+${C('// Classic: Word Ladder (LC 127) — drops complexity from b^d to 2 * b^(d/2)')}
+
+${T('Set')}<${T('String')}> dict  = ${K('new')} ${T('HashSet')}<>(wordList);
+${K('if')} (!dict.${F('contains')}(end)) ${K('return')} ${N('0')};
+
+${T('Set')}<${T('String')}> front = ${K('new')} ${T('HashSet')}<>();
+${T('Set')}<${T('String')}> back  = ${K('new')} ${T('HashSet')}<>();
+${T('Set')}<${T('String')}> seen  = ${K('new')} ${T('HashSet')}<>();
+`
+      },
+      { label:'Seed both ends',
+        hint:'Push start into one frontier, end into the other. Step counter starts at 1 (start word counts as a step).',
+        code:`${C('// Step 2 — Seed and initialise')}
+front.${F('add')}(start);
+back.${F('add')}(end);
+seen.${F('add')}(start);
+seen.${F('add')}(end);
+
+${K('int')} steps = ${N('1')};   ${C('// includes the start word per LC 127 convention')}
+`
+      },
+      { label:'Expand smaller frontier',
+        hint:'Always expand the smaller set. If a generated neighbour is in the OTHER frontier, the two waves have met — done.',
+        code:`${C('// Step 3 — Expand smaller frontier each step')}
+${K('while')} (!front.${F('isEmpty')}() && !back.${F('isEmpty')}()) {
+
+    ${C('// Always expand the smaller frontier')}
+    ${K('if')} (front.${F('size')}() > back.${F('size')}()) {
+        ${T('Set')}<${T('String')}> tmp = front; front = back; back = tmp;
+    }
+
+    ${T('Set')}<${T('String')}> next = ${K('new')} ${T('HashSet')}<>();
+
+    ${K('for')} (${T('String')} w : front) {
+        ${K('char')}[] arr = w.${F('toCharArray')}();
+        ${K('for')} (${K('int')} i = ${N('0')}; i < arr.length; i++) {
+            ${K('char')} orig = arr[i];
+            ${K('for')} (${K('char')} c = 'a'; c <= 'z'; c++) {
+                arr[i] = c;
+                ${T('String')} nb = ${K('new')} ${T('String')}(arr);
+
+                ${K('if')} (back.${F('contains')}(nb)) ${K('return')} steps + ${N('1')};
+
+                ${K('if')} (dict.${F('contains')}(nb) && seen.${F('add')}(nb)) {
+                    next.${F('add')}(nb);
+                }
+            }
+            arr[i] = orig;
+        }
+    }
+    front = next;
+    steps++;
+}
+`
+      },
+      { label:'Return / variants',
+        hint:'If both frontiers run dry without intersecting, no path exists.',
+        code:`${C('// Step 4 — No connection found')}
+${K('return')} ${N('0')};
+
+${C('// Why is bidirectional faster?')}
+${C('//   Single-direction BFS visits up to b^d nodes (branching factor b, depth d).')}
+${C('//   Bidirectional meets in the middle → 2 * b^(d/2)  ≪  b^d for large d.')}
+
+${C('// Caveats:')}
+${C('//   - Only works when END is known and reachable in the same graph.')}
+${C('//   - Tracking the actual path is harder than counting steps —')}
+${C('//     store parent maps from BOTH directions and stitch at the meet.')}
+
+${C('// Time:  O(b^(d/2)) on average vs O(b^d) for plain BFS')}
+${C('// Space: O(b^(d/2)) for the two frontiers + visited set')}
+`
+      }
+    ]
+  },
+  {
+    id:'z01', label:'0-1 BFS (Deque)',
+    steps:[
+      { label:'Define state',
+        hint:'A deque (not a queue). Edge weights are only 0 or 1. Cost-0 edges go to the FRONT (cheap), cost-1 go to the BACK.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dist[v] = shortest distance from src to v in a {0,1}-weighted graph')}
+${C('// dq      = ArrayDeque of node ids; left = cheap, right = costly')}
+${C('// Classic: Min Obstacle Removal (LC 2290), Min Cost to Reach Target,')}
+${C('//          shortest path on grids where moving in the "wrong" direction costs 1')}
+
+${K('int')}[] dist = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(dist, ${T('Integer')}.MAX_VALUE);
+${T('Deque')}<${T('Integer')}> dq = ${K('new')} ${T('ArrayDeque')}<>();
+`
+      },
+      { label:'Seed the deque',
+        hint:'Push the source on the front with distance 0. Distance starts at MAX_VALUE everywhere else.',
+        code:`${C('// Step 2 — Seed')}
+dist[src] = ${N('0')};
+dq.${F('offerFirst')}(src);
+
+${C('// One subtle point: dist updates happen on POP, not on PUSH.')}
+${C('// Reason: a node may be reached multiple times with different costs;')}
+${C('// we accept the FIRST popped distance (which is the smallest).')}
+`
+      },
+      { label:'Expand by edge weight',
+        hint:'Pop from the front. For each neighbour, if going through u improves dist[v], push v on the FRONT for cost-0 edges or BACK for cost-1.',
+        code:`${C('// Step 3 — 0-1 BFS expansion')}
+${K('while')} (!dq.${F('isEmpty')}()) {
+    ${K('int')} u = dq.${F('pollFirst')}();
+
+    ${K('for')} (${K('int')}[] e : adj.${F('get')}(u)) {        ${C('// e = { neighbour, weight (0 or 1) }')}
+        ${K('int')} v = e[${N('0')}], w = e[${N('1')}];
+        ${K('int')} nd = dist[u] + w;
+
+        ${K('if')} (nd < dist[v]) {
+            dist[v] = nd;
+            ${K('if')} (w == ${N('0')}) dq.${F('offerFirst')}(v);   ${C('// cheap → front')}
+            ${K('else')}                dq.${F('offerLast')}(v);    ${C('// costly → back')}
+        }
+    }
+}
+`
+      },
+      { label:'Return / variants',
+        hint:'dist[target] is the minimum-weight path. Same complexity as BFS — O(V + E) — without the log factor of Dijkstra.',
+        code:`${C('// Step 4 — Return')}
+${K('return')} dist[target] == ${T('Integer')}.MAX_VALUE ? -${N('1')} : dist[target];
+
+${C('// Grid framing — Min Obstacle Removal (LC 2290):')}
+${C('//   Moving onto a 0-cell costs 0 (offerFirst).')}
+${C('//   Moving onto a 1-cell costs 1 (offerLast).')}
+${C('//   Path cost = number of obstacles crushed.')}
+
+${C('// Why deque and not PriorityQueue?')}
+${C('//   With only weights {0,1}, the deque keeps the "current min cost"')}
+${C('//   on the left without needing a heap → O(V+E) instead of O(E log V).')}
+
+${C('// Time:  O(V + E)')}
+${C('// Space: O(V)')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

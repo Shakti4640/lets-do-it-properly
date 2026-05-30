@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Trees Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-dfs: #39d0a8;
+    --c-bfs: #58a6ff;
+    --c-bst: #bc8cff;
+    --c-pat: #f0883e;
+    --c-tdp: #d29922;
+    --c-lca: #e06c75;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-tr   { background: rgba(57,208,168,0.1); color: var(--c-dfs); border-color: rgba(57,208,168,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="dfs"].on { color: var(--c-dfs); border-bottom-color: var(--c-dfs); }
+  .tab[data-id="bfs"].on { color: var(--c-bfs); border-bottom-color: var(--c-bfs); }
+  .tab[data-id="bst"].on { color: var(--c-bst); border-bottom-color: var(--c-bst); }
+  .tab[data-id="pat"].on { color: var(--c-pat); border-bottom-color: var(--c-pat); }
+  .tab[data-id="tdp"].on { color: var(--c-tdp); border-bottom-color: var(--c-tdp); }
+  .tab[data-id="lca"].on { color: var(--c-lca); border-bottom-color: var(--c-lca); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Trees Templates</h1>
+    <p>// 6 patterns &middot; 4 steps each &middot; recursion &middot; bfs &middot; tree dp</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-tr">&#x1F333; Trees</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">TreeTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-dfs)">
+      <h3>DFS Recursion</h3>
+      <div class="cheat-row"><span>Order</span><span>pre / in / post</span></div>
+      <div class="cheat-row"><span>Stack</span><span>O(h) recursion</span></div>
+      <div class="cheat-row"><span>Use post for</span><span>aggregate from kids</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Max Depth, Diameter</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-bfs)">
+      <h3>Level-Order BFS</h3>
+      <div class="cheat-row"><span>Queue</span><span>ArrayDeque&lt;TreeNode&gt;</span></div>
+      <div class="cheat-row"><span>Level fence</span><span>snapshot queue.size()</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(n)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Level Order, Right Side View</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-bst)">
+      <h3>BST</h3>
+      <div class="cheat-row"><span>Invariant</span><span>left &lt; node &lt; right</span></div>
+      <div class="cheat-row"><span>Validate</span><span>min/max bounds DFS</span></div>
+      <div class="cheat-row"><span>Inorder</span><span>strictly increasing</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Validate BST, Kth Smallest</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-pat)">
+      <h3>Path Sum / Backtrack</h3>
+      <div class="cheat-row"><span>Carry</span><span>current path / sum</span></div>
+      <div class="cheat-row"><span>Add at</span><span>leaf or any node</span></div>
+      <div class="cheat-row"><span>Undo</span><span>list.removeLast()</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Path Sum II, Sum Root-to-Leaf</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-tdp)">
+      <h3>Tree DP (Postorder)</h3>
+      <div class="cheat-row"><span>Recur returns</span><span>info needed by parent</span></div>
+      <div class="cheat-row"><span>Combine kids</span><span>at the current node</span></div>
+      <div class="cheat-row"><span>Update global</span><span>through current node</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Diameter, Max Path Sum, Robber III</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-lca)">
+      <h3>LCA / Ancestor</h3>
+      <div class="cheat-row"><span>BST</span><span>compare values, walk down</span></div>
+      <div class="cheat-row"><span>Generic</span><span>recurse, both non-null = LCA</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(n) generic, O(h) BST</span></div>
+      <div class="cheat-row"><span>Examples</span><span>LCA in BT / BST</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'dfs', label:'DFS Recursion',
+    steps:[
+      { label:'Define state',
+        hint:'A DFS function takes the current node and returns whatever this subtree needs to report up to its parent.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(node) returns one number/object describing this subtree')}
+${C('// Classic: max depth, count nodes, sum, mirror, invert')}
+
+${K('class')} ${T('TreeNode')} {
+    ${K('int')} val;
+    ${T('TreeNode')} left, right;
+}
+
+${C('// Pick the return type to match the question:')}
+${C('//   int     — depth, count, sum')}
+${C('//   boolean — symmetric, balanced')}
+${C('//   TreeNode — invert, prune')}
+`
+      },
+      { label:'Base case',
+        hint:'Null node returns the identity element: 0 for sums, 0 for depth, true for vacuous booleans.',
+        code:`${C('// Step 2 — Base case is always null')}
+${K('public')} ${K('int')} ${F('maxDepth')}(${T('TreeNode')} node) {
+    ${K('if')} (node == ${K('null')}) ${K('return')} ${N('0')};
+
+    ${C('// Identity per problem:')}
+    ${C('//   max depth      → 0')}
+    ${C('//   count nodes    → 0')}
+    ${C('//   sum            → 0')}
+    ${C('//   isBalanced     → true (height 0)')}
+    ${C('//   invert         → null')}
+}
+`
+      },
+      { label:'Recurse + combine',
+        hint:'Recurse on left and right, then combine those two results to get the answer for the current subtree.',
+        code:`${C('// Step 3 — Recurse on children, combine at current node')}
+${K('int')} L = ${F('maxDepth')}(node.left);
+${K('int')} R = ${F('maxDepth')}(node.right);
+
+${C('// Combine:')}
+${K('return')} ${T('Math')}.${F('max')}(L, R) + ${N('1')};
+
+${C('// Other combinators:')}
+${C('//   count = L + R + 1')}
+${C('//   sum   = L + R + node.val')}
+${C('//   isSymmetric(a,b) → a.val==b.val && sym(a.left,b.right) && sym(a.right,b.left)')}
+${C('//   invert → swap left/right after recursing')}
+`
+      },
+      { label:'Pre / in / post',
+        hint:'Pre = act before children. In = act between left and right (BST inorder). Post = act after children (most tree DP).',
+        code:`${C('// Step 4 — Three traversal flavours')}
+
+${C('// PREORDER — top-down, useful when parent passes info down')}
+${K('void')} ${F('pre')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')};
+    ${F('visit')}(n);          ${C('// before children')}
+    ${F('pre')}(n.left);
+    ${F('pre')}(n.right);
+}
+
+${C('// INORDER — left, self, right (BST → sorted output)')}
+${K('void')} ${F('in')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')};
+    ${F('in')}(n.left);
+    ${F('visit')}(n);
+    ${F('in')}(n.right);
+}
+
+${C('// POSTORDER — children first, parent last (tree DP)')}
+${K('void')} ${F('post')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')};
+    ${F('post')}(n.left);
+    ${F('post')}(n.right);
+    ${F('visit')}(n);
+}
+`
+      }
+    ]
+  },
+  {
+    id:'bfs', label:'Level-Order BFS',
+    steps:[
+      { label:'Define state',
+        hint:'A queue gives the next node to process. To split work into levels, snapshot queue.size() at the top of each round.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// queue holds nodes still to visit')}
+${C('// Each loop iteration processes ONE level')}
+${C('// Classic: Level Order, Right Side View, Zigzag, Min Depth, Connect Next Right')}
+
+${T('Deque')}<${T('TreeNode')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+${T('List')}<${T('List')}<${T('Integer')}>> out = ${K('new')} ${T('ArrayList')}<>();
+`
+      },
+      { label:'Base case',
+        hint:'If root is null return an empty list. Otherwise seed the queue with the root.',
+        code:`${C('// Step 2 — Base case')}
+${K('if')} (root == ${K('null')}) ${K('return')} out;
+
+q.${F('offer')}(root);
+
+${C('// Many problems want a list per level, so initialise')}
+${C('// the outer container BEFORE entering the BFS loop.')}
+`
+      },
+      { label:'Level-by-level loop',
+        hint:'Outer loop drains the queue. Inner loop runs exactly size times — that fence is what cleanly separates levels.',
+        code:`${C('// Step 3 — Process level by level')}
+${K('while')} (!q.${F('isEmpty')}()) {
+
+    ${K('int')} size = q.${F('size')}();          ${C('// nodes on THIS level')}
+    ${T('List')}<${T('Integer')}> level = ${K('new')} ${T('ArrayList')}<>();
+
+    ${K('for')} (${K('int')} i = ${N('0')}; i < size; i++) {
+        ${T('TreeNode')} cur = q.${F('poll')}();
+        level.${F('add')}(cur.val);
+
+        ${K('if')} (cur.left  != ${K('null')}) q.${F('offer')}(cur.left);
+        ${K('if')} (cur.right != ${K('null')}) q.${F('offer')}(cur.right);
+    }
+    out.${F('add')}(level);
+}
+`
+      },
+      { label:'Variants + return',
+        hint:'Right-side view = last value of each level. Zigzag = reverse alternate levels. Min depth = first level a leaf appears.',
+        code:`${C('// Step 4 — Common variants slot into the same loop')}
+${K('return')} out;
+
+${C('// Right Side View — capture rightmost per level:')}
+${C('//   if (i == size - 1) view.add(cur.val);')}
+
+${C('// Zigzag — flip every other level:')}
+${C('//   if (level % 2 == 1) Collections.reverse(rowList);')}
+
+${C('// Min depth — return depth at first leaf seen:')}
+${C('//   if (cur.left == null && cur.right == null) return depth;')}
+
+${C('// Connect Next Right Pointers — link cur to next-in-level:')}
+${C('//   if (i < size - 1) cur.next = q.peek();')}
+
+${C('// Time:  O(n)')}
+${C('// Space: O(w) where w is max width')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'bst', label:'BST',
+    steps:[
+      { label:'Define state',
+        hint:'A BST guarantees left subtree < node < right subtree. That ordering powers search, validate, and kth-smallest in O(h) or O(n) inorder.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// Whatever the question, the BST invariant drives the recursion:')}
+${C('//   left subtree  → all values  <  node.val')}
+${C('//   right subtree → all values  >  node.val')}
+${C('// Classic: Validate BST, Kth Smallest, BST Search/Insert/Delete')}
+
+${C('// For validation we carry an open interval (lo, hi)')}
+${C('// For inorder we carry a counter / running pointer')}
+`
+      },
+      { label:'Base case',
+        hint:'Null node always satisfies the invariant — return true for validate, return null for search miss.',
+        code:`${C('// Step 2 — Base case is always null')}
+${K('boolean')} ${F('validate')}(${T('TreeNode')} n, ${T('Long')} lo, ${T('Long')} hi) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('true')};
+    ${C('// vacuously valid')}
+}
+
+${T('TreeNode')} ${F('search')}(${T('TreeNode')} n, ${K('int')} v) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('null')};
+    ${C('// not found')}
+}
+`
+      },
+      { label:'Validate / search / insert',
+        hint:'Carry tightening bounds for validation. For search/insert/delete walk left when target is smaller, right otherwise.',
+        code:`${C('// Step 3 — Use the invariant to recurse')}
+
+${C('// VALIDATE BST — bounds get tighter as we descend')}
+${K('boolean')} ${F('validate')}(${T('TreeNode')} n, ${T('Long')} lo, ${T('Long')} hi) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('true')};
+    ${K('if')} ((lo != ${K('null')} && n.val <= lo) ||
+        (hi != ${K('null')} && n.val >= hi)) ${K('return')} ${K('false')};
+    ${K('return')} ${F('validate')}(n.left, lo, (${K('long')}) n.val)
+        && ${F('validate')}(n.right, (${K('long')}) n.val, hi);
+}
+
+${C('// SEARCH (iterative, O(h))')}
+${K('while')} (n != ${K('null')} && n.val != target)
+    n = (target < n.val) ? n.left : n.right;
+${K('return')} n;
+
+${C('// INSERT — recurse down, attach a new leaf at the null spot')}
+${K('if')} (n == ${K('null')}) ${K('return')} ${K('new')} ${T('TreeNode')}(v);
+${K('if')} (v < n.val) n.left  = ${F('insert')}(n.left,  v);
+${K('else')}           n.right = ${F('insert')}(n.right, v);
+${K('return')} n;
+`
+      },
+      { label:'Inorder = sorted',
+        hint:'Inorder traversal of a BST visits values in ascending order. That fact powers kth-smallest and "validate via inorder".',
+        code:`${C('// Step 4 — Exploit inorder')}
+
+${C('// KTH SMALLEST — early-exit during inorder')}
+${K('int')} count = ${N('0')}, ans = -${N('1')};
+${K('void')} ${F('inorder')}(${T('TreeNode')} n, ${K('int')} k) {
+    ${K('if')} (n == ${K('null')} || ans != -${N('1')}) ${K('return')};
+    ${F('inorder')}(n.left, k);
+    ${K('if')} (++count == k) { ans = n.val; ${K('return')}; }
+    ${F('inorder')}(n.right, k);
+}
+
+${C('// VALIDATE BST via inorder — track previous value')}
+${T('Integer')} prev = ${K('null')};
+${K('boolean')} ${F('isValid')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('true')};
+    ${K('if')} (!${F('isValid')}(n.left)) ${K('return')} ${K('false')};
+    ${K('if')} (prev != ${K('null')} && n.val <= prev) ${K('return')} ${K('false')};
+    prev = n.val;
+    ${K('return')} ${F('isValid')}(n.right);
+}
+`
+      }
+    ]
+  },
+  {
+    id:'pat', label:'Path Sum / Backtrack',
+    steps:[
+      { label:'Define state',
+        hint:'Each recursion frame carries the current path (and its running sum). On the way back up, undo the choice.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// path = list of node values from root to current node')}
+${C('// running = sum of those values (kept in sync with path)')}
+${C('// Classic: Path Sum I/II, Sum Root to Leaf, Binary Tree Paths')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> out = ${K('new')} ${T('ArrayList')}<>();
+${T('Deque')}<${T('Integer')}> path = ${K('new')} ${T('ArrayDeque')}<>();
+`
+      },
+      { label:'Base case',
+        hint:'Null node returns immediately. Adding to the result happens at the right moment — leaf for path sum, every node for some variants.',
+        code:`${C('// Step 2 — Base case + when to record the answer')}
+${K('void')} ${F('dfs')}(${T('TreeNode')} n, ${K('int')} target, ${K('int')} running) {
+    ${K('if')} (n == ${K('null')}) ${K('return')};
+
+    ${F('add')}(n);                     ${C('// step 3 will undo this')}
+    running += n.val;
+
+    ${C('// Record only at LEAF for "root-to-leaf" problems')}
+    ${K('if')} (n.left == ${K('null')} && n.right == ${K('null')} && running == target) {
+        out.${F('add')}(${K('new')} ${T('ArrayList')}<>(path));
+    }
+    ${C('// continued in step 3 ...')}
+}
+`
+      },
+      { label:'Choose, recurse, un-choose',
+        hint:'Push the value before recursing. After the recursion returns, pop it. The "undo" is what makes the recursion correct.',
+        code:`${C('// Step 3 — Backtrack')}
+    ${F('dfs')}(n.left,  target, running);
+    ${F('dfs')}(n.right, target, running);
+
+    path.${F('removeLast')}();          ${C('// UNDO before returning to parent')}
+
+${C('// Helper add():')}
+${K('void')} ${F('add')}(${T('TreeNode')} n) { path.${F('addLast')}(n.val); }
+
+${C('// Why undo?  Sibling subtrees must NOT see the current node.')}
+${C('// If you forget removeLast, paths leak across branches.')}
+`
+      },
+      { label:'Variants + return',
+        hint:'Root-to-leaf path sum (LC 113), all root-to-leaf paths as strings (LC 257), sum-of-numbers (LC 129), path-sum-III (subpath anywhere — prefix sums).',
+        code:`${C('// Step 4 — Common variants')}
+${K('return')} out;
+
+${C('// LC 257 — return paths as "1->2->5" strings:')}
+${C('//   on leaf, join path with "->"')}
+
+${C('// LC 129 — sum root-to-leaf numbers (digits):')}
+${C('//   running = running * 10 + n.val;')}
+${C('//   on leaf return running, else return left + right')}
+
+${C('// LC 437 — count any contiguous downward path equal to target:')}
+${C('//   carry HashMap<Long, Integer> prefixCount')}
+${C('//   running += n.val')}
+${C('//   answer += map.getOrDefault(running - target, 0)')}
+${C('//   recurse, then prefixCount.merge(running, -1, Integer::sum)')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'tdp', label:'Tree DP (Postorder)',
+    steps:[
+      { label:'Define state',
+        hint:'Each call returns just enough info for the parent to compute its own answer. A class-level field holds the global best.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(node) returns a number/object summarising this subtree')}
+${C('// A class field captures the global answer (max diameter, max path sum, etc.)')}
+${C('// Classic: Diameter, Max Path Sum, House Robber III, Longest Univalue Path')}
+
+${K('class')} ${T('Solution')} {
+    ${K('int')} ans = ${N('0')};   ${C('// global best — updated through current node')}
+}
+
+${C('// Tree DP = postorder + combine + maybe update global')}
+`
+      },
+      { label:'Base case',
+        hint:'Null returns the identity: 0 for length/sum, 0/0 for "rob/notRob", a sentinel for height-balanced checks.',
+        code:`${C('// Step 2 — Base case is null')}
+${K('int')} ${F('dfs')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${N('0')};
+    ${C('// Return identity: a 0-length / 0-sum / 0-depth subtree')}
+}
+
+${C('// House Robber III returns int[2] — {notRob, rob}')}
+${K('int')}[] ${F('dfs2')}(${T('TreeNode')} n) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('new')} ${K('int')}[]{ ${N('0')}, ${N('0')} };
+}
+`
+      },
+      { label:'Recurse, update global',
+        hint:'Recurse into both children. Combine their info AT the current node. Update the global answer here too — paths bend through the current node.',
+        code:`${C('// Step 3 — Postorder + combine + global update')}
+
+${C('// DIAMETER OF BINARY TREE')}
+${K('int')} L = ${F('dfs')}(n.left);
+${K('int')} R = ${F('dfs')}(n.right);
+
+${C('// Path THROUGH this node uses both arms')}
+ans = ${T('Math')}.${F('max')}(ans, L + R);
+
+${C('// MAX PATH SUM — clip negatives to zero')}
+${K('int')} l = ${T('Math')}.${F('max')}(${F('dfs')}(n.left),  ${N('0')});
+${K('int')} r = ${T('Math')}.${F('max')}(${F('dfs')}(n.right), ${N('0')});
+ans = ${T('Math')}.${F('max')}(ans, l + r + n.val);
+`
+      },
+      { label:'Return up',
+        hint:'Return only what the parent can extend — usually a single arm (max(L,R) + 1), never two arms at once.',
+        code:`${C('// Step 4 — Return ONE arm to the parent')}
+
+${C('// DIAMETER — height to extend with')}
+${K('return')} ${T('Math')}.${F('max')}(L, R) + ${N('1')};
+
+${C('// MAX PATH SUM — best single-arm sum to extend with')}
+${K('return')} n.val + ${T('Math')}.${F('max')}(l, r);
+
+${C('// HOUSE ROBBER III')}
+${K('int')}[] left  = ${F('dfs2')}(n.left);
+${K('int')}[] right = ${F('dfs2')}(n.right);
+${K('int')} notRob = ${T('Math')}.${F('max')}(left[${N('0')}], left[${N('1')}])
+            + ${T('Math')}.${F('max')}(right[${N('0')}], right[${N('1')}]);
+${K('int')} rob    = n.val + left[${N('0')}] + right[${N('0')}];
+${K('return')} ${K('new')} ${K('int')}[]{ notRob, rob };
+
+${C('// Final answer for the whole tree:')}
+${C('// dfs(root); return ans;            // diameter / max path sum')}
+${C('// int[] r = dfs2(root); return Math.max(r[0], r[1]);')}
+`
+      }
+    ]
+  },
+  {
+    id:'lca', label:'LCA / Ancestor',
+    steps:[
+      { label:'Define state',
+        hint:'LCA = deepest node that has both targets in its subtree. The recursive form returns the LCA candidate from this subtree.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dfs(n, p, q) returns:')}
+${C('//   p or q if found,  the LCA if both already met,  null otherwise')}
+${C('// Classic: LCA in Binary Tree (LC 236), LCA in BST (LC 235)')}
+
+${C('// In BSTs we can do better — walk down using the value comparison.')}
+`
+      },
+      { label:'Base case',
+        hint:'Null returns null. If we ARE p or q, return ourselves — let the parent decide if both arms found one each.',
+        code:`${C('// Step 2 — Base case')}
+${T('TreeNode')} ${F('lca')}(${T('TreeNode')} n, ${T('TreeNode')} p, ${T('TreeNode')} q) {
+    ${K('if')} (n == ${K('null')} || n == p || n == q) ${K('return')} n;
+    ${C('// "I am one of the targets" → return self')}
+    ${C('// "I am null"               → return null')}
+}
+`
+      },
+      { label:'Recurse + combine',
+        hint:'Recurse on both children. If both return non-null, current node is the LCA. Otherwise propagate the non-null side up.',
+        code:`${C('// Step 3 — Recurse on both sides')}
+${T('TreeNode')} L = ${F('lca')}(n.left,  p, q);
+${T('TreeNode')} R = ${F('lca')}(n.right, p, q);
+
+${C('// Both arms returned a target → current node IS the LCA')}
+${K('if')} (L != ${K('null')} && R != ${K('null')}) ${K('return')} n;
+
+${C('// Otherwise propagate the side that found something')}
+${K('return')} (L != ${K('null')}) ? L : R;
+
+${C('// BST shortcut — O(h)')}
+${K('while')} (n != ${K('null')}) {
+    ${K('if')} (p.val < n.val && q.val < n.val) n = n.left;
+    ${K('else')} ${K('if')} (p.val > n.val && q.val > n.val) n = n.right;
+    ${K('else')} ${K('return')} n;   ${C('// split point — this is the LCA')}
+}
+`
+      },
+      { label:'Existence + variants',
+        hint:'Plain recursion can return a non-null even if only ONE target is in the tree. If existence is in doubt, count finds explicitly.',
+        code:`${C('// Step 4 — Variants')}
+
+${C('// LCA when p or q might not be in the tree (LC 1644):')}
+${K('boolean')} foundP = ${K('false')}, foundQ = ${K('false')};
+
+${T('TreeNode')} ${F('lcaSafe')}(${T('TreeNode')} n, ${T('TreeNode')} p, ${T('TreeNode')} q) {
+    ${K('if')} (n == ${K('null')}) ${K('return')} ${K('null')};
+    ${T('TreeNode')} L = ${F('lcaSafe')}(n.left,  p, q);
+    ${T('TreeNode')} R = ${F('lcaSafe')}(n.right, p, q);
+    ${K('if')} (n == p) { foundP = ${K('true')}; ${K('return')} n; }
+    ${K('if')} (n == q) { foundQ = ${K('true')}; ${K('return')} n; }
+    ${K('if')} (L != ${K('null')} && R != ${K('null')}) ${K('return')} n;
+    ${K('return')} L != ${K('null')} ? L : R;
+}
+${C('// Then return (foundP && foundQ) ? lcaSafe(root,p,q) : null;')}
+
+${C('// Distance between two nodes:')}
+${C('//   LCA + (depth(p) - depth(LCA)) + (depth(q) - depth(LCA))')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

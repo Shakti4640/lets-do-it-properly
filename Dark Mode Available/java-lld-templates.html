@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java LLD Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-sld: #39d0a8;
+    --c-crt: #58a6ff;
+    --c-str: #bc8cff;
+    --c-bhv: #f0883e;
+    --c-cnc: #d29922;
+    --c-prb: #e06c75;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-lld  { background: rgba(57,208,168,0.1); color: var(--c-sld); border-color: rgba(57,208,168,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="sld"].on { color: var(--c-sld); border-bottom-color: var(--c-sld); }
+  .tab[data-id="crt"].on { color: var(--c-crt); border-bottom-color: var(--c-crt); }
+  .tab[data-id="str"].on { color: var(--c-str); border-bottom-color: var(--c-str); }
+  .tab[data-id="bhv"].on { color: var(--c-bhv); border-bottom-color: var(--c-bhv); }
+  .tab[data-id="cnc"].on { color: var(--c-cnc); border-bottom-color: var(--c-cnc); }
+  .tab[data-id="prb"].on { color: var(--c-prb); border-bottom-color: var(--c-prb); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java LLD Templates</h1>
+    <p>// 6 patterns &middot; 4 steps each &middot; SOLID &middot; GoF &middot; concurrency</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-lld">&#x1F3D7;&#xFE0F; LLD</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">LldTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-sld)">
+      <h3>SOLID + Class Design</h3>
+      <div class="cheat-row"><span>S</span><span>Single Responsibility</span></div>
+      <div class="cheat-row"><span>O</span><span>Open / Closed</span></div>
+      <div class="cheat-row"><span>L / I / D</span><span>Liskov, ISP, DIP</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Refactor God class</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-crt)">
+      <h3>Creational Patterns</h3>
+      <div class="cheat-row"><span>Factory</span><span>create-by-type</span></div>
+      <div class="cheat-row"><span>Builder</span><span>fluent step-by-step</span></div>
+      <div class="cheat-row"><span>Singleton</span><span>one instance, lazy</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Notification, HTTP request</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-str)">
+      <h3>Structural Patterns</h3>
+      <div class="cheat-row"><span>Adapter</span><span>incompatible &rarr; expected</span></div>
+      <div class="cheat-row"><span>Decorator</span><span>wrap to add behaviour</span></div>
+      <div class="cheat-row"><span>Composite</span><span>tree of part/whole</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Coffee, FileSystem</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-bhv)">
+      <h3>Behavioral Patterns</h3>
+      <div class="cheat-row"><span>Strategy</span><span>swap algorithm at runtime</span></div>
+      <div class="cheat-row"><span>Observer</span><span>publish / subscribe</span></div>
+      <div class="cheat-row"><span>State</span><span>behaviour by FSM state</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Payment, EventBus</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cnc)">
+      <h3>Concurrency Toolkit</h3>
+      <div class="cheat-row"><span>Lock</span><span>ReentrantLock / synchronized</span></div>
+      <div class="cheat-row"><span>Map</span><span>ConcurrentHashMap</span></div>
+      <div class="cheat-row"><span>Atomic</span><span>AtomicInteger / LongAdder</span></div>
+      <div class="cheat-row"><span>Examples</span><span>LRU thread-safe, Token Bucket</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-prb)">
+      <h3>Interview Problems</h3>
+      <div class="cheat-row"><span>Parking Lot</span><span>enums + strategy</span></div>
+      <div class="cheat-row"><span>LRU Cache</span><span>HashMap + DLL</span></div>
+      <div class="cheat-row"><span>Rate Limiter</span><span>token bucket / sliding</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Splitwise, ATM, Elevator</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'sld', label:'SOLID + Class Design',
+    steps:[
+      { label:'Identify entities',
+        hint:'Read the problem statement and circle the nouns: those become classes. Verbs become methods. Then ask which classes belong together.',
+        code:`${C('// Step 1 — From requirements to classes')}
+${C('// Problem: "Users can place orders for products. Payments use card or wallet."')}
+
+${C('// Nouns → candidate classes:    User, Order, Product, Payment, Card, Wallet')}
+${C('// Verbs → methods on a class:   placeOrder, pay, refund')}
+
+${K('class')} ${T('User')}    { ${T('String')} id; ${T('String')} name; }
+${K('class')} ${T('Product')} { ${T('String')} sku; ${K('int')} priceCents; }
+${K('class')} ${T('Order')}   {
+    ${T('String')} id;
+    ${T('User')} buyer;
+    ${T('List')}<${T('Product')}> items;
+}
+
+${C('// At this stage: data only. Behaviour comes in step 3.')}
+${C('// Build a quick UML — boxes for classes, arrows for "uses / has-a".')}
+`
+      },
+      { label:'Apply Single Responsibility',
+        hint:'Each class should have one reason to change. Split anything that mixes data, persistence, and business rules.',
+        code:`${C('// Step 2 — Single Responsibility (the S in SOLID)')}
+
+${C('// BAD — one class doing three jobs:')}
+${K('class')} ${T('OrderGod')} {
+    ${K('void')} ${F('save')}()           { ${C('/* SQL ... */')} }
+    ${K('void')} ${F('sendEmail')}()      { ${C('/* SMTP ... */')} }
+    ${K('int')} ${F('totalCents')}()      { ${C('/* business rule */')} }
+}
+
+${C('// GOOD — one reason to change per class:')}
+${K('class')} ${T('Order')}            { ${K('int')} ${F('totalCents')}() { ... } }   ${C('// pricing rules')}
+${K('class')} ${T('OrderRepository')}  { ${K('void')} ${F('save')}(${T('Order')} o) { ... } }   ${C('// persistence')}
+${K('class')} ${T('OrderNotifier')}    { ${K('void')} ${F('confirm')}(${T('Order')} o) { ... } } ${C('// notifications')}
+
+${C('// Rule of thumb: if you find yourself saying "this class is the X manager"')}
+${C('// the responsibility is too vague — split it.')}
+`
+      },
+      { label:'Open / Closed + Liskov',
+        hint:'Open for extension, closed for modification — add new behaviour by adding a class, not by editing a switch. Liskov: subtypes must honour the parent contract.',
+        code:`${C('// Step 3 — Open/Closed via polymorphism (no growing if/else chains)')}
+
+${C('// BAD — every new payment method edits this switch:')}
+${K('int')} ${F('charge')}(${T('Order')} o, ${T('String')} method) {
+    ${K('if')} (method.${F('equals')}("CARD"))   ${K('return')} ${F('chargeCard')}(o);
+    ${K('if')} (method.${F('equals')}("WALLET")) ${K('return')} ${F('chargeWallet')}(o);
+    ${C('// ... grows forever')}
+    ${K('throw')} ${K('new')} ${T('IllegalArgumentException')}();
+}
+
+${C('// GOOD — open to extension, closed to modification:')}
+${K('interface')} ${T('PaymentMethod')} { ${K('int')} ${F('charge')}(${T('Order')} o); }
+
+${K('class')} ${T('Card')}   ${K('implements')} ${T('PaymentMethod')} { ${K('public')} ${K('int')} ${F('charge')}(${T('Order')} o) { ... } }
+${K('class')} ${T('Wallet')} ${K('implements')} ${T('PaymentMethod')} { ${K('public')} ${K('int')} ${F('charge')}(${T('Order')} o) { ... } }
+
+${K('class')} ${T('Checkout')} {
+    ${K('int')} ${F('pay')}(${T('Order')} o, ${T('PaymentMethod')} pm) { ${K('return')} pm.${F('charge')}(o); }
+}
+
+${C('// Liskov — Square should NOT extend Rectangle if it changes setWidth semantics.')}
+${C('// Liskov violation = parent contract broken by a child.')}
+`
+      },
+      { label:'ISP + DIP',
+        hint:'Interface Segregation: many small interfaces beat one fat one. Dependency Inversion: depend on interfaces, inject implementations.',
+        code:`${C('// Step 4 — Interface Segregation + Dependency Inversion')}
+
+${C('// BAD — fat interface forces clients to implement methods they do not need:')}
+${K('interface')} ${T('Repo')} { ${K('void')} ${F('save')}(); ${K('void')} ${F('delete')}(); ${K('void')} ${F('export')}(); }
+
+${C('// GOOD — Interface Segregation: split by client need')}
+${K('interface')} ${T('Saver')}   { ${K('void')} ${F('save')}(${T('Order')} o);   }
+${K('interface')} ${T('Deleter')} { ${K('void')} ${F('delete')}(${T('Order')} o); }
+
+${C('// DIP — Checkout depends on the ABSTRACTION, never on the concrete class')}
+${K('class')} ${T('Checkout')} {
+    ${K('private')} ${K('final')} ${T('PaymentMethod')} pm;
+    ${K('private')} ${K('final')} ${T('Saver')} repo;
+
+    ${K('public')} ${T('Checkout')}(${T('PaymentMethod')} pm, ${T('Saver')} repo) {  ${C('// constructor injection')}
+        ${K('this')}.pm = pm;
+        ${K('this')}.repo = repo;
+    }
+
+    ${K('void')} ${F('place')}(${T('Order')} o) {
+        pm.${F('charge')}(o);
+        repo.${F('save')}(o);
+    }
+}
+
+${C('// Now Checkout has no idea whether payment goes to Stripe or Razorpay,')}
+${C('// nor whether saves go to Postgres or DynamoDB. Both can be swapped — and tested.')}
+`
+      }
+    ]
+  },
+  {
+    id:'crt', label:'Creational Patterns',
+    steps:[
+      { label:'Factory Method',
+        hint:'When the type to create depends on input, hide the if/else inside a factory. Callers ask for what they need, not how it is built.',
+        code:`${C('// Step 1 — Factory: centralise object creation')}
+
+${K('interface')} ${T('Notification')} { ${K('void')} ${F('send')}(${T('String')} msg); }
+
+${K('class')} ${T('Email')} ${K('implements')} ${T('Notification')} { ${K('public')} ${K('void')} ${F('send')}(${T('String')} m) { ... } }
+${K('class')} ${T('Sms')}   ${K('implements')} ${T('Notification')} { ${K('public')} ${K('void')} ${F('send')}(${T('String')} m) { ... } }
+${K('class')} ${T('Push')}  ${K('implements')} ${T('Notification')} { ${K('public')} ${K('void')} ${F('send')}(${T('String')} m) { ... } }
+
+${K('class')} ${T('NotificationFactory')} {
+    ${K('public')} ${K('static')} ${T('Notification')} ${F('of')}(${T('String')} channel) {
+        ${K('return')} ${K('switch')} (channel) {
+            ${K('case')} "EMAIL" -> ${K('new')} ${T('Email')}();
+            ${K('case')} "SMS"   -> ${K('new')} ${T('Sms')}();
+            ${K('case')} "PUSH"  -> ${K('new')} ${T('Push')}();
+            ${K('default')} -> ${K('throw')} ${K('new')} ${T('IllegalArgumentException')}(channel);
+        };
+    }
+}
+
+${C('// Caller is decoupled from concrete classes:')}
+${T('NotificationFactory')}.${F('of')}(req.channel).${F('send')}(req.body);
+`
+      },
+      { label:'Builder',
+        hint:'When constructors get more than 3-4 args (especially with optional fields), use a fluent builder. Prevents the "telescoping constructor" smell.',
+        code:`${C('// Step 2 — Builder: fluent, immutable result')}
+
+${K('public')} ${K('class')} ${T('HttpRequest')} {
+    ${K('private')} ${K('final')} ${T('String')} url;
+    ${K('private')} ${K('final')} ${T('String')} method;
+    ${K('private')} ${K('final')} ${T('Map')}<${T('String')}, ${T('String')}> headers;
+    ${K('private')} ${K('final')} ${T('String')} body;
+
+    ${K('private')} ${T('HttpRequest')}(${T('Builder')} b) {        ${C('// private — must use builder')}
+        ${K('this')}.url = b.url; ${K('this')}.method = b.method;
+        ${K('this')}.headers = ${T('Map')}.${F('copyOf')}(b.headers);
+        ${K('this')}.body = b.body;
+    }
+
+    ${K('public')} ${K('static')} ${T('Builder')} ${F('builder')}() { ${K('return')} ${K('new')} ${T('Builder')}(); }
+
+    ${K('public')} ${K('static')} ${K('class')} ${T('Builder')} {
+        ${K('private')} ${T('String')} url, method = "GET", body = "";
+        ${K('private')} ${T('Map')}<${T('String')}, ${T('String')}> headers = ${K('new')} ${T('HashMap')}<>();
+
+        ${K('public')} ${T('Builder')} ${F('url')}(${T('String')} u)                 { ${K('this')}.url = u; ${K('return')} ${K('this')}; }
+        ${K('public')} ${T('Builder')} ${F('method')}(${T('String')} m)              { ${K('this')}.method = m; ${K('return')} ${K('this')}; }
+        ${K('public')} ${T('Builder')} ${F('header')}(${T('String')} k, ${T('String')} v) { headers.${F('put')}(k, v); ${K('return')} ${K('this')}; }
+        ${K('public')} ${T('Builder')} ${F('body')}(${T('String')} b)                { ${K('this')}.body = b; ${K('return')} ${K('this')}; }
+
+        ${K('public')} ${T('HttpRequest')} ${F('build')}() {
+            ${T('Objects')}.${F('requireNonNull')}(url, "url");
+            ${K('return')} ${K('new')} ${T('HttpRequest')}(${K('this')});
+        }
+    }
+}
+
+${T('HttpRequest')} req = ${T('HttpRequest')}.${F('builder')}()
+        .${F('url')}("https://example.com")
+        .${F('header')}("Accept", "application/json")
+        .${F('build')}();
+`
+      },
+      { label:'Singleton',
+        hint:'Use only when there truly should be one instance (config, log appender). Prefer enum singleton — JVM-guaranteed, serialization-safe.',
+        code:`${C('// Step 3 — Singleton (use sparingly)')}
+
+${C('// Best in Java: enum singleton — thread-safe, serialization-safe, no subclassing')}
+${K('public')} ${K('enum')} ${T('Config')} {
+    INSTANCE;
+
+    ${K('private')} ${K('final')} ${T('Properties')} props = ${K('new')} ${T('Properties')}();
+
+    ${K('public')} ${T('String')} ${F('get')}(${T('String')} key)            { ${K('return')} props.${F('getProperty')}(key); }
+    ${K('public')} ${K('void')} ${F('set')}(${T('String')} k, ${T('String')} v) { props.${F('setProperty')}(k, v); }
+}
+
+${C('// Usage:')}
+${T('String')} db = ${T('Config')}.INSTANCE.${F('get')}("db.url");
+
+${C('// Lazy double-checked locking variant — only when you need lazy init AND the')}
+${C('// instance must NOT be loaded at class load time:')}
+${K('public')} ${K('class')} ${T('Lazy')} {
+    ${K('private')} ${K('static')} ${K('volatile')} ${T('Lazy')} instance;
+
+    ${K('public')} ${K('static')} ${T('Lazy')} ${F('get')}() {
+        ${K('if')} (instance == ${K('null')}) {
+            ${K('synchronized')} (${T('Lazy')}.${K('class')}) {
+                ${K('if')} (instance == ${K('null')}) instance = ${K('new')} ${T('Lazy')}();
+            }
+        }
+        ${K('return')} instance;
+    }
+}
+
+${C('// Avoid singletons when DI works — they are global state and hard to mock.')}
+`
+      },
+      { label:'Prototype + Abstract Factory',
+        hint:'Prototype: clone existing objects when constructing from scratch is expensive. Abstract Factory: a family of related factories (e.g. UI for Mac vs Windows).',
+        code:`${C('// Step 4 — Prototype + Abstract Factory')}
+
+${C('// PROTOTYPE — clone is faster than rebuild')}
+${K('class')} ${T('Document')} ${K('implements')} ${T('Cloneable')} {
+    ${T('String')} title; ${T('List')}<${T('String')}> sections = ${K('new')} ${T('ArrayList')}<>();
+
+    ${K('@Override')}
+    ${K('public')} ${T('Document')} ${F('clone')}() {
+        ${T('Document')} copy = ${K('new')} ${T('Document')}();
+        copy.title = ${K('this')}.title;
+        copy.sections = ${K('new')} ${T('ArrayList')}<>(${K('this')}.sections);  ${C('// deep copy fields you mutate')}
+        ${K('return')} copy;
+    }
+}
+
+${T('Document')} template = ${F('loadFromDb')}();
+${T('Document')} fresh = template.${F('clone')}();         ${C('// avoid the DB round-trip again')}
+
+${C('// ABSTRACT FACTORY — family of factories for related products')}
+${K('interface')} ${T('UiFactory')} {
+    ${T('Button')} ${F('button')}();
+    ${T('Window')} ${F('window')}();
+}
+${K('class')} ${T('MacUi')}     ${K('implements')} ${T('UiFactory')} { ... }
+${K('class')} ${T('WindowsUi')} ${K('implements')} ${T('UiFactory')} { ... }
+
+${C('// One factory yields a coherent product family — no mixing Mac buttons')}
+${C('// with Windows windows.')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'str', label:'Structural Patterns',
+    steps:[
+      { label:'Adapter',
+        hint:'When the interface a client expects does not match what an existing class offers, wrap the old class in an adapter that exposes the expected shape.',
+        code:`${C('// Step 1 — Adapter: bridge incompatible interfaces')}
+
+${C('// Existing third-party class with a non-matching API:')}
+${K('class')} ${T('LegacyXmlReporter')} {
+    ${K('public')} ${T('String')} ${F('reportXml')}() { ${K('return')} "<r><kpi>...</kpi></r>"; }
+}
+
+${C('// Our system expects this interface:')}
+${K('interface')} ${T('ReportSource')} { ${T('JsonNode')} ${F('asJson')}(); }
+
+${C('// Adapter — owns a legacy instance and translates the call:')}
+${K('class')} ${T('XmlReporterAdapter')} ${K('implements')} ${T('ReportSource')} {
+    ${K('private')} ${K('final')} ${T('LegacyXmlReporter')} legacy;
+
+    ${K('public')} ${T('XmlReporterAdapter')}(${T('LegacyXmlReporter')} legacy) { ${K('this')}.legacy = legacy; }
+
+    ${K('public')} ${T('JsonNode')} ${F('asJson')}() {
+        ${T('String')} xml = legacy.${F('reportXml')}();
+        ${K('return')} ${F('xmlToJson')}(xml);
+    }
+}
+
+${C('// Caller sees only the modern interface and never knows about XML.')}
+`
+      },
+      { label:'Decorator',
+        hint:'Wrap an object to add behaviour without changing its class. The wrapper implements the same interface, holds the wrapped instance, and adds before/after.',
+        code:`${C('// Step 2 — Decorator: wrap to layer on behaviour')}
+
+${K('interface')} ${T('Coffee')} {
+    ${K('int')} ${F('costCents')}();
+    ${T('String')} ${F('description')}();
+}
+
+${K('class')} ${T('Espresso')} ${K('implements')} ${T('Coffee')} {
+    ${K('public')} ${K('int')} ${F('costCents')}()     { ${K('return')} ${N('220')}; }
+    ${K('public')} ${T('String')} ${F('description')}() { ${K('return')} "Espresso"; }
+}
+
+${K('abstract')} ${K('class')} ${T('CoffeeDecorator')} ${K('implements')} ${T('Coffee')} {
+    ${K('protected')} ${K('final')} ${T('Coffee')} inner;
+    ${K('protected')} ${T('CoffeeDecorator')}(${T('Coffee')} c) { ${K('this')}.inner = c; }
+}
+
+${K('class')} ${T('Milk')} ${K('extends')} ${T('CoffeeDecorator')} {
+    ${K('public')} ${T('Milk')}(${T('Coffee')} c) { ${K('super')}(c); }
+    ${K('public')} ${K('int')} ${F('costCents')}()     { ${K('return')} inner.${F('costCents')}() + ${N('30')}; }
+    ${K('public')} ${T('String')} ${F('description')}() { ${K('return')} inner.${F('description')}() + ", milk"; }
+}
+${K('class')} ${T('Sugar')} ${K('extends')} ${T('CoffeeDecorator')} {
+    ${K('public')} ${T('Sugar')}(${T('Coffee')} c) { ${K('super')}(c); }
+    ${K('public')} ${K('int')} ${F('costCents')}()     { ${K('return')} inner.${F('costCents')}() + ${N('10')}; }
+    ${K('public')} ${T('String')} ${F('description')}() { ${K('return')} inner.${F('description')}() + ", sugar"; }
+}
+
+${T('Coffee')} order = ${K('new')} ${T('Sugar')}(${K('new')} ${T('Milk')}(${K('new')} ${T('Espresso')}()));
+${C('// 220 + 30 + 10 = 260,  "Espresso, milk, sugar"')}
+
+${C('// Real-world: BufferedInputStream wraps FileInputStream wraps ...')}
+`
+      },
+      { label:'Composite',
+        hint:'Treat a tree of part-and-whole the same way. Both leaves and composites implement one interface; composites delegate to their children.',
+        code:`${C('// Step 3 — Composite: treat tree of part / whole uniformly')}
+
+${K('interface')} ${T('FsNode')} {
+    ${T('String')} ${F('name')}();
+    ${K('long')} ${F('sizeBytes')}();
+}
+
+${K('class')} ${T('File')} ${K('implements')} ${T('FsNode')} {
+    ${K('private')} ${K('final')} ${T('String')} name;
+    ${K('private')} ${K('final')} ${K('long')} size;
+    ${K('public')} ${T('File')}(${T('String')} n, ${K('long')} s) { ${K('this')}.name = n; ${K('this')}.size = s; }
+    ${K('public')} ${T('String')} ${F('name')}()       { ${K('return')} name; }
+    ${K('public')} ${K('long')} ${F('sizeBytes')}()   { ${K('return')} size; }
+}
+
+${K('class')} ${T('Directory')} ${K('implements')} ${T('FsNode')} {
+    ${K('private')} ${K('final')} ${T('String')} name;
+    ${K('private')} ${K('final')} ${T('List')}<${T('FsNode')}> children = ${K('new')} ${T('ArrayList')}<>();
+
+    ${K('public')} ${T('Directory')}(${T('String')} n) { ${K('this')}.name = n; }
+    ${K('public')} ${K('void')} ${F('add')}(${T('FsNode')} n) { children.${F('add')}(n); }
+    ${K('public')} ${T('String')} ${F('name')}()       { ${K('return')} name; }
+
+    ${K('public')} ${K('long')} ${F('sizeBytes')}() {
+        ${K('long')} total = ${N('0')};
+        ${K('for')} (${T('FsNode')} c : children) total += c.${F('sizeBytes')}();
+        ${K('return')} total;
+    }
+}
+
+${C('// A Directory can contain Files OR more Directories — same FsNode contract.')}
+${C('// Real-world: HTML DOM, GUI panels, file systems, org charts.')}
+`
+      },
+      { label:'Facade + Proxy',
+        hint:'Facade: one simple entry point hiding a messy subsystem. Proxy: a stand-in (lazy, remote, security, cached) for the real object.',
+        code:`${C('// Step 4 — Facade + Proxy')}
+
+${C('// FACADE — one method that hides three subsystems')}
+${K('class')} ${T('OrderFacade')} {
+    ${K('private')} ${K('final')} ${T('InventoryService')} inv;
+    ${K('private')} ${K('final')} ${T('PaymentService')}   pay;
+    ${K('private')} ${K('final')} ${T('ShippingService')}  ship;
+
+    ${K('public')} ${T('OrderResult')} ${F('placeOrder')}(${T('OrderRequest')} r) {
+        inv.${F('reserve')}(r.items);
+        pay.${F('charge')}(r.cardToken, r.totalCents);
+        ${K('return')} ship.${F('schedule')}(r.address, r.items);
+    }
+}
+
+${C('// Caller writes one line instead of orchestrating three services.')}
+
+${C('// PROXY — lazy heavy-image loader')}
+${K('interface')} ${T('Image')} { ${K('void')} ${F('display')}(); }
+
+${K('class')} ${T('RealImage')} ${K('implements')} ${T('Image')} {
+    ${K('public')} ${T('RealImage')}(${T('String')} path) { ${F('loadFromDisk')}(path); }   ${C('// expensive')}
+    ${K('public')} ${K('void')} ${F('display')}() { ... }
+}
+
+${K('class')} ${T('ImageProxy')} ${K('implements')} ${T('Image')} {
+    ${K('private')} ${K('final')} ${T('String')} path;
+    ${K('private')} ${T('RealImage')} real;
+
+    ${K('public')} ${T('ImageProxy')}(${T('String')} path) { ${K('this')}.path = path; }
+    ${K('public')} ${K('void')} ${F('display')}() {
+        ${K('if')} (real == ${K('null')}) real = ${K('new')} ${T('RealImage')}(path); ${C('// load on first use')}
+        real.${F('display')}();
+    }
+}
+
+${C('// Other proxy flavours: protection (auth), remote (RPC stub), caching, smart-reference.')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'bhv', label:'Behavioral Patterns',
+    steps:[
+      { label:'Strategy',
+        hint:'When you have multiple algorithms for the same task, encapsulate each behind one interface and inject the chosen one. No more if/else by type.',
+        code:`${C('// Step 1 — Strategy: pluggable algorithms')}
+
+${K('interface')} ${T('PricingStrategy')} {
+    ${K('int')} ${F('priceCents')}(${T('Cart')} cart);
+}
+
+${K('class')} ${T('FlatPricing')}    ${K('implements')} ${T('PricingStrategy')} {
+    ${K('public')} ${K('int')} ${F('priceCents')}(${T('Cart')} c) { ${K('return')} c.${F('subtotal')}(); }
+}
+
+${K('class')} ${T('PercentDiscount')} ${K('implements')} ${T('PricingStrategy')} {
+    ${K('private')} ${K('final')} ${K('int')} pct;
+    ${K('public')} ${T('PercentDiscount')}(${K('int')} pct) { ${K('this')}.pct = pct; }
+    ${K('public')} ${K('int')} ${F('priceCents')}(${T('Cart')} c) {
+        ${K('return')} c.${F('subtotal')}() * (${N('100')} - pct) / ${N('100')};
+    }
+}
+
+${K('class')} ${T('Bogo')} ${K('implements')} ${T('PricingStrategy')} {        ${C('// Buy-one-get-one')}
+    ${K('public')} ${K('int')} ${F('priceCents')}(${T('Cart')} c) { ... }
+}
+
+${K('class')} ${T('Checkout')} {
+    ${K('private')} ${K('final')} ${T('PricingStrategy')} pricing;
+    ${K('public')} ${T('Checkout')}(${T('PricingStrategy')} p) { ${K('this')}.pricing = p; }
+    ${K('public')} ${K('int')} ${F('total')}(${T('Cart')} c)    { ${K('return')} pricing.${F('priceCents')}(c); }
+}
+
+${C('// Add a new pricing rule? Add a class. Do not touch Checkout.')}
+`
+      },
+      { label:'Observer (Pub/Sub)',
+        hint:'Subject keeps a list of observers, notifies them on change. Observers register via a common interface. Loose coupling.',
+        code:`${C('// Step 2 — Observer: subject notifies subscribers')}
+
+${K('interface')} ${T('OrderListener')} {
+    ${K('void')} ${F('onPlaced')}(${T('Order')} o);
+}
+
+${K('class')} ${T('OrderService')} {
+    ${K('private')} ${K('final')} ${T('List')}<${T('OrderListener')}> listeners = ${K('new')} ${T('ArrayList')}<>();
+
+    ${K('public')} ${K('void')} ${F('subscribe')}(${T('OrderListener')} l)   { listeners.${F('add')}(l); }
+    ${K('public')} ${K('void')} ${F('unsubscribe')}(${T('OrderListener')} l) { listeners.${F('remove')}(l); }
+
+    ${K('public')} ${K('void')} ${F('place')}(${T('Order')} o) {
+        ${C('// ... persist ...')}
+        ${K('for')} (${T('OrderListener')} l : listeners) l.${F('onPlaced')}(o);
+    }
+}
+
+${C('// Each subscriber is its own concern:')}
+${K('class')} ${T('EmailNotifier')}  ${K('implements')} ${T('OrderListener')} { ${K('public')} ${K('void')} ${F('onPlaced')}(${T('Order')} o) { ... } }
+${K('class')} ${T('Analytics')}      ${K('implements')} ${T('OrderListener')} { ${K('public')} ${K('void')} ${F('onPlaced')}(${T('Order')} o) { ... } }
+${K('class')} ${T('LoyaltyPoints')}  ${K('implements')} ${T('OrderListener')} { ${K('public')} ${K('void')} ${F('onPlaced')}(${T('Order')} o) { ... } }
+
+${C('// Threading note: snapshot the list before iterating if listeners can')}
+${C('// register/deregister concurrently — use CopyOnWriteArrayList for safety.')}
+
+${C('// Production-grade alternatives: Spring ApplicationEvent, Guava EventBus, Kafka.')}
+`
+      },
+      { label:'State (FSM)',
+        hint:'When an object behaves differently based on a state, model each state as its own class implementing the same interface. Transitions live inside states.',
+        code:`${C('// Step 3 — State: behaviour switches with the FSM state')}
+
+${K('interface')} ${T('OrderState')} {
+    ${K('void')} ${F('cancel')}(${T('OrderContext')} ctx);
+    ${K('void')} ${F('ship')}(${T('OrderContext')} ctx);
+    ${K('void')} ${F('deliver')}(${T('OrderContext')} ctx);
+}
+
+${K('class')} ${T('OrderContext')} {
+    ${T('OrderState')} state = ${K('new')} ${T('Placed')}();
+    ${K('public')} ${K('void')} ${F('cancel')}()  { state.${F('cancel')}(${K('this')}); }
+    ${K('public')} ${K('void')} ${F('ship')}()    { state.${F('ship')}(${K('this')}); }
+    ${K('public')} ${K('void')} ${F('deliver')}() { state.${F('deliver')}(${K('this')}); }
+}
+
+${K('class')} ${T('Placed')} ${K('implements')} ${T('OrderState')} {
+    ${K('public')} ${K('void')} ${F('cancel')}(${T('OrderContext')} ctx)  { ctx.state = ${K('new')} ${T('Cancelled')}(); }
+    ${K('public')} ${K('void')} ${F('ship')}(${T('OrderContext')} ctx)    { ctx.state = ${K('new')} ${T('Shipped')}(); }
+    ${K('public')} ${K('void')} ${F('deliver')}(${T('OrderContext')} ctx) { ${K('throw')} ${K('new')} ${T('IllegalStateException')}(); }
+}
+${K('class')} ${T('Shipped')} ${K('implements')} ${T('OrderState')} {
+    ${K('public')} ${K('void')} ${F('cancel')}(${T('OrderContext')} ctx)  { ${K('throw')} ${K('new')} ${T('IllegalStateException')}(); }
+    ${K('public')} ${K('void')} ${F('ship')}(${T('OrderContext')} ctx)    { ${C('// idempotent or throw')} }
+    ${K('public')} ${K('void')} ${F('deliver')}(${T('OrderContext')} ctx) { ctx.state = ${K('new')} ${T('Delivered')}(); }
+}
+${K('class')} ${T('Delivered')} ${K('implements')} ${T('OrderState')} { ... ${C('/* terminal */')} }
+${K('class')} ${T('Cancelled')} ${K('implements')} ${T('OrderState')} { ... ${C('/* terminal */')} }
+
+${C('// State pattern eliminates the giant switch on order.status everywhere.')}
+${C('// Each state owns its own transitions — easy to extend, easy to test.')}
+`
+      },
+      { label:'Command + Chain of Responsibility',
+        hint:'Command: wrap a request in an object so it can be queued/undone. Chain of Responsibility: pass a request through a chain of handlers until one acts.',
+        code:`${C('// Step 4 — Command + Chain of Responsibility')}
+
+${C('// COMMAND — enables undo, queueing, logging of operations')}
+${K('interface')} ${T('Command')} {
+    ${K('void')} ${F('execute')}();
+    ${K('void')} ${F('undo')}();
+}
+
+${K('class')} ${T('AddItem')} ${K('implements')} ${T('Command')} {
+    ${K('private')} ${K('final')} ${T('Cart')} cart; ${K('private')} ${K('final')} ${T('Product')} item;
+    ${K('public')} ${T('AddItem')}(${T('Cart')} c, ${T('Product')} p) { ${K('this')}.cart = c; ${K('this')}.item = p; }
+    ${K('public')} ${K('void')} ${F('execute')}() { cart.${F('add')}(item); }
+    ${K('public')} ${K('void')} ${F('undo')}()    { cart.${F('remove')}(item); }
+}
+
+${T('Deque')}<${T('Command')}> history = ${K('new')} ${T('ArrayDeque')}<>();
+${K('void')} ${F('run')}(${T('Command')} c) { c.${F('execute')}(); history.${F('push')}(c); }
+${K('void')} ${F('undo')}()              { ${K('if')} (!history.${F('isEmpty')}()) history.${F('pop')}().${F('undo')}(); }
+
+${C('// CHAIN OF RESPONSIBILITY — each handler decides "handle or pass on"')}
+${K('abstract')} ${K('class')} ${T('Approver')} {
+    ${K('protected')} ${T('Approver')} next;
+    ${K('public')} ${T('Approver')} ${F('then')}(${T('Approver')} n) { ${K('this')}.next = n; ${K('return')} n; }
+    ${K('public')} ${K('abstract')} ${K('void')} ${F('approve')}(${T('Expense')} e);
+}
+
+${K('class')} ${T('Manager')}  ${K('extends')} ${T('Approver')} {
+    ${K('public')} ${K('void')} ${F('approve')}(${T('Expense')} e) {
+        ${K('if')} (e.cents <= ${N('500_00')}) { ${C('/* sign */')} }
+        ${K('else if')} (next != ${K('null')}) next.${F('approve')}(e);
+        ${K('else')} ${K('throw')} ${K('new')} ${T('IllegalStateException')}("rejected");
+    }
+}
+${K('class')} ${T('Director')} ${K('extends')} ${T('Approver')} { ... }
+${K('class')} ${T('CEO')}      ${K('extends')} ${T('Approver')} { ... }
+
+${C('// new Manager().then(new Director()).then(new CEO()) — request flows until handled.')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'cnc', label:'Concurrency Toolkit',
+    steps:[
+      { label:'Locks + synchronized',
+        hint:'For simple mutual exclusion use synchronized. Use ReentrantLock when you need tryLock, fairness, or interruptibility.',
+        code:`${C('// Step 1 — Locks: protect a critical section')}
+
+${C('// SYNCHRONIZED — implicit lock, easy, slightly less control')}
+${K('class')} ${T('Counter')} {
+    ${K('private')} ${K('int')} value;
+    ${K('public')} ${K('synchronized')} ${K('void')} ${F('inc')}()   { value++; }
+    ${K('public')} ${K('synchronized')} ${K('int')} ${F('get')}()    { ${K('return')} value; }
+}
+
+${C('// REENTRANT LOCK — explicit, supports tryLock and fairness')}
+${K('class')} ${T('SafeBank')} {
+    ${K('private')} ${K('final')} ${T('Lock')} lock = ${K('new')} ${T('ReentrantLock')}();
+    ${K('private')} ${K('long')} balance;
+
+    ${K('public')} ${K('void')} ${F('deposit')}(${K('long')} amt) {
+        lock.${F('lock')}();
+        ${K('try')} { balance += amt; }
+        ${K('finally')} { lock.${F('unlock')}(); }      ${C('// always unlock in finally')}
+    }
+
+    ${K('public')} ${K('boolean')} ${F('tryWithdraw')}(${K('long')} amt, ${K('long')} ms) ${K('throws')} ${T('InterruptedException')} {
+        ${K('if')} (!lock.${F('tryLock')}(ms, ${T('TimeUnit')}.MILLISECONDS)) ${K('return')} ${K('false')};
+        ${K('try')} {
+            ${K('if')} (balance < amt) ${K('return')} ${K('false')};
+            balance -= amt;
+            ${K('return')} ${K('true')};
+        } ${K('finally')} { lock.${F('unlock')}(); }
+    }
+}
+
+${C('// Read-heavy workload? Use ReentrantReadWriteLock for shared reads + exclusive writes.')}
+`
+      },
+      { label:'Concurrent collections',
+        hint:'Replace HashMap with ConcurrentHashMap, ArrayList with CopyOnWriteArrayList for read-heavy lists. Avoid Collections.synchronizedXxx in hot paths.',
+        code:`${C('// Step 2 — Concurrent collections (almost always faster than locking yourself)')}
+
+${C('// Counter under heavy concurrent updates')}
+${T('ConcurrentHashMap')}<${T('String')}, ${T('LongAdder')}> hits = ${K('new')} ${T('ConcurrentHashMap')}<>();
+
+${K('void')} ${F('record')}(${T('String')} url) {
+    hits.${F('computeIfAbsent')}(url, k -> ${K('new')} ${T('LongAdder')}()).${F('increment')}();
+}
+
+${C('// merge() for atomic update-or-insert numbers:')}
+${T('ConcurrentHashMap')}<${T('String')}, ${T('Integer')}> counts = ${K('new')} ${T('ConcurrentHashMap')}<>();
+counts.${F('merge')}(key, ${N('1')}, ${T('Integer')}::sum);
+
+${C('// COW list — listeners that rarely change but iterate often:')}
+${T('CopyOnWriteArrayList')}<${T('OrderListener')}> listeners = ${K('new')} ${T('CopyOnWriteArrayList')}<>();
+
+${C('// Producer / consumer queue — bounded, blocking:')}
+${T('BlockingQueue')}<${T('Task')}> q = ${K('new')} ${T('LinkedBlockingQueue')}<>(${N('1000')});
+q.${F('put')}(t);            ${C('// blocks if full')}
+${T('Task')} t = q.${F('take')}();   ${C('// blocks if empty')}
+
+${C('// AVOID: Collections.synchronizedMap(new HashMap<>()) — single global lock,')}
+${C('// every call queues. ConcurrentHashMap shards internally, far better throughput.')}
+`
+      },
+      { label:'Atomics + immutable',
+        hint:'Atomic primitives are lock-free. For high-contention counters use LongAdder/DoubleAdder. Make value objects immutable to share safely.',
+        code:`${C('// Step 3 — Atomics + immutability')}
+
+${C('// AtomicInteger — fast lock-free counter for low contention')}
+${T('AtomicInteger')} seq = ${K('new')} ${T('AtomicInteger')}();
+${K('int')} next = seq.${F('incrementAndGet')}();
+
+${C('// LongAdder — better under heavy contention (sharded internally)')}
+${T('LongAdder')} requestCount = ${K('new')} ${T('LongAdder')}();
+requestCount.${F('increment')}();
+${K('long')} total = requestCount.${F('sum')}();
+
+${C('// Compare-and-set loop for read-modify-write without locks')}
+${T('AtomicReference')}<${T('State')}> stateRef = ${K('new')} ${T('AtomicReference')}<>(${T('State')}.IDLE);
+${K('boolean')} ok = stateRef.${F('compareAndSet')}(${T('State')}.IDLE, ${T('State')}.RUNNING);
+
+${C('// IMMUTABLE value classes — instantly thread-safe, share freely')}
+${K('public')} ${K('record')} ${T('Money')}(${K('long')} cents, ${T('String')} ccy) {
+    ${K('public')} ${T('Money')} ${F('add')}(${T('Money')} other) {
+        ${K('if')} (!ccy.${F('equals')}(other.ccy)) ${K('throw')} ${K('new')} ${T('IllegalArgumentException')}();
+        ${K('return')} ${K('new')} ${T('Money')}(cents + other.cents, ccy);   ${C('// no mutation')}
+    }
+}
+
+${C('// Rule: prefer immutable types for value objects, atomics for counters,')}
+${C('// concurrent collections for shared maps/queues, locks only when nothing else fits.')}
+`
+      },
+      { label:'Executors + futures',
+        hint:'Never spawn raw Threads in product code. Use ExecutorService with the right pool. CompletableFuture composes async work.',
+        code:`${C('// Step 4 — Executors + CompletableFuture')}
+
+${T('ExecutorService')} pool = ${T('Executors')}.${F('newFixedThreadPool')}(${N('8')});
+
+${C('// Submit work and get a Future:')}
+${T('Future')}<${T('Order')}> f = pool.${F('submit')}(() -> ${F('placeOrder')}(req));
+${T('Order')} o = f.${F('get')}(${N('5')}, ${T('TimeUnit')}.SECONDS);   ${C('// timeout protects you from a stuck task')}
+
+${C('// CompletableFuture for non-blocking pipelines:')}
+${T('CompletableFuture')}.${F('supplyAsync')}(() -> ${F('fetchUser')}(uid), pool)
+    .${F('thenApply')}(${T('User')}::profile)
+    .${F('thenCompose')}(p -> ${T('CompletableFuture')}.${F('supplyAsync')}(() -> ${F('enrich')}(p), pool))
+    .${F('thenAccept')}(${T('System')}.${T('out')}::println)
+    .${F('exceptionally')}(ex -> { log.${F('error')}("failed", ex); ${K('return')} ${K('null')}; });
+
+${C('// Pool sizing rules of thumb:')}
+${C('//   CPU-bound  → cores or cores+1')}
+${C('//   IO-bound   → much higher; measure (cores * (1 + waitTime/serviceTime))')}
+
+${C('// Always shutdown:')}
+pool.${F('shutdown')}();
+${K('if')} (!pool.${F('awaitTermination')}(${N('5')}, ${T('TimeUnit')}.SECONDS)) pool.${F('shutdownNow')}();
+
+${C('// Try-with-resources style in Java 21+ via Executors.newVirtualThreadPerTaskExecutor() — no sizing decision.')}
+`
+      }
+    ]
+  },
+  {
+    id:'prb', label:'Interview Problems',
+    steps:[
+      { label:'Parking Lot',
+        hint:'Classic LLD prompt. Domain: Vehicle (subtypes), Spot (sized), Ticket. Use enums for sizes, a strategy for spot allocation, and a Lot facade.',
+        code:`${C('// Step 1 — Parking Lot — the LLD warm-up')}
+
+${K('enum')} ${T('VehicleSize')} { BIKE, CAR, TRUCK }
+
+${K('abstract')} ${K('class')} ${T('Vehicle')} {
+    ${K('protected')} ${K('final')} ${T('String')} plate;
+    ${K('protected')} ${K('final')} ${T('VehicleSize')} size;
+    ${K('protected')} ${T('Vehicle')}(${T('String')} p, ${T('VehicleSize')} s) { ${K('this')}.plate = p; ${K('this')}.size = s; }
+}
+${K('class')} ${T('Bike')}  ${K('extends')} ${T('Vehicle')} { ${K('public')} ${T('Bike')}(${T('String')} p) { ${K('super')}(p, ${T('VehicleSize')}.BIKE); } }
+${K('class')} ${T('Car')}   ${K('extends')} ${T('Vehicle')} { ${K('public')} ${T('Car')}(${T('String')} p)  { ${K('super')}(p, ${T('VehicleSize')}.CAR); } }
+${K('class')} ${T('Truck')} ${K('extends')} ${T('Vehicle')} { ${K('public')} ${T('Truck')}(${T('String')} p){ ${K('super')}(p, ${T('VehicleSize')}.TRUCK); } }
+
+${K('class')} ${T('Spot')} {
+    ${K('final')} ${T('String')} id;
+    ${K('final')} ${T('VehicleSize')} maxSize;
+    ${T('Vehicle')} occupant;
+    ${K('public')} ${K('boolean')} ${F('canFit')}(${T('Vehicle')} v) { ${K('return')} occupant == ${K('null')} && v.size.${F('ordinal')}() <= maxSize.${F('ordinal')}(); }
+}
+
+${K('interface')} ${T('AllocStrategy')} { ${T('Spot')} ${F('pick')}(${T('List')}<${T('Spot')}> spots, ${T('Vehicle')} v); }
+${K('class')} ${T('NearestFit')} ${K('implements')} ${T('AllocStrategy')} {
+    ${K('public')} ${T('Spot')} ${F('pick')}(${T('List')}<${T('Spot')}> spots, ${T('Vehicle')} v) {
+        ${K('for')} (${T('Spot')} s : spots) ${K('if')} (s.${F('canFit')}(v)) ${K('return')} s;
+        ${K('return')} ${K('null')};
+    }
+}
+
+${K('class')} ${T('ParkingLot')} {
+    ${K('private')} ${K('final')} ${T('List')}<${T('Spot')}> spots;
+    ${K('private')} ${K('final')} ${T('AllocStrategy')} strategy;
+    ${K('private')} ${K('final')} ${T('Map')}<${T('String')}, ${T('Ticket')}> issued = ${K('new')} ${T('ConcurrentHashMap')}<>();
+
+    ${K('public')} ${T('Ticket')} ${F('park')}(${T('Vehicle')} v) {
+        ${K('synchronized')}(spots) {            ${C('// guard for race')}
+            ${T('Spot')} s = strategy.${F('pick')}(spots, v);
+            ${K('if')} (s == ${K('null')}) ${K('throw')} ${K('new')} ${T('IllegalStateException')}("FULL");
+            s.occupant = v;
+            ${T('Ticket')} t = ${K('new')} ${T('Ticket')}(${T('UUID')}.${F('randomUUID')}().${F('toString')}(), s, ${T('Instant')}.${F('now')}());
+            issued.${F('put')}(t.id, t);
+            ${K('return')} t;
+        }
+    }
+}
+
+${C('// Extensions: tiered pricing strategy, multi-floor lots, EV spots, reservations.')}
+`
+      },
+      { label:'LRU Cache',
+        hint:'O(1) get and put using a HashMap of node references plus a doubly linked list to track recency. Most recent at head, least at tail.',
+        code:`${C('// Step 2 — LRU Cache (LC 146)')}
+
+${K('public')} ${K('class')} ${T('LRUCache')}<${T('K')}, ${T('V')}> {
+
+    ${K('private')} ${K('static')} ${K('class')} ${T('Node')}<${T('K')}, ${T('V')}> {
+        ${T('K')} k; ${T('V')} v;
+        ${T('Node')}<${T('K')}, ${T('V')}> prev, next;
+    }
+
+    ${K('private')} ${K('final')} ${K('int')} cap;
+    ${K('private')} ${K('final')} ${T('Map')}<${T('K')}, ${T('Node')}<${T('K')}, ${T('V')}>> map = ${K('new')} ${T('HashMap')}<>();
+    ${K('private')} ${K('final')} ${T('Node')}<${T('K')}, ${T('V')}> head = ${K('new')} ${T('Node')}<>();   ${C('// dummy MRU end')}
+    ${K('private')} ${K('final')} ${T('Node')}<${T('K')}, ${T('V')}> tail = ${K('new')} ${T('Node')}<>();   ${C('// dummy LRU end')}
+
+    ${K('public')} ${T('LRUCache')}(${K('int')} cap) { ${K('this')}.cap = cap; head.next = tail; tail.prev = head; }
+
+    ${K('public')} ${T('V')} ${F('get')}(${T('K')} k) {
+        ${T('Node')}<${T('K')}, ${T('V')}> n = map.${F('get')}(k);
+        ${K('if')} (n == ${K('null')}) ${K('return')} ${K('null')};
+        ${F('moveToHead')}(n);
+        ${K('return')} n.v;
+    }
+
+    ${K('public')} ${K('void')} ${F('put')}(${T('K')} k, ${T('V')} v) {
+        ${T('Node')}<${T('K')}, ${T('V')}> n = map.${F('get')}(k);
+        ${K('if')} (n != ${K('null')}) { n.v = v; ${F('moveToHead')}(n); ${K('return')}; }
+        n = ${K('new')} ${T('Node')}<>(); n.k = k; n.v = v;
+        map.${F('put')}(k, n);
+        ${F('addToHead')}(n);
+        ${K('if')} (map.${F('size')}() > cap) {
+            ${T('Node')}<${T('K')}, ${T('V')}> old = tail.prev;
+            ${F('remove')}(old); map.${F('remove')}(old.k);
+        }
+    }
+
+    ${K('private')} ${K('void')} ${F('addToHead')}(${T('Node')}<${T('K')}, ${T('V')}> n) {
+        n.prev = head; n.next = head.next;
+        head.next.prev = n; head.next = n;
+    }
+    ${K('private')} ${K('void')} ${F('remove')}(${T('Node')}<${T('K')}, ${T('V')}> n) { n.prev.next = n.next; n.next.prev = n.prev; }
+    ${K('private')} ${K('void')} ${F('moveToHead')}(${T('Node')}<${T('K')}, ${T('V')}> n) { ${F('remove')}(n); ${F('addToHead')}(n); }
+}
+
+${C('// Thread-safe variant: wrap public methods in synchronized, or use a striped lock keyed by hash(k).')}
+${C('// Quick built-in alternative: Collections.synchronizedMap(new LinkedHashMap<>(cap, 0.75f, true) { ...removeEldestEntry()... }).')}
+`
+      },
+      { label:'Rate Limiter (Token Bucket)',
+        hint:'Each tenant gets a bucket of tokens that refills over time. A request consumes a token. No tokens, no service. Constant memory per tenant.',
+        code:`${C('// Step 3 — Token Bucket Rate Limiter')}
+
+${K('public')} ${K('class')} ${T('TokenBucket')} {
+    ${K('private')} ${K('final')} ${K('long')} capacity;
+    ${K('private')} ${K('final')} ${K('double')} refillPerNanos;     ${C('// tokens per ns')}
+
+    ${K('private')} ${K('double')} tokens;
+    ${K('private')} ${K('long')} lastRefillNanos;
+
+    ${K('public')} ${T('TokenBucket')}(${K('long')} capacity, ${K('long')} refillPerSecond) {
+        ${K('this')}.capacity = capacity;
+        ${K('this')}.refillPerNanos = refillPerSecond / ${N('1_000_000_000.0')};
+        ${K('this')}.tokens = capacity;
+        ${K('this')}.lastRefillNanos = ${T('System')}.${F('nanoTime')}();
+    }
+
+    ${K('public')} ${K('synchronized')} ${K('boolean')} ${F('tryAcquire')}() {
+        ${F('refill')}();
+        ${K('if')} (tokens >= ${N('1')}) { tokens -= ${N('1')}; ${K('return')} ${K('true')}; }
+        ${K('return')} ${K('false')};
+    }
+
+    ${K('private')} ${K('void')} ${F('refill')}() {
+        ${K('long')} now = ${T('System')}.${F('nanoTime')}();
+        ${K('double')} added = (now - lastRefillNanos) * refillPerNanos;
+        tokens = ${T('Math')}.${F('min')}(capacity, tokens + added);
+        lastRefillNanos = now;
+    }
+}
+
+${C('// Multi-tenant — one bucket per key, lazy creation:')}
+${T('ConcurrentHashMap')}<${T('String')}, ${T('TokenBucket')}> buckets = ${K('new')} ${T('ConcurrentHashMap')}<>();
+${K('boolean')} ${F('allow')}(${T('String')} apiKey) {
+    ${K('return')} buckets.${F('computeIfAbsent')}(apiKey, k -> ${K('new')} ${T('TokenBucket')}(${N('100')}, ${N('20')})).${F('tryAcquire')}();
+}
+
+${C('// Other algorithms:')}
+${C('//   Leaky bucket   → smooths bursts')}
+${C('//   Sliding window → more accurate but heavier (count of timestamps)')}
+${C('//   Distributed    → keep counters in Redis (INCR + EXPIRE) to share across instances')}
+`
+      },
+      { label:'Splitwise / ATM / Elevator',
+        hint:'Pick the dominant entity, define its operations, then the FSM or graph. Splitwise = balances graph; ATM = state machine; Elevator = scheduler + queues.',
+        code:`${C('// Step 4 — Three more classics, condensed')}
+
+${C('// SPLITWISE — owe-graph, settle by netting')}
+${K('class')} ${T('SplitGraph')} {
+    ${K('private')} ${K('final')} ${T('Map')}<${T('String')}, ${T('Map')}<${T('String')}, ${K('long')}>> owes = ${K('new')} ${T('HashMap')}<>();
+
+    ${K('public')} ${K('void')} ${F('addExpense')}(${T('String')} payer, ${T('List')}<${T('String')}> participants, ${K('long')} cents) {
+        ${K('long')} share = cents / participants.${F('size')}();
+        ${K('for')} (${T('String')} p : participants) {
+            ${K('if')} (p.${F('equals')}(payer)) ${K('continue')};
+            owes.${F('computeIfAbsent')}(p, k -> ${K('new')} ${T('HashMap')}<>())
+                .${F('merge')}(payer, share, ${T('Long')}::sum);
+        }
+    }
+    ${K('public')} ${K('long')} ${F('balance')}(${T('String')} a, ${T('String')} b) { ${C('/* netted owe */')} ${K('return')} ${N('0')}; }
+}
+
+${C('// ATM — finite state machine: IDLE → CARD → PIN → MENU → TXN → IDLE')}
+${K('enum')} ${T('AtmState')} { IDLE, CARD_INSERTED, AUTHED, MENU, DISPENSING }
+${C('// Each transition is a method that validates the current state and moves on.')}
+
+${C('// ELEVATOR — multi-elevator dispatch problem')}
+${C('//   Strategy interface: pickElevator(ElevatorRequest req)')}
+${C('//   Implementations: NearestElevator, LeastLoaded, ElevatorPool with up/down queues')}
+${C('//   Each Elevator holds Direction + sortedSet of pending floors')}
+
+${C('// Common interview tips for problem questions:')}
+${C('//   1) Start with use cases, not classes — confirm scope first.')}
+${C('//   2) Sketch a quick UML before coding.')}
+${C('//   3) Highlight extension points (where will future requirements plug in?).')}
+${C('//   4) Mention thread-safety + concurrency model — even briefly — to score points.')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

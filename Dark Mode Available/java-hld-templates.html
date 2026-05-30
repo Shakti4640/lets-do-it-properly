@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java HLD Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-frm: #58a6ff;
+    --c-cap: #39d0a8;
+    --c-stg: #bc8cff;
+    --c-cch: #f0883e;
+    --c-msg: #d29922;
+    --c-cse: #e06c75;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-hld  { background: rgba(88,166,255,0.1); color: var(--c-frm); border-color: rgba(88,166,255,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="frm"].on { color: var(--c-frm); border-bottom-color: var(--c-frm); }
+  .tab[data-id="cap"].on { color: var(--c-cap); border-bottom-color: var(--c-cap); }
+  .tab[data-id="stg"].on { color: var(--c-stg); border-bottom-color: var(--c-stg); }
+  .tab[data-id="cch"].on { color: var(--c-cch); border-bottom-color: var(--c-cch); }
+  .tab[data-id="msg"].on { color: var(--c-msg); border-bottom-color: var(--c-msg); }
+  .tab[data-id="cse"].on { color: var(--c-cse); border-bottom-color: var(--c-cse); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java HLD Templates</h1>
+    <p>// 6 patterns &middot; 4 steps each &middot; capacity &middot; storage &middot; scale</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-hld">&#x1F310; HLD</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">HldTemplate.md</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-frm)">
+      <h3>Interview Framework</h3>
+      <div class="cheat-row"><span>1. Clarify</span><span>scope, users, scale</span></div>
+      <div class="cheat-row"><span>2. Estimate</span><span>QPS, storage, BW</span></div>
+      <div class="cheat-row"><span>3. API</span><span>contract before boxes</span></div>
+      <div class="cheat-row"><span>4. Sketch</span><span>HLD then deep dive</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cap)">
+      <h3>Capacity Math</h3>
+      <div class="cheat-row"><span>QPS</span><span>DAU * actions/day / 86400</span></div>
+      <div class="cheat-row"><span>Peak</span><span>2-5x average</span></div>
+      <div class="cheat-row"><span>Storage</span><span>events * bytes * retention</span></div>
+      <div class="cheat-row"><span>Bandwidth</span><span>QPS * payload size</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-stg)">
+      <h3>Storage Choices</h3>
+      <div class="cheat-row"><span>RDBMS</span><span>strong consistency, joins</span></div>
+      <div class="cheat-row"><span>KV / Doc</span><span>DynamoDB, MongoDB</span></div>
+      <div class="cheat-row"><span>Wide-column</span><span>Cassandra, HBase</span></div>
+      <div class="cheat-row"><span>Search</span><span>Elasticsearch, OpenSearch</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cch)">
+      <h3>Caching + CDN</h3>
+      <div class="cheat-row"><span>Strategies</span><span>cache-aside, write-through</span></div>
+      <div class="cheat-row"><span>Eviction</span><span>LRU / LFU / TTL</span></div>
+      <div class="cheat-row"><span>Stampede</span><span>request coalescing, jitter</span></div>
+      <div class="cheat-row"><span>CDN</span><span>edge cache static assets</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-msg)">
+      <h3>Async + Messaging</h3>
+      <div class="cheat-row"><span>Kafka</span><span>log, partitioned, retain</span></div>
+      <div class="cheat-row"><span>SQS</span><span>queue, at-least-once</span></div>
+      <div class="cheat-row"><span>Pubsub</span><span>fan-out</span></div>
+      <div class="cheat-row"><span>Patterns</span><span>outbox, saga, idempotent</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cse)">
+      <h3>Case Studies</h3>
+      <div class="cheat-row"><span>URL Shortener</span><span>KV + base62 + CDN</span></div>
+      <div class="cheat-row"><span>News Feed</span><span>fan-out push vs pull</span></div>
+      <div class="cheat-row"><span>Chat</span><span>WebSocket + Kafka</span></div>
+      <div class="cheat-row"><span>Rate Limiter</span><span>Redis token bucket</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'frm', label:'Interview Framework',
+    steps:[
+      { label:'Clarify',
+        hint:'Never start drawing boxes before scope is locked. Functional vs non-functional, who, how many, what is in/out of scope.',
+        code:`${C('// Step 1 — Clarify before drawing anything')}
+
+${C('// FUNCTIONAL — what must the system DO?')}
+${C('//   "Build a URL shortener" is too vague. Pin it down:')}
+${C('//   - shorten(longUrl) -> shortUrl')}
+${C('//   - resolve(shortUrl) -> redirect to longUrl')}
+${C('//   - analytics, custom aliases, expiry, auth?  — IN or OUT of scope?')}
+
+${C('// NON-FUNCTIONAL — quality attributes')}
+${C('//   Latency:      p50, p99 redirect time? (e.g. p99 < 100ms)')}
+${C('//   Availability: 99.9 / 99.99 / 99.999%?')}
+${C('//   Consistency:  strong, read-your-writes, eventual?')}
+${C('//   Durability:   never lose a shortened URL?')}
+${C('//   Read:Write:   typical 100:1 for a URL shortener')}
+
+${C('// SCALE — anchor the math')}
+${C('//   DAU?  10M, 100M, 1B?')}
+${C('//   Peak QPS multiplier? — 2-5x average is common')}
+${C('//   Geographic distribution? — single region or global edge?')}
+
+${C('// "What is in scope" is one of the highest-signal questions you can ask early.')}
+${C('// Interviewers reward this almost universally.')}
+`
+      },
+      { label:'Estimate',
+        hint:'Crunch QPS, storage and bandwidth on paper. Use round numbers — 100M users, 100 actions/day, 86400 ≈ 100k seconds.',
+        code:`${C('// Step 2 — Back-of-envelope estimate')}
+
+${C('// QPS — derived from DAU and actions per user per day')}
+${C('//   DAU = 100M,   actions = 10/user/day,   day ≈ 10⁵ s')}
+${C('//   avgQPS = 100M * 10 / 10⁵   = 10⁷ / 10⁵   = 10⁴   = 10,000 QPS')}
+${C('//   peakQPS ≈ 3x avg            = 30,000 QPS')}
+
+${C('// READ vs WRITE split — drives caching and storage choice')}
+${C('//   URL shortener: 100:1 read:write,   so writes ≈ 100 QPS, reads ≈ 30k QPS')}
+${C('//   Twitter timeline: 1:30 read:write favoured by celebrities → fan-out impact')}
+
+${C('// STORAGE — events * bytes * retention')}
+${C('//   100M users * 10 actions * 200 bytes/action * 365 days * 5 yrs')}
+${C('//     = 365 TB   per 5 years   →  pick a sharded store')}
+
+${C('// BANDWIDTH')}
+${C('//   peakQPS * payload  = 30,000 * 200 B = 6 MB/s ingress')}
+${C('//                      = 30,000 * 5 KB  = 150 MB/s egress (with images)')}
+
+${C('// Memory for hot working set:')}
+${C('//   80/20 rule: top 20% of items get 80% of reads')}
+${C('//   Reserve enough Redis to fit that working set in RAM')}
+
+${C('// Round liberally — interviewer wants a sense of magnitude, not exact arithmetic.')}
+`
+      },
+      { label:'API + data model',
+        hint:'Define the API contract before you draw any boxes. Then the data model — what the database actually stores.',
+        code:`${C('// Step 3 — API contract first, then data model')}
+
+${C('// REST API — concrete request/response shapes')}
+${C('//   POST /v1/urls')}
+${C('//     body: { "longUrl": "https://...", "alias": "fav-link", "ttlSec": 86400 }')}
+${C('//     200:  { "shortUrl": "https://sho.rt/abc123" }')}
+${C('//   GET /{key}     -> 301 to longUrl, sets cookie for analytics')}
+${C('//   DELETE /v1/urls/{key}')}
+
+${C('// Pick auth model: bearer token? signed URL?  Where is rate limiting?')}
+
+${C('// DATA MODEL — what the DB persists')}
+${K('class')} ${T('UrlMapping')} {
+    ${T('String')} key;        ${C('// shortened, base62, e.g. "abc123"')}
+    ${T('String')} longUrl;
+    ${T('String')} ownerId;    ${C('// authenticated user, nullable for anonymous')}
+    ${T('Instant')} createdAt;
+    ${T('Instant')} expiresAt; ${C('// null = never expires')}
+    ${K('long')} clickCount;
+}
+
+${C('// Choose a key strategy:')}
+${C('//   1) hash(longUrl) → 7-char base62  → quick, but collisions need handling')}
+${C('//   2) global counter → base62        → no collisions, but the counter is a hot spot')}
+${C('//   3) range allocator → each app server pulls a 1k block → scalable + collision-free')}
+
+${C('// Index plan in DB:')}
+${C('//   PK on key (point lookups for redirect)')}
+${C('//   GSI on ownerId for "list my links"')}
+${C('//   TTL field on expiresAt (DynamoDB), or scheduled job for SQL')}
+`
+      },
+      { label:'Sketch + deep dive',
+        hint:'Draw the boxes only after the contract exists. Then pick one component and go deep — that is where most of the points are.',
+        code:`${C('// Step 4 — Sketch the HLD, then deep dive ONE area')}
+
+${C('// HIGH-LEVEL BOXES (top-down):')}
+${C('//   Client / Mobile')}
+${C('//      ↓')}
+${C('//   CDN  ── for static assets only')}
+${C('//      ↓')}
+${C('//   Load Balancer (ALB / NLB)')}
+${C('//      ↓')}
+${C('//   API Gateway → Auth + Rate Limiter')}
+${C('//      ↓')}
+${C('//   App tier  (stateless, horizontally scaled)')}
+${C('//      ↓ ↓')}
+${C('//   Cache  Database  Object store  Queue  Search index')}
+${C('//      ↓')}
+${C('//   Async workers (cron, batch, indexers)')}
+
+${C('// Mention these explicitly EVERY time:')}
+${C('//   - statelessness of app tier (so we can autoscale)')}
+${C('//   - reads served from cache, writes hit the DB')}
+${C('//   - one log/metric/trace pipeline (CloudWatch + X-Ray, or ELK + Jaeger)')}
+
+${C('// DEEP DIVE — pick the most interesting subsystem and go 2-3 layers deeper')}
+${C('//   Choose ONE: data partitioning OR cache stampede OR consistency model')}
+${C('//   Trade-offs > vendor names. "Why DynamoDB" > "DynamoDB"')}
+
+${C('// Wrap up:')}
+${C('//   1) failure modes (DB down, AZ outage, hot key, slow consumer)')}
+${C('//   2) bottlenecks at scale (connections, GC, network)')}
+${C('//   3) what would change if scale 10x?  (sharding, multi-region, async-by-default)')}
+`
+      }
+    ]
+  },
+  {
+    id:'cap', label:'Capacity Math',
+    steps:[
+      { label:'QPS estimation',
+        hint:'Always express QPS as (DAU * actions/day) / 86400. Then assume peak is 2-5x of average.',
+        code:`${C('// Step 1 — QPS math')}
+
+${C('// Round constants — interview-friendly:')}
+${C('//   1 day   ≈ 10⁵ seconds   (86,400)')}
+${C('//   1 month ≈ 30 days       (2.6M seconds)')}
+${C('//   1 year  ≈ 3 * 10⁷ s     (31.5M)')}
+
+${C('// Worked example — Photo upload service')}
+${C('//   DAU = 100M')}
+${C('//   uploads/user/day = 1     (avg)')}
+${C('//   reads/user/day   = 50    (browsing)')}
+
+${C('//   write QPS  = 100M * 1  / 10⁵   = 1,000  QPS')}
+${C('//   read  QPS  = 100M * 50 / 10⁵   = 50,000 QPS')}
+${C('//   peak write = 1,000  * 3        = 3,000  QPS')}
+${C('//   peak read  = 50,000 * 3        = 150,000 QPS')}
+
+${C('// Read:Write ratios are critical:')}
+${C('//   social timeline   ~ 100:1 reads')}
+${C('//   payments          ~ 1:1   (every read often follows a write)')}
+${C('//   analytics ingest  ~ 1:5   (writes dominate)')}
+
+${C('// Once you have peakQPS:')}
+${C('//   - decide if you need a cache layer (yes if peakReadQPS >> DB capacity)')}
+${C('//   - size the load balancer (each ALB instance handles ~50k req/s)')}
+${C('//   - decide how many app instances (each Java service ~ a few thousand QPS)')}
+`
+      },
+      { label:'Storage estimation',
+        hint:'Storage = (events per day) * (bytes per event) * (retention days). Don\'t forget indexes — typically 1.2-2x raw size.',
+        code:`${C('// Step 2 — Storage math')}
+
+${C('// Generic formula:')}
+${C('//   storage = events/day * bytes/event * retentionDays * replicationFactor')}
+
+${C('// Photo upload example:')}
+${C('//   100M users * 1 upload/day * 2 MB/photo')}
+${C('//      = 200 TB / day raw blob')}
+${C('//   * 365 days = 73 PB / year')}
+${C('//   → S3 / object storage with lifecycle policies (move to Glacier after 90 days)')}
+
+${C('// Metadata is much smaller:')}
+${C('//   100M * 1KB metadata = 100 GB / day → 36 TB / year')}
+${C('//   → DynamoDB or sharded RDS, easily fits')}
+
+${C('// Don\'t forget overhead:')}
+${C('//   indexes  ≈ 30-100% extra')}
+${C('//   replicas ≈ 2-3x (DynamoDB replicates 3x by default)')}
+${C('//   backups  ≈ 1x point-in-time + N daily snapshots')}
+
+${C('// Hot vs cold tiering:')}
+${C('//   90 days hot  → S3 Standard / DynamoDB on-demand')}
+${C('//   90-365 days  → S3 IA / DynamoDB Standard-IA')}
+${C('//   1+ years     → S3 Glacier / archived snapshots')}
+
+${C('// Quick mental tools:')}
+${C('//   1KB row * 1B rows = 1 TB')}
+${C('//   1MB image * 1M images = 1 TB')}
+${C('//   1GB log * 30 days = 30 GB')}
+`
+      },
+      { label:'Bandwidth + memory',
+        hint:'Bandwidth = QPS * payload. Memory for cache = working_set_bytes — usually 20% of total dataset (80/20).',
+        code:`${C('// Step 3 — Bandwidth and memory')}
+
+${C('// BANDWIDTH:')}
+${C('//   ingress = writeQPS * write payload size')}
+${C('//   egress  = readQPS  * read  payload size')}
+
+${C('// Photo example, peak:')}
+${C('//   ingress = 3,000 QPS  * 2 MB   = 6 GB/s')}
+${C('//   egress  = 150,000QPS * 50 KB  = 7.5 GB/s')}
+${C('//   → CDN absolutely required for egress')}
+
+${C('// MEMORY for cache:')}
+${C('//   working_set ≈ 20% of total dataset (80/20 rule)')}
+${C('//   For a 1 TB hot dataset: 200 GB Redis cluster (16 nodes * 16 GB each, with replicas)')}
+
+${C('// Connection pool sizing:')}
+${C('//   Total app threads / instances = total DB connections')}
+${C('//   Postgres ~5,000 connections max → use PgBouncer')}
+${C('//   DynamoDB has no connection limit but per-partition throttle')}
+
+${C('// Compute:')}
+${C('//   1 modern Java service: ~ 1k-5k QPS depending on heap and IO')}
+${C('//   To handle 150k peak QPS: 30-150 instances with autoscaling')}
+
+${C('// Network within AWS:')}
+${C('//   Same AZ:        free, low latency (< 1 ms)')}
+${C('//   Cross-AZ:       $0.01/GB,  ~1 ms')}
+${C('//   Cross-region:   $0.02/GB,  20-300 ms — minimise cross-region traffic')}
+`
+      },
+      { label:'Sanity checks',
+        hint:'Always sanity-check your math. Numbers larger than the disk of the entire data center should make you re-do the calculation.',
+        code:`${C('// Step 4 — Sanity checks + scale targets')}
+
+${C('// SANITY CHECK BENCHMARKS — memorise these:')}
+${C('//   Modern SSD       ~ 100k IOPS, 1-3 GB/s')}
+${C('//   Modern NIC       ~ 10-25 Gbps per host')}
+${C('//   Datacenter LB    ~ 100k-1M req/s per cluster')}
+${C('//   Postgres single  ~ 10k-30k QPS reads, 1-3k writes')}
+${C('//   DynamoDB         ~ 1k QPS per partition (hard cap)')}
+${C('//   Redis single     ~ 100k QPS (single-threaded)')}
+${C('//   Kafka broker     ~ 1 GB/s per broker')}
+
+${C('// LATENCY budget (typical p99):')}
+${C('//   in-memory        ~ 1 ms')}
+${C('//   Redis network    ~ 1-5 ms')}
+${C('//   DynamoDB         ~ 5-15 ms')}
+${C('//   RDS read         ~ 5-30 ms')}
+${C('//   Cross-region     ~ 50-300 ms')}
+
+${C('// COMMON RED FLAGS in your own estimate:')}
+${C('//   - Bandwidth > 100 Gbps without CDN  → re-think architecture')}
+${C('//   - Single DB > 100k QPS               → must shard')}
+${C('//   - Memory > 1 TB on one node          → cluster Redis')}
+${C('//   - Cross-region writes > 1k QPS       → strong consistency will hurt; rethink')}
+
+${C('// Always state assumptions OUT LOUD:')}
+${C('//   "I am assuming 100M DAU with 3x peak factor."')}
+${C('//   "I am assuming 80/20 access pattern, so cache fits in 200 GB."')}
+${C('//   The interviewer can correct you cheaply, and your numbers stay defensible.')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'stg', label:'Storage Choices',
+    steps:[
+      { label:'SQL vs NoSQL decision',
+        hint:'SQL when you need joins, transactions, and a fixed schema. NoSQL when you need horizontal scale, flexible schema, or wide-row tables.',
+        code:`${C('// Step 1 — SQL vs NoSQL decision tree')}
+
+${C('// PICK SQL (Postgres, MySQL, Aurora) WHEN:')}
+${C('//   - rich relational queries with joins')}
+${C('//   - multi-row ACID transactions')}
+${C('//   - schema is stable and well-known')}
+${C('//   - moderate scale (~ TBs, ~10k QPS)')}
+
+${C('// PICK KV / DOCUMENT (DynamoDB, MongoDB) WHEN:')}
+${C('//   - simple access patterns, by partition key')}
+${C('//   - need horizontal scale beyond a single SQL node')}
+${C('//   - schema may evolve quickly')}
+${C('//   - latency budget is tight (sub-10 ms)')}
+
+${C('// PICK WIDE-COLUMN (Cassandra, HBase, ScyllaDB) WHEN:')}
+${C('//   - massive write throughput (millions QPS)')}
+${C('//   - tunable consistency')}
+${C('//   - time-series / event log data')}
+${C('//   - you can model queries-first (no ad-hoc queries)')}
+
+${C('// PICK SEARCH (Elasticsearch, OpenSearch) WHEN:')}
+${C('//   - full-text search, fuzzy matching')}
+${C('//   - log aggregation, observability dashboards')}
+${C('//   - faceted filters and ranking')}
+
+${C('// PICK BLOB (S3, GCS, Azure Blob) WHEN:')}
+${C('//   - large unstructured data — images, video, ML models')}
+${C('//   - infrequent access okay → IA / Glacier tiers')}
+${C('//   - integrate with CDN for delivery')}
+
+${C('// You will OFTEN have both: metadata in SQL/KV + blobs in object store + index in ES.')}
+`
+      },
+      { label:'Partitioning + sharding',
+        hint:'Pick a partition key that distributes load evenly. Avoid hot partitions. Re-sharding is painful — invest in the choice up front.',
+        code:`${C('// Step 2 — Partitioning strategy')}
+
+${C('// HASH PARTITIONING — even distribution, no range scans')}
+${C('//   partition = hash(key) % N')}
+${C('//   pros: uniform load')}
+${C('//   cons: cannot do range queries on key; resizing N triggers reshuffle')}
+
+${C('// CONSISTENT HASHING — solves the resizing problem')}
+${C('//   Place nodes on a ring (hash space 0..2³²)')}
+${C('//   Each key maps to the next node clockwise on the ring')}
+${C('//   Adding/removing a node only affects keys in that slice')}
+${C('//   Used by: Cassandra, DynamoDB internals, memcached client routing')}
+
+${C('// RANGE PARTITIONING — supports range queries; risk of skew')}
+${C('//   partition = first letter of user_id, or year-month')}
+${C('//   Hot partition risk: e.g. all today\'s events go to one shard')}
+${C('//   Mitigations: composite key (date#userId), salting (random prefix)')}
+
+${C('// AVOID HOT KEYS:')}
+${C('//   - "all global config in row global"  → fan out + cache')}
+${C('//   - sequential primary keys on a high-write table → reverse the bytes or hash')}
+${C('//   - celebrity follower lists → "fan-out on read" instead of push')}
+
+${C('// SECONDARY INDEXES on partitioned data:')}
+${C('//   Local index    — same partition, fast point lookups')}
+${C('//   Global index   — different partitioning of the data, costs extra writes')}
+${C('//   In DynamoDB:   GSI = global, LSI = local')}
+`
+      },
+      { label:'Replication + consistency',
+        hint:'Replicas give availability and read scaling. Consistency vs availability is the CAP trade-off — pick one.',
+        code:`${C('// Step 3 — Replication and consistency')}
+
+${C('// LEADER-FOLLOWER (master-slave):')}
+${C('//   Writes go to leader, replicate to followers (sync OR async)')}
+${C('//   Read replicas absorb read load')}
+${C('//   Failover: promote a follower to leader')}
+${C('//   Used by: Aurora, Postgres streaming replication, MySQL')}
+
+${C('// LEADERLESS / QUORUM (Cassandra, DynamoDB):')}
+${C('//   N replicas. Writes need W ack. Reads need R replies.')}
+${C('//   Strong consistency:  R + W > N')}
+${C('//   High availability:   R + W ≤ N')}
+${C('//   Tunable per request')}
+
+${C('// MULTI-LEADER:')}
+${C('//   Each region has a leader, writes locally, async replicate')}
+${C('//   Conflict resolution required (last-write-wins, CRDTs, vector clocks)')}
+${C('//   Used by: Cassandra, multi-region DynamoDB Global Tables')}
+
+${C('// CONSISTENCY MODELS — name them in the interview:')}
+${C('//   Strong / linearizable    — feels single-machine, slowest')}
+${C('//   Read-after-write         — reader sees their own writes')}
+${C('//   Monotonic reads          — never go backwards in time')}
+${C('//   Eventual                 — converges, brief stale reads')}
+${C('//   Causal                   — preserves cause-effect ordering')}
+
+${C('// CAP at the limit:')}
+${C('//   When a network partition occurs, choose:')}
+${C('//     CP — refuse writes (safer, e.g. banking)')}
+${C('//     AP — accept stale data (e.g. shopping cart)')}
+${C('//   Most real-world systems prefer "PA/EL" (PACELC): in normal ops, latency over consistency.')}
+`
+      },
+      { label:'Schema + access patterns',
+        hint:'NoSQL: design schema FROM the access patterns. SQL: normalize first, denormalize where it helps. Both: keep hot rows small.',
+        code:`${C('// Step 4 — Schema and access patterns')}
+
+${C('// NoSQL: model from QUERIES backwards')}
+${C('//   1) List the access patterns:')}
+${C('//      - "get user profile by userId"')}
+${C('//      - "list user\'s recent orders"')}
+${C('//      - "list orders by status for ops dashboard"')}
+${C('//   2) Pick partition keys + sort keys + indexes that satisfy each')}
+${C('//   3) Denormalize aggressively — duplicate data is cheap, joins are expensive')}
+
+${C('// Single-table DynamoDB pattern:')}
+${C('//   PK = USER#123,  SK = PROFILE                     → user record')}
+${C('//   PK = USER#123,  SK = ORDER#2024-01-15            → orders sorted by date')}
+${C('//   PK = STATUS#PEND,  SK = TS#... (GSI)             → admin filter')}
+
+${C('// SQL: normalize to 3NF, denormalize where it pays')}
+${C('//   Pros of normalization: smaller writes, no anomalies')}
+${C('//   When to denormalize: very hot read path, expensive join, materialized view')}
+
+${C('// Soft-delete pattern: add deletedAt column, filter in queries; preserves history')}
+
+${C('// Time-series:')}
+${C('//   Bucket by hour/day in the partition key')}
+${C('//   Drop old buckets via TTL or partition drop — much cheaper than DELETE')}
+
+${C('// Hot rows kill performance regardless of database:')}
+${C('//   "sum all-time pageviews" on one row → use a counter shard pattern')}
+${C('//   "global config" → cache in app memory, refresh every N seconds')}
+
+${C('// Always discuss: PK, SK, GSIs/LSIs, expected rows per partition, query plan.')}
+`
+      }
+    ]
+  },
+  {
+    id:'cch', label:'Caching + CDN',
+    steps:[
+      { label:'Strategies',
+        hint:'Cache-aside is the default. Write-through and write-back trade off freshness vs latency. Refresh-ahead pre-warms hot keys.',
+        code:`${C('// Step 1 — Caching strategies')}
+
+${C('// CACHE-ASIDE (lazy load) — default, app-side')}
+${C('//   1) read cache')}
+${C('//   2) on miss → read DB, populate cache, return value')}
+${C('//   3) on write → write DB, INVALIDATE cache')}
+${C('//   Pros: simple, only caches what is read')}
+${C('//   Cons: cold-start miss spikes, stale if invalidation is missed')}
+
+${C('// WRITE-THROUGH — strong consistency, slower writes')}
+${C('//   1) write cache + DB synchronously')}
+${C('//   2) reads always hit warm cache')}
+${C('//   Pros: cache always fresh')}
+${C('//   Cons: write latency = cache + DB, write amplification')}
+
+${C('// WRITE-BACK / WRITE-BEHIND — fast writes, durability risk')}
+${C('//   1) write cache only')}
+${C('//   2) async flush to DB')}
+${C('//   Pros: very fast writes, batches the DB')}
+${C('//   Cons: data loss on cache crash')}
+${C('//   Use only for: counters, leaderboards, non-critical metrics')}
+
+${C('// REFRESH-AHEAD — pre-warm before TTL expiry')}
+${C('//   When TTL approaches, async refetch from DB')}
+${C('//   Hides DB latency from end users; works only for predictable hot keys')}
+
+${C('// PICKING:')}
+${C('//   read-heavy + tolerable staleness  → cache-aside')}
+${C('//   write-heavy + always-fresh-needed → write-through')}
+${C('//   ephemeral counters                → write-back')}
+`
+      },
+      { label:'Eviction + invalidation',
+        hint:'Eviction when memory full. Invalidation when DB row changes. Don\'t conflate them.',
+        code:`${C('// Step 2 — Eviction + invalidation')}
+
+${C('// EVICTION — when cache is FULL')}
+${C('//   LRU  — drop least recently used (default for Redis maxmemory-policy=allkeys-lru)')}
+${C('//   LFU  — drop least frequently used (better when there is a stable working set)')}
+${C('//   FIFO — first in first out (rarely best)')}
+${C('//   TTL  — time-based expiry (independent of memory pressure)')}
+
+${C('// INVALIDATION — when underlying data CHANGES')}
+${C('//   Strategies:')}
+${C('//     1) write-through: update cache on write')}
+${C('//     2) explicit DELETE on write path: del(key) after DB write')}
+${C('//     3) versioned keys: cache stores K=v1; new write makes K=v2; old auto-expires')}
+${C('//     4) pub/sub invalidation: DB CDC → topic → subscribers DEL the key')}
+
+${C('// "There are only two hard things... cache invalidation and naming things."')}
+${C('//   Always ask: who flips this cache when the row changes?')}
+
+${C('// SET A SANE TTL even when you do explicit invalidation.')}
+${C('//   Bug-tolerance: a missed delete heals in N minutes')}
+${C('//   Stale-read budget should match the TTL')}
+
+${C('// LAYERED CACHES:')}
+${C('//   L1 in-process (Caffeine, Guava) — sub-microsecond, but per-instance staleness')}
+${C('//   L2 Redis cluster              — millisecond shared across the fleet')}
+${C('//   L3 CDN                        — for HTTP-cacheable responses')}
+`
+      },
+      { label:'Stampede + hot keys',
+        hint:'Cache stampede happens when a hot key expires and 1000 servers slam the DB at once. Coalesce, jitter, and use sentinel values.',
+        code:`${C('// Step 3 — Stampede mitigation + hot keys')}
+
+${C('// CACHE STAMPEDE — also called dog-pile or thundering herd')}
+${C('//   Hot key expires; thousands of clients miss simultaneously, all hit DB')}
+
+${C('// FIXES:')}
+${C('//   1) Request coalescing / single-flight')}
+${C('//      First miss queries DB, others wait on the same in-flight Future')}
+${K('class')} ${T('SingleFlight')}<${T('K')}, ${T('V')}> {
+    ${T('ConcurrentHashMap')}<${T('K')}, ${T('CompletableFuture')}<${T('V')}>> inflight = ${K('new')} ${T('ConcurrentHashMap')}<>();
+
+    ${K('public')} ${T('V')} ${F('get')}(${T('K')} key, ${T('Supplier')}<${T('V')}> loader) ${K('throws')} ${T('Exception')} {
+        ${T('CompletableFuture')}<${T('V')}> f = inflight.${F('computeIfAbsent')}(key,
+            k -> ${T('CompletableFuture')}.${F('supplyAsync')}(loader));
+        ${K('try')} { ${K('return')} f.${F('get')}(); }
+        ${K('finally')} { inflight.${F('remove')}(key, f); }
+    }
+}
+
+${C('//   2) TTL jitter — randomize ±10-25% so keys do not all expire together')}
+${C('//   3) Sentinel / negative cache — store "MISS" placeholder briefly, with short TTL')}
+${C('//      Useful for "user not found" — don\'t hammer DB on bad input')}
+${C('//   4) Probabilistic early refresh — XFetch algorithm: refresh probability rises as TTL nears 0')}
+
+${C('// HOT KEY (skewed access):')}
+${C('//   - shard the key:  user.celebrity → user.celebrity.0 ... user.celebrity.9')}
+${C('//     each replica gets one shard, app picks at random')}
+${C('//   - read from local (L1) cache, sync less often')}
+${C('//   - use Redis cluster slot pinning to spread read replicas')}
+
+${C('// NEGATIVE CACHING:')}
+${C('//   Repeated misses for the same key (e.g. 404 lookups) waste DB capacity.')}
+${C('//   Cache the miss with a short TTL (10-60 s) — protects against scrape attacks.')}
+`
+      },
+      { label:'CDN + edge',
+        hint:'CDN handles static and rarely-changing content close to users. Use signed URLs for private content. Cache-Control headers are the levers.',
+        code:`${C('// Step 4 — CDN + edge caching')}
+
+${C('// WHAT BELONGS ON A CDN:')}
+${C('//   - JS/CSS/images/fonts (immutable, fingerprinted filenames)')}
+${C('//   - product images, profile pictures (rarely change)')}
+${C('//   - HLS/DASH video segments (extremely cacheable)')}
+${C('//   - public APIs that are read-heavy and tolerate staleness')}
+
+${C('// HEADERS that drive CDN behaviour:')}
+${C('//   Cache-Control: public, max-age=31536000, immutable    → 1-year edge cache')}
+${C('//   Cache-Control: public, max-age=60, s-maxage=300       → browser 60s, CDN 5m')}
+${C('//   Cache-Control: private, no-store                       → never cache (auth tokens)')}
+${C('//   Vary: Accept-Encoding, Authorization                    → fragments cache by these')}
+
+${C('// CACHE BUSTING — fingerprint filenames so you can keep TTL infinite:')}
+${C('//   /static/main.b3a1c2.js   — change content → change name → cold cache')}
+
+${C('// SIGNED URLs / SIGNED COOKIES:')}
+${C('//   For private blobs: sign a URL with HMAC + expiry')}
+${C('//   CloudFront, S3 presigned, GCS signed URLs')}
+
+${C('// ORIGIN SHIELD:')}
+${C('//   A regional cache in front of your origin so 1000 edge POPs do not all miss simultaneously')}
+
+${C('// EDGE COMPUTE (Cloudflare Workers, Lambda@Edge):')}
+${C('//   AB testing without origin call')}
+${C('//   geo-aware redirects')}
+${C('//   request validation / WAF rules')}
+
+${C('// Mention CDN early — it is a fast win on bandwidth, latency, and origin load.')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'msg', label:'Async + Messaging',
+    steps:[
+      { label:'Why async',
+        hint:'Decouple producers from consumers. Smooth bursty traffic, retry safely, fan out to many subscribers, decouple deploys.',
+        code:`${C('// Step 1 — Why introduce a queue/log at all')}
+
+${C('// REASONS:')}
+${C('//   1) decouple — producer does not need to know consumers')}
+${C('//   2) buffer  — handle traffic spikes without overloading downstream')}
+${C('//   3) retry   — failures replay automatically, no caller involved')}
+${C('//   4) fan out — one event triggers many independent consumers')}
+${C('//   5) order   — durable log lets you replay events to rebuild state')}
+
+${C('// WHEN TO PUSH WORK ASYNC:')}
+${C('//   - long-running tasks (image processing, ML inference, video encode)')}
+${C('//   - cross-service notifications (order placed → email, analytics, loyalty)')}
+${C('//   - bursty workloads (Black Friday, news of the day)')}
+${C('//   - non-critical-path work (logging, analytics, recommendations)')}
+
+${C('// SYNCHRONOUS REQUEST/RESPONSE STILL WINS WHEN:')}
+${C('//   - user is waiting and expects immediate answer')}
+${C('//   - data is small and operation is cheap')}
+${C('//   - strong consistency required across two systems → use a transaction or saga')}
+
+${C('// Mention these BENEFITS in interviews — async is rarely about saving CPU,')}
+${C('// it is about durability, decoupling, and absorbing variance.')}
+`
+      },
+      { label:'Kafka vs SQS vs SNS',
+        hint:'Kafka = durable log, replayable, partitioned. SQS = ephemeral queue, simple, ack-based. SNS = pub/sub fan-out.',
+        code:`${C('// Step 2 — Picking the right messaging system')}
+
+${C('// KAFKA — distributed append-only log')}
+${C('//   - partitioned (key → partition for ordering within key)')}
+${C('//   - retains messages for days/weeks → REPLAY any time')}
+${C('//   - consumer offsets are managed BY consumers')}
+${C('//   - throughput: millions/sec per cluster, multi-broker')}
+${C('//   USE: event sourcing, change data capture, log/metrics pipelines, stream processing')}
+
+${C('// SQS (Standard) — managed queue, at-least-once')}
+${C('//   - no ordering, possible duplicates')}
+${C('//   - up to 14-day retention, max 1 visibility timeout = 12 hr')}
+${C('//   - simple, scales auto, no broker management')}
+${C('//   USE: background jobs, decoupling microservices, retry-safe work')}
+
+${C('// SQS FIFO — ordered + exactly-once within a 5-min dedup window')}
+${C('//   - throughput cap (3k msg/s with batching)')}
+${C('//   USE: must-be-ordered events with modest throughput')}
+
+${C('// SNS — pub/sub fan-out')}
+${C('//   - one publish → many subscribers (SQS, Lambda, HTTP, Email, SMS)')}
+${C('//   USE: notifications, fan-out to multiple downstreams')}
+
+${C('// EVENTBRIDGE — schema registry + rule routing')}
+${C('//   USE: AWS-native event bus, advanced routing rules')}
+
+${C('// Quick rule of thumb:')}
+${C('//   Need replay + ordering + high throughput → KAFKA / KINESIS')}
+${C('//   Just decouple a worker                   → SQS')}
+${C('//   Fan-out to many consumers                → SNS or Kafka')}
+`
+      },
+      { label:'Idempotency + ordering',
+        hint:'At-least-once delivery means consumers must handle duplicates. Idempotency keys, deduplication tables, and natural keys solve this.',
+        code:`${C('// Step 3 — Idempotency + ordering')}
+
+${C('// AT-LEAST-ONCE is the default in distributed messaging.')}
+${C('// Consumers MUST handle duplicates safely.')}
+
+${C('// PATTERN: idempotency key in the request')}
+${C('//   1) producer generates a unique key (e.g. UUID per business event)')}
+${C('//   2) consumer stores key in a "seenIds" table on first processing')}
+${C('//   3) consumer checks seenIds before applying the operation')}
+
+${K('class')} ${T('PaymentProcessor')} {
+    ${K('public')} ${T('Result')} ${F('charge')}(${T('PaymentRequest')} req) {
+        ${K('if')} (seenIds.${F('contains')}(req.idempotencyKey)) {
+            ${K('return')} ${F('lookupExistingResult')}(req.idempotencyKey);
+        }
+        ${T('Result')} r = ${F('actuallyCharge')}(req);
+        seenIds.${F('store')}(req.idempotencyKey, r);   ${C('// in same transaction')}
+        ${K('return')} r;
+    }
+}
+
+${C('// NATURAL IDEMPOTENCY:')}
+${C('//   - "set status to PAID" — repeat is a no-op, naturally idempotent')}
+${C('//   - "create user with id=X" — UPSERT on PK, idempotent')}
+${C('//   - "increment counter by 5" — NOT idempotent unless deduped')}
+
+${C('// ORDERING:')}
+${C('//   Kafka guarantees order WITHIN a partition.')}
+${C('//   To preserve order, partition by entity ID:')}
+${C('//     - userId → all events for one user land in the same partition → in-order')}
+${C('//     - orderId → state transitions for one order are ordered')}
+${C('//   You give up cross-entity ordering → live with that')}
+
+${C('// EXACTLY-ONCE EFFECT (not delivery):')}
+${C('//   Combine idempotent consumers with at-least-once delivery → effectively exactly-once.')}
+${C('//   Pure exactly-once delivery does not exist in distributed systems.')}
+`
+      },
+      { label:'Outbox + Saga',
+        hint:'Outbox pattern guarantees DB write + event publish atomically. Sagas coordinate multi-service transactions via compensations.',
+        code:`${C('// Step 4 — Outbox + Saga')}
+
+${C('// THE PROBLEM: how do you ATOMICALLY save a row AND publish an event?')}
+${C('//   - 2-phase commit between DB and broker is fragile and slow')}
+${C('//   - "save then publish" can fail between steps and lose the event')}
+
+${C('// OUTBOX PATTERN — write the event to a SAME-DB table in the same transaction')}
+${C('//   1) BEGIN TX')}
+${C('//   2) INSERT INTO orders (...)')}
+${C('//   3) INSERT INTO outbox (event_type, payload, status="PENDING")')}
+${C('//   4) COMMIT')}
+${C('//   A separate poller / CDC reader pushes outbox rows to Kafka and marks them DONE')}
+
+${K('class')} ${T('OrderService')} {
+    ${K('@Transactional')}
+    ${K('public')} ${K('void')} ${F('place')}(${T('Order')} o) {
+        orderRepo.${F('save')}(o);
+        outboxRepo.${F('save')}(${K('new')} ${T('OutboxEvent')}("ORDER_PLACED", o.toJson()));
+    }
+}
+
+${C('// CDC (Debezium, AWS DMS) reads the WAL/binlog and streams to Kafka — no poller needed.')}
+
+${C('// SAGA — distributed transaction across services using local transactions + compensations')}
+${C('//   Order placed → Reserve inventory → Charge payment → Schedule shipping')}
+${C('//   If Step 3 fails: emit "PaymentFailed" → Step 2 compensates by un-reserving')}
+
+${C('// TWO SAGA STYLES:')}
+${C('//   Choreography — services react to each other\'s events, no central coordinator')}
+${C('//                  pros: simple, decoupled')}
+${C('//                  cons: hard to reason about flow, debug')}
+${C('//   Orchestration — central service drives the workflow (e.g. AWS Step Functions, Camunda)')}
+${C('//                  pros: explicit flow, easier monitoring')}
+${C('//                  cons: orchestrator becomes a single point of complexity')}
+
+${C('// COMPENSATIONS are not rollbacks — they are inverse business operations.')}
+${C('//   "Refund the charge" undoes "Charge the card"')}
+${C('//   "Send cancellation email" reverses "Send confirmation email"')}
+`
+      }
+    ]
+  },
+  {
+    id:'cse', label:'Case Studies',
+    steps:[
+      { label:'URL Shortener',
+        hint:'Read-heavy, simple data model. Key allocator + KV store + CDN-fronted redirect endpoint covers 95% of cases.',
+        code:`${C('// Step 1 — URL Shortener — the canonical warm-up')}
+
+${C('// REQUIREMENTS:')}
+${C('//   functional:     shorten, resolve, custom alias, expiry, basic analytics')}
+${C('//   non-functional: redirect p99 < 100ms, 100M URLs, 100:1 read:write')}
+
+${C('// SCALE:')}
+${C('//   100M new URLs / yr → 1B over 10 yrs')}
+${C('//   ~100 reads / write')}
+${C('//   peakReadQPS ≈ 10k')}
+
+${C('// API:')}
+${C('//   POST /v1/urls   { longUrl, alias?, ttl? }   →  { shortUrl }')}
+${C('//   GET  /{key}     →  301 Location: longUrl')}
+
+${C('// KEY GENERATION:')}
+${C('//   Option A: hash(longUrl)[:7] — collisions need retry/extension')}
+${C('//   Option B: counter → base62  — needs distributed counter (Snowflake, ZooKeeper, RDS sequence)')}
+${C('//   Option C: range allocator   — each app pulls a 10k block from coordinator,')}
+${C('//                                  generates locally → no per-write coordination')}
+
+${C('// DATA MODEL — DynamoDB:')}
+${C('//   PK: key,  attrs: longUrl, ownerId, createdAt, expiresAt(TTL), clickCount')}
+
+${C('// ARCHITECTURE:')}
+${C('//   Client → CDN → ALB → URL service (stateless) → Redis (hot mappings)')}
+${C('//                                                ↘ DynamoDB (durable)')}
+${C('//                                                ↘ Kafka → Analytics consumer')}
+
+${C('// HOT KEY WIN — most-clicked URLs are massively cached.')}
+${C('//   95%+ cache hit rate means DB sees only 500 QPS even at peak.')}
+
+${C('// EXTENSIONS to mention:')}
+${C('//   - rate limiting per IP / API key')}
+${C('//   - abuse detection (phishing → blocklist)')}
+${C('//   - vanity domain support')}
+${C('//   - geographic redirect via Route 53 latency-based routing')}
+`
+      },
+      { label:'News Feed',
+        hint:'Fan-out push at write time vs fan-out pull at read. Hybrid for celebrities. Ranking happens at read time on top.',
+        code:`${C('// Step 2 — News Feed (Twitter / Instagram / LinkedIn)')}
+
+${C('// CORE QUESTIONS:')}
+${C('//   - When user U opens app, show top N posts from people U follows.')}
+${C('//   - 1B users, average 200 follows, peak 100M DAU.')}
+
+${C('// FAN-OUT-ON-WRITE (push):')}
+${C('//   On post: copy reference into followers\' inboxes')}
+${C('//   Pros: fast read (just paginate inbox)')}
+${C('//   Cons: explosive write amplification — celebrity with 100M followers writes 100M times')}
+
+${C('// FAN-OUT-ON-READ (pull):')}
+${C('//   On read: fetch latest posts from each followee, merge, sort')}
+${C('//   Pros: no write amplification')}
+${C('//   Cons: slow reads, especially for users following many people')}
+
+${C('// HYBRID — best of both:')}
+${C('//   - regular users → push (fast inbox read)')}
+${C('//   - celebrity users (>1M followers) → pull at read time')}
+${C('//   - app merges: inbox + on-demand celebrity timelines + global trending')}
+
+${C('// COMPONENTS:')}
+${C('//   Post service        → writes to PostStore (Cassandra), emits to Kafka')}
+${C('//   Fan-out service     → consumes Kafka, writes to follower inboxes (Redis sorted sets)')}
+${C('//   Feed service        → reads inbox, merges with celebrity timeline, ranks, returns')}
+${C('//   Ranking service     → ML model: recency + engagement + relevance')}
+${C('//   Media service       → S3 + CDN for images/video')}
+
+${C('// STORAGE choices:')}
+${C('//   PostStore        Cassandra (write-heavy, partitioned by userId)')}
+${C('//   Inbox            Redis sorted set per user, capped at last 1k posts, 14-day TTL')}
+${C('//   Social graph     Postgres (followers/following) — modest size, joins help')}
+${C('//   Media            S3 + CloudFront')}
+
+${C('// CACHING strategy:')}
+${C('//   - hot users\' inboxes pre-warmed in Redis')}
+${C('//   - feed CDN-cached for short windows for trending lists')}
+
+${C('// FAILURE MODES:')}
+${C('//   - fan-out service backpressure → consumer lag → Kafka retains for 7 days')}
+${C('//   - celebrity post burst → autoscale or rate-limit fan-out per source')}
+${C('//   - DB hot partition → re-shard celebrity timelines specifically')}
+`
+      },
+      { label:'Chat / Messenger',
+        hint:'WebSocket gateways for real-time delivery. Kafka for the durable backbone. Per-conversation partitioning preserves order.',
+        code:`${C('// Step 3 — Chat / Messenger (Slack / WhatsApp / Discord)')}
+
+${C('// REQUIREMENTS:')}
+${C('//   functional:     1:1 chat, group chat, online status, typing indicator, history,')}
+${C('//                   read receipts, push notifications')}
+${C('//   non-functional: p99 < 200ms delivery in same region, 1B users, 100M concurrent')}
+
+${C('// CONNECTIONS:')}
+${C('//   Use WebSocket for bidirectional, low-latency delivery')}
+${C('//   Each app instance holds N persistent connections (~50k per box)')}
+${C('//   Connection registry: which gateway holds the socket for user X?')}
+${C('//     - Redis: userId → gatewayInstanceId, with TTL refresh on heartbeat')}
+
+${C('// MESSAGE FLOW:')}
+${C('//   1) sender → gateway A (WebSocket)')}
+${C('//   2) gateway A → MessageService → store in DB, append to Kafka topic = "conv-" + hash(convId)')}
+${C('//   3) recipient gateway B subscribes to topic, pushes to recipient socket')}
+${C('//   4) ack flows back along the same path')}
+${C('//   5) push notification service watches Kafka for offline recipients → APNs / FCM')}
+
+${C('// STORAGE:')}
+${C('//   Messages           Cassandra, partition by convId, sort by timestamp')}
+${C('//   Conversations      DynamoDB or Postgres, indexed by userId for "list my chats"')}
+${C('//   Online presence    Redis, ephemeral, expires on disconnect')}
+${C('//   Search             Elasticsearch async-indexed from Kafka')}
+
+${C('// ORDERING:')}
+${C('//   Per-conversation order is preserved by hashing convId → Kafka partition')}
+${C('//   Cross-conversation order is meaningless to users')}
+
+${C('// SCALE PROBLEMS:')}
+${C('//   - WebSocket fanout to a 10k-member channel — backpressure per gateway')}
+${C('//   - "celebrity" channel with millions of subscribers — fan out via dedicated topic + sharded')}
+${C('//   - Mobile reconnects flood the gateway — exponential backoff + connection rate limit')}
+
+${C('// END-TO-END ENCRYPTION (E2EE):')}
+${C('//   server stores ciphertext only; key exchange via Signal protocol')}
+${C('//   trades server-side search for privacy')}
+`
+      },
+      { label:'Distributed Rate Limiter',
+        hint:'Token bucket in Redis is the workhorse. Local + global hybrids handle huge fleets. Pre-warm and circuit-break the limiter itself.',
+        code:`${C('// Step 4 — Distributed Rate Limiter (the most asked HLD detail)')}
+
+${C('// REQUIREMENTS:')}
+${C('//   - 100M API consumers, each with their own quota')}
+${C('//   - decisions must be sub-millisecond')}
+${C('//   - shared across an autoscaled fleet of 1000 instances')}
+
+${C('// SIMPLE STORE: Redis with atomic Lua script')}
+${C('//   key = "rate:user:123",  value = (tokens, lastRefillTimestamp)')}
+${C('//   On each request:')}
+${C('//     1) MULTI/EXEC or Lua script atomically:')}
+${C('//        - refill tokens based on elapsed time')}
+${C('//        - if tokens >= 1: decrement, return ALLOW')}
+${C('//        - else: return DENY')}
+
+${C('// LUA script outline:')}
+${C('//   -- KEYS[1]=rateKey,   ARGV[1]=now,   ARGV[2]=cap,   ARGV[3]=refillRate')}
+${C('//   local data = redis.call("HMGET", KEYS[1], "tokens", "ts")')}
+${C('//   ... compute new tokens ...')}
+${C('//   if newTokens >= 1 then ... return 1 else return 0 end')}
+
+${C('// ALGORITHMS to know:')}
+${C('//   Token bucket   — bursts up to capacity, smooths over time (most common)')}
+${C('//   Leaky bucket   — strict constant outflow rate')}
+${C('//   Fixed window   — count per minute; thunders at boundary')}
+${C('//   Sliding window log — store every timestamp; precise but heavy')}
+${C('//   Sliding window counter — weighted average of last two windows; cheap + accurate')}
+
+${C('// HIERARCHICAL LIMITS — chain them')}
+${C('//   per IP    → 100 rps')}
+${C('//   per user  → 1000 rps')}
+${C('//   per route → 10k  rps')}
+${C('//   per region → 100k rps')}
+
+${C('// HYBRID LOCAL + GLOBAL:')}
+${C('//   Each instance gets a small "lease" of tokens from Redis, refreshes lazily.')}
+${C('//   Trades exact accuracy for huge latency win and Redis offload.')}
+
+${C('// FAILURE MODE — Redis is down:')}
+${C('//   FAIL-OPEN  → allow all, but log + alarm  (most APIs)')}
+${C('//   FAIL-CLOSED → reject all (safety-critical)')}
+${C('//   Always state which one and why in the interview.')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

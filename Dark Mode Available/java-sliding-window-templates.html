@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Sliding Window Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-fix: #58a6ff;
+    --c-lng: #39d0a8;
+    --c-srt: #f0883e;
+    --c-amk: #bc8cff;
+    --c-cnt: #d29922;
+    --c-mqd: #e06c75;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-sw   { background: rgba(88,166,255,0.1); color: var(--c-fix); border-color: rgba(88,166,255,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="fix"].on { color: var(--c-fix); border-bottom-color: var(--c-fix); }
+  .tab[data-id="lng"].on { color: var(--c-lng); border-bottom-color: var(--c-lng); }
+  .tab[data-id="srt"].on { color: var(--c-srt); border-bottom-color: var(--c-srt); }
+  .tab[data-id="amk"].on { color: var(--c-amk); border-bottom-color: var(--c-amk); }
+  .tab[data-id="cnt"].on { color: var(--c-cnt); border-bottom-color: var(--c-cnt); }
+  .tab[data-id="mqd"].on { color: var(--c-mqd); border-bottom-color: var(--c-mqd); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Sliding Window Templates</h1>
+    <p>// 6 patterns &middot; 4 steps each &middot; expand &middot; shrink &middot; record</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-sw">&#x1F50E; Sliding Window</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">SlidingWindow.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-fix)">
+      <h3>Fixed Size K</h3>
+      <div class="cheat-row"><span>Window</span><span>always exactly k</span></div>
+      <div class="cheat-row"><span>Slide</span><span>add right, remove left</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(n)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Avg of K, Max Sum K</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-lng)">
+      <h3>Longest Valid</h3>
+      <div class="cheat-row"><span>Goal</span><span>maximise window length</span></div>
+      <div class="cheat-row"><span>Shrink while</span><span>invalid</span></div>
+      <div class="cheat-row"><span>Record</span><span>r - l + 1</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Longest Distinct, Fruits</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-srt)">
+      <h3>Shortest Valid</h3>
+      <div class="cheat-row"><span>Goal</span><span>minimise window length</span></div>
+      <div class="cheat-row"><span>Shrink while</span><span>still valid</span></div>
+      <div class="cheat-row"><span>Record</span><span>before each shrink step</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Min Subarray Sum &ge; T</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-amk)">
+      <h3>At-Most / Exactly K</h3>
+      <div class="cheat-row"><span>At most</span><span>shrink when distinct &gt; k</span></div>
+      <div class="cheat-row"><span>Exactly</span><span>atMost(k) - atMost(k-1)</span></div>
+      <div class="cheat-row"><span>Time</span><span>O(n)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Subarrays with K Distinct</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cnt)">
+      <h3>Char Match (Anagram)</h3>
+      <div class="cheat-row"><span>Need[]</span><span>target char counts</span></div>
+      <div class="cheat-row"><span>Have[]</span><span>window char counts</span></div>
+      <div class="cheat-row"><span>Match</span><span>matched == |need|</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Min Window, Find Anagrams</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-mqd)">
+      <h3>Monotonic Deque</h3>
+      <div class="cheat-row"><span>Stores</span><span>indices, decreasing values</span></div>
+      <div class="cheat-row"><span>Pop back</span><span>while &le; nums[r]</span></div>
+      <div class="cheat-row"><span>Front</span><span>current window max</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Max in Sliding Window (LC 239)</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'fix', label:'Fixed Size K',
+    steps:[
+      { label:'Define state',
+        hint:'Window length is exactly k. The state is just one running statistic — sum, count, or aggregate over the current k elements.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// windowSum = running sum of the last k elements')}
+${C('// (or any other O(1)-updatable aggregate: max via deque, count of vowels, ...)')}
+${C('// Classic: Average of Subarrays of Size K, Max Sum of K Consecutive')}
+
+${K('int')} k = ${F('windowSize')}();
+${K('long')} windowSum = ${N('0')};
+${K('long')} best = ${T('Long')}.MIN_VALUE;
+`
+      },
+      { label:'Build first window',
+        hint:'Pre-fill the first k elements before any sliding starts. Without this, the slide step would over-count or under-count.',
+        code:`${C('// Step 2 — Seed the first window of length k')}
+${K('for')} (${K('int')} i = ${N('0')}; i < k; i++) {
+    windowSum += nums[i];
+}
+best = windowSum;       ${C('// first complete window contributes its value')}
+`
+      },
+      { label:'Slide one step',
+        hint:'Each slide is two O(1) updates: add the new right element, remove the old left element. No inner loop.',
+        code:`${C('// Step 3 — Slide from index k to n-1')}
+${K('for')} (${K('int')} r = k; r < nums.length; r++) {
+
+    windowSum += nums[r];          ${C('// add new right')}
+    windowSum -= nums[r - k];      ${C('// remove old left')}
+
+    best = ${T('Math')}.${F('max')}(best, windowSum);
+}
+
+${C('// The window is the slice [r-k+1 .. r] inclusive.')}
+${C('// At every iteration its length stays exactly k.')}
+`
+      },
+      { label:'Return answer',
+        hint:'best holds the answer for any aggregate problem. For averages divide by k; for max-vowels return the count, etc.',
+        code:`${C('// Step 4 — Return')}
+${K('return')} best;
+
+${C('// Average over each window of size k:')}
+${T('List')}<${T('Double')}> avgs = ${K('new')} ${T('ArrayList')}<>();
+${C('// inside the slide, push (windowSum / (double) k)')}
+
+${C('// Generic shape:')}
+${C('//   for r in [0..n-1]:')}
+${C('//     add nums[r]')}
+${C('//     if r >= k:  remove nums[r-k]')}
+${C('//     if r >= k-1: record current aggregate')}
+
+${C('// Time:  O(n)')}
+${C('// Space: O(1)')}
+`
+      }
+    ]
+  },
+  {
+    id:'lng', label:'Longest Valid Window',
+    steps:[
+      { label:'Define state',
+        hint:'Two pointers l and r. The window [l..r] must satisfy a constraint. Goal: find the longest such window.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// Window [l..r] must obey some constraint:')}
+${C('//   "no repeating chars" / "at most k distinct" / "sum <= S"')}
+${C('// Classic: Longest Substring Without Repeating, Longest with K Distinct, Fruit Into Baskets')}
+
+${K('int')} l = ${N('0')}, best = ${N('0')};
+${T('Map')}<${T('Character')}, ${T('Integer')}> count = ${K('new')} ${T('HashMap')}<>();
+`
+      },
+      { label:'Expand right',
+        hint:'Move r outward and update the running statistic. The expansion step is what brings new elements into the window.',
+        code:`${C('// Step 2 — Expand: r marches forward, one element at a time')}
+${K('for')} (${K('int')} r = ${N('0')}; r < s.length(); r++) {
+    ${K('char')} cR = s.${F('charAt')}(r);
+
+    count.${F('merge')}(cR, ${N('1')}, ${T('Integer')}::sum);
+
+    ${C('// continued in step 3 ...')}
+}
+
+${C('// Update whatever statistic the constraint depends on:')}
+${C('//   distinct count = count.size()')}
+${C('//   sum / max value / freq table')}
+`
+      },
+      { label:'Shrink while invalid',
+        hint:'If the window is currently invalid, shrink from the left until it is valid again. l only ever moves forward — total O(n).',
+        code:`${C('// Step 3 — Shrink left until window is valid again')}
+    ${K('while')} (count.${F('size')}() > k) {     ${C('// problem-specific predicate')}
+        ${K('char')} cL = s.${F('charAt')}(l);
+        ${K('if')} (count.${F('merge')}(cL, -${N('1')}, ${T('Integer')}::sum) == ${N('0')})
+            count.${F('remove')}(cL);
+        l++;
+    }
+`
+      },
+      { label:'Record + return',
+        hint:'After the shrink restores validity, the window [l..r] IS valid. Record its length, then continue the for-loop.',
+        code:`${C('// Step 4 — Record the best valid window length')}
+    best = ${T('Math')}.${F('max')}(best, r - l + ${N('1')});
+}
+${K('return')} best;
+
+${C('// Mental model — "expand-then-fix":')}
+${C('//   1. Expand r blindly')}
+${C('//   2. While invalid: shrink from l')}
+${C('//   3. After the while, window is valid → record length')}
+
+${C('// l never goes backwards → each pointer crosses the array once.')}
+${C('// Time:  O(n)')}
+${C('// Space: O(alphabet) for the count map')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'srt', label:'Shortest Valid Window',
+    steps:[
+      { label:'Define state',
+        hint:'Mirror image of "longest". The window must satisfy a constraint, and we want the SHORTEST such window.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// Window [l..r] must satisfy:  sum >= target  (or some other lower-bound)')}
+${C('// We want the SHORTEST window that meets it')}
+${C('// Classic: Minimum Size Subarray Sum (LC 209), Smallest Subarray with Sum >= S')}
+
+${K('int')} l = ${N('0')};
+${K('long')} sum = ${N('0')};
+${K('int')} best = ${T('Integer')}.MAX_VALUE;
+`
+      },
+      { label:'Expand right',
+        hint:'Add nums[r]. Keep expanding until the window first meets the constraint — only then is shrinking even meaningful.',
+        code:`${C('// Step 2 — Expand: r grows, accumulate')}
+${K('for')} (${K('int')} r = ${N('0')}; r < nums.length; r++) {
+    sum += nums[r];
+
+    ${C('// continued in step 3 ...')}
+}
+
+${C('// Until sum reaches target, the window is too small —')}
+${C('// nothing to record yet, and shrinking would invalidate it.')}
+`
+      },
+      { label:'Shrink while still valid',
+        hint:'While the window is STILL valid, record its length and shrink. The last valid length before invalidation is a local minimum.',
+        code:`${C('// Step 3 — Shrink while constraint still holds')}
+    ${K('while')} (sum >= target) {
+
+        best = ${T('Math')}.${F('min')}(best, r - l + ${N('1')});  ${C('// record BEFORE shrinking')}
+
+        sum -= nums[l];   ${C('// shrink from the left')}
+        l++;
+    }
+
+${C('// Why "while still valid" (not "while invalid")?')}
+${C('// We are MINIMISING — every valid window is a candidate;')}
+${C('// keep tightening until shrinking would break the predicate.')}
+`
+      },
+      { label:'Return answer',
+        hint:'If best stayed at MAX_VALUE no valid window exists — return 0 (or -1 per the problem).',
+        code:`${C('// Step 4 — Return')}
+${K('return')} best == ${T('Integer')}.MAX_VALUE ? ${N('0')} : best;
+
+${C('// Skeleton for shortest-valid window:')}
+${C('//   for r in [0..n-1]:')}
+${C('//     add nums[r]')}
+${C('//     while VALID:')}
+${C('//       best = min(best, r - l + 1)')}
+${C('//       remove nums[l]; l++')}
+
+${C('// Compare to "longest valid":')}
+${C('//   longest:  while INVALID  → shrink, then record')}
+${C('//   shortest: while   VALID  → record, then shrink')}
+${C('// Time:  O(n)')}
+${C('// Space: O(1)')}
+`
+      }
+    ]
+  },
+  {
+    id:'amk', label:'At-Most / Exactly K',
+    steps:[
+      { label:'Define state',
+        hint:'Many "exactly K distinct" problems are solved as atMost(K) - atMost(K-1). Build the at-most function once, then subtract.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// atMostK = number of subarrays with at most K distinct elements')}
+${C('// exactlyK = atMostK(k) - atMostK(k - 1)')}
+${C('// Classic: Subarrays with K Different Integers (LC 992),')}
+${C('//          Binary Subarrays With Sum (LC 930), Count Nice Subarrays')}
+
+${K('public')} ${K('int')} ${F('subarraysWithKDistinct')}(${K('int')}[] nums, ${K('int')} k) {
+    ${K('return')} ${F('atMost')}(nums, k) - ${F('atMost')}(nums, k - ${N('1')});
+}
+`
+      },
+      { label:'atMost(k) — shrink when over',
+        hint:'A standard longest-valid window. We do not record a length — we count subarrays.',
+        code:`${C('// Step 2 — Build the atMost(k) helper')}
+${K('int')} ${F('atMost')}(${K('int')}[] nums, ${K('int')} k) {
+    ${K('if')} (k < ${N('0')}) ${K('return')} ${N('0')};       ${C('// guard for k - 1 == -1 case')}
+
+    ${T('Map')}<${T('Integer')}, ${T('Integer')}> cnt = ${K('new')} ${T('HashMap')}<>();
+    ${K('int')} l = ${N('0')}, ans = ${N('0')};
+
+    ${K('for')} (${K('int')} r = ${N('0')}; r < nums.length; r++) {
+        cnt.${F('merge')}(nums[r], ${N('1')}, ${T('Integer')}::sum);
+
+        ${K('while')} (cnt.${F('size')}() > k) {
+            ${K('if')} (cnt.${F('merge')}(nums[l], -${N('1')}, ${T('Integer')}::sum) == ${N('0')})
+                cnt.${F('remove')}(nums[l]);
+            l++;
+        }
+        ${C('// continued in step 3 ...')}
+    }
+    ${K('return')} ans;
+}
+`
+      },
+      { label:'Count subarrays ending at r',
+        hint:'For each r, ALL windows ending at r with left in [l..r] are valid (have at most k distinct). That is r - l + 1 of them.',
+        code:`${C('// Step 3 — Count, do not record length')}
+        ans += r - l + ${N('1')};
+
+${C('// Why?  After the while loop:')}
+${C('//   window [l..r] is valid (≤ k distinct)')}
+${C('//   any starting point l, l+1, l+2, ..., r yields a valid')}
+${C('//   subarray ending at r — that is r - l + 1 subarrays.')}
+
+${C('// Sum over all r → total count of subarrays with ≤ k distinct.')}
+`
+      },
+      { label:'Compose for "exactly"',
+        hint:'exactly(k) = atMost(k) - atMost(k-1). Same trick works for sum/count constraints by replacing the predicate.',
+        code:`${C('// Step 4 — Use atMost twice for "exactly K"')}
+${K('return')} ${F('atMost')}(nums, k) - ${F('atMost')}(nums, k - ${N('1')});
+
+${C('// Same recipe extends to:')}
+${C('//   LC 930  Binary Subarrays With Sum     → atMost(S) - atMost(S-1)')}
+${C('//   LC 1248 Count Nice Subarrays          → atMost(k) - atMost(k-1)')}
+${C('//   LC 1358 Substrings with All 3 Chars   → counting via at-most-2 trick')}
+
+${C('// Time:  O(n) per atMost call → O(n) total')}
+${C('// Space: O(k) frequency map')}
+`
+      }
+    ]
+  },
+
+  {
+    id:'cnt', label:'Char Match (Anagram)',
+    steps:[
+      { label:'Define state',
+        hint:'Track need[] (target char counts) and a "matched" counter that increments when a char hits its target frequency in the window.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// need[c]   = how many times c appears in t')}
+${C('// have[c]   = how many times c appears in current window')}
+${C('// matched   = number of distinct chars that have hit their need')}
+${C('// Classic: Minimum Window Substring (LC 76), Find All Anagrams (LC 438), Permutation in String (LC 567)')}
+
+${K('int')}[] need = ${K('new')} ${K('int')}[${N('128')}];
+${K('int')}[] have = ${K('new')} ${K('int')}[${N('128')}];
+${K('int')} required = ${N('0')};
+
+${K('for')} (${K('char')} c : t.${F('toCharArray')}()) {
+    ${K('if')} (need[c]++ == ${N('0')}) required++;   ${C('// distinct chars in t')}
+}
+`
+      },
+      { label:'Expand right',
+        hint:'Add s[r] to have[]. If have[c] just hit need[c], we increment matched. We only care about need-positive characters.',
+        code:`${C('// Step 2 — Expand: add s[r], update matched')}
+${K('int')} l = ${N('0')}, matched = ${N('0')};
+${K('int')} bestL = ${N('0')}, bestLen = ${T('Integer')}.MAX_VALUE;
+
+${K('for')} (${K('int')} r = ${N('0')}; r < s.length(); r++) {
+    ${K('char')} cR = s.${F('charAt')}(r);
+    have[cR]++;
+
+    ${K('if')} (need[cR] > ${N('0')} && have[cR] == need[cR]) {
+        matched++;       ${C('// just satisfied this char')}
+    }
+
+    ${C('// continued in step 3 ...')}
+}
+`
+      },
+      { label:'Shrink while window covers t',
+        hint:'matched == required means every needed char has at least its required count. Shrink to find the smallest such window.',
+        code:`${C('// Step 3 — Shrink while window still satisfies t')}
+    ${K('while')} (matched == required) {
+
+        ${C('// Record the candidate before we break it')}
+        ${K('if')} (r - l + ${N('1')} < bestLen) {
+            bestLen = r - l + ${N('1')};
+            bestL = l;
+        }
+
+        ${K('char')} cL = s.${F('charAt')}(l);
+        have[cL]--;
+        ${K('if')} (need[cL] > ${N('0')} && have[cL] < need[cL]) {
+            matched--;   ${C('// dropped below need → no longer satisfied')}
+        }
+        l++;
+    }
+`
+      },
+      { label:'Return answer',
+        hint:'For min-window return the substring at bestL. For "find all anagrams" record l whenever r-l+1 == t.length() and matched == required.',
+        code:`${C('// Step 4 — Return / variants')}
+${K('return')} bestLen == ${T('Integer')}.MAX_VALUE
+        ? ""
+        : s.${F('substring')}(bestL, bestL + bestLen);
+
+${C('// LC 438 — Find All Anagram start indices (window length is FIXED at t.length()):')}
+${C('//   when r - l + 1 > t.length(): shrink one step (decrement have[s[l]], l++)')}
+${C('//   when matched == required:    out.add(l)')}
+
+${C('// LC 567 — Permutation in String: same as 438 but return true/false')}
+
+${C('// Why "matched" instead of comparing whole arrays?')}
+${C('//   array equality is O(alphabet) per slide — matched counter is O(1).')}
+${C('// Time:  O(|s| + |t|)')}
+${C('// Space: O(alphabet)')}
+`
+      }
+    ]
+  },
+  {
+    id:'mqd', label:'Monotonic Deque',
+    steps:[
+      { label:'Define state',
+        hint:'A deque of indices, kept so that the values at those indices are STRICTLY decreasing front-to-back. The front is always the current window max.',
+        code:`${C('// Step 1 — Define the state')}
+${C('// dq holds INDICES of nums, kept so nums[dq] is decreasing front → back')}
+${C('// dq.peekFirst() = index of the maximum in the current window')}
+${C('// Classic: Sliding Window Maximum (LC 239), Constrained Subseq Sum')}
+
+${T('Deque')}<${T('Integer')}> dq = ${K('new')} ${T('ArrayDeque')}<>();
+${K('int')}[] out = ${K('new')} ${K('int')}[nums.length - k + ${N('1')}];
+`
+      },
+      { label:'Pop back to keep monotonic',
+        hint:'Before pushing nums[r], remove every back element that is <= nums[r] — they can never be a max while nums[r] is in the window.',
+        code:`${C('// Step 2 — Maintain decreasing values from front to back')}
+${K('for')} (${K('int')} r = ${N('0')}; r < nums.length; r++) {
+
+    ${K('while')} (!dq.${F('isEmpty')}() && nums[dq.${F('peekLast')}()] <= nums[r]) {
+        dq.${F('pollLast')}();
+    }
+    dq.${F('offerLast')}(r);
+
+    ${C('// continued in steps 3 and 4 ...')}
+}
+
+${C('// Use < instead of <= if you need to retain ties (rare).')}
+`
+      },
+      { label:'Pop front when out of window',
+        hint:'If the front index falls outside the window [r-k+1 .. r], discard it. That is the only way obsolete elements leave the deque.',
+        code:`${C('// Step 3 — Drop front if it has slid out of the window')}
+    ${K('if')} (dq.${F('peekFirst')}() <= r - k) {
+        dq.${F('pollFirst')}();
+    }
+
+${C('// The deque only ever holds indices that are still in the window')}
+${C('// AND whose values are strictly greater than later ones inserted.')}
+${C('// → front always has the max of the current window.')}
+`
+      },
+      { label:'Record + return',
+        hint:'Once r >= k-1 we have a full window. nums[dq.peekFirst()] is the max — write it to the output.',
+        code:`${C('// Step 4 — Record max once the window is full')}
+    ${K('if')} (r >= k - ${N('1')}) {
+        out[r - k + ${N('1')}] = nums[dq.${F('peekFirst')}()];
+    }
+}
+${K('return')} out;
+
+${C('// Each index enters and leaves the deque at most once → O(n) total')}
+${C('// even though the inner while loop looks quadratic.')}
+
+${C('// To track the MIN instead, flip the comparison:')}
+${C('//   while nums[dq.peekLast()] >= nums[r]: pollLast();')}
+
+${C('// Time:  O(n)')}
+${C('// Space: O(k) for the deque + O(n) output')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>
