@@ -1,0 +1,2908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Algorithm Patterns Cheatsheet — Merge Intervals · Sliding Window · BST</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-elev: #161922;
+    --bg-card: #1b1f2a;
+    --border: #2a2f3d;
+    --text: #e6e8ef;
+    --text-dim: #a4abbd;
+    --accent: #7aa2ff;
+    --accent-2: #8bd5a8;
+    --accent-3: #f5b971;
+    --accent-4: #d28cf5;
+    --code-bg: #0b0d12;
+    --code-border: #232838;
+    --pill: #232838;
+    --shadow: 0 6px 24px rgba(0,0,0,0.35);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(1200px 600px at 10% -10%, #1c2236 0%, transparent 60%),
+                radial-gradient(900px 500px at 110% 10%, #20182f 0%, transparent 55%),
+                var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .layout {
+    display: block;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 28px 32px;
+  }
+
+  /* Hamburger button (top-left, fixed) */
+  .hamburger {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 60;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .hamburger:hover { background: #1f2433; }
+  .hamburger:active { transform: scale(0.96); }
+  .hamburger .bars {
+    position: relative;
+    width: 18px;
+    height: 14px;
+  }
+  .hamburger .bars span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform 0.2s ease, opacity 0.2s ease, top 0.2s ease;
+  }
+  .hamburger .bars span:nth-child(1) { top: 0; }
+  .hamburger .bars span:nth-child(2) { top: 6px; }
+  .hamburger .bars span:nth-child(3) { top: 12px; }
+  body.menu-open .hamburger .bars span:nth-child(1) { top: 6px; transform: rotate(45deg); }
+  body.menu-open .hamburger .bars span:nth-child(2) { opacity: 0; }
+  body.menu-open .hamburger .bars span:nth-child(3) { top: 6px; transform: rotate(-45deg); }
+
+  /* Backdrop */
+  .toc-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 10, 16, 0.55);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 40;
+  }
+  body.menu-open .toc-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Sidebar — slide-out drawer */
+  aside.toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 290px;
+    max-width: 88vw;
+    height: 100vh;
+    background: var(--bg-elev);
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    padding: 76px 16px 22px;
+    box-shadow: 12px 0 32px rgba(0,0,0,0.45);
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    z-index: 50;
+  }
+  body.menu-open aside.toc {
+    transform: translateX(0);
+  }
+  .toc h2 {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 4px 0 12px;
+  }
+  .toc ul { list-style: none; padding: 0; margin: 0; }
+  .toc > ul > li { margin-bottom: 14px; }
+  .toc .section-link {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--text);
+    font-weight: 600;
+    border-left: 3px solid transparent;
+  }
+  .toc .section-link:hover {
+    background: #1f2433;
+    text-decoration: none;
+  }
+  .toc .sub { padding-left: 8px; margin-top: 4px; }
+  .toc .sub a {
+    display: block;
+    padding: 4px 10px;
+    color: var(--text-dim);
+    font-size: 13px;
+    border-radius: 6px;
+  }
+  .toc .sub a:hover { color: var(--text); background: #1a1e2a; text-decoration: none; }
+
+  /* Main */
+  main { min-width: 0; padding-left: 60px; }
+
+  header.hero {
+    margin-bottom: 28px;
+    padding: 26px 28px;
+    background: linear-gradient(135deg, #1d2333 0%, #1a1d28 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  header.hero h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+  }
+  header.hero p {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .hero-tags { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: var(--pill);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-dim);
+  }
+
+  /* Sections */
+  section.pattern {
+    display: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 26px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+    scroll-margin-top: 24px;
+    animation: fade-in 0.18s ease;
+  }
+  section.pattern.active { display: block; }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 0;
+    margin-bottom: 18px;
+    background: linear-gradient(180deg, rgba(15,17,21,0.92) 0%, rgba(15,17,21,0.75) 100%);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-arrow {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--bg-elev);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s ease;
+  }
+  .tab-arrow:hover { background: #1f2433; }
+  .tab-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+  .tab-list {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 2px;
+    min-width: 0;
+  }
+  .tab {
+    flex: 0 1 auto;
+    padding: 8px 14px;
+    background: var(--bg-elev);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab:hover { color: var(--text); border-color: #3a4159; }
+  .tab.active {
+    background: linear-gradient(135deg, var(--accent) 0%, #6a8fe8 100%);
+    color: #0f1115;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(122,162,255,0.3);
+  }
+  .tab .num-pill {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.12);
+    color: inherit;
+  }
+  .tab.active .num-pill {
+    background: rgba(15,17,21,0.18);
+  }
+  .tab-hint {
+    flex: 0 0 auto;
+    color: var(--text-dim);
+    font-size: 11px;
+    padding-left: 6px;
+    white-space: nowrap;
+  }
+  .tab-hint kbd {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    font-family: inherit;
+    color: var(--text);
+  }
+  @media (max-width: 720px) {
+    .tab-hint { display: none; }
+  }
+  section.pattern > h2 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #0f1115;
+    background: var(--accent);
+  }
+  .badge.green { background: var(--accent-2); }
+  .badge.orange { background: var(--accent-3); }
+  .badge.purple { background: var(--accent-4); }
+
+  section.pattern > p.lead {
+    margin: 0 0 18px;
+    color: var(--text-dim);
+  }
+
+  h3.sub-h {
+    margin: 22px 0 10px;
+    font-size: 16px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    scroll-margin-top: 24px;
+  }
+  h4 {
+    margin: 16px 0 6px;
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Cards grid for problem types */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin: 8px 0 4px;
+  }
+  .card {
+    background: #181c27;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .card .num {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(122,162,255,0.12);
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-right: 6px;
+  }
+  .card .title { font-weight: 600; }
+  .card .desc { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+  .card .classic { color: var(--accent-3); font-size: 12px; margin-top: 4px; font-style: italic; }
+
+  ul.tight { margin: 6px 0 6px 20px; padding: 0; }
+  ul.tight li { margin: 3px 0; }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 8px 0 14px;
+    padding: 0;
+  }
+  pre code.hljs {
+    background: transparent !important;
+    padding: 14px 16px;
+    display: block;
+  }
+  code {
+    font-family: "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    color: #d8dee9;
+  }
+  p code, li code, td code {
+    background: #1a1e2a;
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: #f0c987;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 14px;
+    font-size: 13.5px;
+  }
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  thead th {
+    background: #1a1e2a;
+    color: var(--text-dim);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Callouts */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: #161b27;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    color: var(--text-dim);
+    font-size: 13.5px;
+  }
+  .callout.tip { border-left-color: var(--accent-2); }
+  .callout.note { border-left-color: var(--accent-3); }
+  .callout strong { color: var(--text); }
+
+  /* Hinglish block */
+  details.hinglish {
+    margin-top: 16px;
+    background: #181c27;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 14px;
+  }
+  details.hinglish summary {
+    cursor: pointer;
+    padding: 8px 0;
+    font-weight: 600;
+    color: var(--accent-4);
+    list-style: none;
+  }
+  details.hinglish summary::-webkit-details-marker { display: none; }
+  details.hinglish summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.15s ease;
+  }
+  details.hinglish[open] summary::before { transform: rotate(90deg); }
+  details.hinglish .body { padding: 6px 0 14px; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 24px 0 8px;
+  }
+
+  @media (max-width: 900px) {
+    main { padding: 0; }
+  }
+</style>
+</head>
+<body>
+<button class="hamburger" id="menuToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+  <span class="bars"><span></span><span></span><span></span></span>
+</button>
+<div class="toc-backdrop" id="tocBackdrop"></div>
+<div class="layout">
+  <aside class="toc">
+    <h2>On this page</h2>
+    <ul>
+      <li>
+        <a class="section-link" href="#merge-intervals" style="border-left-color: var(--accent);">Merge Intervals</a>
+        <div class="sub">
+          <a href="#mi-types">Problem types</a>
+          <a href="#mi-template">Standard template</a>
+          <a href="#mi-flexible">Flexible template</a>
+          <a href="#mi-adapt">How to adapt</a>
+          <a href="#mi-complexity">Complexity</a>
+          <a href="#mi-hinglish">Hinglish guide</a>
+        </div>
+      </li>
+      <li>
+        <a class="section-link" href="#sliding-window" style="border-left-color: var(--accent-2);">Sliding Window</a>
+        <div class="sub">
+          <a href="#sw-types">Problem types</a>
+          <a href="#sw-variable">Variable size</a>
+          <a href="#sw-fixed">Fixed size</a>
+          <a href="#sw-freq">Frequency map</a>
+          <a href="#sw-adapt">How to adapt</a>
+          <a href="#sw-hinglish">Hinglish guide</a>
+        </div>
+      </li>
+      <li>
+        <a class="section-link" href="#bst" style="border-left-color: var(--accent-4);">BST</a>
+        <div class="sub">
+          <a href="#bst-types">Problem types</a>
+          <a href="#bst-template">Core template</a>
+          <a href="#bst-short">Short template</a>
+          <a href="#bst-adapt">How to adapt</a>
+          <a href="#bst-hinglish">Hinglish guide</a>
+        </div>
+      </li>
+      <li>
+        <a class="section-link" href="#monotonic" style="border-left-color: var(--accent-3);">Monotonic Deque / Stack</a>
+        <div class="sub">
+          <a href="#mono-types">Problem types</a>
+          <a href="#mono-stack">Stack template</a>
+          <a href="#mono-deque">Deque template</a>
+          <a href="#mono-adapt">How to adapt</a>
+          <a href="#mono-hinglish">Hinglish guide</a>
+        </div>
+      </li>
+      <li>
+        <a class="section-link" href="#heap" style="border-left-color: var(--accent);">Heap / Priority Queue</a>
+        <div class="sub">
+          <a href="#heap-types">Problem types</a>
+          <a href="#heap-template">Core template</a>
+          <a href="#heap-topk">Top K template</a>
+          <a href="#heap-twoheap">Two-heap template</a>
+          <a href="#heap-adapt">How to adapt</a>
+          <a href="#heap-hinglish">Hinglish guide</a>
+        </div>
+      </li>
+      <li>
+        <a class="section-link" href="#dp" style="border-left-color: var(--accent-2);">Dynamic Programming</a>
+        <div class="sub">
+          <a href="#dp-types">Problem types</a>
+          <a href="#dp-framework">Framework</a>
+          <a href="#dp-1d">1D DP template</a>
+          <a href="#dp-2d">2D DP template</a>
+          <a href="#dp-knapsack">Knapsack</a>
+          <a href="#dp-lcs">LCS / Edit Distance</a>
+          <a href="#dp-interval">Interval DP</a>
+          <a href="#dp-bitmask">Bitmask DP</a>
+          <a href="#dp-tree">Tree DP</a>
+          <a href="#dp-adapt">How to adapt</a>
+          <a href="#dp-hinglish">Hinglish guide</a>
+        </div>
+      </li>
+      <li>
+        <a class="section-link" href="#tree" style="border-left-color: var(--accent-4);">Tree (General)</a>
+        <div class="sub">
+          <a href="#tree-types">Problem types</a>
+          <a href="#tree-traversals">Traversals</a>
+          <a href="#tree-bfs">BFS / Level order</a>
+          <a href="#tree-recursion">Recursion patterns</a>
+          <a href="#tree-lca">LCA (general)</a>
+          <a href="#tree-construct">Construction</a>
+          <a href="#tree-serialize">Serialize / Deserialize</a>
+          <a href="#tree-views">Views</a>
+          <a href="#tree-adapt">How to adapt</a>
+          <a href="#tree-hinglish">Hinglish guide</a>
+        </div>
+      </li>
+    </ul>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <h1>Algorithm Patterns Cheatsheet</h1>
+      <p>Reusable Java templates and adaptation guides for three core LeetCode patterns.</p>
+      <div class="hero-tags">
+        <span class="tag">Merge Intervals</span>
+        <span class="tag">Sliding Window</span>
+        <span class="tag">BST</span>
+        <span class="tag">Monotonic Deque/Stack</span>
+        <span class="tag">Heap / PQ</span>
+        <span class="tag">Dynamic Programming</span>
+        <span class="tag">Tree</span>
+        <span class="tag">Java</span>
+        <span class="tag">Hinglish notes</span>
+      </div>
+    </header>
+
+    <!-- Tab navigation -->
+    <nav class="tab-bar" id="tabBar" aria-label="Pattern sections">
+      <button class="tab-arrow" id="tabPrev" aria-label="Previous section">‹</button>
+      <div class="tab-list" id="tabList" role="tablist">
+        <button class="tab active" role="tab" data-target="merge-intervals" aria-selected="true"><span class="num-pill">01</span>Merge Intervals</button>
+        <button class="tab" role="tab" data-target="sliding-window" aria-selected="false"><span class="num-pill">02</span>Sliding Window</button>
+        <button class="tab" role="tab" data-target="bst" aria-selected="false"><span class="num-pill">03</span>BST</button>
+        <button class="tab" role="tab" data-target="monotonic" aria-selected="false"><span class="num-pill">04</span>Monotonic Deque/Stack</button>
+        <button class="tab" role="tab" data-target="heap" aria-selected="false"><span class="num-pill">05</span>Heap / Priority Queue</button>
+        <button class="tab" role="tab" data-target="dp" aria-selected="false"><span class="num-pill">06</span>Dynamic Programming</button>
+        <button class="tab" role="tab" data-target="tree" aria-selected="false"><span class="num-pill">07</span>Tree</button>
+      </div>
+      <button class="tab-arrow" id="tabNext" aria-label="Next section">›</button>
+      <span class="tab-hint">Use <kbd>←</kbd> <kbd>→</kbd></span>
+    </nav>
+
+    <!-- ============================== MERGE INTERVALS ============================== -->
+    <section class="pattern active" id="merge-intervals">
+      <h2><span class="badge">01</span> Merge Intervals</h2>
+      <p class="lead">Sort by start time, then linear scan to merge or compare consecutive intervals. The backbone of nearly every interval problem.</p>
+
+      <h3 class="sub-h" id="mi-types">Core problem types</h3>
+      <div class="grid">
+        <div class="card">
+          <div><span class="num">1</span><span class="title">Merging Overlapping Intervals</span></div>
+          <div class="desc">Merge all overlapping/touching intervals into a minimal non-overlapping set.</div>
+          <div class="classic">Classic: Merge Intervals</div>
+        </div>
+        <div class="card">
+          <div><span class="num">2</span><span class="title">Inserting an Interval</span></div>
+          <div class="desc">Insert a new interval into a sorted list of non-overlapping intervals and merge.</div>
+          <div class="classic">Classic: Insert Interval</div>
+        </div>
+        <div class="card">
+          <div><span class="num">3</span><span class="title">Removing Minimum Intervals</span></div>
+          <div class="desc">Remove the minimum number of intervals to make the rest non-overlapping.</div>
+          <div class="classic">Classic: Non-overlapping Intervals</div>
+        </div>
+        <div class="card">
+          <div><span class="num">4</span><span class="title">Finding Overlaps / Intersections</span></div>
+          <div class="desc">Find intersection between two lists of intervals.</div>
+          <div class="classic">Classic: Interval List Intersections</div>
+        </div>
+        <div class="card">
+          <div><span class="num">5</span><span class="title">Scheduling / Resource Allocation</span></div>
+          <div class="desc">Can attend all meetings? Min meeting rooms?</div>
+          <div class="classic">Meeting Rooms, Meeting Rooms II</div>
+        </div>
+        <div class="card">
+          <div><span class="num">6</span><span class="title">Interval Coverage / Bursting</span></div>
+          <div class="desc">Minimum points/arrows to cover or burst all intervals.</div>
+          <div class="classic">Min Number of Arrows to Burst Balloons</div>
+        </div>
+        <div class="card">
+          <div><span class="num">7</span><span class="title">Finding Gaps / Free Time</span></div>
+          <div class="desc">Find gaps between merged intervals (employee free time, etc.).</div>
+        </div>
+      </div>
+
+      <h4>Other variants</h4>
+      <ul class="tight">
+        <li>Maximum Overlap Count (sweep line)</li>
+        <li>Merging with conditions (start/end logic variations)</li>
+        <li>Interval graph problems (greedy + sorting)</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>Key insight:</strong> Almost always sort by start time + linear scan. Mastering Merge, Insert, Non-overlapping, and Meeting Rooms II covers most variations.
+      </div>
+
+      <h3 class="sub-h" id="mi-template">Standard template (Java)</h3>
+      <pre><code class="language-java">import java.util.*;
+
+public class MergeIntervalsTemplate {
+
+    /**
+     * Standard template to merge overlapping intervals
+     *
+     * Time:  O(n log n) — due to sorting
+     * Space: O(n)       — for the result list (worst case)
+     */
+    public int[][] merge(int[][] intervals) {
+        if (intervals == null || intervals.length &lt;= 1) {
+            return intervals;
+        }
+
+        // Step 1: Sort intervals by start time — O(n log n)
+        Arrays.sort(intervals, (a, b) -&gt; Integer.compare(a[0], b[0]));
+
+        List&lt;int[]&gt; merged = new ArrayList&lt;&gt;();
+
+        // Step 2: Initialize with first interval
+        int[] current = intervals[0];
+        merged.add(current);
+
+        // Step 3: Linear scan and merge — O(n)
+        for (int i = 1; i &lt; intervals.length; i++) {
+            int[] next = intervals[i];
+
+            if (current[1] &gt;= next[0]) {
+                // Overlap or touch — extend the end
+                current[1] = Math.max(current[1], next[1]);
+            } else {
+                // No overlap — start a new interval
+                current = next;
+                merged.add(current);
+            }
+        }
+
+        return merged.toArray(new int[merged.size()][]);
+    }
+}</code></pre>
+
+      <h3 class="sub-h" id="mi-flexible">More flexible / reusable template</h3>
+      <pre><code class="language-java">public class IntervalUtils {
+
+    /**
+     * Reusable function to merge overlapping intervals.
+     * Time: O(n log n)   Space: O(n)
+     */
+    public static List&lt;int[]&gt; mergeIntervals(int[][] intervals) {
+        if (intervals == null || intervals.length == 0) {
+            return new ArrayList&lt;&gt;();
+        }
+
+        Arrays.sort(intervals, (a, b) -&gt; a[0] - b[0]);
+
+        List&lt;int[]&gt; result = new ArrayList&lt;&gt;();
+        int[] curr = intervals[0].clone();   // clone to avoid mutating input
+
+        for (int i = 1; i &lt; intervals.length; i++) {
+            int[] next = intervals[i];
+
+            if (curr[1] &gt;= next[0]) {            // overlapping / touching
+                curr[1] = Math.max(curr[1], next[1]);
+            } else {
+                result.add(curr);
+                curr = next.clone();
+            }
+        }
+        result.add(curr);
+        return result;
+    }
+}</code></pre>
+
+      <h3 class="sub-h" id="mi-adapt">How to adapt the template</h3>
+
+      <h4>1. Insert Interval</h4>
+      <pre><code class="language-java">public int[][] insert(int[][] intervals, int[] newInterval) {
+    List&lt;int[]&gt; list = new ArrayList&lt;&gt;(Arrays.asList(intervals));
+    list.add(newInterval);
+    return merge(list.toArray(new int[0][]));   // reuse merge
+}</code></pre>
+
+      <h4>2. Non-overlapping Intervals (remove minimum)</h4>
+      <pre><code class="language-java">int[][] merged = merge(intervals);
+return intervals.length - merged.length;   // minimum removals</code></pre>
+
+      <h4>3. Interval List Intersections</h4>
+      <pre><code class="language-java">if (curr[1] &gt;= next[0]) {
+    int start = Math.max(curr[0], next[0]);
+    int end   = Math.min(curr[1], next[1]);
+    result.add(new int[]{start, end});
+}</code></pre>
+
+      <h4>4. Meeting Rooms II (minimum rooms)</h4>
+      <pre><code class="language-java">Arrays.sort(intervals, (a, b) -&gt; a[0] - b[0]);
+PriorityQueue&lt;Integer&gt; pq = new PriorityQueue&lt;&gt;();   // end times
+
+for (int[] interval : intervals) {
+    if (!pq.isEmpty() &amp;&amp; pq.peek() &lt;= interval[0]) {
+        pq.poll();   // a room got freed
+    }
+    pq.add(interval[1]);
+}
+return pq.size();   // minimum rooms needed</code></pre>
+
+      <h4>5. Minimum Arrows to Burst Balloons</h4>
+      <pre><code class="language-java">Arrays.sort(intervals, (a, b) -&gt; Integer.compare(a[1], b[1]));   // sort by END
+
+int arrows = 1;
+int end = intervals[0][1];
+for (int i = 1; i &lt; intervals.length; i++) {
+    if (intervals[i][0] &gt; end) {   // no overlap
+        arrows++;
+        end = intervals[i][1];
+    }
+}</code></pre>
+
+      <h4>6. Finding Gaps / Free Time</h4>
+      <pre><code class="language-java">List&lt;int[]&gt; merged = mergeIntervals(intervals);
+for (int i = 1; i &lt; merged.size(); i++) {
+    int gapStart = merged.get(i - 1)[1];
+    int gapEnd   = merged.get(i)[0];
+    // gap = [gapStart, gapEnd]
+}</code></pre>
+
+      <h3 class="sub-h" id="mi-complexity">Complexity summary</h3>
+      <table>
+        <thead>
+          <tr><th>Operation</th><th>Time</th><th>Space</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sorting</td><td>O(n log n)</td><td>O(1) or O(n)</td></tr>
+          <tr><td>Merging logic</td><td>O(n)</td><td>O(n)</td></tr>
+          <tr><td><strong>Overall</strong></td><td><strong>O(n log n)</strong></td><td><strong>O(n)</strong></td></tr>
+        </tbody>
+      </table>
+
+      <details class="hinglish" id="mi-hinglish">
+        <summary>Hinglish quick guide — kaise use kare</summary>
+        <div class="body">
+          <ul class="tight">
+            <li><strong>Merge Intervals</strong> — direct <code>merge()</code> call. Sort + linear scan. <em>O(n log n)</em>.</li>
+            <li><strong>Insert Interval</strong> — list mein add karke same <code>merge()</code> chala do.</li>
+            <li><strong>Non-overlapping (remove min)</strong> — <code>n - merged.length</code> = minimum removals.</li>
+            <li><strong>Intersections</strong> — overlap par union ki jagah <code>max(start)</code> &amp; <code>min(end)</code> add karo.</li>
+            <li><strong>Meeting Rooms I</strong> — merge karo, koi overlap mile to false.</li>
+            <li><strong>Meeting Rooms II</strong> — heap of end times. Room free hua to poll, fir add. <code>pq.size()</code> = answer.</li>
+            <li><strong>Burst Balloons</strong> — <em>end time</em> par sort karo, greedy se arrows count karo.</li>
+            <li><strong>Free Time / Gaps</strong> — merge ke baad consecutive intervals ke beech ka gap nikaalo.</li>
+            <li><strong>Max Overlap Count</strong> — sweep line (events + sorting).</li>
+          </ul>
+          <p style="color: var(--text-dim); margin-top: 8px;">
+            Core idea: <strong>sort + linear scan</strong>. 70–80% problems direct cover ho jaate hain, baaki cases mein condition / comparator badlo.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================== SLIDING WINDOW ============================== -->
+    <section class="pattern" id="sliding-window">
+      <h2><span class="badge green">02</span> Sliding Window</h2>
+      <p class="lead">Two pointers (left &amp; right) with expand / shrink logic. The <code>right</code> pointer always advances; <code>left</code> only shrinks when the condition breaks. Most variants run in O(N).</p>
+
+      <h3 class="sub-h" id="sw-types">Core problem types</h3>
+      <div class="grid">
+        <div class="card">
+          <div><span class="num">1</span><span class="title">Fixed Size Window</span></div>
+          <div class="desc">Window size is fixed (given <code>k</code>). Find max/min sum, average, distinct count.</div>
+          <div class="classic">Maximum Average Subarray I, Sliding Window Maximum</div>
+        </div>
+        <div class="card">
+          <div><span class="num">2</span><span class="title">Variable Size Window</span></div>
+          <div class="desc">Window expands and shrinks based on a condition. Smallest/largest subarray satisfying constraint.</div>
+          <div class="classic">Minimum Size Subarray Sum, Longest Substring Without Repeating</div>
+        </div>
+        <div class="card">
+          <div><span class="num">3</span><span class="title">Frequency Map / Counter</span></div>
+          <div class="desc">HashMap or array tracking character / element frequency.</div>
+          <div class="classic">Find All Anagrams, Minimum Window Substring</div>
+        </div>
+        <div class="card">
+          <div><span class="num">4</span><span class="title">Longest / Shortest with Constraint</span></div>
+          <div class="desc">At most K distinct chars, no repeating, with replacement, etc.</div>
+          <div class="classic">Longest Repeating Character Replacement</div>
+        </div>
+        <div class="card">
+          <div><span class="num">5</span><span class="title">Sum-Conditioned Subarrays</span></div>
+          <div class="desc">Sum equals K, at most K. Sliding window works for positive numbers.</div>
+        </div>
+        <div class="card">
+          <div><span class="num">6</span><span class="title">Max / Min in Sliding Window</span></div>
+          <div class="desc">Find max/min in every window of size <code>k</code> using a monotonic deque.</div>
+          <div class="classic">Sliding Window Maximum</div>
+        </div>
+      </div>
+
+      <h4>Other variants</h4>
+      <ul class="tight">
+        <li>Counting valid windows (number of nice subarrays)</li>
+        <li>Two pointers + sliding window combos</li>
+        <li>Dynamic window with auxiliary DS (Deque, Set, TreeMap)</li>
+        <li>String permutation / anagram problems</li>
+        <li>Coverage / jump game variants</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>Heart of sliding window:</strong> <code>right</code> always expands, <code>left</code> only shrinks when condition violates, update answer when window is valid → O(N) guarantee.
+      </div>
+
+      <h3 class="sub-h" id="sw-variable">Variable size template (recommended)</h3>
+      <pre><code class="language-java">import java.util.*;
+
+public class SlidingWindowTemplate {
+
+    /**
+     * Standard variable-size sliding window.
+     * Time:  O(N) — each element visited at most twice
+     * Space: O(1) or O(K) depending on aux storage
+     */
+    public int slidingWindowTemplate(int[] nums, int target) {
+        int n = nums.length;
+        int left = 0;
+        int currentSum = 0;
+        int result = Integer.MAX_VALUE;
+
+        for (int right = 0; right &lt; n; right++) {
+
+            // 1. Expand: add current element
+            currentSum += nums[right];
+
+            // 2. Shrink while condition is violated
+            while (currentSum &gt; target &amp;&amp; left &lt;= right) {
+                currentSum -= nums[left];
+                left++;
+            }
+
+            // 3. Update result when window is valid
+            if (currentSum == target) {
+                result = Math.min(result, right - left + 1);
+            }
+        }
+
+        return result == Integer.MAX_VALUE ? -1 : result;
+    }
+}</code></pre>
+
+      <h3 class="sub-h" id="sw-fixed">Fixed size template</h3>
+      <pre><code class="language-java">/**
+ * Fixed size sliding window (window size = k).
+ * Time: O(N)   Space: O(1) or O(K)
+ */
+public int fixedSlidingWindow(int[] nums, int k) {
+    int n = nums.length;
+    if (n &lt; k) return 0;
+
+    int left = 0;
+    int currentSum = 0;
+
+    // Build first window
+    for (int i = 0; i &lt; k; i++) currentSum += nums[i];
+    int maxSum = currentSum;
+
+    // Slide
+    for (int right = k; right &lt; n; right++) {
+        currentSum += nums[right];   // add new
+        currentSum -= nums[left];    // drop old
+        left++;
+        maxSum = Math.max(maxSum, currentSum);
+    }
+    return maxSum;
+}</code></pre>
+
+      <h3 class="sub-h" id="sw-freq">Frequency map template (string problems)</h3>
+      <pre><code class="language-java">/**
+ * Sliding window with HashMap counter.
+ * Time: O(N)   Space: O(1) / O(26) / O(K)
+ */
+public int minWindowWithFrequency(String s, String t) {
+    if (s.length() &lt; t.length()) return 0;
+
+    Map&lt;Character, Integer&gt; required = new HashMap&lt;&gt;();
+    for (char c : t.toCharArray()) {
+        required.put(c, required.getOrDefault(c, 0) + 1);
+    }
+
+    int left = 0, formed = 0;
+    int minLen = Integer.MAX_VALUE;
+    Map&lt;Character, Integer&gt; window = new HashMap&lt;&gt;();
+
+    for (int right = 0; right &lt; s.length(); right++) {
+        char c = s.charAt(right);
+        window.put(c, window.getOrDefault(c, 0) + 1);
+
+        if (required.containsKey(c) &amp;&amp; window.get(c).equals(required.get(c))) {
+            formed++;
+        }
+
+        // Shrink from left
+        while (formed == required.size() &amp;&amp; left &lt;= right) {
+            minLen = Math.min(minLen, right - left + 1);
+
+            char leftChar = s.charAt(left);
+            window.put(leftChar, window.get(leftChar) - 1);
+            if (required.containsKey(leftChar) &amp;&amp;
+                window.get(leftChar) &lt; required.get(leftChar)) {
+                formed--;
+            }
+            left++;
+        }
+    }
+    return minLen == Integer.MAX_VALUE ? 0 : minLen;
+}</code></pre>
+
+      <h3 class="sub-h" id="sw-adapt">How to adapt the template</h3>
+      <table>
+        <thead>
+          <tr><th>Problem type</th><th>Use template</th><th>Adaptation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Fixed size window</td><td><code>fixedSlidingWindow()</code></td><td>Build first window, then slide.</td></tr>
+          <tr><td>Min length subarray (sum ≥ target)</td><td>Variable</td><td>Shrink while <code>currentSum &gt;= target</code>.</td></tr>
+          <tr><td>Longest substring without repeating</td><td>Variable + freq map</td><td>Shrink when duplicate found.</td></tr>
+          <tr><td>Minimum window substring</td><td>Frequency map</td><td>Use <code>required.size()</code> as the formed target.</td></tr>
+          <tr><td>Sliding window maximum</td><td>Deque-based</td><td>Monotonic deque storing indices.</td></tr>
+          <tr><td>Anagrams / permutations</td><td>Frequency map</td><td>Count windows where <code>formed == required.size()</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Sliding Window Maximum (deque variant)</h4>
+      <pre><code class="language-java">Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();
+List&lt;Integer&gt; ans = new ArrayList&lt;&gt;();
+
+for (int right = 0; right &lt; n; right++) {
+    // Drop smaller elements from the back
+    while (!deque.isEmpty() &amp;&amp; nums[deque.peekLast()] &lt; nums[right]) {
+        deque.pollLast();
+    }
+    deque.offerLast(right);
+
+    // Drop out-of-window elements
+    if (deque.peekFirst() == right - k) deque.pollFirst();
+
+    // Once first window is filled, record max
+    if (right &gt;= k - 1) ans.add(nums[deque.peekFirst()]);
+}</code></pre>
+
+      <div class="callout note">
+        <strong>Note:</strong> Sliding window assumes positive numbers (or some monotonicity). For negative numbers with sum constraints, prefer <strong>Prefix Sum + HashMap</strong>.
+      </div>
+
+      <details class="hinglish" id="sw-hinglish">
+        <summary>Hinglish quick guide — kaise use kare</summary>
+        <div class="body">
+          <ul class="tight">
+            <li><strong>Fixed size</strong> → <code>fixedSlidingWindow()</code>: pehle <code>k</code> size window banao, fir slide.</li>
+            <li><strong>Variable size</strong> → main template: right expand, left shrink jab condition toote.</li>
+            <li><strong>String / character</strong> → frequency map wala template best.</li>
+            <li><strong>Longest with at most K distinct</strong> → freq map + distinct count, shrink when <code>distinct &gt; K</code>.</li>
+            <li><strong>Longest Repeating Char Replacement</strong> → <code>windowSize - maxFreq &lt;= K</code> tab valid.</li>
+            <li><strong>Sliding Window Max</strong> → Deque (monotonic), indices decreasing order mein.</li>
+            <li><strong>Counting valid windows</strong> → har valid window pe <code>count++</code>.</li>
+            <li><strong>Anagrams</strong> → freq map + <code>formed == required.size()</code> condition.</li>
+          </ul>
+          <p style="color: var(--text-dim); margin-top: 8px;">
+            Pro tip: har problem mein socho — “kya main window shrink kar sakta hoon jab condition violate ho?” Agar haan, sliding window kaam karega.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================== BST ============================== -->
+    <section class="pattern" id="bst">
+      <h2><span class="badge purple">03</span> Binary Search Tree (BST)</h2>
+      <p class="lead">Most BST problems exploit one fact: <strong>inorder traversal yields sorted order</strong>. Recursion, stack-based iteration, or Morris traversal are the usual tools.</p>
+
+      <h3 class="sub-h" id="bst-types">Core problem types</h3>
+      <div class="grid">
+        <div class="card">
+          <div><span class="num">1</span><span class="title">BST Basic Operations</span></div>
+          <div class="desc">Search, Insert, Delete in BST.</div>
+          <div class="classic">Search in a BST, Insert into a BST</div>
+        </div>
+        <div class="card">
+          <div><span class="num">2</span><span class="title">Validate BST</span></div>
+          <div class="desc">Check if a binary tree is a valid BST.</div>
+          <div class="classic">Validate Binary Search Tree</div>
+        </div>
+        <div class="card">
+          <div><span class="num">3</span><span class="title">Kth Smallest / Largest</span></div>
+          <div class="desc">Find Kth smallest or largest element using inorder.</div>
+          <div class="classic">Kth Smallest Element in a BST</div>
+        </div>
+        <div class="card">
+          <div><span class="num">4</span><span class="title">Lowest Common Ancestor</span></div>
+          <div class="desc">Find LCA of two nodes by exploiting BST ordering.</div>
+          <div class="classic">LCA of a BST</div>
+        </div>
+        <div class="card">
+          <div><span class="num">5</span><span class="title">Inorder + Successor / Predecessor</span></div>
+          <div class="desc">Inorder gives sorted order, next greater / previous smaller.</div>
+          <div class="classic">Inorder Traversal, Inorder Successor</div>
+        </div>
+        <div class="card">
+          <div><span class="num">6</span><span class="title">Convert / Recover BST</span></div>
+          <div class="desc">BST → sorted array / DLL. Recover swapped nodes.</div>
+          <div class="classic">Convert BST to Greater Tree, Recover BST</div>
+        </div>
+        <div class="card">
+          <div><span class="num">7</span><span class="title">Range Queries / Sum in Range</span></div>
+          <div class="desc">Sum or count nodes in <code>[low, high]</code>.</div>
+          <div class="classic">Range Sum of BST</div>
+        </div>
+      </div>
+
+      <h4>Other variants</h4>
+      <ul class="tight">
+        <li>Trim BST (remove out-of-range nodes)</li>
+        <li>Unique BSTs (Catalan number)</li>
+        <li>Balanced BST / Balance a BST</li>
+        <li>BST Iterator (next() / hasNext() in O(1) amortized)</li>
+        <li>Merge Two BSTs, Find Mode, Floor / Ceil, Two Sum in BST</li>
+        <li>Serialization / Deserialization of BST</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>Mastering this set covers most BST problems:</strong> Validate BST, Kth Smallest, LCA in BST, BST Iterator.
+      </div>
+
+      <h3 class="sub-h" id="bst-template">Core BST template (Java)</h3>
+      <pre><code class="language-java">class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
+
+public class BSTTemplates {
+
+    // 1. SEARCH IN BST
+    public TreeNode searchBST(TreeNode root, int val) {
+        if (root == null || root.val == val) return root;
+        return val &lt; root.val
+            ? searchBST(root.left, val)
+            : searchBST(root.right, val);
+    }
+
+    // 2. VALIDATE BST — Time: O(n), Space: O(h)
+    public boolean isValidBST(TreeNode root) {
+        return validate(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+    private boolean validate(TreeNode node, long min, long max) {
+        if (node == null) return true;
+        if (node.val &lt;= min || node.val &gt;= max) return false;
+        return validate(node.left,  min, node.val) &amp;&amp;
+               validate(node.right, node.val, max);
+    }
+
+    // 3. Kth SMALLEST — Time: O(n), Space: O(h)
+    private int count = 0;
+    private int result = -1;
+    public int kthSmallest(TreeNode root, int k) {
+        count = 0;
+        inorderKth(root, k);
+        return result;
+    }
+    private void inorderKth(TreeNode node, int k) {
+        if (node == null) return;
+        inorderKth(node.left, k);
+        if (++count == k) { result = node.val; return; }
+        inorderKth(node.right, k);
+    }
+
+    // 4. INORDER TRAVERSAL — the king of BST patterns
+    public List&lt;Integer&gt; inorderTraversal(TreeNode root) {
+        List&lt;Integer&gt; result = new ArrayList&lt;&gt;();
+        inorderHelper(root, result);
+        return result;
+    }
+    private void inorderHelper(TreeNode node, List&lt;Integer&gt; list) {
+        if (node == null) return;
+        inorderHelper(node.left, list);
+        list.add(node.val);
+        inorderHelper(node.right, list);
+    }
+
+    // 5. LOWEST COMMON ANCESTOR
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null) return null;
+        if (p.val &lt; root.val &amp;&amp; q.val &lt; root.val)
+            return lowestCommonAncestor(root.left, p, q);
+        if (p.val &gt; root.val &amp;&amp; q.val &gt; root.val)
+            return lowestCommonAncestor(root.right, p, q);
+        return root;
+    }
+}</code></pre>
+
+      <h3 class="sub-h" id="bst-short">Short reference template</h3>
+      <pre><code class="language-java">public class BSTTemplate {
+
+    // 1. Search in BST (iterative)
+    public TreeNode search(TreeNode root, int val) {
+        while (root != null &amp;&amp; root.val != val) {
+            root = val &lt; root.val ? root.left : root.right;
+        }
+        return root;
+    }
+
+    // 2. Validate BST
+    public boolean isValidBST(TreeNode root) {
+        return validate(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+    private boolean validate(TreeNode n, long min, long max) {
+        if (n == null) return true;
+        if (n.val &lt;= min || n.val &gt;= max) return false;
+        return validate(n.left, min, n.val) &amp;&amp; validate(n.right, n.val, max);
+    }
+
+    // 3. Kth Smallest
+    int count = 0, ans = -1;
+    public int kthSmallest(TreeNode root, int k) {
+        count = 0; inorder(root, k); return ans;
+    }
+    private void inorder(TreeNode n, int k) {
+        if (n == null) return;
+        inorder(n.left, k);
+        if (++count == k) ans = n.val;
+        inorder(n.right, k);
+    }
+
+    // 4. LCA in BST
+    public TreeNode lca(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null) return null;
+        if (p.val &lt; root.val &amp;&amp; q.val &lt; root.val) return lca(root.left, p, q);
+        if (p.val &gt; root.val &amp;&amp; q.val &gt; root.val) return lca(root.right, p, q);
+        return root;
+    }
+
+    // 5. Inorder Traversal
+    public List&lt;Integer&gt; inorderList(TreeNode root) {
+        List&lt;Integer&gt; list = new ArrayList&lt;&gt;();
+        helper(root, list);
+        return list;
+    }
+    private void helper(TreeNode n, List&lt;Integer&gt; list) {
+        if (n == null) return;
+        helper(n.left, list);
+        list.add(n.val);
+        helper(n.right, list);
+    }
+}</code></pre>
+
+      <h3 class="sub-h" id="bst-adapt">How to adapt the template</h3>
+      <table>
+        <thead>
+          <tr><th>Problem type</th><th>Approach</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Search / Insert / Delete</td><td>Reuse <code>search()</code> traversal pattern; modify for insert/delete.</td></tr>
+          <tr><td>Validate BST</td><td>Direct <code>isValidBST()</code> with min/max bounds.</td></tr>
+          <tr><td>Kth Smallest</td><td>Direct <code>kthSmallest()</code>. For Kth Largest, reverse the inorder (right → root → left).</td></tr>
+          <tr><td>LCA in BST</td><td>Direct <code>lca()</code>. Compare both <code>p</code> and <code>q</code> with current node.</td></tr>
+          <tr><td>Inorder Successor / Predecessor</td><td>Use inorder list, then pick the next/previous node.</td></tr>
+          <tr><td>Range Sum / Count</td><td>Inorder + check <code>val &gt;= low &amp;&amp; val &lt;= high</code>.</td></tr>
+          <tr><td>Convert BST → sorted array / DLL</td><td>Inorder traversal collects values in sorted order.</td></tr>
+          <tr><td>Recover BST</td><td>Inorder traversal, find two violations, swap them.</td></tr>
+          <tr><td>Trim BST</td><td>Recurse + return null when out of range, else attach trimmed children.</td></tr>
+          <tr><td>BST Iterator</td><td>Stack-based iterative inorder; <code>next()</code> pops, <code>hasNext()</code> checks stack.</td></tr>
+          <tr><td>Find Mode</td><td>Inorder while tracking previous value and run-length count.</td></tr>
+          <tr><td>Two Sum in BST</td><td>Inorder to sorted list, then two-pointer.</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Range Sum example</h4>
+      <pre><code class="language-java">List&lt;Integer&gt; list = bst.inorderList(root);
+int sum = 0;
+for (int val : list) {
+    if (val &gt;= low &amp;&amp; val &lt;= high) sum += val;
+}</code></pre>
+
+      <div class="callout note">
+        <strong>Complexity:</strong> Most operations are <code>O(h)</code> on average — <code>O(log n)</code> for balanced, <code>O(n)</code> worst case (skewed). Space is <code>O(h)</code> due to the recursion stack. Morris traversal achieves <code>O(1)</code> extra space.
+      </div>
+
+      <details class="hinglish" id="bst-hinglish">
+        <summary>Hinglish quick guide — kaise use kare</summary>
+        <div class="body">
+          <ul class="tight">
+            <li><strong>Search / Insert / Delete</strong> → <code>search()</code> pattern direct, left/right move karke.</li>
+            <li><strong>Validate BST</strong> → direct <code>isValidBST()</code>, min/max bounds maintain karo.</li>
+            <li><strong>Kth Smallest / Largest</strong> → inorder se count++ karke kth nikaalo. Largest ke liye reverse inorder.</li>
+            <li><strong>LCA in BST</strong> → direct <code>lca()</code>. Dono p &amp; q ki value se decide karo kaha jaana hai.</li>
+            <li><strong>Inorder Successor</strong> → inorder list bana ke next element nikaal lo.</li>
+            <li><strong>Range Sum</strong> → inorder + range check karke sum/count.</li>
+            <li><strong>Convert BST to sorted array</strong> → direct inorder traversal.</li>
+            <li><strong>Recover BST</strong> → inorder mein 2 swapped nodes find karo, swap kar do.</li>
+            <li><strong>Trim BST</strong> → recursive call + range ke bahar wale nodes drop.</li>
+            <li><strong>BST Iterator</strong> → stack se iterative inorder.</li>
+            <li><strong>Find Mode</strong> → inorder ke saath previous value compare karte raho.</li>
+            <li><strong>Two Sum in BST</strong> → inorder se sorted list, fir two pointer.</li>
+          </ul>
+          <p style="color: var(--text-dim); margin-top: 8px;">
+            Real king: <strong>Inorder traversal</strong>. 80–85% BST problems is short template se cover ho jaate hain.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================== MONOTONIC DEQUE / STACK ============================== -->
+    <section class="pattern" id="monotonic">
+      <h2><span class="badge orange">04</span> Monotonic Deque / Stack</h2>
+      <p class="lead">A stack or deque whose elements maintain a strict order (increasing or decreasing). Each element is pushed and popped at most once → amortized <strong>O(N)</strong>. The go-to pattern for <em>next greater / smaller element</em> and <em>sliding window max/min</em>.</p>
+
+      <h3 class="sub-h" id="mono-types">Core problem types</h3>
+      <div class="grid">
+        <div class="card">
+          <div><span class="num">1</span><span class="title">Next Greater / Smaller Element</span></div>
+          <div class="desc">For each element find the next (or previous) greater / smaller value.</div>
+          <div class="classic">Next Greater Element I/II, Daily Temperatures</div>
+        </div>
+        <div class="card">
+          <div><span class="num">2</span><span class="title">Largest Rectangle in Histogram</span></div>
+          <div class="desc">Use a monotonic increasing stack to find the largest area rectangle.</div>
+          <div class="classic">Largest Rectangle in Histogram, Maximal Rectangle</div>
+        </div>
+        <div class="card">
+          <div><span class="num">3</span><span class="title">Sliding Window Max / Min</span></div>
+          <div class="desc">Find max/min in every window of size <code>k</code> using a monotonic deque.</div>
+          <div class="classic">Sliding Window Maximum</div>
+        </div>
+        <div class="card">
+          <div><span class="num">4</span><span class="title">Trapping Rain Water</span></div>
+          <div class="desc">Stack-based approach: pop when current bar is taller than stack top.</div>
+          <div class="classic">Trapping Rain Water</div>
+        </div>
+        <div class="card">
+          <div><span class="num">5</span><span class="title">Stock Span / Online Stock Span</span></div>
+          <div class="desc">For each day count consecutive days with price ≤ today.</div>
+          <div class="classic">Online Stock Span</div>
+        </div>
+        <div class="card">
+          <div><span class="num">6</span><span class="title">Sum of Subarray Minimums / Maximums</span></div>
+          <div class="desc">Contribution counting via prev/next smaller boundaries.</div>
+          <div class="classic">Sum of Subarray Minimums</div>
+        </div>
+        <div class="card">
+          <div><span class="num">7</span><span class="title">Remove K Digits / Smallest Lexicographic</span></div>
+          <div class="desc">Greedy stack — pop when current digit/char is smaller than top.</div>
+          <div class="classic">Remove K Digits, Remove Duplicate Letters</div>
+        </div>
+        <div class="card">
+          <div><span class="num">8</span><span class="title">Constrained Subsequence Sum</span></div>
+          <div class="desc">DP + monotonic deque to keep best previous value within range.</div>
+          <div class="classic">Constrained Subsequence Sum, Jump Game VI</div>
+        </div>
+      </div>
+
+      <h4>Other variants</h4>
+      <ul class="tight">
+        <li>132 Pattern detection</li>
+        <li>Shortest Subarray with Sum at Least K (deque + prefix sum)</li>
+        <li>Maximum of Minimum for every window size</li>
+        <li>Asteroid Collision (stack-based simulation)</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>Pattern signal:</strong> if the problem asks for <em>“next/previous greater/smaller”</em>, <em>“max/min in window”</em>, or <em>“how far back/forward until a bigger element”</em>, reach for a monotonic structure first.
+      </div>
+
+      <h3 class="sub-h" id="mono-stack">Monotonic stack template (Java)</h3>
+      <pre><code class="language-java">import java.util.*;
+
+public class MonotonicStackTemplate {
+
+    /**
+     * Next Greater Element to the right.
+     * Returns ans[i] = next greater value, or -1 if none.
+     *
+     * Time:  O(N) — every index pushed and popped at most once
+     * Space: O(N) — stack + result array
+     */
+    public int[] nextGreater(int[] nums) {
+        int n = nums.length;
+        int[] ans = new int[n];
+        Arrays.fill(ans, -1);
+
+        Deque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();   // stores indices; values decreasing
+
+        for (int i = 0; i &lt; n; i++) {
+            // While current is greater than stack top → resolve their answers
+            while (!stack.isEmpty() &amp;&amp; nums[stack.peek()] &lt; nums[i]) {
+                ans[stack.pop()] = nums[i];
+            }
+            stack.push(i);
+        }
+        // Indices left in the stack have no next greater → already -1
+        return ans;
+    }
+}</code></pre>
+
+      <h4>Variants by direction &amp; comparison</h4>
+      <table>
+        <thead>
+          <tr><th>Goal</th><th>Iterate</th><th>Stack invariant</th><th>Pop when</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Next greater (right)</td><td>i = 0 → n-1</td><td>values decreasing</td><td><code>nums[top] &lt; nums[i]</code></td></tr>
+          <tr><td>Previous greater (left)</td><td>i = 0 → n-1, peek before push</td><td>values decreasing</td><td><code>nums[top] &lt;= nums[i]</code></td></tr>
+          <tr><td>Next smaller (right)</td><td>i = 0 → n-1</td><td>values increasing</td><td><code>nums[top] &gt; nums[i]</code></td></tr>
+          <tr><td>Previous smaller (left)</td><td>i = 0 → n-1, peek before push</td><td>values increasing</td><td><code>nums[top] &gt;= nums[i]</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="sub-h" id="mono-deque">Monotonic deque template (Sliding Window Max)</h3>
+      <pre><code class="language-java">/**
+ * Sliding Window Maximum using a monotonic decreasing deque.
+ * Front of deque = index of current window's max.
+ *
+ * Time:  O(N)   Space: O(K)
+ */
+public int[] maxSlidingWindow(int[] nums, int k) {
+    int n = nums.length;
+    int[] ans = new int[n - k + 1];
+    Deque&lt;Integer&gt; dq = new ArrayDeque&lt;&gt;();   // stores indices; values decreasing
+
+    for (int i = 0; i &lt; n; i++) {
+
+        // 1. Drop indices that fell out of the window
+        if (!dq.isEmpty() &amp;&amp; dq.peekFirst() &lt;= i - k) {
+            dq.pollFirst();
+        }
+
+        // 2. Maintain decreasing order from the back
+        while (!dq.isEmpty() &amp;&amp; nums[dq.peekLast()] &lt; nums[i]) {
+            dq.pollLast();
+        }
+
+        dq.offerLast(i);
+
+        // 3. Once first window is filled, record max
+        if (i &gt;= k - 1) {
+            ans[i - k + 1] = nums[dq.peekFirst()];
+        }
+    }
+    return ans;
+}</code></pre>
+
+      <div class="callout note">
+        <strong>Sliding window minimum:</strong> flip the comparison in step 2 to <code>nums[dq.peekLast()] &gt; nums[i]</code>. Everything else stays the same.
+      </div>
+
+      <h3 class="sub-h" id="mono-adapt">How to adapt the template</h3>
+
+      <h4>Daily Temperatures (distance to next warmer day)</h4>
+      <pre><code class="language-java">public int[] dailyTemperatures(int[] temps) {
+    int n = temps.length;
+    int[] ans = new int[n];
+    Deque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+    for (int i = 0; i &lt; n; i++) {
+        while (!stack.isEmpty() &amp;&amp; temps[stack.peek()] &lt; temps[i]) {
+            int j = stack.pop();
+            ans[j] = i - j;        // store distance instead of value
+        }
+        stack.push(i);
+    }
+    return ans;
+}</code></pre>
+
+      <h4>Largest Rectangle in Histogram</h4>
+      <pre><code class="language-java">public int largestRectangleArea(int[] h) {
+    int n = h.length, maxArea = 0;
+    Deque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();   // increasing heights
+
+    for (int i = 0; i &lt;= n; i++) {
+        int cur = (i == n) ? 0 : h[i];           // sentinel flushes stack at end
+        while (!stack.isEmpty() &amp;&amp; h[stack.peek()] &gt; cur) {
+            int height = h[stack.pop()];
+            int width  = stack.isEmpty() ? i : i - stack.peek() - 1;
+            maxArea = Math.max(maxArea, height * width);
+        }
+        stack.push(i);
+    }
+    return maxArea;
+}</code></pre>
+
+      <h4>Sum of Subarray Minimums (contribution counting)</h4>
+      <pre><code class="language-java">// For each element find prev-smaller (PSE) and next-smaller (NSE) bounds.
+// Contribution = arr[i] * (i - PSE) * (NSE - i).
+// Use strict on one side and non-strict on the other to handle duplicates.</code></pre>
+
+      <h4>Remove K Digits (greedy lexicographic)</h4>
+      <pre><code class="language-java">public String removeKdigits(String num, int k) {
+    Deque&lt;Character&gt; stack = new ArrayDeque&lt;&gt;();
+    for (char c : num.toCharArray()) {
+        while (k &gt; 0 &amp;&amp; !stack.isEmpty() &amp;&amp; stack.peek() &gt; c) {
+            stack.pop();
+            k--;
+        }
+        stack.push(c);
+    }
+    while (k-- &gt; 0 &amp;&amp; !stack.isEmpty()) stack.pop();
+
+    StringBuilder sb = new StringBuilder();
+    while (!stack.isEmpty()) sb.append(stack.pollLast());
+    while (sb.length() &gt; 1 &amp;&amp; sb.charAt(0) == '0') sb.deleteCharAt(0);
+    return sb.length() == 0 ? "0" : sb.toString();
+}</code></pre>
+
+      <details class="hinglish" id="mono-hinglish">
+        <summary>Hinglish quick guide — kaise use kare</summary>
+        <div class="body">
+          <ul class="tight">
+            <li><strong>Next Greater / Smaller</strong> → stack mein indices rakho, monotonic order maintain karo. Jab current top ko “resolve” kare to <code>ans[top] = current</code>.</li>
+            <li><strong>Previous Greater / Smaller</strong> → push se pehle peek karo — jo bach gaya stack mein wahi previous greater/smaller hai.</li>
+            <li><strong>Sliding Window Max</strong> → deque mein decreasing order rakho. Front always answer.</li>
+            <li><strong>Largest Rectangle</strong> → increasing stack + sentinel (extra 0 at end) se sab flush karwao.</li>
+            <li><strong>Daily Temperatures</strong> → next-greater wala template, bas <code>ans[j] = i - j</code> store karo distance ke liye.</li>
+            <li><strong>Sum of Subarray Mins</strong> → PSE + NSE nikaal lo har index ka, contribution multiply karo.</li>
+            <li><strong>Remove K Digits / Smallest Lexicographic</strong> → greedy stack: jab top &gt; current ho aur k bacha ho, pop kar do.</li>
+            <li><strong>Constrained Subsequence Sum</strong> → DP + deque, sirf valid range ke best dp values rakho.</li>
+          </ul>
+          <p style="color: var(--text-dim); margin-top: 8px;">
+            Mantra: <strong>“Push only what helps the future. Pop everything that's now useless.”</strong> — har element at most ek baar push aur ek baar pop, isiliye total O(N).
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================== HEAP / PRIORITY QUEUE ============================== -->
+    <section class="pattern" id="heap">
+      <h2><span class="badge">05</span> Heap / Priority Queue</h2>
+      <p class="lead">A heap gives you the smallest (min-heap) or largest (max-heap) element in <code>O(log n)</code> push/pop. The pattern of choice for <em>Top K</em>, <em>K-way merge</em>, <em>scheduling</em>, and <em>streaming median</em>.</p>
+
+      <h3 class="sub-h" id="heap-types">Core problem types</h3>
+      <div class="grid">
+        <div class="card">
+          <div><span class="num">1</span><span class="title">Top K Elements</span></div>
+          <div class="desc">Kth largest/smallest, K most frequent, K closest to origin.</div>
+          <div class="classic">Kth Largest in Array, Top K Frequent, K Closest Points</div>
+        </div>
+        <div class="card">
+          <div><span class="num">2</span><span class="title">K-Way Merge</span></div>
+          <div class="desc">Merge K sorted lists or arrays using a min-heap of heads.</div>
+          <div class="classic">Merge K Sorted Lists, Smallest Range Covering K Lists</div>
+        </div>
+        <div class="card">
+          <div><span class="num">3</span><span class="title">Streaming / Running Median</span></div>
+          <div class="desc">Two heaps (max-heap of lower half, min-heap of upper half).</div>
+          <div class="classic">Find Median from Data Stream, Sliding Window Median</div>
+        </div>
+        <div class="card">
+          <div><span class="num">4</span><span class="title">Scheduling / Resource Allocation</span></div>
+          <div class="desc">Min meeting rooms, task scheduler, CPU scheduling.</div>
+          <div class="classic">Meeting Rooms II, Task Scheduler, Reorganize String</div>
+        </div>
+        <div class="card">
+          <div><span class="num">5</span><span class="title">Greedy with Heap</span></div>
+          <div class="desc">Always extract best/worst option each step.</div>
+          <div class="classic">IPO, Furthest Building You Can Reach</div>
+        </div>
+        <div class="card">
+          <div><span class="num">6</span><span class="title">Dijkstra / Graph Shortest Path</span></div>
+          <div class="desc">Min-heap of (distance, node) — relax edges greedily.</div>
+          <div class="classic">Network Delay Time, Path with Minimum Effort</div>
+        </div>
+        <div class="card">
+          <div><span class="num">7</span><span class="title">Find K-th in Sorted Matrix / Sequence</span></div>
+          <div class="desc">Min-heap with explicit (row, col) indices.</div>
+          <div class="classic">Kth Smallest in Sorted Matrix, Kth Smallest Pair Distance</div>
+        </div>
+        <div class="card">
+          <div><span class="num">8</span><span class="title">Reorganize / Frequency-Based Greedy</span></div>
+          <div class="desc">Max-heap by frequency, alternate placements.</div>
+          <div class="classic">Reorganize String, Rearrange String K Distance Apart</div>
+        </div>
+      </div>
+
+      <h4>Other variants</h4>
+      <ul class="tight">
+        <li>Sliding Window Median (lazy-deletion heaps or two TreeSets)</li>
+        <li>Ugly Number II (heap + dedup set)</li>
+        <li>Last Stone Weight (max-heap simulation)</li>
+        <li>Connect Ropes / Min Cost to Combine (Huffman-like)</li>
+        <li>Single-source shortest paths on weighted graphs (Dijkstra)</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>Java cheats:</strong> <code>PriorityQueue&lt;&gt;()</code> is a min-heap by default. For max-heap use <code>new PriorityQueue&lt;&gt;(Comparator.reverseOrder())</code> or a custom comparator like <code>(a, b) -&gt; b - a</code>.
+      </div>
+
+      <h3 class="sub-h" id="heap-template">Core heap template (Java)</h3>
+      <pre><code class="language-java">import java.util.*;
+
+public class HeapTemplates {
+
+    // ====================== MIN-HEAP (default) ======================
+    PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
+
+    // ====================== MAX-HEAP ======================
+    PriorityQueue&lt;Integer&gt; maxHeap = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
+
+    // ====================== HEAP OF PAIRS / OBJECTS ======================
+    // e.g. min-heap of int[]{distance, node} ordered by distance
+    PriorityQueue&lt;int[]&gt; pq = new PriorityQueue&lt;&gt;((a, b) -&gt; a[0] - b[0]);
+
+    /**
+     * Core operations
+     *   pq.offer(x);      // push       O(log n)
+     *   pq.peek();        // top        O(1)
+     *   pq.poll();        // pop top    O(log n)
+     *   pq.size();        // size       O(1)
+     *   new PriorityQueue&lt;&gt;(collection)  // heapify   O(n)
+     */
+}</code></pre>
+
+      <h3 class="sub-h" id="heap-topk">Top K template — Kth Largest / K Most Frequent</h3>
+      <pre><code class="language-java">/**
+ * Kth Largest Element using a size-K min-heap.
+ * Heap always holds the K largest seen so far → root is the Kth largest.
+ *
+ * Time:  O(N log K)
+ * Space: O(K)
+ */
+public int findKthLargest(int[] nums, int k) {
+    PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
+
+    for (int num : nums) {
+        minHeap.offer(num);
+        if (minHeap.size() &gt; k) {
+            minHeap.poll();   // drop smallest, keep top K
+        }
+    }
+    return minHeap.peek();
+}
+
+/**
+ * Top K Frequent Elements.
+ * Time: O(N log K)   Space: O(N)
+ */
+public int[] topKFrequent(int[] nums, int k) {
+    Map&lt;Integer, Integer&gt; freq = new HashMap&lt;&gt;();
+    for (int n : nums) freq.merge(n, 1, Integer::sum);
+
+    // Min-heap by frequency, size K
+    PriorityQueue&lt;int[]&gt; heap = new PriorityQueue&lt;&gt;((a, b) -&gt; a[1] - b[1]);
+    for (var e : freq.entrySet()) {
+        heap.offer(new int[]{e.getKey(), e.getValue()});
+        if (heap.size() &gt; k) heap.poll();
+    }
+
+    int[] ans = new int[k];
+    for (int i = k - 1; i &gt;= 0; i--) ans[i] = heap.poll()[0];
+    return ans;
+}</code></pre>
+
+      <div class="callout note">
+        <strong>Why size-K min-heap for Kth largest?</strong> The K largest elements live in the heap; the smallest of those (the root) is exactly the Kth largest overall. Keeping the heap bounded gives <code>O(N log K)</code> instead of <code>O(N log N)</code>.
+      </div>
+
+      <h3 class="sub-h" id="heap-twoheap">Two-heap template — Streaming Median</h3>
+      <pre><code class="language-java">/**
+ * Find Median from Data Stream.
+ * lower = max-heap of the smaller half
+ * upper = min-heap of the larger half
+ * Invariant: lower.size() == upper.size() OR lower.size() == upper.size() + 1
+ *
+ * addNum:    O(log n)
+ * findMedian: O(1)
+ */
+class MedianFinder {
+    private final PriorityQueue&lt;Integer&gt; lower = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
+    private final PriorityQueue&lt;Integer&gt; upper = new PriorityQueue&lt;&gt;();
+
+    public void addNum(int num) {
+        lower.offer(num);
+        upper.offer(lower.poll());          // funnel through to keep ordering
+
+        if (upper.size() &gt; lower.size()) {  // rebalance
+            lower.offer(upper.poll());
+        }
+    }
+
+    public double findMedian() {
+        if (lower.size() &gt; upper.size()) return lower.peek();
+        return (lower.peek() + upper.peek()) / 2.0;
+    }
+}</code></pre>
+
+      <h3 class="sub-h" id="heap-adapt">How to adapt the template</h3>
+
+      <h4>K-way merge — Merge K Sorted Lists</h4>
+      <pre><code class="language-java">public ListNode mergeKLists(ListNode[] lists) {
+    PriorityQueue&lt;ListNode&gt; pq = new PriorityQueue&lt;&gt;((a, b) -&gt; a.val - b.val);
+    for (ListNode head : lists) {
+        if (head != null) pq.offer(head);
+    }
+
+    ListNode dummy = new ListNode(0), tail = dummy;
+    while (!pq.isEmpty()) {
+        ListNode node = pq.poll();
+        tail.next = node;
+        tail = node;
+        if (node.next != null) pq.offer(node.next);
+    }
+    return dummy.next;
+    // Time: O(N log K) where N = total nodes, K = number of lists
+}</code></pre>
+
+      <h4>Meeting Rooms II — minimum rooms</h4>
+      <pre><code class="language-java">public int minMeetingRooms(int[][] intervals) {
+    Arrays.sort(intervals, (a, b) -&gt; a[0] - b[0]);
+    PriorityQueue&lt;Integer&gt; endTimes = new PriorityQueue&lt;&gt;();   // min-heap of end times
+
+    for (int[] iv : intervals) {
+        if (!endTimes.isEmpty() &amp;&amp; endTimes.peek() &lt;= iv[0]) {
+            endTimes.poll();   // a room got freed → reuse
+        }
+        endTimes.offer(iv[1]);
+    }
+    return endTimes.size();
+}</code></pre>
+
+      <h4>K Closest Points to Origin</h4>
+      <pre><code class="language-java">public int[][] kClosest(int[][] points, int k) {
+    // Max-heap by distance; keep size K.
+    PriorityQueue&lt;int[]&gt; heap = new PriorityQueue&lt;&gt;(
+        (a, b) -&gt; (b[0]*b[0] + b[1]*b[1]) - (a[0]*a[0] + a[1]*a[1])
+    );
+
+    for (int[] p : points) {
+        heap.offer(p);
+        if (heap.size() &gt; k) heap.poll();   // drop the farthest
+    }
+
+    int[][] ans = new int[k][2];
+    for (int i = 0; i &lt; k; i++) ans[i] = heap.poll();
+    return ans;
+}</code></pre>
+
+      <h4>Dijkstra (single-source shortest path)</h4>
+      <pre><code class="language-java">public int[] dijkstra(List&lt;int[]&gt;[] graph, int src) {
+    int n = graph.length;
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+
+    PriorityQueue&lt;int[]&gt; pq = new PriorityQueue&lt;&gt;((a, b) -&gt; a[0] - b[0]);
+    pq.offer(new int[]{0, src});   // {distance, node}
+
+    while (!pq.isEmpty()) {
+        int[] cur = pq.poll();
+        int d = cur[0], u = cur[1];
+        if (d &gt; dist[u]) continue;          // stale entry, skip
+
+        for (int[] edge : graph[u]) {
+            int v = edge[0], w = edge[1];
+            if (dist[u] + w &lt; dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.offer(new int[]{dist[v], v});
+            }
+        }
+    }
+    return dist;
+    // Time: O((V + E) log V)
+}</code></pre>
+
+      <h4>Task Scheduler — frequency-based greedy</h4>
+      <pre><code class="language-java">public int leastInterval(char[] tasks, int n) {
+    int[] cnt = new int[26];
+    for (char c : tasks) cnt[c - 'A']++;
+
+    PriorityQueue&lt;Integer&gt; pq = new PriorityQueue&lt;&gt;(Comparator.reverseOrder());
+    for (int c : cnt) if (c &gt; 0) pq.offer(c);
+
+    int time = 0;
+    Queue&lt;int[]&gt; cooldown = new ArrayDeque&lt;&gt;();   // {remainingCount, availableTime}
+
+    while (!pq.isEmpty() || !cooldown.isEmpty()) {
+        time++;
+        if (!pq.isEmpty()) {
+            int remaining = pq.poll() - 1;
+            if (remaining &gt; 0) cooldown.offer(new int[]{remaining, time + n});
+        }
+        if (!cooldown.isEmpty() &amp;&amp; cooldown.peek()[1] == time) {
+            pq.offer(cooldown.poll()[0]);
+        }
+    }
+    return time;
+}</code></pre>
+
+      <h3 class="sub-h">Complexity reference</h3>
+      <table>
+        <thead>
+          <tr><th>Operation</th><th>Time</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>offer</code> / <code>add</code> (push)</td><td>O(log n)</td></tr>
+          <tr><td><code>poll</code> / <code>remove</code> (pop top)</td><td>O(log n)</td></tr>
+          <tr><td><code>peek</code> (top)</td><td>O(1)</td></tr>
+          <tr><td>Build heap from a collection</td><td>O(n)</td></tr>
+          <tr><td><code>contains</code> / arbitrary <code>remove</code></td><td>O(n) — avoid in hot loops</td></tr>
+        </tbody>
+      </table>
+
+      <details class="hinglish" id="heap-hinglish">
+        <summary>Hinglish quick guide — kaise use kare</summary>
+        <div class="body">
+          <ul class="tight">
+            <li><strong>Top K (Kth Largest)</strong> → size-K <em>min-heap</em>. Heap full hone par smallest pop kar do; root = answer.</li>
+            <li><strong>Top K Frequent</strong> → frequency map banao, fir freq par size-K min-heap.</li>
+            <li><strong>K Closest Points</strong> → size-K <em>max-heap</em> by distance. Sabse door wala pop hota raho.</li>
+            <li><strong>Merge K Sorted Lists</strong> → har list ka head heap mein daalo, smallest pop karke next ko push karte raho.</li>
+            <li><strong>Streaming Median</strong> → 2 heaps: lower (max-heap), upper (min-heap). Balance rakho.</li>
+            <li><strong>Meeting Rooms II</strong> → end-times ka min-heap. Naya meeting start hote hi top &lt;= start ho to poll.</li>
+            <li><strong>Task Scheduler</strong> → max-heap by remaining frequency + cooldown queue.</li>
+            <li><strong>Dijkstra</strong> → min-heap of <code>(dist, node)</code>; stale entries skip kar do.</li>
+            <li><strong>Reorganize String</strong> → max-heap by char frequency. Hamesha do alag-alag chars alternate karo.</li>
+            <li><strong>Kth Smallest in Sorted Matrix</strong> → min-heap of <code>(value, row, col)</code>; pop K times.</li>
+          </ul>
+          <p style="color: var(--text-dim); margin-top: 8px;">
+            Pro tip: Java mein <code>PriorityQueue</code> default min-heap hai. Max-heap chahiye to <code>Comparator.reverseOrder()</code> ya custom <code>(a, b) -&gt; b - a</code> use karo (overflow se bachne ke liye <code>Integer.compare(b, a)</code> safer hai).
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================== DYNAMIC PROGRAMMING ============================== -->
+    <section class="pattern" id="dp">
+      <h2><span class="badge green">06</span> Dynamic Programming</h2>
+      <p class="lead">Solve a problem by combining solutions to overlapping subproblems. Two ingredients: <strong>(1) a state</strong> that captures everything needed to make the next decision, and <strong>(2) a transition</strong> from smaller states to larger ones. Every DP can be written as either top-down memoization or bottom-up tabulation.</p>
+
+      <h3 class="sub-h" id="dp-types">Core problem types</h3>
+      <div class="grid">
+        <div class="card">
+          <div><span class="num">1</span><span class="title">1D / Linear DP</span></div>
+          <div class="desc">Decision over a sequence; state depends on previous indices.</div>
+          <div class="classic">Climbing Stairs, House Robber, Decode Ways, LIS</div>
+        </div>
+        <div class="card">
+          <div><span class="num">2</span><span class="title">2D / Grid DP</span></div>
+          <div class="desc">Path or count problems on a grid; state = (row, col).</div>
+          <div class="classic">Unique Paths, Min Path Sum, Maximal Square</div>
+        </div>
+        <div class="card">
+          <div><span class="num">3</span><span class="title">Knapsack (0/1 &amp; Unbounded)</span></div>
+          <div class="desc">Pick items under a capacity constraint to optimize value/count.</div>
+          <div class="classic">0/1 Knapsack, Coin Change, Partition Equal Subset Sum, Target Sum</div>
+        </div>
+        <div class="card">
+          <div><span class="num">4</span><span class="title">String DP (LCS / Edit Distance)</span></div>
+          <div class="desc">Two-string alignment problems; state = (i, j).</div>
+          <div class="classic">LCS, Edit Distance, Distinct Subsequences, Wildcard / Regex Matching</div>
+        </div>
+        <div class="card">
+          <div><span class="num">5</span><span class="title">Interval DP</span></div>
+          <div class="desc">Solve sub-interval [i, j] by trying every split point k.</div>
+          <div class="classic">Burst Balloons, Matrix Chain Multiplication, Stone Game, Palindrome Partitioning II</div>
+        </div>
+        <div class="card">
+          <div><span class="num">6</span><span class="title">Bitmask DP</span></div>
+          <div class="desc">State includes a bitmask of visited / chosen items.</div>
+          <div class="classic">TSP, Partition to K Equal Sum Subsets, Shortest Path Visiting All Nodes</div>
+        </div>
+        <div class="card">
+          <div><span class="num">7</span><span class="title">Tree DP</span></div>
+          <div class="desc">Post-order recursion returning multiple values per node.</div>
+          <div class="classic">House Robber III, Diameter of Binary Tree, Max Path Sum, Binary Tree Cameras</div>
+        </div>
+        <div class="card">
+          <div><span class="num">8</span><span class="title">DP on Subsequences / Decision DP</span></div>
+          <div class="desc">At each index decide pick / skip / state-transition.</div>
+          <div class="classic">Best Time to Buy/Sell Stock series, Paint House, Delete and Earn</div>
+        </div>
+      </div>
+
+      <h4>Other variants</h4>
+      <ul class="tight">
+        <li>Digit DP (count numbers with constraints in a range)</li>
+        <li>Probability / Expected value DP</li>
+        <li>DP + monotonic deque (Constrained Subsequence Sum, Jump Game VI)</li>
+        <li>DP + binary search (Russian Doll Envelopes, LIS in O(n log n))</li>
+        <li>Game-theory / Minimax DP (Stone Game, Predict the Winner)</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>How to recognize DP:</strong> the problem asks for a <em>count</em>, <em>min/max</em>, <em>true/false</em>, or <em>optimal sequence</em>, AND your decisions can be expressed as <em>“at this position with this remaining budget, what is the best I can do?”</em>. If subproblems repeat — it's DP.
+      </div>
+
+      <h3 class="sub-h" id="dp-framework">The 5-step framework</h3>
+      <ol style="margin: 6px 0 12px 22px; padding: 0;">
+        <li><strong>Define state:</strong> what does <code>dp[i]</code> (or <code>dp[i][j]</code>) mean in plain English?</li>
+        <li><strong>Recurrence:</strong> express <code>dp[i]</code> in terms of smaller states.</li>
+        <li><strong>Base case:</strong> what is the answer for the smallest subproblem?</li>
+        <li><strong>Iteration order:</strong> ensure dependencies are computed before they are used.</li>
+        <li><strong>Final answer:</strong> which cell holds the result? Sometimes it's <code>dp[n]</code>, sometimes <code>max(dp)</code>.</li>
+      </ol>
+
+      <h3 class="sub-h" id="dp-1d">1D DP template — top-down &amp; bottom-up</h3>
+      <pre><code class="language-java">/**
+ * Climbing Stairs / House Robber style — generic 1D template.
+ *
+ * State:      dp[i] = best answer using first i elements (or up to position i).
+ * Recurrence: dp[i] = f(dp[i-1], dp[i-2], ..., dp[i-k])
+ * Base:       dp[0], dp[1], ...
+ * Time:       O(n)   Space: O(n) → can often be reduced to O(1)
+ */
+public int climbStairs(int n) {
+    if (n &lt;= 2) return n;
+
+    // Bottom-up tabulation
+    int prev2 = 1, prev1 = 2;
+    for (int i = 3; i &lt;= n; i++) {
+        int cur = prev1 + prev2;
+        prev2 = prev1;
+        prev1 = cur;
+    }
+    return prev1;     // O(1) space rolling variables
+}
+
+/**
+ * Top-down memoization version — same recurrence, recursive form.
+ */
+Integer[] memo;
+public int climbStairsMemo(int n) {
+    memo = new Integer[n + 1];
+    return solve(n);
+}
+private int solve(int n) {
+    if (n &lt;= 2) return n;
+    if (memo[n] != null) return memo[n];
+    return memo[n] = solve(n - 1) + solve(n - 2);
+}</code></pre>
+
+      <h4>House Robber (decision DP)</h4>
+      <pre><code class="language-java">// dp[i] = max money robbing houses [0..i]
+// Choice: rob house i (dp[i-2] + nums[i]) or skip (dp[i-1])
+public int rob(int[] nums) {
+    int prev2 = 0, prev1 = 0;
+    for (int num : nums) {
+        int cur = Math.max(prev1, prev2 + num);
+        prev2 = prev1;
+        prev1 = cur;
+    }
+    return prev1;
+}</code></pre>
+
+      <h4>Longest Increasing Subsequence — O(n log n)</h4>
+      <pre><code class="language-java">// tails[k] = smallest possible tail of an increasing subseq of length k+1
+public int lengthOfLIS(int[] nums) {
+    List&lt;Integer&gt; tails = new ArrayList&lt;&gt;();
+    for (int x : nums) {
+        int lo = 0, hi = tails.size();
+        while (lo &lt; hi) {
+            int mid = (lo + hi) &gt;&gt;&gt; 1;
+            if (tails.get(mid) &lt; x) lo = mid + 1;
+            else hi = mid;
+        }
+        if (lo == tails.size()) tails.add(x);
+        else tails.set(lo, x);
+    }
+    return tails.size();
+}</code></pre>
+
+      <h3 class="sub-h" id="dp-2d">2D / Grid DP template</h3>
+      <pre><code class="language-java">/**
+ * Unique Paths / Min Path Sum style.
+ *
+ * State:      dp[i][j] = answer ending at cell (i, j)
+ * Recurrence: dp[i][j] = combine(dp[i-1][j], dp[i][j-1])
+ * Base:       first row / first column
+ * Time:       O(m*n)   Space: O(m*n) → can be O(n) with rolling row
+ */
+public int minPathSum(int[][] grid) {
+    int m = grid.length, n = grid[0].length;
+    int[][] dp = new int[m][n];
+    dp[0][0] = grid[0][0];
+
+    for (int j = 1; j &lt; n; j++) dp[0][j] = dp[0][j - 1] + grid[0][j];
+    for (int i = 1; i &lt; m; i++) dp[i][0] = dp[i - 1][0] + grid[i][0];
+
+    for (int i = 1; i &lt; m; i++) {
+        for (int j = 1; j &lt; n; j++) {
+            dp[i][j] = grid[i][j] + Math.min(dp[i - 1][j], dp[i][j - 1]);
+        }
+    }
+    return dp[m - 1][n - 1];
+}</code></pre>
+
+      <h4>Maximal Square (largest all-1s square)</h4>
+      <pre><code class="language-java">// dp[i][j] = side length of the largest square whose bottom-right corner is (i, j)
+// dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1, when matrix[i][j] == '1'
+public int maximalSquare(char[][] matrix) {
+    int m = matrix.length, n = matrix[0].length, best = 0;
+    int[][] dp = new int[m + 1][n + 1];
+
+    for (int i = 1; i &lt;= m; i++) {
+        for (int j = 1; j &lt;= n; j++) {
+            if (matrix[i - 1][j - 1] == '1') {
+                dp[i][j] = Math.min(Math.min(dp[i - 1][j], dp[i][j - 1]), dp[i - 1][j - 1]) + 1;
+                best = Math.max(best, dp[i][j]);
+            }
+        }
+    }
+    return best * best;
+}</code></pre>
+
+      <h3 class="sub-h" id="dp-knapsack">Knapsack templates</h3>
+
+      <h4>0/1 Knapsack (each item used at most once)</h4>
+      <pre><code class="language-java">/**
+ * 0/1 Knapsack: max value with capacity W, items have weight/value.
+ *
+ * dp[w] after processing item i = best value using a subset of {0..i} with total weight ≤ w
+ * Iterate w from HIGH → LOW so each item is used at most once.
+ *
+ * Time: O(n * W)   Space: O(W)
+ */
+public int knapsack01(int[] weights, int[] values, int W) {
+    int[] dp = new int[W + 1];
+
+    for (int i = 0; i &lt; weights.length; i++) {
+        for (int w = W; w &gt;= weights[i]; w--) {
+            dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i]);
+        }
+    }
+    return dp[W];
+}</code></pre>
+
+      <h4>Unbounded Knapsack / Coin Change</h4>
+      <pre><code class="language-java">/**
+ * Coin Change — minimum coins to make amount.
+ * Each coin can be used unlimited times.
+ * Iterate w from LOW → HIGH so the same item can be reused.
+ *
+ * Time: O(n * amount)   Space: O(amount)
+ */
+public int coinChange(int[] coins, int amount) {
+    int[] dp = new int[amount + 1];
+    Arrays.fill(dp, amount + 1);   // sentinel for "impossible"
+    dp[0] = 0;
+
+    for (int coin : coins) {
+        for (int a = coin; a &lt;= amount; a++) {
+            dp[a] = Math.min(dp[a], dp[a - coin] + 1);
+        }
+    }
+    return dp[amount] &gt; amount ? -1 : dp[amount];
+}</code></pre>
+
+      <h4>Subset Sum / Partition Equal Subset Sum</h4>
+      <pre><code class="language-java">// Can we pick a subset summing to target?  → boolean 0/1 knapsack
+public boolean canPartition(int[] nums) {
+    int total = 0;
+    for (int n : nums) total += n;
+    if (total % 2 != 0) return false;
+    int target = total / 2;
+
+    boolean[] dp = new boolean[target + 1];
+    dp[0] = true;
+    for (int num : nums) {
+        for (int s = target; s &gt;= num; s--) {
+            dp[s] = dp[s] || dp[s - num];
+        }
+    }
+    return dp[target];
+}</code></pre>
+
+      <div class="callout note">
+        <strong>Direction rule of thumb:</strong> 0/1 knapsack iterates capacity <em>downward</em> (so each item is considered once); unbounded knapsack iterates capacity <em>upward</em> (so the same item can be reused).
+      </div>
+
+      <h3 class="sub-h" id="dp-lcs">String DP — LCS &amp; Edit Distance</h3>
+
+      <h4>Longest Common Subsequence</h4>
+      <pre><code class="language-java">/**
+ * dp[i][j] = LCS length of s1[0..i-1] and s2[0..j-1]
+ *
+ * Recurrence:
+ *   if s1[i-1] == s2[j-1]:  dp[i][j] = dp[i-1][j-1] + 1
+ *   else:                   dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+ *
+ * Time: O(m*n)   Space: O(m*n) → reducible to O(n)
+ */
+public int lcs(String s1, String s2) {
+    int m = s1.length(), n = s2.length();
+    int[][] dp = new int[m + 1][n + 1];
+
+    for (int i = 1; i &lt;= m; i++) {
+        for (int j = 1; j &lt;= n; j++) {
+            if (s1.charAt(i - 1) == s2.charAt(j - 1)) {
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    return dp[m][n];
+}</code></pre>
+
+      <h4>Edit Distance (Levenshtein)</h4>
+      <pre><code class="language-java">/**
+ * dp[i][j] = min operations to convert s1[0..i-1] → s2[0..j-1]
+ * Operations: insert, delete, replace.
+ *
+ * Time: O(m*n)   Space: O(m*n)
+ */
+public int minDistance(String s1, String s2) {
+    int m = s1.length(), n = s2.length();
+    int[][] dp = new int[m + 1][n + 1];
+
+    for (int i = 0; i &lt;= m; i++) dp[i][0] = i;       // delete all
+    for (int j = 0; j &lt;= n; j++) dp[0][j] = j;       // insert all
+
+    for (int i = 1; i &lt;= m; i++) {
+        for (int j = 1; j &lt;= n; j++) {
+            if (s1.charAt(i - 1) == s2.charAt(j - 1)) {
+                dp[i][j] = dp[i - 1][j - 1];
+            } else {
+                dp[i][j] = 1 + Math.min(
+                    dp[i - 1][j - 1],                // replace
+                    Math.min(dp[i - 1][j], dp[i][j - 1])   // delete / insert
+                );
+            }
+        }
+    }
+    return dp[m][n];
+}</code></pre>
+
+      <h3 class="sub-h" id="dp-interval">Interval DP</h3>
+      <pre><code class="language-java">/**
+ * Interval DP — dp[i][j] = answer for sub-interval [i, j].
+ * Recurrence tries every split point k between i and j.
+ *
+ * Iterate by increasing length so smaller intervals are solved first.
+ *
+ * Classic: Burst Balloons, Matrix Chain Multiplication, Stone Game.
+ *
+ * Time: O(n^3)   Space: O(n^2)
+ */
+public int matrixChainMultiplication(int[] dims) {
+    int n = dims.length - 1;        // n matrices, dims has n+1 entries
+    int[][] dp = new int[n][n];
+
+    for (int len = 2; len &lt;= n; len++) {
+        for (int i = 0; i + len - 1 &lt; n; i++) {
+            int j = i + len - 1;
+            dp[i][j] = Integer.MAX_VALUE;
+            for (int k = i; k &lt; j; k++) {
+                int cost = dp[i][k] + dp[k + 1][j] + dims[i] * dims[k + 1] * dims[j + 1];
+                dp[i][j] = Math.min(dp[i][j], cost);
+            }
+        }
+    }
+    return dp[0][n - 1];
+}</code></pre>
+
+      <h4>Burst Balloons (think backwards: <em>k</em> is the LAST balloon burst in [i, j])</h4>
+      <pre><code class="language-java">public int maxCoins(int[] nums) {
+    int n = nums.length;
+    int[] arr = new int[n + 2];
+    arr[0] = arr[n + 1] = 1;
+    System.arraycopy(nums, 0, arr, 1, n);
+
+    int[][] dp = new int[n + 2][n + 2];
+
+    for (int len = 1; len &lt;= n; len++) {
+        for (int i = 1; i + len - 1 &lt;= n; i++) {
+            int j = i + len - 1;
+            for (int k = i; k &lt;= j; k++) {       // k = last balloon burst
+                int gain = arr[i - 1] * arr[k] * arr[j + 1];
+                dp[i][j] = Math.max(dp[i][j], dp[i][k - 1] + gain + dp[k + 1][j]);
+            }
+        }
+    }
+    return dp[1][n];
+}</code></pre>
+
+      <h3 class="sub-h" id="dp-bitmask">Bitmask DP</h3>
+      <pre><code class="language-java">/**
+ * Bitmask DP — state includes a bitmask of which items are "used".
+ *
+ * dp[mask] = best answer covering exactly the items represented by mask.
+ *
+ * Time: O(2^n * n)   Space: O(2^n)
+ *
+ * Use when n ≤ ~20.
+ */
+public int tsp(int[][] dist) {
+    int n = dist.length;
+    int[][] dp = new int[1 &lt;&lt; n][n];
+    for (int[] row : dp) Arrays.fill(row, Integer.MAX_VALUE / 2);
+    dp[1][0] = 0;        // start at node 0, only node 0 visited
+
+    for (int mask = 1; mask &lt; (1 &lt;&lt; n); mask++) {
+        for (int u = 0; u &lt; n; u++) {
+            if ((mask &amp; (1 &lt;&lt; u)) == 0) continue;
+            for (int v = 0; v &lt; n; v++) {
+                if ((mask &amp; (1 &lt;&lt; v)) != 0) continue;
+                int nextMask = mask | (1 &lt;&lt; v);
+                dp[nextMask][v] = Math.min(dp[nextMask][v], dp[mask][u] + dist[u][v]);
+            }
+        }
+    }
+
+    int best = Integer.MAX_VALUE;
+    int full = (1 &lt;&lt; n) - 1;
+    for (int u = 1; u &lt; n; u++) {
+        best = Math.min(best, dp[full][u] + dist[u][0]);
+    }
+    return best;
+}</code></pre>
+
+      <h3 class="sub-h" id="dp-tree">Tree DP (post-order recursion)</h3>
+      <pre><code class="language-java">/**
+ * House Robber III — rob houses arranged as a binary tree without robbing
+ * a parent and child both.
+ *
+ * For each node return a pair { robThis, skipThis }.
+ *
+ * Time: O(n)   Space: O(h) recursion
+ */
+public int rob(TreeNode root) {
+    int[] ans = dfs(root);
+    return Math.max(ans[0], ans[1]);
+}
+
+private int[] dfs(TreeNode node) {
+    if (node == null) return new int[]{0, 0};
+
+    int[] left  = dfs(node.left);
+    int[] right = dfs(node.right);
+
+    int robThis  = node.val + left[1] + right[1];                   // can't rob children
+    int skipThis = Math.max(left[0], left[1]) + Math.max(right[0], right[1]);
+
+    return new int[]{robThis, skipThis};
+}</code></pre>
+
+      <h4>Diameter / Max Path Sum pattern</h4>
+      <pre><code class="language-java">// Standard tree-DP shape:
+//   1. recurse left, recurse right
+//   2. update a global answer using both children
+//   3. RETURN only what the parent can extend (single arm)
+int best = 0;
+int dfsDiameter(TreeNode node) {
+    if (node == null) return 0;
+    int l = dfsDiameter(node.left);
+    int r = dfsDiameter(node.right);
+    best = Math.max(best, l + r);            // path through node
+    return 1 + Math.max(l, r);               // single arm extends upward
+}</code></pre>
+
+      <h3 class="sub-h" id="dp-adapt">How to recognize / adapt</h3>
+      <table>
+        <thead>
+          <tr><th>Signal in problem</th><th>Likely pattern</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>“Number of ways to …”</td><td>Counting DP — sum transitions</td></tr>
+          <tr><td>“Min / max cost / value to …”</td><td>Optimization DP — min/max transitions</td></tr>
+          <tr><td>“Can we …” / “Is it possible …”</td><td>Boolean DP — OR transitions</td></tr>
+          <tr><td>Two strings, alignment, transformations</td><td>2D string DP (LCS, Edit Distance, Regex)</td></tr>
+          <tr><td>Pick items with capacity / target</td><td>Knapsack (0/1 or unbounded)</td></tr>
+          <tr><td>Optimal play on intervals / merge cost</td><td>Interval DP</td></tr>
+          <tr><td>n ≤ 20 + “visit all” / “subset of …”</td><td>Bitmask DP</td></tr>
+          <tr><td>Recursion on tree returning multiple values</td><td>Tree DP</td></tr>
+          <tr><td>Decisions over time with state machine</td><td>Stock series / state-machine DP</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Top-down ↔ Bottom-up conversion</h4>
+      <ul class="tight">
+        <li>Write the recursive solution first → identify state parameters → that's your <code>dp[...]</code> shape.</li>
+        <li>Add memoization with a map / array of the same shape — this is top-down.</li>
+        <li>Flip the order of computation (smallest state first) and replace recursion with loops — this is bottom-up.</li>
+        <li>If only the last <code>k</code> rows / columns are needed, compress space with rolling arrays.</li>
+      </ul>
+
+      <details class="hinglish" id="dp-hinglish">
+        <summary>Hinglish quick guide — kaise use kare</summary>
+        <div class="body">
+          <ul class="tight">
+            <li><strong>State define karo</strong> — <code>dp[i]</code> ya <code>dp[i][j]</code> ka exact meaning likh lo (English mein).</li>
+            <li><strong>1D DP</strong> — Climbing Stairs, House Robber, LIS. Mostly <code>dp[i] = f(dp[i-1], dp[i-2])</code>.</li>
+            <li><strong>2D Grid DP</strong> — Unique Paths, Min Path Sum. <code>dp[i][j] = combine(dp[i-1][j], dp[i][j-1])</code>.</li>
+            <li><strong>0/1 Knapsack</strong> — capacity loop <em>peeche se aage</em> chalao taaki ek item ek hi baar use ho.</li>
+            <li><strong>Unbounded Knapsack / Coin Change</strong> — capacity loop <em>aage se peeche</em> chalao taaki same item reuse ho.</li>
+            <li><strong>LCS / Edit Distance</strong> — 2D dp on <code>(i, j)</code>. Match hua to diagonal + 1, warna max/min of neighbors.</li>
+            <li><strong>Interval DP</strong> — length ke order mein iterate karo. Har interval pe har split <code>k</code> try karo.</li>
+            <li><strong>Burst Balloons trick</strong> — sochna “last burst in this interval” — usse problem clean ho jaata hai.</li>
+            <li><strong>Bitmask DP</strong> — n ≤ 20 ho to mask use karo. <code>dp[mask][last]</code> common pattern.</li>
+            <li><strong>Tree DP</strong> — post-order recursion, har node se 2 (ya more) values return karo: ek "include this", ek "exclude this".</li>
+            <li><strong>Top-down vs Bottom-up</strong> — pehle recursion + memo likh lo, fir loop mein convert karo.</li>
+            <li><strong>Space optimize</strong> — agar sirf pichli row/col chahiye to rolling array use karo (O(n) → O(1) ya O(m·n) → O(n)).</li>
+          </ul>
+          <p style="color: var(--text-dim); margin-top: 8px;">
+            Mantra: <strong>“Define state in plain English, write recurrence, decide order, optimize space.”</strong> 90% DP problems is framework se solve ho jaate hain.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================== TREE (GENERAL) ============================== -->
+    <section class="pattern" id="tree">
+      <h2><span class="badge purple">07</span> Tree (Binary Tree, General)</h2>
+      <p class="lead">Binary tree problems are dominated by two ideas: <strong>(1) recursion that returns information from subtrees</strong>, and <strong>(2) BFS/level-order traversal with a queue</strong>. Almost every tree problem reduces to choosing the right traversal and the right "what does this subtree return?".</p>
+
+      <h3 class="sub-h" id="tree-types">Core problem types</h3>
+      <div class="grid">
+        <div class="card">
+          <div><span class="num">1</span><span class="title">Traversals (DFS &amp; BFS)</span></div>
+          <div class="desc">Preorder, Inorder, Postorder, Level Order. Recursive and iterative variants.</div>
+          <div class="classic">Binary Tree Preorder/Inorder/Postorder/Level Order Traversal</div>
+        </div>
+        <div class="card">
+          <div><span class="num">2</span><span class="title">Properties &amp; Metrics</span></div>
+          <div class="desc">Height, depth, balanced check, count of nodes, symmetry.</div>
+          <div class="classic">Max Depth, Balanced Tree, Symmetric Tree, Count Nodes</div>
+        </div>
+        <div class="card">
+          <div><span class="num">3</span><span class="title">Path Problems</span></div>
+          <div class="desc">Path sum, all root-to-leaf paths, max path sum, diameter.</div>
+          <div class="classic">Path Sum I/II/III, Binary Tree Maximum Path Sum, Diameter</div>
+        </div>
+        <div class="card">
+          <div><span class="num">4</span><span class="title">LCA (general binary tree)</span></div>
+          <div class="desc">Lowest common ancestor without BST ordering.</div>
+          <div class="classic">LCA of a Binary Tree</div>
+        </div>
+        <div class="card">
+          <div><span class="num">5</span><span class="title">Construction</span></div>
+          <div class="desc">Build a tree from traversal arrays or descriptions.</div>
+          <div class="classic">Build Tree from Preorder + Inorder, from Postorder + Inorder</div>
+        </div>
+        <div class="card">
+          <div><span class="num">6</span><span class="title">Serialize / Deserialize</span></div>
+          <div class="desc">Convert a tree ↔ string (preorder with null markers, or BFS).</div>
+          <div class="classic">Serialize and Deserialize Binary Tree</div>
+        </div>
+        <div class="card">
+          <div><span class="num">7</span><span class="title">Views &amp; Boundaries</span></div>
+          <div class="desc">Right/left/top/bottom view, boundary traversal, vertical order.</div>
+          <div class="classic">Right Side View, Vertical Order Traversal</div>
+        </div>
+        <div class="card">
+          <div><span class="num">8</span><span class="title">Tree DP / Multi-return Recursion</span></div>
+          <div class="desc">Each subtree returns multiple values consumed by the parent.</div>
+          <div class="classic">House Robber III, Binary Tree Cameras, Longest Univalue Path</div>
+        </div>
+        <div class="card">
+          <div><span class="num">9</span><span class="title">Modify in Place</span></div>
+          <div class="desc">Invert tree, flatten to linked list, connect next pointers.</div>
+          <div class="classic">Invert Binary Tree, Flatten BT to Linked List, Populating Next Right Pointers</div>
+        </div>
+        <div class="card">
+          <div><span class="num">10</span><span class="title">N-ary &amp; Generic Trees</span></div>
+          <div class="desc">Same recursion, but iterate over a children list.</div>
+          <div class="classic">N-ary Tree Preorder / Level Order / Max Depth</div>
+        </div>
+      </div>
+
+      <h4>Other variants</h4>
+      <ul class="tight">
+        <li>Distance K from a node (DFS to build parent map + BFS)</li>
+        <li>Cousins / Siblings checks</li>
+        <li>Count Good Nodes / Univalued / Same Tree / Subtree of Another Tree</li>
+        <li>Morris Traversal (O(1) extra space inorder)</li>
+        <li>Lowest Common Ancestor with parent pointers</li>
+      </ul>
+
+      <div class="callout tip">
+        <strong>Mindset:</strong> for any binary tree problem ask two questions — <em>"What does each subtree need to tell me?"</em> and <em>"Do I need top-down info (depth, path so far) or bottom-up info (height, sum)?"</em> Top-down → pass parameters down. Bottom-up → return values up.
+      </div>
+
+      <h3 class="sub-h" id="tree-traversals">DFS traversals (recursive &amp; iterative)</h3>
+      <pre><code class="language-java">class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
+
+public class TreeTraversals {
+
+    /* ---------------- Recursive ---------------- */
+    public void preorder(TreeNode node, List&lt;Integer&gt; out) {
+        if (node == null) return;
+        out.add(node.val);                 // visit
+        preorder(node.left, out);
+        preorder(node.right, out);
+    }
+
+    public void inorder(TreeNode node, List&lt;Integer&gt; out) {
+        if (node == null) return;
+        inorder(node.left, out);
+        out.add(node.val);                 // visit
+        inorder(node.right, out);
+    }
+
+    public void postorder(TreeNode node, List&lt;Integer&gt; out) {
+        if (node == null) return;
+        postorder(node.left, out);
+        postorder(node.right, out);
+        out.add(node.val);                 // visit
+    }
+
+    /* ---------------- Iterative inorder (stack) ---------------- */
+    public List&lt;Integer&gt; inorderIterative(TreeNode root) {
+        List&lt;Integer&gt; out = new ArrayList&lt;&gt;();
+        Deque&lt;TreeNode&gt; stack = new ArrayDeque&lt;&gt;();
+        TreeNode cur = root;
+
+        while (cur != null || !stack.isEmpty()) {
+            while (cur != null) {
+                stack.push(cur);
+                cur = cur.left;
+            }
+            cur = stack.pop();
+            out.add(cur.val);
+            cur = cur.right;
+        }
+        return out;
+    }
+
+    /* ---------------- Iterative preorder ---------------- */
+    public List&lt;Integer&gt; preorderIterative(TreeNode root) {
+        List&lt;Integer&gt; out = new ArrayList&lt;&gt;();
+        if (root == null) return out;
+        Deque&lt;TreeNode&gt; stack = new ArrayDeque&lt;&gt;();
+        stack.push(root);
+
+        while (!stack.isEmpty()) {
+            TreeNode n = stack.pop();
+            out.add(n.val);
+            if (n.right != null) stack.push(n.right);   // right first → left popped first
+            if (n.left  != null) stack.push(n.left);
+        }
+        return out;
+    }
+}</code></pre>
+
+      <div class="callout note">
+        <strong>Time:</strong> O(n) for any traversal. <strong>Space:</strong> O(h) for the recursion / explicit stack — O(log n) on a balanced tree, O(n) worst case (skewed). Morris Traversal achieves O(1) extra space.
+      </div>
+
+      <h3 class="sub-h" id="tree-bfs">BFS / Level-order template</h3>
+      <pre><code class="language-java">/**
+ * Level-order traversal — group nodes by depth.
+ *
+ * Time: O(n)   Space: O(w) where w = max width of the tree
+ */
+public List&lt;List&lt;Integer&gt;&gt; levelOrder(TreeNode root) {
+    List&lt;List&lt;Integer&gt;&gt; result = new ArrayList&lt;&gt;();
+    if (root == null) return result;
+
+    Queue&lt;TreeNode&gt; queue = new ArrayDeque&lt;&gt;();
+    queue.offer(root);
+
+    while (!queue.isEmpty()) {
+        int size = queue.size();                 // freeze the level
+        List&lt;Integer&gt; level = new ArrayList&lt;&gt;();
+
+        for (int i = 0; i &lt; size; i++) {
+            TreeNode node = queue.poll();
+            level.add(node.val);
+            if (node.left  != null) queue.offer(node.left);
+            if (node.right != null) queue.offer(node.right);
+        }
+        result.add(level);
+    }
+    return result;
+}</code></pre>
+
+      <h4>Right Side View (BFS, last node per level)</h4>
+      <pre><code class="language-java">public List&lt;Integer&gt; rightSideView(TreeNode root) {
+    List&lt;Integer&gt; out = new ArrayList&lt;&gt;();
+    if (root == null) return out;
+
+    Queue&lt;TreeNode&gt; queue = new ArrayDeque&lt;&gt;();
+    queue.offer(root);
+
+    while (!queue.isEmpty()) {
+        int size = queue.size();
+        for (int i = 0; i &lt; size; i++) {
+            TreeNode n = queue.poll();
+            if (i == size - 1) out.add(n.val);   // last node of this level
+            if (n.left  != null) queue.offer(n.left);
+            if (n.right != null) queue.offer(n.right);
+        }
+    }
+    return out;
+}</code></pre>
+
+      <h4>Zigzag Level Order</h4>
+      <pre><code class="language-java">// Same BFS skeleton, but on alternate levels reverse the level list (or use a deque).
+public List&lt;List&lt;Integer&gt;&gt; zigzagLevelOrder(TreeNode root) {
+    List&lt;List&lt;Integer&gt;&gt; out = new ArrayList&lt;&gt;();
+    if (root == null) return out;
+
+    Queue&lt;TreeNode&gt; q = new ArrayDeque&lt;&gt;();
+    q.offer(root);
+    boolean ltr = true;
+
+    while (!q.isEmpty()) {
+        int size = q.size();
+        LinkedList&lt;Integer&gt; level = new LinkedList&lt;&gt;();
+        for (int i = 0; i &lt; size; i++) {
+            TreeNode n = q.poll();
+            if (ltr) level.addLast(n.val);
+            else     level.addFirst(n.val);
+            if (n.left  != null) q.offer(n.left);
+            if (n.right != null) q.offer(n.right);
+        }
+        out.add(level);
+        ltr = !ltr;
+    }
+    return out;
+}</code></pre>
+
+      <h3 class="sub-h" id="tree-recursion">Core recursion patterns</h3>
+
+      <h4>Pattern A — Bottom-up: return one value per subtree</h4>
+      <pre><code class="language-java">// Max Depth — classic bottom-up recursion
+public int maxDepth(TreeNode root) {
+    if (root == null) return 0;
+    return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));
+}</code></pre>
+
+      <h4>Pattern B — Bottom-up + global answer (Diameter / Max Path Sum)</h4>
+      <pre><code class="language-java">/**
+ * Diameter of Binary Tree.
+ * Each call returns the height (single arm).
+ * The "diameter through this node" updates a global best.
+ */
+private int best = 0;
+
+public int diameterOfBinaryTree(TreeNode root) {
+    best = 0;
+    height(root);
+    return best;
+}
+
+private int height(TreeNode node) {
+    if (node == null) return 0;
+    int l = height(node.left);
+    int r = height(node.right);
+    best = Math.max(best, l + r);     // path through this node
+    return 1 + Math.max(l, r);        // single arm extends upward
+}</code></pre>
+
+      <h4>Pattern C — Top-down: pass info down via parameters</h4>
+      <pre><code class="language-java">// Path Sum — does any root-to-leaf path sum to target?
+public boolean hasPathSum(TreeNode root, int target) {
+    if (root == null) return false;
+    if (root.left == null &amp;&amp; root.right == null) {
+        return target == root.val;
+    }
+    int rest = target - root.val;
+    return hasPathSum(root.left, rest) || hasPathSum(root.right, rest);
+}</code></pre>
+
+      <h4>Pattern D — Multi-return tuple (Tree DP)</h4>
+      <pre><code class="language-java">/**
+ * House Robber III — return { robThis, skipThis }
+ * Time: O(n)   Space: O(h)
+ */
+public int rob(TreeNode root) {
+    int[] ans = robDfs(root);
+    return Math.max(ans[0], ans[1]);
+}
+
+private int[] robDfs(TreeNode node) {
+    if (node == null) return new int[]{0, 0};
+    int[] l = robDfs(node.left);
+    int[] r = robDfs(node.right);
+
+    int rob  = node.val + l[1] + r[1];                          // can't rob children
+    int skip = Math.max(l[0], l[1]) + Math.max(r[0], r[1]);     // children free
+    return new int[]{rob, skip};
+}</code></pre>
+
+      <h4>Pattern E — Maximum Path Sum (any-to-any path)</h4>
+      <pre><code class="language-java">private int maxSum = Integer.MIN_VALUE;
+
+public int maxPathSum(TreeNode root) {
+    maxSum = Integer.MIN_VALUE;
+    gain(root);
+    return maxSum;
+}
+
+private int gain(TreeNode node) {
+    if (node == null) return 0;
+    int l = Math.max(0, gain(node.left));     // ignore negative gains
+    int r = Math.max(0, gain(node.right));
+    maxSum = Math.max(maxSum, node.val + l + r);
+    return node.val + Math.max(l, r);          // single arm continues up
+}</code></pre>
+
+      <h3 class="sub-h" id="tree-lca">Lowest Common Ancestor (general binary tree)</h3>
+      <pre><code class="language-java">/**
+ * LCA without BST ordering.
+ * Idea: recurse left and right; if both sides return non-null, current node is LCA.
+ *
+ * Time: O(n)   Space: O(h)
+ */
+public TreeNode lca(TreeNode root, TreeNode p, TreeNode q) {
+    if (root == null || root == p || root == q) return root;
+
+    TreeNode left  = lca(root.left,  p, q);
+    TreeNode right = lca(root.right, p, q);
+
+    if (left != null &amp;&amp; right != null) return root;   // p and q split here
+    return left != null ? left : right;
+}</code></pre>
+
+      <h3 class="sub-h" id="tree-construct">Construction from traversals</h3>
+      <pre><code class="language-java">/**
+ * Build tree from Preorder + Inorder.
+ * preorder[0] is the root; locate it in inorder to split left/right subtrees.
+ *
+ * Time: O(n) using a HashMap of inorder index lookups
+ * Space: O(n)
+ */
+private Map&lt;Integer, Integer&gt; inIndex;
+private int preIdx;
+
+public TreeNode buildTree(int[] preorder, int[] inorder) {
+    inIndex = new HashMap&lt;&gt;();
+    for (int i = 0; i &lt; inorder.length; i++) inIndex.put(inorder[i], i);
+    preIdx = 0;
+    return build(preorder, 0, inorder.length - 1);
+}
+
+private TreeNode build(int[] preorder, int inLeft, int inRight) {
+    if (inLeft &gt; inRight) return null;
+
+    int rootVal = preorder[preIdx++];
+    TreeNode root = new TreeNode(rootVal);
+    int mid = inIndex.get(rootVal);
+
+    root.left  = build(preorder, inLeft, mid - 1);
+    root.right = build(preorder, mid + 1, inRight);
+    return root;
+}</code></pre>
+
+      <h3 class="sub-h" id="tree-serialize">Serialize / Deserialize (preorder + null markers)</h3>
+      <pre><code class="language-java">public class Codec {
+
+    private static final String NULL = "#";
+    private static final String SEP  = ",";
+
+    // ---- Serialize: preorder DFS, write "#" for null ----
+    public String serialize(TreeNode root) {
+        StringBuilder sb = new StringBuilder();
+        serializeDfs(root, sb);
+        return sb.toString();
+    }
+
+    private void serializeDfs(TreeNode node, StringBuilder sb) {
+        if (node == null) {
+            sb.append(NULL).append(SEP);
+            return;
+        }
+        sb.append(node.val).append(SEP);
+        serializeDfs(node.left, sb);
+        serializeDfs(node.right, sb);
+    }
+
+    // ---- Deserialize: consume tokens in preorder ----
+    public TreeNode deserialize(String data) {
+        Deque&lt;String&gt; tokens = new ArrayDeque&lt;&gt;(Arrays.asList(data.split(SEP)));
+        return deserializeDfs(tokens);
+    }
+
+    private TreeNode deserializeDfs(Deque&lt;String&gt; tokens) {
+        String t = tokens.poll();
+        if (t == null || t.equals(NULL)) return null;
+        TreeNode node = new TreeNode(Integer.parseInt(t));
+        node.left  = deserializeDfs(tokens);
+        node.right = deserializeDfs(tokens);
+        return node;
+    }
+}</code></pre>
+
+      <h3 class="sub-h" id="tree-views">Views &amp; modifications</h3>
+
+      <h4>Invert Binary Tree</h4>
+      <pre><code class="language-java">public TreeNode invertTree(TreeNode root) {
+    if (root == null) return null;
+    TreeNode left  = invertTree(root.left);
+    TreeNode right = invertTree(root.right);
+    root.left  = right;
+    root.right = left;
+    return root;
+}</code></pre>
+
+      <h4>Flatten Binary Tree to Linked List (preorder, in-place)</h4>
+      <pre><code class="language-java">// Iterative variant: for each node, attach right subtree to the rightmost
+// of the left subtree, then move left to right.
+public void flatten(TreeNode root) {
+    TreeNode cur = root;
+    while (cur != null) {
+        if (cur.left != null) {
+            TreeNode rightmost = cur.left;
+            while (rightmost.right != null) rightmost = rightmost.right;
+            rightmost.right = cur.right;
+            cur.right = cur.left;
+            cur.left  = null;
+        }
+        cur = cur.right;
+    }
+}</code></pre>
+
+      <h4>Same Tree / Symmetric Tree</h4>
+      <pre><code class="language-java">public boolean isSameTree(TreeNode p, TreeNode q) {
+    if (p == null || q == null) return p == q;
+    return p.val == q.val
+        &amp;&amp; isSameTree(p.left,  q.left)
+        &amp;&amp; isSameTree(p.right, q.right);
+}
+
+public boolean isSymmetric(TreeNode root) {
+    return root == null || mirror(root.left, root.right);
+}
+private boolean mirror(TreeNode a, TreeNode b) {
+    if (a == null || b == null) return a == b;
+    return a.val == b.val
+        &amp;&amp; mirror(a.left,  b.right)
+        &amp;&amp; mirror(a.right, b.left);
+}</code></pre>
+
+      <h3 class="sub-h" id="tree-adapt">How to recognize / adapt</h3>
+      <table>
+        <thead>
+          <tr><th>Signal in problem</th><th>Likely template</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>"Visit every node in some order"</td><td>DFS pre/in/post or BFS level-order</td></tr>
+          <tr><td>"By depth / level / row"</td><td>BFS with the <code>size = queue.size()</code> trick</td></tr>
+          <tr><td>"Height / depth / count of …"</td><td>Bottom-up recursion (Pattern A)</td></tr>
+          <tr><td>"Path through any node" / diameter / max sum</td><td>Bottom-up + global answer (Pattern B / E)</td></tr>
+          <tr><td>"Path from root to leaf with X"</td><td>Top-down recursion (Pattern C)</td></tr>
+          <tr><td>"Each node has two states (include / exclude, etc.)"</td><td>Multi-return tuple Tree DP (Pattern D)</td></tr>
+          <tr><td>"Lowest common ancestor"</td><td>LCA template (BST → ordering shortcut, otherwise general)</td></tr>
+          <tr><td>"Build tree from arrays"</td><td>Preorder + Inorder construction</td></tr>
+          <tr><td>"Encode / decode tree as string"</td><td>Serialize/Deserialize with null markers</td></tr>
+          <tr><td>"Right / left / top / bottom view"</td><td>BFS (or DFS with depth tracking)</td></tr>
+          <tr><td>"Modify pointers in place"</td><td>Recursion + parent rewrites (invert, flatten, connect)</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Quick checklist for any tree problem</h4>
+      <ol style="margin: 6px 0 12px 22px; padding: 0;">
+        <li>What does each subtree return? (height, sum, count, boolean, tuple…)</li>
+        <li>Top-down or bottom-up information flow?</li>
+        <li>Do I need a global variable, or can the answer be folded into the return?</li>
+        <li>What is the base case? (<code>node == null</code>, leaf, single node)</li>
+        <li>Will iteration be cleaner (BFS / iterative DFS) or is recursion fine?</li>
+      </ol>
+
+      <details class="hinglish" id="tree-hinglish">
+        <summary>Hinglish quick guide — kaise use kare</summary>
+        <div class="body">
+          <ul class="tight">
+            <li><strong>Traversals</strong> → 4 hi options: pre, in, post, level. Pehle decide karo data kaha "visit" karna hai.</li>
+            <li><strong>Level order / right view</strong> → BFS, har iteration mein <code>size = queue.size()</code> freeze karke level process karo.</li>
+            <li><strong>Height / Depth / Count</strong> → Pattern A: bottom-up, sirf ek number return karo.</li>
+            <li><strong>Diameter / Max Path Sum</strong> → Pattern B/E: subtree se single arm return karo, global best update karo "through this node" wale path se.</li>
+            <li><strong>Path Sum / Root-to-leaf</strong> → Pattern C: target ko parameter ke through neeche le jao.</li>
+            <li><strong>Two-state per node</strong> (Robber III, Cameras) → tuple return karo: <code>{ include, exclude }</code>.</li>
+            <li><strong>LCA (general)</strong> → left aur right me dhundo. Dono non-null mile to current node = LCA.</li>
+            <li><strong>Construct from preorder + inorder</strong> → preorder ka first element root, inorder me uska index dhundo (HashMap se O(1)).</li>
+            <li><strong>Serialize / Deserialize</strong> → preorder + "#" null markers; deserialize me ek queue/deque se tokens consume karo.</li>
+            <li><strong>Invert / Flatten / Connect Next</strong> → recursion karke subtree-pointers rewrite karo.</li>
+            <li><strong>Symmetric</strong> → mirror function: left vs right ka left, aur left vs right ka right cross-compare.</li>
+          </ul>
+          <p style="color: var(--text-dim); margin-top: 8px;">
+            Mantra: <strong>“Subtree kya bata sakta hai apne parent ko?”</strong> — wahi return type ban jaata hai. 80–90% binary tree problems is sawaal se nikal jaate hain.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <footer>
+      Compiled from templates.md · Java reference patterns for Merge Intervals, Sliding Window, BST, Monotonic Deque/Stack, Heap / Priority Queue, Dynamic Programming, and Tree.
+    </footer>
+  </main>
+</div>
+<script>
+  if (window.hljs) {
+    hljs.highlightAll();
+  }
+
+  // ====================== Tab navigation ======================
+  (function () {
+    const sections = Array.from(document.querySelectorAll('section.pattern'));
+    const tabs = Array.from(document.querySelectorAll('.tab-list .tab'));
+    const tabList = document.getElementById('tabList');
+    const prevBtn = document.getElementById('tabPrev');
+    const nextBtn = document.getElementById('tabNext');
+    let activeIndex = Math.max(0, tabs.findIndex(t => t.classList.contains('active')));
+
+    function setActive(index, scrollIntoView = true) {
+      if (index < 0 || index >= tabs.length) return;
+      activeIndex = index;
+      tabs.forEach((t, i) => {
+        const on = i === index;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+      });
+      sections.forEach((s, i) => {
+        s.classList.toggle('active', s.id === tabs[index].dataset.target);
+      });
+      // Update URL hash without jumping the page
+      const id = tabs[index].dataset.target;
+      if (history.replaceState) history.replaceState(null, '', '#' + id);
+      updateArrows();
+      // Scroll content area to top when switching tabs
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateArrows() {
+      prevBtn.disabled = activeIndex === 0;
+      nextBtn.disabled = activeIndex === tabs.length - 1;
+    }
+
+    // Click tab
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => setActive(i));
+    });
+
+    // Arrow buttons
+    prevBtn.addEventListener('click', () => setActive(activeIndex - 1));
+    nextBtn.addEventListener('click', () => setActive(activeIndex + 1));
+
+    // Keyboard arrows (global)
+    document.addEventListener('keydown', (e) => {
+      // Ignore when typing in inputs / contenteditable
+      const tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setActive(Math.min(activeIndex + 1, tabs.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setActive(Math.max(activeIndex - 1, 0));
+      }
+    });
+
+    // Sidebar links should switch tabs too
+    document.querySelectorAll('aside.toc a[href^="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        const id = href.slice(1);
+        // Find which tab owns this id (either the section itself or one of its sub-anchors)
+        const owner = sections.find(sec => sec.id === id || sec.querySelector('#' + CSS.escape(id)));
+        if (!owner) return;
+        const idx = tabs.findIndex(t => t.dataset.target === owner.id);
+        if (idx >= 0) {
+          setActive(idx, false);
+          // After switching, scroll to the actual sub-anchor inside the section
+          if (owner.id !== id) {
+            setTimeout(() => {
+              const target = document.getElementById(id);
+              if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 60);
+          }
+        }
+      });
+    });
+
+    // Honour initial #hash
+    if (location.hash) {
+      const id = location.hash.slice(1);
+      const owner = sections.find(sec => sec.id === id || sec.querySelector('#' + CSS.escape(id)));
+      if (owner) {
+        const idx = tabs.findIndex(t => t.dataset.target === owner.id);
+        if (idx >= 0) setActive(idx, true);
+      }
+    }
+
+    updateArrows();
+  })();
+
+  // Hamburger menu toggle
+  (function () {
+    const body = document.body;
+    const btn = document.getElementById('menuToggle');
+    const backdrop = document.getElementById('tocBackdrop');
+    const toc = document.querySelector('aside.toc');
+
+    function setOpen(open) {
+      body.classList.toggle('menu-open', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function toggle() {
+      setOpen(!body.classList.contains('menu-open'));
+    }
+
+    btn.addEventListener('click', toggle);
+    backdrop.addEventListener('click', () => setOpen(false));
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && body.classList.contains('menu-open')) {
+        setOpen(false);
+      }
+    });
+
+    // Close after clicking any link inside the TOC
+    if (toc) {
+      toc.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href^="#"]');
+        if (link) setOpen(false);
+      });
+    }
+  })();
+</script>
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>
