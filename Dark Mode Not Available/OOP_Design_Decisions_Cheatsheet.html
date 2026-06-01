@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OOP Design Decisions — Interfaces · Classes · Inheritance · Composition (Intuition Guide)</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<style>
+  /* ---------- Print-first, A3 friendly ---------- */
+  @page { size: A3; margin: 12mm; }
+  html, body {
+    background: #ffffff;
+    color: #111;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt;
+    line-height: 1.35;
+    margin: 0;
+    padding: 0;
+  }
+  .wrap { max-width: 1650px; margin: 0 auto; padding: 14px 18px 40px 18px; }
+  h1 {
+    font-size: 26pt;
+    margin: 4px 0 2px 0;
+    letter-spacing: 0.3px;
+    border-bottom: 3px solid #111;
+    padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: #444; margin-left: 10px;}
+  h2 {
+    font-size: 16pt;
+    margin: 22px 0 6px 0;
+    padding: 6px 10px;
+    background: #f2f2f2;
+    border-left: 6px solid #111;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12.5pt;
+    margin: 14px 0 4px 0;
+    color: #222;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 11.5pt;
+    margin: 10px 0 2px 0;
+    color: #333;
+    page-break-after: avoid;
+  }
+  p, li { margin: 4px 0; }
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10.5pt;
+    background: #f6f6f6;
+    border: 1px solid #e2e2e2;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #222;
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 10.25pt;
+    line-height: 1.5;
+    background: #ffffff;
+    color: #24292e;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  pre .kw  { color: #cf222e; font-weight: 600; } /* keywords */
+  pre .typ { color: #953800; }                   /* types / classes */
+  pre .str { color: #0a3069; }                   /* strings / chars */
+  pre .num { color: #0550ae; }                   /* numeric literals */
+  pre .cmt { color: #6e7781; font-style: italic; } /* comments */
+  pre .ann { color: #116329; font-weight: 600; } /* annotations @Override */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 6px 0 10px 0;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 6px 8px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th {
+    background: #eaeaea;
+    font-weight: 600;
+  }
+  .wrong { background: #fff2f2; }
+  .right { background: #f0fbf1; }
+  .wrong td:first-child, .right td:first-child { font-weight: 600; width: 18%; }
+  .col-wrong { color: #a40000; }
+  .col-right { color: #116611; }
+
+  /* Compare table variant */
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: #fbe8e8; color: #7a0000;}
+  table.compare th:nth-child(3) { width: 39%; background: #e5f7e8; color: #0b5d16;}
+  table.compare td:nth-child(2) { background: #fff6f6; }
+  table.compare td:nth-child(3) { background: #f4fbf5; }
+
+  /* Tips */
+  .tips {
+    border: 1px dashed #888;
+    background: #fffdf4;
+    padding: 8px 12px;
+    margin: 6px 0 10px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .tips b { color: #6a4a00; }
+
+  /* Decision callout — the "how did we decide" reasoning */
+  .decision {
+    border: 1px solid #1f6f9c;
+    border-left: 6px solid #1f8ac0;
+    background: #eef7fc;
+    padding: 9px 13px;
+    margin: 8px 0 12px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .decision b { color: #0d4a6b; }
+  .decision .verdict {
+    display: inline-block;
+    margin-top: 4px;
+    font-weight: 600;
+    color: #0d4a6b;
+  }
+
+  /* Smell callout — warning signs */
+  .smell {
+    border: 1px solid #a06000;
+    border-left: 6px solid #d08400;
+    background: #fff7ec;
+    padding: 9px 13px;
+    margin: 8px 0 12px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .smell b { color: #7a4a00; }
+
+  /* Tricky questions */
+  .tricky {
+    border: 1px solid #333;
+    background: #fafaff;
+    padding: 10px 12px;
+    margin: 10px 0 16px 0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary {
+    cursor: pointer;
+    color: #005a9e;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  details[open] > summary { color: #111; }
+  details .hint {
+    margin-top: 4px;
+    padding: 6px 8px;
+    background: #eef3ff;
+    border-left: 4px solid #005a9e;
+    border-radius: 3px;
+  }
+
+  /* Legend pills */
+  .pill {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 9.5pt;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .pill.bad { background: #a40000; color: #fff; }
+  .pill.good { background: #116611; color: #fff; }
+  .pill.tip  { background: #b08100; color: #fff; }
+  .pill.trk  { background: #1f5fa0; color: #fff; }
+
+  /* Print-only: show hints */
+  @media print {
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+    .noprint { display: none !important; }
+  }
+
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px 14px;
+    font-size: 10.5pt;
+    margin: 6px 0 0 0;
+  }
+  .toc a { color: #005a9e; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  .legend { font-size: 10pt; margin: 6px 0 10px 0; }
+  .small { font-size: 9.5pt; color: #555; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>OOP Design Decisions<span class="sub">Interfaces · Classes · Inheritance · Composition — the intuition for <i>when to use what</i> (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Over-engineered</span>
+  <span class="pill good">Right / Idiomatic</span>
+  <span class="pill tip">Heuristic</span>
+  <span class="pill trk">Decision</span>
+  <span class="small">This guide assumes you know the syntax. The goal is the <b>reasoning</b>: every example shows the naive choice, why it hurts, and how we decided on the better one.</span>
+</div>
+
+<div class="toc">
+  <a href="#s0">0. How to read this guide</a>
+  <a href="#s1">1. Four tools at a glance</a>
+  <a href="#s2">2. The one master question</a>
+  <a href="#s3">3. The decision flow</a>
+  <a href="#s4">4. Concrete class — the default</a>
+  <a href="#s5">5. Interface — a contract ("can-do")</a>
+  <a href="#s6">6. Abstract class — shared skeleton</a>
+  <a href="#s7">7. Inheritance — when "is-a" is real</a>
+  <a href="#s8">8. Composition — the default reuse</a>
+  <a href="#s9">9. Interface vs Abstract vs Concrete</a>
+  <a href="#s10">10. Inheritance vs Composition</a>
+  <a href="#s11">11. Example A — Payment methods</a>
+  <a href="#s12">12. Example B — Notifications</a>
+  <a href="#s13">13. Example C — Coffee / Decorator</a>
+  <a href="#s14">14. Example D — Game abilities</a>
+  <a href="#s15">15. Example E — Service + Repository</a>
+  <a href="#s16">16. Example F — Report exporters</a>
+  <a href="#s17">17. Decision heuristics &amp; smells</a>
+  <a href="#s18">18. Anti-pattern gallery</a>
+  <a href="#s19">19. Final quick-reference rules</a>
+</div>
+
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. How to read this guide</h2>
+<p>Most tutorials teach you <i>what</i> a class, interface, or <code>extends</code> keyword does. That is not the hard part. The hard part is standing in front of a blank file and knowing <b>which one to reach for</b> — and being able to defend the choice when a reviewer pushes back.</p>
+<p>So every section here is written around a decision, not a definition. The pattern repeats:</p>
+<table>
+  <thead><tr><th>Step</th><th>What we do</th><th>Why it matters</th></tr></thead>
+  <tbody>
+    <tr><td><b>1. Requirement</b></td><td>State what the code must do, in plain English.</td><td>The relationship words ("is a", "has a", "can do", "varies by") are hiding in the sentence.</td></tr>
+    <tr><td><b>2. Naive move</b></td><td>The first thing most people write.</td><td>Usually works for today, hurts in six months.</td></tr>
+    <tr><td><b>3. The pain</b></td><td>The exact line that becomes painful to change.</td><td>Design quality only shows up at change time, never at write time.</td></tr>
+    <tr><td><b>4. The decision</b></td><td>Pick the tool and justify it in one sentence.</td><td>If you can't say the sentence, you picked wrong.</td></tr>
+    <tr><td><b>5. The result</b></td><td>The refactored code.</td><td>Proof the decision actually paid off.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The whole guide in one line:</b> <i>Inheritance and interfaces model what a thing <b>is</b>; composition models what a thing <b>has</b> or <b>uses</b>. Default to "has", earn the right to say "is".</i></div>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. The four tools at a glance</h2>
+<table>
+  <thead><tr><th>Tool</th><th>Sentence it models</th><th>Gives you</th><th>Costs you</th><th>Reach for it when…</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Concrete class</b></td>
+      <td>"This is a concrete <i>thing</i> with state + behavior."</td>
+      <td>The simplest unit. State, behavior, instances.</td>
+      <td>Nothing — until you need variation it can't express.</td>
+      <td>There is exactly one implementation and no fork in behavior yet.</td>
+    </tr>
+    <tr>
+      <td><b>Interface</b></td>
+      <td>"X <i>can do</i> Y" / "X <i>plays the role</i> Y."</td>
+      <td>A contract callers depend on; many unrelated impls; multiple roles per class.</td>
+      <td>No shared code (pre-Java 8) — just the promise. Indirection.</td>
+      <td>Behavior varies, callers shouldn't care which impl, or a type needs several roles.</td>
+    </tr>
+    <tr>
+      <td><b>Abstract class</b></td>
+      <td>"X <i>is a kind of</i> Y, and all Ys share this skeleton."</td>
+      <td>Partial implementation + enforced template + shared state.</td>
+      <td>Single-parent lock-in (<code>extends</code> is used up). Tight coupling.</td>
+      <td>Several impls are genuine subtypes <b>and</b> share real code/state.</td>
+    </tr>
+    <tr>
+      <td><b>Composition</b></td>
+      <td>"X <i>has a</i> / <i>uses a</i> Y."</td>
+      <td>Reuse without subtype pressure; swap parts at runtime; combine many behaviors.</td>
+      <td>A little wiring/delegation boilerplate.</td>
+      <td>You want a behavior but the "is-a" sentence is false or fragile. (Most of the time.)</td>
+    </tr>
+  </tbody>
+</table>
+<div class="decision">
+  <b>How to use this table:</b> read your requirement out loud and listen for the verb.
+  "can / supports / is able to" → <b>interface</b>.
+  "is a kind of … and they share code" → <b>abstract class</b>.
+  "has / uses / is built from / delegates to" → <b>composition</b>.
+  No variation at all yet → <b>plain class</b>, and don't add abstraction on speculation.
+  <span class="verdict">Verdict: the grammar of the sentence picks the tool more reliably than any rule of thumb.</span>
+</div>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. The one master question that drives every choice</h2>
+<p>Before you type <code>class</code>, <code>interface</code>, or <code>extends</code>, you only have to answer one thing about the relationship between two types A and B:</p>
+
+<table>
+  <thead><tr><th>Read the sentence aloud…</th><th>Relationship</th><th>Tool</th><th>The test it must pass</th></tr></thead>
+  <tbody>
+    <tr><td>"A <b>is a</b> B" — and stays one in <i>every</i> place a B is used</td><td>true subtype</td><td><code>extends</code> / <code>implements</code></td><td><b>Liskov:</b> swap an A in for a B and nothing breaks or surprises.</td></tr>
+    <tr><td>"A <b>can do</b> B" / "A <b>plays the role</b> B"</td><td>capability</td><td><code>interface</code></td><td>The role is independent of A's identity; other unrelated types can play it too.</td></tr>
+    <tr><td>"A <b>has a</b> B" / "A <b>is built from</b> B"</td><td>ownership</td><td>field (composition)</td><td>B is a part/collaborator; A is not a kind of B.</td></tr>
+    <tr><td>"A <b>uses a</b> B for a moment"</td><td>dependency</td><td>parameter / injected field</td><td>A needs B's behavior but doesn't own its lifetime.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips">
+  <b>The trap everyone falls into:</b> "I can reuse B's code if A extends B." Reuse is <b>not</b> a reason to inherit. Reuse is what composition is for. Inheritance is for <i>substitutability</i>. If you only want the code and not the "is-a", you want a field, not a parent.
+</div>
+
+<h3>Why "is-a" is a stronger claim than it sounds</h3>
+<p>Saying "A is a B" promises something brutal: <i>every method B exposes must make sense on A, forever, including methods B's author hasn't written yet.</i> That is why a true is-a is rare and a false one is a time bomb.</p>
+<pre>// The classic broken promise:
+class Rectangle { void setWidth(int w){...} void setHeight(int h){...} }
+class Square extends Rectangle { /* must keep width == height */ }
+
+Rectangle r = new Square();
+r.setWidth(5);
+r.setHeight(10);   // a caller written for Rectangle expects 5 x 10...
+// ...but a Square can't be 5 x 10. The "is-a" was a lie.</pre>
+<div class="decision">
+  <b>Decision:</b> Square is <i>not</i> a Rectangle in a mutable model, because <code>setWidth</code> doesn't make sense on a Square.
+  <span class="verdict">Verdict: both implement a read-only <code>Shape</code> interface (<code>area()</code>), and neither extends the other.</span>
+</div>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. The decision flow (run this in your head every time)</h2>
+<pre><span class="cmt">START: I need type A to have some behavior / fit somewhere.</span>
+
+1. Is there only ONE behavior and no sign of variation yet?
+   ├─ YES → plain concrete class. Stop. Don't pre-abstract.
+   └─ NO  → go to 2.
+
+2. Do callers need to treat several DIFFERENT types uniformly,
+   without caring which concrete one they hold?
+   ├─ YES → you need a polymorphic supertype → go to 3.
+   └─ NO  → you just need to REUSE some behavior → go to 5.
+
+3. Are the implementations RELATED (share real state + code) or
+   UNRELATED (only share a promise)?
+   ├─ UNRELATED, or a type needs MULTIPLE roles → INTERFACE.
+   └─ RELATED, genuine subtypes sharing a skeleton → go to 4.
+
+4. Is "A is a B in every context" true (passes Liskov)?
+   ├─ YES → ABSTRACT CLASS (skeleton) or concrete inheritance.
+   └─ NO  → step back: use an INTERFACE for the role +
+            COMPOSITION for the shared code.
+
+5. REUSE path: do you want B's behavior inside A?
+   └─ Hold a B as a field and delegate (COMPOSITION).
+      Add an interface on top only if callers must be polymorphic.</pre>
+
+<div class="tips">
+  <b>Notice the bias:</b> three of the five exits land on interface or composition. Concrete inheritance is the <i>last</i> door you open, only after Liskov says yes. That bias is the whole point of "favor composition over inheritance".
+</div>
+
+<table class="compare">
+  <thead><tr><th>If you find yourself saying…</th><th>You probably want (wrong)</th><th>You actually want (right)</th></tr></thead>
+  <tbody>
+    <tr><td>"I'll extend it to reuse two methods."</td><td><code>extends</code></td><td>a field + delegate (composition)</td></tr>
+    <tr><td>"Lots of unrelated classes need to be 'printable'."</td><td>a base class</td><td><code>interface Printable</code></td></tr>
+    <tr><td>"All my parsers share 80% of the steps."</td><td>copy-paste, or interface only</td><td>abstract class with a template method</td></tr>
+    <tr><td>"This thing is sometimes a manager, sometimes a contractor."</td><td>a subclass per combination</td><td>composition of roles</td></tr>
+    <tr><td>"I need to add behavior at runtime, stackable."</td><td>a subclass per combination</td><td>decorators (composition + shared interface)</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Concrete class — the honest default</h2>
+<p>The most under-rated decision is <b>not abstracting at all</b>. A plain class with state and methods is the right answer far more often than the patterns crowd admits. Abstraction has a carrying cost: indirection, more files, harder navigation. You pay it only when variation actually arrives.</p>
+
+<h3>Requirement</h3>
+<p>"I need a <code>Money</code> value: an amount and a currency, that can add to another Money."</p>
+<pre>final class Money {
+    private final long minorUnits;   <span class="cmt">// cents</span>
+    private final String currency;
+
+    Money(long minorUnits, String currency){
+        this.minorUnits = minorUnits;
+        this.currency = currency;
+    }
+    Money plus(Money other){
+        if(!currency.equals(other.currency))
+            throw new IllegalArgumentException("currency mismatch");
+        return new Money(minorUnits + other.minorUnits, currency);
+    }
+}</pre>
+<div class="decision">
+  <b>How we decided:</b> there is one representation, one behavior, no second kind of Money on the horizon. No caller needs to swap implementations. So: <b>no interface, no base class</b>. Adding <code>interface MoneyLike</code> here would be abstraction with zero payoff — a classic "speculative generality" smell.
+  <span class="verdict">Verdict: concrete <code>final</code> class. We can always extract an interface later <i>when</i> a second implementation appears — and not one day before.</span>
+</div>
+
+<div class="smell">
+  <b>Smell — premature interface:</b> a project where every class has a matching <code>IThing</code> interface with exactly one implementation <code>Thing</code>. That is ceremony, not design. Extract the interface at the moment the second implementation (or the first mock you genuinely need) shows up.
+</div>
+
+<div class="tricky">
+  <div class="q">Q. "Always code to an interface" — so should <code>Money</code> implement <code>IMoney</code> from day one?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. The maxim means <i>depend on the narrowest type that does the job</i>, not "wrap everything in an interface". With one impl and no polymorphic callers, the interface adds indirection and zero flexibility. YAGNI wins until a real second case arrives.</div>
+  </details>
+</div>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Interface — a contract / capability ("can-do")</h2>
+<p>An interface answers: <i>"what can callers rely on, regardless of who implements it?"</i> It is pure promise. Use it when the <b>behavior varies</b>, the <b>implementations are unrelated</b>, or a single type must <b>play several roles</b>.</p>
+
+<h3>The three signals that scream "interface"</h3>
+<table>
+  <thead><tr><th>Signal</th><th>Example</th><th>Why a class can't do it</th></tr></thead>
+  <tbody>
+    <tr><td>Many <i>unrelated</i> types, one capability</td><td><code>Comparable</code>, <code>Serializable</code>, <code>AutoCloseable</code></td><td>A <code>String</code>, a <code>File</code>, and a <code>Socket</code> share no ancestor — but all can be "closed".</td></tr>
+    <tr><td>A type needs <i>multiple</i> roles</td><td><code>class Drone implements Flyable, Trackable, Chargeable</code></td><td>Java allows only one parent class; you can implement many interfaces.</td></tr>
+    <tr><td>Callers should be <i>decoupled</i> from impl</td><td><code>List</code> hides <code>ArrayList</code> vs <code>LinkedList</code></td><td>The contract lets you swap the impl without touching callers.</td></tr>
+  </tbody>
+</table>
+
+<h3>Worked decision</h3>
+<p><b>Requirement:</b> "Different objects in my app need to be exportable to JSON for an audit log: an <code>Order</code>, a <code>User</code>, a <code>Shipment</code>."</p>
+<pre><span class="cmt">// Naive: a base class everything extends to get toJson().</span>
+<span class="cmt">// Problem: Order, User, Shipment are NOT the same kind of thing,</span>
+<span class="cmt">// and they already have their own natural hierarchies. Forcing a</span>
+<span class="cmt">// shared parent just to share toJson() burns the single extends slot.</span>
+
+<span class="cmt">// Decision: "can be exported" is a CAPABILITY, not an identity. → interface.</span>
+interface JsonExportable {
+    String toJson();
+}
+
+class Order    implements JsonExportable { public String toJson(){ ... } }
+class User     implements JsonExportable { public String toJson(){ ... } }
+class Shipment implements JsonExportable { public String toJson(){ ... } }
+
+<span class="cmt">// Callers depend only on the capability:</span>
+void audit(JsonExportable item){ log(item.toJson()); }</pre>
+<div class="decision">
+  <b>How we decided:</b> the three types share <i>no state and no identity</i> — only a promise ("I can produce JSON"). They each keep their own class hierarchy free. A class needs <code>can-do</code>, not <code>is-a</code>.
+  <span class="verdict">Verdict: interface. The single <code>extends</code> slot stays available for each type's real subtype relationship.</span>
+</div>
+
+<h3>When the interface should carry a <code>default</code> method</h3>
+<pre>interface JsonExportable {
+    String toJson();
+    <span class="cmt">// default = optional shared behavior callers get for free,</span>
+    <span class="cmt">// WITHOUT forcing a base class or breaking existing impls.</span>
+    default String toPrettyJson(){ return prettify(toJson()); }
+}</pre>
+<div class="tips"><b>Heuristic:</b> reach for a <code>default</code> method when you want to add behavior to an interface <i>without breaking every existing implementer</i>, or to provide a sensible convenience built on the abstract methods. Do <b>not</b> use defaults to smuggle in shared <i>state</i> — interfaces still can't hold instance fields. State is the line that pushes you toward an abstract class.</div>
+
+<div class="tricky">
+  <div class="q">Q. Interface gained <code>default</code> methods in Java 8 — so is an abstract class now pointless?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. Interfaces still can't hold mutable instance <b>state</b>, can't have constructors, and can't enforce construction invariants. The moment your "shared skeleton" needs fields the subclasses read/write, you've crossed into abstract-class territory.</div>
+  </details>
+</div>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Abstract class — a shared skeleton ("is-a-kind-of" + shared code/state)</h2>
+<p>An abstract class is the answer when several implementations are <b>genuine subtypes</b> (Liskov holds) <b>and</b> they share real implementation: fields, constructors, and a fixed sequence of steps where only a few vary. The signature move is the <b>Template Method</b>.</p>
+
+<h3>Worked decision — Template Method</h3>
+<p><b>Requirement:</b> "Every data import follows the same steps — open source, read rows, validate, save, close — but CSV, XML, and JSON differ only in <i>how rows are read</i>."</p>
+<pre>abstract class DataImporter {
+    <span class="cmt">// shared, fixed algorithm — subclasses can't reorder it</span>
+    public final ImportReport run(Path file){
+        var src = open(file);                 <span class="cmt">// shared</span>
+        var rows = readRows(src);             <span class="cmt">// VARIES → abstract</span>
+        var clean = validate(rows);           <span class="cmt">// shared</span>
+        save(clean);                          <span class="cmt">// shared</span>
+        close(src);                           <span class="cmt">// shared</span>
+        return report;
+    }
+    protected abstract List&lt;Row&gt; readRows(Source src);  <span class="cmt">// the hook</span>
+
+    <span class="cmt">// shared state + helpers live here — an interface couldn't hold these</span>
+    private final ImportReport report = new ImportReport();
+    protected List&lt;Row&gt; validate(List&lt;Row&gt; rows){ ... }
+    private Source open(Path p){ ... }
+    private void save(List&lt;Row&gt; rows){ ... }
+    private void close(Source s){ ... }
+}
+
+class CsvImporter  extends DataImporter { protected List&lt;Row&gt; readRows(Source s){ ... } }
+class JsonImporter extends DataImporter { protected List&lt;Row&gt; readRows(Source s){ ... } }</pre>
+<div class="decision">
+  <b>How we decided:</b> (1) the importers <i>are</i> kinds of importer — a <code>CsvImporter</code> is substitutable anywhere a <code>DataImporter</code> is used → Liskov passes. (2) They share <b>state</b> (<code>report</code>) and a <b>fixed algorithm</b> with one varying step. State + enforced template are exactly what an interface cannot give you.
+  <span class="verdict">Verdict: abstract class with a <code>final</code> template method and one <code>abstract</code> hook. Mark <code>run()</code> <code>final</code> so subclasses can't break the sequence.</span>
+</div>
+
+<div class="tips"><b>Heuristic — "interface + abstract class" combo:</b> the mature pattern is an <code>interface</code> for the contract callers see, plus an optional <code>abstract</code> skeletal class that implements the boring parts (think <code>Collection</code> ↔ <code>AbstractCollection</code>, <code>List</code> ↔ <code>AbstractList</code>). Callers depend on the interface; implementers extend the skeleton if it helps, or go their own way if it doesn't.</div>
+
+<div class="tricky">
+  <div class="q">Q. Why mark the template method <code>final</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Because the whole value of Template Method is that the <i>sequence</i> is fixed and only the hooks vary. If a subclass could override <code>run()</code>, it could skip validation or reorder steps — re-introducing exactly the inconsistency the pattern exists to prevent.</div>
+  </details>
+</div>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Inheritance — only when "is-a" is real (and survives the future)</h2>
+<p>Concrete inheritance (<code>class B extends A</code> where A is concrete) is the most powerful and the most abused tool. It couples B to A's <i>implementation</i>, not just its contract. Use it only when all of these hold:</p>
+<table>
+  <thead><tr><th>Gate</th><th>Question</th><th>If "no"…</th></tr></thead>
+  <tbody>
+    <tr><td><b>Liskov</b></td><td>Is B usable everywhere A is, with no surprises, forever?</td><td>Use interface for the role + composition for the code.</td></tr>
+    <tr><td><b>Stable parent</b></td><td>Is A's API stable, and designed for extension (documented, non-final hooks)?</td><td>Composition — don't bind to a fragile base class.</td></tr>
+    <tr><td><b>True specialization</b></td><td>Does B genuinely <i>add</i> or <i>refine</i> behavior, not subtract it?</td><td>If B removes/forbids parent methods, it's not a subtype.</td></tr>
+    <tr><td><b>One axis of variation</b></td><td>Is there only ONE dimension B specializes along?</td><td>Multiple axes → class explosion → composition.</td></tr>
+  </tbody>
+</table>
+
+<h3>A legitimate inheritance</h3>
+<pre><span class="cmt">// Exceptions are the textbook honest hierarchy: each is-a the parent</span>
+<span class="cmt">// in every context, and only refines meaning — never removes behavior.</span>
+class AppException        extends RuntimeException { ... }
+class PaymentException    extends AppException { ... }
+class CardDeclinedException extends PaymentException {
+    private final String declineCode;
+    CardDeclinedException(String code){ super("card declined: " + code); this.declineCode = code; }
+}
+<span class="cmt">// catch(AppException e) genuinely catches all three. Substitutability holds.</span></pre>
+<div class="decision">
+  <b>How we decided:</b> a <code>CardDeclinedException</code> <i>is a</i> <code>PaymentException</code> <i>is an</i> <code>AppException</code> in every place those are caught. It only adds detail (<code>declineCode</code>); it removes nothing. Single axis (kind of failure), stable parent (the JDK's <code>RuntimeException</code> is designed to be extended).
+  <span class="verdict">Verdict: concrete inheritance is correct here — and it's one of the few places it clearly is.</span>
+</div>
+
+<h3>The "class explosion" that says STOP inheriting</h3>
+<pre><span class="cmt">// Requirement: pizzas vary by SIZE and by CRUST and by TOPPINGS.</span>
+<span class="cmt">// Inheritance tries to encode every combination as a subclass:</span>
+class SmallThinMargheritaPizza extends Pizza {}
+class LargeThickPepperoniPizza extends Pizza {}
+class MediumThinVeggiePizza    extends Pizza {}
+<span class="cmt">// ...3 sizes x 3 crusts x N toppings = combinatorial explosion. Unmaintainable.</span></pre>
+<div class="smell">
+  <b>Smell — combinatorial subclasses:</b> the number of subclasses multiplies because you're modelling <i>several independent axes of variation</i> with one inheritance tree. Each axis should become a <b>field</b> (composition), not a branch of the hierarchy.
+</div>
+<pre><span class="cmt">// Decision: each axis of variation → a field. One Pizza class.</span>
+class Pizza {
+    private final Size size;            <span class="cmt">// has-a</span>
+    private final Crust crust;          <span class="cmt">// has-a</span>
+    private final List&lt;Topping&gt; toppings; <span class="cmt">// has-a many</span>
+    Pizza(Size s, Crust c, List&lt;Topping&gt; t){ ... }
+}
+<span class="cmt">// 3 sizes + 3 crusts + N toppings — additive, not multiplicative.</span></pre>
+<div class="decision">
+  <b>How we decided:</b> "a pizza <i>has a</i> size, <i>has a</i> crust, <i>has</i> toppings" — three has-a sentences, zero is-a. Inheritance can only specialize one axis; composition lets the axes vary independently.
+  <span class="verdict">Verdict: composition of value objects. Add a Builder if the constructor gets unwieldy.</span>
+</div>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Composition — the default reuse mechanism</h2>
+<p>Composition means A holds a reference to B and <b>delegates</b> the work. It's the answer to "I want B's behavior" without claiming "A is a B". It buys you three things inheritance can't: <b>runtime swapping</b>, <b>combining many behaviors</b>, and <b>insulation from the base class changing under you</b>.</p>
+
+<h3>The fragile base class problem (why reuse-by-inheritance bites)</h3>
+<pre><span class="cmt">// WRONG: extend HashSet to count how many elements were ever added.</span>
+class CountingSet&lt;E&gt; extends HashSet&lt;E&gt; {
+    private int added = 0;
+    public boolean add(E e){ added++; return super.add(e); }
+    public boolean addAll(Collection&lt;? extends E&gt; c){
+        added += c.size();
+        return super.addAll(c);   <span class="cmt">// BUG: HashSet.addAll calls add() internally...</span>
+    }                             <span class="cmt">// ...so each element is counted TWICE.</span>
+}</pre>
+<div class="smell">
+  <b>Smell:</b> the bug exists only because we inherited <i>implementation</i> — we had to know that <code>HashSet.addAll</code> happens to call <code>add</code>. That's an internal detail the base class can change in any release. You are coupled to the parent's private behavior.
+</div>
+<pre><span class="cmt">// RIGHT: compose. Wrap a Set, delegate, count in exactly one place.</span>
+class CountingSet&lt;E&gt; implements Set&lt;E&gt; {
+    private final Set&lt;E&gt; inner = new HashSet&lt;&gt;();
+    private int added = 0;
+
+    public boolean add(E e){ added++; return inner.add(e); }
+    public boolean addAll(Collection&lt;? extends E&gt; c){
+        added += c.size();
+        return inner.addAll(c);   <span class="cmt">// inner.add is HashSet's business, not ours</span>
+    }
+    public int addedCount(){ return added; }
+    <span class="cmt">// ...delegate the rest of Set to inner...</span>
+}</pre>
+<div class="decision">
+  <b>How we decided:</b> we wanted <i>reuse</i> (a working Set) + <i>one new behavior</i> (counting). Reuse is not is-a. By composing, we depend only on the <code>Set</code> <b>contract</b>, not on <code>HashSet</code>'s internal call graph — so a future JDK change can't silently double-count.
+  <span class="verdict">Verdict: implement the interface, hold the impl as a field, delegate. This is the "favor composition over inheritance" rule in its purest form.</span>
+</div>
+
+<h3>Composition also gives you runtime flexibility</h3>
+<pre><span class="cmt">// Strategy pattern: the behavior is a swappable field, chosen at runtime.</span>
+interface SortStrategy { void sort(int[] a); }
+class QuickSort implements SortStrategy { public void sort(int[] a){ ... } }
+class TimSort   implements SortStrategy { public void sort(int[] a){ ... } }
+
+class Sorter {
+    private SortStrategy strategy;                 <span class="cmt">// has-a behavior</span>
+    Sorter(SortStrategy s){ this.strategy = s; }
+    void setStrategy(SortStrategy s){ this.strategy = s; }  <span class="cmt">// swap at runtime!</span>
+    void sort(int[] a){ strategy.sort(a); }
+}</pre>
+<div class="decision">
+  <b>How we decided:</b> the sorting behavior must change <i>at runtime</i> (small arrays → insertion, large → quicksort). Inheritance fixes behavior at compile time — a <code>QuickSorter</code> can never become a <code>TimSorter</code>. A composed strategy field can be reassigned whenever you like.
+  <span class="verdict">Verdict: composition (Strategy). Interface for the contract, field for the swap.</span>
+</div>
+
+<h3>Composition vs Aggregation — the ownership nuance</h3>
+<table class="compare">
+  <thead><tr><th>Aspect</th><th>Composition (strong has-a)</th><th>Aggregation (weak has-a)</th></tr></thead>
+  <tbody>
+    <tr><td>Lifetime</td><td>Part dies with the whole.</td><td>Part outlives the whole.</td></tr>
+    <tr><td>Example</td><td><code>Order</code> owns its <code>LineItem</code>s.</td><td><code>Department</code> references shared <code>Employee</code>s.</td></tr>
+    <tr><td>Java hint</td><td>Part created inside, never leaked.</td><td>Part passed in, possibly shared.</td></tr>
+    <tr><td>Delete the whole?</td><td>Delete the parts too.</td><td>Parts survive.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Why care?</b> The distinction tells you who is responsible for creating, copying, and disposing the part — and whether a getter may safely hand it out. Composition usually means defensive copies; aggregation means shared references are expected.</div>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Interface vs Abstract class vs Concrete class — head to head</h2>
+<table>
+  <thead><tr><th>Dimension</th><th>Concrete class</th><th>Abstract class</th><th>Interface</th></tr></thead>
+  <tbody>
+    <tr><td>Can be instantiated?</td><td>Yes</td><td>No (subclass it)</td><td>No (implement it)</td></tr>
+    <tr><td>Instance state (fields)</td><td>Yes</td><td>Yes (incl. mutable)</td><td>No (only <code>public static final</code> constants)</td></tr>
+    <tr><td>Constructors</td><td>Yes</td><td>Yes (for subclasses)</td><td>No</td></tr>
+    <tr><td>How many can a class take?</td><td>—</td><td>One parent (<code>extends</code>)</td><td>Many (<code>implements</code>)</td></tr>
+    <tr><td>Code sharing</td><td>n/a</td><td>Full (fields + methods)</td><td>Behavior only via <code>default</code>; no state</td></tr>
+    <tr><td>Models</td><td>a concrete thing</td><td>"is-a-kind-of" + shared skeleton</td><td>"can-do" / a role</td></tr>
+    <tr><td>Coupling created</td><td>none beyond itself</td><td>tight (to impl + single-parent lock)</td><td>loose (to a promise)</td></tr>
+  </tbody>
+</table>
+
+<table class="compare">
+  <thead><tr><th>Situation</th><th>Don't reach for…</th><th>Reach for…</th></tr></thead>
+  <tbody>
+    <tr><td>One impl, no variation in sight</td><td>interface / abstract class</td><td><b>concrete class</b> (abstract later if needed)</td></tr>
+    <tr><td>Unrelated types share one capability</td><td>abstract base class</td><td><b>interface</b></td></tr>
+    <tr><td>A type must fill several roles</td><td>multiple inheritance (illegal anyway)</td><td><b>multiple interfaces</b></td></tr>
+    <tr><td>Subtypes share state + a fixed algorithm</td><td>interface alone (can't hold state)</td><td><b>abstract class</b> (template method)</td></tr>
+    <tr><td>You want the contract <i>and</i> a head-start impl</td><td>just one of them</td><td><b>interface + skeletal abstract class</b> (e.g. <code>List</code>/<code>AbstractList</code>)</td></tr>
+    <tr><td>You only want to reuse some code</td><td>any kind of inheritance</td><td><b>composition</b> (a field + delegation)</td></tr>
+  </tbody>
+</table>
+
+<div class="decision">
+  <b>The deciding question between interface and abstract class:</b> <i>"Do my implementations share real state and a real chunk of code, AND are they all genuinely the same kind of thing?"</i>
+  Both yes → abstract class. Only a shared promise, or unrelated types, or a type needs multiple roles → interface.
+  <span class="verdict">Verdict: when unsure, start with an interface (loosest coupling). Promote to "interface + abstract skeleton" only when duplication across impls becomes real and painful.</span>
+</div>
+
+<div class="tricky">
+  <div class="q">Q. Two interfaces both define <code>default void log(){...}</code> and my class implements both. What happens?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">The diamond conflict makes it a compile error until you override <code>log()</code> in your class. You can delegate to a chosen one with <code>InterfaceName.super.log()</code>. This is exactly why defaults are for convenience, not for layering real behavior.</div>
+  </details>
+</div>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Inheritance vs Composition — head to head</h2>
+<table>
+  <thead><tr><th>Dimension</th><th>Inheritance (<code>extends</code>)</th><th>Composition (field + delegate)</th></tr></thead>
+  <tbody>
+    <tr><td>Relationship</td><td>is-a</td><td>has-a / uses-a</td></tr>
+    <tr><td>Binding time</td><td>Compile time (fixed at <code>new</code>)</td><td>Runtime (swap the field)</td></tr>
+    <tr><td>Coupling</td><td>Tight — to the parent's implementation</td><td>Loose — to the part's contract</td></tr>
+    <tr><td>Reuse cost</td><td>Inherits the <i>whole</i> API, wanted or not</td><td>Expose only what you delegate</td></tr>
+    <tr><td>Multiple behaviors</td><td>One parent only</td><td>Combine as many parts as you like</td></tr>
+    <tr><td>Fragile base class</td><td>Yes — parent changes can break you</td><td>No — insulated behind the contract</td></tr>
+    <tr><td>Polymorphism</td><td>Built in</td><td>Add an interface on top when callers need it</td></tr>
+    <tr><td>Boilerplate</td><td>Low (free method inheritance)</td><td>Some (delegation methods)</td></tr>
+  </tbody>
+</table>
+
+<div class="tips"><b>The famous rule, decoded:</b> "Favor composition over inheritance" doesn't mean "never inherit". It means <i>default</i> to composition because it keeps coupling loose and behavior swappable, and only inherit when you have a <b>proven, future-proof is-a</b> that passes Liskov. Inheritance is a commitment; composition is a loan you can repay.</div>
+
+<table class="compare">
+  <thead><tr><th>Tie-breaker question</th><th>Answer leans inheritance</th><th>Answer leans composition</th></tr></thead>
+  <tbody>
+    <tr><td>Is every parent method meaningful on the child?</td><td>Yes, all of them</td><td>Some don't apply / you'd throw <code>UnsupportedOperationException</code></td></tr>
+    <tr><td>Will the relationship hold forever?</td><td>Yes (e.g. <code>SavingsAccount</code> is-a <code>Account</code>)</td><td>Might change (a manager who becomes a contractor)</td></tr>
+    <tr><td>How many things vary independently?</td><td>One axis</td><td>Two or more axes</td></tr>
+    <tr><td>Do you need to change behavior at runtime?</td><td>No</td><td>Yes</td></tr>
+    <tr><td>Do you control / trust the parent class?</td><td>Yes, designed for extension</td><td>No, or it's not designed to be subclassed</td></tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. <code>Stack extends Vector</code> ships in the JDK. Inheritance or mistake?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Mistake. A stack only allows push/pop/peek, but by extending <code>Vector</code> it also exposes <code>get(i)</code>, <code>add(i, x)</code>, <code>remove(i)</code> — random access that violates the LIFO contract. A composed <code>Deque</code> inside a <code>Stack</code> would have hidden those. It's the canonical "reuse-by-inheritance gone wrong".</div>
+  </details>
+</div>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. Example A — Payment methods (interface, because behavior varies &amp; impls are unrelated)</h2>
+<h3>Requirement</h3>
+<p>"Checkout must charge a customer. Today we support credit card and UPI; tomorrow wallet, net-banking, gift card. The checkout code must not change when we add one."</p>
+
+<h3>Naive move &amp; the pain</h3>
+<pre><span class="cmt">// Naive: an enum + a giant switch.</span>
+double charge(PaymentType type, Money amt){
+    switch(type){
+        case CARD: /* card logic */ break;
+        case UPI:  /* upi logic  */ break;
+        <span class="cmt">// every new method edits THIS method → it never stops changing.</span>
+    }
+}</pre>
+<div class="smell"><b>Smell:</b> an <code>instanceof</code>/<code>switch</code> ladder on a "type" field. Adding a behavior means editing shared code (violates Open/Closed). The variation belongs in <i>types</i>, not in a branch.</div>
+
+<h3>The decision</h3>
+<p>"A payment method <b>can</b> process a payment" — a capability. The implementations (card vs UPI vs wallet) are <b>unrelated</b>: they share no state, no base behavior, only the promise. That is the textbook interface signal.</p>
+<pre>interface PaymentMethod {
+    PaymentResult pay(Money amount);
+}
+
+class CreditCardPayment implements PaymentMethod {
+    private final String cardToken;
+    public PaymentResult pay(Money amount){ /* gateway call */ }
+}
+class UpiPayment implements PaymentMethod {
+    private final String vpa;
+    public PaymentResult pay(Money amount){ /* upi call */ }
+}
+
+<span class="cmt">// Checkout depends on the CONTRACT, never on a concrete method.</span>
+class Checkout {
+    PaymentResult complete(PaymentMethod method, Money total){
+        return method.pay(total);   <span class="cmt">// adding GiftCardPayment needs ZERO edits here</span>
+    }
+}</pre>
+<div class="decision">
+  <b>How we decided:</b> verb test → "can pay" → capability → <b>interface</b>. The impls don't share code or identity, so an abstract base would be wrong. <code>Checkout</code> binding to <code>PaymentMethod</code> (not concretes) makes new methods <i>additive</i> — open for extension, closed for modification.
+  <span class="verdict">Verdict: interface + polymorphism. A new payment type is a new class, not an edit to existing code.</span>
+</div>
+<div class="tricky">
+  <div class="q">Q. All payment methods need to "log the attempt and validate the amount &gt; 0". Where does that go now?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Two clean options: (1) a <code>default</code> method or static helper on the interface for the validation; or (2) if there's real shared <i>state</i> (a logger, a retry counter), introduce an <code>abstract class AbstractPayment implements PaymentMethod</code> as a skeletal base. Choose abstract class only once shared <b>state</b> appears — otherwise keep it an interface.</div>
+  </details>
+</div>
+
+<!-- ============================= 12 ============================= -->
+<h2 id="s12">12. Example B — Notifications (interface for the role, composition to combine channels)</h2>
+<h3>Requirement</h3>
+<p>"Send a notification by email, SMS, or push. Some events must go out on <i>several</i> channels at once. Users configure their preferred channels at runtime."</p>
+
+<h3>Why not inheritance?</h3>
+<pre><span class="cmt">// Tempting: EmailNotifier, then EmailAndSmsNotifier extends EmailNotifier...</span>
+<span class="cmt">// → combinatorial explosion again (Email, SMS, Push, Email+SMS, All, ...).</span>
+<span class="cmt">// Also: "send on several channels" is runtime config, not a compile-time type.</span></pre>
+
+<h3>The decision</h3>
+<p>"A channel <b>can</b> send" → interface. "A multi-channel notifier <b>has</b> a list of channels" → composition. The composite is itself a channel (it implements the same interface) — that's the <b>Composite pattern</b>.</p>
+<pre>interface NotificationChannel {
+    void send(User u, String msg);
+}
+class EmailChannel implements NotificationChannel { public void send(User u,String m){ ... } }
+class SmsChannel   implements NotificationChannel { public void send(User u,String m){ ... } }
+class PushChannel  implements NotificationChannel { public void send(User u,String m){ ... } }
+
+<span class="cmt">// Composite: HAS-A list of channels, and IS-A channel itself.</span>
+class MultiChannel implements NotificationChannel {
+    private final List&lt;NotificationChannel&gt; channels;
+    MultiChannel(List&lt;NotificationChannel&gt; channels){ this.channels = List.copyOf(channels); }
+    public void send(User u, String msg){
+        for (NotificationChannel c : channels) c.send(u, msg);
+    }
+}
+
+<span class="cmt">// Runtime assembly from user preferences — no new classes per combo:</span>
+NotificationChannel chosen = new MultiChannel(List.of(new EmailChannel(), new PushChannel()));
+chosen.send(user, "Your order shipped");</pre>
+<div class="decision">
+  <b>How we decided:</b> the "send" behavior varies and callers shouldn't care which channel → <b>interface</b>. "Send on many" is a <i>collection</i> assembled at runtime from config → <b>composition</b>, not a subclass per combination. Making the composite implement the same interface means callers treat one channel and many channels identically.
+  <span class="verdict">Verdict: interface for the role + Composite (composition) for "many". Combinations become data, not types.</span>
+</div>
+<div class="tips"><b>Pattern spotting:</b> whenever "one or many of X behave like a single X", that's Composite — and Composite is just disciplined composition behind a shared interface.</div>
+
+<!-- ============================= 13 ============================= -->
+<h2 id="s13">13. Example C — Coffee pricing (Decorator: when "is-a AND has-a" is the right answer)</h2>
+<h3>Requirement</h3>
+<p>"Price a coffee. A base coffee can be wrapped with add-ons — milk, sugar, extra shot, whipped cream — in any combination and any order, each adding to the price and the description."</p>
+
+<h3>Naive move &amp; the pain</h3>
+<pre><span class="cmt">// Subclass per combination → explosion (CoffeeWithMilk, CoffeeWithMilkAndSugar, ...).</span>
+<span class="cmt">// And a customer can ask for "double milk, one sugar" — unbounded combos.</span></pre>
+
+<h3>The decision</h3>
+<p>Each add-on must (a) be usable anywhere a coffee is used → it <b>is-a</b> coffee (same interface), and (b) wrap an existing coffee to extend it → it <b>has-a</b> coffee. That dual relationship is exactly the <b>Decorator pattern</b>: composition for the wrapping, a shared interface for substitutability.</p>
+<pre>interface Coffee {
+    String description();
+    int cost();   <span class="cmt">// in cents</span>
+}
+class Espresso implements Coffee {
+    public String description(){ return "Espresso"; }
+    public int cost(){ return 200; }
+}
+
+<span class="cmt">// Base decorator: IS-A Coffee (implements) AND HAS-A Coffee (wraps).</span>
+abstract class AddOn implements Coffee {
+    protected final Coffee base;          <span class="cmt">// has-a (composition)</span>
+    protected AddOn(Coffee base){ this.base = base; }
+}
+class Milk extends AddOn {
+    Milk(Coffee base){ super(base); }
+    public String description(){ return base.description() + " + Milk"; }
+    public int cost(){ return base.cost() + 50; }
+}
+class Sugar extends AddOn {
+    Sugar(Coffee base){ super(base); }
+    public String description(){ return base.description() + " + Sugar"; }
+    public int cost(){ return base.cost() + 10; }
+}
+
+<span class="cmt">// Stack add-ons in any order/quantity at runtime — no new classes per combo:</span>
+Coffee order = new Sugar(new Milk(new Milk(new Espresso())));
+order.description(); <span class="cmt">// "Espresso + Milk + Milk + Sugar"</span>
+order.cost();        <span class="cmt">// 200 + 50 + 50 + 10 = 310</span></pre>
+<div class="decision">
+  <b>How we decided:</b> we needed both substitutability (a decorated coffee must still be a <code>Coffee</code> to callers → implement the interface) <i>and</i> dynamic, stackable extension (→ wrap a <code>Coffee</code> field). Inheritance alone gives substitutability but explodes on combinations; composition alone loses substitutability. Decorator uses both deliberately.
+  <span class="verdict">Verdict: Decorator — interface for "is-a Coffee", composed wrapped field for "has-a Coffee". The combinations live in object graphs, not in the type system.</span>
+</div>
+<div class="tricky">
+  <div class="q">Q. This uses <code>extends AddOn</code> — didn't we say avoid inheritance?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">The real reuse here is the <i>composition</i> (the wrapped <code>base</code> field). <code>extends AddOn</code> only shares the tiny "hold a base" boilerplate and is a legitimate is-a (every <code>Milk</code> truly is an <code>AddOn</code> is a <code>Coffee</code>). The behavior that varies (cost/description) is delegated to the composed object, not inherited. Inheritance here is structural sugar; composition does the heavy lifting.</div>
+  </details>
+</div>
+
+<!-- ============================= 14 ============================= -->
+<h2 id="s14">14. Example D — Game characters &amp; abilities (composition over a "Character" hierarchy)</h2>
+<h3>Requirement</h3>
+<p>"Characters can walk, some can fly, some can swim, some can cast spells. Abilities are mixed freely: a Mage walks + casts, a Dragon flies + swims + casts, a Fish only swims."</p>
+
+<h3>Naive move &amp; the pain</h3>
+<pre><span class="cmt">// Put every ability on a base class:</span>
+class Character {
+    void walk(){...} void fly(){...} void swim(){...} void cast(){...}
+}
+class Fish extends Character { /* but Fish.fly()/walk()/cast() are nonsense */ }</pre>
+<div class="smell"><b>Smell:</b> subclasses inherit methods that don't apply, forcing empty overrides or <code>throw new UnsupportedOperationException()</code>. That's a Liskov violation and the loudest "this isn't really is-a" alarm there is. (Same root cause as a <code>Penguin</code> inheriting <code>fly()</code> from <code>Bird</code>.)</div>
+
+<h3>The decision</h3>
+<p>An ability is something a character <b>can do</b> → interface. Which abilities a character has is a free combination → implement multiple interfaces, and delegate the actual work to composed ability objects so the logic is reused without inheritance.</p>
+<pre>interface Walks { void walk(); }
+interface Flies { void fly(); }
+interface Swims { void swim(); }
+interface Casts { void cast(); }
+
+<span class="cmt">// Reusable behavior objects (composition targets):</span>
+class WalkBehavior { void walk(){ System.out.println("walking"); } }
+class FlyBehavior  { void fly(){  System.out.println("flying");  } }
+
+class Mage implements Walks, Casts {
+    private final WalkBehavior walk = new WalkBehavior();   <span class="cmt">// has-a</span>
+    public void walk(){ walk.walk(); }                       <span class="cmt">// delegate</span>
+    public void cast(){ /* spell logic */ }
+}
+class Dragon implements Flies, Swims, Casts {
+    private final FlyBehavior fly = new FlyBehavior();
+    public void fly(){ fly.fly(); }
+    public void swim(){ ... }
+    public void cast(){ ... }
+}
+class Fish implements Swims {            <span class="cmt">// only the role it truly has</span>
+    public void swim(){ ... }
+}
+
+<span class="cmt">// Systems target the capability, not the character type:</span>
+void launch(Flies f){ f.fly(); }   <span class="cmt">// works for Dragon, never offered a Fish</span></pre>
+<div class="decision">
+  <b>How we decided:</b> abilities are <i>independent axes</i> combined per character → multiple <b>interfaces</b> (capabilities), not a fat base class. The <i>implementation</i> of each ability is shared by <b>composing</b> behavior objects and delegating — so two flyers reuse <code>FlyBehavior</code> without an inheritance chain. A <code>Fish</code> never even sees <code>fly()</code>, so it can't be misused.
+  <span class="verdict">Verdict: multiple interfaces for roles + composition for the shared ability code. Zero nonsense-method inheritance.</span>
+</div>
+<div class="tips"><b>Generalizes to:</b> "mixins / capabilities". Whenever traits combine freely and not every type has every trait, model traits as interfaces and reuse their code by composition (or interface <code>default</code>s for tiny stateless bits), never by piling them onto one base class.</div>
+
+<!-- ============================= 15 ============================= -->
+<h2 id="s15">15. Example E — Service + Repository (interface + composition = dependency inversion)</h2>
+<h3>Requirement</h3>
+<p>"<code>OrderService</code> needs to load and save orders. In production it uses a SQL database; in tests it should use an in-memory fake so tests are fast and don't need a DB."</p>
+
+<h3>Naive move &amp; the pain</h3>
+<pre><span class="cmt">// Service news-up a concrete DB class itself:</span>
+class OrderService {
+    private final JdbcOrderRepository repo = new JdbcOrderRepository(); <span class="cmt">// hard-wired</span>
+}
+<span class="cmt">// Now you CANNOT test OrderService without a real database. The dependency</span>
+<span class="cmt">// is welded in. Swapping storage means editing OrderService.</span></pre>
+<div class="smell"><b>Smell:</b> a high-level policy class (<code>OrderService</code>) depends directly on a low-level detail (<code>JdbcOrderRepository</code>). That's the dependency arrow pointing the wrong way.</div>
+
+<h3>The decision</h3>
+<p>"The service <b>uses a</b> repository" → composition (a field). But it should use the <i>abstraction</i>, not a concrete class → the field's type is an <b>interface</b>, injected through the constructor. That combination is the Dependency Inversion Principle.</p>
+<pre>interface OrderRepository {            <span class="cmt">// the contract (abstraction)</span>
+    Order find(long id);
+    void save(Order o);
+}
+
+class OrderService {
+    private final OrderRepository repo;        <span class="cmt">// has-a an ABSTRACTION</span>
+    OrderService(OrderRepository repo){        <span class="cmt">// injected, not new-ed</span>
+        this.repo = repo;
+    }
+    void reprice(long id){
+        Order o = repo.find(id);
+        o.applyDiscount();
+        repo.save(o);
+    }
+}
+
+class JdbcOrderRepository    implements OrderRepository { ... }  <span class="cmt">// prod</span>
+class InMemoryOrderRepository implements OrderRepository { ... } <span class="cmt">// tests</span>
+
+new OrderService(new JdbcOrderRepository());     <span class="cmt">// production wiring</span>
+new OrderService(new InMemoryOrderRepository()); <span class="cmt">// test wiring — no DB needed</span></pre>
+<div class="decision">
+  <b>How we decided:</b> the relationship is "uses-a" → <b>composition</b> via a field, not inheritance (an <code>OrderService extends JdbcOrderRepository</code> would be absurd). To make it swappable and testable, the field is typed as an <b>interface</b> and supplied from outside. High-level code now depends on a promise, and both prod and test implementations satisfy it.
+  <span class="verdict">Verdict: interface for the contract + constructor-injected composition. This is why "program to an interface" and "favor composition" are really the same advice viewed from two angles.</span>
+</div>
+<div class="tricky">
+  <div class="q">Q. Why inject through the constructor instead of <code>new</code>-ing inside, or using a setter?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">Constructor injection makes the dependency <i>required</i> and the object <i>fully formed and immutable</i> after construction — no half-built state, no forgetting to set it. <code>new</code>-ing inside re-welds the coupling you were trying to break. Setter injection allows the object to exist in an invalid state before the setter is called.</div>
+  </details>
+</div>
+
+<!-- ============================= 16 ============================= -->
+<h2 id="s16">16. Example F — Report exporters (abstract class earns its place)</h2>
+<h3>Requirement</h3>
+<p>"Export a report to PDF, CSV, and HTML. All three do the same dance: write a header, write rows, write a footer, then flush — but each formats those pieces differently. They also share a buffer, a row counter, and the flush logic."</p>
+
+<h3>Why this one is an abstract class, not just an interface</h3>
+<p>Two things are true at once: (1) the three exporters are genuine <i>kinds of</i> exporter (Liskov holds), and (2) they share real <b>state</b> (buffer, counter) and a fixed <b>algorithm</b>. Shared state is the line an interface cannot cross.</p>
+<pre>abstract class ReportExporter {
+    private final StringBuilder buffer = new StringBuilder(); <span class="cmt">// shared STATE</span>
+    private int rowCount = 0;                                 <span class="cmt">// shared STATE</span>
+
+    <span class="cmt">// fixed algorithm — subclasses cannot reorder or skip steps</span>
+    public final String export(Report r){
+        writeHeader(r);                       <span class="cmt">// hook</span>
+        for (Row row : r.rows()){ writeRow(row); rowCount++; }  <span class="cmt">// hook + shared count</span>
+        writeFooter(rowCount);                <span class="cmt">// hook, uses shared state</span>
+        return flush();                       <span class="cmt">// shared</span>
+    }
+    protected void emit(String s){ buffer.append(s); }  <span class="cmt">// shared helper</span>
+    private String flush(){ return buffer.toString(); } <span class="cmt">// shared</span>
+
+    protected abstract void writeHeader(Report r);  <span class="cmt">// VARIES</span>
+    protected abstract void writeRow(Row row);       <span class="cmt">// VARIES</span>
+    protected abstract void writeFooter(int total);  <span class="cmt">// VARIES</span>
+}
+
+class CsvExporter extends ReportExporter {
+    protected void writeHeader(Report r){ emit(String.join(",", r.columns()) + "\n"); }
+    protected void writeRow(Row row){ emit(row.csv() + "\n"); }
+    protected void writeFooter(int total){ /* CSV: no footer */ }
+}
+class HtmlExporter extends ReportExporter {
+    protected void writeHeader(Report r){ emit("&lt;table&gt;"); }
+    protected void writeRow(Row row){ emit("&lt;tr&gt;" + row.html() + "&lt;/tr&gt;"); }
+    protected void writeFooter(int total){ emit("&lt;/table&gt;&lt;p&gt;" + total + " rows&lt;/p&gt;"); }
+}</pre>
+<div class="decision">
+  <b>How we decided:</b> ran the flow. Callers need polymorphism (interface-ish), but the impls are <i>related</i>, share <b>state</b> and a <b>fixed sequence</b> with varying hooks → step 3/4 of the flow lands on <b>abstract class with Template Method</b>. An interface couldn't hold <code>buffer</code>/<code>rowCount</code>; pure composition would duplicate the export sequence in every exporter.
+  <span class="verdict">Verdict: abstract class. If callers also need to treat exporters alongside <i>unrelated</i> "exportable" things, add a thin <code>interface Exporter</code> on top — the <code>List</code>/<code>AbstractList</code> combo.</span>
+</div>
+<div class="smell"><b>Counter-check:</b> if the three exporters turned out to share <i>no</i> state and <i>no</i> code (each totally independent), the abstract class would be dead weight — drop it back to a plain <code>interface Exporter { String export(Report r); }</code>. The shared <b>state</b> is what justifies the abstract class here.</div>
+
+<!-- ============================= 17 ============================= -->
+<h2 id="s17">17. Decision heuristics &amp; the smells that override them</h2>
+<h3>Heuristics, in priority order</h3>
+<table>
+  <thead><tr><th>#</th><th>Heuristic</th><th>What it really protects</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><b>Don't abstract until the second case arrives.</b></td><td>Avoids speculative generality; keeps code navigable.</td></tr>
+    <tr><td>2</td><td><b>Program to an interface (the narrowest type that works).</b></td><td>Decouples callers from implementations.</td></tr>
+    <tr><td>3</td><td><b>Favor composition over inheritance.</b></td><td>Keeps coupling loose and behavior swappable.</td></tr>
+    <tr><td>4</td><td><b>Inherit only on a future-proof is-a (Liskov).</b></td><td>Prevents the broken-substitution time bomb.</td></tr>
+    <tr><td>5</td><td><b>Abstract class only when subtypes share state + algorithm.</b></td><td>Stops you forcing state into interfaces or duplicating code.</td></tr>
+    <tr><td>6</td><td><b>One axis of variation per inheritance tree.</b></td><td>Prevents combinatorial subclass explosion.</td></tr>
+    <tr><td>7</td><td><b>Keep interfaces small &amp; role-focused (ISP).</b></td><td>No client forced to depend on methods it doesn't use.</td></tr>
+  </tbody>
+</table>
+
+<h3>Smells that mean "you chose the wrong tool"</h3>
+<table>
+  <thead><tr><th>Symptom in the code</th><th>What it's telling you</th><th>The fix</th></tr></thead>
+  <tbody>
+    <tr><td>Subclass overrides a method to throw <code>UnsupportedOperationException</code> or do nothing.</td><td>Not a real is-a; Liskov broken.</td><td>Interface for the role + composition; expose only what applies.</td></tr>
+    <tr><td>Subclass exists only to reach a couple of parent methods.</td><td>You wanted reuse, not subtyping.</td><td>Hold the helper as a field; delegate.</td></tr>
+    <tr><td>Subclasses multiply as combinations (A+B, A+C, A+B+C…).</td><td>Multiple independent axes in one tree.</td><td>One field per axis (composition) or decorators.</td></tr>
+    <tr><td><code>instanceof</code> / <code>switch(type)</code> ladders.</td><td>Polymorphism that should live in types.</td><td>Interface + one impl per case; let dispatch do the branching.</td></tr>
+    <tr><td>Every class has a matching one-impl <code>IXxx</code> interface.</td><td>Premature abstraction / ceremony.</td><td>Delete the interface until a second impl or a real mock needs it.</td></tr>
+    <tr><td>Editing a base class keeps breaking unrelated subclasses.</td><td>Fragile base class; inheritance coupling.</td><td>Compose behind a contract instead of extending.</td></tr>
+    <tr><td>An interface with 15 methods, most impls leaving half empty.</td><td>Interface too fat (ISP violation).</td><td>Split into several small role interfaces.</td></tr>
+    <tr><td>Deep hierarchy (&gt;2–3 levels) just to reach behavior.</td><td>Inheritance used as a code-sharing pipe.</td><td>Flatten into composed collaborators.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================= 18 ============================= -->
+<h2 id="s18">18. Anti-pattern gallery — wrong vs right, with the reason</h2>
+<table class="compare">
+  <thead><tr><th>Scenario</th><th>Wrong</th><th>Right (and why)</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Reuse a couple of utility methods</td>
+      <td><code>class Report extends StringUtils</code></td>
+      <td>Call the static helpers, or hold a formatter field. Utilities are <b>uses-a</b>, never is-a.</td>
+    </tr>
+    <tr>
+      <td>Add timestamps to a list</td>
+      <td><code>class TimedList&lt;E&gt; extends ArrayList&lt;E&gt;</code></td>
+      <td><code>implements List&lt;E&gt;</code>, wrap an inner list, delegate. Avoids self-call surprises &amp; fragile base.</td>
+    </tr>
+    <tr>
+      <td>A type with several roles</td>
+      <td><code>class SmartDevice extends Phone extends Camera</code> (illegal)</td>
+      <td><code>implements Phone, Camera, MusicPlayer</code>. Roles = interfaces, combine freely.</td>
+    </tr>
+    <tr>
+      <td>Square &amp; Rectangle</td>
+      <td><code>class Square extends Rectangle</code></td>
+      <td>Both <code>implements Shape { double area(); }</code>; no inheritance. <code>setWidth</code> can't honor a square invariant.</td>
+    </tr>
+    <tr>
+      <td>Behavior chosen at runtime</td>
+      <td><code>class FastSorter extends Sorter</code> + <code>class SlowSorter extends Sorter</code></td>
+      <td>Compose a <code>SortStrategy</code> field, reassignable at runtime (Strategy).</td>
+    </tr>
+    <tr>
+      <td>Manager who might also be a contractor</td>
+      <td><code>class Manager extends Employee</code></td>
+      <td><code>class Person { Set&lt;Role&gt; roles; }</code> — roles are has-a, so they combine and change over time.</td>
+    </tr>
+    <tr>
+      <td>Service tied to a database</td>
+      <td><code>new JdbcRepository()</code> inside the service</td>
+      <td>Inject a <code>Repository</code> interface (composition + DI). Now testable &amp; swappable.</td>
+    </tr>
+    <tr>
+      <td>Penguin in a bird hierarchy</td>
+      <td><code>class Penguin extends Bird</code> inheriting <code>fly()</code></td>
+      <td><code>fly()</code> lives on a <code>Flyable</code> interface; <code>Penguin implements Bird, Swimmable</code> only.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="tricky">
+  <div class="q">Q. "Replace inheritance with composition" — does that mean never write <code>extends</code>?</div>
+  <details><summary>Reveal hint</summary>
+    <div class="hint">No. Use <code>extends</code> when the subtype honors the parent's contract in every context — <code>FileInputStream extends InputStream</code>, <code>CardDeclinedException extends RuntimeException</code>, framework base classes designed for extension. The rule says <i>default</i> to composition and reach for inheritance with evidence (a proven, stable is-a), not "never inherit".</div>
+  </details>
+</div>
+
+<!-- ============================= 19 ============================= -->
+<h2 id="s19">19. Final quick-reference rules</h2>
+<table>
+  <thead><tr><th>When you…</th><th>Use</th><th>One-sentence justification</th></tr></thead>
+  <tbody>
+    <tr><td>have one impl, no variation yet</td><td><b>concrete class</b></td><td>Don't pay for abstraction you don't need (YAGNI).</td></tr>
+    <tr><td>need unrelated types to share a capability</td><td><b>interface</b></td><td>"can-do" is a promise, not an identity.</td></tr>
+    <tr><td>need a type to play several roles</td><td><b>multiple interfaces</b></td><td>One parent slot, many contracts.</td></tr>
+    <tr><td>have related subtypes sharing state + algorithm</td><td><b>abstract class</b> (template method)</td><td>Only abstract classes hold state &amp; enforce a sequence.</td></tr>
+    <tr><td>want the contract <i>and</i> a starter impl</td><td><b>interface + skeletal abstract class</b></td><td>Callers depend on the interface; implementers get a head start.</td></tr>
+    <tr><td>want to reuse behavior</td><td><b>composition</b></td><td>Reuse is has-a, never is-a.</td></tr>
+    <tr><td>want behavior swappable at runtime</td><td><b>composition (Strategy)</b></td><td>Fields can be reassigned; parents can't.</td></tr>
+    <tr><td>want stackable, combinable behavior</td><td><b>composition (Decorator / Composite)</b></td><td>Combinations belong in object graphs, not the type tree.</td></tr>
+    <tr><td>want to invert a dependency for testing</td><td><b>interface field + constructor injection</b></td><td>Depend on abstractions, supply concretes from outside.</td></tr>
+    <tr><td>have a true, future-proof "is-a"</td><td><b>inheritance</b></td><td>And only then — after Liskov says yes.</td></tr>
+  </tbody>
+</table>
+
+<div class="tips">
+  <b>If you remember nothing else:</b> say the relationship out loud.
+  <b>"can-do"</b> → interface. <b>"is-a-kind-of + shares code/state"</b> → abstract class.
+  <b>"has-a / uses-a"</b> → composition. <b>"is-a, forever, everywhere"</b> → inheritance (rare, and prove it).
+  Default to interface + composition; treat <code>extends</code> on a concrete class as something you must <i>justify</i>, not something you reach for.
+</div>
+
+<p class="small" style="margin-top:18px">
+  Printing tip: use <b>Ctrl+P → More settings → Paper size: A3</b>, Margins: Default, Background graphics: ON. Hints auto-expand in print.
+</p>
+
+</div>
+
+<script>
+// --- Simple Java syntax highlighter for all <pre> blocks ---
+(function () {
+  const KEYWORDS = new Set([
+    "abstract","assert","boolean","break","byte","case","catch","char","class","const","continue",
+    "default","do","double","else","enum","extends","final","finally","float","for","goto","if",
+    "implements","import","instanceof","int","interface","long","native","new","package","private",
+    "protected","public","record","return","sealed","short","static","strictfp","super","switch",
+    "synchronized","this","throw","throws","transient","try","var","void","volatile","while","yield",
+    "true","false","null","non-sealed","permits"
+  ]);
+  // Types we want highlighted even though they're not keywords
+  const TYPE_RE = /^(String|Integer|Long|Double|Float|Boolean|Character|Byte|Short|Number|Object|List|ArrayList|LinkedList|Map|HashMap|LinkedHashMap|TreeMap|Set|HashSet|TreeSet|LinkedHashSet|Collection|Collections|Queue|Deque|ArrayDeque|PriorityQueue|Stack|Vector|Iterator|Iterable|Stream|IntStream|LongStream|DoubleStream|Optional|Comparator|Comparable|Arrays|Math|System|Thread|Runnable|Exception|RuntimeException|Throwable|IllegalArgumentException|IllegalStateException|NullPointerException|NumberFormatException|UnsupportedOperationException|IndexOutOfBoundsException|ClassCastException|StringBuilder|StringBuffer|CharSequence|Class|Enum|Record|Void|Money|PaymentMethod|PaymentResult|CreditCardPayment|UpiPayment|Checkout|NotificationChannel|EmailChannel|SmsChannel|PushChannel|MultiChannel|User|Coffee|Espresso|AddOn|Milk|Sugar|Walks|Flies|Swims|Casts|WalkBehavior|FlyBehavior|Mage|Dragon|Fish|OrderRepository|OrderService|JdbcOrderRepository|InMemoryOrderRepository|Order|Report|Row|ReportExporter|CsvExporter|HtmlExporter|JsonExporter|DataImporter|CsvImporter|ImportReport|Source|JsonExportable|Shipment|Pizza|Size|Crust|Topping|SortStrategy|QuickSort|TimSort|Sorter|AppException|PaymentException|CardDeclinedException|CountingSet|Shape|Rectangle|Square|Path|T|E|K|V|R|N|U|X)$/;
+
+  function escape(s){ return s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+  function highlight(src) {
+    const tokenRe = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])')|(@[A-Za-z_][A-Za-z0-9_]*)|(\b\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?\d+)?[LlFfDd]?\b|\b0x[\da-fA-F_]+[Ll]?\b|\b0b[01_]+[Ll]?\b)|([A-Za-z_$][A-Za-z0-9_$]*)/g;
+    let out = "";
+    let lastIndex = 0;
+    let m;
+    while ((m = tokenRe.exec(src)) !== null) {
+      out += escape(src.slice(lastIndex, m.index));
+      if (m[1]) out += '<span class="cmt">' + escape(m[1]) + '</span>';
+      else if (m[2]) out += '<span class="str">' + escape(m[2]) + '</span>';
+      else if (m[3]) out += '<span class="str">' + escape(m[3]) + '</span>';
+      else if (m[4]) out += '<span class="ann">' + escape(m[4]) + '</span>';
+      else if (m[5]) out += '<span class="num">' + escape(m[5]) + '</span>';
+      else if (m[6]) {
+        const word = m[6];
+        if (KEYWORDS.has(word)) out += '<span class="kw">' + word + '</span>';
+        else if (TYPE_RE.test(word)) out += '<span class="typ">' + word + '</span>';
+        else out += escape(word);
+      }
+      lastIndex = tokenRe.lastIndex;
+    }
+    out += escape(src.slice(lastIndex));
+    return out;
+  }
+
+  document.querySelectorAll("pre").forEach(pre => {
+    if (pre.dataset.hl === "1") return;
+    const raw = pre.textContent;
+    pre.innerHTML = highlight(raw);
+    pre.dataset.hl = "1";
+  });
+})();
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  /* =========================================================
+     Kiro Dim Dark Mode -- soft slate palette, not pitch-black.
+     Activated only when <html> has class "kiro-dark".
+     Designed so coloured pastel callouts stay LIGHT but their
+     text becomes dark+readable; everything else flips to dim.
+     ========================================================= */
+  html.kiro-dark{
+    --kd-bg:        #1c2128;   /* page bg, slate, not black */
+    --kd-bg-2:      #242a33;   /* panels, h2 bands */
+    --kd-bg-3:      #2c333d;   /* hover / table header */
+    --kd-text:      #e8edf2;   /* main text on dark */
+    --kd-text-mute: #a8b1bd;
+    --kd-border:    #3a414d;
+    --kd-accent:    #8c7bff;
+    --kd-link:      #8cc6ff;
+    --kd-good:      #4ddbb0;
+    --kd-bad:       #ff9d9d;
+    --kd-warn:      #ffd166;
+    --kd-info:      #6ec5ff;
+    --kd-code-bg:   #1f2530;
+    --kd-pre-bg:    #1a1f29;
+    /* Used for elements that keep their original light pastel bg.
+       We force a near-black text colour so they remain readable. */
+    --kd-on-pastel: #15171c;
+    color-scheme: dark;
+    background:#1c2128 !important;
+    color:#e8edf2 !important;
+  }
+
+  /* ----- Base text & layout ----- */
+  html.kiro-dark body{
+    background: var(--kd-bg) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1,
+  html.kiro-dark h3,
+  html.kiro-dark h4,
+  html.kiro-dark h5,
+  html.kiro-dark h6{
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark h1{ border-bottom-color: var(--kd-border) !important; }
+  html.kiro-dark h2{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark h1 .sub,
+  html.kiro-dark .small,
+  html.kiro-dark .legend,
+  html.kiro-dark .sub,
+  html.kiro-dark .muted{ color: var(--kd-text-mute) !important; }
+
+  html.kiro-dark a{ color: var(--kd-link) !important; }
+  html.kiro-dark a:hover{ color: #c8e1ff !important; }
+  html.kiro-dark hr{ border-color: var(--kd-border) !important; }
+
+  /* ----- Code & pre ----- */
+  html.kiro-dark code,
+  html.kiro-dark code.inline,
+  html.kiro-dark td code,
+  html.kiro-dark th code,
+  html.kiro-dark p code,
+  html.kiro-dark li code,
+  html.kiro-dark span code{
+    background: #2c333d !important;
+    color: #f5e8b8 !important;
+    border: 1px solid #3a414d !important;
+    border-radius: 3px;
+    padding: 0 4px;
+  }
+  html.kiro-dark pre,
+  html.kiro-dark pre.code{
+    background: var(--kd-pre-bg) !important;
+    color: #e8edf2 !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark pre code{
+    background: transparent !important;
+    color: inherit !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  /* Dark-friendly GitHub Dark colours mapped to syntax-highlight classes
+     used across the cheatsheets. !important + html.kiro-dark ancestor
+     guarantees these win against the original light-theme colours. */
+  html.kiro-dark pre .kw,    html.kiro-dark .kw,
+  html.kiro-dark pre span.kw    { color: #ff7b72 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .typ,   html.kiro-dark .typ,
+  html.kiro-dark pre span.typ   { color: #ffa657 !important; font-weight: 400 !important; }
+  html.kiro-dark pre .str,   html.kiro-dark .str,
+  html.kiro-dark pre span.str   { color: #a5d6ff !important; font-weight: 400 !important; }
+  html.kiro-dark pre .num,   html.kiro-dark .num,
+  html.kiro-dark pre span.num   { color: #79c0ff !important; font-weight: 400 !important; }
+  html.kiro-dark pre .cmt,   html.kiro-dark .cmt,
+  html.kiro-dark pre span.cmt   { color: #9aa3b0 !important; font-style: italic !important; font-weight: 400 !important; }
+  html.kiro-dark pre .ann,   html.kiro-dark .ann,
+  html.kiro-dark pre span.ann   { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .fn,    html.kiro-dark .fn,
+  html.kiro-dark pre span.fn    { color: #d2a8ff !important; }
+  html.kiro-dark pre .pp,    html.kiro-dark .pp,
+  html.kiro-dark pre span.pp    { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .bi,    html.kiro-dark .bi,
+  html.kiro-dark pre span.bi    { color: #d2a8ff !important; }
+  html.kiro-dark pre .dec,   html.kiro-dark .dec,
+  html.kiro-dark pre span.dec   { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .self,  html.kiro-dark .self,
+  html.kiro-dark pre span.self  { color: #ffa657 !important; font-style: italic !important; }
+  html.kiro-dark pre .mac,   html.kiro-dark .mac,
+  html.kiro-dark pre span.mac   { color: #d2a8ff !important; font-weight: 600 !important; }
+  html.kiro-dark pre .attr,  html.kiro-dark .attr,
+  html.kiro-dark pre span.attr  { color: #7ee787 !important; font-weight: 600 !important; }
+  html.kiro-dark pre .var,   html.kiro-dark .var,
+  html.kiro-dark pre span.var   { color: #ffa657 !important; }
+  html.kiro-dark pre .op,    html.kiro-dark .op,
+  html.kiro-dark pre span.op    { color: #c9d1d9 !important; }
+  /* Plain text inside <pre> (no class) inherits the pre's white colour. */
+  html.kiro-dark pre{ color: #e8edf2 !important; }
+
+  /* ----- Tables ----- */
+  html.kiro-dark table{
+    background: transparent !important;
+    color: var(--kd-text) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark th,
+  html.kiro-dark td{
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+    background-color: transparent;
+  }
+  html.kiro-dark th{
+    background: var(--kd-bg-3) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark tr:nth-child(even) td{ background: rgba(255,255,255,.025); }
+
+  html.kiro-dark .right,
+  html.kiro-dark .good,
+  html.kiro-dark tr.right td,
+  html.kiro-dark tr.good td{
+    background: rgba(77,219,176,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .wrong,
+  html.kiro-dark .bad,
+  html.kiro-dark tr.wrong td,
+  html.kiro-dark tr.bad td{
+    background: rgba(255,157,157,.10) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .col-right{ color: var(--kd-good) !important; }
+  html.kiro-dark .col-wrong{ color: var(--kd-bad) !important; }
+
+  html.kiro-dark table.compare th:nth-child(2){
+    background: rgba(255,157,157,.18) !important; color: #ffc4c4 !important;
+  }
+  html.kiro-dark table.compare th:nth-child(3){
+    background: rgba(77,219,176,.18) !important; color: #b0f0d8 !important;
+  }
+  html.kiro-dark table.compare td:nth-child(2){ background: rgba(255,157,157,.06) !important; }
+  html.kiro-dark table.compare td:nth-child(3){ background: rgba(77,219,176,.06) !important; }
+
+  /* ----- Generic tip / note / tricky callouts ----- */
+  html.kiro-dark .tips,
+  html.kiro-dark .tip,
+  html.kiro-dark .note{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .tips b,
+  html.kiro-dark .tip b{ color: var(--kd-warn) !important; }
+
+  html.kiro-dark .tricky{
+    background: rgba(140,123,255,.10) !important;
+    border-color: rgba(140,123,255,.5) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* Decision + smell callouts specific to this guide */
+  html.kiro-dark .decision{
+    background: rgba(110,197,255,.10) !important;
+    border-color: rgba(110,197,255,.5) !important;
+    border-left-color: var(--kd-info) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .decision b,
+  html.kiro-dark .decision .verdict{ color: #bfe3ff !important; }
+  html.kiro-dark .smell{
+    background: rgba(255,209,102,.10) !important;
+    border-color: rgba(255,209,102,.5) !important;
+    border-left-color: var(--kd-warn) !important;
+    color: var(--kd-text) !important;
+  }
+  html.kiro-dark .smell b{ color: var(--kd-warn) !important; }
+
+  html.kiro-dark .callout,
+  html.kiro-dark .info,
+  html.kiro-dark .panel,
+  html.kiro-dark .box{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* ----- Pills ----- */
+  html.kiro-dark .pill{ color: #fff !important; }
+  html.kiro-dark .pill.bad{ background: #b3434a !important; }
+  html.kiro-dark .pill.good{ background: #1f8a64 !important; }
+  html.kiro-dark .pill.tip { background: #8a6a00 !important; }
+  html.kiro-dark .pill.trk { background: #1f5fa0 !important; }
+
+  /* ----- Details / summary ----- */
+  html.kiro-dark details > summary{ color: var(--kd-link) !important; }
+  html.kiro-dark details[open] > summary{ color: var(--kd-text) !important; }
+  html.kiro-dark details .hint{
+    background: rgba(110,197,255,.12) !important;
+    border-left-color: var(--kd-info) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* TOC, blockquote */
+  html.kiro-dark .toc{
+    background: var(--kd-bg-2) !important;
+    border-color: var(--kd-border) !important;
+  }
+  html.kiro-dark .toc a{ color: var(--kd-link) !important; }
+  html.kiro-dark blockquote{
+    background: var(--kd-bg-2) !important;
+    border-left-color: var(--kd-accent) !important;
+    color: var(--kd-text) !important;
+  }
+
+  /* ----- Universal safety net: only kicks in for elements whose
+           background is STILL light AFTER the dark theme has been
+           applied. Tagged at runtime via data-kd-pastel. ----- */
+  html.kiro-dark [data-kd-pastel]{
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] *:not(.label):not(.pill):not(code):not(pre):not(b):not(strong){
+    color: #15171c !important;
+  }
+  html.kiro-dark [data-kd-pastel] b,
+  html.kiro-dark [data-kd-pastel] strong{
+    color: #000 !important;
+  }
+  html.kiro-dark [data-kd-pastel] code{
+    background: rgba(0,0,0,.10) !important;
+    color: #15171c !important;
+    border-color: rgba(0,0,0,.18) !important;
+  }
+  html.kiro-dark [data-kd-pastel] a{ color: #1a4f8a !important; }
+
+  /* Toggle button itself */
+  .kiro-dark-toggle{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#1c2128;
+    color:#ffd166;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer;
+    font-size:22px;line-height:1;
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{
+    background:#ffd166;
+    color:#1c2128;
+    border-color:#1c2128;
+  }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+
+  var EXCLUDE_TAGS = {CODE:1, PRE:1, BUTTON:1, INPUT:1, TEXTAREA:1, SELECT:1, OPTION:1, SCRIPT:1, STYLE:1, SVG:1, PATH:1, IMG:1};
+  var EXCLUDE_CLASSES = [
+    'kiro-dark-toggle','kiro-home-btn',
+    'tips','tip','note','tricky','callout','panel','box','warning','warn','trick','hint-box','info',
+    'decision','smell','verdict',
+    'pill','chip','cat-chip','tag',
+    'right','wrong','good','bad','col-right','col-wrong',
+    'compare','toc','blockquote','muted','sub','small','legend'
+  ];
+  function hasExcludedClass(el){
+    if(!el.classList || !el.classList.length) return false;
+    for(var i=0;i<EXCLUDE_CLASSES.length;i++){
+      if(el.classList.contains(EXCLUDE_CLASSES[i])) return true;
+    }
+    return false;
+  }
+
+  function untagAll(){
+    var tagged = document.querySelectorAll('[data-kd-pastel]');
+    for(var i=0;i<tagged.length;i++) tagged[i].removeAttribute('data-kd-pastel');
+  }
+
+  function tagPastels(){
+    if(!document.body) return;
+    untagAll();
+    var els = document.body.getElementsByTagName('*');
+    for(var i=0;i<els.length;i++){
+      var el = els[i];
+      if(EXCLUDE_TAGS[el.tagName]) continue;
+      if(hasExcludedClass(el)) continue;
+      if(el.tagName === 'H2') continue;
+      if(el.tagName === 'TD' || el.tagName === 'TH'){
+        var tr = el.parentElement;
+        if(tr && (tr.classList.contains('right')||tr.classList.contains('wrong')||tr.classList.contains('good')||tr.classList.contains('bad'))) continue;
+      }
+      var cs = window.getComputedStyle(el);
+      var bg = cs.backgroundColor;
+      var m = bg.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+      if(!m) continue;
+      var r=+m[1], g=+m[2], b=+m[3], a=m[4]===undefined?1:+m[4];
+      if(a < 0.55) continue;
+      var minC = Math.min(r,g,b);
+      if(minC >= 220 && !(r===255 && g===255 && b===255)){
+        el.setAttribute('data-kd-pastel','1');
+      }
+    }
+  }
+
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+      if(typeof requestAnimationFrame === 'function'){
+        requestAnimationFrame(function(){ requestAnimationFrame(tagPastels); });
+      } else { setTimeout(tagPastels, 0); }
+    } else {
+      html.classList.remove('kiro-dark');
+      untagAll();
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>
