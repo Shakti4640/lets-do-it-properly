@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Backtracking Cheatsheet — Choose / Explore / Unchoose</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #111827;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-2: #facc15;
+    --good: #4ade80;
+    --bad: #f87171;
+    --border: #334155;
+    --code-bg: #0b1220;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
+  header h1 {
+    margin: 0 0 6px;
+    font-size: 30px;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+  header p.sub { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+  h2 {
+    margin: 28px 0 10px;
+    color: var(--accent-2);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    font-size: 20px;
+  }
+  h3 { margin: 18px 0 6px; color: var(--accent); font-size: 16px; }
+  p { margin: 6px 0 10px; }
+  ul, ol { margin: 6px 0 12px 22px; }
+  li { margin: 3px 0; }
+  code, pre {
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13px;
+  }
+  code.inline {
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: #fde68a;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    color: #e2e8f0;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #334155;
+    color: #e2e8f0;
+    font-size: 11px;
+    margin-right: 4px;
+  }
+  .pill.good { background: #14532d; color: #bbf7d0; }
+  .pill.bad  { background: #7f1d1d; color: #fecaca; }
+  .pill.warn { background: #78350f; color: #fde68a; }
+  .toc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+  }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .callout {
+    border-left: 4px solid var(--accent);
+    background: var(--panel-2);
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .callout.warn { border-color: var(--accent-2); }
+  .callout.bad  { border-color: var(--bad); }
+  .callout.good { border-color: var(--good); }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 12px;
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #1f2937; color: var(--accent-2); }
+  .kw  { color: #c084fc; }
+  .typ { color: #38bdf8; }
+  .str { color: #facc15; }
+  .cmt { color: #64748b; font-style: italic; }
+  .num { color: #fb923c; }
+  .fn  { color: #4ade80; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Backtracking — Choose / Explore / Unchoose</h1>
+  <p class="sub">A brief, practical cheatsheet covering the canonical pattern, every common flavour, and why the "undo" step exists. Java snippets throughout.</p>
+</header>
+
+<div class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#what">What is backtracking?</a></li>
+    <li><a href="#template">The canonical template (Choose / Explore / Unchoose)</a></li>
+    <li><a href="#why">Why do we <em>undo</em>?</a></li>
+    <li><a href="#flavours">Flavours of backtracking</a>
+      <ul>
+        <li><a href="#f1">Include / Exclude (Subsets)</a></li>
+        <li><a href="#f2">Pick / Unpick at index (Permutations)</a></li>
+        <li><a href="#f3">Pick from a start index (Combinations)</a></li>
+        <li><a href="#f4">Place / Unplace with constraints (N-Queens, Sudoku)</a></li>
+        <li><a href="#f5">Path on a grid (DFS with visited)</a></li>
+      </ul>
+    </li>
+    <li><a href="#plain">Plain-English deep dive (why we need each piece)</a></li>
+    <li><a href="#steps">5-step recipe to apply backtracking</a></li>
+    <li><a href="#tips">Common mistakes &amp; tips</a></li>
+  </ol>
+</div>
+
+<h2 id="what">1. What is backtracking?</h2>
+<p>
+Backtracking is a <strong>brute-force search done smartly</strong>: build a candidate solution one decision at a time, and the moment a partial decision can no longer lead to a valid answer, <em>retract</em> it and try the next option. It is DFS over a decision tree with <strong>state mutation + undo</strong>.
+</p>
+<ul>
+  <li><span class="pill">Decision tree</span> Each node = a partial state, each edge = one choice.</li>
+  <li><span class="pill">Pruning</span> Skip whole subtrees as soon as constraints break.</li>
+  <li><span class="pill good">Cheap memory</span> One mutable state object instead of many copies.</li>
+</ul>
+
+<h2 id="template">2. The canonical template</h2>
+<p>Every backtracking solution follows the same three-line dance inside the recursion:</p>
+<div class="callout">
+  <strong>Choose</strong> &rarr; <strong>Explore</strong> (recurse) &rarr; <strong>Unchoose</strong> (undo)
+</div>
+
+<pre><code><span class="kw">void</span> <span class="fn">backtrack</span>(State s, List&lt;Result&gt; out) {
+    <span class="kw">if</span> (isComplete(s)) {           <span class="cmt">// base case</span>
+        out.add(snapshot(s));
+        <span class="kw">return</span>;
+    }
+    <span class="kw">for</span> (Choice c : choices(s)) {  <span class="cmt">// branch</span>
+        <span class="kw">if</span> (!isValid(s, c)) <span class="kw">continue</span>; <span class="cmt">// prune</span>
+
+        apply(s, c);                <span class="cmt">// 1. CHOOSE</span>
+        backtrack(s, out);          <span class="cmt">// 2. EXPLORE</span>
+        undo(s, c);                 <span class="cmt">// 3. UNCHOOSE</span>
+    }
+}
+</code></pre>
+
+<h2 id="why">3. Why do we <em>undo</em>?</h2>
+<p>
+Because we share <strong>one mutable state</strong> across all recursion branches. After exploring a choice, the state must look exactly like it did <em>before</em> that choice, so the next sibling branch starts from a clean slate.
+</p>
+<div class="grid2">
+  <div class="card">
+    <h3>If you forget to undo</h3>
+    <ul>
+      <li>State leaks across branches.</li>
+      <li>Permutations contain stale picks.</li>
+      <li>"Used" flags stay <code class="inline">true</code> forever, killing valid paths.</li>
+      <li>You'd have to deep-copy state on every call &mdash; memory blows up.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>What "undo" actually means</h3>
+    <ul>
+      <li>Pop the last element you pushed.</li>
+      <li>Flip the <code class="inline">used[i]</code> flag back.</li>
+      <li>Clear the cell you just filled on the board.</li>
+      <li>Decrement counters / sums you bumped.</li>
+    </ul>
+  </div>
+</div>
+<div class="callout good">
+  <strong>Rule of thumb:</strong> every line of code that mutates state in <em>Choose</em> must have a mirror line in <em>Unchoose</em>.
+</div>
+
+<h2 id="flavours">4. Flavours of backtracking</h2>
+
+<h3 id="f1">4.1 Include / Exclude — Subsets</h3>
+<p>At each index decide: <strong>include</strong> this element or <strong>exclude</strong> it. Two recursive calls per index, no loop needed.</p>
+<pre><code><span class="kw">void</span> <span class="fn">subsets</span>(<span class="kw">int</span>[] nums, <span class="kw">int</span> i, List&lt;Integer&gt; cur, List&lt;List&lt;Integer&gt;&gt; out) {
+    <span class="kw">if</span> (i == nums.length) {
+        out.add(<span class="kw">new</span> ArrayList&lt;&gt;(cur));   <span class="cmt">// snapshot</span>
+        <span class="kw">return</span>;
+    }
+    <span class="cmt">// EXCLUDE: don't touch state, just move on</span>
+    subsets(nums, i + <span class="num">1</span>, cur, out);
+
+    <span class="cmt">// INCLUDE: choose -> explore -> unchoose</span>
+    cur.add(nums[i]);                       <span class="cmt">// choose</span>
+    subsets(nums, i + <span class="num">1</span>, cur, out);     <span class="cmt">// explore</span>
+    cur.remove(cur.size() - <span class="num">1</span>);          <span class="cmt">// unchoose</span>
+}
+</code></pre>
+<p><span class="pill">Why undo here</span> The same <code class="inline">cur</code> list is reused for the exclude branch of the parent and for sibling subtrees.</p>
+
+<h3 id="f2">4.2 Pick / Unpick at index — Permutations</h3>
+<p>Order matters &rarr; loop over <em>all</em> unused indices at every level. The classic <code class="inline">used[]</code> flag flavour.</p>
+<pre><code><span class="kw">void</span> <span class="fn">permute</span>(<span class="kw">int</span>[] nums, <span class="kw">boolean</span>[] used,
+                    List&lt;Integer&gt; cur, List&lt;List&lt;Integer&gt;&gt; out) {
+    <span class="kw">if</span> (cur.size() == nums.length) {
+        out.add(<span class="kw">new</span> ArrayList&lt;&gt;(cur));
+        <span class="kw">return</span>;
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; nums.length; i++) {
+        <span class="kw">if</span> (used[i]) <span class="kw">continue</span>;            <span class="cmt">// prune</span>
+
+        used[i] = <span class="kw">true</span>;                   <span class="cmt">// CHOOSE</span>
+        cur.add(nums[i]);
+        permute(nums, used, cur, out);        <span class="cmt">// EXPLORE</span>
+        cur.remove(cur.size() - <span class="num">1</span>);        <span class="cmt">// UNCHOOSE</span>
+        used[i] = <span class="kw">false</span>;
+    }
+}
+</code></pre>
+
+<h3 id="f3">4.3 Pick from a <em>start</em> index — Combinations</h3>
+<p>Order does <strong>not</strong> matter &rarr; pass a <code class="inline">start</code> so we never look back. This avoids duplicate combinations naturally.</p>
+<pre><code><span class="kw">void</span> <span class="fn">combine</span>(<span class="kw">int</span> n, <span class="kw">int</span> k, <span class="kw">int</span> start,
+                    List&lt;Integer&gt; cur, List&lt;List&lt;Integer&gt;&gt; out) {
+    <span class="kw">if</span> (cur.size() == k) { out.add(<span class="kw">new</span> ArrayList&lt;&gt;(cur)); <span class="kw">return</span>; }
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = start; i &lt;= n; i++) {
+        cur.add(i);                              <span class="cmt">// CHOOSE</span>
+        combine(n, k, i + <span class="num">1</span>, cur, out);     <span class="cmt">// EXPLORE (note i+1)</span>
+        cur.remove(cur.size() - <span class="num">1</span>);          <span class="cmt">// UNCHOOSE</span>
+    }
+}
+</code></pre>
+
+<h3 id="f4">4.4 Place / Unplace with constraints — N-Queens</h3>
+<p>The choice mutates a richer state (a board + attack sets). Undo must restore <em>all</em> of them.</p>
+<pre><code><span class="kw">void</span> <span class="fn">solveNQ</span>(<span class="kw">int</span> row, <span class="kw">int</span> n, <span class="kw">int</span>[] queenCol,
+                    Set&lt;Integer&gt; cols, Set&lt;Integer&gt; diag1, Set&lt;Integer&gt; diag2,
+                    List&lt;<span class="kw">int</span>[]&gt; out) {
+    <span class="kw">if</span> (row == n) { out.add(queenCol.clone()); <span class="kw">return</span>; }
+
+    <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c &lt; n; c++) {
+        <span class="kw">if</span> (cols.contains(c) || diag1.contains(row - c) || diag2.contains(row + c))
+            <span class="kw">continue</span>;                    <span class="cmt">// prune by constraints</span>
+
+        queenCol[row] = c;                  <span class="cmt">// CHOOSE</span>
+        cols.add(c); diag1.add(row - c); diag2.add(row + c);
+
+        solveNQ(row + <span class="num">1</span>, n, queenCol, cols, diag1, diag2, out); <span class="cmt">// EXPLORE</span>
+
+        cols.remove(c);                     <span class="cmt">// UNCHOOSE (mirror every mutation)</span>
+        diag1.remove(row - c);
+        diag2.remove(row + c);
+    }
+}
+</code></pre>
+
+<h3 id="f5">4.5 Path on a grid — DFS with visited</h3>
+<p>Word Search style. Mark the cell, recurse to neighbours, unmark on the way out.</p>
+<pre><code><span class="kw">boolean</span> <span class="fn">dfs</span>(<span class="kw">char</span>[][] g, <span class="kw">int</span> r, <span class="kw">int</span> c, String w, <span class="kw">int</span> k) {
+    <span class="kw">if</span> (k == w.length()) <span class="kw">return</span> <span class="kw">true</span>;
+    <span class="kw">if</span> (r &lt; <span class="num">0</span> || c &lt; <span class="num">0</span> || r &gt;= g.length || c &gt;= g[<span class="num">0</span>].length) <span class="kw">return</span> <span class="kw">false</span>;
+    <span class="kw">if</span> (g[r][c] != w.charAt(k)) <span class="kw">return</span> <span class="kw">false</span>;
+
+    <span class="kw">char</span> tmp = g[r][c];
+    g[r][c] = <span class="str">'#'</span>;                              <span class="cmt">// CHOOSE (mark visited)</span>
+
+    <span class="kw">boolean</span> ok = dfs(g, r+<span class="num">1</span>, c, w, k+<span class="num">1</span>) || dfs(g, r-<span class="num">1</span>, c, w, k+<span class="num">1</span>)
+              || dfs(g, r, c+<span class="num">1</span>, w, k+<span class="num">1</span>) || dfs(g, r, c-<span class="num">1</span>, w, k+<span class="num">1</span>); <span class="cmt">// EXPLORE</span>
+
+    g[r][c] = tmp;                                 <span class="cmt">// UNCHOOSE (restore cell)</span>
+    <span class="kw">return</span> ok;
+}
+</code></pre>
+
+<h2 id="plain">5. Plain-English deep dive (why we need each piece)</h2>
+
+<div class="callout">
+  <strong>The big picture, in one line:</strong> imagine you are walking through a giant maze where each junction has many doors. You walk down a path; if it dead-ends, you walk back to the last junction and try a different door. Backtracking <em>is</em> that walk.
+</div>
+
+<h3>Why "Choose"?</h3>
+<p>
+You can't solve a big problem in one shot. You have to <strong>commit to one small decision at a time</strong> — pick this number, place this queen, mark this cell. "Choose" is just you saying: "OK, let me try this option and see where it leads."
+</p>
+<ul>
+  <li><strong>Why we need it:</strong> Without committing to a choice, the recursion has nothing new to work with. The state never changes, so the next call would be identical to the current one — infinite loop.</li>
+  <li><strong>Real-world feel:</strong> like trying on a shirt before deciding if it fits. You have to actually put it on first.</li>
+</ul>
+
+<h3>Why "Explore"?</h3>
+<p>
+After making one decision, you ask: <em>"Given this decision, can the rest of the problem be solved?"</em> That question is exactly the same kind of question you started with — just smaller. So you call the same function on the smaller problem. That's the recursion.
+</p>
+<ul>
+  <li><strong>Why we need it:</strong> One decision alone doesn't give you a complete answer. You need to keep stacking decisions until the solution is fully built (base case) or proven impossible.</li>
+  <li><strong>Real-world feel:</strong> after picking the first piece of a jigsaw, you keep adding pieces. Each piece you add changes the puzzle for the next one.</li>
+</ul>
+
+<h3>Why "Unchoose" (Undo)?</h3>
+<p>
+This is the part most beginners skip and then wonder why their answer is wrong. Here is the simple truth:
+</p>
+<div class="callout good">
+  <strong>You only have ONE notebook.</strong> You write your current attempt in it. When the attempt fails (or succeeds and is recorded), you must <strong>erase your last line</strong> before trying a different option — otherwise the new attempt starts on a dirty page.
+</div>
+<ul>
+  <li><strong>Why we need it:</strong> The list <code class="inline">cur</code>, the board, the <code class="inline">used[]</code> array — they are <em>shared</em> across every branch of the recursion tree. If you don't undo, branch B inherits the leftovers of branch A and produces garbage.</li>
+  <li><strong>Why not just copy the state?</strong> You could (and for tiny problems it works), but copying a 9x9 Sudoku board millions of times is slow and memory-hungry. Mutate-and-undo is faster.</li>
+  <li><strong>Real-world feel:</strong> trying outfits in a fitting room. You take the shirt off before trying the next one. You don't pile every shirt on top of each other.</li>
+</ul>
+
+<h3>Why "Include / Exclude" (Subsets flavour)?</h3>
+<p>
+For each item in the input, there are exactly two truths in the universe of subsets: either the item is in the subset, or it isn't. So at every step we just split into those two branches.
+</p>
+<ul>
+  <li><strong>Why we need it:</strong> Subsets are about <em>membership</em>, not order. Asking "include or exclude?" naturally generates every possible membership combination.</li>
+  <li><strong>Why no for-loop:</strong> Because the only two choices are binary, two recursive calls cover everything. A loop would over-complicate it.</li>
+  <li><strong>Real-world feel:</strong> packing for a trip. For each item on the shelf you ask "take it, or leave it?" By the time you reach the end of the shelf, your bag <em>is</em> one of the possible packing combinations.</li>
+</ul>
+
+<h3>Why "Pick / Unpick at index" (Permutations flavour)?</h3>
+<p>
+Permutations care about order: <code class="inline">[1,2,3]</code> and <code class="inline">[3,2,1]</code> are different answers. So at every position we must consider <em>every</em> remaining number, not just the ones after the current index.
+</p>
+<ul>
+  <li><strong>Why we need a <code class="inline">used[]</code> flag:</strong> A number can appear at most once in a permutation. The flag answers the question "have I already placed this in the current arrangement?" without scanning the list.</li>
+  <li><strong>Why we flip the flag back:</strong> Same notebook problem. After we finish exploring "what if 2 is in position 0?", we have to release 2 so it's free to be picked at position 1 in the next branch.</li>
+  <li><strong>Real-world feel:</strong> seating 5 friends in 5 chairs. For chair 1 you can try anyone. After seating Alice in chair 1 and exploring all arrangements, you stand Alice up before trying Bob in chair 1.</li>
+</ul>
+
+<h3>Why "Start index" (Combinations flavour)?</h3>
+<p>
+Combinations don't care about order: <code class="inline">{1,2}</code> and <code class="inline">{2,1}</code> are the same. If we let the loop look at <em>all</em> indices like permutations do, we'd produce both — duplicates.
+</p>
+<ul>
+  <li><strong>Why we need <code class="inline">start</code>:</strong> By forcing the next pick to come from indices &gt; the last picked index, every combination comes out in a fixed (sorted) order. Duplicates simply can't be generated.</li>
+  <li><strong>Why <code class="inline">i + 1</code> vs <code class="inline">i</code>:</strong> <code class="inline">i + 1</code> = "each element used at most once". <code class="inline">i</code> = "element can be reused" (combination sum problem).</li>
+  <li><strong>Real-world feel:</strong> picking 3 toppings from a menu of 10. You read the menu top-to-bottom and only pick toppings <em>below</em> your last pick. You never go back up — that's how you avoid counting "pepperoni + olives" and "olives + pepperoni" twice.</li>
+</ul>
+
+<h3>Why "Place / Unplace with constraints" (N-Queens flavour)?</h3>
+<p>
+Some problems aren't just "build a list" — they have <strong>rules</strong> that some choices break instantly. N-Queens says: no two queens may share a column or diagonal. We don't want to wait until the board is full to discover a clash; we want to detect it the moment we try to place a bad queen and skip that whole branch.
+</p>
+<ul>
+  <li><strong>Why we track sets (cols, diag1, diag2):</strong> Constant-time lookup. Asking "is this column already taken?" should not require scanning the board.</li>
+  <li><strong>Why we undo all three sets:</strong> One queen affects three things at once (column + two diagonals). Choose adds to all three; Unchoose must remove from all three. Mismatched undo = ghost queens still "blocking" cells they no longer occupy.</li>
+  <li><strong>Real-world feel:</strong> assigning meeting rooms with rules ("no two teams in adjacent rooms"). Before booking room 5 for Team A, check the rule book. If you cancel, free <em>every</em> reservation that booking caused.</li>
+</ul>
+
+<h3>Why "Mark / Unmark" on a grid (DFS flavour)?</h3>
+<p>
+Grid problems (word search, islands, paths) need to remember "I've already stepped here in <em>this</em> path so I don't loop forever." But that memory is only valid for the current path — once the path backs out, the cell becomes available again for a different path.
+</p>
+<ul>
+  <li><strong>Why we mark the cell:</strong> To prevent the recursion from re-entering it and walking in circles.</li>
+  <li><strong>Why we unmark:</strong> A different path might legitimately go through this cell. If we leave it marked forever, we'd block valid solutions.</li>
+  <li><strong>Real-world feel:</strong> exploring a cave with chalk. You chalk-mark each room you enter so you don't go in circles. When you backtrack out of a dead-end, you wipe the chalk so a different route can use the room.</li>
+</ul>
+
+<h3>Why "Prune" (the <code class="inline">if (!isValid) continue</code> line)?</h3>
+<p>
+The naive backtracking tree is huge — often exponential. Pruning cuts off entire branches early so you never waste time exploring obviously doomed paths.
+</p>
+<ul>
+  <li><strong>Why we need it:</strong> Without pruning, N-Queens at N=12 already takes minutes; with pruning it's milliseconds. Same algorithm, dramatically different speed.</li>
+  <li><strong>Where to prune:</strong> <em>Before</em> the recursive call, never after. Once you've recursed, the work is done — too late to save it.</li>
+  <li><strong>Real-world feel:</strong> if you're filling a Sudoku and notice a row already has two 5s, you stop right there. You don't keep filling the rest of the puzzle "just to see".</li>
+</ul>
+
+<h3>Why "Snapshot" the result (<code class="inline">new ArrayList&lt;&gt;(cur)</code>)?</h3>
+<p>
+Remember: <code class="inline">cur</code> is the same physical list across all branches. If you store a reference to it directly, every entry in your result list points to <em>the same</em> list — and by the time recursion ends, that list is empty (because every push was undone).
+</p>
+<ul>
+  <li><strong>Why we need a copy:</strong> A snapshot freezes the contents at the moment of success, so future undos can't disturb it.</li>
+  <li><strong>Real-world feel:</strong> taking a photo of your whiteboard before erasing it. The photo survives even after the whiteboard is wiped clean.</li>
+</ul>
+
+<div class="callout warn">
+  <strong>One sentence summary:</strong> Backtracking is "try, recurse, undo" on a single shared scratchpad — the undo is what makes the scratchpad reusable for the next attempt.
+</div>
+
+<h2 id="steps">6. 5-step recipe to apply backtracking</h2>
+<ol>
+  <li><strong>Define the state.</strong> What does a partial solution look like? (a list, a board, indices, sums…)</li>
+  <li><strong>Define the choices.</strong> At this state, what are the next legal options? Loop or two-way include/exclude?</li>
+  <li><strong>Define the goal.</strong> When is the state a complete answer? Snapshot it (<code class="inline">new ArrayList&lt;&gt;(cur)</code>).</li>
+  <li><strong>Define the constraints &amp; prune.</strong> Skip a choice <em>before</em> recursing whenever it can't lead to a valid solution.</li>
+  <li><strong>Mirror Choose with Unchoose.</strong> Every mutation done before <code class="inline">recurse()</code> must be reverted after it.</li>
+</ol>
+
+<h2 id="tips">7. Common mistakes &amp; tips</h2>
+<table>
+  <tr><th>Mistake</th><th>Symptom</th><th>Fix</th></tr>
+  <tr>
+    <td>Forgetting to snapshot the result</td>
+    <td>All results in <code class="inline">out</code> end up identical (or empty)</td>
+    <td><code class="inline">out.add(new ArrayList&lt;&gt;(cur))</code> &mdash; never add <code class="inline">cur</code> directly</td>
+  </tr>
+  <tr>
+    <td>Forgetting <code class="inline">unchoose</code></td>
+    <td>Wrong/duplicate results, "used" cells stay locked</td>
+    <td>Mirror every mutation symmetrically</td>
+  </tr>
+  <tr>
+    <td>Recursing with <code class="inline">i</code> instead of <code class="inline">i + 1</code> in combinations</td>
+    <td>Element repeats / infinite recursion</td>
+    <td>Use <code class="inline">i + 1</code> for "no repeat", <code class="inline">i</code> only when reuse is allowed</td>
+  </tr>
+  <tr>
+    <td>Not pruning early</td>
+    <td>TLE on large inputs</td>
+    <td>Check constraints <em>before</em> the recursive call, sort input to enable early <code class="inline">break</code></td>
+  </tr>
+  <tr>
+    <td>Mutating shared collections without undo</td>
+    <td>Cross-branch contamination</td>
+    <td>Either undo, or pass an immutable copy (slower but simpler)</td>
+  </tr>
+  <tr>
+    <td>Duplicates in input (e.g. <code class="inline">[1,1,2]</code>)</td>
+    <td>Duplicate subsets/permutations in output</td>
+    <td>Sort first, then <code class="inline">if (i &gt; start &amp;&amp; nums[i] == nums[i-1]) continue;</code></td>
+  </tr>
+</table>
+
+<div class="callout warn">
+  <strong>Mental model:</strong> backtracking = DFS + writable state + a strict "leave the state how you found it" contract on every recursive call.
+</div>
+
+</div>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+</body>
+</html>

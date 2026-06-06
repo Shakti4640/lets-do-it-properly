@@ -1708,5 +1708,76 @@ render();
 </a>
 <!-- KIRO_HOME_BUTTON_END -->
 
+<!-- KIRO_CROSS_TAB_NAV_START -->
+<script id="kiro-cross-tab-nav">
+(function(){
+  if(window.__kiroCrossTabNav) return;
+  window.__kiroCrossTabNav = true;
+  function init(){
+    if(typeof getProblems !== 'function' || typeof window.render !== 'function' || typeof state === 'undefined') return;
+    var ORDER = ['veasy','easy','med','hard'];
+    function diffs(){ return ORDER.filter(function(d){ try { return getProblems(d).length > 0; } catch(e){ return false; } }); }
+
+    function updateNavButtons(){
+      var prevB = document.getElementById('prev');
+      var nextB = document.getElementById('next');
+      if(!prevB || !nextB) return;
+      if(state.diff === 'brief'){ return; }
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      var arr = getProblems(state.diff);
+      prevB.disabled = (di <= 0 && state.idx <= 0);
+      nextB.disabled = (di === list.length - 1 && state.idx >= arr.length - 1);
+    }
+
+    var origRender = window.render;
+    window.render = function(){
+      var r = origRender.apply(this, arguments);
+      try { updateNavButtons(); } catch(e){}
+      return r;
+    };
+
+    function goNext(){
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      var arr = getProblems(state.diff);
+      if(state.idx < arr.length - 1){ state.idx++; window.render(); return; }
+      if(di < list.length - 1){ state.diff = list[di + 1]; state.idx = 0; window.render(); }
+    }
+    function goPrev(){
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      if(state.idx > 0){ state.idx--; window.render(); return; }
+      if(di > 0){
+        var pd = list[di - 1];
+        state.diff = pd;
+        var parr = getProblems(pd);
+        state.idx = Math.max(0, parr.length - 1);
+        window.render();
+      }
+    }
+
+    window.nextProblem = goNext;
+    window.prevProblem = goPrev;
+
+    ['prev','next'].forEach(function(id){
+      var b = document.getElementById(id);
+      if(!b) return;
+      var clone = b.cloneNode(true);
+      b.parentNode.replaceChild(clone, b);
+      clone.addEventListener('click', id === 'next' ? goNext : goPrev);
+    });
+
+    updateNavButtons();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<!-- KIRO_CROSS_TAB_NAV_END -->
+
 </body>
 </html>

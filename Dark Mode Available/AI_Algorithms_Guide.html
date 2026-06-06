@@ -1,0 +1,2141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>30 AI Algorithms — Cheatsheet, Intuition & Python Snippets</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #7c3aed;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --bi:  #b91c1c;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  /* HAMBURGER + TOC SIDEBAR */
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #f3e8ff; color: var(--accent); }
+  .sidebar a.active { background: #f3e8ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* HERO + TABS */
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p  { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy  .dot { background: var(--easy); }
+  .tab.med   .dot { background: var(--med); }
+  .tab.hard  .dot { background: var(--hard); }
+  .tab.brief .dot { background: #8b5cf6; }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  /* MAIN */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 120px;
+  }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #f3e8ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy  { background: var(--easy); }
+  .badge.med   { background: var(--med); }
+  .badge.hard  { background: var(--hard); }
+  .pill {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 600;
+    letter-spacing: .03em;
+  }
+  .pill.unsup { background:#ecfdf5; color:#047857; }
+  .pill.rl    { background:#fef3c7; color:#92400e; }
+  .pill.dl    { background:#fce7f3; color:#9d174d; }
+  .pill.dim   { background:#e0e7ff; color:#3730a3; }
+  .pill.ens   { background:#fef2f2; color:#991b1b; }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #f5f3ff;
+    border-left: 4px solid #8b5cf6;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .formula {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 13.5px;
+    overflow-x: auto;
+  }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+
+  /* CHEATSHEET TABLE */
+  .cheat-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 8px 0 16px;
+    font-size: 14px;
+  }
+  .cheat-table th, .cheat-table td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .cheat-table th {
+    background: #f3e8ff;
+    color: var(--accent);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cheat-table td:first-child {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    background: var(--code-bg);
+    white-space: nowrap;
+    color: var(--num);
+  }
+  .cheat-table tr:nth-child(even) td:not(:first-child) { background: #fafbff; }
+
+  /* CODE */
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .bi  { color: var(--bi);  font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  /* PREV/NEXT BAR */
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #f3e8ff; color: var(--accent); border-color: #d8b4fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  /* BRIEF TAB */
+  body.brief-mode .nav-bar { display: none; }
+  .brief-root { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  .brief-root .brief-header { text-align: center; margin-bottom: 24px; }
+  .brief-root .brief-subtitle {
+    font-size: 11px; letter-spacing: 8px; color: var(--muted); margin-bottom: 8px;
+  }
+  .brief-root .brief-title {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900; margin: 0;
+    background: linear-gradient(90deg, #7c3aed, #db2777, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  .brief-root .brief-tagline { color: var(--muted); margin-top: 8px; font-size: 13px; }
+  .brief-root .panel {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 20px;
+  }
+  .brief-root .panel h3 {
+    margin: 0 0 12px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .brief-root .grid {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .brief-root .card-mini {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; background: var(--code-bg);
+  }
+  .brief-root .card-mini b { color: var(--accent); display:block; margin-bottom:4px; font-size:13.5px; }
+  .brief-root .card-mini span { color: var(--muted); font-size: 13px; }
+  .brief-root .flow {
+    border: 1px dashed var(--border); border-radius: 12px;
+    padding: 16px; background: var(--code-bg);
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 13px; line-height: 1.9;
+    overflow-x: auto;
+    white-space: pre;          /* preserve newlines + spacing in the tree */
+    margin: 0;
+    color: var(--fg);
+  }
+  .brief-root .flow .q { color: var(--accent); font-weight:700; }
+  .brief-root .flow .a { color: var(--str); }
+  .brief-root .flow .alg { color: var(--bi); font-weight:700; }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* DARK MODE */
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #c084fc;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --bi:  #ffa657;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(192,132,252,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(192,132,252,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(139,92,246,.10); }
+  [data-theme="dark"] .formula { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .pill { background: rgba(67,56,202,.18); color: #c7d2fe; }
+  [data-theme="dark"] .pill.unsup { background: rgba(4,120,87,.18); color: #a7f3d0; }
+  [data-theme="dark"] .pill.rl    { background: rgba(146,64,14,.18); color: #fde68a; }
+  [data-theme="dark"] .pill.dl    { background: rgba(157,23,77,.18); color: #fbcfe8; }
+  [data-theme="dark"] .pill.dim   { background: rgba(55,48,163,.18); color: #c7d2fe; }
+  [data-theme="dark"] .pill.ens   { background: rgba(153,27,27,.18); color: #fecaca; }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(192,132,252,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+  [data-theme="dark"] .cheat-table th { background: rgba(192,132,252,.15); color: var(--accent); }
+  [data-theme="dark"] .cheat-table td:first-child { background: var(--code-bg); color: var(--num); }
+  [data-theme="dark"] .cheat-table tr:nth-child(even) td:not(:first-child) { background: rgba(255,255,255,.02); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>30 AI Algorithms — Cheatsheet, Intuition &amp; Python Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Foundations<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+    <div class="tab brief" data-diff="brief"><span class="dot"></span>Brief</div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">&larr; Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next &rarr;</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL ALGORITHMS ----------------------- */
+const PROBLEMS = [];
+
+/* ===================== FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The AI Algorithms Cheatsheet (read this first)", diff: "veasy",
+  family: "Foundations",
+  problem: "ML algorithms split into three big families: SUPERVISED (you have labeled (X, y) pairs and learn a function), UNSUPERVISED (no labels, find structure), and REINFORCEMENT (an agent acts in an environment and learns from rewards). Knowing which family a problem lives in narrows the algorithm choice from 30 to about 5.",
+  intuition: "Pick the family from the data shape, then pick the algorithm from the bias–variance trade-off and the data scale. Linear models are high-bias / low-variance and need lots of data to be wrong; tree ensembles are low-bias and dominate tabular data; deep nets dominate when raw signals (pixels, audio, text, sequences) are involved; reinforcement learning is for sequential decision making where you optimize a long-run reward, not a single label.",
+  hints: [
+    "Labels y available? → Supervised. y is continuous → Regression. y is categorical → Classification.",
+    "No labels? → Unsupervised. Group rows → Clustering. Compress columns → Dimensionality reduction. Score how weird → Anomaly detection.",
+    "Sequential decisions with feedback? → Reinforcement Learning (MDP, Q-learning, policy gradient, actor-critic).",
+    "Tabular and small? → Start with a linear/logistic baseline, then a tree ensemble (Random Forest / XGBoost).",
+    "Images, audio, text, time series? → Deep learning (CNN / RNN / LSTM / Transformer)."
+  ],
+  tips: [
+    "Always train a dumb baseline first (mean predictor, logistic regression, k-NN). If your fancy model can't beat it, the data — not the model — is the bug.",
+    "Bias–variance: high training error = bias (underfitting), big train↔val gap = variance (overfitting).",
+    "Standardize features for any distance- or gradient-based model (k-NN, k-Means, SVM, PCA, NN). Trees don't care.",
+    "Validate with train / val / test or k-fold CV. Never tune hyperparameters on the test set.",
+    "More data > more model. Doubling clean data usually beats doubling depth."
+  ],
+  cheatsheetHtml: `
+    <table class="cheat-table">
+      <thead><tr><th>Family</th><th>Algorithms in this guide</th></tr></thead>
+      <tbody>
+        <tr><td>Supervised — Regression</td><td>Linear Regression</td></tr>
+        <tr><td>Supervised — Classification</td><td>Logistic Reg, k-NN, Naive Bayes, Decision Tree, SVM</td></tr>
+        <tr><td>Ensembles (sup.)</td><td>Random Forest, AdaBoost, Gradient Boosting, XGBoost</td></tr>
+        <tr><td>Clustering (unsup.)</td><td>k-Means, k-Means++, Hierarchical, DBSCAN</td></tr>
+        <tr><td>Dim. Reduction (unsup.)</td><td>PCA, t-SNE, Autoencoders</td></tr>
+        <tr><td>Anomaly Detection</td><td>Isolation Forest</td></tr>
+        <tr><td>Deep Learning</td><td>ANN, CNN, RNN, LSTM, Transformer</td></tr>
+        <tr><td>Reinforcement Learning</td><td>MDP, Q-Learning, SARSA, DQN, Policy Gradient, Actor-Critic</td></tr>
+        <tr><td>Search / Optimization</td><td>Genetic Algorithms</td></tr>
+      </tbody>
+    </table>
+    <p><b>Bias–variance one-liners:</b></p>
+    <ul class="hints">
+      <li><b>Linear / Logistic / Naive Bayes</b> — high bias, low variance, fast, interpretable. Great baselines.</li>
+      <li><b>k-NN / Decision Tree</b> — low bias, high variance. Easy to overfit on small data.</li>
+      <li><b>Random Forest / Gradient Boosting</b> — bagging averages variance away; boosting cuts bias. Workhorses on tabular data.</li>
+      <li><b>SVM with RBF</b> — flexible decision boundaries, but tuning C and γ matters and it scales as O(n²) – O(n³).</li>
+      <li><b>Deep nets</b> — universal approximators, dominant on raw perceptual data, hungry for data and compute.</li>
+    </ul>
+  `,
+  code: `# ----------------------------------------------------------------------
+# The five lines you'll write at the start of nearly every ML script.
+# Memorise this skeleton; every algorithm in this guide drops into it.
+# ----------------------------------------------------------------------
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing   import StandardScaler
+from sklearn.metrics         import accuracy_score, mean_squared_error
+
+# 1) Split BEFORE you touch the features (no leakage).
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y  # stratify only for classification
+)
+
+# 2) Scale only for distance / gradient based models (k-NN, k-Means, SVM, PCA, NN).
+scaler  = StandardScaler().fit(X_train)
+X_train = scaler.transform(X_train)
+X_test  = scaler.transform(X_test)
+
+# 3) Fit a model.
+model = SomeEstimator(...)        # plug any estimator from this guide
+model.fit(X_train, y_train)
+
+# 4) Predict + evaluate. Always pick the metric your business actually cares about.
+y_pred = model.predict(X_test)
+print("acc :", accuracy_score(y_test, y_pred))           # classification
+print("rmse:", mean_squared_error(y_test, y_pred) ** .5) # regression`,
+  complexity: "Knowing the family is a 30-second decision. Picking the algorithm inside that family is what the next 30 cards are for."
+});
+
+
+/* ===================== FOUNDATIONS / VERY EASY ===================== */
+
+PROBLEMS.push({
+  num: 1, title: "Linear Regression", diff: "veasy",
+  family: "Supervised — Regression",
+  problem: "Given inputs X and continuous targets y, fit a straight line (or hyperplane) ŷ = Xw + b that minimises the squared error between predictions and labels.",
+  intuition: "It's the geometric best fit — the unique line that minimises the average squared vertical gap to your data. The closed-form Normal Equation gives it in one matrix step; gradient descent gives it iteratively when X is too big to invert. Linear regression is the baseline you must beat — if a fancy model can't, your features are the problem, not the model.",
+  formula: "ŷ = Xw + b      Loss = (1/n) Σ (yᵢ − ŷᵢ)²      ∂Loss/∂w = (2/n) Xᵀ(Xw − y)",
+  hints: [
+    "Prepare X as an (n × d) matrix and append a column of 1s so the bias rides along.",
+    "Closed-form: w = (XᵀX)⁻¹ Xᵀy. Cheap up to ~10⁴ features; otherwise use gradient descent.",
+    "Standardize features so every coefficient lives on the same scale — it makes regularization fair.",
+    "Add L2 (Ridge) or L1 (Lasso) regularization if d > n or features are correlated."
+  ],
+  tips: [
+    "Linear regression assumes residuals are roughly i.i.d. Gaussian. Plot them — funnel shapes mean you need a log target or a tree model.",
+    "R² alone is a trap. Always also report RMSE on a held-out set.",
+    "Multicollinearity wrecks coefficient interpretability — use VIF or just switch to Ridge.",
+    "Polynomial features turn a linear model into a flexible curve fitter without leaving sklearn."
+  ],
+  code: `import numpy as np
+from sklearn.linear_model import LinearRegression, Ridge
+
+# ---- 1) Closed-form (the math) ----------------------------------------
+def fit_normal_eq(X, y):
+    X1 = np.c_[np.ones(len(X)), X]              # bias trick
+    return np.linalg.pinv(X1.T @ X1) @ X1.T @ y # w = (XᵀX)⁻¹ Xᵀy
+
+# ---- 2) sklearn (the practice) ----------------------------------------
+model = LinearRegression().fit(X_train, y_train)
+print(model.coef_, model.intercept_)
+print("R²:", model.score(X_test, y_test))
+
+# ---- 3) Ridge when features are correlated or n < d --------------------
+ridge = Ridge(alpha=1.0).fit(X_train, y_train)
+print("ridge R²:", ridge.score(X_test, y_test))`,
+  complexity: "Closed form O(nd² + d³). Gradient descent O(nd) per epoch. Inference O(d) per row."
+});
+
+PROBLEMS.push({
+  num: 2, title: "Logistic Regression", diff: "veasy",
+  family: "Supervised — Classification",
+  problem: "Given X and binary labels y ∈ {0,1}, predict the probability P(y=1 | x) = σ(wᵀx + b). The decision is 1 iff that probability ≥ 0.5.",
+  intuition: "Squash a linear score through the sigmoid σ(z) = 1 / (1 + e⁻ᶻ) so it lives in [0, 1] and reads as a probability. Train by maximising the log-likelihood — equivalently, minimising binary cross-entropy. The decision boundary is still a hyperplane; the sigmoid only transforms the score, it doesn't bend the boundary.",
+  formula: "P(y=1|x) = σ(wᵀx + b)     Loss = −(1/n) Σ [yᵢ log p̂ᵢ + (1 − yᵢ) log(1 − p̂ᵢ)]",
+  hints: [
+    "No closed form — use gradient descent or sklearn's LBFGS.",
+    "For multi-class, use softmax (multinomial logistic) instead of sigmoid.",
+    "Add L2 by default in sklearn; tune `C = 1/λ`.",
+    "Probabilities are calibrated only with enough data — use Platt scaling or isotonic if you need sharp probability estimates."
+  ],
+  tips: [
+    "Logistic regression is linear in the features, not in the probabilities. Add interaction or polynomial features for non-linear boundaries.",
+    "Class imbalance ruins accuracy as a metric. Use ROC-AUC, PR-AUC, or set `class_weight='balanced'`.",
+    "It's the workhorse classification baseline — fast, calibrated, interpretable.",
+    "Coefficients are log-odds: exp(wⱼ) = odds-ratio per unit of feature j."
+  ],
+  code: `from sklearn.linear_model import LogisticRegression
+
+clf = LogisticRegression(
+    penalty='l2', C=1.0,                # smaller C ⇒ stronger regularization
+    class_weight='balanced',            # save you from imbalance
+    max_iter=1000
+).fit(X_train, y_train)
+
+probs = clf.predict_proba(X_test)[:, 1] # P(y = 1 | x)
+preds = (probs >= 0.5).astype(int)
+
+# Manual sigmoid + cross-entropy (so you really know what fit() does):
+def sigmoid(z): return 1 / (1 + np.exp(-z))
+def bce(y, p): return -np.mean(y*np.log(p+1e-9) + (1-y)*np.log(1-p+1e-9))`,
+  complexity: "Train O(n · d · iters). Inference O(d). Memory O(d)."
+});
+
+PROBLEMS.push({
+  num: 6, title: "k-Nearest Neighbors (k-NN)", diff: "veasy",
+  family: "Supervised — Lazy / Instance-based",
+  problem: "Predict the label of a new point by looking up its k closest training neighbours and majority-voting (classification) or averaging (regression). No training, just storage and look-up.",
+  intuition: "k-NN literally memorises the training set. At inference time it reaches into the box of past examples, grabs the k that sit closest in feature space, and copies their answer. Bigger k smooths the decision surface (more bias); k = 1 is jagged (max variance).",
+  hints: [
+    "Distances are usually Euclidean; for sparse / high-dim data use cosine.",
+    "ALWAYS standardize features — distance is meaningless across mismatched scales.",
+    "Pick k by cross-validation. Odd k for binary classification dodges ties.",
+    "For n in the millions use a KD-tree, Ball-tree, or approximate nearest-neighbour (HNSW, FAISS)."
+  ],
+  tips: [
+    "Curse of dimensionality: in d > ~20, all distances look similar. Reduce dim with PCA first.",
+    "Weighting by `1/distance` often beats uniform voting.",
+    "k-NN is a strong baseline on small clean datasets and a recommender-system staple.",
+    "Inference cost grows with n — bad for huge training sets unless you index."
+  ],
+  code: `from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler().fit(X_train)
+Xtr, Xte = scaler.transform(X_train), scaler.transform(X_test)
+
+knn = KNeighborsClassifier(
+    n_neighbors=7, weights='distance', metric='minkowski', p=2
+).fit(Xtr, y_train)
+
+print("acc:", knn.score(Xte, y_test))
+
+# ---- From scratch (so you really see what's happening) ----------------
+def knn_predict(x, X, y, k=5):
+    dists = np.linalg.norm(X - x, axis=1)        # Euclidean to every train point
+    idx   = np.argpartition(dists, k)[:k]        # k smallest, unsorted
+    return np.bincount(y[idx]).argmax()          # majority vote`,
+  complexity: "Train O(1) (just store). Predict O(n · d) brute-force, O(log n) with a tree. Memory O(n · d)."
+});
+
+PROBLEMS.push({
+  num: 7, title: "Naive Bayes", diff: "veasy",
+  family: "Supervised — Classification",
+  problem: "Classify an input x by picking the class c that maximises P(c | x) ∝ P(c) · ∏ⱼ P(xⱼ | c). The 'naive' part: assume features are conditionally independent given the class.",
+  intuition: "Bayes' rule rearranges conditional probabilities. The independence assumption is wildly wrong on real data, yet it works astonishingly well — the classifier only needs the argmax to be right, not the probabilities. Tiny model, fast training, often the strongest spam / text-classification baseline you can write in 10 lines.",
+  formula: "P(c|x) ∝ P(c) · ∏ⱼ P(xⱼ|c)      log P(c|x) = log P(c) + Σⱼ log P(xⱼ|c)",
+  hints: [
+    "Pick the variant by feature type: GaussianNB (continuous), MultinomialNB (counts/TF-IDF), BernoulliNB (binary).",
+    "ALWAYS use Laplace smoothing (`alpha=1`) so unseen feature values don't zero out the posterior.",
+    "Work in log-space — products of tiny probabilities underflow.",
+    "Class priors P(c) come from training-class frequencies."
+  ],
+  tips: [
+    "Best-in-class (heh) for text classification with bag-of-words / TF-IDF.",
+    "Surprisingly robust to irrelevant features; the independence assumption rarely flips the argmax.",
+    "Probabilities are not well-calibrated — use it for decisions, not for risk estimation.",
+    "Trains in one pass over the data — closed-form parameter estimates."
+  ],
+  code: `from sklearn.naive_bayes import MultinomialNB, GaussianNB
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# ---- Text (bag of words / TF-IDF) -------------------------------------
+vec = TfidfVectorizer(stop_words='english', ngram_range=(1, 2))
+Xtr = vec.fit_transform(text_train)
+clf = MultinomialNB(alpha=1.0).fit(Xtr, y_train)   # alpha = Laplace smoothing
+print("acc:", clf.score(vec.transform(text_test), y_test))
+
+# ---- Continuous features (use Gaussian assumption) --------------------
+gnb = GaussianNB().fit(X_train, y_train)`,
+  complexity: "Train O(n · d). Predict O(d · |classes|). Memory O(d · |classes|)."
+});
+
+PROBLEMS.push({
+  num: 3, title: "Decision Tree", diff: "veasy",
+  family: "Supervised — Tree",
+  problem: "Recursively split the feature space along axis-aligned cuts. Each split picks the feature + threshold that most reduces impurity (Gini / entropy for classification, MSE for regression). Leaves predict the majority class or mean target.",
+  intuition: "A tree is a flowchart of yes/no questions. The training algorithm greedily asks 'which single split makes the two child nodes purer than the parent?' and locks in the best one. Repeat on each child until you hit a stopping rule. Trees are the most interpretable non-linear model — you can literally read out the rules.",
+  formula: "Gini(p) = 1 − Σ pₖ²    Entropy(p) = −Σ pₖ log₂ pₖ    InfoGain = H(parent) − Σ (nᵢ/n) H(child ᵢ)",
+  hints: [
+    "Stop with `max_depth`, `min_samples_leaf`, or `ccp_alpha` (cost-complexity pruning).",
+    "Trees are scale-invariant — no need to standardize features.",
+    "Handle categoricals natively or via one-hot encoding.",
+    "Single trees overfit. Use them as the unit cell of forests / boosted ensembles."
+  ],
+  tips: [
+    "`feature_importances_` is biased toward high-cardinality features — prefer permutation importance.",
+    "A depth-3 tree is often a great explainable baseline.",
+    "Trees can't extrapolate — predictions are clipped to the training-target range.",
+    "Plot the tree (`plot_tree`) at least once to build intuition; you'll never trust black-boxes blindly again."
+  ],
+  code: `from sklearn.tree import DecisionTreeClassifier, plot_tree
+
+dt = DecisionTreeClassifier(
+    criterion='gini', max_depth=5,
+    min_samples_leaf=20, ccp_alpha=0.0,
+    random_state=42
+).fit(X_train, y_train)
+
+print("acc:", dt.score(X_test, y_test))
+
+# ---- Read off the most informative splits -----------------------------
+import pandas as pd
+imp = pd.Series(dt.feature_importances_, index=feature_names).sort_values(ascending=False)
+print(imp.head(10))
+
+# plot_tree(dt, feature_names=feature_names, class_names=classes, filled=True)`,
+  complexity: "Train O(n · d · log n). Predict O(depth) ≈ O(log n). Memory O(nodes)."
+});
+
+PROBLEMS.push({
+  num: 11, title: "k-Means Clustering", diff: "veasy",
+  family: "Unsupervised — Clustering",
+  problem: "Partition n points into k clusters by alternating: (a) ASSIGN each point to the closest centroid, (b) MOVE each centroid to the mean of its cluster. Repeat until assignments stop changing.",
+  intuition: "It's expectation-maximisation on a mixture of spherical Gaussians with equal variance. The algorithm minimises within-cluster sum of squares, but only finds a LOCAL minimum — your initialisation matters. (k-Means++ fixes that, see card 7.)",
+  formula: "minimise  Σᵢ ‖xᵢ − μ_{c(i)}‖²        update  μⱼ = mean({xᵢ : c(i) = j})",
+  hints: [
+    "Pick k with the Elbow method (plot inertia vs k) or the Silhouette score.",
+    "ALWAYS standardize features — distance-based.",
+    "Run with multiple random seeds (`n_init=10`) and keep the best inertia.",
+    "Doesn't handle non-spherical, varying-density, or noisy clusters — switch to DBSCAN."
+  ],
+  tips: [
+    "Outliers pull centroids — clip or remove them first.",
+    "MiniBatchKMeans handles millions of points with a small RAM footprint.",
+    "k-Means is variance-minimising, not density-based — clusters end up roughly equal-sized.",
+    "Centroids are continuous — k-Modes is the discrete-feature analogue."
+  ],
+  code: `from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+X_std = StandardScaler().fit_transform(X)
+
+km = KMeans(
+    n_clusters=4, n_init=10, init='k-means++',
+    max_iter=300, random_state=42
+).fit(X_std)
+
+labels    = km.labels_
+centroids = km.cluster_centers_
+inertia   = km.inertia_     # Σ ‖x − μ_c‖²
+
+# ---- Elbow plot to choose k -------------------------------------------
+ks = range(1, 11)
+inertias = [KMeans(n_clusters=k, n_init=10, random_state=42).fit(X_std).inertia_ for k in ks]`,
+  complexity: "Train O(n · k · d · iters). Predict O(k · d) per row. Memory O(k · d)."
+});
+
+PROBLEMS.push({
+  num: 26, title: "k-Means++", diff: "veasy",
+  family: "Unsupervised — Clustering",
+  problem: "Vanilla k-Means is sensitive to how the initial centroids are placed. k-Means++ replaces random init with a smarter probabilistic seeding so you converge faster and to a better local optimum.",
+  intuition: "Pick the first centroid uniformly at random. For every next centroid, sample a point with probability proportional to its squared distance to the nearest already-chosen centroid. The further a point is from the existing centroids, the more likely it gets picked — so seeds spread out instead of clumping. Then run normal k-Means.",
+  formula: "P(x is next centroid) = D(x)² / Σⱼ D(xⱼ)²   where D(x) = min‖x − μ‖",
+  hints: [
+    "It's the default in sklearn (`init='k-means++'`); you almost never write it yourself.",
+    "Total seeding cost is O(n · k) — negligible vs the main loop.",
+    "Reduces variance across runs dramatically; you can drop `n_init` from 10 down to 1–2.",
+    "Same cost guarantees as k-Means once seeded — it only changes the initialisation."
+  ],
+  tips: [
+    "k-Means++ comes with a theoretical bound: expected inertia ≤ 8(ln k + 2) · OPT.",
+    "If features have different scales, k-Means++ won't save you — still standardize.",
+    "On streaming data, look at scalable k-Means++ (k-Means|| / Spark MLlib's variant).",
+    "If you only ever start k-Means once, k-Means++ is the cheapest accuracy upgrade you can make."
+  ],
+  code: `import numpy as np
+
+def kmeanspp_init(X, k, rng=np.random.default_rng(0)):
+    n = len(X)
+    idx = [rng.integers(n)]                       # first centroid uniform
+    for _ in range(1, k):
+        d2 = np.min(((X[:, None] - X[idx][None]) ** 2).sum(-1), axis=1)
+        probs = d2 / d2.sum()
+        idx.append(rng.choice(n, p=probs))        # ∝ D(x)²
+    return X[idx]
+
+# Then run normal k-Means starting from these centroids.
+# In sklearn it's literally one parameter:
+from sklearn.cluster import KMeans
+km = KMeans(n_clusters=4, init='k-means++', n_init=1, random_state=42).fit(X)`,
+  complexity: "Seeding O(n · k). Total k-Means with k++ init: same as plain k-Means but typically converges in fewer iters."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 13, title: "Principal Component Analysis (PCA)", diff: "easy",
+  family: "Unsupervised — Dimensionality Reduction",
+  problem: "Given an n × d data matrix X, find an orthogonal basis where the coordinates are uncorrelated and ranked by variance. Keep the top-k axes and you've compressed d features into k while preserving as much variance as possible.",
+  intuition: "Centre the data, compute the covariance matrix Σ = (1/n) XᵀX, eigendecompose it. The eigenvectors with the biggest eigenvalues are the directions of maximum spread; project X onto those k vectors and you have the best linear k-dim summary in a least-squares sense. Equivalently: SVD of X gives the same answer in one shot.",
+  formula: "Σ = (1/n) XᵀX     Σvᵢ = λᵢvᵢ     Z = X · V_k     reconstruct X̂ = Z · V_kᵀ",
+  hints: [
+    "ALWAYS standardize features first — variance is scale-dependent.",
+    "Pick k by `explained_variance_ratio_.cumsum() ≥ 0.95`.",
+    "PCA is linear; it can't unfold a Swiss roll. Use t-SNE / UMAP / autoencoders for that.",
+    "For huge / sparse data use `TruncatedSVD` instead of `PCA` — it skips centring."
+  ],
+  tips: [
+    "Use PCA before k-Means / k-NN / SVM when d is large — it kills noise and speeds up the model.",
+    "Reconstruction error ‖X − X̂‖² is itself a useful anomaly score on the held-out set.",
+    "Components are orthogonal but not interpretable — they're linear mixtures of all original features.",
+    "Whitening (divide each component by √λ) makes downstream models behave nicely."
+  ],
+  code: `from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+X_std = StandardScaler().fit_transform(X)
+
+pca = PCA(n_components=0.95)            # keep 95% of variance
+Z   = pca.fit_transform(X_std)
+print("kept", pca.n_components_, "components")
+print("explained:", pca.explained_variance_ratio_.cumsum())
+
+# ---- Reconstruct (lossy) ----------------------------------------------
+X_hat = pca.inverse_transform(Z)
+err   = ((X_std - X_hat) ** 2).mean()
+print("reconstruction MSE:", err)`,
+  complexity: "Train O(min(n²d, nd²)) via SVD. Project new row O(d · k). Memory O(d · k)."
+});
+
+PROBLEMS.push({
+  num: 12, title: "Hierarchical Clustering", diff: "easy",
+  family: "Unsupervised — Clustering",
+  problem: "Build a tree (dendrogram) of clusters bottom-up: start with every point as its own cluster, repeatedly merge the two closest clusters until everything is in one. Cut the dendrogram horizontally to get a flat clustering at any granularity.",
+  intuition: "Agglomerative clustering keeps a 'distance between clusters' function — single, complete, average, or Ward linkage — and greedily merges the closest pair at every step. The dendrogram is the full history; you choose k after the fact by deciding how high to cut.",
+  hints: [
+    "Linkage controls cluster shape: single (chains), complete (compact), average (between), Ward (minimises variance — the default).",
+    "Visualise the dendrogram and look for the longest vertical gap — that's your natural k.",
+    "Standardize features and use a sensible distance (Euclidean for Ward).",
+    "Doesn't scale: O(n²) memory just for the distance matrix. Sample / use BIRCH / mini-batch alternatives for n > ~10⁴."
+  ],
+  tips: [
+    "Unlike k-Means, you don't pick k up-front and it handles non-globular clusters (with single linkage).",
+    "Single linkage suffers from the 'chaining' effect — long thin clusters merge by the wrong bridge points.",
+    "Ward + Euclidean is the safest default and matches k-Means's variance-minimising spirit.",
+    "Use `scipy.cluster.hierarchy.dendrogram` to plot — far more informative than just labels."
+  ],
+  code: `from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+X_std = StandardScaler().fit_transform(X)
+
+Z = linkage(X_std, method='ward')           # try 'average', 'complete', 'single'
+# dendrogram(Z, truncate_mode='lastp', p=30); plt.show()
+
+# Cut into a flat clustering
+labels = fcluster(Z, t=4, criterion='maxclust')      # 4 clusters
+# or:    fcluster(Z, t=2.5, criterion='distance')    # by linkage distance`,
+  complexity: "Train O(n²) memory, O(n² log n) time for naive; O(n²) with smarter heaps. Inference: assign new point with k-NN to existing labels."
+});
+
+PROBLEMS.push({
+  num: 13, title: "DBSCAN (Density-Based Clustering)", diff: "easy",
+  family: "Unsupervised — Clustering",
+  problem: "Group points that sit in dense neighbourhoods, label sparse regions as noise. Two parameters: ε (radius) and `min_samples` (neighbours required to call a region 'dense').",
+  intuition: "Walk through points. If a point has at least `min_samples` neighbours within ε, it's a CORE point; expand outward through its dense connections to grow a cluster. Points reachable only through chains of core points are BORDER. Anything not reachable is NOISE. The number of clusters is found, not chosen.",
+  hints: [
+    "Pick ε from a k-distance plot: sort the distance to the k-th nearest neighbour and take the elbow.",
+    "`min_samples ≈ 2 · d` is a starting heuristic.",
+    "Standardize features — it's distance-based.",
+    "Doesn't work well when clusters have very different densities — try HDBSCAN."
+  ],
+  tips: [
+    "Outliers get label -1 — DBSCAN is also a fine anomaly-detection tool.",
+    "Finds arbitrary-shaped clusters (concentric circles, moons) where k-Means falls over.",
+    "Borderline points may flip clusters between runs — that's expected, not a bug.",
+    "Use `algorithm='ball_tree'` and a small leaf size for high-dim data."
+  ],
+  code: `from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors  import NearestNeighbors
+import numpy as np, matplotlib.pyplot as plt
+
+X_std = StandardScaler().fit_transform(X)
+
+# ---- Pick eps from the k-distance elbow -------------------------------
+k = 5
+nn = NearestNeighbors(n_neighbors=k).fit(X_std)
+d, _ = nn.kneighbors(X_std)
+plt.plot(np.sort(d[:, k-1]))   # elbow ⇒ eps
+
+db = DBSCAN(eps=0.5, min_samples=5).fit(X_std)
+labels = db.labels_                       # -1 = noise
+n_clusters = len(set(labels)) - (1 if -1 in labels else 0)`,
+  complexity: "Train O(n log n) with index, O(n²) without. Memory O(n)."
+});
+
+PROBLEMS.push({
+  num: 4, title: "Random Forest", diff: "easy",
+  family: "Supervised — Ensemble (Bagging)",
+  problem: "Train many decorrelated decision trees on bootstrap samples, randomising the feature subset considered at each split. Predict by majority vote (classification) or average (regression).",
+  intuition: "Single trees are low-bias / high-variance. Average enough decorrelated trees and the variance cancels — but only if the trees disagree. Random Forest forces disagreement two ways: (1) each tree sees a bootstrap sample, (2) each split sees a random √d subset of features. The result is a low-variance, low-bias model that wins on tabular data with almost zero tuning.",
+  hints: [
+    "`n_estimators=300` is a fine starting point; more rarely hurts, only costs time.",
+    "Trees can be deep — RF won't overfit the way a single deep tree does.",
+    "`max_features='sqrt'` for classification, `1/3` for regression — that's the decorrelating knob.",
+    "Out-of-bag (OOB) score is a free cross-validation estimate."
+  ],
+  tips: [
+    "Use permutation importance, not the default `feature_importances_` (biased toward continuous and high-cardinality features).",
+    "Inference is embarrassingly parallel — `n_jobs=-1` everywhere.",
+    "Models in the wild: tabular Kaggle, fraud detection, biology. Hard to beat without proper feature engineering.",
+    "Doesn't extrapolate (still piecewise-constant), so for monotone trends + noise consider gradient boosting or a linear model on top of RF residuals."
+  ],
+  code: `from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier(
+    n_estimators=300, max_depth=None,
+    max_features='sqrt', min_samples_leaf=2,
+    n_jobs=-1, oob_score=True, random_state=42
+).fit(X_train, y_train)
+
+print("oob acc :", rf.oob_score_)
+print("test acc:", rf.score(X_test, y_test))
+
+# ---- Permutation importance (the honest signal) -----------------------
+from sklearn.inspection import permutation_importance
+imp = permutation_importance(rf, X_test, y_test, n_repeats=10, n_jobs=-1)
+print(sorted(zip(imp.importances_mean, feature_names), reverse=True)[:10])`,
+  complexity: "Train O(T · n · d · log n). Predict O(T · log n). Memory O(T · nodes)."
+});
+
+PROBLEMS.push({
+  num: 8, title: "AdaBoost", diff: "easy",
+  family: "Supervised — Ensemble (Boosting)",
+  problem: "Train a sequence of weak learners (typically depth-1 stumps). After each round, REWEIGHT misclassified samples up so the next stump focuses on what the ensemble still gets wrong. Final prediction is a weighted vote.",
+  intuition: "Boosting turns a weak classifier (only slightly better than random) into a strong one by chaining many of them, each correcting the previous one's mistakes. AdaBoost's elegance: it's a coordinate-descent-on-exponential-loss algorithm with a closed-form weight update αₜ = ½ ln((1−εₜ)/εₜ).",
+  formula: "αₜ = ½ ln((1 − εₜ)/εₜ)     wᵢ ← wᵢ · exp(αₜ · 𝟙[hₜ(xᵢ) ≠ yᵢ])     F(x) = sign(Σ αₜ hₜ(x))",
+  hints: [
+    "Default base estimator is a depth-1 decision stump.",
+    "Sensitive to label noise — every misclassified outlier gets blown up.",
+    "Tune `n_estimators` and `learning_rate`; smaller LR + more rounds = smoother model.",
+    "Multi-class: SAMME / SAMME.R algorithms handle it natively in sklearn."
+  ],
+  tips: [
+    "AdaBoost was the first practical boosting method; gradient boosting generalised the idea to any differentiable loss.",
+    "Resists overfitting on clean data, but very brittle on mislabelled data.",
+    "Try it as a fast tabular baseline — usually loses to GBM/XGBoost but trains in seconds.",
+    "Easy to interpret because each round adds one short rule."
+  ],
+  code: `from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree     import DecisionTreeClassifier
+
+ada = AdaBoostClassifier(
+    estimator=DecisionTreeClassifier(max_depth=1),  # the canonical 'stump'
+    n_estimators=200, learning_rate=1.0, random_state=42
+).fit(X_train, y_train)
+
+print("acc:", ada.score(X_test, y_test))
+
+# Per-round weights show how much each stump contributes
+for i, alpha in enumerate(ada.estimator_weights_[:5]):
+    print(f"stump {i}: alpha={alpha:.3f}")`,
+  complexity: "Train O(T · n · d). Predict O(T · depth). Memory O(T · stumps)."
+});
+
+PROBLEMS.push({
+  num: 9, title: "Gradient Boosting", diff: "easy",
+  family: "Supervised — Ensemble (Boosting)",
+  problem: "Build trees additively. Each new tree is fit to the NEGATIVE GRADIENT of the loss with respect to the current ensemble's prediction — i.e., the residuals for squared loss. Combine with a learning-rate-scaled sum.",
+  intuition: "It's gradient descent in function space. After round t, the model is Fₜ(x). Compute the residual rᵢ = −∂L/∂F evaluated at Fₜ(xᵢ). Fit a small tree hₜ₊₁ to those residuals, then Fₜ₊₁ = Fₜ + η · hₜ₊₁. Repeat. Generalises to any differentiable loss (logistic, quantile, Huber, ...).",
+  formula: "Fₜ₊₁(x) = Fₜ(x) + η · hₜ₊₁(x)     where  hₜ₊₁ ≈ −∂L/∂F |_{F = Fₜ}",
+  hints: [
+    "Three knobs that matter: `learning_rate`, `n_estimators`, `max_depth` (3–8 typical).",
+    "Smaller LR + more trees = better generalization, slower training.",
+    "Use early stopping on a validation set so you don't grow trees you don't need.",
+    "Subsample rows (`subsample=0.8`) and columns (`max_features='sqrt'`) for stochastic gradient boosting."
+  ],
+  tips: [
+    "Sklearn's `GradientBoostingClassifier` is correct but slow; reach for `HistGradientBoostingClassifier`, LightGBM, or XGBoost in practice.",
+    "Calibrated probabilities for free if loss is logistic.",
+    "Trees are sequential — training is NOT parallel across trees (only within tree splits).",
+    "Often the strongest tabular model in the world. Combine with proper feature engineering and you usually win."
+  ],
+  code: `from sklearn.ensemble import HistGradientBoostingClassifier
+
+gbm = HistGradientBoostingClassifier(
+    learning_rate=0.05, max_iter=500,
+    max_depth=None, max_leaf_nodes=31,
+    early_stopping=True, validation_fraction=0.1,
+    random_state=42
+).fit(X_train, y_train)
+
+print("acc:", gbm.score(X_test, y_test))
+print("trees grown:", gbm.n_iter_)`,
+  complexity: "Train O(T · n · d) with histogram binning, much faster than naive. Predict O(T · depth)."
+});
+
+PROBLEMS.push({
+  num: 10, title: "XGBoost", diff: "easy",
+  family: "Supervised — Ensemble (Boosting)",
+  problem: "Production-grade gradient boosting. Adds a regularized objective (penalises tree complexity), uses second-order gradients (Hessian) for the split criterion, and ships with histogram binning, GPU support, and built-in handling of missing values.",
+  intuition: "Standard GBM expands the loss with a first-order Taylor approximation; XGBoost uses second-order and a complexity penalty `Ω(f) = γT + ½λ‖w‖²`. The closed-form leaf weights and the gain formula come straight out of that quadratic — and that's why it's fast, accurate, and the default tabular winner.",
+  formula: "Obj = Σ L(yᵢ, ŷᵢ) + Σₖ Ω(fₖ)     wⱼ* = −Gⱼ / (Hⱼ + λ)     gain = ½(GL²/(HL+λ) + GR²/(HR+λ) − G²/(H+λ)) − γ",
+  hints: [
+    "Knobs: `eta` (LR), `max_depth`, `min_child_weight`, `subsample`, `colsample_bytree`, `lambda`, `gamma`.",
+    "Use `early_stopping_rounds` against a validation set — non-negotiable.",
+    "Handles missing values natively (it learns the best default direction at each split).",
+    "GPU mode (`tree_method='hist'`, `device='cuda'`) is many-x faster on big data."
+  ],
+  tips: [
+    "XGBoost, LightGBM, and CatBoost are the three you should know. Start with XGBoost or LightGBM; CatBoost wins on heavy-categorical data.",
+    "`importance_type='gain'` is more honest than 'weight'.",
+    "Don't tune everything — sweep `eta`, `max_depth`, `min_child_weight`, `subsample` first.",
+    "Calibrate probabilities with sigmoid/isotonic if you need risk scores, not just ranks."
+  ],
+  code: `import xgboost as xgb
+
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dval   = xgb.DMatrix(X_val,   label=y_val)
+
+params = dict(
+    objective='binary:logistic', eval_metric='auc',
+    eta=0.05, max_depth=6, min_child_weight=1,
+    subsample=0.9, colsample_bytree=0.9,
+    reg_lambda=1.0, gamma=0.0, tree_method='hist',
+)
+bst = xgb.train(
+    params, dtrain, num_boost_round=2000,
+    evals=[(dtrain,'tr'), (dval,'va')],
+    early_stopping_rounds=50, verbose_eval=100,
+)
+
+probs = bst.predict(xgb.DMatrix(X_test))`,
+  complexity: "Train O(T · n · d) with hist-binning; ~10x faster than scikit GBM in practice. Inference O(T · depth)."
+});
+
+PROBLEMS.push({
+  num: 28, title: "Isolation Forest", diff: "easy",
+  family: "Unsupervised — Anomaly Detection",
+  problem: "Detect anomalies by ISOLATING points: build many random binary trees that split features at random thresholds. Anomalies — by definition rare and different — get separated in fewer splits than normal points, so they live closer to the root.",
+  intuition: "Most algorithms model what's NORMAL and flag deviations. Isolation Forest flips that — it directly measures how easy it is to chop a point off from the rest. Average path length over many random trees becomes the anomaly score; shorter path = weirder point.",
+  formula: "score(x) = 2^(− E[h(x)] / c(n))   where c(n) ≈ 2H(n−1) − 2(n−1)/n",
+  hints: [
+    "Set `contamination` to the expected fraction of anomalies (e.g. 0.01 for 1%).",
+    "No need to standardize — splits are scale-invariant.",
+    "Works great on high-dimensional and big data; trees are independent and trivially parallel.",
+    "Returns a continuous `decision_function` score — threshold it however your application needs."
+  ],
+  tips: [
+    "Stronger than k-NN-distance anomaly detection on high-dim data.",
+    "Doesn't assume any distribution — non-parametric.",
+    "Combine with `predict` (-1 = anomaly, 1 = normal) for a binary flag.",
+    "If you have any labels, validate by sampling top-k flagged points and checking precision-at-k."
+  ],
+  code: `from sklearn.ensemble import IsolationForest
+
+iso = IsolationForest(
+    n_estimators=200, max_samples='auto',
+    contamination=0.01, random_state=42, n_jobs=-1
+).fit(X_train)
+
+scores = -iso.score_samples(X_test)         # bigger = more anomalous
+flags  = iso.predict(X_test)                # +1 normal, -1 anomaly`,
+  complexity: "Train O(T · ψ · log ψ) where ψ = subsample size (default 256). Predict O(T · log ψ)."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 5, title: "Support Vector Machine (SVM)", diff: "med",
+  family: "Supervised — Classification / Regression",
+  problem: "Find the hyperplane that separates the classes with the LARGEST possible margin. Only the closest points (support vectors) define the boundary; everything else is irrelevant. Use the kernel trick to bend the boundary in input space while staying linear in feature space.",
+  intuition: "Maximising the margin means trusting the closest points least and pushing the boundary as far from both classes as possible. Slack variables ξᵢ + the C hyperparameter trade off margin width vs misclassification. The kernel trick — replacing dot products xᵢᵀxⱼ with k(xᵢ, xⱼ) — lets you fit non-linear boundaries (RBF, polynomial, sigmoid) without explicitly computing the high-dim feature map.",
+  formula: "min ½‖w‖² + C·Σξᵢ   s.t. yᵢ(wᵀxᵢ + b) ≥ 1 − ξᵢ ,  ξᵢ ≥ 0      decision: f(x) = Σ αᵢ yᵢ k(xᵢ, x) + b",
+  hints: [
+    "RBF kernel is the safe default: `kernel='rbf'`, then sweep C ∈ [0.1, 10], γ ∈ [1e-3, 1].",
+    "ALWAYS standardize features — distances drive the kernel.",
+    "C controls regularization: small C = wide margin, more slack; big C = tight margin, less slack.",
+    "Doesn't scale well: training is O(n²) – O(n³). For n > ~10⁵ switch to LinearSVC, SGDClassifier, or a tree ensemble."
+  ],
+  tips: [
+    "SVMs were the king of classification before deep learning. Still very strong on small / medium tabular data.",
+    "`probability=True` adds Platt scaling but slows training a lot — only enable if you really need calibrated probs.",
+    "SVR (regression) and One-Class SVM (anomaly detection) reuse the same machinery.",
+    "Kernel choice = inductive bias. RBF for smooth surfaces, linear for high-dim sparse text, polynomial for known interactions."
+  ],
+  code: `from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler().fit(X_train)
+Xtr, Xte = scaler.transform(X_train), scaler.transform(X_test)
+
+svm = SVC(kernel='rbf', C=1.0, gamma='scale',
+          class_weight='balanced').fit(Xtr, y_train)
+
+print("acc:", svm.score(Xte, y_test))
+print("# support vectors:", svm.n_support_)`,
+  complexity: "Train O(n² – n³) (libsvm). Linear kernel via LinearSVC is O(n · d). Predict O(|SV| · d)."
+});
+
+PROBLEMS.push({
+  num: 15, title: "t-SNE (t-Distributed Stochastic Neighbor Embedding)", diff: "med",
+  family: "Unsupervised — Visualisation / Manifold Learning",
+  problem: "Project high-dim data into 2D / 3D so similar points stay close and dissimilar points end up far apart. Designed for VISUALISATION, not preprocessing for downstream models.",
+  intuition: "Build a probability distribution P over pairs in high-dim that's high when xᵢ, xⱼ are neighbours. Build the same distribution Q in low-dim. Move the low-dim points to minimise KL(P‖Q). The 'heavy tail' of the t-distribution in the low-dim Q gives stragglers room to spread, fixing the 'crowding problem' of plain SNE.",
+  formula: "pⱼ|ᵢ ∝ exp(−‖xᵢ − xⱼ‖² / 2σᵢ²)     qᵢⱼ ∝ (1 + ‖yᵢ − yⱼ‖²)⁻¹     min KL(P ‖ Q)",
+  hints: [
+    "`perplexity ≈ 5 to 50` — roughly the effective # of neighbours each point cares about.",
+    "Run PCA → 50 components first, THEN t-SNE — much faster and stabler.",
+    "Distances in the t-SNE plot are NOT preserved globally; only LOCAL clusters mean anything.",
+    "Always run multiple seeds — t-SNE is non-convex and embeddings vary."
+  ],
+  tips: [
+    "Don't read 'how big' or 'how far apart' clusters look — those are artefacts.",
+    "UMAP is faster, often clearer, and preserves more global structure. Default to UMAP unless you have a specific reason.",
+    "Don't use t-SNE features as inputs to classifiers — re-running it on a new test point isn't well-defined.",
+    "Hyperparameter sensitivity is famous; the same data with different perplexities can look totally different."
+  ],
+  code: `from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+
+# Step 1: cheap dim reduction first
+X50 = PCA(n_components=50, random_state=42).fit_transform(X)
+
+# Step 2: t-SNE to 2D
+emb = TSNE(
+    n_components=2, perplexity=30, learning_rate='auto',
+    init='pca', random_state=42
+).fit_transform(X50)
+
+# emb has shape (n, 2) — scatter-plot it, colour by label`,
+  complexity: "O(n²) memory and time in the naive form; O(n log n) with Barnes–Hut or FFT (default in sklearn for big n)."
+});
+
+PROBLEMS.push({
+  num: 21, title: "Artificial Neural Network (ANN / MLP)", diff: "med",
+  family: "Deep Learning — Feedforward",
+  problem: "Stack alternating linear layers (W·x + b) and non-linear activations (ReLU / sigmoid / tanh) into a feedforward network. Train end-to-end by minimising a loss with backpropagation + stochastic gradient descent.",
+  intuition: "Universal approximation theorem: an MLP with a single sufficiently wide hidden layer can approximate any continuous function on a compact set. In practice you go DEEP — many narrower layers compose features more efficiently than one wide layer. Backprop is just the chain rule, applied layer by layer in reverse.",
+  formula: "h⁽ˡ⁾ = σ(W⁽ˡ⁾ h⁽ˡ⁻¹⁾ + b⁽ˡ⁾)     ∂L/∂W⁽ˡ⁾ = δ⁽ˡ⁾ (h⁽ˡ⁻¹⁾)ᵀ     δ⁽ˡ⁾ = (W⁽ˡ⁺¹⁾ᵀ δ⁽ˡ⁺¹⁾) ⊙ σ′(z⁽ˡ⁾)",
+  hints: [
+    "Default architecture: 2-3 hidden layers, ReLU activation, batch norm or layer norm, dropout 0.1-0.3.",
+    "Optimizer: Adam(lr=1e-3) for almost everything; SGD+momentum for vision when you have time to tune.",
+    "Loss: MSE for regression, cross-entropy for classification (binary or categorical).",
+    "Watch out for exploding / vanishing gradients — use He / Xavier init and skip connections in deeper nets."
+  ],
+  tips: [
+    "Always normalize inputs to roughly mean 0, std 1 — the optimisation surface gets way nicer.",
+    "Early stopping on validation loss is the cheapest, strongest regularizer.",
+    "More data >> more layers. Augmentation buys you free generalisation.",
+    "Tabular MLPs rarely beat boosted trees. Reach for deep nets when inputs are perceptual (image, audio, text)."
+  ],
+  code: `import torch, torch.nn as nn
+
+class MLP(nn.Module):
+    def __init__(self, d_in, d_out, hidden=(128, 64)):
+        super().__init__()
+        layers, prev = [], d_in
+        for h in hidden:
+            layers += [nn.Linear(prev, h), nn.ReLU(), nn.Dropout(0.2)]
+            prev = h
+        layers.append(nn.Linear(prev, d_out))
+        self.net = nn.Sequential(*layers)
+
+    def forward(self, x): return self.net(x)
+
+model = MLP(d_in=X.shape[1], d_out=10).cuda()
+opt   = torch.optim.Adam(model.parameters(), lr=1e-3)
+loss_fn = nn.CrossEntropyLoss()
+
+for xb, yb in loader:                       # standard PyTorch loop
+    xb, yb = xb.cuda(), yb.cuda()
+    opt.zero_grad()
+    loss = loss_fn(model(xb), yb)
+    loss.backward()
+    opt.step()`,
+  complexity: "Train O(epochs · n · params). Inference O(params) per row. Memory dominated by weights + activations."
+});
+
+PROBLEMS.push({
+  num: 27, title: "Autoencoders", diff: "med",
+  family: "Deep Learning — Unsupervised",
+  problem: "Train a neural net to copy its input to its output through a NARROW bottleneck. The encoder compresses x → z, the decoder reconstructs z → x̂. The bottleneck z is a learned non-linear summary of the data — useful for compression, denoising, or anomaly detection.",
+  intuition: "If a tiny bottleneck can reconstruct the input, the bottleneck must capture the structure. PCA does this linearly; an autoencoder does it non-linearly. Variants change the loss or the constraints: denoising AEs (corrupt input, reconstruct clean), sparse AEs (penalise active units), variational AEs (force z to look Gaussian).",
+  formula: "z = f_φ(x)    x̂ = g_θ(z)    L(x, x̂) = ‖x − x̂‖²   (or BCE for binary inputs)",
+  hints: [
+    "Bottleneck size ≪ input dim — that's where the learning happens.",
+    "Use the same architecture for encoder and decoder, just mirrored.",
+    "Reconstruction error on held-out data = anomaly score (out-of-distribution inputs reconstruct poorly).",
+    "Variational AEs (VAEs) replace the deterministic z with a sampled q(z|x) and add a KL term to keep z structured."
+  ],
+  tips: [
+    "Linear AE with MSE loss = PCA (in the limit). Non-linearity is what buys you over PCA.",
+    "Denoising AE: train on (corrupted, clean) pairs — works astonishingly well even with simple Gaussian noise.",
+    "Don't expect sharp images from a vanilla AE; the bottleneck blurs detail. Use a VAE-GAN or diffusion model for photoreal generation.",
+    "Pre-train an AE then drop the decoder — z is a learned feature representation for downstream tasks."
+  ],
+  code: `import torch.nn as nn
+
+class AE(nn.Module):
+    def __init__(self, d_in, d_z):
+        super().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(d_in, 256), nn.ReLU(),
+            nn.Linear(256, 64),   nn.ReLU(),
+            nn.Linear(64, d_z))
+        self.decoder = nn.Sequential(
+            nn.Linear(d_z, 64),   nn.ReLU(),
+            nn.Linear(64, 256),   nn.ReLU(),
+            nn.Linear(256, d_in), nn.Sigmoid())
+
+    def forward(self, x):
+        z   = self.encoder(x)
+        return self.decoder(z), z
+
+ae   = AE(d_in=784, d_z=32).cuda()
+opt  = torch.optim.Adam(ae.parameters(), 1e-3)
+loss = nn.MSELoss()
+for xb, _ in loader:
+    xb = xb.cuda()
+    x_hat, _ = ae(xb)
+    l = loss(x_hat, xb)
+    opt.zero_grad(); l.backward(); opt.step()`,
+  complexity: "Train O(epochs · n · params). Memory O(params + batch · activations)."
+});
+
+PROBLEMS.push({
+  num: 22, title: "Convolutional Neural Network (CNN)", diff: "med",
+  family: "Deep Learning — Vision",
+  problem: "An MLP for images would have hundreds of millions of weights. A CNN replaces fully-connected layers with CONVOLUTION layers that share a small set of weights across spatial locations, exploiting two facts: features are local, and the same feature can appear anywhere in the image.",
+  intuition: "Each conv filter is a learned pattern detector that slides over the image — produce the same response to that pattern wherever it occurs (translation equivariance). Stack convs + non-linearity + pooling to build a hierarchy: edges → textures → parts → objects. Modern CNNs add residual connections (ResNet) so gradients flow through hundreds of layers.",
+  formula: "(K * X)[i, j] = Σ_{u, v} K[u, v] · X[i+u, j+v]    + bias    → ReLU → Pool → repeat",
+  hints: [
+    "Stack: Conv → BatchNorm → ReLU → Pool. Repeat 4–6 times. End with global average pooling + a Linear head.",
+    "Use 3×3 kernels; deeper > wider when in doubt.",
+    "Always augment images: random crop, flip, colour jitter. CNN's biggest enemy is overfitting on small data.",
+    "ImageNet-pretrained backbones (ResNet-50, EfficientNet) + fine-tuning beat training from scratch on most real datasets."
+  ],
+  tips: [
+    "Receptive field grows with depth and stride — at the top layers each neuron 'sees' most of the image.",
+    "Use `nn.Conv2d` (PyTorch) / `tf.keras.layers.Conv2D` — never roll convolution by hand outside of teaching.",
+    "Vision Transformers (ViT) match or beat CNNs at scale, but CNNs are still best on small datasets thanks to inductive bias.",
+    "1×1 convolutions = per-pixel linear layers — useful for cheap channel mixing (Inception, ResNet bottlenecks)."
+  ],
+  code: `import torch.nn as nn
+
+class TinyCNN(nn.Module):
+    def __init__(self, n_classes=10):
+        super().__init__()
+        def block(i, o): return nn.Sequential(
+            nn.Conv2d(i, o, 3, padding=1), nn.BatchNorm2d(o),
+            nn.ReLU(), nn.MaxPool2d(2))
+        self.feat = nn.Sequential(
+            block(3, 32), block(32, 64), block(64, 128))
+        self.head = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1), nn.Flatten(),
+            nn.Linear(128, n_classes))
+
+    def forward(self, x): return self.head(self.feat(x))`,
+  complexity: "Train O(epochs · n · K² · C_in · C_out · H · W) per layer. Use GPUs."
+});
+
+PROBLEMS.push({
+  num: 23, title: "Recurrent Neural Network (RNN)", diff: "med",
+  family: "Deep Learning — Sequences",
+  problem: "Process sequences x₁, x₂, ..., x_T by maintaining a hidden state hₜ that summarises everything seen so far. Update rule: hₜ = tanh(W_hh hₜ₋₁ + W_xh xₜ + b). Output yₜ = W_hy hₜ.",
+  intuition: "Same neural network applied repeatedly, with the previous output looped back as input. Weights are shared across time steps, so the network can handle variable-length sequences and learn temporal patterns. Train with backpropagation THROUGH TIME — unroll the recurrence and apply standard backprop.",
+  formula: "hₜ = tanh(W_hh hₜ₋₁ + W_xh xₜ + b)     yₜ = W_hy hₜ",
+  hints: [
+    "Vanilla RNNs suffer from vanishing / exploding gradients on long sequences. Use LSTM or GRU instead — see card 24.",
+    "Pad and pack variable-length sequences in PyTorch with `pack_padded_sequence`.",
+    "Bidirectional RNNs run a forward and a backward RNN and concat the hidden states — much better when you have the full sequence at inference.",
+    "Initialize weights with orthogonal init for the recurrent matrix, He / Xavier for input weights."
+  ],
+  tips: [
+    "RNNs are sequential — you can't parallelise across time. That's why Transformers (card 25) are eating their lunch.",
+    "Use teacher forcing during training (feed the true previous token), then autoregressive generation at inference.",
+    "Gradient clipping (`clip_grad_norm_`) is essentially mandatory.",
+    "For real-world sequence work, default to LSTM / Transformer; pure RNNs are mostly a teaching tool now."
+  ],
+  code: `import torch.nn as nn
+
+class CharRNN(nn.Module):
+    def __init__(self, vocab, hidden=256):
+        super().__init__()
+        self.emb = nn.Embedding(vocab, hidden)
+        self.rnn = nn.RNN(hidden, hidden, batch_first=True)  # vanilla RNN
+        self.head = nn.Linear(hidden, vocab)
+
+    def forward(self, x, h=None):
+        e = self.emb(x)
+        out, h = self.rnn(e, h)
+        return self.head(out), h
+
+# Loss: cross-entropy on next-token prediction
+# Training: feed shifted sequence, predict the next char at every position`,
+  complexity: "Train O(T · hidden² · n) — sequential in T. Memory O(T · hidden) for backprop through time."
+});
+
+PROBLEMS.push({
+  num: 29, title: "Markov Decision Process (MDP)", diff: "med",
+  family: "Reinforcement Learning — Foundations",
+  problem: "Formalise sequential decision-making as a tuple (S, A, P, R, γ): states, actions, transition probabilities P(s'|s,a), rewards R(s,a), and a discount factor γ ∈ [0,1). Find a policy π(a|s) that maximises the expected discounted return.",
+  intuition: "MDP = Markov assumption (the future depends only on the current state) + a clear notion of value. The Bellman equation V*(s) = maxₐ [R(s,a) + γ Σ P(s'|s,a) V*(s')] is recursive — solve it once and you have the optimal policy. When P and R are known, value iteration / policy iteration solve it exactly. When they aren't, you need RL (cards 16, 17, 18, 19, 20).",
+  formula: "V*(s) = maxₐ [R(s,a) + γ Σ_s' P(s'|s,a) V*(s')]      Q*(s,a) = R(s,a) + γ Σ_s' P(s'|s,a) maxₐ' Q*(s',a')",
+  hints: [
+    "Discount factor γ trades off immediate vs long-term reward (typical 0.9 – 0.99).",
+    "Value iteration: repeatedly apply the Bellman update until V converges. Convergence rate ∝ γ.",
+    "Policy iteration: alternate (1) evaluate the current policy by solving its linear system, (2) make π greedy w.r.t. V.",
+    "MDPs assume the state captures EVERYTHING — if it doesn't, you have a POMDP and life gets harder."
+  ],
+  tips: [
+    "Value iteration converges in roughly log(1/(1-γ)) iterations for ε-accuracy.",
+    "If |S| is huge, you tabulate-then-die. Use function approximation (DQN — card 18) instead.",
+    "Reward shaping changes the speed of learning, never the optimal policy (provided you stay potential-based).",
+    "MDP is the language; Q-learning, SARSA, DQN, policy gradient, actor-critic are the algorithms that solve it."
+  ],
+  code: `import numpy as np
+
+def value_iteration(P, R, gamma=0.99, theta=1e-6):
+    """
+    P : array of shape (S, A, S) — transition probabilities
+    R : array of shape (S, A)   — expected immediate reward
+    """
+    S, A = R.shape
+    V = np.zeros(S)
+    while True:
+        Q = R + gamma * np.einsum('sap,p->sa', P, V)   # Bellman backup
+        V_new = Q.max(axis=1)
+        if np.abs(V_new - V).max() < theta: break
+        V = V_new
+    pi = Q.argmax(axis=1)        # greedy policy
+    return V, pi`,
+  complexity: "Value iteration O(|S|² · |A| · iters). Memory O(|S|² · |A|) for P. Tabular ≤ ~10⁶ states."
+});
+
+PROBLEMS.push({
+  num: 30, title: "Genetic Algorithms", diff: "med",
+  family: "Search / Optimization — Evolutionary",
+  problem: "Optimise a black-box fitness function by evolving a POPULATION of candidate solutions. Each generation: SELECT parents weighted by fitness, CROSS OVER pairs to produce offspring, randomly MUTATE bits, replace the population.",
+  intuition: "Borrowed from biology. You don't need gradients, the function doesn't have to be smooth, and the search escapes local optima because mutation + crossover keep the population diverse. Trade-off: slow per-evaluation (you call the fitness function many times), embarrassingly parallel.",
+  formula: "P(parent = i) ∝ fitness(i)    child = crossover(p₁, p₂)    child′ = mutate(child)    population ← top-N(parents ∪ children)",
+  hints: [
+    "Pick selection: roulette / tournament / rank. Tournament is robust and easy.",
+    "Encode the candidate as a fixed-length vector (binary, real-valued, or permutation).",
+    "Mutation rate ~1/L, where L is the chromosome length.",
+    "Elitism: always carry the top-k unchanged into the next generation, otherwise you can lose the current best."
+  ],
+  tips: [
+    "Great when the fitness landscape is non-differentiable, noisy, or has many local optima (NAS, hyperparameter tuning, scheduling).",
+    "If you have gradients, use them. GAs are inefficient compared to gradient methods on smooth problems.",
+    "CMA-ES, NEAT, and differential evolution are stronger evolutionary cousins worth knowing.",
+    "Always cache fitness evaluations — they're usually the bottleneck."
+  ],
+  code: `import numpy as np
+
+def genetic_algorithm(fitness, n_genes, pop=50, generations=100,
+                      mut_rate=0.05, elite=2, rng=np.random.default_rng(0)):
+    population = rng.integers(0, 2, (pop, n_genes))    # binary encoding
+    for _ in range(generations):
+        scores = np.array([fitness(ind) for ind in population])
+        order  = scores.argsort()[::-1]
+        keep   = population[order[:elite]]             # elitism
+        # tournament selection (size 3)
+        def pick():
+            idx = rng.integers(0, pop, 3); return population[idx[scores[idx].argmax()]]
+        children = []
+        while len(children) < pop - elite:
+            p1, p2 = pick(), pick()
+            c = rng.integers(1, n_genes)
+            child = np.r_[p1[:c], p2[c:]]              # one-point crossover
+            mask  = rng.random(n_genes) < mut_rate
+            child = np.where(mask, 1 - child, child)   # bit-flip mutation
+            children.append(child)
+        population = np.vstack([keep, children])
+    scores = np.array([fitness(ind) for ind in population])
+    return population[scores.argmax()], scores.max()`,
+  complexity: "O(generations · pop · cost-of-fitness). Memory O(pop · n_genes)."
+});
+
+PROBLEMS.push({
+  num: 24, title: "Long Short-Term Memory (LSTM)", diff: "med",
+  family: "Deep Learning — Sequences",
+  problem: "A vanilla RNN forgets long-range information because gradients vanish through repeated multiplication by W_hh. LSTM fixes this by adding a CELL STATE c_t with additive updates and three GATES (input, forget, output) that learn what to keep, discard, and expose.",
+  intuition: "Think of c_t as a conveyor belt running through time — information is added or removed via gates rather than multiplied through. Because the gradient flows along the cell state with mostly +1 multiplications, LSTMs can carry signals over hundreds of time steps. Almost everything you'd reach for an RNN for, reach for an LSTM (or GRU) instead.",
+  formula: "f_t = σ(W_f [h_{t−1}, x_t])    i_t = σ(W_i [..])    o_t = σ(W_o [..])\nc_t = f_t ⊙ c_{t−1} + i_t ⊙ tanh(W_c [..])\nh_t = o_t ⊙ tanh(c_t)",
+  hints: [
+    "Forget gate f_t learns what to drop from the cell state. Input gate i_t learns what new info to add. Output gate o_t learns what part of the cell to expose as the hidden state.",
+    "GRU is a simpler cousin (2 gates instead of 3). Slightly cheaper, almost as accurate.",
+    "Stack 1–3 LSTM layers; deeper rarely helps on sequence data without massive scale.",
+    "Use bidirectional LSTMs for tasks where the full sequence is available (NER, POS tagging)."
+  ],
+  tips: [
+    "Initialise the forget gate bias to 1 — biases the network toward remembering early in training.",
+    "LSTMs have ~4× the parameters of an RNN with the same hidden size; budget accordingly.",
+    "For most modern NLP, a Transformer beats an LSTM. But LSTMs are still strong for streaming / online settings where you can't see the future.",
+    "Gradient clipping is still useful even with LSTM — exploding gradients beat vanishing ones less often, but they happen."
+  ],
+  code: `import torch.nn as nn
+
+class SeqClassifier(nn.Module):
+    def __init__(self, vocab, hidden=256, n_classes=2, num_layers=2, bidir=True):
+        super().__init__()
+        self.emb  = nn.Embedding(vocab, hidden, padding_idx=0)
+        self.lstm = nn.LSTM(hidden, hidden, num_layers=num_layers,
+                            batch_first=True, bidirectional=bidir, dropout=0.3)
+        out_dim = hidden * (2 if bidir else 1)
+        self.head = nn.Linear(out_dim, n_classes)
+
+    def forward(self, x, lengths=None):
+        e = self.emb(x)
+        out, (h, c) = self.lstm(e)
+        # mean-pool over time (mask-aware in real code)
+        feat = out.mean(dim=1)
+        return self.head(feat)`,
+  complexity: "Train O(T · 4 · hidden² · n) — sequential in T. ~4× the cost of a vanilla RNN of the same width."
+});
+
+PROBLEMS.push({
+  num: 25, title: "Transformer", diff: "hard",
+  family: "Deep Learning — Sequences",
+  problem: "Replace recurrence with SELF-ATTENTION: every token attends to every other token in parallel. Architecture = stack of (multi-head attention + feed-forward + residual + layer norm) blocks. This is the backbone of GPT, BERT, ViT, and almost every modern foundation model.",
+  intuition: "Each token emits a query, key, and value vector. The query of token i is dot-producted with the keys of every other token to produce attention weights — essentially 'how relevant is token j to token i?' — and the output for i is the weighted sum of values. Multiple heads do this in parallel with different learned projections so the model can attend to syntax, semantics, and position simultaneously.",
+  formula: "Attention(Q, K, V) = softmax(QKᵀ / √d_k) V    MultiHead = concat(head₁, …, head_h) W_O",
+  hints: [
+    "Add POSITIONAL ENCODINGS (sinusoidal or learned) — attention by itself is permutation-invariant.",
+    "Causal (decoder) attention masks future positions for autoregressive generation; encoder attention is bidirectional.",
+    "Memory scales as O(T²) in sequence length T — the bottleneck. FlashAttention, sliding-window, and linear-attention variants address this.",
+    "Pre-norm ordering (LN before sublayer) trains far more stably than post-norm at scale."
+  ],
+  tips: [
+    "Don't train one from scratch unless you have to — fine-tune a pretrained checkpoint (BERT, GPT-2, T5, LLaMA).",
+    "Tokenisation matters more than people admit — BPE / SentencePiece / WordPiece each have different trade-offs.",
+    "Hidden size, number of heads, and d_k=hidden/heads are tied: widen carefully.",
+    "Mixed precision (bf16/fp16) and gradient checkpointing are essential for training anything beyond a toy model."
+  ],
+  code: `import torch, torch.nn as nn
+
+class TransformerBlock(nn.Module):
+    def __init__(self, d=256, heads=8, ff=1024, drop=0.1):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(d)
+        self.attn = nn.MultiheadAttention(d, heads, dropout=drop, batch_first=True)
+        self.ln2 = nn.LayerNorm(d)
+        self.ff = nn.Sequential(
+            nn.Linear(d, ff), nn.GELU(), nn.Dropout(drop), nn.Linear(ff, d))
+        self.drop = nn.Dropout(drop)
+
+    def forward(self, x, mask=None):
+        h = self.ln1(x)
+        a, _ = self.attn(h, h, h, attn_mask=mask, need_weights=False)
+        x = x + self.drop(a)                # residual #1
+        x = x + self.drop(self.ff(self.ln2(x)))   # residual #2
+        return x
+
+# Use HuggingFace transformers in real life:
+# from transformers import AutoModel, AutoTokenizer`,
+  complexity: "Train O(T² · d) per layer per step — quadratic in sequence length. Inference for autoregressive decoding O(T · d) per new token."
+});
+
+
+/* ===================== REINFORCEMENT LEARNING ===================== */
+
+PROBLEMS.push({
+  num: 16, title: "Q-Learning", diff: "med",
+  family: "Reinforcement Learning — Value-based",
+  problem: "Learn the optimal action-value function Q*(s,a) without knowing the environment dynamics, by repeatedly taking actions, observing (s, a, r, s'), and applying the Bellman update Q(s,a) ← Q(s,a) + α [r + γ maxₐ' Q(s',a') − Q(s,a)].",
+  intuition: "OFF-POLICY temporal difference learning: act using whatever exploration policy you like (typically ε-greedy), but always update toward the GREEDY future value. The max in the target is what makes Q-learning learn the optimal policy regardless of the data-collection policy. Tabular Q-learning is provably correct for small discrete state/action spaces.",
+  formula: "Q(s,a) ← Q(s,a) + α [r + γ maxₐ' Q(s',a') − Q(s,a)]    π(s) = argmaxₐ Q(s,a)",
+  hints: [
+    "Initialize Q to zeros (or optimistic values to encourage exploration).",
+    "Use ε-greedy: with probability ε pick a random action, otherwise pick argmax Q. Decay ε over time.",
+    "Learning rate α typically 0.1; discount γ typically 0.9 – 0.99.",
+    "Q-learning maximises over actions in the target — this introduces 'maximisation bias'. Double Q-learning fixes it."
+  ],
+  tips: [
+    "Tabular Q-learning works only for tiny discrete worlds. Beyond that, use DQN (card 18).",
+    "OFF-policy means you can replay old (s,a,r,s') transitions — replay buffers are critical for stability.",
+    "Reward shaping speeds learning but never changes the optimal policy if you stick to potential-based shaping.",
+    "Watch for non-stationary returns when γ ≈ 1 — bootstrapped values can blow up."
+  ],
+  code: `import numpy as np
+
+def q_learning(env, episodes=2000, alpha=0.1, gamma=0.99, eps=1.0, eps_min=0.05, eps_decay=0.995):
+    Q = np.zeros((env.n_states, env.n_actions))
+    for ep in range(episodes):
+        s = env.reset()
+        done = False
+        while not done:
+            # ε-greedy action selection
+            a = np.random.randint(env.n_actions) if np.random.rand() < eps else int(np.argmax(Q[s]))
+            s2, r, done = env.step(a)
+            # Bellman update — note the max over a' (off-policy)
+            target = r + gamma * (0 if done else Q[s2].max())
+            Q[s, a] += alpha * (target - Q[s, a])
+            s = s2
+        eps = max(eps_min, eps * eps_decay)
+    return Q, Q.argmax(axis=1)`,
+  complexity: "Per step O(|A|). Memory O(|S|·|A|). Convergence requires every (s,a) visited infinitely often."
+});
+
+PROBLEMS.push({
+  num: 17, title: "SARSA (State-Action-Reward-State-Action)", diff: "med",
+  family: "Reinforcement Learning — Value-based",
+  problem: "ON-POLICY counterpart to Q-learning. Update Q(s,a) toward the value of the actually-taken next action a': Q(s,a) ← Q(s,a) + α [r + γ Q(s', a') − Q(s,a)].",
+  intuition: "Where Q-learning is daring (always assumes you'll take the best future action), SARSA is conservative (uses what you actually did next). On a cliff-walking world, Q-learning learns the shortest-but-risky path while SARSA learns a safer detour because it accounts for the cost of its own ε-greedy exploration. Use SARSA whenever exploration during learning is expensive (real robots, real money).",
+  formula: "Q(s,a) ← Q(s,a) + α [r + γ Q(s', a') − Q(s,a)]    where a' is sampled from π(·|s')",
+  hints: [
+    "Same structure as Q-learning but you sample a' BEFORE the update — the tuple is (s, a, r, s', a').",
+    "On-policy means you can't reuse old transitions across policy changes — limited replay.",
+    "Expected SARSA replaces Q(s', a') with Eₐ' π(a'|s') Q(s', a') — lower variance, slightly higher cost.",
+    "n-step SARSA bootstraps n steps in the future, trading bias for variance."
+  ],
+  tips: [
+    "Use SARSA when the cost of 'trying' bad actions during learning matters (production-deployed agents, robots).",
+    "Use Q-learning when exploration is cheap and you want the optimal policy directly.",
+    "ε-greedy decay schedule still applies and matters a lot.",
+    "If you can simulate, you almost always prefer Q-learning + replay; SARSA shines in real-world / safety-critical settings."
+  ],
+  code: `import numpy as np
+
+def sarsa(env, episodes=2000, alpha=0.1, gamma=0.99, eps=0.1):
+    Q = np.zeros((env.n_states, env.n_actions))
+    def pick(s):
+        return np.random.randint(env.n_actions) if np.random.rand() < eps else int(np.argmax(Q[s]))
+
+    for _ in range(episodes):
+        s = env.reset()
+        a = pick(s)
+        done = False
+        while not done:
+            s2, r, done = env.step(a)
+            a2 = 0 if done else pick(s2)
+            target = r + gamma * (0 if done else Q[s2, a2])
+            Q[s, a] += alpha * (target - Q[s, a])    # on-policy update
+            s, a = s2, a2
+    return Q, Q.argmax(axis=1)`,
+  complexity: "Same as Q-learning — O(|A|) per step, O(|S|·|A|) memory."
+});
+
+PROBLEMS.push({
+  num: 18, title: "Deep Q-Network (DQN)", diff: "hard",
+  family: "Reinforcement Learning — Deep value-based",
+  problem: "Replace the Q-table with a neural network Q_θ(s, a) so you can do Q-learning on continuous / high-dimensional states (Atari pixels). Train with two stabilising tricks: a REPLAY BUFFER and a slowly-updated TARGET NETWORK.",
+  intuition: "Naive deep Q-learning is unstable: consecutive samples are correlated, and the target moves as θ moves. Replay decorrelates samples (random minibatches from past experience). The target network Q_θ⁻ is a frozen copy that supplies the bootstrapped target r + γ maxₐ' Q_θ⁻(s', a') and is synced every K steps — this gives the loss a near-stationary target. Together they made deep RL actually work (DeepMind, Atari, 2015).",
+  formula: "L(θ) = E_(s,a,r,s')~D [ ( r + γ maxₐ' Q_θ⁻(s', a') − Q_θ(s, a) )² ]",
+  hints: [
+    "Replay buffer size 10⁵–10⁶ transitions. Sample uniformly (or use prioritized replay for harder problems).",
+    "Update target net by hard-copy every K=1000–10000 steps, or soft-update with τ = 0.005 every step.",
+    "Use Double DQN: argmax with the online net, evaluate with the target net — reduces overestimation.",
+    "Frame-stack the last 4 frames for partially-observed environments like Atari."
+  ],
+  tips: [
+    "Reward clipping to [−1, +1] (Atari standard) prevents runaway gradients across very different games.",
+    "Huber loss instead of MSE is more robust to outlier TD errors.",
+    "Dueling DQN splits Q into V(s) + advantage A(s,a) — more sample efficient.",
+    "DQN works on discrete actions only. For continuous, switch to DDPG / SAC."
+  ],
+  code: `import torch, torch.nn as nn, torch.nn.functional as F, random
+from collections import deque
+
+class QNet(nn.Module):
+    def __init__(self, n_in, n_act):
+        super().__init__()
+        self.f = nn.Sequential(nn.Linear(n_in, 128), nn.ReLU(),
+                               nn.Linear(128, 128), nn.ReLU(),
+                               nn.Linear(128, n_act))
+    def forward(self, x): return self.f(x)
+
+def dqn_step(qnet, target, opt, batch, gamma=0.99):
+    s, a, r, s2, done = batch
+    q = qnet(s).gather(1, a.unsqueeze(1)).squeeze(1)
+    with torch.no_grad():
+        q_next = target(s2).max(1).values
+        y = r + gamma * q_next * (1 - done)
+    loss = F.smooth_l1_loss(q, y)         # Huber
+    opt.zero_grad(); loss.backward(); opt.step()
+    return loss.item()
+
+# Outside loop: replay buffer (deque), ε-greedy action, target net hard-copy every K steps.`,
+  complexity: "Per gradient step O(batch · params). Memory dominated by replay buffer (state · 10⁶)."
+});
+
+PROBLEMS.push({
+  num: 19, title: "Policy Gradient (REINFORCE)", diff: "hard",
+  family: "Reinforcement Learning — Policy-based",
+  problem: "Parameterise the policy directly π_θ(a|s) and follow the gradient of expected return ∇_θ J(θ) = E[ ∇_θ log π_θ(a|s) · G_t ]. No value function required — but high variance.",
+  intuition: "If a trajectory had high return, increase the log-probability of the actions you took. If it had low return, decrease them. Subtract a BASELINE b(s) (often a learned value V_φ(s)) from G_t to reduce variance without adding bias — the result is the advantage Â_t = G_t − V_φ(s). Policy gradient handles continuous action spaces and stochastic policies natively, which DQN cannot.",
+  formula: "∇_θ J(θ) = E_τ Σ_t ∇_θ log π_θ(a_t|s_t) · (G_t − b(s_t))    where G_t = Σ_{k≥t} γ^{k−t} r_k",
+  hints: [
+    "Gaussian policy for continuous actions: μ(s), σ(s) → a ~ N(μ, σ²). Output log σ for stability.",
+    "Categorical policy for discrete actions: softmax over logits → sample.",
+    "Entropy bonus β H[π_θ(·|s)] keeps exploration alive — typical β around 0.01.",
+    "PPO is just policy gradient with a clipped ratio that limits step size — almost always preferred to plain REINFORCE."
+  ],
+  tips: [
+    "On-policy: every gradient step needs fresh trajectories from the current policy — sample-inefficient compared to DQN.",
+    "Always normalise advantages within a batch ((Â − Â̄) / σ_Â) — huge stability win.",
+    "Generalised Advantage Estimation (GAE) trades bias and variance with one knob λ ∈ [0,1].",
+    "If your gradient norms explode, clip them. If returns explode, normalise rewards or use return-to-go."
+  ],
+  code: `import torch, torch.nn as nn, torch.nn.functional as F
+from torch.distributions import Categorical
+
+class PolicyNet(nn.Module):
+    def __init__(self, n_in, n_act):
+        super().__init__()
+        self.f = nn.Sequential(nn.Linear(n_in, 128), nn.Tanh(),
+                               nn.Linear(128, n_act))
+    def forward(self, s): return self.f(s)
+
+def reinforce_episode(policy, opt, traj, gamma=0.99):
+    """ traj = list of (state, action, reward) for one rollout. """
+    states  = torch.stack([t[0] for t in traj])
+    actions = torch.tensor([t[1] for t in traj])
+    rewards = [t[2] for t in traj]
+
+    # discounted return-to-go
+    G, returns = 0.0, []
+    for r in reversed(rewards):
+        G = r + gamma * G
+        returns.insert(0, G)
+    returns = torch.tensor(returns, dtype=torch.float32)
+    returns = (returns - returns.mean()) / (returns.std() + 1e-8)   # baseline
+
+    logits = policy(states)
+    logp   = Categorical(logits=logits).log_prob(actions)
+    loss   = -(logp * returns).mean()
+    opt.zero_grad(); loss.backward(); opt.step()
+    return loss.item()`,
+  complexity: "Per episode O(T · params). Memory O(T) for the rollout."
+});
+
+PROBLEMS.push({
+  num: 20, title: "Actor-Critic", diff: "hard",
+  family: "Reinforcement Learning — Hybrid",
+  problem: "Combine the two worlds: an ACTOR π_θ(a|s) (policy gradient) and a CRITIC V_φ(s) (value function). The critic estimates the value of the current state and supplies a low-variance baseline for the actor. The actor updates with ∇_θ log π · Â, where Â = r + γ V_φ(s') − V_φ(s).",
+  intuition: "Pure policy gradient has high variance (whole-trajectory returns); pure DQN can't learn stochastic / continuous policies. Actor-critic uses the critic's TD estimate as a low-variance, biased substitute for the return — the actor learns from one-step advantages instead of full Monte Carlo. A2C / A3C / PPO / SAC are all variations on this theme.",
+  formula: "Â_t = r_t + γ V_φ(s_{t+1}) − V_φ(s_t)\nθ ← θ + α_a · ∇_θ log π_θ(a_t|s_t) · Â_t\nφ ← φ + α_c · ∇_φ ( r_t + γ V_φ(s_{t+1}) − V_φ(s_t) )²",
+  hints: [
+    "Two heads on one trunk is fine and common — share early features, split into actor and critic heads.",
+    "Use n-step returns or GAE to balance bias and variance in Â.",
+    "PPO (Proximal Policy Optimization) is the de-facto modern actor-critic — clip ratio 0.2, run K epochs over the batch.",
+    "For continuous actions, SAC adds an entropy term in the reward — robust and sample efficient."
+  ],
+  tips: [
+    "Actor and critic learning rates are usually different (critic faster, actor slower).",
+    "Use separate optimisers for actor and critic so their learning rates stay independent.",
+    "Normalising state inputs and clipping advantages stabilises training noticeably.",
+    "Synchronous A2C is simpler than asynchronous A3C and just as effective on modern GPUs."
+  ],
+  code: `import torch, torch.nn as nn, torch.nn.functional as F
+from torch.distributions import Categorical
+
+class ActorCritic(nn.Module):
+    def __init__(self, n_in, n_act):
+        super().__init__()
+        self.trunk = nn.Sequential(nn.Linear(n_in, 128), nn.Tanh())
+        self.actor = nn.Linear(128, n_act)
+        self.critic = nn.Linear(128, 1)
+    def forward(self, s):
+        h = self.trunk(s)
+        return self.actor(h), self.critic(h).squeeze(-1)
+
+def a2c_step(net, opt, s, a, r, s2, done, gamma=0.99, c1=0.5, c2=0.01):
+    logits, v   = net(s)
+    _,      v2  = net(s2)
+    target = r + gamma * v2.detach() * (1 - done)
+    adv    = target - v
+
+    dist   = Categorical(logits=logits)
+    pg     = -(dist.log_prob(a) * adv.detach()).mean()
+    vl     = F.mse_loss(v, target)
+    ent    = -dist.entropy().mean()
+    loss   = pg + c1 * vl + c2 * ent
+    opt.zero_grad(); loss.backward(); opt.step()
+    return loss.item()`,
+  complexity: "Per step O(params). Memory O(batch · features). Training cost dominated by environment simulation, not the networks."
+});
+
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Foundations', easy: 'Easy', med: 'Medium', hard: 'Hard', brief: 'Brief' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Python syntax highlighter — same scheme as the Bit-Manipulation guide. */
+function highlightPython(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+
+  // line comments (#)
+  s = s.replace(/#[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  // triple-quoted strings (kept simple)
+  s = s.replace(/&quot;&quot;&quot;[\s\S]*?&quot;&quot;&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;&#39;&#39;[\s\S]*?&#39;&#39;&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  // double-quoted / single-quoted strings
+  s = s.replace(/&quot;([^&\n]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;([^&\n]|&(?!#39;))*?&#39;/g,    m => stashIt('<span class="str">' + m + '</span>'));
+
+  const builtins = ['print','len','range','enumerate','zip','map','filter','sum','min','max',
+    'abs','round','sorted','reversed','list','dict','set','tuple','int','float','str','bool',
+    'isinstance','any','all','next','iter','open','type','super','hasattr','getattr','setattr'];
+  const biRe = new RegExp('\\b(' + builtins.join('|') + ')\\b', 'g');
+  s = s.replace(biRe, (_, name) => stashIt('<span class="bi">' + name + '</span>'));
+
+  const types = ['np','torch','nn','F','pd','plt','sklearn','sk','tf','keras','xgb','lgb',
+    'StandardScaler','LinearRegression','LogisticRegression','Ridge','Lasso','KNeighborsClassifier',
+    'DecisionTreeClassifier','RandomForestClassifier','GradientBoostingClassifier','XGBClassifier',
+    'SVC','SVR','KMeans','DBSCAN','PCA','TSNE','IsolationForest','Pipeline','Tensor','DataLoader',
+    'Module','Sequential','Linear','Conv2d','BatchNorm2d','LSTM','GRU','MultiheadAttention',
+    'LayerNorm','ReLU','GELU','Tanh','Embedding','MaxPool2d','AdaptiveAvgPool2d','Flatten',
+    'Categorical','Optimizer','Adam','SGD','True','False','None','self'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['def','class','return','if','elif','else','for','while','in','not','and','or',
+    'is','import','from','as','with','try','except','finally','raise','pass','break','continue',
+    'lambda','yield','global','nonlocal','async','await'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  // numbers
+  s = s.replace(/\b(\d+(?:\.\d+)?(?:e[+-]?\d+)?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS
+    .filter(p => p.diff === diff)
+    .sort((a, b) => a.num - b.num);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Foundations' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.diff === 'brief') {
+    document.body.classList.add('brief-mode');
+    main.innerHTML = renderBriefView();
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.diff === state.diff);
+    });
+    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  document.body.classList.remove('brief-mode');
+
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+
+  const cheatBlock = p.cheatsheetHtml
+    ? `<div class="section-title">Cheatsheet</div>${p.cheatsheetHtml}`
+    : '';
+
+  const formulaBlock = p.formula
+    ? `<div class="section-title">Key Formula</div><div class="formula">${escapeHtml(p.formula)}</div>`
+    : '';
+
+  const familyPill = p.family
+    ? `<span class="pill">${escapeHtml(p.family)}</span>`
+    : '';
+
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+        ${familyPill}
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      ${formulaBlock}
+      ${cheatBlock}
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Python Code</div>
+      <pre class="code"><code>${highlightPython(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+/* theme toggle */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+
+
+/* ===== BRIEF MODE: at-a-glance map of the 30 algorithms ===== */
+function renderBriefView() {
+  const families = [
+    { title: 'Supervised — Regression',          algos: ['Linear Regression'] },
+    { title: 'Supervised — Classification',      algos: ['Logistic Regression', 'k-NN', 'Naive Bayes', 'Decision Tree', 'SVM'] },
+    { title: 'Ensembles',                        algos: ['Random Forest', 'AdaBoost', 'Gradient Boosting', 'XGBoost'] },
+    { title: 'Clustering',                       algos: ['k-Means', 'k-Means++', 'Hierarchical', 'DBSCAN'] },
+    { title: 'Dimensionality Reduction',         algos: ['PCA', 't-SNE', 'Autoencoders'] },
+    { title: 'Anomaly Detection',                algos: ['Isolation Forest'] },
+    { title: 'Deep Learning',                    algos: ['ANN', 'CNN', 'RNN', 'LSTM', 'Transformer'] },
+    { title: 'Reinforcement Learning',           algos: ['MDP', 'Q-Learning', 'SARSA', 'DQN', 'Policy Gradient', 'Actor-Critic'] },
+    { title: 'Search / Optimization',            algos: ['Genetic Algorithms'] },
+  ];
+
+  const decisionFlow = `
+<span class="q">Q1.</span> Do you have labeled (X, y) pairs?
+   ├── <span class="a">YES</span> → <span class="q">Q2.</span> Is y continuous or categorical?
+   │       ├── continuous   → <span class="alg">Linear Regression / Gradient Boosting / Neural Net</span>
+   │       └── categorical  → <span class="alg">Logistic Reg / Decision Tree / Random Forest / XGBoost / SVM</span>
+   └── <span class="a">NO</span>  → <span class="q">Q3.</span> Are you grouping rows, compressing columns, or scoring weirdness?
+           ├── group rows         → <span class="alg">k-Means / k-Means++ / DBSCAN / Hierarchical</span>
+           ├── compress columns   → <span class="alg">PCA / t-SNE / Autoencoders</span>
+           └── score weirdness    → <span class="alg">Isolation Forest</span>
+
+<span class="q">Q4.</span> Are you making sequential decisions with reward feedback?
+   └── <span class="a">YES</span> → <span class="alg">MDP → Q-Learning / SARSA → DQN → Policy Gradient → Actor-Critic</span>
+
+<span class="q">Q5.</span> Is your input raw pixels, audio, text, or a long sequence?
+   ├── images / video        → <span class="alg">CNN (or Vision Transformer)</span>
+   ├── short sequences       → <span class="alg">RNN / LSTM</span>
+   └── long sequences / text → <span class="alg">Transformer</span>
+`;
+
+  const bvCards = [
+    { b: 'Linear / Logistic / Naive Bayes', s: 'High bias, low variance. Fast, interpretable, great baselines.' },
+    { b: 'k-NN / Decision Tree',            s: 'Low bias, high variance. Easy to overfit on small data.' },
+    { b: 'Random Forest / Boosting',        s: 'Bagging averages variance away; boosting cuts bias. Tabular workhorses.' },
+    { b: 'SVM (RBF)',                       s: 'Flexible but tuning C, γ matters. Scales as O(n²)–O(n³).' },
+    { b: 'Deep Nets',                       s: 'Universal approximators. Dominate raw perceptual data. Hungry for data + compute.' },
+  ];
+
+  const families_html = families.map(f => `
+    <div class="panel">
+      <h3>${escapeHtml(f.title)}</h3>
+      <div class="grid">
+        ${f.algos.map(a => `<div class="card-mini"><b>${escapeHtml(a)}</b><span>see card in Foundations / Easy / Medium / Hard tabs</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const bv_html = `
+    <div class="panel">
+      <h3>Bias–Variance Cheatsheet</h3>
+      <div class="grid">
+        ${bvCards.map(c => `<div class="card-mini"><b>${escapeHtml(c.b)}</b><span>${escapeHtml(c.s)}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  return `
+    <div class="brief-root">
+      <header class="brief-header">
+        <div class="brief-subtitle">A I &nbsp; A L G O R I T H M S</div>
+        <h1 class="brief-title">30 Algorithms · One Decision</h1>
+        <p class="brief-tagline">Pick the family from your data. Pick the algorithm from bias–variance and scale.</p>
+      </header>
+
+      <div class="panel">
+        <h3>The 5-Question Decision Flow</h3>
+        <div class="flow">${decisionFlow}</div>
+      </div>
+
+      ${bv_html}
+      ${families_html}
+    </div>
+  `;
+}
+
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_CROSS_TAB_NAV_START -->
+<script id="kiro-cross-tab-nav">
+(function(){
+  if(window.__kiroCrossTabNav) return;
+  window.__kiroCrossTabNav = true;
+  function init(){
+    if(typeof getProblems !== 'function' || typeof window.render !== 'function' || typeof state === 'undefined') return;
+    var ORDER = ['veasy','easy','med','hard'];
+    function diffs(){ return ORDER.filter(function(d){ try { return getProblems(d).length > 0; } catch(e){ return false; } }); }
+
+    function updateNavButtons(){
+      var prevB = document.getElementById('prev');
+      var nextB = document.getElementById('next');
+      if(!prevB || !nextB) return;
+      if(state.diff === 'brief'){ return; }
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      var arr = getProblems(state.diff);
+      prevB.disabled = (di <= 0 && state.idx <= 0);
+      nextB.disabled = (di === list.length - 1 && state.idx >= arr.length - 1);
+    }
+
+    var origRender = window.render;
+    window.render = function(){
+      var r = origRender.apply(this, arguments);
+      try { updateNavButtons(); } catch(e){}
+      return r;
+    };
+
+    function goNext(){
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      var arr = getProblems(state.diff);
+      if(state.idx < arr.length - 1){ state.idx++; window.render(); return; }
+      if(di < list.length - 1){ state.diff = list[di + 1]; state.idx = 0; window.render(); }
+    }
+    function goPrev(){
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      if(state.idx > 0){ state.idx--; window.render(); return; }
+      if(di > 0){
+        var pd = list[di - 1];
+        state.diff = pd;
+        var parr = getProblems(pd);
+        state.idx = Math.max(0, parr.length - 1);
+        window.render();
+      }
+    }
+
+    window.nextProblem = goNext;
+    window.prevProblem = goPrev;
+
+    ['prev','next'].forEach(function(id){
+      var b = document.getElementById(id);
+      if(!b) return;
+      var clone = b.cloneNode(true);
+      b.parentNode.replaceChild(clone, b);
+      clone.addEventListener('click', id === 'next' ? goNext : goPrev);
+    });
+
+    updateNavButtons();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<!-- KIRO_CROSS_TAB_NAV_END -->
+
+</body>
+</html>

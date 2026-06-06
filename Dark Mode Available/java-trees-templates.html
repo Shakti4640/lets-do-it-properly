@@ -753,5 +753,75 @@ types.forEach((t, idx) => {
 </a>
 <!-- KIRO_HOME_BUTTON_END -->
 
+<!-- KIRO_TAB_ARROWS_START -->
+<style id="kiro-tab-arrows-style">
+  .kiro-tab-arrow{
+    flex:0 0 auto;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:36px; align-self:stretch; min-height:40px;
+    background:transparent; border:none; color:currentColor;
+    opacity:.55; font-size:20px; line-height:1; cursor:pointer;
+    font-family:inherit; transition:opacity .15s ease, background .15s ease;
+    -webkit-appearance:none; appearance:none;
+  }
+  .kiro-tab-arrow:hover{ opacity:1; background:rgba(127,127,127,.16); }
+  .kiro-tab-arrow:active{ background:rgba(127,127,127,.26); }
+  .kiro-tab-arrow:focus-visible{ outline:2px solid currentColor; outline-offset:-3px; }
+</style>
+<script id="kiro-tab-arrows-script">
+(function(){
+  if(window.__kiroTabArrows) return;
+  window.__kiroTabArrows = true;
+  function init(){
+    var bar = document.getElementById('tabs')
+           || document.querySelector('.tab-row')
+           || document.querySelector('.tab-list');
+    if(!bar || bar.querySelector('.kiro-tab-arrow')) return;
+    function tabs(){
+      return Array.prototype.filter.call(bar.children, function(el){
+        return el.classList && el.classList.contains('tab');
+      });
+    }
+    function activeIndex(list){
+      for(var i=0;i<list.length;i++){
+        var cls = ' ' + (list[i].className || '') + ' ';
+        if(/\son\s/.test(cls) || /\sactive\s/.test(cls) || /\sactive-/.test(cls)) return i;
+      }
+      return 0;
+    }
+    function go(delta){
+      var list = tabs();
+      if(!list.length) return;
+      var ni = activeIndex(list) + delta;
+      if(ni < 0) ni = list.length - 1;
+      if(ni >= list.length) ni = 0;
+      list[ni].click();
+      if(list[ni].scrollIntoView) list[ni].scrollIntoView({inline:'center', block:'nearest'});
+    }
+    var prev = document.createElement('button');
+    prev.type='button'; prev.className='kiro-tab-arrow kiro-tab-prev';
+    prev.setAttribute('aria-label','Previous template'); prev.title='Previous (\u2190)';
+    prev.innerHTML='&#8249;';
+    var next = document.createElement('button');
+    next.type='button'; next.className='kiro-tab-arrow kiro-tab-next';
+    next.setAttribute('aria-label','Next template'); next.title='Next (\u2192)';
+    next.innerHTML='&#8250;';
+    prev.addEventListener('click', function(e){ e.preventDefault(); go(-1); });
+    next.addEventListener('click', function(e){ e.preventDefault(); go(1); });
+    bar.insertBefore(prev, bar.firstChild);
+    bar.appendChild(next);
+    document.addEventListener('keydown', function(e){
+      var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+      if(tag==='input'||tag==='textarea'||tag==='select') return;
+      if(e.key==='ArrowRight'){ e.preventDefault(); go(1); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); go(-1); }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<!-- KIRO_TAB_ARROWS_END -->
+
 </body>
 </html>
