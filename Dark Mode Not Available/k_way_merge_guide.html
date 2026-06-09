@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-Way Merge — Visual Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent1: #0077b6;  /* blue */
+    --accent2: #2a9d8f;  /* teal */
+    --accent3: #f4a261;  /* orange */
+    --accent4: #e63946;  /* red */
+    --accent5: #8338ec;  /* purple */
+    --accent6: #d62828;  /* dark red */
+    --code-bg: #f8f8fc;
+    --keyword: #8338ec;
+    --type:    #0077b6;
+    --string:  #2a9d8f;
+    --comment: #9ca3af;
+    --number:  #e63946;
+    --method:  #d97706;
+    --anno:    #d62828;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HEADER ── */
+  .hero {
+    padding: 60px 60px 40px;
+    border-bottom: 2px solid var(--text);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 52px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .hero-title span { color: var(--accent1); }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+  .hero-badge {
+    background: var(--text);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 2px;
+  }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 50px 40px 80px; }
+
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 32px 0 10px;
+  }
+  p { color: #374151; margin-bottom: 14px; }
+  code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    background: #f0f0fa;
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--keyword);
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 50px 0; }
+
+  /* ── VIS: K lists merging ── */
+  .heap-demo {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin: 18px 0 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+  .lists-row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .list-col { display: flex; flex-direction: column; gap: 5px; }
+  .list-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .cell {
+    width: 44px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    font-size: 14px; font-weight: 600; color: #fff;
+  }
+  .c-blue  { background: var(--accent1); }
+  .c-teal  { background: var(--accent2); }
+  .c-orng  { background: var(--accent3); color: #1a1a2e; }
+  .c-red   { background: var(--accent4); }
+  .c-purp  { background: var(--accent5); }
+  .c-gray  { background: #d1d5db; color: #374151; }
+  .c-head  { outline: 3px solid #1a1a2e; outline-offset: -3px; }
+
+  .heap-box {
+    border: 2px dashed var(--accent1);
+    border-radius: 6px;
+    padding: 14px 20px;
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .heap-label {
+    font-size: 11px;
+    color: var(--accent1);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-right: 6px;
+  }
+  .heap-cell {
+    background: #e8f4fd;
+    border: 1px solid var(--accent1);
+    color: var(--accent1);
+    border-radius: 4px;
+    width: 48px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+  }
+  .heap-cell.min-cell {
+    background: var(--accent1);
+    color: #fff;
+    font-weight: 700;
+  }
+  .arrow-row {
+    font-size: 18px;
+    color: var(--accent2);
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #374151;
+  }
+  .arrow-row span { font-size: 18px; color: var(--accent2); }
+  .result-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .res-cell {
+    width: 38px; height: 32px;
+    background: #f0fbf9;
+    border: 1.5px solid var(--accent2);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    color: var(--accent2);
+  }
+
+  /* ── CODE BLOCK ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent5);
+    border-radius: 6px;
+    padding: 22px 26px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: 14px 0 24px;
+  }
+  .kw  { color: var(--keyword); font-weight: 500; }
+  .ty  { color: var(--type); }
+  .cm  { color: var(--comment); font-style: italic; }
+  .st  { color: var(--string); }
+  .nm  { color: var(--number); }
+  .mt  { color: var(--method); }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+  }
+  .card-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .card-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .card-body  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .card-lc    {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    margin-top: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  .c1 { border-top: 3px solid var(--accent1); }
+  .c1 .card-num { color: var(--accent1); }
+  .c1 .card-lc { background: #e8f4fd; color: var(--accent1); }
+
+  .c2 { border-top: 3px solid var(--accent2); }
+  .c2 .card-num { color: var(--accent2); }
+  .c2 .card-lc { background: #e8f6f3; color: var(--accent2); }
+
+  .c3 { border-top: 3px solid var(--accent3); }
+  .c3 .card-num { color: var(--accent3); }
+  .c3 .card-lc { background: #fef4ec; color: var(--accent3); }
+
+  .c4 { border-top: 3px solid var(--accent4); }
+  .c4 .card-num { color: var(--accent4); }
+  .c4 .card-lc { background: #fdf0f0; color: var(--accent4); }
+
+  .c5 { border-top: 3px solid var(--accent5); }
+  .c5 .card-num { color: var(--accent5); }
+  .c5 .card-lc { background: #f3eefe; color: var(--accent5); }
+
+  .c6 { border-top: 3px solid var(--accent6); }
+  .c6 .card-num { color: var(--accent6); }
+  .c6 .card-lc { background: #fde8e8; color: var(--accent6); }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 18px 0;
+  }
+  th {
+    background: var(--text);
+    color: #fff;
+    padding: 10px 16px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: #374151;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #fafafa; }
+  td:first-child { font-family: 'DM Mono', monospace; color: var(--keyword); font-size: 12px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent2);
+    background: #f0fbf9;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #374151;
+  }
+  .callout strong { color: var(--accent2); }
+  .callout-warn { border-left-color: var(--accent3); background: #fef9f0; }
+  .callout-warn strong { color: var(--accent3); }
+  .callout-red { border-left-color: var(--accent4); background: #fdf4f4; }
+  .callout-red strong { color: var(--accent4); }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 14px; margin: 16px 0 24px; }
+  .step  { display: flex; gap: 14px; align-items: flex-start; }
+  .step-num {
+    width: 28px; height: 28px;
+    background: var(--text); color: #fff;
+    border-radius: 50%;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .step-body { font-size: 14px; color: #374151; }
+  .step-body strong { color: var(--text); }
+
+  /* ── COMPARE BOX ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .compare-box {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .compare-box h4 {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .compare-box ul {
+    list-style: none;
+    font-size: 13px;
+    color: #374151;
+  }
+  .compare-box ul li { margin-bottom: 6px; padding-left: 14px; position: relative; }
+  .compare-box ul li::before { content: "—"; position: absolute; left: 0; color: var(--muted); }
+  .bad  { border-top: 3px solid var(--accent4); }
+  .bad  h4 { color: var(--accent4); }
+  .good { border-top: 3px solid var(--accent2); }
+  .good h4 { color: var(--accent2); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-sub">LeetCode Pattern Series</div>
+    <div class="hero-title"><span>K-Way</span> Merge</div>
+    <div class="hero-sub" style="margin-top:8px">Min-Heap · Java Templates · All 6 Types</div>
+  </div>
+  <div class="hero-badge">O(n log k) pattern</div>
+</div>
+
+<div class="container">
+
+  <!-- ══ 00: THE IDEA ══ -->
+  <div class="section-num">Section 00 — The Idea</div>
+  <h2>What is K-Way Merge?</h2>
+
+  <p>You have <strong>K sorted lists</strong>. You want to combine them into <strong>one sorted output</strong> — or find the Kth smallest element across all of them.</p>
+
+  <p>The naive way? Dump everything into one array and sort it → <code>O(n·K log(n·K))</code>. That's slow and wastes the fact that lists are already sorted.</p>
+
+  <p>The smart way? Use a <strong>Min-Heap (Priority Queue)</strong>. Always pull the globally smallest element in <code>O(log K)</code> time. This is the entire pattern.</p>
+
+  <div class="callout">
+    <strong>Core Insight:</strong> At any moment, the next element in the merged output must be the smallest among all <em>current front elements</em> of the K lists. A min-heap lets you find that in O(log K) instead of O(K).
+  </div>
+
+  <!-- VISUAL -->
+  <div class="heap-demo">
+    <div style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:16px;">Step-by-step visual: merging 3 sorted lists</div>
+
+    <div class="lists-row">
+      <div class="list-col">
+        <div class="list-label" style="color:var(--accent1)">List 1</div>
+        <div class="cell c-blue c-head">1</div>
+        <div class="cell c-blue">4</div>
+        <div class="cell c-blue">7</div>
+      </div>
+      <div class="list-col">
+        <div class="list-label" style="color:var(--accent2)">List 2</div>
+        <div class="cell c-teal c-head">2</div>
+        <div class="cell c-teal">5</div>
+        <div class="cell c-teal">8</div>
+      </div>
+      <div class="list-col">
+        <div class="list-label" style="color:var(--accent3)">List 3</div>
+        <div class="cell c-orng c-head">3</div>
+        <div class="cell c-orng">6</div>
+        <div class="cell c-orng">9</div>
+      </div>
+      <div style="flex:1; padding-left:20px; border-left:1px solid var(--border);">
+        <div class="list-label">Min-Heap state</div>
+        <div class="heap-box">
+          <span class="heap-label">heap →</span>
+          <div class="heap-cell min-cell">1</div>
+          <div class="heap-cell">2</div>
+          <div class="heap-cell">3</div>
+        </div>
+        <div class="arrow-row"><span>↓</span> pop 1 (smallest), push next from List 1 → 4</div>
+        <div class="heap-box" style="margin-top:10px;">
+          <span class="heap-label">heap →</span>
+          <div class="heap-cell min-cell">2</div>
+          <div class="heap-cell">3</div>
+          <div class="heap-cell">4</div>
+        </div>
+        <div class="arrow-row"><span>↓</span> pop 2, push 5 … and so on</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px; color:var(--muted); margin-bottom:8px;">Final merged result:</div>
+    <div class="result-row">
+      <div class="res-cell">1</div>
+      <div class="res-cell">2</div>
+      <div class="res-cell">3</div>
+      <div class="res-cell">4</div>
+      <div class="res-cell">5</div>
+      <div class="res-cell">6</div>
+      <div class="res-cell">7</div>
+      <div class="res-cell">8</div>
+      <div class="res-cell">9</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 01: WHAT TO STORE IN THE HEAP ══ -->
+  <div class="section-num">Section 01 — The Heap Trick</div>
+  <h2>What do you store in the heap?</h2>
+
+  <p>This is the most important design decision. You never store just the value. You always store <strong>enough info to fetch the next element</strong>.</p>
+
+  <div class="compare">
+    <div class="compare-box bad">
+      <h4>❌ Wrong — just values</h4>
+      <ul>
+        <li>heap.add(node.val)</li>
+        <li>After popping, you don't know which list it came from</li>
+        <li>Can't fetch the next element</li>
+        <li>Works only for finding min, not for full merge</li>
+      </ul>
+    </div>
+    <div class="compare-box good">
+      <h4>✅ Right — store a tuple</h4>
+      <ul>
+        <li>heap.add(new int[]{value, listIndex, elementIndex})</li>
+        <li>After popping, you know exactly which list and position</li>
+        <li>Can advance that pointer and push next element</li>
+        <li>Works for any K-way merge problem</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>For LinkedList problems:</strong> Store the <code>ListNode</code> itself in the heap. The comparator uses <code>node.val</code>. After popping, push <code>node.next</code>.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 02: MASTER TEMPLATE ══ -->
+  <div class="section-num">Section 02 — Core Template</div>
+  <h2>The Master Template</h2>
+  <p>Two versions: one for arrays, one for linked lists. Same logic, different data.</p>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Initialize:</strong> Push the first element (head) of each of the K lists into a min-heap</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Pop min:</strong> Extract the smallest element from the heap — this goes into your output</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Push next:</strong> From whatever list the popped element came from, push its next element into the heap</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>Repeat</strong> until the heap is empty</div></div>
+  </div>
+
+  <h3 style="color: var(--accent1);">Version A — For K Sorted Arrays</h3>
+
+<pre><span class="kw">import</span> java.util.*;
+
+<span class="kw">public class</span> <span class="ty">KWayMerge</span> {
+
+    <span class="cm">/**
+     * Merge K sorted arrays into one sorted list.
+     * Time:  O(n log k)  — n total elements, k lists in heap
+     * Space: O(k)        — heap holds at most k elements at once
+     */</span>
+    <span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; <span class="mt">mergeKSortedArrays</span>(<span class="ty">int</span>[][] arrays) {
+
+        <span class="cm">// Min-heap stores: [value, listIndex, elementIndex]</span>
+        <span class="ty">PriorityQueue</span>&lt;<span class="ty">int</span>[]&gt; heap = <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a[<span class="nm">0</span>] - b[<span class="nm">0</span>]);
+
+        <span class="cm">// ── STEP 1: Push first element of each list ────────────</span>
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; arrays.length; i++) {
+            <span class="kw">if</span> (arrays[i].length &gt; <span class="nm">0</span>) {
+                heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{arrays[i][<span class="nm">0</span>], i, <span class="nm">0</span>});
+                <span class="cm">//                    ^value  ^list  ^index</span>
+            }
+        }
+
+        <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; result = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+        <span class="cm">// ── STEPS 2 & 3: Pop min, push next ────────────────────</span>
+        <span class="kw">while</span> (!heap.<span class="mt">isEmpty</span>()) {
+            <span class="ty">int</span>[] curr = heap.<span class="mt">poll</span>();
+            <span class="ty">int</span> val   = curr[<span class="nm">0</span>];
+            <span class="ty">int</span> li    = curr[<span class="nm">1</span>]; <span class="cm">// which list</span>
+            <span class="ty">int</span> idx   = curr[<span class="nm">2</span>]; <span class="cm">// which position in that list</span>
+
+            result.<span class="mt">add</span>(val);   <span class="cm">// ✅ smallest element goes to output</span>
+
+            <span class="cm">// Push next element from the same list (if exists)</span>
+            <span class="kw">if</span> (idx + <span class="nm">1</span> &lt; arrays[li].length) {
+                heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{arrays[li][idx + <span class="nm">1</span>], li, idx + <span class="nm">1</span>});
+            }
+        }
+
+        <span class="kw">return</span> result;
+    }
+}</pre>
+
+  <h3 style="color: var(--accent2);">Version B — For K Sorted Linked Lists (LC #23)</h3>
+
+<pre><span class="cm">// ListNode definition</span>
+<span class="kw">class</span> <span class="ty">ListNode</span> {
+    <span class="ty">int</span> val;
+    <span class="ty">ListNode</span> next;
+    <span class="ty">ListNode</span>(<span class="ty">int</span> val) { <span class="kw">this</span>.val = val; }
+}
+
+<span class="kw">public</span> <span class="ty">ListNode</span> <span class="mt">mergeKLists</span>(<span class="ty">ListNode</span>[] lists) {
+
+    <span class="cm">// Comparator on node.val — heap stores actual nodes</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">ListNode</span>&gt; heap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a.val - b.val);
+
+    <span class="cm">// ── Push head of each list ──────────────────────────────</span>
+    <span class="kw">for</span> (<span class="ty">ListNode</span> node : lists) {
+        <span class="kw">if</span> (node != <span class="kw">null</span>) heap.<span class="mt">offer</span>(node);
+    }
+
+    <span class="ty">ListNode</span> dummy = <span class="kw">new</span> <span class="ty">ListNode</span>(<span class="nm">0</span>); <span class="cm">// dummy head trick</span>
+    <span class="ty">ListNode</span> tail  = dummy;
+
+    <span class="kw">while</span> (!heap.<span class="mt">isEmpty</span>()) {
+        <span class="ty">ListNode</span> curr = heap.<span class="mt">poll</span>();   <span class="cm">// smallest node</span>
+        tail.next = curr;
+        tail = tail.next;              <span class="cm">// advance result pointer</span>
+
+        <span class="kw">if</span> (curr.next != <span class="kw">null</span>) {
+            heap.<span class="mt">offer</span>(curr.next);     <span class="cm">// push next node from same list</span>
+        }
+    }
+
+    <span class="kw">return</span> dummy.next; <span class="cm">// skip dummy head</span>
+}</pre>
+
+  <hr class="divider">
+
+  <!-- ══ 03: PROBLEM TYPES ══ -->
+  <div class="section-num">Section 03 — Problem Types</div>
+  <h2>All 6 Problem Types</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">01</div>
+      <div class="card-title">Merge K Sorted Lists</div>
+      <div class="card-body">Classic: combine K linked lists into one sorted list using a min-heap on node values.</div>
+      <span class="card-lc">LC #23</span>
+    </div>
+    <div class="card c2">
+      <div class="card-num">02</div>
+      <div class="card-title">Kth Smallest in K Lists</div>
+      <div class="card-body">Pop K times from the heap. The Kth pop gives you the answer. No need to build full output.</div>
+      <span class="card-lc">LC #378 · #668</span>
+    </div>
+    <div class="card c3">
+      <div class="card-num">03</div>
+      <div class="card-title">Smallest Range Covering K Lists</div>
+      <div class="card-body">Find the smallest range [a,b] such that at least one element from each list falls in it.</div>
+      <span class="card-lc">LC #632</span>
+    </div>
+    <div class="card c4">
+      <div class="card-num">04</div>
+      <div class="card-title">Find K Pairs with Smallest Sums</div>
+      <div class="card-body">Treat (i,j) pairs as a virtual 2D sorted matrix. Use heap to explore lazily.</div>
+      <span class="card-lc">LC #373</span>
+    </div>
+    <div class="card c5">
+      <div class="card-num">05</div>
+      <div class="card-title">Kth Smallest in Sorted Matrix</div>
+      <div class="card-body">Each row is a sorted list. K-way merge across rows to find Kth element.</div>
+      <span class="card-lc">LC #378</span>
+    </div>
+    <div class="card c6">
+      <div class="card-num">06</div>
+      <div class="card-title">Kth Smallest in Multiplication Table</div>
+      <div class="card-body">Virtual matrix where row i is multiples of i. Binary search + count works too.</div>
+      <span class="card-lc">LC #668</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 04: EACH TYPE WITH CODE ══ -->
+  <div class="section-num">Section 04 — Code for Each Type</div>
+  <h2>Type-by-Type Templates</h2>
+
+  <!-- TYPE 2 -->
+  <h3 style="color: var(--accent2);">Type 02 — Kth Smallest in K Sorted Lists</h3>
+  <p>Same as full merge — but stop early. After popping K elements, you have your answer. You never build the full merged list.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">kthSmallest</span>(<span class="ty">int</span>[][] arrays, <span class="ty">int</span> k) {
+
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">int</span>[]&gt; heap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a[<span class="nm">0</span>] - b[<span class="nm">0</span>]);
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; arrays.length; i++) {
+        <span class="kw">if</span> (arrays[i].length &gt; <span class="nm">0</span>)
+            heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{arrays[i][<span class="nm">0</span>], i, <span class="nm">0</span>});
+    }
+
+    <span class="ty">int</span> count = <span class="nm">0</span>, result = <span class="nm">-1</span>;
+
+    <span class="kw">while</span> (!heap.<span class="mt">isEmpty</span>()) {
+        <span class="ty">int</span>[] curr = heap.<span class="mt">poll</span>();
+        result = curr[<span class="nm">0</span>];
+        count++;
+
+        <span class="kw">if</span> (count == k) <span class="kw">return</span> result;  <span class="cm">// ✅ Stop early!</span>
+
+        <span class="ty">int</span> li = curr[<span class="nm">1</span>], idx = curr[<span class="nm">2</span>];
+        <span class="kw">if</span> (idx + <span class="nm">1</span> &lt; arrays[li].length)
+            heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{arrays[li][idx + <span class="nm">1</span>], li, idx + <span class="nm">1</span>});
+    }
+
+    <span class="kw">return</span> result;
+}</pre>
+
+  <!-- TYPE 3 -->
+  <h3 style="color: var(--accent3);">Type 03 — Smallest Range Covering K Lists (LC #632)</h3>
+  <p>Keep one element from each list in the heap at all times. Track the current max separately. The range is <code>[heap_min, current_max]</code>. Shrink it greedily by advancing the list that holds the current minimum.</p>
+
+<pre><span class="kw">public int</span>[] <span class="mt">smallestRange</span>(<span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; nums) {
+
+    <span class="cm">// heap stores: [value, listIndex, elementIndex]</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">int</span>[]&gt; heap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a[<span class="nm">0</span>] - b[<span class="nm">0</span>]);
+
+    <span class="ty">int</span> curMax = <span class="ty">Integer</span>.MIN_VALUE;
+
+    <span class="cm">// Seed: push first element of every list</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; nums.<span class="mt">size</span>(); i++) {
+        <span class="ty">int</span> val = nums.<span class="mt">get</span>(i).<span class="mt">get</span>(<span class="nm">0</span>);
+        heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{val, i, <span class="nm">0</span>});
+        curMax = <span class="ty">Math</span>.<span class="mt">max</span>(curMax, val);
+    }
+
+    <span class="ty">int</span>[] best = {<span class="nm">0</span>, <span class="ty">Integer</span>.MAX_VALUE};
+
+    <span class="kw">while</span> (heap.<span class="mt">size</span>() == nums.<span class="mt">size</span>()) {  <span class="cm">// must keep one from each list</span>
+        <span class="ty">int</span>[] curr = heap.<span class="mt">poll</span>();
+        <span class="ty">int</span> curMin = curr[<span class="nm">0</span>], li = curr[<span class="nm">1</span>], idx = curr[<span class="nm">2</span>];
+
+        <span class="cm">// Update best range if current [min, max] is smaller</span>
+        <span class="kw">if</span> (curMax - curMin &lt; best[<span class="nm">1</span>] - best[<span class="nm">0</span>]) {
+            best = <span class="kw">new</span> <span class="ty">int</span>[]{curMin, curMax};
+        }
+
+        <span class="cm">// Advance the list that had the minimum (the popped one)</span>
+        <span class="kw">if</span> (idx + <span class="nm">1</span> &lt; nums.<span class="mt">get</span>(li).<span class="mt">size</span>()) {
+            <span class="ty">int</span> nextVal = nums.<span class="mt">get</span>(li).<span class="mt">get</span>(idx + <span class="nm">1</span>);
+            heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{nextVal, li, idx + <span class="nm">1</span>});
+            curMax = <span class="ty">Math</span>.<span class="mt">max</span>(curMax, nextVal);
+        }
+        <span class="cm">// else: a list is exhausted → heap.size() drops → loop ends</span>
+    }
+
+    <span class="kw">return</span> best;
+}</pre>
+
+  <!-- TYPE 4 -->
+  <h3 style="color: var(--accent4);">Type 04 — K Pairs with Smallest Sums (LC #373)</h3>
+  <p>Think of it as a virtual matrix: <code>matrix[i][j] = nums1[i] + nums2[j]</code>. Each row is already sorted. Start with first element of each row and explore lazily.</p>
+
+<pre><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; <span class="mt">kSmallestPairs</span>(<span class="ty">int</span>[] n1, <span class="ty">int</span>[] n2, <span class="ty">int</span> k) {
+
+    <span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;&gt; res = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+    <span class="kw">if</span> (n1.length == <span class="nm">0</span> || n2.length == <span class="nm">0</span>) <span class="kw">return</span> res;
+
+    <span class="cm">// heap stores: [sum, i, j] where sum = n1[i] + n2[j]</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">int</span>[]&gt; heap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a[<span class="nm">0</span>] - b[<span class="nm">0</span>]);
+
+    <span class="cm">// Seed: fix each i, start with j=0</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; <span class="ty">Math</span>.<span class="mt">min</span>(n1.length, k); i++) {
+        heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{n1[i] + n2[<span class="nm">0</span>], i, <span class="nm">0</span>});
+    }
+
+    <span class="kw">while</span> (!heap.<span class="mt">isEmpty</span>() &amp;&amp; res.<span class="mt">size</span>() &lt; k) {
+        <span class="ty">int</span>[] curr = heap.<span class="mt">poll</span>();
+        <span class="ty">int</span> i = curr[<span class="nm">1</span>], j = curr[<span class="nm">2</span>];
+
+        res.<span class="mt">add</span>(<span class="ty">Arrays</span>.<span class="mt">asList</span>(n1[i], n2[j]));
+
+        <span class="cm">// Only advance j (column) — i is fixed per "row"</span>
+        <span class="kw">if</span> (j + <span class="nm">1</span> &lt; n2.length) {
+            heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{n1[i] + n2[j + <span class="nm">1</span>], i, j + <span class="nm">1</span>});
+        }
+    }
+
+    <span class="kw">return</span> res;
+}</pre>
+
+  <!-- TYPE 5 -->
+  <h3 style="color: var(--accent5);">Type 05 — Kth Smallest in Sorted Matrix (LC #378)</h3>
+  <p>Each row of the matrix is a sorted list. Treat it as K sorted lists and find the Kth element.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">kthSmallestMatrix</span>(<span class="ty">int</span>[][] matrix, <span class="ty">int</span> k) {
+
+    <span class="ty">int</span> n = matrix.length;
+    <span class="cm">// heap: [value, row, col]</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">int</span>[]&gt; heap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a[<span class="nm">0</span>] - b[<span class="nm">0</span>]);
+
+    <span class="cm">// Push first element of each row</span>
+    <span class="kw">for</span> (<span class="ty">int</span> r = <span class="nm">0</span>; r &lt; <span class="ty">Math</span>.<span class="mt">min</span>(n, k); r++) {
+        heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{matrix[r][<span class="nm">0</span>], r, <span class="nm">0</span>});
+    }
+
+    <span class="ty">int</span> count = <span class="nm">0</span>, result = <span class="nm">0</span>;
+
+    <span class="kw">while</span> (!heap.<span class="mt">isEmpty</span>()) {
+        <span class="ty">int</span>[] curr = heap.<span class="mt">poll</span>();
+        result = curr[<span class="nm">0</span>];
+        <span class="ty">int</span> r = curr[<span class="nm">1</span>], c = curr[<span class="nm">2</span>];
+        count++;
+
+        <span class="kw">if</span> (count == k) <span class="kw">return</span> result;  <span class="cm">// done!</span>
+
+        <span class="kw">if</span> (c + <span class="nm">1</span> &lt; n)
+            heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{matrix[r][c + <span class="nm">1</span>], r, c + <span class="nm">1</span>});
+    }
+
+    <span class="kw">return</span> result;
+}</pre>
+
+  <hr class="divider">
+
+  <!-- ══ 05: COMPLEXITY ══ -->
+  <div class="section-num">Section 05 — Complexity</div>
+  <h2>Time &amp; Space Summary</h2>
+
+  <table>
+    <thead>
+      <tr><th>Problem Type</th><th>Time</th><th>Space</th><th>Key Note</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Merge K Sorted Lists/Arrays</td><td>O(n log k)</td><td>O(k)</td><td>n = total elements, k = num lists</td></tr>
+      <tr><td>Kth Smallest (stop early)</td><td>O(k log k)</td><td>O(k)</td><td>Only pop k times, not all n</td></tr>
+      <tr><td>Smallest Range (LC 632)</td><td>O(n log k)</td><td>O(k)</td><td>n = total elements across lists</td></tr>
+      <tr><td>K Pairs Smallest Sums</td><td>O(k log k)</td><td>O(k)</td><td>Seed with min(n1.len, k) rows</td></tr>
+      <tr><td>Kth Smallest in Matrix</td><td>O(k log n)</td><td>O(n)</td><td>n = matrix row count</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Why O(n log k) and not O(n log n)?</strong> Because the heap only ever holds K elements at a time. Each push/pop is <code>O(log k)</code>, and you do it n times → <code>O(n log k)</code>. Since k ≤ n, this is always faster than sorting.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 06: CHEAT SHEET ══ -->
+  <div class="section-num">Section 06 — Quick Reference</div>
+  <h2>The "Which Approach?" Cheat Sheet</h2>
+
+  <table>
+    <thead>
+      <tr><th>If the problem says…</th><th>→ Approach</th><th>Heap stores</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>"merge K sorted lists"</td><td>Master template, full output</td><td>[node] or [val, list, idx]</td></tr>
+      <tr><td>"Kth smallest across K lists"</td><td>Stop after K pops</td><td>[val, list, idx]</td></tr>
+      <tr><td>"smallest range from K lists"</td><td>Keep one per list, track max</td><td>[val, list, idx] + curMax</td></tr>
+      <tr><td>"K pairs with smallest sums"</td><td>Virtual matrix, fix i advance j</td><td>[sum, i, j]</td></tr>
+      <tr><td>"Kth smallest in sorted matrix"</td><td>Each row = one list</td><td>[val, row, col]</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-red">
+    <strong>Interview tip:</strong> The moment you see "K sorted" + "smallest/merge", say — <em>"I'll use a min-heap. I'll seed it with the first element of each list and then pop-and-push until done. Time complexity will be O(n log k)."</em> That's the entire pattern in one sentence.
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>K-Way Merge vs Merge Intervals:</strong> They sound similar but are different. Merge Intervals = sort + scan on a single list of ranges. K-Way Merge = heap-based extraction across K independently sorted sequences.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 07: DRY RUN ══ -->
+  <div class="section-num">Section 07 — Dry Run</div>
+  <h2>Tracing the Heap</h2>
+  <p>Merging <code>[[1,4,7], [2,5], [3,6]]</code>. Heap stores <code>[value, list, idx]</code>; only the value is shown below for brevity.</p>
+
+  <table>
+    <thead>
+      <tr><th>Step</th><th>Heap before pop</th><th>Pop</th><th>Push next</th><th>Output so far</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>seed</td><td>{1, 2, 3}</td><td>—</td><td>heads of all 3 lists</td><td>[]</td></tr>
+      <tr><td>1</td><td>{1, 2, 3}</td><td>1</td><td>4 (list 0)</td><td>[1]</td></tr>
+      <tr><td>2</td><td>{2, 3, 4}</td><td>2</td><td>5 (list 1)</td><td>[1,2]</td></tr>
+      <tr><td>3</td><td>{3, 4, 5}</td><td>3</td><td>6 (list 2)</td><td>[1,2,3]</td></tr>
+      <tr><td>4</td><td>{4, 5, 6}</td><td>4</td><td>7 (list 0)</td><td>[1,2,3,4]</td></tr>
+      <tr><td>5</td><td>{5, 6, 7}</td><td>5</td><td>list 1 exhausted</td><td>[1,2,3,4,5]</td></tr>
+      <tr><td>6</td><td>{6, 7}</td><td>6</td><td>list 2 exhausted</td><td>…,6</td></tr>
+      <tr><td>7</td><td>{7}</td><td>7</td><td>list 0 exhausted</td><td>[1,2,3,4,5,6,7]</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Heap never exceeds K=3.</strong> That's the whole efficiency argument: every pop is balanced by at most one push, so the heap size stays bounded by the number of lists, giving O(log k) per operation.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 08: EDGE CASES ══ -->
+  <div class="section-num">Section 08 — Edge Cases</div>
+  <h2>Pitfalls &amp; Boundary Decisions</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">!</div>
+      <div class="card-title">Empty lists in the input</div>
+      <div class="card-body">Always guard with <code>if (arrays[i].length &gt; 0)</code> (or <code>node != null</code>) before seeding. Pushing from an empty list throws or corrupts the heap.</div>
+    </div>
+    <div class="card c2">
+      <div class="card-num">!</div>
+      <div class="card-title">Comparator overflow</div>
+      <div class="card-body">For large values use <code>Integer.compare(a[0], b[0])</code> instead of <code>a[0] - b[0]</code>; the subtraction can overflow int range.</div>
+    </div>
+    <div class="card c3">
+      <div class="card-num">!</div>
+      <div class="card-title">Storing value only</div>
+      <div class="card-body">For arrays you must store <code>[value, list, idx]</code>. With just the value you can't find the next element to push.</div>
+    </div>
+    <div class="card c4">
+      <div class="card-num">!</div>
+      <div class="card-title">Smallest-range loop guard</div>
+      <div class="card-body">LC #632 loops <code>while (heap.size() == numLists)</code>. The moment any list is exhausted the range can't cover all K — stop immediately.</div>
+    </div>
+    <div class="card c5">
+      <div class="card-num">!</div>
+      <div class="card-title">Seeding more than needed</div>
+      <div class="card-body">For "K pairs / Kth smallest" seed only <code>min(len, k)</code> rows — seeding all n rows wastes memory and time.</div>
+    </div>
+    <div class="card c6">
+      <div class="card-num">!</div>
+      <div class="card-title">All elements equal</div>
+      <div class="card-body">Ties are fine — the heap just pops them in arbitrary order. Output stays sorted because equal keys are interchangeable.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue">
+    <strong>When NOT to use a heap:</strong> if you only have <strong>two</strong> sorted lists, a plain two-pointer merge is simpler and O(n) with no log factor. The heap pays off once K &ge; 3 (or K is large/unknown).
+  </div>
+
+  <p style="font-size:12px; color: var(--muted); margin-top: 40px; text-align: center;">
+    K-Way Merge — Visual Guide &nbsp;·&nbsp; Java Templates &nbsp;·&nbsp; Min-Heap Pattern
+  </p>
+
+</div>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed; right:18px; bottom:84px;
+    width:52px; height:52px; border-radius:50%;
+    background:#6c5ce7; color:#ffffff;
+    display:flex; align-items:center; justify-content:center;
+    text-decoration:none; font-size:24px; line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  html.kiro-dark{ color-scheme:dark; background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark body{ background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark .hero{ border-bottom-color:#3a414d !important; }
+  html.kiro-dark .hero-title{ color:#e8edf2 !important; }
+  html.kiro-dark .hero-sub{ color:#a8b1bd !important; }
+  html.kiro-dark .hero-badge{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark h2{ color:#e8edf2 !important; }
+  html.kiro-dark h3{ color:#a8b1bd !important; }
+  html.kiro-dark .section-num{ color:#a8b1bd !important; }
+  html.kiro-dark p{ color:#c5ccd6 !important; }
+  html.kiro-dark strong{ color:#e8edf2; }
+  html.kiro-dark .divider{ border-top-color:#3a414d !important; }
+  html.kiro-dark code{ background:#2c333d !important; color:#f5e8b8 !important; }
+  html.kiro-dark pre{ background:#1a1f29 !important; border-color:#3a414d !important; color:#d6deeb !important; }
+  html.kiro-dark .kw{ color:#c4a4ff !important; }
+  html.kiro-dark .ty{ color:#7cc4ff !important; }
+  html.kiro-dark .st{ color:#5fd6b8 !important; }
+  html.kiro-dark .cm{ color:#8a93a0 !important; }
+  html.kiro-dark .nm{ color:#ff9d9d !important; }
+  html.kiro-dark .mt{ color:#ffb070 !important; }
+  html.kiro-dark .op{ color:#c5ccd6 !important; }
+  html.kiro-dark .callout{ background:#242a33 !important; color:#d6deeb !important;
+    border-top-color:#3a414d !important; border-right-color:#3a414d !important; border-bottom-color:#3a414d !important; }
+  html.kiro-dark th{ background:#2c333d !important; color:#e8edf2 !important; }
+  html.kiro-dark td{ color:#c5ccd6 !important; border-bottom-color:#3a414d !important; }
+  html.kiro-dark tr:nth-child(even) td{ background:rgba(255,255,255,.03) !important; }
+  html.kiro-dark td:first-child{ color:#d2b3ff !important; }
+  html.kiro-dark .step-num{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark .step-body{ color:#c5ccd6 !important; }
+  html.kiro-dark .step-body strong{ color:#e8edf2 !important; }
+  html.kiro-dark .card{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .card-title{ color:#e8edf2 !important; }
+  html.kiro-dark .card-body{ color:#a8b1bd !important; }
+  html.kiro-dark .card-lc{ background:rgba(255,255,255,.08) !important; }
+  html.kiro-dark .compare-box{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .compare-box ul,
+  html.kiro-dark .compare-box ul li{ color:#c5ccd6 !important; }
+  html.kiro-dark .compare-box ul li::before{ color:#a8b1bd !important; }
+  html.kiro-dark .vis-wrap,
+  html.kiro-dark .heap-demo,
+  html.kiro-dark .vis-box{ background:#1a1f29 !important; border-color:#3a414d !important; }
+  html.kiro-dark .bar-track{ background:#2c333d !important; }
+  html.kiro-dark .heap-cell{ background:#22303c !important; }
+  html.kiro-dark .res-cell{ background:#1e2a28 !important; }
+  html.kiro-dark .heap-state{ background:#242a33 !important; }
+  html.kiro-dark .el-heap,
+  html.kiro-dark .hs-el{ background:#22303c !important; }
+  html.kiro-dark .el-dim{ background:#2c333d !important; color:#7a818c !important; }
+  html.kiro-dark .label,
+  html.kiro-dark .list-label,
+  html.kiro-dark .stream-label,
+  html.kiro-dark .vis-title,
+  html.kiro-dark .hs-note,
+  html.kiro-dark .arrow-note,
+  html.kiro-dark .arrow-row{ color:#a8b1bd !important; }
+  .kiro-dark-toggle{
+    position:fixed; right:18px; bottom:18px;
+    width:52px; height:52px; border-radius:50%;
+    background:#1c2128; color:#ffd166;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer; font-size:22px; line-height:1; z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{ background:#ffd166; color:#1c2128; border-color:#1c2128; }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+    } else {
+      html.classList.remove('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); }
+  else { init(); }
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>

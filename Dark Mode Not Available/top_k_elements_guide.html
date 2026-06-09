@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top K Elements — Visual Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#ffffff; --text:#1a1a2e; --muted:#6b7280; --border:#e5e7eb;
+    --a1:#c0392b; --a2:#0077b6; --a3:#2a9d8f; --a4:#f4a261; --a5:#8338ec; --a6:#d62828;
+    --code-bg:#f8f8fc; --keyword:#8338ec; --type:#0077b6; --comment:#9ca3af; --number:#c0392b; --method:#d97706; --string:#2a9d8f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7;}
+  .hero{padding:60px 60px 40px;border-bottom:2px solid var(--text);display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+  .hero-title{font-family:'DM Serif Display',serif;font-size:52px;line-height:1;}
+  .hero-title span{color:var(--a1);}
+  .hero-sub{font-size:13px;color:var(--muted);font-weight:500;letter-spacing:.12em;text-transform:uppercase;margin-top:10px;}
+  .hero-badge{background:var(--text);color:#fff;font-family:'DM Mono',monospace;font-size:12px;padding:6px 14px;border-radius:2px;}
+  .container{max-width:960px;margin:0 auto;padding:50px 40px 80px;}
+  .section-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+  h2{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:18px;}
+  h3{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:32px 0 10px;}
+  p{color:#374151;margin-bottom:14px;}
+  code{font-family:'DM Mono',monospace;font-size:12.5px;background:#f0f0fa;padding:1px 6px;border-radius:3px;color:var(--keyword);}
+  .divider{border:none;border-top:1px solid var(--border);margin:50px 0;}
+  pre{background:var(--code-bg);border:1px solid var(--border);border-left:3px solid var(--a5);border-radius:6px;padding:22px 26px;overflow-x:auto;font-family:'DM Mono',monospace;font-size:13px;line-height:1.8;margin:14px 0 24px;}
+  .kw{color:var(--keyword);font-weight:500;} .ty{color:var(--type);} .cm{color:var(--comment);font-style:italic;} .nm{color:var(--number);} .mt{color:var(--method);} .st{color:var(--string);}
+  .callout{border:1px solid var(--border);border-left:4px solid var(--a3);background:#f0fbf9;border-radius:4px;padding:16px 20px;margin:20px 0;font-size:14px;color:#374151;}
+  .callout strong{color:var(--a3);}
+  .callout-warn{border-left-color:var(--a4);background:#fef9f0;} .callout-warn strong{color:var(--a4);}
+  .callout-red{border-left-color:var(--a1);background:#fdf4f4;} .callout-red strong{color:var(--a1);}
+  .callout-blue{border-left-color:var(--a2);background:#eaf4fd;} .callout-blue strong{color:var(--a2);}
+  .steps{display:flex;flex-direction:column;gap:14px;margin:16px 0 24px;}
+  .step{display:flex;gap:14px;align-items:flex-start;}
+  .step-num{width:28px;height:28px;background:var(--text);color:#fff;border-radius:50%;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .step-body{font-size:14px;color:#374151;} .step-body strong{color:var(--text);}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin:20px 0;}
+  .card{border:1px solid var(--border);border-radius:6px;padding:18px 20px;}
+  .card-num{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;line-height:1;margin-bottom:10px;}
+  .card-title{font-weight:600;font-size:14px;margin-bottom:6px;}
+  .card-body{font-size:13px;color:var(--muted);line-height:1.55;}
+  .card-lc{font-family:'DM Mono',monospace;font-size:11px;margin-top:10px;padding:3px 8px;border-radius:2px;display:inline-block;}
+  .c1{border-top:3px solid var(--a1);} .c1 .card-num{color:var(--a1);} .c1 .card-lc{background:#fdf0f0;color:var(--a1);}
+  .c2{border-top:3px solid var(--a2);} .c2 .card-num{color:var(--a2);} .c2 .card-lc{background:#e8f4fd;color:var(--a2);}
+  .c3{border-top:3px solid var(--a3);} .c3 .card-num{color:var(--a3);} .c3 .card-lc{background:#e8f6f3;color:var(--a3);}
+  .c4{border-top:3px solid var(--a4);} .c4 .card-num{color:var(--a4);} .c4 .card-lc{background:#fef4ec;color:var(--a4);}
+  .c5{border-top:3px solid var(--a5);} .c5 .card-num{color:var(--a5);} .c5 .card-lc{background:#f3eefe;color:var(--a5);}
+  .c6{border-top:3px solid var(--a6);} .c6 .card-num{color:var(--a6);} .c6 .card-lc{background:#fde8e8;color:var(--a6);}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:18px 0;}
+  th{background:var(--text);color:#fff;padding:10px 16px;text-align:left;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;font-weight:500;}
+  td{padding:10px 16px;border-bottom:1px solid var(--border);color:#374151;}
+  tr:last-child td{border-bottom:none;} tr:nth-child(even) td{background:#fafafa;}
+  td:first-child{font-family:'DM Mono',monospace;color:var(--keyword);font-size:12px;}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0;}
+  .compare-box{border:1px solid var(--border);border-radius:6px;padding:16px 18px;}
+  .compare-box h4{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+  .compare-box ul{list-style:none;font-size:13px;color:#374151;}
+  .compare-box ul li{margin-bottom:6px;padding-left:14px;position:relative;}
+  .compare-box ul li::before{content:"—";position:absolute;left:0;color:var(--muted);}
+  .maxh{border-top:3px solid var(--a1);} .maxh h4{color:var(--a1);}
+  .minh{border-top:3px solid var(--a2);} .minh h4{color:var(--a2);}
+  /* VIS */
+  .vis-box{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:28px 32px;margin:18px 0 24px;font-family:'DM Mono',monospace;font-size:13px;}
+  .vis-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:18px;}
+  .stream-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+  .stream-label{font-size:12px;color:var(--muted);width:110px;flex-shrink:0;}
+  .el{width:36px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:13px;font-weight:600;}
+  .el-new{background:var(--a1);color:#fff;}
+  .el-heap{background:#e8f4fd;border:1.5px solid var(--a2);color:var(--a2);}
+  .el-dim{background:#f0f0f4;color:#aaa;}
+  .heap-state{margin:6px 0 14px;padding:12px 16px;background:#fff;border:1.5px dashed var(--a2);border-radius:5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .hs-label{font-size:11px;color:var(--a2);text-transform:uppercase;letter-spacing:.08em;margin-right:4px;}
+  .hs-min{background:var(--a2);color:#fff;border-radius:3px;padding:3px 10px;font-size:13px;font-weight:700;}
+  .hs-el{background:#eaf4fd;border:1px solid var(--a2);color:var(--a2);border-radius:3px;padding:3px 10px;font-size:13px;}
+  .hs-note{font-size:12px;color:var(--muted);margin-left:6px;}
+  .arrow-note{font-size:13px;color:#374151;margin:4px 0 10px;display:flex;align-items:center;gap:8px;}
+  .arrow-note span{font-size:16px;color:var(--a3);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div>
+    <div class="hero-sub">LeetCode Pattern Series</div>
+    <div class="hero-title">Top <span>K</span> Elements</div>
+    <div class="hero-sub" style="margin-top:8px">Heap · QuickSelect · Bucket Sort · All 7 Types</div>
+  </div>
+  <div class="hero-badge">O(n log k) pattern</div>
+</div>
+
+<div class="container">
+
+  <div class="section-num">Section 00 — The Idea</div>
+  <h2>What is the Top K pattern?</h2>
+  <p>You have <strong>n elements</strong> and want the <strong>K largest, K smallest, or Kth element</strong>. The naive way sorts everything in <code>O(n log n)</code>. The smart way uses a heap of size K — never more.</p>
+  <p>There are two heap flavours depending on what you want:</p>
+
+  <div class="compare">
+    <div class="compare-box maxh">
+      <h4>Max-Heap → find K Smallest</h4>
+      <ul>
+        <li>Heap holds K smallest seen so far</li>
+        <li>Max (biggest) sits at the top</li>
+        <li>New element smaller than top? → evict top, insert new</li>
+        <li>At end: heap = K smallest elements</li>
+      </ul>
+    </div>
+    <div class="compare-box minh">
+      <h4>Min-Heap → find K Largest</h4>
+      <ul>
+        <li>Heap holds K largest seen so far</li>
+        <li>Min (smallest of the big ones) sits at top</li>
+        <li>New element bigger than top? → evict top, insert new</li>
+        <li>At end: heap = K largest elements</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>Memory trick:</strong> To find K <em>largest</em>, use a <em>min</em>-heap. To find K <em>smallest</em>, use a <em>max</em>-heap. The heap type is always the <em>opposite</em> of what you're looking for!
+  </div>
+
+  <div class="vis-box">
+    <div class="vis-title">Visual: Find Top 3 Largest from [3, 1, 5, 12, 2, 11, 7] — min-heap of size 3</div>
+
+    <div class="stream-row">
+      <span class="stream-label">Add 3:</span>
+      <div class="el el-new">3</div>
+    </div>
+    <div class="heap-state"><span class="hs-label">heap</span><div class="hs-min">3</div><span class="hs-note">← heap not full yet (size 1 of 3)</span></div>
+
+    <div class="stream-row">
+      <span class="stream-label">Add 1:</span>
+      <div class="el el-new">1</div>
+    </div>
+    <div class="heap-state"><span class="hs-label">heap</span><div class="hs-min">1</div><div class="hs-el">3</div><span class="hs-note">← size 2, not full</span></div>
+
+    <div class="stream-row">
+      <span class="stream-label">Add 5:</span>
+      <div class="el el-new">5</div>
+    </div>
+    <div class="heap-state"><span class="hs-label">heap</span><div class="hs-min">1</div><div class="hs-el">3</div><div class="hs-el">5</div><span class="hs-note">← FULL (size=3)</span></div>
+
+    <div class="stream-row">
+      <span class="stream-label">Add 12:</span>
+      <div class="el el-new">12</div>
+    </div>
+    <div class="arrow-note"><span>↓</span> 12 &gt; heap.min(1) → evict 1, insert 12</div>
+    <div class="heap-state"><span class="hs-label">heap</span><div class="hs-min">3</div><div class="hs-el">5</div><div class="hs-el">12</div><span class="hs-note">← 1 evicted</span></div>
+
+    <div class="stream-row">
+      <span class="stream-label">Add 2:</span>
+      <div class="el el-new">2</div>
+    </div>
+    <div class="arrow-note"><span>↓</span> 2 &lt; heap.min(3) → skip, nothing changes</div>
+
+    <div class="stream-row">
+      <span class="stream-label">Add 11:</span>
+      <div class="el el-new">11</div>
+    </div>
+    <div class="arrow-note"><span>↓</span> 11 &gt; heap.min(3) → evict 3, insert 11</div>
+    <div class="heap-state"><span class="hs-label">heap</span><div class="hs-min">5</div><div class="hs-el">11</div><div class="hs-el">12</div><span class="hs-note">← 3 evicted</span></div>
+
+    <div class="stream-row">
+      <span class="stream-label">Add 7:</span>
+      <div class="el el-new">7</div>
+    </div>
+    <div class="arrow-note"><span>↓</span> 7 &gt; heap.min(5) → evict 5, insert 7</div>
+    <div class="heap-state"><span class="hs-label">FINAL</span><div class="hs-min">7</div><div class="hs-el">11</div><div class="hs-el">12</div><span class="hs-note">← Top 3 Largest = {7, 11, 12} ✅</span></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-num">Section 01 — Core Template</div>
+  <h2>The Master Template</h2>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Create heap</strong> — min-heap for K largest, max-heap for K smallest</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Stream elements</strong> one by one, adding each to the heap</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>If heap size exceeds K</strong>, call poll() — evicts the element that doesn't belong</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>When done</strong>, heap contains exactly the K elements you want. peek() gives the Kth element itself.</div></div>
+  </div>
+
+  <h3 style="color:var(--a2);">Version A — Top K Largest</h3>
+<pre><span class="kw">import</span> java.util.*;
+
+<span class="cm">/**
+ * Top K Largest using Min-Heap of size K
+ * Time:  O(n log k)
+ * Space: O(k)
+ */</span>
+<span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; <span class="mt">topKLargest</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">Integer</span>&gt; minHeap = <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(); <span class="cm">// default = min</span>
+
+    <span class="kw">for</span> (<span class="ty">int</span> num : nums) {
+        minHeap.<span class="mt">offer</span>(num);
+        <span class="kw">if</span> (minHeap.<span class="mt">size</span>() &gt; k)
+            minHeap.<span class="mt">poll</span>(); <span class="cm">// removes smallest → only top K stay</span>
+    }
+
+    <span class="kw">return new</span> <span class="ty">ArrayList</span>&lt;&gt;(minHeap); <span class="cm">// all K largest</span>
+}
+
+<span class="cm">// To get just the Kth largest: return minHeap.peek();</span></pre>
+
+  <h3 style="color:var(--a1);">Version B — Top K Smallest</h3>
+<pre><span class="cm">/**
+ * Top K Smallest using Max-Heap of size K
+ * Time:  O(n log k)
+ * Space: O(k)
+ */</span>
+<span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; <span class="mt">topKSmallest</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">Integer</span>&gt; maxHeap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(<span class="ty">Collections</span>.<span class="mt">reverseOrder</span>()); <span class="cm">// max at top</span>
+
+    <span class="kw">for</span> (<span class="ty">int</span> num : nums) {
+        maxHeap.<span class="mt">offer</span>(num);
+        <span class="kw">if</span> (maxHeap.<span class="mt">size</span>() &gt; k)
+            maxHeap.<span class="mt">poll</span>(); <span class="cm">// removes largest → only K smallest stay</span>
+    }
+
+    <span class="kw">return new</span> <span class="ty">ArrayList</span>&lt;&gt;(maxHeap);
+}
+
+<span class="cm">// To get just the Kth smallest: return maxHeap.peek();</span></pre>
+
+  <hr class="divider">
+
+  <div class="section-num">Section 02 — Problem Types</div>
+  <h2>All 7 Problem Types</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">01</div>
+      <div class="card-title">Kth Largest / Smallest</div>
+      <div class="card-body">Single element answer. Heap of size K, return peek() at the end.</div>
+      <span class="card-lc">LC #215 · #703</span>
+    </div>
+    <div class="card c2">
+      <div class="card-num">02</div>
+      <div class="card-title">Top K Frequent Elements</div>
+      <div class="card-body">Count frequencies first, then heap on (freq, element). Min-heap of size K.</div>
+      <span class="card-lc">LC #347</span>
+    </div>
+    <div class="card c3">
+      <div class="card-num">03</div>
+      <div class="card-title">Top K Frequent Words</div>
+      <div class="card-body">Same as type 02 but comparator also sorts alphabetically on ties.</div>
+      <span class="card-lc">LC #692</span>
+    </div>
+    <div class="card c4">
+      <div class="card-num">04</div>
+      <div class="card-title">K Closest Points to Origin</div>
+      <div class="card-body">Heap on distance squared (x²+y²). Max-heap of size K to keep K closest.</div>
+      <span class="card-lc">LC #973</span>
+    </div>
+    <div class="card c5">
+      <div class="card-num">05</div>
+      <div class="card-title">Sort by Frequency</div>
+      <div class="card-body">Max-heap by count. Pop and repeat each character/element by its frequency.</div>
+      <span class="card-lc">LC #451</span>
+    </div>
+    <div class="card c6">
+      <div class="card-num">06</div>
+      <div class="card-title">Task Scheduler</div>
+      <div class="card-body">Max-heap of freq counts + cooldown queue. Greedily run most frequent task.</div>
+      <span class="card-lc">LC #621 · #767</span>
+    </div>
+    <div class="card c5">
+      <div class="card-num">07</div>
+      <div class="card-title">QuickSelect — O(n) Kth</div>
+      <div class="card-body">Partition-based. Average O(n). Use when you need only one Kth value, not a list.</div>
+      <span class="card-lc">LC #215</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-num">Section 03 — Code for Each Type</div>
+  <h2>Type-by-Type Templates</h2>
+
+  <h3 style="color:var(--a1);">Type 01 — Kth Largest Element (LC #215)</h3>
+  <p>Heap of size K. After processing all elements, the top of the heap is the Kth largest (smallest among the top K).</p>
+<pre><span class="kw">public int</span> <span class="mt">findKthLargest</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">Integer</span>&gt; minHeap = <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;();
+
+    <span class="kw">for</span> (<span class="ty">int</span> num : nums) {
+        minHeap.<span class="mt">offer</span>(num);
+        <span class="kw">if</span> (minHeap.<span class="mt">size</span>() &gt; k) minHeap.<span class="mt">poll</span>();
+    }
+
+    <span class="kw">return</span> minHeap.<span class="mt">peek</span>(); <span class="cm">// Kth largest = min of top-K heap</span>
+}</pre>
+
+  <h3 style="color:var(--a2);">Type 02 — Top K Frequent Elements (LC #347)</h3>
+  <p>Step 1: count frequencies. Step 2: min-heap keyed by frequency, evict least frequent when size exceeds K.</p>
+<pre><span class="kw">public int</span>[] <span class="mt">topKFrequent</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+
+    <span class="cm">// Step 1: frequency map</span>
+    <span class="ty">Map</span>&lt;<span class="ty">Integer</span>, <span class="ty">Integer</span>&gt; freq = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="ty">int</span> n : nums)
+        freq.<span class="mt">put</span>(n, freq.<span class="mt">getOrDefault</span>(n, <span class="nm">0</span>) + <span class="nm">1</span>);
+
+    <span class="cm">// Step 2: min-heap by frequency — stores [element, freq]</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">int</span>[]&gt; heap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; a[<span class="nm">1</span>] - b[<span class="nm">1</span>]);
+
+    <span class="kw">for</span> (<span class="ty">Map</span>.<span class="ty">Entry</span>&lt;<span class="ty">Integer</span>,<span class="ty">Integer</span>&gt; e : freq.<span class="mt">entrySet</span>()) {
+        heap.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{e.<span class="mt">getKey</span>(), e.<span class="mt">getValue</span>()});
+        <span class="kw">if</span> (heap.<span class="mt">size</span>() &gt; k) heap.<span class="mt">poll</span>(); <span class="cm">// evict least frequent</span>
+    }
+
+    <span class="cm">// Step 3: extract</span>
+    <span class="ty">int</span>[] res = <span class="kw">new</span> <span class="ty">int</span>[k];
+    <span class="kw">for</span> (<span class="ty">int</span> i = k - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) res[i] = heap.<span class="mt">poll</span>()[<span class="nm">0</span>];
+    <span class="kw">return</span> res;
+}</pre>
+
+  <h3 style="color:var(--a3);">Type 03 — Top K Frequent Words (LC #692)</h3>
+  <p>Same flow, but the comparator must handle ties: same frequency → alphabetically earlier word wins.</p>
+<pre><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; <span class="mt">topKFrequent</span>(<span class="ty">String</span>[] words, <span class="ty">int</span> k) {
+
+    <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Integer</span>&gt; freq = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="ty">String</span> w : words)
+        freq.<span class="mt">put</span>(w, freq.<span class="mt">getOrDefault</span>(w, <span class="nm">0</span>) + <span class="nm">1</span>);
+
+    <span class="cm">// Min-heap: lower freq → top. Same freq → later alphabetically → top (evicted first)</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">String</span>&gt; heap = <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(
+        (a, b) -&gt; freq.<span class="mt">get</span>(a).equals(freq.<span class="mt">get</span>(b))
+            ? b.<span class="mt">compareTo</span>(a)           <span class="cm">// tie: reverse alpha at top</span>
+            : freq.<span class="mt">get</span>(a) - freq.<span class="mt">get</span>(b) <span class="cm">// lower freq at top</span>
+    );
+
+    <span class="kw">for</span> (<span class="ty">String</span> w : freq.<span class="mt">keySet</span>()) {
+        heap.<span class="mt">offer</span>(w);
+        <span class="kw">if</span> (heap.<span class="mt">size</span>() &gt; k) heap.<span class="mt">poll</span>();
+    }
+
+    <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; res = <span class="kw">new</span> <span class="ty">LinkedList</span>&lt;&gt;();
+    <span class="kw">while</span> (!heap.<span class="mt">isEmpty</span>())
+        ((<span class="ty">LinkedList</span>&lt;<span class="ty">String</span>&gt;) res).<span class="mt">addFirst</span>(heap.<span class="mt">poll</span>()); <span class="cm">// reverse for final order</span>
+    <span class="kw">return</span> res;
+}</pre>
+
+  <h3 style="color:var(--a4);">Type 04 — K Closest Points to Origin (LC #973)</h3>
+  <p>Use distance squared (<code>x*x + y*y</code>) — no sqrt needed for comparison. Max-heap keeps the K closest; farthest gets evicted.</p>
+<pre><span class="kw">public int</span>[][] <span class="mt">kClosest</span>(<span class="ty">int</span>[][] points, <span class="ty">int</span> k) {
+
+    <span class="cm">// Max-heap by distance squared — farthest point at top</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">int</span>[]&gt; maxHeap = <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(
+        (a, b) -&gt; (b[<span class="nm">0</span>]*b[<span class="nm">0</span>] + b[<span class="nm">1</span>]*b[<span class="nm">1</span>]) - (a[<span class="nm">0</span>]*a[<span class="nm">0</span>] + a[<span class="nm">1</span>]*a[<span class="nm">1</span>])
+    );
+
+    <span class="kw">for</span> (<span class="ty">int</span>[] p : points) {
+        maxHeap.<span class="mt">offer</span>(p);
+        <span class="kw">if</span> (maxHeap.<span class="mt">size</span>() &gt; k) maxHeap.<span class="mt">poll</span>(); <span class="cm">// evict farthest</span>
+    }
+
+    <span class="kw">return</span> maxHeap.<span class="mt">toArray</span>(<span class="kw">new</span> <span class="ty">int</span>[k][]);
+}</pre>
+
+  <h3 style="color:var(--a5);">Type 05 — Sort Characters by Frequency (LC #451)</h3>
+  <p>Max-heap by count. Pop each character and repeat it <code>count</code> times to build the output string.</p>
+<pre><span class="kw">public</span> <span class="ty">String</span> <span class="mt">frequencySort</span>(<span class="ty">String</span> s) {
+
+    <span class="ty">Map</span>&lt;<span class="ty">Character</span>, <span class="ty">Integer</span>&gt; freq = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="ty">char</span> c : s.<span class="mt">toCharArray</span>())
+        freq.<span class="mt">put</span>(c, freq.<span class="mt">getOrDefault</span>(c, <span class="nm">0</span>) + <span class="nm">1</span>);
+
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">Character</span>&gt; maxHeap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;((a, b) -&gt; freq.<span class="mt">get</span>(b) - freq.<span class="mt">get</span>(a));
+    maxHeap.<span class="mt">addAll</span>(freq.<span class="mt">keySet</span>());
+
+    <span class="ty">StringBuilder</span> sb = <span class="kw">new</span> <span class="ty">StringBuilder</span>();
+    <span class="kw">while</span> (!maxHeap.<span class="mt">isEmpty</span>()) {
+        <span class="ty">char</span> c = maxHeap.<span class="mt">poll</span>();
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; freq.<span class="mt">get</span>(c); i++) sb.<span class="mt">append</span>(c);
+    }
+    <span class="kw">return</span> sb.<span class="mt">toString</span>();
+}</pre>
+
+  <h3 style="color:var(--a6);">Type 06 — Task Scheduler (LC #621)</h3>
+  <p>Always run the most frequent available task. If it's on cooldown, idle. Track cooldown with a queue that re-admits tasks after <code>n</code> time slots.</p>
+<pre><span class="kw">public int</span> <span class="mt">leastInterval</span>(<span class="ty">char</span>[] tasks, <span class="ty">int</span> n) {
+
+    <span class="ty">int</span>[] freq = <span class="kw">new</span> <span class="ty">int</span>[<span class="nm">26</span>];
+    <span class="kw">for</span> (<span class="ty">char</span> t : tasks) freq[t - <span class="st">'A'</span>]++;
+
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">Integer</span>&gt; maxHeap =
+        <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;(<span class="ty">Collections</span>.<span class="mt">reverseOrder</span>());
+    <span class="kw">for</span> (<span class="ty">int</span> f : freq) <span class="kw">if</span> (f &gt; <span class="nm">0</span>) maxHeap.<span class="mt">offer</span>(f);
+
+    <span class="ty">int</span> time = <span class="nm">0</span>;
+    <span class="ty">Queue</span>&lt;<span class="ty">int</span>[]&gt; cooldown = <span class="kw">new</span> <span class="ty">LinkedList</span>&lt;&gt;(); <span class="cm">// [remaining, ready_at]</span>
+
+    <span class="kw">while</span> (!maxHeap.<span class="mt">isEmpty</span>() || !cooldown.<span class="mt">isEmpty</span>()) {
+        time++;
+
+        <span class="kw">if</span> (!maxHeap.<span class="mt">isEmpty</span>()) {
+            <span class="ty">int</span> rem = maxHeap.<span class="mt">poll</span>() - <span class="nm">1</span>;
+            <span class="kw">if</span> (rem &gt; <span class="nm">0</span>) cooldown.<span class="mt">offer</span>(<span class="kw">new</span> <span class="ty">int</span>[]{rem, time + n});
+        }
+        <span class="cm">// else: idle this slot</span>
+
+        <span class="kw">if</span> (!cooldown.<span class="mt">isEmpty</span>() &amp;&amp; cooldown.<span class="mt">peek</span>()[<span class="nm">1</span>] == time)
+            maxHeap.<span class="mt">offer</span>(cooldown.<span class="mt">poll</span>()[<span class="nm">0</span>]);
+    }
+    <span class="kw">return</span> time;
+}</pre>
+
+  <h3 style="color:var(--a5);">Type 07 — QuickSelect: O(n) Average for Kth Element</h3>
+  <div class="callout callout-blue">
+    <strong>Idea:</strong> Partition array around a pivot. After partitioning, pivot lands at its correct sorted position. If that's exactly the target index — done! Otherwise recurse only on one half. Average O(n), no heap needed.
+  </div>
+<pre><span class="kw">public int</span> <span class="mt">findKthLargest</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+    <span class="cm">// Kth largest = (n-k)th index from left in sorted order</span>
+    <span class="kw">return</span> <span class="mt">quickSelect</span>(nums, <span class="nm">0</span>, nums.length - <span class="nm">1</span>, nums.length - k);
+}
+
+<span class="kw">private int</span> <span class="mt">quickSelect</span>(<span class="ty">int</span>[] a, <span class="ty">int</span> lo, <span class="ty">int</span> hi, <span class="ty">int</span> target) {
+    <span class="kw">if</span> (lo == hi) <span class="kw">return</span> a[lo];
+
+    <span class="ty">int</span> pivot = a[hi], p = lo;
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = lo; i &lt; hi; i++) {
+        <span class="kw">if</span> (a[i] &lt;= pivot) {
+            <span class="ty">int</span> tmp = a[i]; a[i] = a[p]; a[p] = tmp;
+            p++;
+        }
+    }
+    <span class="ty">int</span> tmp = a[p]; a[p] = a[hi]; a[hi] = tmp; <span class="cm">// pivot to final position</span>
+
+    <span class="kw">if</span>      (p == target) <span class="kw">return</span> a[p];
+    <span class="kw">else if</span> (p &lt; target)  <span class="kw">return</span> <span class="mt">quickSelect</span>(a, p + <span class="nm">1</span>, hi, target);
+    <span class="kw">else</span>                  <span class="kw">return</span> <span class="mt">quickSelect</span>(a, lo, p - <span class="nm">1</span>, target);
+}</pre>
+
+  <hr class="divider">
+
+  <div class="section-num">Section 04 — Complexity</div>
+  <h2>Time &amp; Space Summary</h2>
+
+  <table>
+    <thead>
+      <tr><th>Approach</th><th>Time</th><th>Space</th><th>When to use</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Full sort</td><td>O(n log n)</td><td>O(1)</td><td>Never — baseline to beat</td></tr>
+      <tr><td>Min-heap size K</td><td>O(n log k)</td><td>O(k)</td><td>Top K largest / K frequent</td></tr>
+      <tr><td>Max-heap size K</td><td>O(n log k)</td><td>O(k)</td><td>Top K smallest / K closest</td></tr>
+      <tr><td>QuickSelect</td><td>O(n) avg / O(n²) worst</td><td>O(1)</td><td>Single Kth value, full array available</td></tr>
+      <tr><td>Bucket Sort</td><td>O(n)</td><td>O(n)</td><td>Top K frequent when values are bounded</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Heap vs QuickSelect:</strong> Use the <strong>heap</strong> when you need the full list of K elements or data is streaming. Use <strong>QuickSelect</strong> when you only need one Kth value and the entire array is available upfront.
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-num">Section 05 — Quick Reference</div>
+  <h2>The "Which Heap?" Cheat Sheet</h2>
+
+  <table>
+    <thead>
+      <tr><th>Problem says…</th><th>Heap type</th><th>Evict when…</th><th>Answer is…</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Top K largest</td><td>Min-heap</td><td>size &gt; K</td><td>heap contents</td></tr>
+      <tr><td>Top K smallest</td><td>Max-heap</td><td>size &gt; K</td><td>heap contents</td></tr>
+      <tr><td>Kth largest</td><td>Min-heap, size K</td><td>size &gt; K</td><td>heap.peek()</td></tr>
+      <tr><td>Kth smallest</td><td>Max-heap, size K</td><td>size &gt; K</td><td>heap.peek()</td></tr>
+      <tr><td>Top K frequent</td><td>Min-heap by freq</td><td>size &gt; K</td><td>heap contents</td></tr>
+      <tr><td>K closest points</td><td>Max-heap by dist²</td><td>size &gt; K</td><td>heap contents</td></tr>
+      <tr><td>Most frequent greedy</td><td>Max-heap by freq</td><td>never (use all)</td><td>process in pop order</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-red">
+    <strong>Interview tip:</strong> When you see "Top K" or "Kth smallest/largest", say — <em>"I'll use a heap of size K. For K largest I use a min-heap so I efficiently evict the smallest. That's O(n log k) time and O(k) space."</em>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>Pattern comparison (all three):</strong>
+    <br>• <strong>Top K Elements</strong> = find K best from one unsorted pool → heap of size K, evict the loser
+    <br>• <strong>K-Way Merge</strong> = combine K already-sorted sequences → heap seeds one element from each list
+    <br>• <strong>Merge Intervals</strong> = merge overlapping ranges → sort + linear scan, no heap at all
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-num">Section 06 — The O(n) Trick</div>
+  <h2>Bucket Sort for Top K Frequent</h2>
+  <p>When the answer is "top K <em>frequent</em>", you can beat the heap entirely. A frequency can be at most <code>n</code>, so bucket each element by its count into an array of size <code>n + 1</code>, then walk it from the high end. No log factor — pure <strong>O(n)</strong>.</p>
+
+<pre><span class="kw">public int</span>[] <span class="mt">topKFrequentBucket</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+
+    <span class="ty">Map</span>&lt;<span class="ty">Integer</span>, <span class="ty">Integer</span>&gt; freq = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="kw">for</span> (<span class="ty">int</span> n : nums)
+        freq.<span class="mt">merge</span>(n, <span class="nm">1</span>, <span class="ty">Integer</span>::sum);
+
+    <span class="cm">// bucket[f] = list of elements that appear exactly f times</span>
+    <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt;[] bucket = <span class="kw">new</span> <span class="ty">List</span>[nums.length + <span class="nm">1</span>];
+    <span class="kw">for</span> (<span class="ty">int</span> key : freq.<span class="mt">keySet</span>()) {
+        <span class="ty">int</span> f = freq.<span class="mt">get</span>(key);
+        <span class="kw">if</span> (bucket[f] == <span class="kw">null</span>) bucket[f] = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+        bucket[f].<span class="mt">add</span>(key);
+    }
+
+    <span class="cm">// Walk from highest frequency downward until we collect k</span>
+    <span class="ty">int</span>[] res = <span class="kw">new</span> <span class="ty">int</span>[k];
+    <span class="ty">int</span> idx = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> f = nums.length; f &gt;= <span class="nm">1</span> &amp;&amp; idx &lt; k; f--) {
+        <span class="kw">if</span> (bucket[f] == <span class="kw">null</span>) <span class="kw">continue</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> val : bucket[f]) {
+            <span class="kw">if</span> (idx == k) <span class="kw">break</span>;
+            res[idx++] = val;
+        }
+    }
+    <span class="kw">return</span> res;
+}</pre>
+
+  <div class="callout callout-blue">
+    <strong>Heap vs Bucket:</strong> the heap is <code>O(n log k)</code> and works for any "top K" question. Bucket sort is <code>O(n)</code> but only applies when the sort key is a bounded integer count (frequencies). If frequencies can be huge or sparse, the heap is the safer default.
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-num">Section 07 — Edge Cases</div>
+  <h2>Pitfalls &amp; Boundary Decisions</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">!</div>
+      <div class="card-title">Heap type is inverted</div>
+      <div class="card-body">K <em>largest</em> → <strong>min</strong>-heap; K <em>smallest</em> → <strong>max</strong>-heap. Picking the wrong one evicts exactly the elements you wanted to keep.</div>
+    </div>
+    <div class="card c2">
+      <div class="card-num">!</div>
+      <div class="card-title">k &gt; n</div>
+      <div class="card-body">If k exceeds the element count, just return everything. Guard before assuming the heap fills to size k.</div>
+    </div>
+    <div class="card c3">
+      <div class="card-num">!</div>
+      <div class="card-title">Distance overflow</div>
+      <div class="card-body">For K-closest, <code>x*x + y*y</code> can overflow int with large coordinates. Use <code>long</code> for the squared distance.</div>
+    </div>
+    <div class="card c4">
+      <div class="card-num">!</div>
+      <div class="card-title">Tie-breaking rules</div>
+      <div class="card-body">"Top K frequent words" needs alphabetical tie-breaks. The comparator must handle equal frequencies explicitly, or order is undefined.</div>
+    </div>
+    <div class="card c5">
+      <div class="card-num">!</div>
+      <div class="card-title">QuickSelect worst case</div>
+      <div class="card-body">A bad pivot gives O(n&sup2;). Randomise the pivot (or shuffle first) to make the worst case astronomically unlikely.</div>
+    </div>
+    <div class="card c6">
+      <div class="card-num">!</div>
+      <div class="card-title">QuickSelect mutates input</div>
+      <div class="card-body">Partitioning reorders the array in place. If the caller still needs the original order, copy first.</div>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:var(--muted);margin-top:40px;text-align:center;">
+    Top K Elements — Visual Guide &nbsp;·&nbsp; Java Templates &nbsp;·&nbsp; Heap + QuickSelect
+  </p>
+
+</div>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed; right:18px; bottom:84px;
+    width:52px; height:52px; border-radius:50%;
+    background:#6c5ce7; color:#ffffff;
+    display:flex; align-items:center; justify-content:center;
+    text-decoration:none; font-size:24px; line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  html.kiro-dark{ color-scheme:dark; background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark body{ background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark .hero{ border-bottom-color:#3a414d !important; }
+  html.kiro-dark .hero-title{ color:#e8edf2 !important; }
+  html.kiro-dark .hero-sub{ color:#a8b1bd !important; }
+  html.kiro-dark .hero-badge{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark h2{ color:#e8edf2 !important; }
+  html.kiro-dark h3{ color:#a8b1bd !important; }
+  html.kiro-dark .section-num{ color:#a8b1bd !important; }
+  html.kiro-dark p{ color:#c5ccd6 !important; }
+  html.kiro-dark strong{ color:#e8edf2; }
+  html.kiro-dark .divider{ border-top-color:#3a414d !important; }
+  html.kiro-dark code{ background:#2c333d !important; color:#f5e8b8 !important; }
+  html.kiro-dark pre{ background:#1a1f29 !important; border-color:#3a414d !important; color:#d6deeb !important; }
+  html.kiro-dark .kw{ color:#c4a4ff !important; }
+  html.kiro-dark .ty{ color:#7cc4ff !important; }
+  html.kiro-dark .st{ color:#5fd6b8 !important; }
+  html.kiro-dark .cm{ color:#8a93a0 !important; }
+  html.kiro-dark .nm{ color:#ff9d9d !important; }
+  html.kiro-dark .mt{ color:#ffb070 !important; }
+  html.kiro-dark .op{ color:#c5ccd6 !important; }
+  html.kiro-dark .callout{ background:#242a33 !important; color:#d6deeb !important;
+    border-top-color:#3a414d !important; border-right-color:#3a414d !important; border-bottom-color:#3a414d !important; }
+  html.kiro-dark th{ background:#2c333d !important; color:#e8edf2 !important; }
+  html.kiro-dark td{ color:#c5ccd6 !important; border-bottom-color:#3a414d !important; }
+  html.kiro-dark tr:nth-child(even) td{ background:rgba(255,255,255,.03) !important; }
+  html.kiro-dark td:first-child{ color:#d2b3ff !important; }
+  html.kiro-dark .step-num{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark .step-body{ color:#c5ccd6 !important; }
+  html.kiro-dark .step-body strong{ color:#e8edf2 !important; }
+  html.kiro-dark .card{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .card-title{ color:#e8edf2 !important; }
+  html.kiro-dark .card-body{ color:#a8b1bd !important; }
+  html.kiro-dark .card-lc{ background:rgba(255,255,255,.08) !important; }
+  html.kiro-dark .compare-box{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .compare-box ul,
+  html.kiro-dark .compare-box ul li{ color:#c5ccd6 !important; }
+  html.kiro-dark .compare-box ul li::before{ color:#a8b1bd !important; }
+  html.kiro-dark .vis-wrap,
+  html.kiro-dark .heap-demo,
+  html.kiro-dark .vis-box{ background:#1a1f29 !important; border-color:#3a414d !important; }
+  html.kiro-dark .bar-track{ background:#2c333d !important; }
+  html.kiro-dark .heap-cell{ background:#22303c !important; }
+  html.kiro-dark .res-cell{ background:#1e2a28 !important; }
+  html.kiro-dark .heap-state{ background:#242a33 !important; }
+  html.kiro-dark .el-heap,
+  html.kiro-dark .hs-el{ background:#22303c !important; }
+  html.kiro-dark .el-dim{ background:#2c333d !important; color:#7a818c !important; }
+  html.kiro-dark .label,
+  html.kiro-dark .list-label,
+  html.kiro-dark .stream-label,
+  html.kiro-dark .vis-title,
+  html.kiro-dark .hs-note,
+  html.kiro-dark .arrow-note,
+  html.kiro-dark .arrow-row{ color:#a8b1bd !important; }
+  .kiro-dark-toggle{
+    position:fixed; right:18px; bottom:18px;
+    width:52px; height:52px; border-radius:50%;
+    background:#1c2128; color:#ffd166;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer; font-size:22px; line-height:1; z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{ background:#ffd166; color:#1c2128; border-color:#1c2128; }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+    } else {
+      html.classList.remove('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); }
+  else { init(); }
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>

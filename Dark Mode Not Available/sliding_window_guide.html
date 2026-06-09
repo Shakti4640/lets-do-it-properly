@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sliding Window — Visual Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent1: #2a9d8f;   /* teal (primary) */
+    --accent2: #457b9d;   /* blue */
+    --accent3: #f4a261;   /* orange */
+    --accent4: #e63946;   /* red */
+    --accent5: #8338ec;   /* purple */
+    --accent6: #d62828;   /* dark red */
+    --code-bg: #f8f8fc;
+    --keyword: #8338ec;
+    --type:    #457b9d;
+    --string:  #2a9d8f;
+    --comment: #9ca3af;
+    --number:  #e63946;
+    --method:  #d97706;
+    --anno:    #d62828;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HEADER ── */
+  .hero {
+    padding: 60px 60px 40px;
+    border-bottom: 2px solid var(--text);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 52px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .hero-title span { color: var(--accent1); }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+  .hero-badge {
+    background: var(--text);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 2px;
+  }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 50px 40px 80px; }
+
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 32px 0 10px;
+  }
+  p { color: #374151; margin-bottom: 14px; }
+  code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    background: #f0f0fa;
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--keyword);
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 50px 0; }
+
+  /* ── VISUAL: window slide ── */
+  .vis-box {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin: 18px 0 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+  .vis-title {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 18px;
+  }
+  .arr-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .arr-label { font-size: 12px; color: var(--muted); width: 96px; flex-shrink: 0; }
+  .cell {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 5px; font-size: 14px; font-weight: 600;
+    background: #eef0f6; color: #374151;
+    border: 1.5px solid transparent;
+  }
+  .cell.in-win { background: var(--accent1); color: #fff; }
+  .cell.edge-l { background: var(--accent2); color: #fff; }
+  .cell.edge-r { background: var(--accent3); color: #1a1a2e; }
+  .note-row { font-size: 12.5px; color: #374151; margin: 4px 0 14px; display: flex; align-items: center; gap: 8px; }
+  .note-row span { font-size: 16px; color: var(--accent1); }
+  .win-meta {
+    margin-top: 6px; font-size: 12px; color: var(--muted);
+    display: flex; gap: 18px; flex-wrap: wrap;
+  }
+  .win-meta b { color: var(--accent1); }
+
+  /* ── CODE BLOCK ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent5);
+    border-radius: 6px;
+    padding: 22px 26px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: 14px 0 24px;
+  }
+  .kw { color: var(--keyword); font-weight: 500; }
+  .ty { color: var(--type); }
+  .cm { color: var(--comment); font-style: italic; }
+  .st { color: var(--string); }
+  .nm { color: var(--number); }
+  .mt { color: var(--method); }
+  .op { color: #6b7280; }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .card { border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; }
+  .card-num { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; line-height: 1; margin-bottom: 10px; }
+  .card-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .card-body { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .card-lc { font-family: 'DM Mono', monospace; font-size: 11px; margin-top: 10px; padding: 3px 8px; border-radius: 2px; display: inline-block; }
+
+  .c1 { border-top: 3px solid var(--accent1); } .c1 .card-num { color: var(--accent1); } .c1 .card-lc { background: #e8f6f3; color: var(--accent1); }
+  .c2 { border-top: 3px solid var(--accent2); } .c2 .card-num { color: var(--accent2); } .c2 .card-lc { background: #eaf2f8; color: var(--accent2); }
+  .c3 { border-top: 3px solid var(--accent3); } .c3 .card-num { color: var(--accent3); } .c3 .card-lc { background: #fef4ec; color: var(--accent3); }
+  .c4 { border-top: 3px solid var(--accent4); } .c4 .card-num { color: var(--accent4); } .c4 .card-lc { background: #fdf0f0; color: var(--accent4); }
+  .c5 { border-top: 3px solid var(--accent5); } .c5 .card-num { color: var(--accent5); } .c5 .card-lc { background: #f3eefe; color: var(--accent5); }
+  .c6 { border-top: 3px solid var(--accent6); } .c6 .card-num { color: var(--accent6); } .c6 .card-lc { background: #fde8e8; color: var(--accent6); }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 18px 0; }
+  th {
+    background: var(--text); color: #fff; padding: 10px 16px; text-align: left;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; font-weight: 500;
+  }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border); color: #374151; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #fafafa; }
+  td:first-child { font-family: 'DM Mono', monospace; color: var(--keyword); font-size: 12px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent1);
+    background: #f0fbf9;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #374151;
+  }
+  .callout strong { color: var(--accent1); }
+  .callout-warn { border-left-color: var(--accent3); background: #fef9f0; }
+  .callout-warn strong { color: var(--accent3); }
+  .callout-red { border-left-color: var(--accent4); background: #fdf4f4; }
+  .callout-red strong { color: var(--accent4); }
+  .callout-blue { border-left-color: var(--accent2); background: #eaf4fd; }
+  .callout-blue strong { color: var(--accent2); }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 14px; margin: 16px 0 24px; }
+  .step { display: flex; gap: 14px; align-items: flex-start; }
+  .step-num {
+    width: 28px; height: 28px; background: var(--text); color: #fff; border-radius: 50%;
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+  }
+  .step-body { font-size: 14px; color: #374151; }
+  .step-body strong { color: var(--text); }
+
+  /* ── COMPARE BOX ── */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .compare-box { border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
+  .compare-box h4 { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .compare-box ul { list-style: none; font-size: 13px; color: #374151; }
+  .compare-box ul li { margin-bottom: 6px; padding-left: 14px; position: relative; }
+  .compare-box ul li::before { content: "—"; position: absolute; left: 0; color: var(--muted); }
+  .bad { border-top: 3px solid var(--accent4); } .bad h4 { color: var(--accent4); }
+  .good { border-top: 3px solid var(--accent1); } .good h4 { color: var(--accent1); }
+
+  @media print {
+    body { font-size: 13px; }
+    .hero { padding: 30px; }
+    .container { padding: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-sub">LeetCode Pattern Series</div>
+    <div class="hero-title">Sliding <span>Window</span></div>
+    <div class="hero-sub" style="margin-top:8px">Two Pointers · Java Templates · All 6 Types</div>
+  </div>
+  <div class="hero-badge">O(n) pattern</div>
+</div>
+
+<div class="container">
+
+  <!-- ══ 00: THE IDEA ══ -->
+  <div class="section-num">Section 00 — The Idea</div>
+  <h2>What is the Sliding Window?</h2>
+
+  <p>You have a <strong>contiguous</strong> sequence — an array or a string — and you want something about a <em>range</em> of it: the longest substring, the max sum of K elements, the smallest window containing a target. The brute force checks every sub-range in <code>O(n&sup2;)</code> or worse.</p>
+
+  <p>The sliding window keeps <strong>two pointers</strong> — a <code>left</code> and a <code>right</code> — that bound a window. You <strong>expand right</strong> to include new elements, and <strong>shrink left</strong> when the window breaks a rule. Each element enters and leaves the window at most once, so the whole scan is <code>O(n)</code>.</p>
+
+  <div class="callout">
+    <strong>Core Insight:</strong> Instead of recomputing each window from scratch, you <em>reuse</em> the previous window's work — add the entering element, remove the leaving one. That incremental update is what turns O(n&sup2;) into O(n).
+  </div>
+
+  <!-- VISUAL -->
+  <div class="vis-box">
+    <div class="vis-title">Visual: max sum of a fixed window k=3 over [2, 1, 5, 1, 3, 2]</div>
+
+    <div class="arr-row">
+      <span class="arr-label">window @0:</span>
+      <div class="cell edge-l">2</div><div class="cell in-win">1</div><div class="cell edge-r">5</div>
+      <div class="cell">1</div><div class="cell">3</div><div class="cell">2</div>
+    </div>
+    <div class="note-row"><span>=</span> sum = 2 + 1 + 5 = <b>8</b></div>
+
+    <div class="arr-row">
+      <span class="arr-label">slide →</span>
+      <div class="cell">2</div><div class="cell edge-l">1</div><div class="cell in-win">5</div>
+      <div class="cell edge-r">1</div><div class="cell">3</div><div class="cell">2</div>
+    </div>
+    <div class="note-row"><span>=</span> drop 2, add 1 → sum = 8 - 2 + 1 = <b>7</b></div>
+
+    <div class="arr-row">
+      <span class="arr-label">slide →</span>
+      <div class="cell">2</div><div class="cell">1</div><div class="cell edge-l">5</div>
+      <div class="cell in-win">1</div><div class="cell edge-r">3</div><div class="cell">2</div>
+    </div>
+    <div class="note-row"><span>=</span> drop 1, add 3 → sum = 7 - 1 + 3 = <b>9</b> &nbsp;✅ best so far</div>
+
+    <div class="arr-row">
+      <span class="arr-label">slide →</span>
+      <div class="cell">2</div><div class="cell">1</div><div class="cell">5</div>
+      <div class="cell edge-l">1</div><div class="cell in-win">3</div><div class="cell edge-r">2</div>
+    </div>
+    <div class="note-row"><span>=</span> drop 5, add 2 → sum = 9 - 5 + 2 = <b>6</b></div>
+
+    <div class="win-meta"><span>Answer: <b>max window sum = 9</b> (window [5,1,3])</span><span>Each element touched twice → <b>O(n)</b></span></div>
+  </div>
+
+  <p style="font-size:13px; color: var(--muted);">Notice we never re-add the three numbers each time. One subtraction (the element leaving on the <span style="color:var(--accent2)">left</span>) plus one addition (the element entering on the <span style="color:var(--accent3)">right</span>) gives the next window's sum.</p>
+
+  <hr class="divider">
+
+  <!-- ══ 01: FIXED vs DYNAMIC ══ -->
+  <div class="section-num">Section 01 — Two Flavours</div>
+  <h2>Fixed vs Dynamic Windows</h2>
+
+  <p>Every sliding window problem is one of two kinds. Recognising which one you're facing tells you the entire loop structure.</p>
+
+  <div class="compare">
+    <div class="compare-box good">
+      <h4>Fixed-size window</h4>
+      <ul>
+        <li>Window length k is given and never changes</li>
+        <li>right advances every step; left follows k behind</li>
+        <li>Add arr[right], remove arr[right - k]</li>
+        <li>Examples: max sum of k, averages, anagrams</li>
+      </ul>
+    </div>
+    <div class="compare-box bad">
+      <h4>Dynamic (variable) window</h4>
+      <ul>
+        <li>Window grows and shrinks based on a condition</li>
+        <li>right expands; left shrinks via a while loop</li>
+        <li>"Longest valid" or "shortest valid" subarray</li>
+        <li>Examples: longest no-repeat, min window substring</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>The deciding question:</strong> "Is the window size handed to me?" If yes → fixed. If the problem asks for the <em>longest/shortest</em> window meeting some rule → dynamic, and you'll shrink <code>left</code> in a <code>while</code> loop.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 02: MASTER TEMPLATES ══ -->
+  <div class="section-num">Section 02 — Core Templates</div>
+  <h2>The Two Master Templates</h2>
+  <p>Memorise these two skeletons. Almost every sliding window problem is an adaptation of one of them.</p>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Expand:</strong> move <code>right</code> forward, pulling the new element into the window state</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Check:</strong> is the window still valid? (size reached, or condition satisfied / violated)</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Shrink:</strong> move <code>left</code> forward, removing elements until the window is valid again</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>Record:</strong> update your answer at the right moment (inside or after the shrink)</div></div>
+  </div>
+
+  <h3 style="color: var(--accent1);">Template A — Fixed-size window</h3>
+
+<pre><span class="kw">import</span> java.util.*;
+
+<span class="kw">public class</span> <span class="ty">FixedWindow</span> {
+
+    <span class="cm">/**
+     * Max sum of any window of exactly size k.
+     * Time:  O(n)   ← each element added & removed once
+     * Space: O(1)
+     */</span>
+    <span class="kw">public</span> <span class="ty">int</span> <span class="mt">maxSumFixed</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+
+        <span class="ty">int</span> windowSum = <span class="nm">0</span>, best = <span class="ty">Integer</span>.MIN_VALUE;
+        <span class="ty">int</span> left = <span class="nm">0</span>;
+
+        <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; nums.length; right++) {
+
+            windowSum += nums[right];          <span class="cm">// ── 1. expand: add entering element</span>
+
+            <span class="kw">if</span> (right - left + <span class="nm">1</span> == k) {        <span class="cm">// ── 2. window is full</span>
+                best = <span class="ty">Math</span>.<span class="mt">max</span>(best, windowSum); <span class="cm">// ── 4. record answer</span>
+                windowSum -= nums[left];       <span class="cm">// ── 3. shrink: drop leaving element</span>
+                left++;
+            }
+        }
+        <span class="kw">return</span> best;
+    }
+}</pre>
+
+  <h3 style="color: var(--accent2);">Template B — Dynamic window (longest valid)</h3>
+
+<pre><span class="cm">/**
+ * Generic "longest window satisfying a condition".
+ * Expand always; shrink only while the window is INVALID.
+ * Time:  O(n)   Space: O(k) for the state map
+ */</span>
+<span class="kw">public</span> <span class="ty">int</span> <span class="mt">longestValid</span>(<span class="ty">int</span>[] nums) {
+
+    <span class="ty">Map</span>&lt;<span class="ty">Integer</span>, <span class="ty">Integer</span>&gt; state = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="ty">int</span> left = <span class="nm">0</span>, best = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; nums.length; right++) {
+
+        <span class="cm">// ── 1. expand: include nums[right] in the window state</span>
+        state.<span class="mt">merge</span>(nums[right], <span class="nm">1</span>, <span class="ty">Integer</span>::sum);
+
+        <span class="cm">// ── 3. shrink while the window breaks the rule</span>
+        <span class="kw">while</span> (<span class="mt">windowIsInvalid</span>(state)) {
+            <span class="ty">int</span> leaving = nums[left++];
+            <span class="kw">if</span> (state.<span class="mt">merge</span>(leaving, <span class="nm">-1</span>, <span class="ty">Integer</span>::sum) == <span class="nm">0</span>)
+                state.<span class="mt">remove</span>(leaving);
+        }
+
+        <span class="cm">// ── 4. record: window [left..right] is now valid</span>
+        best = <span class="ty">Math</span>.<span class="mt">max</span>(best, right - left + <span class="nm">1</span>);
+    }
+    <span class="kw">return</span> best;
+}</pre>
+
+  <div class="callout callout-red">
+    <strong>Shortest vs Longest — the flip:</strong> For <em>longest</em>, you record the answer <strong>after</strong> the while-shrink (window is valid). For <em>shortest</em>, you flip it: shrink <strong>while the window is still valid</strong> and record inside that while loop, capturing the smallest valid window before it breaks.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 03: PROBLEM TYPES ══ -->
+  <div class="section-num">Section 03 — Problem Types</div>
+  <h2>All 6 Problem Types</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">01</div>
+      <div class="card-title">Fixed-Size Max / Average</div>
+      <div class="card-body">Window of given size k. Track a running sum; slide and update the best.</div>
+      <span class="card-lc">LC #643</span>
+    </div>
+    <div class="card c2">
+      <div class="card-num">02</div>
+      <div class="card-title">Longest No-Repeat Substring</div>
+      <div class="card-body">Dynamic window. Shrink from left whenever a duplicate enters.</div>
+      <span class="card-lc">LC #3</span>
+    </div>
+    <div class="card c3">
+      <div class="card-num">03</div>
+      <div class="card-title">Longest with At-Most-K</div>
+      <div class="card-body">At most K distinct / K flips. Shrink while the constraint is exceeded.</div>
+      <span class="card-lc">LC #340 · #424 · #1004</span>
+    </div>
+    <div class="card c4">
+      <div class="card-num">04</div>
+      <div class="card-title">Minimum Window / Shortest</div>
+      <div class="card-body">Smallest window covering all targets. Shrink while still valid.</div>
+      <span class="card-lc">LC #76 · #209</span>
+    </div>
+    <div class="card c5">
+      <div class="card-num">05</div>
+      <div class="card-title">Anagrams / Permutation in String</div>
+      <div class="card-body">Fixed window = pattern length. Match frequency counts as you slide.</div>
+      <span class="card-lc">LC #438 · #567</span>
+    </div>
+    <div class="card c6">
+      <div class="card-num">06</div>
+      <div class="card-title">Monotonic Deque Window</div>
+      <div class="card-body">Sliding window maximum. A deque keeps candidates in decreasing order.</div>
+      <span class="card-lc">LC #239</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 04: CODE FOR EACH TYPE ══ -->
+  <div class="section-num">Section 04 — Code for Each Type</div>
+  <h2>Type-by-Type Templates</h2>
+
+  <!-- TYPE 2 -->
+  <h3 style="color: var(--accent2);">Type 02 — Longest Substring Without Repeating Characters (LC #3)</h3>
+  <p>Keep the last index of each character. When a repeat falls inside the window, jump <code>left</code> past its previous position.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">lengthOfLongestSubstring</span>(<span class="ty">String</span> s) {
+
+    <span class="ty">Map</span>&lt;<span class="ty">Character</span>, <span class="ty">Integer</span>&gt; lastSeen = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="ty">int</span> left = <span class="nm">0</span>, best = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; s.<span class="mt">length</span>(); right++) {
+        <span class="ty">char</span> c = s.<span class="mt">charAt</span>(right);
+
+        <span class="cm">// If c is in the window, move left past its last occurrence</span>
+        <span class="kw">if</span> (lastSeen.<span class="mt">containsKey</span>(c) &amp;&amp; lastSeen.<span class="mt">get</span>(c) &gt;= left) {
+            left = lastSeen.<span class="mt">get</span>(c) + <span class="nm">1</span>;
+        }
+
+        lastSeen.<span class="mt">put</span>(c, right);
+        best = <span class="ty">Math</span>.<span class="mt">max</span>(best, right - left + <span class="nm">1</span>); <span class="cm">// window is always valid here</span>
+    }
+    <span class="kw">return</span> best;
+}</pre>
+
+  <!-- TYPE 3 -->
+  <h3 style="color: var(--accent3);">Type 03 — Longest Substring with At Most K Distinct (LC #340)</h3>
+  <p>Count distinct characters with a frequency map. Shrink from the left while the map holds more than K keys.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">lengthOfLongestSubstringKDistinct</span>(<span class="ty">String</span> s, <span class="ty">int</span> k) {
+
+    <span class="ty">Map</span>&lt;<span class="ty">Character</span>, <span class="ty">Integer</span>&gt; freq = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+    <span class="ty">int</span> left = <span class="nm">0</span>, best = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; s.<span class="mt">length</span>(); right++) {
+        freq.<span class="mt">merge</span>(s.<span class="mt">charAt</span>(right), <span class="nm">1</span>, <span class="ty">Integer</span>::sum);
+
+        <span class="cm">// Too many distinct → shrink until we're back to k</span>
+        <span class="kw">while</span> (freq.<span class="mt">size</span>() &gt; k) {
+            <span class="ty">char</span> leaving = s.<span class="mt">charAt</span>(left++);
+            <span class="kw">if</span> (freq.<span class="mt">merge</span>(leaving, <span class="nm">-1</span>, <span class="ty">Integer</span>::sum) == <span class="nm">0</span>)
+                freq.<span class="mt">remove</span>(leaving);
+        }
+
+        best = <span class="ty">Math</span>.<span class="mt">max</span>(best, right - left + <span class="nm">1</span>);
+    }
+    <span class="kw">return</span> best;
+}</pre>
+
+  <!-- TYPE 4 -->
+  <h3 style="color: var(--accent4);">Type 04 — Minimum Window Substring (LC #76)</h3>
+  <p>The classic "shortest valid" window. Expand until the window covers every needed character, then shrink greedily to find the smallest such window.</p>
+
+<pre><span class="kw">public</span> <span class="ty">String</span> <span class="mt">minWindow</span>(<span class="ty">String</span> s, <span class="ty">String</span> t) {
+
+    <span class="kw">if</span> (s.<span class="mt">length</span>() &lt; t.<span class="mt">length</span>()) <span class="kw">return</span> <span class="st">""</span>;
+
+    <span class="ty">int</span>[] need = <span class="kw">new</span> <span class="ty">int</span>[<span class="nm">128</span>];
+    <span class="kw">for</span> (<span class="ty">char</span> c : t.<span class="mt">toCharArray</span>()) need[c]++;
+
+    <span class="ty">int</span> left = <span class="nm">0</span>, missing = t.<span class="mt">length</span>();
+    <span class="ty">int</span> bestLen = <span class="ty">Integer</span>.MAX_VALUE, bestStart = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; s.<span class="mt">length</span>(); right++) {
+        <span class="kw">if</span> (need[s.<span class="mt">charAt</span>(right)]-- &gt; <span class="nm">0</span>) missing--; <span class="cm">// consumed a needed char</span>
+
+        <span class="cm">// Window is valid — try to shrink it from the left</span>
+        <span class="kw">while</span> (missing == <span class="nm">0</span>) {
+            <span class="kw">if</span> (right - left + <span class="nm">1</span> &lt; bestLen) {
+                bestLen = right - left + <span class="nm">1</span>;
+                bestStart = left;
+            }
+            <span class="kw">if</span> (need[s.<span class="mt">charAt</span>(left)]++ == <span class="nm">0</span>) missing++; <span class="cm">// about to break validity</span>
+            left++;
+        }
+    }
+    <span class="kw">return</span> bestLen == <span class="ty">Integer</span>.MAX_VALUE ? <span class="st">""</span> : s.<span class="mt">substring</span>(bestStart, bestStart + bestLen);
+}</pre>
+
+  <!-- TYPE 5 -->
+  <h3 style="color: var(--accent5);">Type 05 — Find All Anagrams (LC #438)</h3>
+  <p>Fixed window the size of the pattern. Compare frequency arrays as the window slides; a match means the window is an anagram.</p>
+
+<pre><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; <span class="mt">findAnagrams</span>(<span class="ty">String</span> s, <span class="ty">String</span> p) {
+
+    <span class="ty">List</span>&lt;<span class="ty">Integer</span>&gt; res = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+    <span class="kw">if</span> (s.<span class="mt">length</span>() &lt; p.<span class="mt">length</span>()) <span class="kw">return</span> res;
+
+    <span class="ty">int</span>[] need = <span class="kw">new</span> <span class="ty">int</span>[<span class="nm">26</span>], win = <span class="kw">new</span> <span class="ty">int</span>[<span class="nm">26</span>];
+    <span class="kw">for</span> (<span class="ty">char</span> c : p.<span class="mt">toCharArray</span>()) need[c - <span class="st">'a'</span>]++;
+
+    <span class="ty">int</span> k = p.<span class="mt">length</span>();
+    <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; s.<span class="mt">length</span>(); right++) {
+        win[s.<span class="mt">charAt</span>(right) - <span class="st">'a'</span>]++;          <span class="cm">// add entering char</span>
+
+        <span class="kw">if</span> (right &gt;= k)                            <span class="cm">// window overflowed size k</span>
+            win[s.<span class="mt">charAt</span>(right - k) - <span class="st">'a'</span>]--;     <span class="cm">// remove leaving char</span>
+
+        <span class="kw">if</span> (<span class="ty">Arrays</span>.<span class="mt">equals</span>(win, need))
+            res.<span class="mt">add</span>(right - k + <span class="nm">1</span>);              <span class="cm">// window start index</span>
+    }
+    <span class="kw">return</span> res;
+}</pre>
+
+  <!-- TYPE 6 -->
+  <h3 style="color: var(--accent6);">Type 06 — Sliding Window Maximum (LC #239)</h3>
+  <p>A plain max-per-window is O(n&middot;k). A <strong>monotonic deque</strong> of indices — kept in decreasing value order — gives O(n). The front of the deque is always the current window's maximum.</p>
+
+<pre><span class="kw">public int</span>[] <span class="mt">maxSlidingWindow</span>(<span class="ty">int</span>[] nums, <span class="ty">int</span> k) {
+
+    <span class="ty">int</span> n = nums.length;
+    <span class="ty">int</span>[] res = <span class="kw">new</span> <span class="ty">int</span>[n - k + <span class="nm">1</span>];
+    <span class="ty">Deque</span>&lt;<span class="ty">Integer</span>&gt; dq = <span class="kw">new</span> <span class="ty">ArrayDeque</span>&lt;&gt;(); <span class="cm">// stores indices, values decreasing</span>
+
+    <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; n; right++) {
+
+        <span class="cm">// Drop indices that fell out of the window on the left</span>
+        <span class="kw">if</span> (!dq.<span class="mt">isEmpty</span>() &amp;&amp; dq.<span class="mt">peekFirst</span>() &lt;= right - k)
+            dq.<span class="mt">pollFirst</span>();
+
+        <span class="cm">// Pop smaller values from the back — they can never be the max</span>
+        <span class="kw">while</span> (!dq.<span class="mt">isEmpty</span>() &amp;&amp; nums[dq.<span class="mt">peekLast</span>()] &lt; nums[right])
+            dq.<span class="mt">pollLast</span>();
+
+        dq.<span class="mt">offerLast</span>(right);
+
+        <span class="kw">if</span> (right &gt;= k - <span class="nm">1</span>)                  <span class="cm">// window fully formed</span>
+            res[right - k + <span class="nm">1</span>] = nums[dq.<span class="mt">peekFirst</span>()];
+    }
+    <span class="kw">return</span> res;
+}</pre>
+
+  <hr class="divider">
+
+  <!-- ══ 05: COMPLEXITY ══ -->
+  <div class="section-num">Section 05 — Complexity</div>
+  <h2>Time &amp; Space Summary</h2>
+
+  <table>
+    <thead>
+      <tr><th>Problem Type</th><th>Time</th><th>Space</th><th>Key Trick</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Fixed-size max / average</td><td>O(n)</td><td>O(1)</td><td>Running sum, slide by 1</td></tr>
+      <tr><td>Longest no-repeat</td><td>O(n)</td><td>O(min(n, charset))</td><td>Jump left past duplicate</td></tr>
+      <tr><td>Longest at-most-K distinct</td><td>O(n)</td><td>O(k)</td><td>Shrink while size &gt; k</td></tr>
+      <tr><td>Minimum window substring</td><td>O(n + m)</td><td>O(charset)</td><td>Shrink while still valid</td></tr>
+      <tr><td>Find all anagrams</td><td>O(n)</td><td>O(1)</td><td>Compare 26-length freq arrays</td></tr>
+      <tr><td>Sliding window maximum</td><td>O(n)</td><td>O(k)</td><td>Monotonic decreasing deque</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Why O(n) and not O(n&sup2;)?</strong> Both <code>left</code> and <code>right</code> only ever move <em>forward</em>. Across the whole run, each pointer travels at most n steps, so the total work is <code>2n → O(n)</code> — even though there's a nested <code>while</code> loop, it never resets.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 06: CHEAT SHEET ══ -->
+  <div class="section-num">Section 06 — Quick Reference</div>
+  <h2>The "Which Window?" Cheat Sheet</h2>
+
+  <div class="callout">
+    <strong>Fixed size given?</strong> → Template A: slide by 1, add right / drop right&minus;k.<br>
+    <strong>"Longest … such that"?</strong> → Template B: record <em>after</em> the shrink loop.<br>
+    <strong>"Shortest / minimum … such that"?</strong> → Shrink while valid, record <em>inside</em> the shrink.<br>
+    <strong>"Window maximum / minimum"?</strong> → Monotonic deque, not a plain scan.
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>If the problem says…</th><th>→ Use this approach</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>"max/min sum of k consecutive"</td><td>Fixed window, running sum</td></tr>
+      <tr><td>"longest substring without repeating"</td><td>Dynamic + last-seen map</td></tr>
+      <tr><td>"at most K distinct / K replacements"</td><td>Dynamic + shrink while &gt; k</td></tr>
+      <tr><td>"smallest window containing all of t"</td><td>Shortest variant, shrink while valid</td></tr>
+      <tr><td>"find all anagrams / permutation in"</td><td>Fixed window + frequency match</td></tr>
+      <tr><td>"maximum in each window of size k"</td><td>Monotonic deque of indices</td></tr>
+      <tr><td>"minimum size subarray sum &ge; target"</td><td>Shortest variant on running sum</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <strong>Interview tip:</strong> As soon as you see "contiguous subarray / substring" plus "longest / shortest / max / min", say out loud — <em>"This is a sliding window. I'll expand right, and shrink left when the window breaks the condition. That's O(n)."</em> Then decide fixed vs dynamic and whether you record before or after shrinking.
+  </div>
+
+  <div class="callout callout-blue">
+    <strong>Common mistakes:</strong>
+    <br>&bull; Forgetting to update the answer at the right moment (before vs after shrink).
+    <br>&bull; Removing the leaving element from the state map but not deleting zero-count keys — breaks <code>map.size()</code> checks.
+    <br>&bull; Using a window when the subarray need not be contiguous — sliding window only works on contiguous ranges.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 07: DRY RUN ══ -->
+  <div class="section-num">Section 07 — Dry Run</div>
+  <h2>Tracing "Longest No-Repeat"</h2>
+  <p>Input <code>s = "abcabcbb"</code>. Watch <code>left</code> jump when a repeat enters the window.</p>
+
+  <table>
+    <thead>
+      <tr><th>right</th><th>char</th><th>lastSeen ≥ left?</th><th>left</th><th>window</th><th>best</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0</td><td>a</td><td>new</td><td>0</td><td>"a"</td><td>1</td></tr>
+      <tr><td>1</td><td>b</td><td>new</td><td>0</td><td>"ab"</td><td>2</td></tr>
+      <tr><td>2</td><td>c</td><td>new</td><td>0</td><td>"abc"</td><td>3</td></tr>
+      <tr><td>3</td><td>a</td><td>a@0 ≥ 0 ✓</td><td>1</td><td>"bca"</td><td>3</td></tr>
+      <tr><td>4</td><td>b</td><td>b@1 ≥ 1 ✓</td><td>2</td><td>"cab"</td><td>3</td></tr>
+      <tr><td>5</td><td>c</td><td>c@2 ≥ 2 ✓</td><td>3</td><td>"abc"</td><td>3</td></tr>
+      <tr><td>6</td><td>b</td><td>b@4 ≥ 3 ✓</td><td>5</td><td>"cb"</td><td>3</td></tr>
+      <tr><td>7</td><td>b</td><td>b@6 ≥ 5 ✓</td><td>7</td><td>"b"</td><td>3</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Why <code>lastSeen ≥ left</code> and not just <code>contains</code>?</strong> A character may have been seen earlier but already pushed <em>out</em> of the window. Only a duplicate whose last index is still <code>&ge; left</code> actually sits inside the current window and forces a shrink.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 08: SHORTEST VARIANT ══ -->
+  <div class="section-num">Section 08 — The Shortest Variant</div>
+  <h2>Minimum Size Subarray Sum (LC #209)</h2>
+  <p>This is the mirror image of "longest". You expand to satisfy the condition (sum &ge; target), then shrink <strong>while it still holds</strong>, recording the smallest valid window as you go.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">minSubArrayLen</span>(<span class="ty">int</span> target, <span class="ty">int</span>[] nums) {
+
+    <span class="ty">int</span> left = <span class="nm">0</span>, sum = <span class="nm">0</span>;
+    <span class="ty">int</span> best = <span class="ty">Integer</span>.MAX_VALUE;
+
+    <span class="kw">for</span> (<span class="ty">int</span> right = <span class="nm">0</span>; right &lt; nums.length; right++) {
+        sum += nums[right];                 <span class="cm">// expand</span>
+
+        <span class="cm">// Shrink WHILE the window is still valid (sum stays &ge; target)</span>
+        <span class="kw">while</span> (sum &gt;= target) {
+            best = <span class="ty">Math</span>.<span class="mt">min</span>(best, right - left + <span class="nm">1</span>); <span class="cm">// record inside the shrink</span>
+            sum -= nums[left++];
+        }
+    }
+    <span class="kw">return</span> best == <span class="ty">Integer</span>.MAX_VALUE ? <span class="nm">0</span> : best;
+}</pre>
+
+  <div class="callout callout-red">
+    <strong>Longest vs Shortest — the one-line difference:</strong> for <em>longest</em> you record <strong>after</strong> the shrink loop (window just became valid); for <em>shortest</em> you record <strong>inside</strong> the shrink loop (window is valid and you're squeezing it smaller). Same skeleton, opposite record point.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══ 09: EDGE CASES ══ -->
+  <div class="section-num">Section 09 — Edge Cases</div>
+  <h2>Pitfalls &amp; Boundary Decisions</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">!</div>
+      <div class="card-title">No valid window exists</div>
+      <div class="card-body">For shortest problems, initialise <code>best = MAX_VALUE</code> and return 0 (or -1) if it never changes. Don't return MAX_VALUE by accident.</div>
+    </div>
+    <div class="card c2">
+      <div class="card-num">!</div>
+      <div class="card-title">Negative numbers</div>
+      <div class="card-body">Classic sliding window assumes the window metric is <em>monotonic</em> as it grows. Negatives break "minimum subarray sum" — use a prefix-sum + deque instead.</div>
+    </div>
+    <div class="card c3">
+      <div class="card-num">!</div>
+      <div class="card-title">Window size 0 / k &gt; n</div>
+      <div class="card-body">For fixed windows, bail early if <code>k &gt; nums.length</code>. Otherwise the "window full" check never fires.</div>
+    </div>
+    <div class="card c4">
+      <div class="card-num">!</div>
+      <div class="card-title">Stale map keys</div>
+      <div class="card-body">When a count hits 0, <code>remove()</code> the key. Leaving zero-count entries corrupts any <code>map.size()</code>-based distinct check.</div>
+    </div>
+    <div class="card c5">
+      <div class="card-num">!</div>
+      <div class="card-title">Deque holds indices</div>
+      <div class="card-body">For window maximum, store <em>indices</em> not values — you need the index to know when a candidate has slid out of range.</div>
+    </div>
+    <div class="card c6">
+      <div class="card-num">!</div>
+      <div class="card-title">Char vs Unicode</div>
+      <div class="card-body">A 26- or 128-length array assumes ASCII. For full Unicode strings use a <code>HashMap</code> instead of a fixed array.</div>
+    </div>
+  </div>
+
+  <p style="font-size:12px; color: var(--muted); margin-top: 40px; text-align: center;">
+    Sliding Window — Visual Guide &nbsp;·&nbsp; Java Templates &nbsp;·&nbsp; Two-Pointer Pattern
+  </p>
+
+</div><!-- /container -->
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed; right:18px; bottom:84px;
+    width:52px; height:52px; border-radius:50%;
+    background:#6c5ce7; color:#ffffff;
+    display:flex; align-items:center; justify-content:center;
+    text-decoration:none; font-size:24px; line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  html.kiro-dark{ color-scheme:dark; background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark body{ background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark .hero{ border-bottom-color:#3a414d !important; }
+  html.kiro-dark .hero-title{ color:#e8edf2 !important; }
+  html.kiro-dark .hero-sub{ color:#a8b1bd !important; }
+  html.kiro-dark .hero-badge{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark h2{ color:#e8edf2 !important; }
+  html.kiro-dark h3{ color:#a8b1bd !important; }
+  html.kiro-dark .section-num{ color:#a8b1bd !important; }
+  html.kiro-dark p{ color:#c5ccd6 !important; }
+  html.kiro-dark strong{ color:#e8edf2; }
+  html.kiro-dark .divider{ border-top-color:#3a414d !important; }
+  html.kiro-dark code{ background:#2c333d !important; color:#f5e8b8 !important; }
+  html.kiro-dark pre{ background:#1a1f29 !important; border-color:#3a414d !important; color:#d6deeb !important; }
+  html.kiro-dark .kw{ color:#c4a4ff !important; }
+  html.kiro-dark .ty{ color:#7cc4ff !important; }
+  html.kiro-dark .st{ color:#5fd6b8 !important; }
+  html.kiro-dark .cm{ color:#8a93a0 !important; }
+  html.kiro-dark .nm{ color:#ff9d9d !important; }
+  html.kiro-dark .mt{ color:#ffb070 !important; }
+  html.kiro-dark .op{ color:#c5ccd6 !important; }
+  html.kiro-dark .callout{ background:#242a33 !important; color:#d6deeb !important;
+    border-top-color:#3a414d !important; border-right-color:#3a414d !important; border-bottom-color:#3a414d !important; }
+  html.kiro-dark th{ background:#2c333d !important; color:#e8edf2 !important; }
+  html.kiro-dark td{ color:#c5ccd6 !important; border-bottom-color:#3a414d !important; }
+  html.kiro-dark tr:nth-child(even) td{ background:rgba(255,255,255,.03) !important; }
+  html.kiro-dark td:first-child{ color:#d2b3ff !important; }
+  html.kiro-dark .step-num{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark .step-body{ color:#c5ccd6 !important; }
+  html.kiro-dark .step-body strong{ color:#e8edf2 !important; }
+  html.kiro-dark .card{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .card-title{ color:#e8edf2 !important; }
+  html.kiro-dark .card-body{ color:#a8b1bd !important; }
+  html.kiro-dark .card-lc{ background:rgba(255,255,255,.08) !important; }
+  html.kiro-dark .compare-box{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .compare-box ul,
+  html.kiro-dark .compare-box ul li{ color:#c5ccd6 !important; }
+  html.kiro-dark .compare-box ul li::before{ color:#a8b1bd !important; }
+  html.kiro-dark .vis-box{ background:#1a1f29 !important; border-color:#3a414d !important; }
+  html.kiro-dark .cell{ background:#2c333d !important; color:#c5ccd6 !important; }
+  html.kiro-dark .vis-title,
+  html.kiro-dark .arr-label,
+  html.kiro-dark .note-row,
+  html.kiro-dark .win-meta{ color:#a8b1bd !important; }
+  .kiro-dark-toggle{
+    position:fixed; right:18px; bottom:18px;
+    width:52px; height:52px; border-radius:50%;
+    background:#1c2128; color:#ffd166;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer; font-size:22px; line-height:1; z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{ background:#ffd166; color:#1c2128; border-color:#1c2128; }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+    } else {
+      html.classList.remove('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); }
+  else { init(); }
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>

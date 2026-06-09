@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merge Intervals — Visual Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent1: #e63946;   /* red */
+    --accent2: #2a9d8f;   /* teal */
+    --accent3: #f4a261;   /* orange */
+    --accent4: #457b9d;   /* blue */
+    --accent5: #8338ec;   /* purple */
+    --code-bg: #f8f8fc;
+    --keyword: #8338ec;
+    --type:    #457b9d;
+    --string:  #2a9d8f;
+    --comment: #9ca3af;
+    --number:  #e63946;
+    --method:  #f4a261;
+    --anno:    #d62828;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HEADER ── */
+  .hero {
+    padding: 60px 60px 40px;
+    border-bottom: 2px solid var(--text);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 52px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .hero-title span { color: var(--accent1); }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+  .hero-badge {
+    background: var(--text);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 2px;
+  }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 50px 40px 80px; }
+
+  /* ── SECTION HEADERS ── */
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 28px 0 10px;
+  }
+  p { color: #374151; margin-bottom: 14px; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 50px 0;
+  }
+
+  /* ── VISUAL INTERVALS ── */
+  .vis-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+    margin: 18px 0 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+  .interval-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+  }
+  .label { color: var(--muted); width: 90px; font-size: 12px; }
+  .bar-track {
+    flex: 1;
+    height: 22px;
+    position: relative;
+    background: #f0f0f8;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar {
+    position: absolute;
+    height: 100%;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 11px;
+    color: #fff;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+  .bar-a { background: var(--accent4); left: 5%; width: 30%; }
+  .bar-b { background: var(--accent1); left: 22%; width: 25%; }
+  .bar-c { background: var(--accent3); left: 60%; width: 28%; }
+  .bar-merged { background: var(--accent2); left: 5%; width: 42%; }
+  .bar-c2    { background: var(--accent3); left: 60%; width: 28%; }
+  .arrow { font-size: 18px; color: var(--accent2); margin: 4px 0; }
+
+  /* ── CODE BLOCK ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent5);
+    border-radius: 6px;
+    padding: 22px 26px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    margin: 14px 0 24px;
+  }
+  .kw  { color: var(--keyword); font-weight: 500; }
+  .ty  { color: var(--type); }
+  .cm  { color: var(--comment); font-style: italic; }
+  .st  { color: var(--string); }
+  .nm  { color: var(--number); }
+  .mt  { color: var(--method); }
+  .an  { color: var(--anno); }
+  .op  { color: #6b7280; }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    position: relative;
+  }
+  .card-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .card-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .card-body  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .card-lc    { font-family: 'DM Mono', monospace; font-size: 11px; margin-top: 10px; padding: 3px 8px; border-radius: 2px; display: inline-block; }
+
+  /* per-card accent colors */
+  .c1 .card-num { color: var(--accent4); }
+  .c1 { border-top: 3px solid var(--accent4); }
+  .c1 .card-lc { background: #eaf2f8; color: var(--accent4); }
+
+  .c2 .card-num { color: var(--accent2); }
+  .c2 { border-top: 3px solid var(--accent2); }
+  .c2 .card-lc { background: #e8f6f3; color: var(--accent2); }
+
+  .c3 .card-num { color: var(--accent1); }
+  .c3 { border-top: 3px solid var(--accent1); }
+  .c3 .card-lc { background: #fdf0f0; color: var(--accent1); }
+
+  .c4 .card-num { color: var(--accent5); }
+  .c4 { border-top: 3px solid var(--accent5); }
+  .c4 .card-lc { background: #f3eefe; color: var(--accent5); }
+
+  .c5 .card-num { color: var(--accent3); }
+  .c5 { border-top: 3px solid var(--accent3); }
+  .c5 .card-lc { background: #fef4ec; color: var(--accent3); }
+
+  .c6 .card-num { color: #d62828; }
+  .c6 { border-top: 3px solid #d62828; }
+  .c6 .card-lc { background: #fde8e8; color: #d62828; }
+
+  .c7 .card-num { color: #555; }
+  .c7 { border-top: 3px solid #555; }
+  .c7 .card-lc { background: #f0f0f0; color: #555; }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 18px 0;
+  }
+  th {
+    background: var(--text);
+    color: #fff;
+    padding: 10px 16px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: #374151;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #fafafa; }
+  td:first-child { font-family: 'DM Mono', monospace; color: var(--keyword); font-size: 12px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent2);
+    background: #f0fbf9;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: #374151;
+  }
+  .callout strong { color: var(--accent2); }
+
+  .callout-warn {
+    border-left-color: var(--accent3);
+    background: #fef9f0;
+  }
+  .callout-warn strong { color: var(--accent3); }
+
+  /* ── STEP PILLS ── */
+  .steps { display: flex; flex-direction: column; gap: 14px; margin: 16px 0 24px; }
+  .step  { display: flex; gap: 14px; align-items: flex-start; }
+  .step-num {
+    width: 28px; height: 28px;
+    background: var(--text); color: #fff;
+    border-radius: 50%;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .step-body { font-size: 14px; color: #374151; }
+  .step-body strong { color: var(--text); }
+
+  /* ── PRINT ── */
+  @media print {
+    body { font-size: 13px; }
+    .hero { padding: 30px; }
+    .container { padding: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-sub">LeetCode Pattern Series</div>
+    <div class="hero-title">Merge <span>Intervals</span></div>
+    <div class="hero-sub" style="margin-top:8px">Java Templates · Visual Examples · All 7 Types</div>
+  </div>
+  <div class="hero-badge">O(n log n) pattern</div>
+</div>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 0. THE CORE IDEA -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 00 — The Idea</div>
+  <h2>What even is "merging intervals"?</h2>
+
+  <p>An <strong>interval</strong> is just a range — like a meeting from <code>2pm to 4pm</code>, or an array range <code>[2, 4]</code>. The core question is: <em>do two intervals overlap?</em></p>
+
+  <p>Two intervals <strong>[a, b]</strong> and <strong>[c, d]</strong> overlap if <code>b &gt;= c</code> (assuming a ≤ c after sorting). If they overlap, you merge them into <code>[a, max(b, d)]</code>.</p>
+
+  <div class="vis-wrap">
+    <div class="interval-row"><span class="label">Input A</span><div class="bar-track"><div class="bar bar-a">[1, 4]</div></div></div>
+    <div class="interval-row"><span class="label">Input B</span><div class="bar-track"><div class="bar bar-b">[3, 6]</div></div></div>
+    <div class="interval-row"><span class="label">Input C</span><div class="bar-track"><div class="bar bar-c">[8,11]</div></div></div>
+    <div class="arrow">↓ merge overlapping</div>
+    <div class="interval-row"><span class="label">Merged</span><div class="bar-track"><div class="bar bar-merged">[1, 6]</div></div></div>
+    <div class="interval-row"><span class="label">Kept</span><div class="bar-track"><div class="bar bar-c2">[8,11]</div></div></div>
+  </div>
+
+  <p style="font-size:13px; color: var(--muted);">A overlaps B (4 ≥ 3), so they merge → [1,6]. C doesn't overlap [1,6] (8 &gt; 6), so it stays separate.</p>
+
+  <div class="callout">
+    <strong>Golden Rule:</strong> Always <strong>sort by start time</strong> first. After that, a single left-to-right scan is enough to merge everything. That's the whole trick.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 1. CORE TEMPLATE -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 01 — Core Template</div>
+  <h2>The Master Template</h2>
+  <p>This one function covers ~70% of all Merge Intervals problems. Read it once, understand it forever.</p>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Sort</strong> all intervals by their start value → O(n log n)</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Start</strong> with the first interval as your "current" working interval</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Scan</strong> each remaining interval: if it overlaps current, expand current's end; else save current and move on</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>Return</strong> the result list</div></div>
+  </div>
+
+<pre><span class="kw">import</span> java.util.*;
+
+<span class="kw">public class</span> <span class="ty">MergeIntervals</span> {
+
+    <span class="cm">/**
+     * Merge all overlapping intervals.
+     * Time:  O(n log n)  ← sorting dominates
+     * Space: O(n)        ← result list
+     */</span>
+    <span class="kw">public</span> <span class="ty">int</span>[][] <span class="mt">merge</span>(<span class="ty">int</span>[][] intervals) {
+
+        <span class="cm">// Edge case: 0 or 1 interval → nothing to merge</span>
+        <span class="kw">if</span> (intervals == <span class="kw">null</span> || intervals.length &lt;= <span class="nm">1</span>) <span class="kw">return</span> intervals;
+
+        <span class="cm">// ── STEP 1: Sort by start time ─────────────────────────</span>
+        <span class="ty">Arrays</span>.<span class="mt">sort</span>(intervals, (a, b) -&gt; <span class="ty">Integer</span>.<span class="mt">compare</span>(a[<span class="nm">0</span>], b[<span class="nm">0</span>]));
+
+        <span class="ty">List</span>&lt;<span class="ty">int</span>[]&gt; result = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+        <span class="cm">// ── STEP 2: Start with the first interval ──────────────</span>
+        <span class="ty">int</span>[] curr = intervals[<span class="nm">0</span>].clone(); <span class="cm">// clone to avoid mutating input</span>
+
+        <span class="cm">// ── STEP 3: Scan remaining intervals ───────────────────</span>
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">1</span>; i &lt; intervals.length; i++) {
+            <span class="ty">int</span>[] next = intervals[i];
+
+            <span class="kw">if</span> (curr[<span class="nm">1</span>] &gt;= next[<span class="nm">0</span>]) {
+                <span class="cm">// ✅ Overlap! Expand current's end if needed</span>
+                curr[<span class="nm">1</span>] = <span class="ty">Math</span>.<span class="mt">max</span>(curr[<span class="nm">1</span>], next[<span class="nm">1</span>]);
+            } <span class="kw">else</span> {
+                <span class="cm">// ❌ No overlap. Save current, move to next</span>
+                result.<span class="mt">add</span>(curr);
+                curr = next.clone();
+            }
+        }
+
+        result.<span class="mt">add</span>(curr); <span class="cm">// Don't forget the last interval!</span>
+
+        <span class="kw">return</span> result.<span class="mt">toArray</span>(<span class="kw">new</span> <span class="ty">int</span>[result.size()][]);
+    }
+}</pre>
+
+  <div class="callout callout-warn">
+    <strong>Common mistake:</strong> Forgetting <code>result.add(curr)</code> after the loop. The last interval never gets added inside the loop — always add it after!
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 2. THE 7 TYPES -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 02 — Problem Types</div>
+  <h2>All 7 Types at a Glance</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">01</div>
+      <div class="card-title">Merge Overlapping</div>
+      <div class="card-body">Classic problem. Merge all overlapping intervals into a minimal set.</div>
+      <span class="card-lc">LC #56</span>
+    </div>
+    <div class="card c2">
+      <div class="card-num">02</div>
+      <div class="card-title">Insert Interval</div>
+      <div class="card-body">Insert a new interval into a sorted list, then merge any overlaps.</div>
+      <span class="card-lc">LC #57</span>
+    </div>
+    <div class="card c3">
+      <div class="card-num">03</div>
+      <div class="card-title">Remove Minimum</div>
+      <div class="card-body">Remove fewest intervals so none overlap. Count what merge removes.</div>
+      <span class="card-lc">LC #435</span>
+    </div>
+    <div class="card c4">
+      <div class="card-num">04</div>
+      <div class="card-title">Intersections</div>
+      <div class="card-body">Find common parts between two interval lists using 2-pointer.</div>
+      <span class="card-lc">LC #986</span>
+    </div>
+    <div class="card c5">
+      <div class="card-num">05</div>
+      <div class="card-title">Meeting Rooms II</div>
+      <div class="card-body">Min rooms = max simultaneous overlaps. Use a min-heap of end times.</div>
+      <span class="card-lc">LC #253</span>
+    </div>
+    <div class="card c6">
+      <div class="card-num">06</div>
+      <div class="card-title">Burst Balloons</div>
+      <div class="card-body">Sort by end time + greedy. Minimum arrows to pierce all intervals.</div>
+      <span class="card-lc">LC #452</span>
+    </div>
+    <div class="card c7">
+      <div class="card-num">07</div>
+      <div class="card-title">Free Time / Gaps</div>
+      <div class="card-body">Merge everything, then find gaps between consecutive merged intervals.</div>
+      <span class="card-lc">LC #759</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 3. EACH TYPE WITH CODE -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 03 — Code for Each Type</div>
+  <h2>Type-by-Type Templates</h2>
+
+  <!-- TYPE 2 -->
+  <h3 style="color: var(--accent2);">Type 02 — Insert Interval (LC #57)</h3>
+  <p>You're given a sorted non-overlapping list. Add a new interval and merge. Easiest trick: just add it to the list and call merge.</p>
+
+<pre><span class="kw">public</span> <span class="ty">int</span>[][] <span class="mt">insert</span>(<span class="ty">int</span>[][] intervals, <span class="ty">int</span>[] newInterval) {
+
+    <span class="ty">List</span>&lt;<span class="ty">int</span>[]&gt; list = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;(<span class="ty">Arrays</span>.<span class="mt">asList</span>(intervals));
+    list.<span class="mt">add</span>(newInterval);           <span class="cm">// just throw it in</span>
+
+    <span class="kw">return</span> <span class="mt">merge</span>(list.<span class="mt">toArray</span>(<span class="kw">new</span> <span class="ty">int</span>[<span class="nm">0</span>][]));  <span class="cm">// reuse the master template!</span>
+}</pre>
+
+  <!-- TYPE 3 -->
+  <h3 style="color: var(--accent1);">Type 03 — Remove Minimum (Non-overlapping, LC #435)</h3>
+  <p>Question: "How many intervals to remove so none overlap?" Answer: total intervals minus how many survive after merging.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">eraseOverlapIntervals</span>(<span class="ty">int</span>[][] intervals) {
+
+    <span class="ty">int</span>[][] merged = <span class="mt">merge</span>(intervals);   <span class="cm">// use master template</span>
+
+    <span class="cm">// intervals that "disappeared" during merge = ones we must remove</span>
+    <span class="kw">return</span> intervals.length - merged.length;
+}</pre>
+
+  <!-- TYPE 4 -->
+  <h3 style="color: var(--accent5);">Type 04 — Interval Intersections (LC #986)</h3>
+  <p>Two separate sorted lists. Find their overlapping parts. Use 2-pointer: at each step, collect intersection and advance the pointer with the smaller end.</p>
+
+<pre><span class="kw">public</span> <span class="ty">int</span>[][] <span class="mt">intervalIntersection</span>(<span class="ty">int</span>[][] A, <span class="ty">int</span>[][] B) {
+
+    <span class="ty">List</span>&lt;<span class="ty">int</span>[]&gt; res = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+    <span class="ty">int</span> i = <span class="nm">0</span>, j = <span class="nm">0</span>;
+
+    <span class="kw">while</span> (i &lt; A.length &amp;&amp; j &lt; B.length) {
+
+        <span class="cm">// Intersection = overlap between A[i] and B[j]</span>
+        <span class="ty">int</span> lo = <span class="ty">Math</span>.<span class="mt">max</span>(A[i][<span class="nm">0</span>], B[j][<span class="nm">0</span>]);
+        <span class="ty">int</span> hi = <span class="ty">Math</span>.<span class="mt">min</span>(A[i][<span class="nm">1</span>], B[j][<span class="nm">1</span>]);
+
+        <span class="kw">if</span> (lo &lt;= hi)
+            res.<span class="mt">add</span>(<span class="kw">new</span> <span class="ty">int</span>[]{lo, hi});  <span class="cm">// valid intersection</span>
+
+        <span class="cm">// Advance the pointer with smaller end time</span>
+        <span class="kw">if</span> (A[i][<span class="nm">1</span>] &lt; B[j][<span class="nm">1</span>]) i++;
+        <span class="kw">else</span> j++;
+    }
+
+    <span class="kw">return</span> res.<span class="mt">toArray</span>(<span class="kw">new</span> <span class="ty">int</span>[res.size()][]);
+}</pre>
+
+  <!-- TYPE 5 -->
+  <h3 style="color: var(--accent3);">Type 05 — Meeting Rooms II (LC #253)</h3>
+  <p>Simple merge doesn't work here. You need the <em>peak number of simultaneous meetings</em>. A min-heap tracks ongoing meeting end times.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">minMeetingRooms</span>(<span class="ty">int</span>[][] intervals) {
+
+    <span class="cm">// Sort by start time (same as always)</span>
+    <span class="ty">Arrays</span>.<span class="mt">sort</span>(intervals, (a, b) -&gt; a[<span class="nm">0</span>] - b[<span class="nm">0</span>]);
+
+    <span class="cm">// Min-heap of end times = rooms currently in use</span>
+    <span class="ty">PriorityQueue</span>&lt;<span class="ty">Integer</span>&gt; heap = <span class="kw">new</span> <span class="ty">PriorityQueue</span>&lt;&gt;();
+
+    <span class="kw">for</span> (<span class="ty">int</span>[] m : intervals) {
+        <span class="kw">if</span> (!heap.<span class="mt">isEmpty</span>() &amp;&amp; heap.<span class="mt">peek</span>() &lt;= m[<span class="nm">0</span>]) {
+            heap.<span class="mt">poll</span>();   <span class="cm">// earliest room is free, reuse it</span>
+        }
+        heap.<span class="mt">add</span>(m[<span class="nm">1</span>]);   <span class="cm">// allocate a room ending at m[1]</span>
+    }
+
+    <span class="kw">return</span> heap.<span class="mt">size</span>(); <span class="cm">// rooms still occupied = answer</span>
+}</pre>
+
+  <!-- TYPE 6 -->
+  <h3 style="color: #d62828;">Type 06 — Burst Balloons / Min Arrows (LC #452)</h3>
+  <p>Sort by <strong>end time</strong> (not start). Greedily place an arrow at each balloon's end point — it bursts all overlapping balloons too.</p>
+
+<pre><span class="kw">public int</span> <span class="mt">findMinArrowShots</span>(<span class="ty">int</span>[][] points) {
+
+    <span class="cm">// KEY difference: sort by END time, not start!</span>
+    <span class="ty">Arrays</span>.<span class="mt">sort</span>(points, (a, b) -&gt; <span class="ty">Integer</span>.<span class="mt">compare</span>(a[<span class="nm">1</span>], b[<span class="nm">1</span>]));
+
+    <span class="ty">int</span> arrows = <span class="nm">1</span>;
+    <span class="ty">int</span> arrowPos = points[<span class="nm">0</span>][<span class="nm">1</span>]; <span class="cm">// shoot at end of first balloon</span>
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">1</span>; i &lt; points.length; i++) {
+        <span class="kw">if</span> (points[i][<span class="nm">0</span>] &gt; arrowPos) {    <span class="cm">// balloon starts after last arrow</span>
+            arrows++;
+            arrowPos = points[i][<span class="nm">1</span>];        <span class="cm">// fire new arrow</span>
+        }
+        <span class="cm">// else: current arrow already bursts this balloon</span>
+    }
+
+    <span class="kw">return</span> arrows;
+}</pre>
+
+  <!-- TYPE 7 -->
+  <h3 style="color: #555;">Type 07 — Find Free Time / Gaps (LC #759)</h3>
+  <p>Merge everything first. Then look at the "holes" between consecutive merged intervals — those are your free slots.</p>
+
+<pre><span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">int</span>[]&gt; <span class="mt">employeeFreeTime</span>(<span class="ty">int</span>[][] allIntervals) {
+
+    <span class="ty">List</span>&lt;<span class="ty">int</span>[]&gt; merged = <span class="mt">mergeToList</span>(allIntervals); <span class="cm">// use master template</span>
+    <span class="ty">List</span>&lt;<span class="ty">int</span>[]&gt; freeTime = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">1</span>; i &lt; merged.<span class="mt">size</span>(); i++) {
+        <span class="ty">int</span> gapStart = merged.<span class="mt">get</span>(i - <span class="nm">1</span>)[<span class="nm">1</span>]; <span class="cm">// end of prev interval</span>
+        <span class="ty">int</span> gapEnd   = merged.<span class="mt">get</span>(i)[<span class="nm">0</span>];     <span class="cm">// start of next interval</span>
+        freeTime.<span class="mt">add</span>(<span class="kw">new</span> <span class="ty">int</span>[]{gapStart, gapEnd});
+    }
+
+    <span class="kw">return</span> freeTime;
+}</pre>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 4. COMPLEXITY TABLE -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 04 — Complexity</div>
+  <h2>Time &amp; Space Summary</h2>
+
+  <table>
+    <thead>
+      <tr><th>Problem Type</th><th>Time</th><th>Space</th><th>Key Trick</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Merge Overlapping</td><td>O(n log n)</td><td>O(n)</td><td>Sort + scan</td></tr>
+      <tr><td>Insert Interval</td><td>O(n log n)</td><td>O(n)</td><td>Add + reuse merge</td></tr>
+      <tr><td>Remove Minimum</td><td>O(n log n)</td><td>O(n)</td><td>n − merged.size()</td></tr>
+      <tr><td>Intersections</td><td>O(n + m)</td><td>O(k)</td><td>2-pointer on both lists</td></tr>
+      <tr><td>Meeting Rooms II</td><td>O(n log n)</td><td>O(n)</td><td>Min-heap of end times</td></tr>
+      <tr><td>Burst Balloons</td><td>O(n log n)</td><td>O(1)</td><td>Sort by END + greedy</td></tr>
+      <tr><td>Free Time / Gaps</td><td>O(n log n)</td><td>O(n)</td><td>Merge, then find holes</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 5. CHEAT SHEET -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 05 — Quick Reference</div>
+  <h2>The "Which Template?" Cheat Sheet</h2>
+
+  <div class="callout">
+    <strong>Sort by start?</strong> → Types 1, 2, 3, 4, 5, 7 all sort by start time.<br>
+    <strong>Sort by end?</strong> → Only Type 6 (Burst Balloons / Arrows).<br>
+    <strong>Need a heap?</strong> → Only Type 5 (Meeting Rooms II).<br>
+    <strong>Two lists?</strong> → Type 4 uses 2-pointer, not the merge template.
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>If the problem says…</th><th>→ Use this approach</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>"merge overlapping intervals"</td><td>Master template directly</td></tr>
+      <tr><td>"insert and merge"</td><td>Add to list, call merge</td></tr>
+      <tr><td>"minimum removals / non-overlapping"</td><td>merge → count difference</td></tr>
+      <tr><td>"can attend all meetings?"</td><td>If merge changes nothing → true</td></tr>
+      <tr><td>"minimum rooms / resources"</td><td>Sort start + min-heap of ends</td></tr>
+      <tr><td>"minimum arrows / points"</td><td>Sort by END + greedy counter</td></tr>
+      <tr><td>"find intersection of two lists"</td><td>2-pointer: max(lo), min(hi)</td></tr>
+      <tr><td>"find free time / gaps"</td><td>Merge all, collect gaps</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <strong>Interview tip:</strong> As soon as you see intervals, say out loud — <em>"I'll sort by start time first, then do a linear scan."</em> That signals to the interviewer that you know the pattern. Then adapt based on what they actually want.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 6. DRY RUN -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 06 — Dry Run</div>
+  <h2>Tracing the Master Template</h2>
+  <p>Input: <code>[[1,3], [2,6], [8,10], [15,18]]</code>. Already sorted by start. Watch <code>curr</code> evolve.</p>
+
+  <table>
+    <thead>
+      <tr><th>Step</th><th>next</th><th>curr[1] &ge; next[0]?</th><th>Action</th><th>curr after</th><th>result</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>init</td><td>—</td><td>—</td><td>curr = [1,3]</td><td>[1,3]</td><td>[]</td></tr>
+      <tr><td>i=1</td><td>[2,6]</td><td>3 &ge; 2 ✓</td><td>extend end → max(3,6)</td><td>[1,6]</td><td>[]</td></tr>
+      <tr><td>i=2</td><td>[8,10]</td><td>6 &ge; 8 ✗</td><td>save curr, curr = [8,10]</td><td>[8,10]</td><td>[[1,6]]</td></tr>
+      <tr><td>i=3</td><td>[15,18]</td><td>10 &ge; 15 ✗</td><td>save curr, curr = [15,18]</td><td>[15,18]</td><td>[[1,6],[8,10]]</td></tr>
+      <tr><td>end</td><td>—</td><td>—</td><td>save last curr</td><td>—</td><td>[[1,6],[8,10],[15,18]]</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>Watch the merge at i=1:</strong> the end becomes <code>max(3, 6) = 6</code>, not just <code>6</code>. If the next interval is fully swallowed (e.g. current <code>[1,10]</code> meets <code>[2,4]</code>), <code>max</code> keeps the larger existing end. Using plain assignment here is the most common bug.
+  </div>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- 7. EDGE CASES -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section-num">Section 07 — Edge Cases</div>
+  <h2>Pitfalls &amp; Boundary Decisions</h2>
+
+  <div class="card-grid">
+    <div class="card c1">
+      <div class="card-num">!</div>
+      <div class="card-title">Touching = overlap?</div>
+      <div class="card-body">Do <code>[1,2]</code> and <code>[2,3]</code> merge? For number ranges, usually yes (use <code>&gt;=</code>). For half-open time slots, often no (use <code>&gt;</code>). Always confirm.</div>
+    </div>
+    <div class="card c2">
+      <div class="card-num">!</div>
+      <div class="card-title">Empty / single input</div>
+      <div class="card-body">Length 0 or 1 → return as-is. The master template guards this up front so the <code>intervals[0]</code> access never throws.</div>
+    </div>
+    <div class="card c3">
+      <div class="card-num">!</div>
+      <div class="card-title">Mutating the input</div>
+      <div class="card-body">We <code>clone()</code> the first interval. Without it, extending <code>curr[1]</code> would silently edit the caller's array.</div>
+    </div>
+    <div class="card c4">
+      <div class="card-num">!</div>
+      <div class="card-title">Forgetting the last add</div>
+      <div class="card-body">The loop only saves <code>curr</code> when a non-overlap appears. The final <code>curr</code> always needs an explicit add after the loop.</div>
+    </div>
+    <div class="card c5">
+      <div class="card-num">!</div>
+      <div class="card-title">Sort comparator overflow</div>
+      <div class="card-body">Prefer <code>Integer.compare(a[0], b[0])</code> over <code>a[0] - b[0]</code>; subtraction overflows for large/negative coordinates.</div>
+    </div>
+    <div class="card c6">
+      <div class="card-num">!</div>
+      <div class="card-title">Already sorted?</div>
+      <div class="card-body">If the input is guaranteed sorted by start, skip the sort and the whole pass drops to O(n).</div>
+    </div>
+  </div>
+
+  <div class="callout callout-red">
+    <strong>Overlap test, stated precisely:</strong> after sorting by start, intervals <code>curr</code> and <code>next</code> overlap iff <code>curr.end &ge; next.start</code>. You never need to compare starts again — sorting guarantees <code>curr.start &le; next.start</code>.
+  </div>
+
+  <p style="font-size:12px; color: var(--muted); margin-top: 40px; text-align: center;">
+    Merge Intervals — Visual Guide &nbsp;·&nbsp; Java Templates &nbsp;·&nbsp; All complexity values verified
+  </p>
+
+</div><!-- /container -->
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed; right:18px; bottom:84px;
+    width:52px; height:52px; border-radius:50%;
+    background:#6c5ce7; color:#ffffff;
+    display:flex; align-items:center; justify-content:center;
+    text-decoration:none; font-size:24px; line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_DARK_MODE_START -->
+<style id="kiro-dark-mode-style">
+  html.kiro-dark{ color-scheme:dark; background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark body{ background:#1c2128 !important; color:#e8edf2 !important; }
+  html.kiro-dark .hero{ border-bottom-color:#3a414d !important; }
+  html.kiro-dark .hero-title{ color:#e8edf2 !important; }
+  html.kiro-dark .hero-sub{ color:#a8b1bd !important; }
+  html.kiro-dark .hero-badge{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark h2{ color:#e8edf2 !important; }
+  html.kiro-dark h3{ color:#a8b1bd !important; }
+  html.kiro-dark .section-num{ color:#a8b1bd !important; }
+  html.kiro-dark p{ color:#c5ccd6 !important; }
+  html.kiro-dark strong{ color:#e8edf2; }
+  html.kiro-dark .divider{ border-top-color:#3a414d !important; }
+  html.kiro-dark code{ background:#2c333d !important; color:#f5e8b8 !important; }
+  html.kiro-dark pre{ background:#1a1f29 !important; border-color:#3a414d !important; color:#d6deeb !important; }
+  html.kiro-dark .kw{ color:#c4a4ff !important; }
+  html.kiro-dark .ty{ color:#7cc4ff !important; }
+  html.kiro-dark .st{ color:#5fd6b8 !important; }
+  html.kiro-dark .cm{ color:#8a93a0 !important; }
+  html.kiro-dark .nm{ color:#ff9d9d !important; }
+  html.kiro-dark .mt{ color:#ffb070 !important; }
+  html.kiro-dark .an{ color:#8ee99a !important; }
+  html.kiro-dark .op{ color:#c5ccd6 !important; }
+  /* Callouts: keep coloured left border, dim the rest */
+  html.kiro-dark .callout{ background:#242a33 !important; color:#d6deeb !important;
+    border-top-color:#3a414d !important; border-right-color:#3a414d !important; border-bottom-color:#3a414d !important; }
+  /* Tables */
+  html.kiro-dark th{ background:#2c333d !important; color:#e8edf2 !important; }
+  html.kiro-dark td{ color:#c5ccd6 !important; border-bottom-color:#3a414d !important; }
+  html.kiro-dark tr:nth-child(even) td{ background:rgba(255,255,255,.03) !important; }
+  html.kiro-dark td:first-child{ color:#d2b3ff !important; }
+  /* Steps */
+  html.kiro-dark .step-num{ background:#3a414d !important; color:#e8edf2 !important; }
+  html.kiro-dark .step-body{ color:#c5ccd6 !important; }
+  html.kiro-dark .step-body strong{ color:#e8edf2 !important; }
+  /* Cards (keep accent top border + accent num/lc text) */
+  html.kiro-dark .card{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .card-title{ color:#e8edf2 !important; }
+  html.kiro-dark .card-body{ color:#a8b1bd !important; }
+  html.kiro-dark .card-lc{ background:rgba(255,255,255,.08) !important; }
+  /* Compare boxes */
+  html.kiro-dark .compare-box{ background:#242a33 !important; border-color:#3a414d !important; }
+  html.kiro-dark .compare-box ul,
+  html.kiro-dark .compare-box ul li{ color:#c5ccd6 !important; }
+  html.kiro-dark .compare-box ul li::before{ color:#a8b1bd !important; }
+  /* Visual demo panels across all three guides */
+  html.kiro-dark .vis-wrap,
+  html.kiro-dark .heap-demo,
+  html.kiro-dark .vis-box{ background:#1a1f29 !important; border-color:#3a414d !important; }
+  html.kiro-dark .bar-track{ background:#2c333d !important; }
+  html.kiro-dark .heap-cell{ background:#22303c !important; }
+  html.kiro-dark .res-cell{ background:#1e2a28 !important; }
+  html.kiro-dark .heap-state{ background:#242a33 !important; }
+  html.kiro-dark .el-heap,
+  html.kiro-dark .hs-el{ background:#22303c !important; }
+  html.kiro-dark .el-dim{ background:#2c333d !important; color:#7a818c !important; }
+  html.kiro-dark .label,
+  html.kiro-dark .list-label,
+  html.kiro-dark .stream-label,
+  html.kiro-dark .vis-title,
+  html.kiro-dark .hs-note,
+  html.kiro-dark .arrow-note,
+  html.kiro-dark .arrow-row{ color:#a8b1bd !important; }
+  /* Toggle button */
+  .kiro-dark-toggle{
+    position:fixed; right:18px; bottom:18px;
+    width:52px; height:52px; border-radius:50%;
+    background:#1c2128; color:#ffd166;
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid #ffd166;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    cursor:pointer; font-size:22px; line-height:1; z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; padding:0;
+  }
+  .kiro-dark-toggle:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-dark-toggle:active{transform:scale(.95);}
+  .kiro-dark-toggle:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  html.kiro-dark .kiro-dark-toggle{ background:#ffd166; color:#1c2128; border-color:#1c2128; }
+  @media print{.kiro-dark-toggle{display:none!important;}}
+</style>
+<button type="button" class="kiro-dark-toggle" id="kiroDarkToggle"
+        title="Toggle dark mode" aria-label="Toggle dark mode" aria-pressed="false">
+  <span id="kiroDarkToggleIcon" aria-hidden="true">&#x1F319;</span>
+</button>
+<script id="kiro-dark-mode-script">
+(function(){
+  var KEY = 'kiro_dark_mode';
+  var html = document.documentElement;
+  var btn = document.getElementById('kiroDarkToggle');
+  var icon = document.getElementById('kiroDarkToggleIcon');
+  function apply(on){
+    if(on){
+      html.classList.add('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','true'); btn.title='Switch to light mode'; }
+      if(icon){ icon.textContent = '\u2600\uFE0F'; }
+    } else {
+      html.classList.remove('kiro-dark');
+      if(btn){ btn.setAttribute('aria-pressed','false'); btn.title='Switch to dark mode'; }
+      if(icon){ icon.textContent = '\uD83C\uDF19'; }
+    }
+  }
+  function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch(e) {}
+    if(saved === '1') apply(true);
+    else if(saved === '0') apply(false);
+    else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) apply(true);
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); }
+  else { init(); }
+  if(btn){
+    btn.addEventListener('click', function(){
+      var nowOn = !html.classList.contains('kiro-dark');
+      apply(nowOn);
+      try { localStorage.setItem(KEY, nowOn ? '1' : '0'); } catch(e) {}
+    });
+  }
+})();
+</script>
+<!-- KIRO_DARK_MODE_END -->
+
+</body>
+</html>
