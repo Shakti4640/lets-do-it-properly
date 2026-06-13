@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Topological Sort Templates</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-sub: #39d0a8;
+    --c-com: #58a6ff;
+    --c-per: #bc8cff;
+    --c-grd: #f0883e;
+    --c-pal: #d29922;
+    --c-cnt: #e06c75;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-bt   { background: rgba(57,208,168,0.1); color: var(--c-sub); border-color: rgba(57,208,168,0.25); }
+
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="kahn"].on  { color: var(--c-sub); border-bottom-color: var(--c-sub); }
+  .tab[data-id="dfs"].on   { color: var(--c-com); border-bottom-color: var(--c-com); }
+  .tab[data-id="lex"].on   { color: var(--c-per); border-bottom-color: var(--c-per); }
+  .tab[data-id="layer"].on { color: var(--c-grd); border-bottom-color: var(--c-grd); }
+  .tab[data-id="dag"].on   { color: var(--c-pal); border-bottom-color: var(--c-pal); }
+  .tab[data-id="cyc"].on   { color: var(--c-cnt); border-bottom-color: var(--c-cnt); }
+
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.on { display: block; }
+
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Topological Sort Templates</h1>
+    <p>// 6 patterns · 4 steps each · build-indegree · peel · relax</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">☕ Java</span>
+    <span class="badge badge-bt">⇢ Topological Sort</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">TopoSortTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-sub)">
+      <h3>Kahn (BFS)</h3>
+      <div class="cheat-row"><span>State</span><span>indegree[] + queue</span></div>
+      <div class="cheat-row"><span>Step</span><span>pop 0-indegree, relax</span></div>
+      <div class="cheat-row"><span>Cycle</span><span>placed &lt; V</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Course Schedule I/II</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-com)">
+      <h3>DFS Post-order</h3>
+      <div class="cheat-row"><span>State</span><span>visited + stack</span></div>
+      <div class="cheat-row"><span>Step</span><span>push AFTER recursion</span></div>
+      <div class="cheat-row"><span>Order</span><span>reverse finish order</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Build order, DAG</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-per)">
+      <h3>Lexicographic</h3>
+      <div class="cheat-row"><span>State</span><span>PriorityQueue</span></div>
+      <div class="cheat-row"><span>Step</span><span>poll smallest free node</span></div>
+      <div class="cheat-row"><span>Cost</span><span>O((V+E) log V)</span></div>
+      <div class="cheat-row"><span>Examples</span><span>smallest valid order</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-grd)">
+      <h3>Layered (Levels)</h3>
+      <div class="cheat-row"><span>State</span><span>process queue by layer</span></div>
+      <div class="cheat-row"><span>Step</span><span>snapshot queue size</span></div>
+      <div class="cheat-row"><span>Answer</span><span>count layers</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Parallel Courses</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-pal)">
+      <h3>Longest / Critical Path</h3>
+      <div class="cheat-row"><span>State</span><span>dp[] over topo order</span></div>
+      <div class="cheat-row"><span>Step</span><span>relax dp[v]=max(...)</span></div>
+      <div class="cheat-row"><span>Answer</span><span>max dp / finish</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Parallel Courses III</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cnt)">
+      <h3>Cycle Detection</h3>
+      <div class="cheat-row"><span>State</span><span>3-color DFS</span></div>
+      <div class="cheat-row"><span>Step</span><span>gray on path = cycle</span></div>
+      <div class="cheat-row"><span>Alt</span><span>Kahn placed &lt; V</span></div>
+      <div class="cheat-row"><span>Examples</span><span>Can finish? / DAG check</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+const types = [
+  {
+    id:'kahn', label:'Kahn (BFS)',
+    steps:[
+      { label:'Build graph + indegree',
+        hint:'Edge u -> v means "u must come before v", so v gains one incoming edge. Build an adjacency list and an indegree[] array together.',
+        code:`${C('// Step 1 — Build adjacency list + indegree array')}
+${C('// edges[i] = {u, v}  means  u BEFORE v   (u -> v)')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> adj = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) adj.${F('add')}(${K('new')} ${T('ArrayList')}<>());
+${K('int')}[] indeg = ${K('new')} ${K('int')}[n];
+
+${K('for')} (${K('int')}[] e : edges) {
+    adj.${F('get')}(e[${N('0')}]).${F('add')}(e[${N('1')}]);   ${C('// u -> v')}
+    indeg[e[${N('1')}]]++;                ${C('// v has one more blocker')}
+}
+`
+      },
+      { label:'Seed the queue',
+        hint:'Any node with indegree 0 has nothing in front of it — it can go first. Seed the queue with every such node.',
+        code:`${C('// Step 2 — Every 0-indegree node is free to place first')}
+
+${T('Deque')}<${T('Integer')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+    ${K('if')} (indeg[i] == ${N('0')}) q.${F('offer')}(i);
+
+${C('// These nodes have no prerequisites left → they start the order.')}
+`
+      },
+      { label:'Peel nodes one by one',
+        hint:'Pop a free node, append it to the order, and decrement each neighbour\'s indegree. A neighbour that hits 0 just lost its last blocker — enqueue it.',
+        code:`${C('// Step 3 — Peel: pop, record, unlock dependents')}
+
+${K('int')}[] order = ${K('new')} ${K('int')}[n];
+${K('int')} idx = ${N('0')};
+
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} u = q.${F('poll')}();
+    order[idx++] = u;                 ${C('// u is safe to place now')}
+
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u))
+        ${K('if')} (--indeg[v] == ${N('0')})   ${C('// v lost its last blocker')}
+            q.${F('offer')}(v);
+}
+`
+      },
+      { label:'Cycle check',
+        hint:'If you placed every node, the graph was a DAG. If fewer than n were placed, the leftovers form a cycle — no topological order exists.',
+        code:`${C('// Step 4 — Did we place all n nodes?')}
+
+${K('if')} (idx == n) ${K('return')} order;     ${C('// success — valid topo order')}
+${K('return')} ${K('new')} ${K('int')}[${N('0')}];           ${C('// cycle detected → impossible')}
+
+${C('// Course Schedule (LC 207): return idx == numCourses (boolean)')}
+${C('// Course Schedule II (LC 210): return the order array as above')}
+
+${C('// Time  O(V + E)   — each node + edge processed once')}
+${C('// Space O(V + E)   — adjacency list + indegree + queue')}
+`
+      }
+    ]
+  },
+  {
+    id:'dfs', label:'DFS Post-order',
+    steps:[
+      { label:'Define state',
+        hint:'State = a visited[] flag plus an output stack. A node is "finished" only after everything it points to is finished.',
+        code:`${C('// Step 1 — Post-order DFS state')}
+${C('// dfs(u): finish every descendant of u, THEN record u')}
+
+${T('boolean')}[] vis = ${K('new')} ${K('boolean')}[n];
+${T('Deque')}<${T('Integer')}> stack = ${K('new')} ${T('ArrayDeque')}<>();
+
+${C('// adj = adjacency list where u -> v means u before v')}
+${C('// The stack collects nodes in REVERSE topological order.')}
+`
+      },
+      { label:'Recurse into neighbours first',
+        hint:'Mark the node visited, then dive into every unvisited neighbour BEFORE doing anything with the node itself.',
+        code:`${C('// Step 2 — Visit all descendants before recording the node')}
+
+${K('void')} ${F('dfs')}(${K('int')} u, ${T('List')}<${T('List')}<${T('Integer')}>> adj,
+         ${T('boolean')}[] vis, ${T('Deque')}<${T('Integer')}> stack) {
+
+    vis[u] = ${K('true')};
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u))
+        ${K('if')} (!vis[v]) ${F('dfs')}(v, adj, vis, stack);   ${C('// finish descendants')}
+
+    ${C('// ... record u here (next step)')}
+}
+`
+      },
+      { label:'Push on the way out',
+        hint:'After the neighbour loop, the node is fully explored. Push it now — the push-after-loop placement is the whole trick.',
+        code:`${C('// Step 3 — Push AFTER the loop = post-order')}
+
+${K('void')} ${F('dfs')}(${K('int')} u, ${T('List')}<${T('List')}<${T('Integer')}>> adj,
+         ${T('boolean')}[] vis, ${T('Deque')}<${T('Integer')}> stack) {
+
+    vis[u] = ${K('true')};
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u))
+        ${K('if')} (!vis[v]) ${F('dfs')}(v, adj, vis, stack);
+
+    stack.${F('push')}(u);     ${C('// u finished → push (reverses finish order)')}
+}
+`
+      },
+      { label:'Drive + reverse',
+        hint:'Call dfs from every unvisited node (covers disconnected parts). Popping the stack yields the topological order.',
+        code:`${C('// Step 4 — Cover all components, then read the stack')}
+
+${T('List')}<${T('Integer')}> ${F('topoDFS')}(${K('int')} n, ${T('List')}<${T('List')}<${T('Integer')}>> adj) {
+    ${T('boolean')}[] vis = ${K('new')} ${K('boolean')}[n];
+    ${T('Deque')}<${T('Integer')}> stack = ${K('new')} ${T('ArrayDeque')}<>();
+
+    ${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+        ${K('if')} (!vis[i]) ${F('dfs')}(i, adj, vis, stack);
+
+    ${T('List')}<${T('Integer')}> order = ${K('new')} ${T('ArrayList')}<>();
+    ${K('while')} (!stack.${F('isEmpty')}()) order.${F('add')}(stack.${F('pop')}());
+    ${K('return')} order;          ${C('// valid topological order')}
+}
+
+${C('// Need cycle detection too? Use the 3-color variant (Cycle tab).')}
+${C('// Time O(V + E), Space O(V) recursion + stack.')}
+`
+      }
+    ]
+  },
+  {
+    id:'lex', label:'Lexicographic',
+    steps:[
+      { label:'Why a heap',
+        hint:'Topological order is usually not unique. To get the lexicographically smallest valid order, always place the smallest currently-free node — a min-heap gives you that.',
+        code:`${C('// Step 1 — Swap the plain queue for a min-heap')}
+${C('// Goal: smallest-in-order topological sort')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> adj = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) adj.${F('add')}(${K('new')} ${T('ArrayList')}<>());
+${K('int')}[] indeg = ${K('new')} ${K('int')}[n];
+${K('for')} (${K('int')}[] e : edges) { adj.${F('get')}(e[${N('0')}]).${F('add')}(e[${N('1')}]); indeg[e[${N('1')}]]++; }
+
+${C('// Only change vs Kahn: PriorityQueue instead of ArrayDeque')}
+${T('PriorityQueue')}<${T('Integer')}> pq = ${K('new')} ${T('PriorityQueue')}<>();
+`
+      },
+      { label:'Seed the heap',
+        hint:'Add every 0-indegree node to the heap. The heap keeps them ordered so the smallest comes out first.',
+        code:`${C('// Step 2 — Seed with all free nodes')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+    ${K('if')} (indeg[i] == ${N('0')}) pq.${F('offer')}(i);
+
+${C('// pq.poll() will always return the smallest available node.')}
+`
+      },
+      { label:'Poll smallest, relax',
+        hint:'Same peel loop as Kahn, but poll the heap. Newly-freed neighbours are offered to the heap and re-sorted automatically.',
+        code:`${C('// Step 3 — Always extend with the smallest free node')}
+
+${T('List')}<${T('Integer')}> order = ${K('new')} ${T('ArrayList')}<>();
+
+${K('while')} (!pq.${F('isEmpty')}()) {
+    ${K('int')} u = pq.${F('poll')}();      ${C('// smallest free node')}
+    order.${F('add')}(u);
+
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u))
+        ${K('if')} (--indeg[v] == ${N('0')}) pq.${F('offer')}(v);
+}
+`
+      },
+      { label:'Cycle check + cost',
+        hint:'Same completeness test as Kahn. Note the log factor: each push/pop is O(log V).',
+        code:`${C('// Step 4 — Validate and note the cost')}
+
+${K('if')} (order.${F('size')}() != n)
+    ${K('return')} ${T('Collections')}.${F('emptyList')}();   ${C('// cycle → no order')}
+${K('return')} order;
+
+${C('// Time  O((V + E) log V)  — heap operations add the log V')}
+${C('// Space O(V + E)')}
+${C('// Use this only when the SMALLEST order is required; otherwise Kahn.')}
+`
+      }
+    ]
+  },
+  {
+    id:'layer', label:'Layered (Levels)',
+    steps:[
+      { label:'When to count layers',
+        hint:'If every "round" you may take ALL currently-free nodes in parallel (e.g. minimum semesters), each BFS layer of Kahn is one round. Count the layers.',
+        code:`${C('// Step 1 — Build graph + indegree (1-indexed courses here)')}
+${C('// relations[i] = {a, b}  means  a BEFORE b')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> adj = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i <= n; i++) adj.${F('add')}(${K('new')} ${T('ArrayList')}<>());
+${K('int')}[] indeg = ${K('new')} ${K('int')}[n + ${N('1')}];
+${K('for')} (${K('int')}[] r : relations) { adj.${F('get')}(r[${N('0')}]).${F('add')}(r[${N('1')}]); indeg[r[${N('1')}]]++; }
+`
+      },
+      { label:'Seed first layer',
+        hint:'All 0-indegree nodes form the first parallel batch (semester 1 candidates).',
+        code:`${C('// Step 2 — First layer = all free nodes')}
+
+${T('Deque')}<${T('Integer')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+${K('for')} (${K('int')} i = ${N('1')}; i <= n; i++)
+    ${K('if')} (indeg[i] == ${N('0')}) q.${F('offer')}(i);
+
+${K('int')} semesters = ${N('0')}, taken = ${N('0')};
+`
+      },
+      { label:'Process one layer at a time',
+        hint:'Snapshot the queue size at the top of each round; only those nodes belong to the current layer. Bump the layer counter once per round.',
+        code:`${C('// Step 3 — Drain exactly one layer per iteration')}
+
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} layer = q.${F('size')}();   ${C('// freeze this round, one batch')}
+    semesters++;
+
+    ${K('for')} (${K('int')} k = ${N('0')}; k < layer; k++) {
+        ${K('int')} u = q.${F('poll')}();
+        taken++;
+        ${K('for')} (${K('int')} v : adj.${F('get')}(u))
+            ${K('if')} (--indeg[v] == ${N('0')}) q.${F('offer')}(v);  ${C('// next layer')}
+    }
+}
+`
+      },
+      { label:'Return layer count',
+        hint:'The number of layers is the answer (= longest dependency chain). If not all nodes were taken, a cycle blocks completion.',
+        code:`${C('// Step 4 — Layers = minimum rounds; cycle → -1')}
+
+${K('return')} taken == n ? semesters : -${N('1')};
+
+${C('// Parallel Courses (LC 1136): exactly this.')}
+${C('// The layer count equals the length of the longest path of dependencies.')}
+
+${C('// Time  O(V + E)')}
+${C('// Space O(V + E)')}
+`
+      }
+    ]
+  },
+  {
+    id:'dag', label:'Longest / Critical Path',
+    steps:[
+      { label:'The DAG DP idea',
+        hint:'Process nodes in topological order. Because every prerequisite is finalized before the node that needs it, a single relaxation pass computes the longest (weighted) path.',
+        code:`${C('// Step 1 — Longest / critical path = DP over topo order')}
+${C('// finish[v] = time[v] + max(finish[u]) over prerequisites u -> v')}
+
+${T('List')}<${T('List')}<${T('Integer')}>> adj = ${K('new')} ${T('ArrayList')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i <= n; i++) adj.${F('add')}(${K('new')} ${T('ArrayList')}<>());
+${K('int')}[] indeg = ${K('new')} ${K('int')}[n + ${N('1')}];
+${K('for')} (${K('int')}[] r : relations) { adj.${F('get')}(r[${N('0')}]).${F('add')}(r[${N('1')}]); indeg[r[${N('1')}]]++; }
+
+${K('long')}[] finish = ${K('new')} ${K('long')}[n + ${N('1')}];
+`
+      },
+      { label:'Seed sources',
+        hint:'Nodes with no prerequisites start at their own duration. Add them to the queue.',
+        code:`${C('// Step 2 — Source nodes finish at their own cost')}
+
+${T('Deque')}<${T('Integer')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+${K('for')} (${K('int')} i = ${N('1')}; i <= n; i++)
+    ${K('if')} (indeg[i] == ${N('0')}) {
+        q.${F('offer')}(i);
+        finish[i] = time[i - ${N('1')}];   ${C('// no prereq → just its duration')}
+    }
+`
+      },
+      { label:'Relax in topo order',
+        hint:'When you pop u, every prerequisite of u is already final. Push u\'s finish time into each successor: a successor cannot start before u completes.',
+        code:`${C('// Step 3 — Relax each edge once, in dependency order')}
+
+${K('long')} ans = ${N('0')};
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${K('int')} u = q.${F('poll')}();
+    ans = ${T('Math')}.${F('max')}(ans, finish[u]);
+
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        ${C('// v waits for u, then runs for time[v]')}
+        finish[v] = ${T('Math')}.${F('max')}(finish[v], finish[u] + time[v - ${N('1')}]);
+        ${K('if')} (--indeg[v] == ${N('0')}) q.${F('offer')}(v);
+    }
+}
+`
+      },
+      { label:'Answer = max finish',
+        hint:'The largest finish time is the project length (critical path). For an unweighted longest path, use dp[v] = max(dp[v], dp[u] + 1).',
+        code:`${C('// Step 4 — Critical path length')}
+
+${K('return')} (${K('int')}) ans;
+
+${C('// Parallel Courses III (LC 2050): exactly this template.')}
+${C('// Unweighted longest path: replace finish[]+time with dp[v]=max(dp[v],dp[u]+1).')}
+${C('// Largest Color Value (LC 1857): carry a 26-wide dp array per node instead.')}
+
+${C('// Time  O(V + E)')}
+${C('// Space O(V + E)')}
+`
+      }
+    ]
+  },
+  {
+    id:'cyc', label:'Cycle Detection',
+    steps:[
+      { label:'Three colors',
+        hint:'A plain visited flag is not enough. Use white (unseen), gray (on the current DFS path), black (done). A gray node seen again is a back edge — a cycle.',
+        code:`${C('// Step 1 — 3-color state')}
+${C('// 0 = white (unvisited), 1 = gray (on path), 2 = black (done)')}
+
+${K('int')}[] color = ${K('new')} ${K('int')}[n];
+
+${C('// A directed graph is a DAG (has a topo order) iff it has NO cycle.')}
+`
+      },
+      { label:'Mark gray on entry',
+        hint:'When you enter a node, color it gray. It stays gray for the entire time it sits on the recursion stack.',
+        code:`${C('// Step 2 — Enter: paint gray')}
+
+${T('boolean')} ${F('hasCycle')}(${K('int')} u, ${T('List')}<${T('List')}<${T('Integer')}>> adj, ${K('int')}[] color) {
+    color[u] = ${N('1')};                ${C('// gray: now on the current path')}
+
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        ${C('// ... inspect neighbour colors (next step)')}
+    }
+
+    color[u] = ${N('2')};                ${C('// black: fully explored (set on exit)')}
+    ${K('return')} ${K('false')};
+}
+`
+      },
+      { label:'Detect the back edge',
+        hint:'A neighbour that is gray means we looped back to a node still on our path — a cycle. A white neighbour is recursed into; a black one is already safe.',
+        code:`${C('// Step 3 — Gray neighbour = cycle')}
+
+${T('boolean')} ${F('hasCycle')}(${K('int')} u, ${T('List')}<${T('List')}<${T('Integer')}>> adj, ${K('int')}[] color) {
+    color[u] = ${N('1')};
+
+    ${K('for')} (${K('int')} v : adj.${F('get')}(u)) {
+        ${K('if')} (color[v] == ${N('1')}) ${K('return')} ${K('true')};        ${C('// back edge → cycle')}
+        ${K('if')} (color[v] == ${N('0')} && ${F('hasCycle')}(v, adj, color))
+            ${K('return')} ${K('true')};
+    }
+
+    color[u] = ${N('2')};
+    ${K('return')} ${K('false')};
+}
+`
+      },
+      { label:'Drive over all nodes',
+        hint:'Run the check from every unvisited node. Equivalent shortcut: run Kahn and report a cycle when fewer than V nodes are placed.',
+        code:`${C('// Step 4 — Cover every component')}
+
+${T('boolean')} ${F('isCyclic')}(${K('int')} n, ${T('List')}<${T('List')}<${T('Integer')}>> adj) {
+    ${K('int')}[] color = ${K('new')} ${K('int')}[n];
+    ${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+        ${K('if')} (color[i] == ${N('0')} && ${F('hasCycle')}(i, adj, color))
+            ${K('return')} ${K('true')};
+    ${K('return')} ${K('false')};
+}
+
+${C('// Kahn alternative: build indegrees, peel, then "return placed != V".')}
+${C('// Course Schedule (LC 207) is just "return !isCyclic(...)".')}
+
+${C('// Time  O(V + E),  Space O(V) for color + recursion.')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_TAB_ARROWS_START -->
+<style id="kiro-tab-arrows-style">
+  .kiro-tab-arrow{
+    flex:0 0 auto;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:36px; align-self:stretch; min-height:40px;
+    background:transparent; border:none; color:currentColor;
+    opacity:.55; font-size:20px; line-height:1; cursor:pointer;
+    font-family:inherit; transition:opacity .15s ease, background .15s ease;
+    -webkit-appearance:none; appearance:none;
+  }
+  .kiro-tab-arrow:hover{ opacity:1; background:rgba(127,127,127,.16); }
+  .kiro-tab-arrow:active{ background:rgba(127,127,127,.26); }
+  .kiro-tab-arrow:focus-visible{ outline:2px solid currentColor; outline-offset:-3px; }
+</style>
+<script id="kiro-tab-arrows-script">
+(function(){
+  if(window.__kiroTabArrows) return;
+  window.__kiroTabArrows = true;
+  function init(){
+    var bar = document.getElementById('tabs')
+           || document.querySelector('.tab-row')
+           || document.querySelector('.tab-list');
+    if(!bar || bar.querySelector('.kiro-tab-arrow')) return;
+    function tabs(){
+      return Array.prototype.filter.call(bar.children, function(el){
+        return el.classList && el.classList.contains('tab');
+      });
+    }
+    function activeIndex(list){
+      for(var i=0;i<list.length;i++){
+        var cls = ' ' + (list[i].className || '') + ' ';
+        if(/\son\s/.test(cls) || /\sactive\s/.test(cls) || /\sactive-/.test(cls)) return i;
+      }
+      return 0;
+    }
+    function go(delta){
+      var list = tabs();
+      if(!list.length) return;
+      var ni = activeIndex(list) + delta;
+      if(ni < 0) ni = list.length - 1;
+      if(ni >= list.length) ni = 0;
+      list[ni].click();
+      if(list[ni].scrollIntoView) list[ni].scrollIntoView({inline:'center', block:'nearest'});
+    }
+    var prev = document.createElement('button');
+    prev.type='button'; prev.className='kiro-tab-arrow kiro-tab-prev';
+    prev.setAttribute('aria-label','Previous template'); prev.title='Previous (\u2190)';
+    prev.innerHTML='&#8249;';
+    var next = document.createElement('button');
+    next.type='button'; next.className='kiro-tab-arrow kiro-tab-next';
+    next.setAttribute('aria-label','Next template'); next.title='Next (\u2192)';
+    next.innerHTML='&#8250;';
+    prev.addEventListener('click', function(e){ e.preventDefault(); go(-1); });
+    next.addEventListener('click', function(e){ e.preventDefault(); go(1); });
+    bar.insertBefore(prev, bar.firstChild);
+    bar.appendChild(next);
+    document.addEventListener('keydown', function(e){
+      var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+      if(tag==='input'||tag==='textarea'||tag==='select') return;
+      if(e.key==='ArrowRight'){ e.preventDefault(); go(1); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); go(-1); }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<!-- KIRO_TAB_ARROWS_END -->
+
+</body>
+</html>

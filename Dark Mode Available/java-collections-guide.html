@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Collections Guide</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-lst: #39d0a8;
+    --c-lnk: #58a6ff;
+    --c-map: #bc8cff;
+    --c-tmp: #f0883e;
+    --c-set: #d29922;
+    --c-deq: #e06c75;
+    --c-pq:  #5ad1c4;
+    --c-str: #ff9ec4;
+    --c-arr: #7ee787;
+    --c-big: #f2cc60;
+    --c-cmp: #56d4dd;
+    --c-tree:#6cc04a;
+    --c-heap:#d2a8ff;
+    --c-trie:#ffa657;
+    --c-uf:  #f78166;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-col  { background: rgba(57,208,168,0.1); color: var(--c-lst); border-color: rgba(57,208,168,0.25); }
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab-arrow {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; align-self: stretch; min-height: 40px;
+    background: var(--bg3); border: none; color: var(--text2);
+    opacity: .7; font-size: 20px; line-height: 1; cursor: pointer;
+    font-family: inherit; transition: opacity .15s, background .15s, color .15s;
+    position: sticky; z-index: 2;
+  }
+  .tab-arrow.prev { left: 0; border-right: 1px solid var(--border); }
+  .tab-arrow.next { right: 0; border-left: 1px solid var(--border); }
+  .tab-arrow:hover { opacity: 1; color: var(--text); background: var(--bg4); }
+  .tab-arrow:active { background: var(--bg2); }
+  .tab-arrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="lst"].on { color: var(--c-lst); border-bottom-color: var(--c-lst); }
+  .tab[data-id="lnk"].on { color: var(--c-lnk); border-bottom-color: var(--c-lnk); }
+  .tab[data-id="map"].on { color: var(--c-map); border-bottom-color: var(--c-map); }
+  .tab[data-id="tmp"].on { color: var(--c-tmp); border-bottom-color: var(--c-tmp); }
+  .tab[data-id="set"].on { color: var(--c-set); border-bottom-color: var(--c-set); }
+  .tab[data-id="deq"].on { color: var(--c-deq); border-bottom-color: var(--c-deq); }
+  .tab[data-id="pq"].on  { color: var(--c-pq);  border-bottom-color: var(--c-pq); }
+  .tab[data-id="str"].on { color: var(--c-str); border-bottom-color: var(--c-str); }
+  .tab[data-id="arr"].on { color: var(--c-arr); border-bottom-color: var(--c-arr); }
+  .tab[data-id="big"].on  { color: var(--c-big);  border-bottom-color: var(--c-big); }
+  .tab[data-id="cmp"].on  { color: var(--c-cmp);  border-bottom-color: var(--c-cmp); }
+  .tab[data-id="tree"].on { color: var(--c-tree); border-bottom-color: var(--c-tree); }
+  .tab[data-id="heap"].on { color: var(--c-heap); border-bottom-color: var(--c-heap); }
+  .tab[data-id="trie"].on { color: var(--c-trie); border-bottom-color: var(--c-trie); }
+  .tab[data-id="uf"].on   { color: var(--c-uf);   border-bottom-color: var(--c-uf); }
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Collections Guide</h1>
+    <p>// 15 topics &middot; 4 facets each &middot; &larr;/&rarr; switch topic &middot; Ctrl+&larr;/&rarr; switch facet</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">&#9749; Java</span>
+    <span class="badge badge-col">&#x1F4E6; Collections</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">CollectionsGuide.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-arr)">
+      <h3>Array []</h3>
+      <div class="cheat-row"><span>Backing</span><span>contiguous memory</span></div>
+      <div class="cheat-row"><span>access a[i]</span><span>O(1)</span></div>
+      <div class="cheat-row"><span>Size</span><span>fixed at creation</span></div>
+      <div class="cheat-row"><span>Use when</span><span>DP, grids, freq counts</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-lst)">
+      <h3>ArrayList</h3>
+      <div class="cheat-row"><span>Backing</span><span>resizable array</span></div>
+      <div class="cheat-row"><span>get(i)</span><span>O(1)</span></div>
+      <div class="cheat-row"><span>add end / mid</span><span>O(1)* / O(n)</span></div>
+      <div class="cheat-row"><span>Use when</span><span>random access, iteration</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-lnk)">
+      <h3>LinkedList</h3>
+      <div class="cheat-row"><span>Backing</span><span>doubly linked nodes</span></div>
+      <div class="cheat-row"><span>get(i)</span><span>O(n)</span></div>
+      <div class="cheat-row"><span>add/remove ends</span><span>O(1)</span></div>
+      <div class="cheat-row"><span>Use when</span><span>Deque / queue ends</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-map)">
+      <h3>HashMap</h3>
+      <div class="cheat-row"><span>Backing</span><span>hash table</span></div>
+      <div class="cheat-row"><span>get/put</span><span>O(1) avg</span></div>
+      <div class="cheat-row"><span>Order</span><span>none</span></div>
+      <div class="cheat-row"><span>Use when</span><span>key &rarr; value lookup</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-tmp)">
+      <h3>TreeMap</h3>
+      <div class="cheat-row"><span>Backing</span><span>red-black tree</span></div>
+      <div class="cheat-row"><span>get/put</span><span>O(log n)</span></div>
+      <div class="cheat-row"><span>Order</span><span>sorted by key</span></div>
+      <div class="cheat-row"><span>Use when</span><span>range / floor / ceiling</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-set)">
+      <h3>HashSet / TreeSet</h3>
+      <div class="cheat-row"><span>Backing</span><span>HashMap / TreeMap</span></div>
+      <div class="cheat-row"><span>contains</span><span>O(1) / O(log n)</span></div>
+      <div class="cheat-row"><span>Order</span><span>none / sorted</span></div>
+      <div class="cheat-row"><span>Use when</span><span>uniqueness, membership</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-deq)">
+      <h3>ArrayDeque</h3>
+      <div class="cheat-row"><span>Backing</span><span>circular array</span></div>
+      <div class="cheat-row"><span>push/pop/peek</span><span>O(1)</span></div>
+      <div class="cheat-row"><span>Nulls</span><span>not allowed</span></div>
+      <div class="cheat-row"><span>Use when</span><span>stack &amp; queue</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-pq)">
+      <h3>PriorityQueue</h3>
+      <div class="cheat-row"><span>Backing</span><span>binary heap</span></div>
+      <div class="cheat-row"><span>peek</span><span>O(1)</span></div>
+      <div class="cheat-row"><span>offer/poll</span><span>O(log n)</span></div>
+      <div class="cheat-row"><span>Use when</span><span>top-K, scheduling</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-str)">
+      <h3>String / StringBuilder</h3>
+      <div class="cheat-row"><span>String</span><span>immutable</span></div>
+      <div class="cheat-row"><span>+ in loop</span><span>O(n&sup2;) &mdash; avoid</span></div>
+      <div class="cheat-row"><span>SB append</span><span>O(1) amortised</span></div>
+      <div class="cheat-row"><span>Compare</span><span>.equals(), not ==</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-big)">
+      <h3>Big-O ladder</h3>
+      <div class="cheat-row"><span>O(1)</span><span>array / hash get</span></div>
+      <div class="cheat-row"><span>O(log n)</span><span>binary search, tree</span></div>
+      <div class="cheat-row"><span>O(n log n)</span><span>good sorting</span></div>
+      <div class="cheat-row"><span>O(n&sup2;)</span><span>nested loops</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cmp)">
+      <h3>Comparable / Comparator</h3>
+      <div class="cheat-row"><span>Comparable</span><span>natural, compareTo</span></div>
+      <div class="cheat-row"><span>Comparator</span><span>external, compare</span></div>
+      <div class="cheat-row"><span>&lt;0 / 0 / &gt;0</span><span>before / equal / after</span></div>
+      <div class="cheat-row"><span>Ints</span><span>Integer.compare</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-tree)">
+      <h3>Tree / BST</h3>
+      <div class="cheat-row"><span>BST rule</span><span>left &lt; node &lt; right</span></div>
+      <div class="cheat-row"><span>search</span><span>O(h), log n balanced</span></div>
+      <div class="cheat-row"><span>In-order</span><span>sorted output</span></div>
+      <div class="cheat-row"><span>Degenerate</span><span>O(n) stick</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-heap)">
+      <h3>Heap</h3>
+      <div class="cheat-row"><span>Shape</span><span>complete tree in array</span></div>
+      <div class="cheat-row"><span>peek</span><span>O(1)</span></div>
+      <div class="cheat-row"><span>push/pop</span><span>O(log n)</span></div>
+      <div class="cheat-row"><span>parent(i)</span><span>(i-1)/2</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-trie)">
+      <h3>Trie</h3>
+      <div class="cheat-row"><span>Keys</span><span>strings by char</span></div>
+      <div class="cheat-row"><span>insert/search</span><span>O(L)</span></div>
+      <div class="cheat-row"><span>Strength</span><span>prefix queries</span></div>
+      <div class="cheat-row"><span>Use when</span><span>autocomplete</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-uf)">
+      <h3>Union-Find</h3>
+      <div class="cheat-row"><span>find / union</span><span>~O(1) amortised</span></div>
+      <div class="cheat-row"><span>Optimise</span><span>compress + rank</span></div>
+      <div class="cheat-row"><span>connected</span><span>find(a)==find(b)</span></div>
+      <div class="cheat-row"><span>Use when</span><span>components, cycles</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--accent)">
+      <h3>Picking one</h3>
+      <div class="cheat-row"><span>Index access</span><span>ArrayList</span></div>
+      <div class="cheat-row"><span>Both ends</span><span>ArrayDeque</span></div>
+      <div class="cheat-row"><span>Lookup by key</span><span>HashMap</span></div>
+      <div class="cheat-row"><span>Sorted / order</span><span>TreeMap / TreeSet</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+
+const types = [
+  {
+    id:'big', label:'Big-O',
+    steps:[
+      { label:'What & why',
+        hint:'Big-O describes how runtime or memory grows as input n grows. It is the vocabulary for choosing between every structure in this guide.',
+        code:`${C('// Big-O — how cost scales as the input grows')}
+${C('//')}
+${C('// It ignores constants and small terms; it answers ONE question:')}
+${C('//   "when n doubles, what happens to the work?"')}
+${C('//')}
+${C('// Common classes, best to worst:')}
+${C('//   O(1)        constant     array access, HashMap get (avg)')}
+${C('//   O(log n)    logarithmic  binary search, TreeMap, heap push/pop')}
+${C('//   O(n)        linear       one pass over the data')}
+${C('//   O(n log n)  linearithmic good sorting (Arrays.sort, mergesort)')}
+${C('//   O(n^2)      quadratic    nested loops, naive pair checks')}
+${C('//   O(2^n)      exponential  subsets / brute-force recursion')}
+${C('//   O(n!)       factorial    permutations')}
+${C('//')}
+${C('// Rule of thumb at n = 1e6: O(n) and O(n log n) are fine;')}
+${C('//                          O(n^2) (1e12 ops) is almost always too slow.')}
+`
+      },
+      { label:'Reading code',
+        hint:'Add sequential blocks, multiply nested loops, and let the dominant term win. Halving the problem each step is the signature of O(log n).',
+        code:`${C('// Step 2 — Deriving Big-O from code')}
+
+${C('// Sequential -> ADD, keep the dominant term')}
+${K('for')} (${K('int')} x : a) { }      ${C('// O(n)')}
+${K('for')} (${K('int')} x : a) { }      ${C('// O(n)   -> total O(n), not O(2n)')}
+
+${C('// Nested -> MULTIPLY')}
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++)
+    ${K('for')} (${K('int')} j = ${N('0')}; j < n; j++) { }   ${C('// O(n^2)')}
+
+${C('// Halving each step -> O(log n)')}
+${K('for')} (${K('int')} i = n; i > ${N('1')}; i /= ${N('2')}) { }    ${C('// O(log n)')}
+
+${C('// Loop + halving inside -> O(n log n)  (e.g. sort)')}
+${C('// Recursion: cost = (number of calls) x (work per call)')}
+`
+      },
+      { label:'Cheat sheet',
+        hint:'Memorize the cost of the operations you use most. This table is the payoff of the whole guide — it tells you which structure to reach for.',
+        code:`${C('// Step 3 — Operation costs across this guide')}
+${C('//')}
+${C('//  STRUCTURE       access    search    insert    remove')}
+${C('//  array[]         O(1)      O(n)      n/a       n/a')}
+${C('//  ArrayList       O(1)      O(n)      O(1)*end  O(n)')}
+${C('//  LinkedList      O(n)      O(n)      O(1)ends  O(1)ends')}
+${C('//  HashMap/Set     -         O(1)*     O(1)*     O(1)*')}
+${C('//  TreeMap/Set     -         O(log n)  O(log n)  O(log n)')}
+${C('//  ArrayDeque      -         O(n)      O(1)ends  O(1)ends')}
+${C('//  PriorityQueue   peek O(1) O(n)      O(log n)  O(log n)')}
+${C('//')}
+${C('//  * = average; worst case can degrade with bad hashing.')}
+${C('//  "ends" = front/back only.')}
+`
+      },
+      { label:'Space & gotchas',
+        hint:'Space complexity counts extra memory, including the recursion call stack. Average vs worst case and amortized cost are the usual traps.',
+        code:`${C('// Step 4 — Space complexity & traps')}
+
+${C('// SPACE = extra memory beyond the input. Recursion depth COUNTS:')}
+${C('//   recursive DFS on a tree -> O(h) stack frames (h = height)')}
+${C('//   building a result list  -> O(n)')}
+
+${C('// TRAPS:')}
+${C('//   - Amortized vs worst: ArrayList.add is O(1) amortized, but the')}
+${C('//     resize that occasionally happens is O(n).')}
+${C('//   - Average vs worst: HashMap is O(1) average, O(n) worst (collisions).')}
+${C('//   - Constants matter in practice: O(n) with huge constants can lose')}
+${C('//     to O(n log n) with small ones at realistic sizes.')}
+${C('//   - Big-O hides hardware reality: arrays beat linked lists on cache')}
+${C('//     even when Big-O ties.')}
+`
+      }
+    ]
+  },
+  {
+    id:'arr', label:'Array []',
+    steps:[
+      { label:'When & why',
+        hint:'The lowest-level sequence: fixed size, contiguous memory, O(1) indexed access. Fastest and lightest, but the length is locked at creation.',
+        code:`${C('// Array [] — the primitive, fixed-size sequence')}
+${C('//')}
+${C('// WHEN: the size is known up front and you want the fastest, lightest')}
+${C('//       indexed storage (DP tables, frequency counts, grids, buffers).')}
+${C('// WHY : contiguous memory + no boxing for primitives -> O(1) access,')}
+${C('//       minimal overhead, best cache behaviour of anything in Java.')}
+${C('//')}
+${C('// REACH FOR IT WHEN:')}
+${C('//   - fixed length, hot loops, primitive data (int[], char[], boolean[])')}
+${C('//   - frequency / seen arrays:  int[26] for a..z, int[256] for ASCII')}
+${C('//   - 2-D grids and DP:        int[rows][cols]')}
+${C('//')}
+${C('// AVOID WHEN:')}
+${C('//   - the size must grow/shrink   -> ArrayList')}
+${C('//   - you need add/remove in middle -> ArrayList / LinkedList')}
+
+${K('int')}[] a   = ${K('new')} ${K('int')}[${N('5')}];          ${C('// zero-filled: [0,0,0,0,0]')}
+${K('int')}[] b   = { ${N('3')}, ${N('1')}, ${N('2')} };       ${C('// literal initialiser')}
+${K('int')}[][] g = ${K('new')} ${K('int')}[${N('3')}][${N('4')}];      ${C('// 3x4 grid, all zeros')}
+`
+      },
+      { label:'Core operations',
+        hint:'Access by index, .length is a FIELD not a method, and there is no add/remove. Use Arrays utility methods for fill, copy, sort, and printing.',
+        code:`${C('// Step 2 — Core operations')}
+${K('int')} x = a[${N('0')}];          ${C('// read    -> O(1)')}
+a[${N('0')}] = ${N('42')};            ${C('// write   -> O(1)')}
+${K('int')} n = a.length;        ${C('// FIELD, no () — not a.length()!')}
+
+${C('// Default values: int/long 0, double 0.0, boolean false, Object null')}
+
+${C('// Arrays utility helpers (import java.util.Arrays):')}
+${T('Arrays')}.${F('fill')}(a, -${N('1')});                 ${C('// set every slot to -1')}
+${K('int')}[] c = ${T('Arrays')}.${F('copyOf')}(a, ${N('10')});      ${C('// resize-copy (pad with 0)')}
+${K('int')}[] slice = ${T('Arrays')}.${F('copyOfRange')}(a, ${N('1')}, ${N('4')}); ${C('// [1, 4)')}
+${T('System')}.out.${F('println')}(${T('Arrays')}.${F('toString')}(a));   ${C('// readable print')}
+${T('System')}.out.${F('println')}(${T('Arrays')}.${F('deepToString')}(g)); ${C('// 2-D print')}
+
+${C('// Iterate')}
+${K('for')} (${K('int')} v : a) { ${C('/* value, no index */')} }
+${K('for')} (${K('int')} i = ${N('0')}; i < a.length; i++) { ${C('/* with index */')} }
+`
+      },
+      { label:'Sort & search',
+        hint:'Arrays.sort is dual-pivot quicksort for primitives, Timsort for objects. binarySearch needs a sorted array. Use a boxed Integer[] to sort descending.',
+        code:`${C('// Step 3 — Sort & search')}
+${T('Arrays')}.${F('sort')}(a);                  ${C('// ascending, in place -> O(n log n)')}
+${T('Arrays')}.${F('sort')}(a, ${N('1')}, ${N('4')});            ${C('// sort sub-range [1, 4)')}
+${K('int')} pos = ${T('Arrays')}.${F('binarySearch')}(a, ${N('42')}); ${C('// needs a SORTED array')}
+
+${C('// Sort 2-D by a column (e.g. intervals by start):')}
+${T('Arrays')}.${F('sort')}(intervals, (p, q) -> p[${N('0')}] - q[${N('0')}]);
+
+${C('// DESCENDING needs boxed Integer[] — primitives have no Comparator:')}
+${T('Integer')}[] boxed = { ${N('3')}, ${N('1')}, ${N('2')} };
+${T('Arrays')}.${F('sort')}(boxed, ${T('Comparator')}.${F('reverseOrder')}());
+
+${C('// Array <-> List')}
+${T('List')}<${T('Integer')}> list = ${T('Arrays')}.${F('asList')}(boxed);    ${C('// fixed-size view')}
+${K('int')}[] back = list.${F('stream')}().${F('mapToInt')}(${T('Integer')}::intValue).${F('toArray')}();
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'O(1) access, but fixed size and no bounds safety beyond the runtime exception. Multi-dimensional arrays are arrays-of-arrays (can be jagged).',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   access a[i] / write       O(1)')}
+${C('//   length                    O(1) (cached field)')}
+${C('//   Arrays.sort               O(n log n)')}
+${C('//   Arrays.fill / copyOf      O(n)')}
+${C('//   "insert" / "remove"       not supported — must build a new array')}
+
+${C('// TRAPS:')}
+${C('//   - a.length is a FIELD; String.length() is a METHOD — easy to mix up.')}
+${C('//   - Out-of-range index -> ArrayIndexOutOfBoundsException (no auto-grow).')}
+${C('//   - Size is FIXED at creation; need growth -> ArrayList.')}
+${C('//   - new int[3][] is JAGGED: rows are null until you allocate each.')}
+${C('//   - == compares references; use Arrays.equals(a, b) for contents')}
+${C('//     and Arrays.deepEquals for nested arrays.')}
+${C('//   - Object[] default is null — guard before dereferencing.')}
+`
+      }
+    ]
+  },
+  {
+    id:'lst', label:'ArrayList',
+    steps:[
+      { label:'When & why',
+        hint:'The default List. A growable array — pick it whenever you need indexed access or fast iteration and do not care about insertion order tricks.',
+        code:`${C('// ArrayList — the go-to List implementation')}
+${C('//')}
+${C('// WHEN: you need an ordered, index-addressable, resizable sequence.')}
+${C('// WHY : backed by a contiguous array, so get(i) is O(1) and iteration')}
+${C('//       is cache-friendly (fastest of all the List types in practice).')}
+${C('//')}
+${C('// REACH FOR IT WHEN:')}
+${C('//   - you read/scan far more than you insert in the middle')}
+${C('//   - you need random access by position')}
+${C('//   - you are collecting results to return (most common use)')}
+${C('//')}
+${C('// AVOID WHEN:')}
+${C('//   - you insert/remove at the FRONT a lot   -> ArrayDeque')}
+${C('//   - you need key lookup                     -> HashMap')}
+
+${T('List')}<${T('Integer')}> list = ${K('new')} ${T('ArrayList')}<>();
+${T('List')}<${T('String')}> seeded = ${K('new')} ${T('ArrayList')}<>(${T('List')}.${F('of')}(${S('"a"')}, ${S('"b"')}, ${S('"c"')}));
+`
+      },
+      { label:'Core methods',
+        hint:'add / get / set / remove / size are the bread and butter. remove(int) deletes by index; remove(Object) deletes by value — a classic gotcha with Integer.',
+        code:`${C('// Step 2 — Core methods')}
+list.${F('add')}(${N('10')});            ${C('// append to end           -> O(1) amortised')}
+list.${F('add')}(${N('0')}, ${N('99')});         ${C('// insert at index 0       -> O(n) (shifts)')}
+${K('int')} x   = list.${F('get')}(${N('0')});   ${C('// read by index           -> O(1)')}
+list.${F('set')}(${N('0')}, ${N('42')});         ${C('// overwrite index 0       -> O(1)')}
+${K('boolean')} has = list.${F('contains')}(${N('42')}); ${C('// linear scan         -> O(n)')}
+${K('int')} sz  = list.${F('size')}();
+
+${C('// GOTCHA: remove is overloaded on List<Integer>')}
+list.${F('remove')}(${N('1')});           ${C('// removes INDEX 1 (int overload)')}
+list.${F('remove')}(${T('Integer')}.${F('valueOf')}(${N('42')})); ${C('// removes the VALUE 42')}
+
+${K('for')} (${K('int')} v : list) { ${C('/* iterate in order */')} }
+list.${F('forEach')}(v -> ${T('System')}.out.${F('println')}(v));
+`
+      },
+      { label:'Common patterns',
+        hint:'2-D lists, sorting with comparators, converting to/from arrays, and removing while iterating with removeIf.',
+        code:`${C('// Step 3 — Common idioms')}
+
+${C('// Sort ascending / descending / by key')}
+${T('Collections')}.${F('sort')}(list);
+list.${F('sort')}(${T('Comparator')}.${F('reverseOrder')}());
+people.${F('sort')}(${T('Comparator')}.${F('comparingInt')}(p -> p.age));
+
+${C('// Build a 2-D list (e.g. BFS levels, DP rows)')}
+${T('List')}<${T('List')}<${T('Integer')}>> grid = ${K('new')} ${T('ArrayList')}<>();
+grid.${F('add')}(${K('new')} ${T('ArrayList')}<>());
+
+${C('// Array <-> List')}
+${T('Integer')}[] arr = list.${F('toArray')}(${K('new')} ${T('Integer')}[${N('0')}]);
+${T('List')}<${T('Integer')}> back = ${T('Arrays')}.${F('asList')}(arr); ${C('// fixed-size view!')}
+
+${C('// Remove while iterating (safe) — never list.remove() inside a for-each')}
+list.${F('removeIf')}(v -> v % ${N('2')} == ${N('0')});
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'Amortised O(1) appends hide occasional O(n) resizes. Pre-size with the constructor if you know the count. Arrays.asList is fixed-size.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   get(i) / set(i)     O(1)')}
+${C('//   add(end)            O(1) amortised (doubles capacity on resize)')}
+${C('//   add(i) / remove(i)  O(n)  -> shifts every later element')}
+${C('//   contains / indexOf  O(n)  -> linear scan')}
+
+${C('// Pre-size when the count is known — avoids repeated array copies:')}
+${T('List')}<${T('Integer')}> big = ${K('new')} ${T('ArrayList')}<>(${N('100_000')});
+
+${C('// TRAPS:')}
+${C('//   - Arrays.asList(arr) is FIXED size; add()/remove() throw.')}
+${C('//   - List.of(...) is IMMUTABLE; any mutation throws.')}
+${C('//   - Modifying a list during a for-each -> ConcurrentModificationException.')}
+${C('//   - remove(int) vs remove(Object) on List<Integer> picks the index!')}
+`
+      }
+    ]
+  },
+  {
+    id:'lnk', label:'LinkedList',
+    steps:[
+      { label:'When & why',
+        hint:'A doubly-linked list that implements both List and Deque. Rarely the best List, but a fine Deque. Reach for ArrayList or ArrayDeque first.',
+        code:`${C('// LinkedList — doubly-linked, implements List AND Deque')}
+${C('//')}
+${C('// WHEN: you need O(1) insert/remove at BOTH ends and do not need')}
+${C('//       random access by index.')}
+${C('// WHY : each element is a node with prev/next pointers, so splicing')}
+${C('//       at the ends is constant time — but get(i) must walk the chain.')}
+${C('//')}
+${C('// HONEST TAKE:')}
+${C('//   - As a List, ArrayList beats it almost always (cache locality).')}
+${C('//   - As a Deque/Queue, ArrayDeque beats it almost always too.')}
+${C('//   - Its niche: you hold node references and splice often, or you')}
+${C('//     genuinely need a List + Deque in one object.')}
+
+${T('LinkedList')}<${T('Integer')}> ll = ${K('new')} ${T('LinkedList')}<>();
+${T('Deque')}<${T('Integer')}> asDeque = ll;   ${C('// can be used as a Deque')}
+`
+      },
+      { label:'Core methods',
+        hint:'End operations are O(1): addFirst / addLast / peekFirst / pollLast. Index operations like get(i) are O(n).',
+        code:`${C('// Step 2 — Core methods (the ones worth using)')}
+ll.${F('addFirst')}(${N('1')});      ${C('// O(1)')}
+ll.${F('addLast')}(${N('2')});       ${C('// O(1)')}
+${K('int')} f = ll.${F('peekFirst')}(); ${C('// look at head, null if empty')}
+${K('int')} l = ll.${F('peekLast')}();  ${C('// look at tail')}
+ll.${F('pollFirst')}();          ${C('// remove + return head')}
+ll.${F('pollLast')}();           ${C('// remove + return tail')}
+
+${C('// As a Queue (FIFO):  offer -> poll')}
+ll.${F('offer')}(${N('3')});
+${K('int')} head = ll.${F('poll')}();
+
+${C('// AVOID these on a LinkedList — each is O(n):')}
+ll.${F('get')}(${N('5')});           ${C('// walks 5 nodes from the nearer end')}
+ll.${F('add')}(${N('5')}, ${N('99')});      ${C('// walk + splice')}
+`
+      },
+      { label:'ArrayList vs LinkedList',
+        hint:'Side-by-side decision table. The short version: default to ArrayList; use LinkedList only for genuine front+back queue needs (and even then, prefer ArrayDeque).',
+        code:`${C('// Step 3 — ArrayList vs LinkedList')}
+${C('//')}
+${C('//                       ArrayList        LinkedList')}
+${C('//   get(i)              O(1)             O(n)')}
+${C('//   add / remove end    O(1) amortised   O(1)')}
+${C('//   add / remove front  O(n)             O(1)')}
+${C('//   add / remove middle O(n) shift       O(n) walk + O(1) splice')}
+${C('//   memory per element  low (just value) high (value + 2 pointers)')}
+${C('//   cache locality      excellent        poor (scattered nodes)')}
+${C('//')}
+${C('// DECISION:')}
+${C('//   need indexed access?            -> ArrayList')}
+${C('//   pure stack or queue?            -> ArrayDeque (faster than both)')}
+${C('//   need List + frequent end ops?   -> LinkedList is acceptable')}
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'The pointer overhead and cache misses usually make LinkedList slower than ArrayList even where Big-O looks equal. Benchmark before choosing it.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   addFirst/addLast/peek*/poll*   O(1)')}
+${C('//   get(i)/add(i)/remove(i)        O(n)')}
+${C('//   contains                       O(n)')}
+
+${C('// TRAPS:')}
+${C('//   - get(i) in a loop turns an O(n) scan into O(n^2). Use an')}
+${C('//     iterator or for-each, never indexed access in a loop.')}
+${C('//   - Higher constant factors + cache misses: real-world it often')}
+${C('//     loses to ArrayList even when Big-O ties.')}
+${C('//   - For stack/queue semantics, ArrayDeque is the modern choice;')}
+${C('//     LinkedList-as-Queue is legacy advice.')}
+`
+      }
+    ]
+  },
+  {
+    id:'map', label:'HashMap',
+    steps:[
+      { label:'When & why',
+        hint:'The workhorse for key -> value lookup. O(1) average get/put. No ordering guarantee — use LinkedHashMap for insertion order, TreeMap for sorted.',
+        code:`${C('// HashMap — average O(1) key -> value lookup')}
+${C('//')}
+${C('// WHEN: you map keys to values and want the fastest possible lookup.')}
+${C('// WHY : a hash table buckets entries by key.hashCode(); a good hash')}
+${C('//       spreads keys so get/put average O(1).')}
+${C('//')}
+${C('// VARIANTS:')}
+${C('//   HashMap        no order, fastest')}
+${C('//   LinkedHashMap  preserves INSERTION order (great for LRU caches)')}
+${C('//   TreeMap        keeps keys SORTED, O(log n) (see next tab)')}
+${C('//')}
+${C('// COUNTING / GROUPING / SEEN-BEFORE -> almost always a HashMap.')}
+
+${T('Map')}<${T('String')}, ${T('Integer')}> map = ${K('new')} ${T('HashMap')}<>();
+${T('Map')}<${T('String')}, ${T('Integer')}> ordered = ${K('new')} ${T('LinkedHashMap')}<>();
+`
+      },
+      { label:'Core methods',
+        hint:'put / get / containsKey / remove plus the null-safe helpers getOrDefault, putIfAbsent, merge, and computeIfAbsent that remove boilerplate.',
+        code:`${C('// Step 2 — Core methods')}
+map.${F('put')}(${S('"a"')}, ${N('1')});                 ${C('// insert / overwrite')}
+${K('int')} v = map.${F('get')}(${S('"a"')});            ${C('// returns null if absent (autounbox NPE risk!)')}
+${K('boolean')} has = map.${F('containsKey')}(${S('"a"')});
+map.${F('remove')}(${S('"a"')});
+
+${C('// Null-safe helpers — prefer these:')}
+${K('int')} c = map.${F('getOrDefault')}(${S('"x"')}, ${N('0')});  ${C('// no NPE, no branch')}
+map.${F('putIfAbsent')}(${S('"a"')}, ${N('1')});
+
+${C('// Iterate entries')}
+${K('for')} (${T('Map')}.${T('Entry')}<${T('String')}, ${T('Integer')}> e : map.${F('entrySet')}()) {
+    e.${F('getKey')}(); e.${F('getValue')}();
+}
+map.${F('forEach')}((k, val) -> ${T('System')}.out.${F('println')}(k + ${S('"="')} + val));
+`
+      },
+      { label:'Power patterns',
+        hint:'Frequency counting with merge, grouping with computeIfAbsent, and seen-sets. These three idioms cover most interview and real-world map usage.',
+        code:`${C('// Step 3 — The patterns you actually reuse')}
+
+${C('// 1) Frequency count — merge is the cleanest way')}
+${K('for')} (${T('String')} w : words)
+    freq.${F('merge')}(w, ${N('1')}, ${T('Integer')}::sum);   ${C('// freq[w] += 1, starting at 1')}
+
+${C('// 2) Group items into buckets — computeIfAbsent')}
+${T('Map')}<${T('Character')}, ${T('List')}<${T('String')}>> groups = ${K('new')} ${T('HashMap')}<>();
+${K('for')} (${T('String')} s : strs)
+    groups.${F('computeIfAbsent')}(s.${F('charAt')}(${N('0')}), k -> ${K('new')} ${T('ArrayList')}<>()).${F('add')}(s);
+
+${C('// 3) Two-sum style "have I seen the complement?"')}
+${T('Map')}<${T('Integer')}, ${T('Integer')}> idx = ${K('new')} ${T('HashMap')}<>();
+${K('for')} (${K('int')} i = ${N('0')}; i < nums.length; i++) {
+    ${K('if')} (idx.${F('containsKey')}(target - nums[i]))
+        ${K('return')} ${K('new')} ${K('int')}[]{ idx.${F('get')}(target - nums[i]), i };
+    idx.${F('put')}(nums[i], i);
+}
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'O(1) average degrades only with bad hashCode. Custom keys MUST override equals AND hashCode. get() returns null — beware autoboxing NPEs.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   get / put / remove / containsKey   O(1) average, O(n) worst')}
+${C('//   (worst case is rare: many collisions; modern JDK treeifies buckets)')}
+
+${C('// TRAPS:')}
+${C('//   - Custom key class? You MUST override equals() AND hashCode()')}
+${C('//     consistently, or lookups silently miss.')}
+${C('//   - int v = map.get(k); throws NPE if k is absent (null unboxed).')}
+${C('//     Use getOrDefault or fetch into an Integer and null-check.')}
+${C('//   - HashMap is NOT thread-safe. For concurrency use')}
+${C('//     ConcurrentHashMap (never Hashtable in new code).')}
+${C('//   - Iteration order is unspecified and can change between runs.')}
+`
+      }
+    ]
+  },
+  {
+    id:'tmp', label:'TreeMap',
+    steps:[
+      { label:'When & why',
+        hint:'A sorted map (red-black tree). Slower than HashMap (O(log n)) but gives you ordering plus floor/ceiling/range queries HashMap cannot do.',
+        code:`${C('// TreeMap — keys kept in sorted order, O(log n) operations')}
+${C('//')}
+${C('// WHEN: you need keys in SORTED order, or you ask range questions')}
+${C('//       like "largest key <= x" or "all entries between a and b".')}
+${C('// WHY : backed by a red-black (balanced BST) tree, so it can answer')}
+${C('//       floor/ceiling/headMap/tailMap that a hash table cannot.')}
+${C('//')}
+${C('// TRADE-OFF: O(log n) vs HashMap O(1). Pay it only for the ordering.')}
+${C('//')}
+${C('// EXAMPLES: leaderboards, calendars/intervals, "closest price",')}
+${C('//           time-series range scans.')}
+
+${T('TreeMap')}<${T('Integer')}, ${T('String')}> tm = ${K('new')} ${T('TreeMap')}<>();
+${T('TreeMap')}<${T('String')}, ${T('Integer')}> byLen =
+    ${K('new')} ${T('TreeMap')}<>(${T('Comparator')}.${F('comparingInt')}(${T('String')}::length));
+`
+      },
+      { label:'Navigation methods',
+        hint:'The reason to choose TreeMap: floorKey, ceilingKey, lowerKey, higherKey, firstKey, lastKey — all O(log n).',
+        code:`${C('// Step 2 — Navigation (the whole point of TreeMap)')}
+tm.${F('put')}(${N('10')}, ${S('"a"')}); tm.${F('put')}(${N('20')}, ${S('"b"')}); tm.${F('put')}(${N('30')}, ${S('"c"')});
+
+tm.${F('firstKey')}();          ${C('// 10  — smallest')}
+tm.${F('lastKey')}();           ${C('// 30  — largest')}
+tm.${F('floorKey')}(${N('25')});       ${C('// 20  — greatest key <= 25')}
+tm.${F('ceilingKey')}(${N('25')});     ${C('// 30  — smallest key >= 25')}
+tm.${F('lowerKey')}(${N('20')});       ${C('// 10  — strictly <  20')}
+tm.${F('higherKey')}(${N('20')});      ${C('// 30  — strictly >  20')}
+
+${C('// Same family for entries: floorEntry, ceilingEntry, firstEntry...')}
+${T('Map')}.${T('Entry')}<${T('Integer')}, ${T('String')}> e = tm.${F('floorEntry')}(${N('25')});
+`
+      },
+      { label:'Range & ordered views',
+        hint:'headMap / tailMap / subMap return live sorted views; descendingMap reverses. Great for "everything between two bounds".',
+        code:`${C('// Step 3 — Range views (live, backed by the map)')}
+tm.${F('headMap')}(${N('20')});          ${C('// keys <  20')}
+tm.${F('headMap')}(${N('20')}, ${K('true')});    ${C('// keys <= 20')}
+tm.${F('tailMap')}(${N('20')});          ${C('// keys >= 20')}
+tm.${F('subMap')}(${N('10')}, ${K('true')}, ${N('30')}, ${K('false')}); ${C('// 10 <= key < 30')}
+
+${C('// Iterate in ascending key order (always sorted)')}
+${K('for')} (${K('var')} entry : tm.${F('entrySet')}()) { ${C('/* sorted */')} }
+
+${C('// Reverse order')}
+${T('NavigableMap')}<${T('Integer')}, ${T('String')}> desc = tm.${F('descendingMap')}();
+
+${C('// Poll the ends like a priority structure')}
+tm.${F('pollFirstEntry')}();      ${C('// remove + return smallest')}
+tm.${F('pollLastEntry')}();       ${C('// remove + return largest')}
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'Everything is O(log n). Keys must be Comparable or you must supply a Comparator. TreeSet is the same structure without values.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   get / put / remove                 O(log n)')}
+${C('//   floor/ceiling/lower/higher/first   O(log n)')}
+${C('//   subMap/headMap/tailMap             O(1) (lazy views)')}
+
+${C('// TRAPS:')}
+${C('//   - Keys must implement Comparable, OR pass a Comparator to the')}
+${C('//     constructor. Otherwise put() throws ClassCastException.')}
+${C('//   - Ordering is defined by the comparator, NOT by equals(): two')}
+${C('//     keys that compare 0 are treated as the SAME key.')}
+${C('//   - No null keys (can not be compared). Values may be null.')}
+${C('//   - Need sorted UNIQUE values, not a map? Use TreeSet.')}
+`
+      }
+    ]
+  },
+  {
+    id:'set', label:'HashSet / TreeSet',
+    steps:[
+      { label:'When & why',
+        hint:'Sets store unique elements. HashSet for fast membership, LinkedHashSet for insertion order, TreeSet for sorted order + navigation.',
+        code:`${C('// Set — a collection with NO duplicates')}
+${C('//')}
+${C('// WHEN: you care only about presence/uniqueness, not counts or order.')}
+${C('// WHY : add() returns false if the element is already there, giving')}
+${C('//       you "seen before?" in O(1) (HashSet) or O(log n) (TreeSet).')}
+${C('//')}
+${C('// FLAVOURS:')}
+${C('//   HashSet        no order, O(1)        — default choice')}
+${C('//   LinkedHashSet  insertion order, O(1) — dedupe but keep order')}
+${C('//   TreeSet        sorted, O(log n)      — ordering + floor/ceiling')}
+
+${T('Set')}<${T('Integer')}> seen   = ${K('new')} ${T('HashSet')}<>();
+${T('Set')}<${T('Integer')}> sorted = ${K('new')} ${T('TreeSet')}<>();
+${T('Set')}<${T('Integer')}> order  = ${K('new')} ${T('LinkedHashSet')}<>();
+`
+      },
+      { label:'Core methods',
+        hint:'add / contains / remove / size. The return value of add (true if newly added) is the idiom for dedup and cycle detection.',
+        code:`${C('// Step 2 — Core methods')}
+${K('boolean')} fresh = seen.${F('add')}(${N('5')});   ${C('// true = was NOT present before')}
+seen.${F('add')}(${N('5')});                     ${C('// false = duplicate, set unchanged')}
+${K('boolean')} has = seen.${F('contains')}(${N('5')}); ${C('// membership test')}
+seen.${F('remove')}(${N('5')});
+${K('int')} sz = seen.${F('size')}();
+
+${C('// The add()-returns-false trick = dedup / visited in one line:')}
+${K('if')} (!seen.${F('add')}(node)) ${K('continue')};  ${C('// already visited -> skip')}
+
+${C('// TreeSet adds navigation (like TreeMap keys):')}
+${T('TreeSet')}<${T('Integer')}> ts = ${K('new')} ${T('TreeSet')}<>(seen);
+ts.${F('first')}(); ts.${F('last')}();
+ts.${F('floor')}(${N('25')}); ts.${F('ceiling')}(${N('25')});
+ts.${F('lower')}(${N('20')}); ts.${F('higher')}(${N('20')});
+`
+      },
+      { label:'Set algebra',
+        hint:'Union, intersection, and difference via addAll / retainAll / removeAll. Copy first if you must keep the original.',
+        code:`${C('// Step 3 — Union / intersection / difference')}
+${T('Set')}<${T('Integer')}> a = ${K('new')} ${T('HashSet')}<>(${T('List')}.${F('of')}(${N('1')}, ${N('2')}, ${N('3')}));
+${T('Set')}<${T('Integer')}> b = ${K('new')} ${T('HashSet')}<>(${T('List')}.${F('of')}(${N('2')}, ${N('3')}, ${N('4')}));
+
+${T('Set')}<${T('Integer')}> union = ${K('new')} ${T('HashSet')}<>(a);
+union.${F('addAll')}(b);                ${C('// {1,2,3,4}')}
+
+${T('Set')}<${T('Integer')}> inter = ${K('new')} ${T('HashSet')}<>(a);
+inter.${F('retainAll')}(b);             ${C('// {2,3}  keep only shared')}
+
+${T('Set')}<${T('Integer')}> diff = ${K('new')} ${T('HashSet')}<>(a);
+diff.${F('removeAll')}(b);              ${C('// {1}    a minus b')}
+
+${C('// Dedup a list while preserving order:')}
+${T('List')}<${T('Integer')}> unique = ${K('new')} ${T('ArrayList')}<>(${K('new')} ${T('LinkedHashSet')}<>(nums));
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'HashSet is just a HashMap with dummy values; TreeSet is a TreeMap. Same hashCode/equals and Comparable rules apply.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   HashSet  add/contains/remove   O(1) average')}
+${C('//   TreeSet  add/contains/remove   O(log n), elements sorted')}
+
+${C('// TRAPS:')}
+${C('//   - HashSet is literally backed by a HashMap -> same rule: custom')}
+${C('//     elements MUST override equals() and hashCode().')}
+${C('//   - TreeSet uses compareTo()/Comparator for equality: if two')}
+${C('//     elements compare 0 they are the SAME element (no duplicate).')}
+${C('//   - Need to count occurrences, not just presence? Use a Map.')}
+${C('//   - HashSet iteration order is unspecified; use LinkedHashSet')}
+${C('//     when you need stable, insertion-ordered iteration.')}
+`
+      }
+    ]
+  },
+  {
+    id:'deq', label:'ArrayDeque',
+    steps:[
+      { label:'When & why',
+        hint:'The modern choice for BOTH stacks and queues. Faster than Stack (legacy) and LinkedList. Backed by a circular array, O(1) at both ends.',
+        code:`${C('// ArrayDeque — the one true stack AND queue')}
+${C('//')}
+${C('// WHEN: you need a stack (LIFO) or a queue (FIFO) or both ends.')}
+${C('// WHY : circular-array backing gives O(1) push/pop/peek at both ends')}
+${C('//       with great cache locality.')}
+${C('//')}
+${C('// USE INSTEAD OF:')}
+${C('//   - java.util.Stack   (legacy, synchronised, slow)')}
+${C('//   - LinkedList        (more memory, worse locality)')}
+${C('//')}
+${C('// Declare it via the Deque interface:')}
+
+${T('Deque')}<${T('Integer')}> stack = ${K('new')} ${T('ArrayDeque')}<>();  ${C('// use as LIFO')}
+${T('Deque')}<${T('Integer')}> queue = ${K('new')} ${T('ArrayDeque')}<>();  ${C('// use as FIFO')}
+`
+      },
+      { label:'As a stack (LIFO)',
+        hint:'push / pop / peek operate on the head. This replaces the legacy Stack class entirely.',
+        code:`${C('// Step 2 — Stack semantics (LIFO)')}
+stack.${F('push')}(${N('1')});       ${C('// add to head   (= addFirst)')}
+stack.${F('push')}(${N('2')});
+${K('int')} top = stack.${F('peek')}();  ${C('// look at head  -> 2')}
+${K('int')} out = stack.${F('pop')}();   ${C('// remove head   -> 2')}
+
+${C('// Classic uses: DFS, matching brackets, monotonic stack, undo.')}
+
+${C('// Balanced-parentheses sketch:')}
+${K('for')} (${K('char')} ch : s.${F('toCharArray')}()) {
+    ${K('if')} (ch == '(') stack.${F('push')}(ch);
+    ${K('else')} ${K('if')} (stack.${F('isEmpty')}() || stack.${F('pop')}() != '(') ${K('return')} ${K('false')};
+}
+${K('return')} stack.${F('isEmpty')}();
+`
+      },
+      { label:'As a queue / deque',
+        hint:'offer/poll/peek for FIFO; offerFirst/offerLast/pollFirst/pollLast for full double-ended access (e.g. sliding-window maximum, 0-1 BFS).',
+        code:`${C('// Step 3 — Queue (FIFO) and full deque')}
+queue.${F('offer')}(${N('1')});       ${C('// enqueue at tail (= offerLast)')}
+queue.${F('offer')}(${N('2')});
+${K('int')} h = queue.${F('peek')}();    ${C('// front -> 1')}
+${K('int')} d = queue.${F('poll')}();    ${C('// dequeue front -> 1')}
+
+${C('// Both ends explicitly (deque / monotonic-deque patterns):')}
+${T('Deque')}<${T('Integer')}> dq = ${K('new')} ${T('ArrayDeque')}<>();
+dq.${F('offerFirst')}(${N('0')});   dq.${F('offerLast')}(${N('9')});
+dq.${F('pollFirst')}();        dq.${F('pollLast')}();
+dq.${F('peekFirst')}();        dq.${F('peekLast')}();
+
+${C('// Sliding window maximum keeps indices in a monotonic deque:')}
+${K('while')} (!dq.${F('isEmpty')}() && nums[dq.${F('peekLast')}()] < nums[i])
+    dq.${F('pollLast')}();
+dq.${F('offerLast')}(i);
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'O(1) at both ends, but NO indexed access and NO null elements (null is the "empty" sentinel). Prefer offer/poll over add/remove to avoid exceptions.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   push/pop/peek, offer/poll, *First/*Last   all O(1)')}
+${C('//   get(i) by index                            NOT supported')}
+
+${C('// add/offer & remove/poll differ on failure:')}
+${C('//   add / remove / element  -> THROW on capacity/empty')}
+${C('//   offer / poll / peek     -> return false / null (preferred)')}
+
+${C('// TRAPS:')}
+${C('//   - NULL is forbidden — poll()/peek() return null to mean EMPTY,')}
+${C('//     so a null element would be ambiguous. NullPointerException on add.')}
+${C('//   - No random access; it is not a List.')}
+${C('//   - Do not use java.util.Stack or Vector in new code.')}
+`
+      }
+    ]
+  },
+  {
+    id:'pq', label:'PriorityQueue',
+    steps:[
+      { label:'When & why',
+        hint:'A binary heap that always serves the smallest (or by your comparator) element next. The tool for top-K, merging, and greedy scheduling.',
+        code:`${C('// PriorityQueue — a binary min-heap by default')}
+${C('//')}
+${C('// WHEN: you repeatedly need the smallest (or largest, or "best")')}
+${C('//       element without keeping everything fully sorted.')}
+${C('// WHY : a heap gives O(log n) insert/extract and O(1) peek — far')}
+${C('//       cheaper than re-sorting a list each time.')}
+${C('//')}
+${C('// EXAMPLES: Top-K elements, Dijkstra, merge K sorted lists,')}
+${C('//           task scheduling by priority, median (two heaps).')}
+
+${T('PriorityQueue')}<${T('Integer')}> minHeap = ${K('new')} ${T('PriorityQueue')}<>();
+${T('PriorityQueue')}<${T('Integer')}> maxHeap =
+    ${K('new')} ${T('PriorityQueue')}<>(${T('Comparator')}.${F('reverseOrder')}());
+`
+      },
+      { label:'Core methods',
+        hint:'offer to insert, peek to view the head, poll to extract the head. Order of iteration is NOT sorted — only poll order is.',
+        code:`${C('// Step 2 — Core methods')}
+minHeap.${F('offer')}(${N('5')});      ${C('// insert            -> O(log n)')}
+minHeap.${F('offer')}(${N('1')});
+minHeap.${F('offer')}(${N('3')});
+${K('int')} top = minHeap.${F('peek')}();  ${C('// smallest, no removal -> O(1) -> 1')}
+${K('int')} out = minHeap.${F('poll')}();  ${C('// remove smallest      -> O(log n) -> 1')}
+
+${C('// Draining yields sorted order (heapsort):')}
+${K('while')} (!minHeap.${F('isEmpty')}())
+    ${T('System')}.out.${F('println')}(minHeap.${F('poll')}());   ${C('// 3, 5, ...')}
+
+${C('// WARNING: iterating / toArray does NOT give sorted order —')}
+${C('// only repeated poll() does.')}
+`
+      },
+      { label:'Custom order & top-K',
+        hint:'Pass a Comparator for objects. The top-K trick: keep a heap of size k, evict the worst — O(n log k) instead of O(n log n).',
+        code:`${C('// Step 3 — Custom comparators & the top-K pattern')}
+
+${C('// Heap of objects by a field:')}
+${T('PriorityQueue')}<${K('int')}[]> byDist =
+    ${K('new')} ${T('PriorityQueue')}<>((x, y) -> x[${N('1')}] - y[${N('1')}]); ${C('// closest first')}
+
+${C('// K LARGEST: keep a MIN-heap of size k; evict the smallest.')}
+${T('PriorityQueue')}<${T('Integer')}> heap = ${K('new')} ${T('PriorityQueue')}<>();
+${K('for')} (${K('int')} n : nums) {
+    heap.${F('offer')}(n);
+    ${K('if')} (heap.${F('size')}() > k) heap.${F('poll')}();   ${C('// drop the smallest so far')}
+}
+${K('int')} kthLargest = heap.${F('peek')}();      ${C('// O(n log k)')}
+
+${C('// Build a heap from a collection in O(n):')}
+${T('PriorityQueue')}<${T('Integer')}> h = ${K('new')} ${T('PriorityQueue')}<>(nums);
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'offer/poll O(log n), peek O(1), but contains/remove(Object) are O(n). It is NOT sorted internally and NOT thread-safe.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   offer / poll        O(log n)')}
+${C('//   peek                O(1)')}
+${C('//   contains / remove(o) O(n)   -> not its strength')}
+${C('//   build from n items  O(n)    -> heapify constructor')}
+
+${C('// TRAPS:')}
+${C('//   - NOT sorted: iteration / toArray order is heap order, not')}
+${C('//     ascending. Only successive poll() is ordered.')}
+${C('//   - Default is a MIN-heap. For a max-heap pass reverseOrder().')}
+${C('//   - int subtraction comparators (a-b) overflow on huge values;')}
+${C('//     prefer Integer.compare(a, b) or Comparator.comparingInt.')}
+${C('//   - No null elements. Not thread-safe (use PriorityBlockingQueue).')}
+`
+      }
+    ]
+  },
+  {
+    id:'str', label:'String / StringBuilder',
+    steps:[
+      { label:'When & why',
+        hint:'String is immutable — every "edit" allocates a new object. Use StringBuilder whenever you build text in a loop or with many concatenations.',
+        code:`${C('// String vs StringBuilder — immutability is the whole story')}
+${C('//')}
+${C('// String       IMMUTABLE. Every concat / replace makes a NEW object.')}
+${C('// StringBuilder MUTABLE, growable char buffer. Edit in place, O(1)* append.')}
+${C('//')}
+${C('// USE String WHEN:')}
+${C('//   - the text is fixed or built once')}
+${C('//   - you want a safe key / map / set element (immutable = safe hash)')}
+${C('//')}
+${C('// USE StringBuilder WHEN:')}
+${C('//   - you concatenate inside a loop (building CSV, joining tokens)')}
+${C('//   - you mutate characters (reverse, replace, insert) repeatedly')}
+${C('//')}
+${C('// THE CLASSIC BUG: s += x inside a loop is O(n^2) — each += copies')}
+${C('// the whole string. Build with StringBuilder, then toString() once.')}
+
+${T('String')} s = ${S('"hello"')};
+${T('StringBuilder')} sb = ${K('new')} ${T('StringBuilder')}();
+`
+      },
+      { label:'String methods',
+        hint:'length / charAt / substring / indexOf / split / equals. Remember: == compares references, .equals() compares content.',
+        code:`${C('// Step 2 — String essentials')}
+${K('int')} n   = s.${F('length')}();
+${K('char')} c   = s.${F('charAt')}(${N('0')});
+${T('String')} sub = s.${F('substring')}(${N('1')}, ${N('3')});   ${C('// [1, 3) -> "el"')}
+${K('int')} at  = s.${F('indexOf')}(${S('"l"')});      ${C('// first index, -1 if none')}
+${K('boolean')} has = s.${F('contains')}(${S('"ell"')});
+
+${C('// Split / join / case / trim')}
+${T('String')}[] parts = ${S('"a,b,c"')}.${F('split')}(${S('","')});
+${T('String')} joined = ${T('String')}.${F('join')}(${S('"-"')}, parts);   ${C('// "a-b-c"')}
+${T('String')} up = s.${F('toUpperCase')}(); s.${F('strip')}();
+
+${C('// COMPARISON — the #1 beginner trap:')}
+${K('if')} (s.${F('equals')}(${S('"hello"')})) { }       ${C('// content   -> CORRECT')}
+${K('if')} (s == ${S('"hello"')}) { }             ${C('// reference  -> WRONG (usually)')}
+${K('if')} (s.${F('equalsIgnoreCase')}(${S('"HELLO"')})) { }
+`
+      },
+      { label:'StringBuilder methods',
+        hint:'append / insert / deleteCharAt / reverse / toString. Chain calls since each mutator returns the same builder.',
+        code:`${C('// Step 3 — StringBuilder workhorse methods')}
+${T('StringBuilder')} sb = ${K('new')} ${T('StringBuilder')}();
+sb.${F('append')}(${S('"a"')}).${F('append')}(${N('1')}).${F('append')}(${K('true')});  ${C('// chainable -> "a1true"')}
+sb.${F('insert')}(${N('0')}, ${S('"["')});        ${C('// insert at index')}
+sb.${F('setCharAt')}(${N('1')}, 'X');
+sb.${F('deleteCharAt')}(${N('0')});
+sb.${F('reverse')}();                ${C('// in-place reverse — handy for palindromes')}
+${K('int')} len = sb.${F('length')}();
+${T('String')} result = sb.${F('toString')}();  ${C('// materialise ONCE at the end')}
+
+${C('// Build text in a loop the RIGHT way:')}
+${T('StringBuilder')} out = ${K('new')} ${T('StringBuilder')}();
+${K('for')} (${T('String')} tok : tokens) {
+    ${K('if')} (out.${F('length')}() > ${N('0')}) out.${F('append')}(${S('","')});
+    out.${F('append')}(tok);
+}
+${K('return')} out.${F('toString')}();
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'String concat in a loop is O(n^2); StringBuilder append is amortised O(1). substring is O(k). char is just an int — do arithmetic on it.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   String  + (concat)     O(n) per op  -> O(n^2) in a loop  AVOID')}
+${C('//   String  charAt/length  O(1)')}
+${C('//   String  substring      O(k) (copies in Java 8+)')}
+${C('//   StringBuilder append   O(1) amortised')}
+${C('//   StringBuilder reverse  O(n)')}
+
+${C('// HANDY CONVERSIONS:')}
+${K('char')}[] arr = s.${F('toCharArray')}();
+${T('String')} fromArr = ${K('new')} ${T('String')}(arr);
+${K('int')} digit = ${S("'7'")} - ${S("'0'")};       ${C('// char arithmetic -> 7')}
+${K('int')} idx   = ch - 'a';            ${C('// map a..z -> 0..25 (frequency arrays)')}
+
+${C('// TRAPS:')}
+${C('//   - Use .equals(), not ==, to compare String CONTENT.')}
+${C('//   - StringBuilder is NOT thread-safe (that is StringBuffer, legacy).')}
+${C('//   - String is a great Map key precisely because it is immutable.')}
+`
+      }
+    ]
+  },
+  {
+    id:'cmp', label:'Comparable / Comparator',
+    steps:[
+      { label:'What & why',
+        hint:'These two interfaces define ORDER. Comparable is a type\'s natural ordering (one, built in); Comparator is an external, swappable ordering.',
+        code:`${C('// Comparable vs Comparator — how Java decides ORDER')}
+${C('//')}
+${C('// Comparable<T>  the NATURAL order baked into the class itself.')}
+${C('//                One per type. Method: int compareTo(T other).')}
+${C('//                Integer, String, etc. are already Comparable.')}
+${C('//')}
+${C('// Comparator<T>  an EXTERNAL order you pass in. Many per type.')}
+${C('//                Method: int compare(T a, T b).')}
+${C('//')}
+${C('// BOTH return:  < 0  if a comes BEFORE b')}
+${C('//               = 0  if equal in ordering')}
+${C('//               > 0  if a comes AFTER  b')}
+${C('//')}
+${C('// Used by: Collections.sort, Arrays.sort, TreeMap, TreeSet, PriorityQueue.')}
+
+${K('class')} ${T('Task')} ${K('implements')} ${T('Comparable')}<${T('Task')}> {
+    ${K('int')} priority;
+    ${K('public')} ${K('int')} ${F('compareTo')}(${T('Task')} o) { ${K('return')} ${T('Integer')}.${F('compare')}(priority, o.priority); }
+}
+`
+      },
+      { label:'Building comparators',
+        hint:'Prefer the factory methods: comparing, comparingInt, thenComparing, reversed. They read cleanly and avoid subtraction-overflow bugs.',
+        code:`${C('// Step 2 — Build comparators the modern way')}
+
+${C('// By one key')}
+${T('Comparator')}<${T('Person')}> byAge = ${T('Comparator')}.${F('comparingInt')}(p -> p.age);
+
+${C('// Multi-key: age asc, then name asc — tie-breakers chain cleanly')}
+${T('Comparator')}<${T('Person')}> order =
+    ${T('Comparator')}.${F('comparingInt')}((${T('Person')} p) -> p.age)
+              .${F('thenComparing')}(p -> p.name);
+
+${C('// Reverse any comparator')}
+${T('Comparator')}<${T('Person')}> oldestFirst = byAge.${F('reversed')}();
+
+${C('// Method-reference shorthand')}
+${T('Comparator')}<${T('String')}> byLen = ${T('Comparator')}.${F('comparingInt')}(${T('String')}::length);
+
+${C('// AVOID raw subtraction — it overflows on large/negative ints:')}
+${C('//   (a, b) -> a - b        BAD (Integer.MIN_VALUE wraps)')}
+${C('//   Integer.compare(a, b)  GOOD')}
+`
+      },
+      { label:'Where it plugs in',
+        hint:'Pass a Comparator to sort, or to the constructor of TreeMap / TreeSet / PriorityQueue to change their ordering.',
+        code:`${C('// Step 3 — Plugging order into structures')}
+
+${C('// Sort a list / array')}
+people.${F('sort')}(${T('Comparator')}.${F('comparingInt')}(p -> p.age));
+${T('Arrays')}.${F('sort')}(arr, ${T('Comparator')}.${F('reverseOrder')}());
+
+${C('// Max-heap = min-heap + reversed comparator')}
+${T('PriorityQueue')}<${T('Integer')}> maxHeap =
+    ${K('new')} ${T('PriorityQueue')}<>(${T('Comparator')}.${F('reverseOrder')}());
+
+${C('// TreeMap / TreeSet ordered by a custom rule')}
+${T('TreeSet')}<${T('String')}> byLength =
+    ${K('new')} ${T('TreeSet')}<>(${T('Comparator')}.${F('comparingInt')}(${T('String')}::length)
+                            .${F('thenComparing')}(s -> s));   ${C('// tie-break so equals-length stay distinct')}
+`
+      },
+      { label:'Gotchas',
+        hint:'For sorted structures, the comparator DEFINES equality: compare == 0 means "same element". Keep compareTo consistent with equals.',
+        code:`${C('// Step 4 — Gotchas')}
+
+${C('//   - In TreeMap/TreeSet, ordering defines IDENTITY: if compare()')}
+${C('//     returns 0, the elements are treated as the SAME -> the second')}
+${C('//     is dropped / overwrites the first. Add a tie-breaker key.')}
+${C('//   - compareTo SHOULD be consistent with equals(): a.compareTo(b)==0')}
+${C('//     ideally implies a.equals(b). Inconsistency surprises sorted sets.')}
+${C('//   - A comparator must be a TOTAL order and transitive, or sort()')}
+${C('//     throws "Comparison method violates its general contract".')}
+${C('//   - Never use a - b for ints that can be large/negative; overflow')}
+${C('//     flips the sign. Use Integer.compare / Long.compare / Double.compare.')}
+`
+      }
+    ]
+  },
+  {
+    id:'tree', label:'Tree / BST',
+    steps:[
+      { label:'What & why',
+        hint:'A tree is nodes with children, no cycles. A Binary Search Tree keeps left < node < right, giving O(log n) search when balanced.',
+        code:`${C('// Tree / Binary Search Tree (BST)')}
+${C('//')}
+${C('// TREE: a root with children; each node has exactly one parent')}
+${C('//       (the root has none) and there are no cycles.')}
+${C('// BINARY TREE: every node has at most 2 children (left, right).')}
+${C('// BST: an ordered binary tree where, for every node,')}
+${C('//      all keys in LEFT subtree  <  node.key  <  all keys in RIGHT.')}
+${C('//')}
+${C('// WHY: that ordering lets you discard half the tree at each step')}
+${C('//      -> search / insert / delete in O(h). Balanced h = log n.')}
+${C('//')}
+${C('// Javas TreeMap/TreeSet ARE self-balancing BSTs (red-black trees).')}
+
+${K('class')} ${T('TreeNode')} {
+    ${K('int')} val;
+    ${T('TreeNode')} left, right;
+    ${T('TreeNode')}(${K('int')} v) { val = v; }
+}
+`
+      },
+      { label:'BST operations',
+        hint:'Search and insert both walk down comparing keys: go left if smaller, right if larger. O(h) each.',
+        code:`${C('// Step 2 — Search & insert (the ordering pays off)')}
+
+${K('boolean')} ${F('search')}(${T('TreeNode')} root, ${K('int')} target) {
+    ${T('TreeNode')} cur = root;
+    ${K('while')} (cur != ${K('null')}) {
+        ${K('if')} (target == cur.val) ${K('return')} ${K('true')};
+        cur = target < cur.val ? cur.left : cur.right;  ${C('// drop half')}
+    }
+    ${K('return')} ${K('false')};                                    ${C('// O(h)')}
+}
+
+${T('TreeNode')} ${F('insert')}(${T('TreeNode')} root, ${K('int')} v) {
+    ${K('if')} (root == ${K('null')}) ${K('return')} ${K('new')} ${T('TreeNode')}(v);
+    ${K('if')} (v < root.val) root.left  = ${F('insert')}(root.left, v);
+    ${K('else')}             root.right = ${F('insert')}(root.right, v);
+    ${K('return')} root;
+}
+`
+      },
+      { label:'Traversals',
+        hint:'In-order on a BST yields SORTED keys. Pre/post-order and level-order (BFS) each suit different problems.',
+        code:`${C('// Step 3 — Traversals (know all four)')}
+
+${C('// IN-ORDER (left, node, right) — on a BST gives SORTED output')}
+${K('void')} ${F('inorder')}(${T('TreeNode')} n, ${T('List')}<${T('Integer')}> out) {
+    ${K('if')} (n == ${K('null')}) ${K('return')};
+    ${F('inorder')}(n.left, out);
+    out.${F('add')}(n.val);
+    ${F('inorder')}(n.right, out);
+}
+
+${C('// PRE-ORDER  (node, left, right) — copy/serialize a tree')}
+${C('// POST-ORDER (left, right, node) — delete children before parent')}
+
+${C('// LEVEL-ORDER (BFS) — queue, one level at a time:')}
+${T('Deque')}<${T('TreeNode')}> q = ${K('new')} ${T('ArrayDeque')}<>();
+${K('if')} (root != ${K('null')}) q.${F('offer')}(root);
+${K('while')} (!q.${F('isEmpty')}()) {
+    ${T('TreeNode')} c = q.${F('poll')}();
+    ${K('if')} (c.left  != ${K('null')}) q.${F('offer')}(c.left);
+    ${K('if')} (c.right != ${K('null')}) q.${F('offer')}(c.right);
+}
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'Balanced => O(log n); a degenerate (sorted-insert) BST becomes a linked list at O(n). That is why real libraries self-balance.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   search / insert / delete   O(h)')}
+${C('//     balanced tree  h = log n  -> O(log n)')}
+${C('//     degenerate     h = n      -> O(n)   (a glorified linked list)')}
+${C('//   any traversal              O(n) time, O(h) recursion space')}
+
+${C('// TRAPS:')}
+${C('//   - Inserting already-sorted keys into a plain BST builds a stick')}
+${C('//     (every node has one child) -> O(n). Self-balancing trees')}
+${C('//     (red-black / AVL) fix this; TreeMap/TreeSet do it for you.')}
+${C('//   - Deep recursion on a skewed tree can StackOverflow; consider')}
+${C('//     an explicit stack for very deep trees.')}
+${C('//   - Do not hand-roll a BST when TreeMap/TreeSet already suffice.')}
+`
+      }
+    ]
+  },
+  {
+    id:'heap', label:'Heap',
+    steps:[
+      { label:'What & why',
+        hint:'A heap is a complete binary tree kept in an array, where each parent beats its children. It powers PriorityQueue and heapsort.',
+        code:`${C('// Heap — the structure behind PriorityQueue')}
+${C('//')}
+${C('// A COMPLETE binary tree (filled left-to-right) with the HEAP PROPERTY:')}
+${C('//   min-heap: every parent <= its children  (smallest at the root)')}
+${C('//   max-heap: every parent >= its children  (largest  at the root)')}
+${C('//')}
+${C('// Stored compactly in an ARRAY (no node objects):')}
+${C('//   parent(i) = (i - 1) / 2')}
+${C('//   left(i)   = 2*i + 1')}
+${C('//   right(i)  = 2*i + 2')}
+${C('//')}
+${C('// WHY: the min/max is always at index 0 (O(1) peek), and insert/remove')}
+${C('//      restore order in O(log n) by swapping along ONE path.')}
+
+${K('int')}[] heap = ${K('new')} ${K('int')}[capacity];
+${K('int')} size = ${N('0')};
+`
+      },
+      { label:'Sift up / sift down',
+        hint:'Insert at the end and bubble UP; remove the root, move the last element to the top, and bubble DOWN. Each touches only one root-to-leaf path.',
+        code:`${C('// Step 2 — The two repair operations (min-heap)')}
+
+${C('// INSERT: append, then sift up while smaller than parent')}
+${K('void')} ${F('push')}(${K('int')} v) {
+    heap[size] = v;
+    ${K('int')} i = size++;
+    ${K('while')} (i > ${N('0')} && heap[i] < heap[(i - ${N('1')}) / ${N('2')}]) {
+        ${F('swap')}(i, (i - ${N('1')}) / ${N('2')});
+        i = (i - ${N('1')}) / ${N('2')};
+    }
+}
+
+${C('// EXTRACT-MIN: take root, move last up, sift down to the smaller child')}
+${K('int')} ${F('pop')}() {
+    ${K('int')} min = heap[${N('0')}];
+    heap[${N('0')}] = heap[--size];
+    ${K('int')} i = ${N('0')};
+    ${K('while')} (${K('true')}) {
+        ${K('int')} l = ${N('2')}*i + ${N('1')}, r = ${N('2')}*i + ${N('2')}, s = i;
+        ${K('if')} (l < size && heap[l] < heap[s]) s = l;
+        ${K('if')} (r < size && heap[r] < heap[s]) s = r;
+        ${K('if')} (s == i) ${K('break')};
+        ${F('swap')}(i, s); i = s;
+    }
+    ${K('return')} min;
+}
+`
+      },
+      { label:'In practice',
+        hint:'You rarely hand-roll a heap — use PriorityQueue. The concept matters for understanding cost, heapsort, and the top-K / two-heap patterns.',
+        code:`${C('// Step 3 — In real Java code, use PriorityQueue')}
+${T('PriorityQueue')}<${T('Integer')}> minHeap = ${K('new')} ${T('PriorityQueue')}<>();
+${T('PriorityQueue')}<${T('Integer')}> maxHeap = ${K('new')} ${T('PriorityQueue')}<>(${T('Collections')}.${F('reverseOrder')}());
+
+${C('// HEAPSORT: push everything, then pop n times -> sorted, O(n log n)')}
+
+${C('// BUILD-HEAP in O(n): construct PriorityQueue from a collection')}
+${T('PriorityQueue')}<${T('Integer')}> h = ${K('new')} ${T('PriorityQueue')}<>(nums);
+
+${C('// TOP-K largest: keep a MIN-heap of size k, evict the smallest')}
+${K('for')} (${K('int')} x : nums) {
+    minHeap.${F('offer')}(x);
+    ${K('if')} (minHeap.${F('size')}() > k) minHeap.${F('poll')}();
+}                                ${C('// k largest remain, O(n log k)')}
+
+${C('// MEDIAN of a stream: a max-heap (low half) + min-heap (high half)')}
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'peek O(1), push/pop O(log n), build O(n). A heap is only partially ordered — it is NOT sorted and has no fast arbitrary search.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   peek (min/max)        O(1)')}
+${C('//   push / pop            O(log n)')}
+${C('//   build from n items    O(n)   (bottom-up heapify)')}
+${C('//   search arbitrary key  O(n)   -> NOT what a heap is for')}
+
+${C('// TRAPS:')}
+${C('//   - A heap is only PARTIALLY ordered: the root is the extreme, but')}
+${C('//     iterating gives heap order, NOT sorted order.')}
+${C('//   - Default PriorityQueue is a MIN-heap; reverse the comparator')}
+${C('//     for a max-heap.')}
+${C('//   - Need to remove/update an arbitrary element fast? A plain heap')}
+${C('//     cannot; you need an indexed heap or a TreeMap.')}
+`
+      }
+    ]
+  },
+  {
+    id:'trie', label:'Trie',
+    steps:[
+      { label:'What & why',
+        hint:'A trie (prefix tree) stores strings by character along paths. Lookup and prefix queries cost O(length), independent of how many words are stored.',
+        code:`${C('// Trie — the prefix tree for string keys')}
+${C('//')}
+${C('// Each EDGE is a character; each PATH from the root spells a prefix.')}
+${C('// Nodes flagged isEnd mark where a complete word finishes.')}
+${C('//')}
+${C('// WHY: search / insert / startsWith run in O(L) where L = word length,')}
+${C('//      regardless of how many words are stored. Shared prefixes are')}
+${C('//      stored once, which is memory-efficient for big dictionaries.')}
+${C('//')}
+${C('// USE FOR: autocomplete, spell-check, prefix matching, word games,')}
+${C('//          IP routing tables. A HashSet<String> can not do PREFIX queries.')}
+
+${K('class')} ${T('TrieNode')} {
+    ${T('TrieNode')}[] next = ${K('new')} ${T('TrieNode')}[${N('26')}];  ${C('// a..z (or a HashMap for big alphabets)')}
+    ${K('boolean')} isEnd;
+}
+`
+      },
+      { label:'Insert',
+        hint:'Walk the word char by char, creating child nodes as needed, then flag the final node as the end of a word.',
+        code:`${C('// Step 2 — Insert a word')}
+${T('TrieNode')} root = ${K('new')} ${T('TrieNode')}();
+
+${K('void')} ${F('insert')}(${T('String')} word) {
+    ${T('TrieNode')} cur = root;
+    ${K('for')} (${K('char')} ch : word.${F('toCharArray')}()) {
+        ${K('int')} c = ch - 'a';
+        ${K('if')} (cur.next[c] == ${K('null')})
+            cur.next[c] = ${K('new')} ${T('TrieNode')}();   ${C('// create branch on demand')}
+        cur = cur.next[c];
+    }
+    cur.isEnd = ${K('true')};                       ${C('// mark end of a complete word')}
+}                                            ${C('// O(L)')}
+`
+      },
+      { label:'Search & prefix',
+        hint:'search and startsWith share a walk helper; the only difference is whether you require isEnd at the final node.',
+        code:`${C('// Step 3 — Exact search vs prefix match')}
+
+${T('TrieNode')} ${F('walk')}(${T('String')} s) {
+    ${T('TrieNode')} cur = root;
+    ${K('for')} (${K('char')} ch : s.${F('toCharArray')}()) {
+        ${K('int')} c = ch - 'a';
+        ${K('if')} (cur.next[c] == ${K('null')}) ${K('return')} ${K('null')};   ${C('// path breaks -> absent')}
+        cur = cur.next[c];
+    }
+    ${K('return')} cur;
+}
+
+${K('boolean')} ${F('search')}(${T('String')} word) {
+    ${T('TrieNode')} n = ${F('walk')}(word);
+    ${K('return')} n != ${K('null')} && n.isEnd;      ${C('// must END a word')}
+}
+
+${K('boolean')} ${F('startsWith')}(${T('String')} prefix) {
+    ${K('return')} ${F('walk')}(prefix) != ${K('null')};      ${C('// path existing is enough')}
+}
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'All ops are O(L). Memory can balloon with a fixed children array per node; use a HashMap of children for large or sparse alphabets.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   insert / search / startsWith   O(L)   (L = key length)')}
+${C('//   space                          O(total chars x alphabet)')}
+
+${C('// TRAPS:')}
+${C('//   - A fixed TrieNode[26] per node wastes memory if most slots are')}
+${C('//     null. For large/unicode alphabets use Map<Character, TrieNode>.')}
+${C('//   - Distinguish "word exists" (isEnd) from "prefix exists" — that')}
+${C('//     flag is the whole point; forgetting it makes search == startsWith.')}
+${C('//   - If you only need exact membership (no prefixes), a HashSet is')}
+${C('//     simpler and lighter. Reach for a trie only for PREFIX work.')}
+`
+      }
+    ]
+  },
+  {
+    id:'uf', label:'Union-Find',
+    steps:[
+      { label:'What & why',
+        hint:'Disjoint Set Union tracks which elements are in the same group. It answers "are these connected?" and "merge these groups" in near O(1).',
+        code:`${C('// Union-Find (Disjoint Set Union, DSU)')}
+${C('//')}
+${C('// Maintains a partition of items into disjoint groups and answers:')}
+${C('//   find(x)     -> which group is x in? (its representative / root)')}
+${C('//   union(a, b) -> merge the groups of a and b')}
+${C('//   connected   -> find(a) == find(b)?')}
+${C('//')}
+${C('// WHY: with two optimisations (below) every op is near O(1) amortised.')}
+${C('//')}
+${C('// USE FOR: connected components, cycle detection in an undirected')}
+${C('//          graph, Kruskals MST, "number of islands"/grouping problems,')}
+${C('//          dynamic connectivity as edges are added.')}
+
+${K('int')}[] parent, rank;   ${C('// parent[i] = i means i is its own root')}
+`
+      },
+      { label:'Build & find',
+        hint:'Each element starts as its own group. find walks to the root; PATH COMPRESSION flattens the chain so future finds are fast.',
+        code:`${C('// Step 2 — Init + find with path compression')}
+
+${K('void')} ${F('init')}(${K('int')} n) {
+    parent = ${K('new')} ${K('int')}[n];
+    rank   = ${K('new')} ${K('int')}[n];
+    ${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) parent[i] = i;   ${C('// each its own group')}
+}
+
+${K('int')} ${F('find')}(${K('int')} x) {
+    ${K('if')} (parent[x] != x)
+        parent[x] = ${F('find')}(parent[x]);    ${C('// PATH COMPRESSION: point straight to root')}
+    ${K('return')} parent[x];
+}
+`
+      },
+      { label:'Union by rank',
+        hint:'Attach the shorter tree under the taller one (union by rank/size) to keep trees flat. Returns false if already merged — handy for cycle detection.',
+        code:`${C('// Step 3 — Union by rank')}
+${K('boolean')} ${F('union')}(${K('int')} a, ${K('int')} b) {
+    ${K('int')} ra = ${F('find')}(a), rb = ${F('find')}(b);
+    ${K('if')} (ra == rb) ${K('return')} ${K('false')};        ${C('// already together -> edge forms a CYCLE')}
+
+    ${C('// attach smaller tree under the larger -> stays shallow')}
+    ${K('if')} (rank[ra] < rank[rb]) { ${K('int')} t = ra; ra = rb; rb = t; }
+    parent[rb] = ra;
+    ${K('if')} (rank[ra] == rank[rb]) rank[ra]++;
+    ${K('return')} ${K('true')};                       ${C('// a real merge happened')}
+}
+
+${C('// Count components: how many roots remain')}
+${K('int')} comps = ${N('0')};
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) ${K('if')} (${F('find')}(i) == i) comps++;
+`
+      },
+      { label:'Complexity & gotchas',
+        hint:'With path compression + union by rank, each op is O(α(n)) — inverse Ackermann, effectively constant. It does not support splitting groups.',
+        code:`${C('// Step 4 — Complexity & gotchas')}
+${C('//   find / union (both optimisations)   O(alpha(n)) ~ O(1) amortised')}
+${C('//     alpha = inverse Ackermann, < 5 for any realistic n')}
+${C('//   without optimisations               O(n) worst case')}
+
+${C('// TRAPS:')}
+${C('//   - You MUST apply BOTH path compression AND union by rank/size to')}
+${C('//     get the near-constant bound; one alone is weaker.')}
+${C('//   - Compare ROOTS, not raw ids: connected = find(a) == find(b).')}
+${C('//   - It only MERGES; you can not efficiently split a group apart.')}
+${C('//   - For grid problems, map (r, c) -> r * cols + c to get an int id.')}
+${C('//   - Great for UNDIRECTED connectivity / cycle detection; for')}
+${C('//     directed-graph cycles use DFS colors instead.')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">facet ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+
+// ---- Left / right arrow navigation ----
+function activeTabId() {
+  const on = document.querySelector('.tab.on');
+  return on ? on.dataset.id : types[0].id;
+}
+function goTab(delta) {
+  const ids = types.map(t => t.id);
+  let i = ids.indexOf(activeTabId()) + delta;
+  if (i < 0) i = ids.length - 1;
+  if (i >= ids.length) i = 0;
+  switchTab(ids[i]);
+  const btn = document.querySelector('.tab[data-id="' + ids[i] + '"]');
+  if (btn && btn.scrollIntoView) btn.scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+function goFacet(delta) {
+  const id = activeTabId();
+  const t = types.find(x => x.id === id);
+  let i = stepIdx[id] + delta;
+  if (i < 0) i = t.steps.length - 1;
+  if (i >= t.steps.length) i = 0;
+  setStep(id, i);
+}
+
+const prevArrow = document.createElement('button');
+prevArrow.type = 'button';
+prevArrow.className = 'tab-arrow prev';
+prevArrow.setAttribute('aria-label', 'Previous collection');
+prevArrow.title = 'Previous (\u2190)';
+prevArrow.innerHTML = '&#8249;';
+prevArrow.onclick = () => goTab(-1);
+
+const nextArrow = document.createElement('button');
+nextArrow.type = 'button';
+nextArrow.className = 'tab-arrow next';
+nextArrow.setAttribute('aria-label', 'Next collection');
+nextArrow.title = 'Next (\u2192)';
+nextArrow.innerHTML = '&#8250;';
+nextArrow.onclick = () => goTab(1);
+
+tabsEl.insertBefore(prevArrow, tabsEl.firstChild);
+tabsEl.appendChild(nextArrow);
+
+document.addEventListener('keydown', e => {
+  const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea') return;
+  if (e.ctrlKey && e.key === 'ArrowLeft')  { e.preventDefault(); goFacet(-1); return; }
+  if (e.ctrlKey && e.key === 'ArrowRight') { e.preventDefault(); goFacet(1);  return; }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); goTab(-1); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); goTab(1); }
+});
+</script>
+
+</body>
+</html>

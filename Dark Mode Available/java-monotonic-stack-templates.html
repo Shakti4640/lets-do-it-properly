@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Monotonic Stack Templates</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:     #0d0f12;
+    --bg2:    #13161b;
+    --bg3:    #1a1e25;
+    --bg4:    #21262f;
+    --border: rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --text:   #c9d1d9;
+    --text2:  #8b949e;
+    --text3:  #4d5566;
+    --accent: #58a6ff;
+    --kw:  #ff7b72;
+    --ty:  #79c0ff;
+    --cm:  #4d5566;
+    --st:  #a5d6a7;
+    --fn:  #ffc66d;
+    --nu:  #79c0ff;
+    --c-sub: #39d0a8;
+    --c-com: #58a6ff;
+    --c-per: #bc8cff;
+    --c-grd: #f0883e;
+    --c-pal: #d29922;
+    --c-cnt: #e06c75;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+
+  header {
+    max-width: 960px;
+    margin: 0 auto 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #e6edf3; line-height: 1.2; }
+  .header-left p  { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; border: 1px solid;
+  }
+  .badge-java { background: rgba(255,123,114,0.1); color: var(--kw); border-color: rgba(255,123,114,0.25); }
+  .badge-bt   { background: rgba(57,208,168,0.1); color: var(--c-sub); border-color: rgba(57,208,168,0.25); }
+
+  .card {
+    max-width: 960px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  .window-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .file-name { margin-left: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+
+  .tab-row {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg3); overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 11px 18px; font-family: 'Syne', sans-serif;
+    font-size: 12.5px; font-weight: 600; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s; white-space: nowrap;
+    user-select: none; letter-spacing: 0.2px; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab[data-id="ng"].on     { color: var(--c-sub); border-bottom-color: var(--c-sub); }
+  .tab[data-id="ns"].on     { color: var(--c-com); border-bottom-color: var(--c-com); }
+  .tab[data-id="prev"].on   { color: var(--c-per); border-bottom-color: var(--c-per); }
+  .tab[data-id="hist"].on   { color: var(--c-grd); border-bottom-color: var(--c-grd); }
+  .tab[data-id="deque"].on  { color: var(--c-pal); border-bottom-color: var(--c-pal); }
+  .tab[data-id="greedy"].on { color: var(--c-cnt); border-bottom-color: var(--c-cnt); }
+
+  .step-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--bg2); overflow-x: auto; scrollbar-width: none;
+  }
+  .step-bar::-webkit-scrollbar { display: none; }
+  .step-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--text3); background: none; border: none;
+    border-right: 1px solid var(--border); cursor: pointer;
+    transition: background .15s, color .15s; white-space: nowrap; text-align: left;
+  }
+  .step-btn:last-child { border-right: none; }
+  .step-btn:hover { background: var(--bg4); color: var(--text2); }
+  .step-btn.on { background: var(--bg4); color: var(--text); }
+  .step-btn .sn { display: block; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .step-btn.on .sn { color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.on { display: block; }
+
+  .code-wrap {
+    padding: 22px 26px; overflow-x: auto; background: var(--bg2); min-height: 280px;
+  }
+  pre {
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    line-height: 1.75; color: var(--text); tab-size: 4; margin: 0;
+  }
+  .kw { color: var(--kw); }
+  .ty { color: var(--ty); }
+  .cm { color: var(--cm); font-style: italic; }
+  .st { color: var(--st); }
+  .fn { color: var(--fn); }
+  .nu { color: var(--nu); }
+
+  .note-bar {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 24px; background: var(--bg3);
+    border-top: 1px solid var(--border);
+    font-size: 12.5px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+  }
+  .note-bar::before { content: '//'; color: var(--cm); flex-shrink: 0; margin-top: 1px; }
+
+  .cheat { max-width: 960px; margin: 24px auto 0; }
+  .cheat-title {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 12px; padding-left: 2px;
+  }
+  .cheat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 680px) { .cheat-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 681px) and (max-width: 900px) { .cheat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cheat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; border-top: 3px solid;
+  }
+  .cheat-card h3 { font-size: 13px; font-weight: 600; color: #e6edf3; margin-bottom: 8px; }
+  .cheat-row {
+    display: flex; justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--text2); padding: 3px 0; border-bottom: 1px solid var(--border);
+  }
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-row span:last-child { color: var(--text3); text-align: right; max-width: 55%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Java Monotonic Stack Templates</h1>
+    <p>// 6 patterns · 4 steps each · push · pop-to-resolve · default</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span class="badge badge-java">☕ Java</span>
+    <span class="badge badge-bt">▤ Monotonic Stack</span>
+  </div>
+</header>
+
+<div class="card">
+  <div class="window-bar">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="file-name">MonotonicStackTemplate.java</span>
+  </div>
+  <div class="tab-row" id="tabs"></div>
+  <div id="panels"></div>
+</div>
+
+<div class="cheat">
+  <p class="cheat-title">// quick reference</p>
+  <div class="cheat-grid">
+    <div class="cheat-card" style="border-top-color:var(--c-sub)">
+      <h3>Next Greater</h3>
+      <div class="cheat-row"><span>Stack</span><span>decreasing</span></div>
+      <div class="cheat-row"><span>Pop when</span><span>a[i] &gt; a[top]</span></div>
+      <div class="cheat-row"><span>Store</span><span>indices</span></div>
+      <div class="cheat-row"><span>Examples</span><span>496, 503, 739</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-com)">
+      <h3>Next Smaller</h3>
+      <div class="cheat-row"><span>Stack</span><span>increasing</span></div>
+      <div class="cheat-row"><span>Pop when</span><span>a[i] &lt; a[top]</span></div>
+      <div class="cheat-row"><span>Store</span><span>indices</span></div>
+      <div class="cheat-row"><span>Examples</span><span>1475, boundaries</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-per)">
+      <h3>Previous Greater/Smaller</h3>
+      <div class="cheat-row"><span>Direction</span><span>read top BEFORE push</span></div>
+      <div class="cheat-row"><span>Top</span><span>= nearest prev boundary</span></div>
+      <div class="cheat-row"><span>Online</span><span>works streaming</span></div>
+      <div class="cheat-row"><span>Examples</span><span>901 Stock Span</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-grd)">
+      <h3>Histogram / Span</h3>
+      <div class="cheat-row"><span>Stack</span><span>increasing indices</span></div>
+      <div class="cheat-row"><span>On pop</span><span>width = i-newTop-1</span></div>
+      <div class="cheat-row"><span>Trick</span><span>sentinel 0 to flush</span></div>
+      <div class="cheat-row"><span>Examples</span><span>84, 85, 42, 907</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-pal)">
+      <h3>Monotonic Deque</h3>
+      <div class="cheat-row"><span>Struct</span><span>double-ended</span></div>
+      <div class="cheat-row"><span>Back</span><span>pop dominated</span></div>
+      <div class="cheat-row"><span>Front</span><span>evict out-of-window</span></div>
+      <div class="cheat-row"><span>Examples</span><span>239, 862</span></div>
+    </div>
+    <div class="cheat-card" style="border-top-color:var(--c-cnt)">
+      <h3>Greedy Build</h3>
+      <div class="cheat-row"><span>Stack</span><span>= result so far</span></div>
+      <div class="cheat-row"><span>Pop when</span><span>improves result</span></div>
+      <div class="cheat-row"><span>Guards</span><span>budget k / occurs later</span></div>
+      <div class="cheat-row"><span>Examples</span><span>402, 316, 1047, 735</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const K=s=>`<span class="kw">${s}</span>`;
+const T=s=>`<span class="ty">${s}</span>`;
+const C=s=>`<span class="cm">${s}</span>`;
+const S=s=>`<span class="st">${s}</span>`;
+const F=s=>`<span class="fn">${s}</span>`;
+const N=s=>`<span class="nu">${s}</span>`;
+
+const types = [
+  {
+    id:'ng', label:'Next Greater',
+    steps:[
+      { label:'Pick the four dials',
+        hint:'Next-greater-to-the-right = scan left→right, keep a DECREASING stack of indices, pop while the new value is greater. Default answer is -1.',
+        code:`${C('// Step 1 — Set up: decreasing stack of indices, default -1')}
+
+${K('int')} n = a.length;
+${K('int')}[] ans = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(ans, -${N('1')});               ${C('// default: no greater element')}
+
+${T('Deque')}<${T('Integer')}> st = ${K('new')} ${T('ArrayDeque')}<>();   ${C('// values decreasing top->bottom')}
+
+${C('// Store INDICES (not values) so you can also recover distances later.')}
+`
+      },
+      { label:'Resolve smaller waiters',
+        hint:'When a[i] arrives, it is the answer for every index on the stack whose value is smaller. Pop them and record a[i].',
+        code:`${C('// Step 2 — a[i] resolves everything smaller still waiting')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] < a[i]) {
+        ${K('int')} idx = st.${F('pop')}();    ${C('// idx finds its next-greater now')}
+        ans[idx] = a[i];           ${C('// ...it is a[i]')}
+    }
+    ${C('// ... then push i (next step)')}
+}
+`
+      },
+      { label:'Push the current index',
+        hint:'After resolving, push i. It now waits on the stack for its own next-greater. The stack stays decreasing by construction.',
+        code:`${C('// Step 3 — i now waits for ITS next greater')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] < a[i])
+        ans[st.${F('pop')}()] = a[i];
+
+    st.${F('push')}(i);                  ${C('// keeps the stack decreasing')}
+}
+${K('return')} ans;                      ${C('// leftover indices keep -1')}
+`
+      },
+      { label:'Circular variant',
+        hint:'For a circular array (LC 503), iterate i from 0 to 2n-1 and use i % n; only push real indices during the first pass.',
+        code:`${C('// Step 4 — Circular: virtual length 2n, push only first pass')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < ${N('2')} * n; i++) {
+    ${K('int')} cur = a[i % n];
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] < cur)
+        ans[st.${F('pop')}()] = cur;     ${C('// may resolve across the wrap')}
+    ${K('if')} (i < n) st.${F('push')}(i);     ${C('// each real index enters once')}
+}
+
+${C('// Daily Temperatures (LC 739): store indices, ans = i - idx (distance).')}
+${C('// Time O(n) amortized — each index pushed & popped once. Space O(n).')}
+`
+      }
+    ]
+  },
+  {
+    id:'ns', label:'Next Smaller',
+    steps:[
+      { label:'Flip the inequality',
+        hint:'Next-smaller-to-the-right = the mirror image. Keep an INCREASING stack and pop while the new value is smaller (or smaller-or-equal).',
+        code:`${C('// Step 1 — Increasing stack of indices, default -1')}
+
+${K('int')} n = a.length;
+${K('int')}[] ans = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(ans, -${N('1')});
+
+${T('Deque')}<${T('Integer')}> st = ${K('new')} ${T('ArrayDeque')}<>();   ${C('// values increasing top->bottom')}
+
+${C('// "next greater" → decreasing stack; "next smaller" → increasing stack.')}
+`
+      },
+      { label:'Pop bigger waiters',
+        hint:'A smaller incoming value resolves every larger index waiting on the stack.',
+        code:`${C('// Step 2 — a[i] resolves everything LARGER still waiting')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] > a[i]) {
+        ${K('int')} idx = st.${F('pop')}();
+        ans[idx] = a[i];           ${C('// a[i] is the next-smaller for idx')}
+    }
+    ${C('// ... push i next')}
+}
+`
+      },
+      { label:'Push + strictness choice',
+        hint:'Use > to keep equal values waiting (strict next-smaller) or >= to resolve them (next smaller-or-equal). The choice matters for dedup/area problems.',
+        code:`${C('// Step 3 — Push; choose > vs >= for equal values')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${C('// >= here means "next smaller-OR-EQUAL" (e.g. LC 1475 discounts)')}
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] >= a[i])
+        ans[st.${F('pop')}()] = a[i];
+
+    st.${F('push')}(i);
+}
+`
+      },
+      { label:'Boundaries for counting',
+        hint:'Two passes (next-smaller and previous-smaller) give each element the window where it is the minimum — the backbone of Sum of Subarray Minimums.',
+        code:`${C('// Step 4 — Span where a[i] is the minimum (LC 907)')}
+
+${C('// left[i]  = distance to previous strictly-smaller (left boundary)')}
+${C('// right[i] = distance to next smaller-or-equal (right boundary)')}
+${C('// #subarrays where a[i] is the min  =  left[i] * right[i]')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] >= a[i]) st.${F('pop')}();
+    left[i] = st.${F('isEmpty')}() ? i + ${N('1')} : i - st.${F('peek')}();
+    st.${F('push')}(i);
+}
+${C('// Pair one side strict and the other non-strict to avoid double counting.')}
+`
+      }
+    ]
+  },
+  {
+    id:'prev', label:'Previous Greater/Smaller',
+    steps:[
+      { label:'Read before you push',
+        hint:'"Previous"-style questions are answered by looking at the stack TOP right before pushing the current element. The surviving top is the nearest qualifying neighbour on the left.',
+        code:`${C('// Step 1 — For "previous greater": decreasing stack')}
+${C('// The element left on top after popping IS the previous-greater.')}
+
+${K('int')} n = a.length;
+${K('int')}[] prevGreater = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(prevGreater, -${N('1')});
+
+${T('Deque')}<${T('Integer')}> st = ${K('new')} ${T('ArrayDeque')}<>();   ${C('// indices, values decreasing')}
+`
+      },
+      { label:'Pop, then peek the top',
+        hint:'Pop all values that are <= current (they can never be the previous-greater of anything to the right). Whatever remains on top is the answer for i.',
+        code:`${C('// Step 2 — Pop smaller-or-equal, then the top is the answer')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] <= a[i])
+        st.${F('pop')}();                 ${C('// these are blocked by a[i]')}
+
+    prevGreater[i] = st.${F('isEmpty')}() ? -${N('1')} : st.${F('peek')}();
+    st.${F('push')}(i);
+}
+`
+      },
+      { label:'Online / streaming form',
+        hint:'Because you only ever look left, "previous" questions work on a stream. Online Stock Span bundles a span count with each price so popped runs collapse into one number.',
+        code:`${C('// Step 3 — Online Stock Span (LC 901): stack of [price, span]')}
+
+${K('class')} StockSpanner {
+    ${T('Deque')}<${K('int')}[]> st = ${K('new')} ${T('ArrayDeque')}<>();   ${C('// {price, span}')}
+
+    ${K('public')} ${K('int')} ${F('next')}(${K('int')} price) {
+        ${K('int')} span = ${N('1')};
+        ${C('// absorb earlier days with price <= today')}
+        ${K('while')} (!st.${F('isEmpty')}() && st.${F('peek')}()[${N('0')}] <= price)
+            span += st.${F('pop')}()[${N('1')}];
+        st.${F('push')}(${K('new')} ${K('int')}[]{price, span});
+        ${K('return')} span;
+    }
+}
+`
+      },
+      { label:'Previous smaller',
+        hint:'Mirror it: keep an INCREASING stack and pop while top >= current. The remaining top is the previous-smaller. This feeds left-boundary widths in area problems.',
+        code:`${C('// Step 4 — Previous smaller: increasing stack')}
+
+${K('int')}[] prevSmaller = ${K('new')} ${K('int')}[n];
+${T('Arrays')}.${F('fill')}(prevSmaller, -${N('1')});
+st.${F('clear')}();
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!st.${F('isEmpty')}() && a[st.${F('peek')}()] >= a[i]) st.${F('pop')}();
+    prevSmaller[i] = st.${F('isEmpty')}() ? -${N('1')} : st.${F('peek')}();
+    st.${F('push')}(i);
+}
+
+${C('// prevSmaller + nextSmaller together bound each bar in Histogram (LC 84).')}
+${C('// Time O(n), Space O(n).')}
+`
+      }
+    ]
+  },
+  {
+    id:'hist', label:'Histogram / Span',
+    steps:[
+      { label:'The width insight',
+        hint:'In Largest Rectangle, each bar can extend left/right until a strictly shorter bar stops it. An increasing stack of indices finds both boundaries the moment a shorter bar pops it.',
+        code:`${C('// Step 1 — Increasing stack of indices; resolve on a shorter bar')}
+
+${K('int')} n = heights.length, best = ${N('0')};
+${T('Deque')}<${T('Integer')}> st = ${K('new')} ${T('ArrayDeque')}<>();   ${C('// indices, heights increasing')}
+
+${C('// When height[i] is shorter than the top, the top bar can grow no')}
+${C('// further right — its maximal rectangle is now fully determined.')}
+`
+      },
+      { label:'Sentinel flush',
+        hint:'Iterate i from 0 to n (inclusive). Treat i == n as a height-0 sentinel so the loop drains every remaining bar without a separate cleanup pass.',
+        code:`${C('// Step 2 — Loop to n inclusive; a trailing 0 flushes the stack')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i <= n; i++) {
+    ${K('int')} h = (i == n) ? ${N('0')} : heights[i];   ${C('// sentinel height 0')}
+
+    ${K('while')} (!st.${F('isEmpty')}() && heights[st.${F('peek')}()] > h) {
+        ${C('// ... pop and measure (next step)')}
+    }
+    st.${F('push')}(i);
+}
+`
+      },
+      { label:'Width = i - newTop - 1',
+        hint:'After popping the bar, the LEFT boundary is the new stack top (or -1 if empty), and the RIGHT boundary is i. The classic bug is using the popped index instead of the new top.',
+        code:`${C('// Step 3 — Pop resolves one rectangle')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i <= n; i++) {
+    ${K('int')} h = (i == n) ? ${N('0')} : heights[i];
+    ${K('while')} (!st.${F('isEmpty')}() && heights[st.${F('peek')}()] > h) {
+        ${K('int')} height = heights[st.${F('pop')}()];   ${C('// this bar is the limit')}
+        ${K('int')} left   = st.${F('isEmpty')}() ? -${N('1')} : st.${F('peek')}();
+        ${K('int')} width  = i - left - ${N('1')};          ${C('// span between boundaries')}
+        best = ${T('Math')}.${F('max')}(best, height * width);
+    }
+    st.${F('push')}(i);
+}
+${K('return')} best;
+`
+      },
+      { label:'Reuse: Maximal Rectangle & Water',
+        hint:'Run the histogram per matrix row (heights = consecutive 1s per column) for Maximal Rectangle (LC 85). A decreasing stack with a min(left,right)-floor formula traps rain water (LC 42).',
+        code:`${C('// Step 4 — Same engine, two famous reuses')}
+
+${C('// Maximal Rectangle (LC 85): build a histogram row by row')}
+${K('for')} (${K('char')}[] row : matrix) {
+    ${K('for')} (${K('int')} c = ${N('0')}; c < cols; c++)
+        height[c] = (row[c] == ${S("'1'")}) ? height[c] + ${N('1')} : ${N('0')};
+    best = ${T('Math')}.${F('max')}(best, ${F('largestInHistogram')}(height));
+}
+
+${C('// Trapping Rain Water (LC 42): decreasing stack, each pop = one water slab')}
+${C('//   bounded = min(h[left], h[i]) - h[floor];  width = i - left - 1;')}
+${C('//   water  += bounded * width;')}
+
+${C('// Time O(n) per histogram; LC 85 is O(rows * cols).')}
+`
+      }
+    ]
+  },
+  {
+    id:'deque', label:'Monotonic Deque',
+    steps:[
+      { label:'Stack with two ends',
+        hint:'A sliding-window max needs to evict elements from BOTH ends, so upgrade the stack to a double-ended deque of indices kept decreasing by value.',
+        code:`${C('// Step 1 — Decreasing deque of indices; front = window max')}
+
+${K('int')} n = nums.length;
+${K('int')}[] ans = ${K('new')} ${K('int')}[n - k + ${N('1')}];
+${T('Deque')}<${T('Integer')}> dq = ${K('new')} ${T('ArrayDeque')}<>();   ${C('// indices, values decreasing')}
+
+${C('// Front holds the current window maximum; store indices to detect eviction.')}
+`
+      },
+      { label:'Pop dominated from the back',
+        hint:'Before adding i, remove from the back any index whose value is <= nums[i]; while nums[i] lives, those can never be a maximum again.',
+        code:`${C('// Step 2 — Discard back values that nums[i] dominates')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!dq.${F('isEmpty')}() && nums[dq.${F('peekLast')}()] <= nums[i])
+        dq.${F('pollLast')}();          ${C('// they can never out-max nums[i]')}
+    dq.${F('offerLast')}(i);
+    ${C('// ... evict stale front + record (next step)')}
+}
+`
+      },
+      { label:'Evict the stale front',
+        hint:'If the front index has slid out of the window (front <= i - k), drop it. The front is then guaranteed inside the window and is its maximum.',
+        code:`${C('// Step 3 — Drop the front if it left the window; then record')}
+
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) {
+    ${K('while')} (!dq.${F('isEmpty')}() && nums[dq.${F('peekLast')}()] <= nums[i])
+        dq.${F('pollLast')}();
+    dq.${F('offerLast')}(i);
+
+    ${K('if')} (dq.${F('peekFirst')}() <= i - k) dq.${F('pollFirst')}();   ${C('// out of window')}
+
+    ${K('if')} (i >= k - ${N('1')})                  ${C('// window fully formed')}
+        ans[i - k + ${N('1')}] = nums[dq.${F('peekFirst')}()];
+}
+${K('return')} ans;
+`
+      },
+      { label:'Prefix-sum variant',
+        hint:'Shortest Subarray with Sum ≥ K (LC 862, allows negatives) runs an INCREASING deque over prefix sums: pop the front when it qualifies, pop the back when the current prefix dominates.',
+        code:`${C('// Step 4 — LC 862: monotonic deque over prefix sums (handles negatives)')}
+
+${K('long')}[] P = ${K('new')} ${K('long')}[n + ${N('1')}];
+${K('for')} (${K('int')} i = ${N('0')}; i < n; i++) P[i + ${N('1')}] = P[i] + nums[i];
+
+${K('int')} ans = n + ${N('1')};
+${T('Deque')}<${T('Integer')}> dq = ${K('new')} ${T('ArrayDeque')}<>();   ${C('// P increasing front->back')}
+${K('for')} (${K('int')} i = ${N('0')}; i <= n; i++) {
+    ${K('while')} (!dq.${F('isEmpty')}() && P[i] - P[dq.${F('peekFirst')}()] >= K)
+        ans = ${T('Math')}.${F('min')}(ans, i - dq.${F('pollFirst')}());   ${C('// qualifies → shortest')}
+    ${K('while')} (!dq.${F('isEmpty')}() && P[dq.${F('peekLast')}()] >= P[i])
+        dq.${F('pollLast')}();                ${C('// current prefix is smaller & later')}
+    dq.${F('offerLast')}(i);
+}
+${K('return')} ans <= n ? ans : -${N('1')};
+
+${C('// Both run O(n): every index enters and leaves the deque once.')}
+`
+      }
+    ]
+  },
+  {
+    id:'greedy', label:'Greedy Build',
+    steps:[
+      { label:'Stack = the answer',
+        hint:'Here the stack IS the result being built. You pop the top whenever doing so makes the final answer strictly better, subject to a guard (a budget, or "this char appears again later").',
+        code:`${C('// Step 1 — Build the result in a stack (StringBuilder works great)')}
+${C('// Remove K Digits (LC 402): make the smallest number after removing k digits')}
+
+${T('StringBuilder')} st = ${K('new')} ${T('StringBuilder')}();   ${C('// increasing-digit stack')}
+
+${C('// Greedy rule: a big digit followed by a smaller one should be dropped,')}
+${C('// because that bump is what makes the number large.')}
+`
+      },
+      { label:'Pop while it improves (with budget)',
+        hint:'For Remove K Digits: while the top digit is bigger than the incoming one and you still have removals left (k > 0), pop and spend one removal.',
+        code:`${C('// Step 2 — Pop bigger tops while budget k remains')}
+
+${K('for')} (${K('char')} c : num.toCharArray()) {
+    ${K('while')} (k > ${N('0')} && st.${F('length')}() > ${N('0')}
+                 && st.${F('charAt')}(st.${F('length')}() - ${N('1')}) > c) {
+        st.${F('deleteCharAt')}(st.${F('length')}() - ${N('1')});   ${C('// drop a too-big digit')}
+        k--;
+    }
+    st.${F('append')}(c);
+}
+`
+      },
+      { label:'Spend leftover + clean up',
+        hint:'If k removals remain (input was non-decreasing), trim from the end. Then strip leading zeros and guard the empty case.',
+        code:`${C('// Step 3 — Finish budget, strip leading zeros')}
+
+st.${F('setLength')}(st.${F('length')}() - k);     ${C('// trim tail if k left over')}
+
+${K('int')} i = ${N('0')};
+${K('while')} (i < st.${F('length')}() && st.${F('charAt')}(i) == ${S("'0'")}) i++;
+${T('String')} res = st.${F('substring')}(i);
+${K('return')} res.${F('isEmpty')}() ? ${S('"0"')} : res;
+`
+      },
+      { label:'Guarded variants',
+        hint:'Remove Duplicate Letters (LC 316) pops only if the top occurs again later AND is not already placed. Asteroid Collision (LC 735) pops smaller right-movers when a left-mover hits.',
+        code:`${C('// Step 4 — Same shape, different guard')}
+
+${C('// LC 316 — lexicographically smallest distinct subsequence')}
+${C('// guard: pop top only if top > c AND lastIndex[top] > i (re-addable)')}
+${K('while')} (st.${F('length')}() > ${N('0')}) {
+    ${K('char')} top = st.${F('charAt')}(st.${F('length')}() - ${N('1')});
+    ${K('if')} (top > c && last[top - ${S("'a'")}] > i && !inStack[c - ${S("'a'")}]) {
+        st.${F('deleteCharAt')}(st.${F('length')}() - ${N('1')});
+        inStack[top - ${S("'a'")}] = ${K('false')};
+    } ${K('else')} ${K('break')};
+}
+
+${C('// LC 735 — Asteroid Collision: while top > 0 (right) and a < 0 (left),')}
+${C('//   compare sizes: pop smaller, both die on tie, else incoming dies.')}
+${C('// LC 1047 — Remove Adjacent Duplicates: pop when top == c (pure cancel).')}
+`
+      }
+    ]
+  }
+];
+
+const stepIdx = {};
+types.forEach(t => stepIdx[t.id] = 0);
+
+function render(id) {
+  const t = types.find(x => x.id === id);
+  document.getElementById('sr-' + id).innerHTML = t.steps.map((s, i) => `
+    <button class="step-btn ${i === stepIdx[id] ? 'on' : ''}" onclick="setStep('${id}', ${i})">
+      <span class="sn">step ${i + 1}</span>${s.label}
+    </button>`).join('');
+  document.getElementById('cr-' + id).innerHTML = `<pre>${t.steps[stepIdx[id]].code}</pre>`;
+  document.getElementById('hr-' + id).textContent = t.steps[stepIdx[id]].hint;
+}
+
+function setStep(id, i) { stepIdx[id] = i; render(id); }
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+}
+
+const tabsEl   = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+
+types.forEach((t, idx) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (idx === 0 ? ' on' : '');
+  btn.dataset.id = t.id;
+  btn.textContent = t.label;
+  btn.onclick = () => switchTab(t.id);
+  tabsEl.appendChild(btn);
+
+  const panel = document.createElement('div');
+  panel.className = 'panel' + (idx === 0 ? ' on' : '');
+  panel.id = 'p-' + t.id;
+  panel.innerHTML = `
+    <div class="step-bar" id="sr-${t.id}"></div>
+    <div class="code-wrap" id="cr-${t.id}"></div>
+    <div class="note-bar" id="hr-${t.id}"></div>`;
+  panelsEl.appendChild(panel);
+
+  render(t.id);
+});
+</script>
+
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_TAB_ARROWS_START -->
+<style id="kiro-tab-arrows-style">
+  .kiro-tab-arrow{
+    flex:0 0 auto;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:36px; align-self:stretch; min-height:40px;
+    background:transparent; border:none; color:currentColor;
+    opacity:.55; font-size:20px; line-height:1; cursor:pointer;
+    font-family:inherit; transition:opacity .15s ease, background .15s ease;
+    -webkit-appearance:none; appearance:none;
+  }
+  .kiro-tab-arrow:hover{ opacity:1; background:rgba(127,127,127,.16); }
+  .kiro-tab-arrow:active{ background:rgba(127,127,127,.26); }
+  .kiro-tab-arrow:focus-visible{ outline:2px solid currentColor; outline-offset:-3px; }
+</style>
+<script id="kiro-tab-arrows-script">
+(function(){
+  if(window.__kiroTabArrows) return;
+  window.__kiroTabArrows = true;
+  function init(){
+    var bar = document.getElementById('tabs')
+           || document.querySelector('.tab-row')
+           || document.querySelector('.tab-list');
+    if(!bar || bar.querySelector('.kiro-tab-arrow')) return;
+    function tabs(){
+      return Array.prototype.filter.call(bar.children, function(el){
+        return el.classList && el.classList.contains('tab');
+      });
+    }
+    function activeIndex(list){
+      for(var i=0;i<list.length;i++){
+        var cls = ' ' + (list[i].className || '') + ' ';
+        if(/\son\s/.test(cls) || /\sactive\s/.test(cls) || /\sactive-/.test(cls)) return i;
+      }
+      return 0;
+    }
+    function go(delta){
+      var list = tabs();
+      if(!list.length) return;
+      var ni = activeIndex(list) + delta;
+      if(ni < 0) ni = list.length - 1;
+      if(ni >= list.length) ni = 0;
+      list[ni].click();
+      if(list[ni].scrollIntoView) list[ni].scrollIntoView({inline:'center', block:'nearest'});
+    }
+    var prev = document.createElement('button');
+    prev.type='button'; prev.className='kiro-tab-arrow kiro-tab-prev';
+    prev.setAttribute('aria-label','Previous template'); prev.title='Previous (\u2190)';
+    prev.innerHTML='&#8249;';
+    var next = document.createElement('button');
+    next.type='button'; next.className='kiro-tab-arrow kiro-tab-next';
+    next.setAttribute('aria-label','Next template'); next.title='Next (\u2192)';
+    next.innerHTML='&#8250;';
+    prev.addEventListener('click', function(e){ e.preventDefault(); go(-1); });
+    next.addEventListener('click', function(e){ e.preventDefault(); go(1); });
+    bar.insertBefore(prev, bar.firstChild);
+    bar.appendChild(next);
+    document.addEventListener('keydown', function(e){
+      var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+      if(tag==='input'||tag==='textarea'||tag==='select') return;
+      if(e.key==='ArrowRight'){ e.preventDefault(); go(1); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); go(-1); }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<!-- KIRO_TAB_ARROWS_END -->
+
+</body>
+</html>

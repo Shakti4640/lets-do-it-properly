@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Monotonic Stack — Hints, Tricks & Java Snippets</title>
+<link rel="icon" type="image/png" href="../images/favicon.png">
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --fg: #1f2330;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --border: #e3e6ee;
+    --card: #ffffff;
+    --code-bg: #f8fafc;
+    --code-fg: #24292f;
+    --kw: #cf222e;
+    --typ: #6f42c1;
+    --str: #0a7d4d;
+    --cmt: #6a737d;
+    --num: #0550ae;
+    --veasy: #0891b2;
+    --easy: #16a34a;
+    --med: #d97706;
+    --hard: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  /* HAMBURGER + TOC SIDEBAR */
+  .hamburger {
+    position: fixed; top: 14px; left: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 5px; cursor: pointer; z-index: 1001;
+  }
+  .hamburger span {
+    display: block; width: 22px; height: 2.5px;
+    background: #1e1e25; border-radius: 2px;
+    transition: transform .25s, opacity .2s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    height: 100vh; width: 360px; max-width: 90vw;
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 14px rgba(0,0,0,.06);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 70px 18px 32px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sidebar .group-title {
+    margin-top: 18px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .sidebar a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 8px;
+    margin: 2px 0;
+    text-decoration: none;
+    color: #1f2330;
+    border-radius: 6px;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .sidebar a:hover { background: #eef2ff; color: var(--accent); }
+  .sidebar a.active { background: #eef2ff; color: var(--accent); font-weight: 600; }
+  .sidebar a .num {
+    display: inline-block;
+    min-width: 28px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 999;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* HERO + TABS */
+  .topbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 0;
+    padding-left: 76px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h1 { margin: 0 0 6px; font-size: 20px; }
+  .topbar p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tab {
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    background: #f1f3f9;
+    color: var(--muted);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background .15s;
+  }
+  .tab:hover { background: #e7eaf3; color: var(--fg); }
+  .tab.active {
+    background: #ffffff;
+    color: var(--fg);
+    border-bottom: 2px solid #ffffff;
+    margin-bottom: -1px;
+    box-shadow: 0 -2px 0 var(--accent) inset;
+  }
+  .tab .dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .tab.veasy .dot { background: var(--veasy); }
+  .tab.easy .dot { background: var(--easy); }
+  .tab.med .dot { background: var(--med); }
+  .tab.hard .dot { background: var(--hard); }
+  .tab .count { color: var(--muted); margin-left: 6px; font-weight: 500; }
+
+  /* MAIN */
+  main { max-width: 980px; margin: 0 auto; padding: 28px 24px 120px; }
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .problem-card h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .num-tag {
+    background: #eef2ff; color: var(--accent);
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff; font-weight: 700; letter-spacing: .05em;
+  }
+  .badge.veasy { background: var(--veasy); }
+  .badge.easy { background: var(--easy); }
+  .badge.med { background: var(--med); }
+  .badge.hard { background: var(--hard); }
+
+  .section-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 8px;
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  .problem-card p { margin: 8px 0; font-size: 15px; }
+  .intuition {
+    background: #ecfeff;
+    border-left: 4px solid #06b6d4;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 8px 0;
+  }
+  .hints, .tips { margin: 6px 0 6px 4px; padding: 0 0 0 22px; }
+  .hints li, .tips li { margin: 6px 0; font-size: 14.5px; }
+  .tips-block {
+    background: #fff7ed;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+  }
+  .complexity { margin-top: 12px; color: var(--muted); font-size: 13.5px; }
+
+  /* CODE */
+  pre.code {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  pre.code code {
+    font-family: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  }
+  .kw  { color: var(--kw);  font-weight: 600; }
+  .typ { color: var(--typ); font-weight: 500; }
+  .str { color: var(--str); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .num { color: var(--num); }
+
+  /* PREV/NEXT BAR */
+  .nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    z-index: 60;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--fg);
+    font-weight: 500;
+  }
+  .nav-btn:hover:not(:disabled) { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .nav-info { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kbd {
+    display: inline-block;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: #f6f8fa;
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding-left: 70px; padding-right: 70px; }
+    main { padding: 20px 14px 130px; }
+    .problem-card { padding: 18px 18px; }
+    .problem-card h2 { font-size: 19px; }
+  }
+
+  /* THEME TOGGLE BUTTON */
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 1001;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--fg);
+    transition: background .15s, color .15s, border-color .15s, transform .15s;
+  }
+  .theme-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.05); }
+  .theme-toggle:active { transform: scale(0.95); }
+
+  /* ===================== DARK MODE ===================== */
+  [data-theme="dark"] {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --border: #30363d;
+    --card: #161b22;
+    --code-bg: #0b0f15;
+    --code-fg: #e6edf3;
+    --kw:  #ff7b72;
+    --typ: #d2a8ff;
+    --str: #a5d6ff;
+    --cmt: #8b949e;
+    --num: #79c0ff;
+  }
+  [data-theme="dark"] .hamburger { background: var(--card); }
+  [data-theme="dark"] .hamburger span { background: var(--fg); }
+  [data-theme="dark"] .sidebar { background: var(--card); box-shadow: 2px 0 14px rgba(0,0,0,.4); }
+  [data-theme="dark"] .sidebar a { color: var(--fg); }
+  [data-theme="dark"] .sidebar a:hover,
+  [data-theme="dark"] .sidebar a.active { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .topbar { background: var(--card); }
+  [data-theme="dark"] .tab { background: #0d1117; border-color: var(--border); }
+  [data-theme="dark"] .tab:hover { background: #1c2128; color: var(--fg); }
+  [data-theme="dark"] .tab.active { background: var(--card); border-bottom-color: var(--card); color: var(--fg); }
+  [data-theme="dark"] .num-tag { background: rgba(88,166,255,.15); color: var(--accent); }
+  [data-theme="dark"] .intuition { background: rgba(6,182,212,.10); }
+  [data-theme="dark"] .tips-block { background: rgba(245,158,11,.10); }
+  [data-theme="dark"] .nav-bar { background: var(--card); box-shadow: 0 -2px 8px rgba(0,0,0,.3); }
+  [data-theme="dark"] .nav-btn { background: var(--card); color: var(--fg); }
+  [data-theme="dark"] .nav-btn:hover:not(:disabled) { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); }
+  [data-theme="dark"] .kbd { background: #1c2128; border-color: var(--border); color: var(--muted); }
+  [data-theme="dark"] pre.code { background: var(--code-bg); }
+  [data-theme="dark"] .overlay { background: rgba(0,0,0,.55); }
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburger" aria-label="Open menu">
+  <span></span><span></span><span></span>
+</button>
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <h2>Table of Contents</h2>
+  <div id="toc"></div>
+</aside>
+
+<header class="topbar">
+  <h1>Monotonic Stack — Step by Step Hints, Tricks & Java Snippets</h1>
+  <p>Click a difficulty tab. Use <span class="kbd">←</span> <span class="kbd">→</span> arrow keys to navigate within the tab.</p>
+  <div class="tabs" id="tabs">
+    <div class="tab veasy" data-diff="veasy"><span class="dot"></span>Very Easy<span class="count" id="cnt-veasy"></span></div>
+    <div class="tab easy"  data-diff="easy"><span class="dot"></span>Easy<span class="count" id="cnt-easy"></span></div>
+    <div class="tab med"   data-diff="med"><span class="dot"></span>Medium<span class="count" id="cnt-med"></span></div>
+    <div class="tab hard"  data-diff="hard"><span class="dot"></span>Hard<span class="count" id="cnt-hard"></span></div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prev">← Previous</button>
+  <div class="nav-info" id="nav-info"></div>
+  <button class="nav-btn" id="next">Next →</button>
+</div>
+
+<script>
+/* ----------------------- DATA: ALL PROBLEMS ----------------------- */
+const PROBLEMS = [];
+
+
+/* ===================== TEMPLATE / FOUNDATION ===================== */
+PROBLEMS.push({
+  num: 0, title: "The Monotonic Stack Template (read this first)", diff: "veasy",
+  problem: "A monotonic stack is an ordinary stack that you keep sorted (either always increasing or always decreasing from bottom to top) by popping elements that would break the order before you push. It is the go-to tool for 'next greater / next smaller / previous greater / previous smaller element' questions and for span/area problems like Largest Rectangle in Histogram — anything where each element needs to find its nearest bigger or smaller boundary.",
+  intuition: "Imagine scanning left to right while holding a stack of 'candidates still waiting for their answer'. When a new value arrives, it RESOLVES every waiting candidate it dominates: those get popped, and the new value (or the element now on top) is their answer. Because each element is pushed once and popped once, the whole scan is O(n) even though it feels like nested comparisons. The direction of the inequality (increasing vs decreasing) and what you store (index vs value) are the only two dials you ever turn.",
+  hints: [
+    "Decide FOUR things up front: (1) scan left→right or right→left, (2) stack increasing or decreasing, (3) store indices or values, (4) pop on '<' or '<=' (strict vs non-strict).",
+    "RULE OF THUMB: 'next greater' → maintain a DECREASING stack and pop while the new element is greater. 'next smaller' → maintain an INCREASING stack.",
+    "Store INDICES, not values, whenever you also need distance/width (e.g., Daily Temperatures, Histogram). You can always read the value via arr[stack.top()].",
+    "Whatever is left on the stack at the end had no qualifying neighbour → its answer is the default (0, -1, or n).",
+    "The moment you POP an element is the moment its answer is known: the popper (or the new top) is its nearest greater/smaller neighbour."
+  ],
+  tips: [
+    "Use ArrayDeque as both stack (push/pop/peek) and deque — never the legacy java.util.Stack.",
+    "Strict vs non-strict (< vs <=) decides how DUPLICATES are handled. For counting/area problems this choice prevents double counting — pick one side strict and the other non-strict.",
+    "'Previous' questions = scan left→right and read the stack top BEFORE pushing. 'Next' questions = scan and resolve elements as you pop them.",
+    "Circular array? Iterate the index from 0 to 2n-1 and use i % n. Don't physically duplicate the array.",
+    "If you find yourself writing an O(n^2) double loop to find a nearest bigger/smaller element, that's the signal to reach for a monotonic stack."
+  ],
+  code: `/*
+ * THE CANONICAL TEMPLATE — "next greater element to the right".
+ * Maintain a DECREASING stack of INDICES. When a taller bar arrives, it is
+ * the answer for every shorter bar waiting on the stack.
+ */
+int[] nextGreater(int[] a) {
+    int n = a.length;
+    int[] ans = new int[n];
+    Arrays.fill(ans, -1);                         // default: no greater element
+    Deque<Integer> st = new ArrayDeque<>();       // stores INDICES, values decreasing
+
+    for (int i = 0; i < n; i++) {
+        // current a[i] resolves everything smaller still on the stack
+        while (!st.isEmpty() && a[st.peek()] < a[i]) {
+            int idx = st.pop();                   // idx's answer is found NOW
+            ans[idx] = a[i];                      // ...it is a[i]
+        }
+        st.push(i);                               // i now waits for ITS greater
+    }
+    return ans;                                   // leftover indices keep -1
+}
+
+/*
+ * MENTAL CHECKLIST you fill in for every variant:
+ *   direction : left->right  (use right->left for "previous"-style scans)
+ *   monotone  : decreasing   (use increasing for "next/prev SMALLER")
+ *   store     : indices       (needed for widths/distances)
+ *   pop test  : a[top] < a[i] (use <= to make duplicates non-strict)
+ *
+ * Tiny trace for a = [2, 1, 2, 4, 3]:
+ *   i=0 push0            stack=[0]            (values: 2)
+ *   i=1 push1            stack=[0,1]          (2,1)
+ *   i=2 a[1]=1<2 pop1 ans[1]=2; a[0]=2<2? no; push2  stack=[0,2]
+ *   i=3 a[2]=2<4 pop2 ans[2]=4; a[0]=2<4 pop0 ans[0]=4; push3 stack=[3]
+ *   i=4 a[3]=4<3? no; push4   stack=[3,4]
+ *   leftover 3,4 -> ans[3]=ans[4]=-1   =>   ans = [4,2,4,-1,-1]
+ */`,
+  complexity: "Time O(n): each index is pushed once and popped at most once. Space O(n) for the stack."
+});
+
+/* ===================== VERY EASY (PATTERN BUILDING) ===================== */
+
+PROBLEMS.push({
+  num: 496, title: "Next Greater Element I", diff: "veasy",
+  problem: "Given nums1 (a subset of nums2), for each value in nums1 find the first greater element to its right in nums2. Return -1 where none exists.",
+  intuition: "Precompute the 'next greater' for EVERY element of nums2 once using the decreasing-stack template, store the results in a map keyed by value (values are unique), then answer each nums1 query in O(1).",
+  hints: [
+    "Run the standard next-greater scan over nums2.",
+    "Each time you pop index/value v because a bigger value g appeared, record map[v] = g.",
+    "Anything still on the stack at the end has no greater element → leave it out of the map (default -1).",
+    "Finally map each nums1 value through the table."
+  ],
+  tips: [
+    "Because nums2 has unique values, you can key the map by value instead of index — cleaner.",
+    "This 'precompute once, answer many' shape is why the problem feels easy despite the subset twist."
+  ],
+  code: `/*
+ * LC 496 — precompute next-greater for nums2, then map nums1 queries.
+ */
+int[] nextGreaterElement(int[] nums1, int[] nums2) {
+
+    Map<Integer, Integer> next = new HashMap<>();
+    Deque<Integer> st = new ArrayDeque<>();       // decreasing stack of VALUES
+
+    for (int x : nums2) {
+        while (!st.isEmpty() && st.peek() < x)    // x resolves smaller values
+            next.put(st.pop(), x);
+        st.push(x);
+    }
+    // values left on the stack have no greater element -> default below
+
+    int[] ans = new int[nums1.length];
+    for (int i = 0; i < nums1.length; i++)
+        ans[i] = next.getOrDefault(nums1[i], -1);
+    return ans;
+}`,
+  complexity: "Time O(n + m). Space O(n) for the stack and map."
+});
+
+PROBLEMS.push({
+  num: 739, title: "Daily Temperatures", diff: "veasy",
+  problem: "Given daily temperatures, return an array where answer[i] is the number of days you must wait until a warmer temperature. If none, put 0.",
+  intuition: "Identical to next-greater, but the answer is the DISTANCE, not the value. So store INDICES on the stack; when day j resolves a waiting day i, the wait is j - i.",
+  hints: [
+    "Keep a decreasing stack of day indices.",
+    "When temps[i] > temps[stack.top()], pop and set answer[top] = i - top.",
+    "Push i and continue.",
+    "Indices still on the stack at the end keep their default 0 (no warmer day)."
+  ],
+  tips: [
+    "This is the textbook 'store indices to get distances' use case.",
+    "Iterating right→left with a different formulation also works, but left→right with distances is the cleanest."
+  ],
+  code: `/*
+ * LC 739 — next warmer day; store INDICES so we can return the gap.
+ */
+int[] dailyTemperatures(int[] temps) {
+
+    int n = temps.length;
+    int[] ans = new int[n];                       // defaults to 0
+    Deque<Integer> st = new ArrayDeque<>();       // decreasing stack of indices
+
+    for (int i = 0; i < n; i++) {
+        while (!st.isEmpty() && temps[st.peek()] < temps[i]) {
+            int j = st.pop();
+            ans[j] = i - j;                        // days waited = distance
+        }
+        st.push(i);
+    }
+    return ans;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 503, title: "Next Greater Element II (Circular)", diff: "veasy",
+  problem: "Given a CIRCULAR integer array, return the next greater element for each position (wrapping around the end back to the start). Return -1 where none exists.",
+  intuition: "The only change from the linear case is that the array wraps. Simulate the wrap by iterating the index from 0 to 2n-1 and using i % n. Push real indices only on the first pass; the second pass just resolves leftovers.",
+  hints: [
+    "Loop i from 0 to 2n-1; the working index is i % n.",
+    "Keep a decreasing stack of indices, resolving as usual.",
+    "Only push during the first n iterations (i < n) so each index enters the stack once.",
+    "Whatever survives both passes truly has no greater element → -1."
+  ],
+  tips: [
+    "Do NOT physically concatenate the array; the modulo trick is O(1) extra space conceptually and avoids copies.",
+    "The second pass is purely for elements that wrap around to find their answer at the front."
+  ],
+  code: `/*
+ * LC 503 — circular next-greater via a 2n virtual scan with i % n.
+ */
+int[] nextGreaterElements(int[] nums) {
+
+    int n = nums.length;
+    int[] ans = new int[n];
+    Arrays.fill(ans, -1);
+    Deque<Integer> st = new ArrayDeque<>();       // decreasing stack of indices
+
+    for (int i = 0; i < 2 * n; i++) {
+        int cur = nums[i % n];
+        while (!st.isEmpty() && nums[st.peek()] < cur)
+            ans[st.pop()] = cur;                   // resolve, possibly across wrap
+        if (i < n) st.push(i);                     // push each real index once
+    }
+    return ans;
+}`,
+  complexity: "Time O(n) (2n iterations). Space O(n)."
+});
+
+
+/* ===================== EASY ===================== */
+
+PROBLEMS.push({
+  num: 901, title: "Online Stock Span", diff: "easy",
+  problem: "Design a class that, for each new daily price, returns the span: the number of consecutive days (ending today, going back) whose price was <= today's price.",
+  intuition: "The span back from today stops at the first earlier day with a strictly greater price — a 'previous greater element' problem, solved online. Keep a decreasing stack of (price, span) pairs; when today's price swallows shorter days, add their spans into today's.",
+  hints: [
+    "Maintain a stack of [price, span] pairs, decreasing by price from bottom to top.",
+    "For a new price, start span = 1.",
+    "While the stack top's price <= today's price, pop it and add its span to today's.",
+    "Push [price, accumulatedSpan] and return that span."
+  ],
+  tips: [
+    "Bundling the span with the price is what lets you collapse many popped days into one number.",
+    "Use '<=' so equal prices are absorbed into the current span (definition says <= today's price)."
+  ],
+  code: `/*
+ * LC 901 — previous-greater, online. Stack of [price, span], decreasing.
+ */
+class StockSpanner {
+    Deque<int[]> st = new ArrayDeque<>();          // each = {price, span}
+
+    public int next(int price) {
+        int span = 1;
+        // absorb all earlier days with price <= today's
+        while (!st.isEmpty() && st.peek()[0] <= price)
+            span += st.pop()[1];
+        st.push(new int[]{price, span});
+        return span;
+    }
+}`,
+  complexity: "Amortized O(1) per call (each price pushed and popped once). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 1019, title: "Next Greater Node In Linked List", diff: "easy",
+  problem: "Given a singly linked list, return an array where answer[i] is the value of the first node after node i with a strictly greater value, or 0 if none.",
+  intuition: "Convert the list to an array (or process positions on the fly) and apply the next-greater template. The linked-list wrapper changes nothing about the core algorithm.",
+  hints: [
+    "Walk the list once collecting values into an ArrayList → array.",
+    "Run the decreasing-stack next-greater scan over that array.",
+    "Store indices; when value[i] resolves a popped index j, set ans[j] = value[i].",
+    "Leftover indices keep the default 0."
+  ],
+  tips: [
+    "You don't strictly need to materialize the array — you can push positions as you traverse — but the array version is far easier to get right.",
+    "Default is 0 here (not -1); read the spec carefully for the 'none' value."
+  ],
+  code: `/*
+ * LC 1019 — flatten to an array, then standard next-greater (default 0).
+ */
+int[] nextLargerNodes(ListNode head) {
+
+    List<Integer> vals = new ArrayList<>();
+    for (ListNode p = head; p != null; p = p.next) vals.add(p.val);
+
+    int n = vals.size();
+    int[] ans = new int[n];                        // defaults to 0
+    Deque<Integer> st = new ArrayDeque<>();        // decreasing stack of indices
+
+    for (int i = 0; i < n; i++) {
+        while (!st.isEmpty() && vals.get(st.peek()) < vals.get(i))
+            ans[st.pop()] = vals.get(i);
+        st.push(i);
+    }
+    return ans;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 1475, title: "Final Prices With a Special Discount", diff: "easy",
+  problem: "For each item i, the discount equals the price of the FIRST later item j with prices[j] <= prices[i]. Return the final prices after applying each discount.",
+  intuition: "This is 'next smaller-or-equal element to the right'. Maintain an increasing stack of indices; when a new price is <= the stack top's price, it is that index's discount.",
+  hints: [
+    "Initialize answer = copy of prices.",
+    "Keep a (non-strict) increasing stack of indices.",
+    "While prices[i] <= prices[stack.top()], pop j and set answer[j] = prices[j] - prices[i].",
+    "Push i."
+  ],
+  tips: [
+    "Note the '<=' — the discount uses the first price that is less than OR equal.",
+    "Because the discount subtracts from the original, start answer as a clone of prices and only adjust the ones that get resolved."
+  ],
+  code: `/*
+ * LC 1475 — next smaller-or-equal to the right gives the discount.
+ */
+int[] finalPrices(int[] prices) {
+
+    int n = prices.length;
+    int[] ans = prices.clone();                    // default: no discount
+    Deque<Integer> st = new ArrayDeque<>();        // increasing stack of indices
+
+    for (int i = 0; i < n; i++) {
+        while (!st.isEmpty() && prices[st.peek()] >= prices[i]) {
+            int j = st.pop();
+            ans[j] = prices[j] - prices[i];        // first <= price is the discount
+        }
+        st.push(i);
+    }
+    return ans;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 1047, title: "Remove All Adjacent Duplicates In String", diff: "easy",
+  problem: "Repeatedly remove two adjacent equal letters until none remain; return the final string. e.g. \"abbaca\" → \"ca\".",
+  intuition: "A plain stack (the simplest cousin of the monotonic stack) models the 'cancel the neighbour' rule perfectly: if the incoming char equals the top, they annihilate (pop); otherwise push.",
+  hints: [
+    "Use a StringBuilder as a stack.",
+    "For each char: if it equals the last char in the builder, delete that last char; else append.",
+    "The builder always holds the reduced string so far.",
+    "Return the builder as the final answer."
+  ],
+  tips: [
+    "Not strictly 'monotonic', but it's the foundational stack-cancellation idea that powers Asteroid Collision and Remove K Digits.",
+    "StringBuilder-as-stack avoids the char-to-String conversions a Deque<Character> would need."
+  ],
+  code: `/*
+ * LC 1047 — stack cancellation; StringBuilder doubles as the stack.
+ */
+String removeDuplicates(String s) {
+
+    StringBuilder sb = new StringBuilder();
+    for (char c : s.toCharArray()) {
+        int len = sb.length();
+        if (len > 0 && sb.charAt(len - 1) == c)
+            sb.deleteCharAt(len - 1);              // matching pair cancels
+        else
+            sb.append(c);                          // otherwise keep it
+    }
+    return sb.toString();
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+
+/* ===================== MEDIUM ===================== */
+
+PROBLEMS.push({
+  num: 84, title: "Largest Rectangle in Histogram", diff: "med",
+  problem: "Given bar heights, find the area of the largest rectangle that fits entirely under the histogram.",
+  intuition: "For each bar as the limiting height, the rectangle stretches left and right until it hits a strictly shorter bar. A monotonically INCREASING stack of indices finds, for the bar being popped, its right boundary (the current bar) and its left boundary (the new stack top) in one pass.",
+  hints: [
+    "Keep an increasing stack of indices. Append a sentinel height 0 at the end to flush everything.",
+    "When the current height is less than the stack top's height, pop: that popped bar's height defines a rectangle.",
+    "Width = (current index) - (new stack top index) - 1, or current index if the stack becomes empty.",
+    "Area = poppedHeight * width; track the max."
+  ],
+  tips: [
+    "The trailing sentinel (height 0) avoids a separate loop to drain the stack at the end.",
+    "Width math is the classic bug: after popping, the left boundary is the NEW top, not the popped index.",
+    "This is the engine behind Maximal Rectangle (LC 85)."
+  ],
+  code: `/*
+ * LC 84 — increasing stack of indices; pop resolves a bar's max rectangle.
+ */
+int largestRectangleArea(int[] heights) {
+
+    int n = heights.length, best = 0;
+    Deque<Integer> st = new ArrayDeque<>();        // increasing stack of indices
+
+    for (int i = 0; i <= n; i++) {
+        int h = (i == n) ? 0 : heights[i];         // sentinel 0 flushes the stack
+        while (!st.isEmpty() && heights[st.peek()] > h) {
+            int height = heights[st.pop()];        // this bar limits the rectangle
+            int left = st.isEmpty() ? -1 : st.peek();
+            int width = i - left - 1;              // span between boundaries
+            best = Math.max(best, height * width);
+        }
+        st.push(i);
+    }
+    return best;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 42, title: "Trapping Rain Water", diff: "med",
+  problem: "Given elevation heights, compute how much rain water is trapped between the bars after it rains.",
+  intuition: "Water sits in horizontal layers bounded by a taller bar on each side. A DECREASING stack of indices captures these basins: when a taller bar arrives, it forms the right wall, the popped bar is the floor, and the new stack top is the left wall.",
+  hints: [
+    "Keep a decreasing stack of indices.",
+    "When height[i] > height[top], pop the floor; if the stack is now empty there's no left wall, so stop.",
+    "boundedHeight = min(height[i], height[newTop]) - height[floor]; width = i - newTop - 1.",
+    "Add boundedHeight * width to the total, then continue popping."
+  ],
+  tips: [
+    "Two-pointer is the O(1)-space alternative, but the stack version generalizes the layer-by-layer idea nicely.",
+    "Each pop adds one rectangular slab of water; you may add several slabs for a single i."
+  ],
+  code: `/*
+ * LC 42 — decreasing stack; each pop fills one horizontal water slab.
+ */
+int trap(int[] height) {
+
+    int n = height.length, water = 0;
+    Deque<Integer> st = new ArrayDeque<>();        // decreasing stack of indices
+
+    for (int i = 0; i < n; i++) {
+        while (!st.isEmpty() && height[st.peek()] < height[i]) {
+            int floor = st.pop();                  // bottom of the basin
+            if (st.isEmpty()) break;               // no left wall -> spills out
+            int left = st.peek();
+            int bounded = Math.min(height[left], height[i]) - height[floor];
+            int width = i - left - 1;
+            water += bounded * width;              // add this slab
+        }
+        st.push(i);
+    }
+    return water;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 402, title: "Remove K Digits", diff: "med",
+  problem: "Given a non-negative number as a string and an integer k, remove exactly k digits to make the smallest possible resulting number.",
+  intuition: "To minimize, scan left to right and greedily drop a digit whenever it is larger than the digit after it — those big-then-small bumps cost the most. An increasing stack does this: pop the top while it exceeds the incoming digit and you still have removals left.",
+  hints: [
+    "Keep an increasing stack (by digit) built from the characters.",
+    "While k > 0 and the top digit > current digit, pop and decrement k.",
+    "Push the current digit.",
+    "If k remains after the scan, drop k digits from the END (digits are already non-decreasing). Finally strip leading zeros."
+  ],
+  tips: [
+    "Edge cases: result could be empty → return \"0\". Leading zeros must be trimmed.",
+    "The 'remove from the end if k left' step handles already-sorted inputs like \"12345\".",
+    "Build the stack directly in a StringBuilder to make the final trimming easy."
+  ],
+  code: `/*
+ * LC 402 — increasing-digit stack; drop bigger-then-smaller bumps first.
+ */
+String removeKdigits(String num, int k) {
+
+    StringBuilder st = new StringBuilder();        // increasing stack of digits
+    for (char c : num.toCharArray()) {
+        while (k > 0 && st.length() > 0 && st.charAt(st.length() - 1) > c) {
+            st.deleteCharAt(st.length() - 1);      // pop a too-big digit
+            k--;
+        }
+        st.append(c);
+    }
+    // still need to remove? trim from the (now non-decreasing) tail
+    st.setLength(st.length() - k);
+
+    // strip leading zeros
+    int i = 0;
+    while (i < st.length() && st.charAt(i) == '0') i++;
+    String res = st.substring(i);
+    return res.isEmpty() ? "0" : res;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 316, title: "Remove Duplicate Letters", diff: "med",
+  problem: "Remove duplicate letters so every letter appears once and the result is the lexicographically smallest among all such strings.",
+  intuition: "Greedy with an increasing stack. Pop a bigger letter off the stack when a smaller letter arrives — but ONLY if the popped letter appears again later (so we can re-add it). Track which letters are already in the stack to avoid duplicates.",
+  hints: [
+    "Precompute lastIndex[c] = last position of each character.",
+    "Keep a boolean inStack[26] and a stack (StringBuilder).",
+    "For each char c not already in the stack: while top > c AND top occurs later (lastIndex[top] > i), pop it and mark out.",
+    "Push c and mark inStack."
+  ],
+  tips: [
+    "The 'occurs later' guard is essential — you may only discard a letter you can reintroduce.",
+    "Skip characters already on the stack entirely; re-adding would create duplicates.",
+    "LC 1081 'Smallest Subsequence of Distinct Characters' is the exact same problem."
+  ],
+  code: `/*
+ * LC 316 — lexicographically smallest distinct subsequence via greedy stack.
+ */
+String removeDuplicateLetters(String s) {
+
+    int[] last = new int[26];
+    for (int i = 0; i < s.length(); i++) last[s.charAt(i) - 'a'] = i;
+
+    boolean[] inStack = new boolean[26];
+    StringBuilder st = new StringBuilder();         // increasing-ish greedy stack
+
+    for (int i = 0; i < s.length(); i++) {
+        char c = s.charAt(i);
+        if (inStack[c - 'a']) continue;             // already placed -> skip
+        // pop bigger letters that still appear later
+        while (st.length() > 0) {
+            char top = st.charAt(st.length() - 1);
+            if (top > c && last[top - 'a'] > i) {
+                st.deleteCharAt(st.length() - 1);
+                inStack[top - 'a'] = false;
+            } else break;
+        }
+        st.append(c);
+        inStack[c - 'a'] = true;
+    }
+    return st.toString();
+}`,
+  complexity: "Time O(n). Space O(1) extra (26-sized arrays) plus the output."
+});
+
+PROBLEMS.push({
+  num: 907, title: "Sum of Subarray Minimums", diff: "med",
+  problem: "Return the sum of min(b) over every contiguous subarray b of an array, modulo 1e9+7.",
+  intuition: "Instead of enumerating subarrays, ask: for each element, in how many subarrays is IT the minimum? That count is (distance to previous smaller) × (distance to next smaller). Two monotonic-stack passes give those boundaries; multiply by the value and sum.",
+  hints: [
+    "left[i] = number of elements to the left (incl. i) until a strictly smaller one (previous-smaller boundary).",
+    "right[i] = number to the right until a smaller-or-equal one (next-smaller-or-equal boundary).",
+    "Use strict on one side and non-strict on the other to avoid double-counting equal values.",
+    "Contribution of a[i] = a[i] * left[i] * right[i]; sum all, mod 1e9+7."
+  ],
+  tips: [
+    "The asymmetric strict/non-strict choice is THE subtle part — equal minimums must be attributed to exactly one subarray.",
+    "You can compute both boundary arrays with monotonic stacks in O(n).",
+    "Sum of Subarray Ranges (LC 2104) = this minus the analogous 'sum of maximums'."
+  ],
+  code: `/*
+ * LC 907 — each element's contribution = value * (#subarrays where it's the min).
+ * left = span to previous strictly-smaller; right = span to next smaller-or-equal.
+ */
+int sumSubarrayMins(int[] a) {
+
+    int n = a.length, MOD = 1_000_000_007;
+    int[] left = new int[n], right = new int[n];
+    Deque<Integer> st = new ArrayDeque<>();
+
+    // previous strictly smaller -> how far left a[i] stays the min
+    for (int i = 0; i < n; i++) {
+        while (!st.isEmpty() && a[st.peek()] >= a[i]) st.pop();
+        left[i] = st.isEmpty() ? i + 1 : i - st.peek();
+        st.push(i);
+    }
+    st.clear();
+    // next smaller-or-equal -> how far right a[i] stays the min
+    for (int i = n - 1; i >= 0; i--) {
+        while (!st.isEmpty() && a[st.peek()] > a[i]) st.pop();
+        right[i] = st.isEmpty() ? n - i : st.peek() - i;
+        st.push(i);
+    }
+
+    long sum = 0;
+    for (int i = 0; i < n; i++)
+        sum = (sum + (long) a[i] * left[i] % MOD * right[i]) % MOD;
+    return (int) sum;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 735, title: "Asteroid Collision", diff: "med",
+  problem: "Each asteroid moves right (+) or left (-) at the same speed; magnitude = size. Equal-size opposite asteroids both explode; a smaller one explodes. Return the surviving asteroids.",
+  intuition: "A stack naturally models collisions: a right-moving asteroid waits on the stack; a left-moving one collides with stack-top right-movers, popping smaller ones until it survives, explodes, or the stack runs out.",
+  hints: [
+    "Iterate asteroids; the stack holds survivors so far.",
+    "A collision happens only when stack top > 0 (right) and current < 0 (left).",
+    "Resolve: if top < |current|, pop and keep colliding; if equal, pop and current dies; if top bigger, current dies.",
+    "If current survives all collisions (or no collision applies), push it."
+  ],
+  tips: [
+    "Use a boolean 'alive' flag for the incoming asteroid so you know whether to push it after the while loop.",
+    "Only a positive-on-stack meeting a negative-incoming collides; same signs or (-, +) never collide.",
+    "ArrayDeque used as a stack, then convert to array at the end."
+  ],
+  code: `/*
+ * LC 735 — stack of survivors; left-movers collide with right-movers on top.
+ */
+int[] asteroidCollision(int[] asteroids) {
+
+    Deque<Integer> st = new ArrayDeque<>();
+    for (int a : asteroids) {
+        boolean alive = true;
+        // collision while top is right-moving and 'a' is left-moving
+        while (alive && a < 0 && !st.isEmpty() && st.peek() > 0) {
+            int top = st.peek();
+            if (top < -a) st.pop();                // top explodes, a continues
+            else if (top == -a) { st.pop(); alive = false; }  // both explode
+            else alive = false;                    // a explodes
+        }
+        if (alive) st.push(a);
+    }
+
+    int[] res = new int[st.size()];
+    for (int i = res.length - 1; i >= 0; i--) res[i] = st.pop();  // bottom..top
+    return res;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 456, title: "132 Pattern", diff: "med",
+  problem: "Given an array, decide whether there exist indices i < j < k with nums[i] < nums[k] < nums[j] (a '132' pattern).",
+  intuition: "Scan RIGHT to LEFT. Maintain a decreasing stack of candidate '2' values and track the largest value that has already been popped as a valid '2' (call it 'third'). If you ever see a number smaller than 'third', that's the '1' and you've found 1-3-2.",
+  hints: [
+    "Iterate k from right to left; the stack holds potential '3' values (decreasing).",
+    "While stack top < nums[k], pop it into 'third' (the best '2' so far that's below some '3').",
+    "If nums[k] < third at any point, return true (nums[k] is the '1').",
+    "Push nums[k] as a future '3'."
+  ],
+  tips: [
+    "'third' is always the value of a '2' that had a bigger '3' to its left — exactly what a '1' must dip below.",
+    "Initialize third to Integer.MIN_VALUE so the first comparison can't trigger.",
+    "Right-to-left is the non-obvious key; left-to-right is much harder to get O(n)."
+  ],
+  code: `/*
+ * LC 456 — scan right-to-left; 'third' is the best valid '2', stack holds '3's.
+ */
+boolean find132pattern(int[] nums) {
+
+    Deque<Integer> st = new ArrayDeque<>();        // decreasing stack of candidate '3's
+    int third = Integer.MIN_VALUE;                 // best '2' with a bigger '3' on its right
+
+    for (int k = nums.length - 1; k >= 0; k--) {
+        if (nums[k] < third) return true;          // nums[k] is the '1'
+        while (!st.isEmpty() && st.peek() < nums[k])
+            third = st.pop();                      // promote popped value to '2'
+        st.push(nums[k]);
+    }
+    return false;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+
+/* ===================== HARD ===================== */
+
+PROBLEMS.push({
+  num: 85, title: "Maximal Rectangle", diff: "hard",
+  problem: "Given a binary matrix of 0s and 1s, find the largest rectangle containing only 1s and return its area.",
+  intuition: "Process the matrix row by row, building a histogram where heights[c] = number of consecutive 1s ending at the current row in column c. For each row, the answer is Largest Rectangle in Histogram (LC 84) on that height array. The overall max across rows is the answer.",
+  hints: [
+    "Maintain a heights[] array of length = #columns, all starting at 0.",
+    "For each row: if cell is '1', heights[c]++; else reset heights[c] = 0.",
+    "Run the histogram routine (increasing stack) on heights after each row update.",
+    "Keep the running maximum area."
+  ],
+  tips: [
+    "This reduces a 2-D problem to repeated 1-D histogram calls — recognizing that reduction is the whole battle.",
+    "Reuse the exact LC 84 stack code as a helper; don't reinvent it.",
+    "Resetting to 0 on a '0' cell is what enforces 'consecutive 1s only'."
+  ],
+  code: `/*
+ * LC 85 — per-row histogram + Largest Rectangle in Histogram.
+ */
+int maximalRectangle(char[][] matrix) {
+
+    if (matrix.length == 0) return 0;
+    int cols = matrix[0].length, best = 0;
+    int[] heights = new int[cols];
+
+    for (char[] row : matrix) {
+        for (int c = 0; c < cols; c++)
+            heights[c] = (row[c] == '1') ? heights[c] + 1 : 0;   // build histogram
+        best = Math.max(best, largestInHistogram(heights));
+    }
+    return best;
+}
+
+// LC 84 helper: increasing stack of indices with a flush sentinel
+int largestInHistogram(int[] h) {
+    int n = h.length, best = 0;
+    Deque<Integer> st = new ArrayDeque<>();
+    for (int i = 0; i <= n; i++) {
+        int cur = (i == n) ? 0 : h[i];
+        while (!st.isEmpty() && h[st.peek()] > cur) {
+            int height = h[st.pop()];
+            int left = st.isEmpty() ? -1 : st.peek();
+            best = Math.max(best, height * (i - left - 1));
+        }
+        st.push(i);
+    }
+    return best;
+}`,
+  complexity: "Time O(rows · cols). Space O(cols)."
+});
+
+PROBLEMS.push({
+  num: 2104, title: "Sum of Subarray Ranges", diff: "hard",
+  problem: "The range of a subarray is max - min. Return the sum of ranges over all contiguous subarrays.",
+  intuition: "Sum of ranges = (sum of subarray maximums) - (sum of subarray minimums). Each part is a Sum-of-Subarray-Minimums-style computation: count, for every element, how many subarrays it dominates as the max (or min) using monotonic-stack boundaries.",
+  hints: [
+    "Compute sum of minimums exactly like LC 907 (prev strictly-smaller, next smaller-or-equal).",
+    "Compute sum of maximums symmetrically (prev strictly-greater, next greater-or-equal).",
+    "Answer = sumMax - sumMin.",
+    "Use long arithmetic — the totals grow quickly."
+  ],
+  tips: [
+    "The strict/non-strict pairing must mirror correctly for max vs min to avoid double counting equals.",
+    "Two helper passes (one for min, one for max) keep the code clean.",
+    "No modulo here, but values can be large → use long throughout."
+  ],
+  code: `/*
+ * LC 2104 — sum(max over subarrays) - sum(min over subarrays).
+ */
+long subArrayRanges(int[] a) {
+    return contribution(a, true) - contribution(a, false);   // max - min
+}
+
+// sumOfMax when isMax=true, else sumOfMin, via monotonic-stack spans
+long contribution(int[] a, boolean isMax) {
+    int n = a.length;
+    long total = 0;
+    Deque<Integer> st = new ArrayDeque<>();
+
+    for (int i = 0; i <= n; i++) {
+        // for max: pop while top <= current; for min: pop while top >= current
+        while (!st.isEmpty() && (i == n ||
+               (isMax ? a[st.peek()] <= a[i] : a[st.peek()] >= a[i]))) {
+            int mid = st.pop();
+            int left = st.isEmpty() ? -1 : st.peek();
+            long count = (long) (mid - left) * (i - mid);     // #subarrays where a[mid] dominates
+            total += (long) a[mid] * count;
+        }
+        st.push(i);
+    }
+    return total;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+PROBLEMS.push({
+  num: 239, title: "Sliding Window Maximum", diff: "hard",
+  problem: "Given an array and a window size k, return the maximum of every contiguous window of size k as the window slides left to right.",
+  intuition: "A monotonic DEQUE (double-ended) of indices, kept decreasing by value, makes the front always the current window's maximum. Pop from the back any indices with smaller values (they can never be a future max while the current one lives), and pop from the front any index that slid out of the window.",
+  hints: [
+    "Store INDICES in a deque, values decreasing from front to back.",
+    "Before adding i, pop the back while nums[back] <= nums[i].",
+    "Pop the front if it is <= i - k (out of window).",
+    "Once i >= k-1, the front index holds the window max → record nums[front]."
+  ],
+  tips: [
+    "This is the deque generalization of the monotonic stack — the same 'discard dominated elements' idea, with eviction from both ends.",
+    "Always store indices, never raw values, so you can detect when the max leaves the window.",
+    "Shortest Subarray with Sum at Least K (LC 862) uses the same monotonic-deque tool on prefix sums."
+  ],
+  code: `/*
+ * LC 239 — monotonic decreasing deque of indices; front = window max.
+ */
+int[] maxSlidingWindow(int[] nums, int k) {
+
+    int n = nums.length;
+    int[] ans = new int[n - k + 1];
+    Deque<Integer> dq = new ArrayDeque<>();        // indices, values decreasing
+
+    for (int i = 0; i < n; i++) {
+        // drop smaller values from the back: they can't be a future max
+        while (!dq.isEmpty() && nums[dq.peekLast()] <= nums[i])
+            dq.pollLast();
+        dq.offerLast(i);
+
+        // drop the front if it left the window
+        if (dq.peekFirst() <= i - k) dq.pollFirst();
+
+        // window fully formed -> record its max
+        if (i >= k - 1) ans[i - k + 1] = nums[dq.peekFirst()];
+    }
+    return ans;
+}`,
+  complexity: "Time O(n) — each index enters and leaves the deque once. Space O(k)."
+});
+
+PROBLEMS.push({
+  num: 862, title: "Shortest Subarray with Sum at Least K", diff: "hard",
+  problem: "Given an integer array (which may contain negatives) and K, return the length of the shortest non-empty subarray with sum >= K, or -1 if none exists.",
+  intuition: "Work on prefix sums P, where subarray (j, i] sum = P[i] - P[j]. We want the shortest i - j with P[i] - P[j] >= K. A monotonic INCREASING deque of prefix-sum indices lets us, for each i, pop qualifying fronts (answer candidates) and discard useless larger-or-equal prefix sums from the back.",
+  hints: [
+    "Build prefix sums of length n+1.",
+    "Maintain a deque of indices with increasing prefix-sum values.",
+    "For each i: while P[i] - P[front] >= K, record i - front and pop the front (it can't help a later, longer answer).",
+    "While P[i] <= P[back], pop the back (P[i] dominates: smaller and more recent)."
+  ],
+  tips: [
+    "Negatives break the plain sliding-window approach — that's why the monotonic deque on prefix sums is needed.",
+    "Popping the back when P[i] <= P[back] keeps the deque increasing AND prefers later indices for shorter subarrays.",
+    "Use long for prefix sums to avoid overflow."
+  ],
+  code: `/*
+ * LC 862 — monotonic increasing deque over prefix sums (handles negatives).
+ */
+int shortestSubarray(int[] nums, int K) {
+
+    int n = nums.length;
+    long[] P = new long[n + 1];
+    for (int i = 0; i < n; i++) P[i + 1] = P[i] + nums[i];
+
+    int ans = n + 1;
+    Deque<Integer> dq = new ArrayDeque<>();        // indices, P increasing front->back
+
+    for (int i = 0; i <= n; i++) {
+        // front qualifies: P[i] - P[front] >= K -> record and discard front
+        while (!dq.isEmpty() && P[i] - P[dq.peekFirst()] >= K)
+            ans = Math.min(ans, i - dq.pollFirst());
+        // back is useless if its prefix sum >= current (current is smaller & later)
+        while (!dq.isEmpty() && P[dq.peekLast()] >= P[i])
+            dq.pollLast();
+        dq.offerLast(i);
+    }
+    return ans <= n ? ans : -1;
+}`,
+  complexity: "Time O(n). Space O(n)."
+});
+
+
+/* ----------------------- RENDERING ENGINE ----------------------- */
+
+const DIFF_LABEL = { veasy: 'Very Easy', easy: 'Easy', med: 'Medium', hard: 'Hard' };
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* Lightweight Java syntax highlighter. */
+function highlightJava(src) {
+  let s = escapeHtml(src);
+  const stash = [];
+  const stashIt = (html) => {
+    stash.push(html);
+    return '\u0001zZ' + (stash.length - 1) + 'Zz\u0001';
+  };
+  s = s.replace(/\/\/[^\n]*/g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/\/\*[\s\S]*?\*\//g, m => stashIt('<span class="cmt">' + m + '</span>'));
+  s = s.replace(/&quot;([^&]|&(?!quot;))*?&quot;/g, m => stashIt('<span class="str">' + m + '</span>'));
+  s = s.replace(/&#39;.&#39;|&#39;\\.&#39;/g, m => stashIt('<span class="str">' + m + '</span>'));
+
+  const types = ['String','Integer','Long','Boolean','Character','Double','Float',
+    'List','Map','Set','HashMap','HashSet','TreeMap','TreeSet','ArrayList','LinkedList',
+    'ArrayDeque','Queue','Deque','PriorityQueue','StringBuilder','BitSet','Stack',
+    'TreeNode','ListNode','StockSpanner','Random','Collections','Arrays','Math','Comparator','Objects'];
+  const typeRe = new RegExp('\\b(' + types.join('|') + ')\\b', 'g');
+  s = s.replace(typeRe, (_, name) => stashIt('<span class="typ">' + name + '</span>'));
+
+  const kws = ['void','int','long','boolean','char','double','float','byte','short',
+    'public','private','protected','static','final','abstract','class','interface','enum',
+    'return','if','else','for','while','do','break','continue','switch','case','default',
+    'new','null','true','false','this','super','try','catch','finally','throw','throws',
+    'import','package','extends','implements','instanceof'];
+  const kwRe = new RegExp('\\b(' + kws.join('|') + ')\\b', 'g');
+  s = s.replace(kwRe, (_, name) => stashIt('<span class="kw">' + name + '</span>'));
+
+  s = s.replace(/\b(\d+(?:_\d+)*L?)\b/g, '<span class="num">$1</span>');
+
+  while (/\u0001zZ\d+Zz\u0001/.test(s)) {
+    s = s.replace(/\u0001zZ(\d+)Zz\u0001/g, (_, i) => stash[+i]);
+  }
+  return s;
+}
+
+function getProblems(diff) {
+  return PROBLEMS.filter(p => p.diff === diff);
+}
+
+const state = { diff: 'veasy', idx: 0 };
+
+function renderTOC() {
+  const toc = document.getElementById('toc');
+  const groups = [
+    { diff: 'veasy', label: 'Very Easy' },
+    { diff: 'easy',  label: 'Easy' },
+    { diff: 'med',   label: 'Medium' },
+    { diff: 'hard',  label: 'Hard' },
+  ];
+  const html = groups.map(g => {
+    const items = getProblems(g.diff)
+      .map((p, i) => `<a data-diff="${g.diff}" data-idx="${i}"><span class="num">${p.num === 0 ? '★' : '#' + p.num}</span>${escapeHtml(p.title)}</a>`)
+      .join('');
+    return `<div class="group-title">${g.label}</div>${items}`;
+  }).join('');
+  toc.innerHTML = html;
+  toc.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      state.diff = a.dataset.diff;
+      state.idx = +a.dataset.idx;
+      render();
+      toggleSidebar(false);
+    });
+  });
+}
+
+function renderTabs() {
+  document.getElementById('cnt-veasy').textContent = '(' + getProblems('veasy').length + ')';
+  document.getElementById('cnt-easy').textContent  = '(' + getProblems('easy').length + ')';
+  document.getElementById('cnt-med').textContent   = '(' + getProblems('med').length + ')';
+  document.getElementById('cnt-hard').textContent  = '(' + getProblems('hard').length + ')';
+}
+
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      if (state.diff !== t.dataset.diff) {
+        state.diff = t.dataset.diff;
+        state.idx = 0;
+        render();
+      }
+    };
+  });
+}
+
+function render() {
+  const problems = getProblems(state.diff);
+  if (state.idx >= problems.length) state.idx = problems.length - 1;
+  if (state.idx < 0) state.idx = 0;
+  const p = problems[state.idx];
+  const main = document.getElementById('main');
+  const numTag = p.num === 0 ? '★ Foundation' : '#' + p.num;
+  main.innerHTML = `
+    <div class="problem-card">
+      <h2>
+        <span class="num-tag">${numTag}</span>
+        ${escapeHtml(p.title)}
+        <span class="badge ${p.diff}">${DIFF_LABEL[p.diff]}</span>
+      </h2>
+
+      <div class="section-title">Problem</div>
+      <p>${escapeHtml(p.problem)}</p>
+
+      <div class="section-title">Intuition</div>
+      <div class="intuition">${escapeHtml(p.intuition)}</div>
+
+      <div class="section-title">Step-by-step Hints</div>
+      <ol class="hints">${p.hints.map(h => `<li>${escapeHtml(h)}</li>`).join('')}</ol>
+
+      <div class="section-title">Tips & Tricks</div>
+      <div class="tips-block"><ul class="tips">${p.tips.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+
+      <div class="section-title">Java Code</div>
+      <pre class="code"><code>${highlightJava(p.code)}</code></pre>
+
+      ${p.complexity ? `<div class="complexity"><b>Complexity:</b> ${escapeHtml(p.complexity)}</div>` : ''}
+    </div>
+  `;
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.diff === state.diff);
+  });
+
+  document.getElementById('prev').disabled = state.idx === 0;
+  document.getElementById('next').disabled = state.idx === problems.length - 1;
+  document.getElementById('nav-info').textContent =
+    `${DIFF_LABEL[state.diff]} · ${state.idx + 1} / ${problems.length}`;
+
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.classList.toggle('active', a.dataset.diff === state.diff && +a.dataset.idx === state.idx);
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextProblem() {
+  const arr = getProblems(state.diff);
+  if (state.idx < arr.length - 1) { state.idx++; render(); }
+}
+function prevProblem() {
+  if (state.idx > 0) { state.idx--; render(); }
+}
+document.getElementById('prev').addEventListener('click', prevProblem);
+document.getElementById('next').addEventListener('click', nextProblem);
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowLeft') prevProblem();
+  else if (e.key === 'ArrowRight') nextProblem();
+  else if (e.key === 'Escape') toggleSidebar(false);
+});
+
+const hb = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+function toggleSidebar(open) {
+  const isOpen = (typeof open === 'boolean') ? open : !sb.classList.contains('open');
+  sb.classList.toggle('open', isOpen);
+  hb.classList.toggle('open', isOpen);
+  ov.classList.toggle('show', isOpen);
+}
+hb.addEventListener('click', () => toggleSidebar());
+ov.addEventListener('click', () => toggleSidebar(false));
+
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeBtn.textContent = '☀️';
+    themeBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeBtn.textContent = '🌙';
+    themeBtn.title = 'Switch to dark mode';
+  }
+}
+(function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) { applyTheme(saved); return; }
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark ? 'dark' : 'light');
+})();
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('theme', next);
+});
+
+/* boot */
+renderTabs();
+bindTabs();
+renderTOC();
+render();
+
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+
+<!-- KIRO_CROSS_TAB_NAV_START -->
+<script id="kiro-cross-tab-nav">
+(function(){
+  if(window.__kiroCrossTabNav) return;
+  window.__kiroCrossTabNav = true;
+  function init(){
+    if(typeof getProblems !== 'function' || typeof window.render !== 'function' || typeof state === 'undefined') return;
+    var ORDER = ['veasy','easy','med','hard'];
+    function diffs(){ return ORDER.filter(function(d){ try { return getProblems(d).length > 0; } catch(e){ return false; } }); }
+
+    function updateNavButtons(){
+      var prevB = document.getElementById('prev');
+      var nextB = document.getElementById('next');
+      if(!prevB || !nextB) return;
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      var arr = getProblems(state.diff);
+      prevB.disabled = (di <= 0 && state.idx <= 0);
+      nextB.disabled = (di === list.length - 1 && state.idx >= arr.length - 1);
+    }
+
+    var origRender = window.render;
+    window.render = function(){
+      var r = origRender.apply(this, arguments);
+      try { updateNavButtons(); } catch(e){}
+      return r;
+    };
+
+    function goNext(){
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      var arr = getProblems(state.diff);
+      if(state.idx < arr.length - 1){ state.idx++; window.render(); return; }
+      if(di < list.length - 1){ state.diff = list[di + 1]; state.idx = 0; window.render(); }
+    }
+    function goPrev(){
+      var list = diffs();
+      var di = list.indexOf(state.diff);
+      if(di === -1) return;
+      if(state.idx > 0){ state.idx--; window.render(); return; }
+      if(di > 0){
+        var pd = list[di - 1];
+        state.diff = pd;
+        var parr = getProblems(pd);
+        state.idx = Math.max(0, parr.length - 1);
+        window.render();
+      }
+    }
+
+    window.nextProblem = goNext;
+    window.prevProblem = goPrev;
+
+    ['prev','next'].forEach(function(id){
+      var b = document.getElementById(id);
+      if(!b) return;
+      var clone = b.cloneNode(true);
+      b.parentNode.replaceChild(clone, b);
+      clone.addEventListener('click', id === 'next' ? goNext : goPrev);
+    });
+
+    updateNavButtons();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<!-- KIRO_CROSS_TAB_NAV_END -->
+
+</body>
+</html>
