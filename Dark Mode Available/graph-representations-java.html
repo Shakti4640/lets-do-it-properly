@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Representations & Conversions – Java</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #141720;
+    --surface2:  #1c2030;
+    --border:    #252b3b;
+    --accent:    #7c6af7;
+    --accent2:   #4ecdc4;
+    --accent3:   #f7c948;
+    --accent4:   #f26b5e;
+    --text:      #e2e6f0;
+    --muted:     #7a839a;
+    --code-bg:   #0a0c10;
+
+    /* token colors */
+    --tk-kw:    #c792ea;
+    --tk-type:  #82aaff;
+    --tk-str:   #c3e88d;
+    --tk-num:   #f78c6c;
+    --tk-cmt:   #546e7a;
+    --tk-fn:    #82aaff;
+    --tk-ann:   #f7c948;
+    --tk-op:    #89ddff;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 0 0 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0d0f14 0%, #141720 60%, #1a1030 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 40px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(124,106,247,.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 52px);
+    line-height: 1.12;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero-sub {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 560px;
+    margin: 0 auto 32px;
+  }
+  .hero-pills { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    border: 1px solid;
+  }
+  .pill-purple { color: var(--accent);  border-color: rgba(124,106,247,.4); background: rgba(124,106,247,.08); }
+  .pill-teal   { color: var(--accent2); border-color: rgba(78,205,196,.4);  background: rgba(78,205,196,.08); }
+  .pill-yellow { color: var(--accent3); border-color: rgba(247,201,72,.4);  background: rgba(247,201,72,.08); }
+  .pill-red    { color: var(--accent4); border-color: rgba(242,107,94,.4);  background: rgba(242,107,94,.08); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── SECTION HEADERS ── */
+  .sec-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 52px 0 6px;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  h2 .tag { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--accent3); margin-left: 10px; }
+  .sec-divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent) 0%, transparent 80%);
+    margin: 10px 0 24px;
+  }
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 28px 0 10px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+  .card p { color: var(--muted); font-size: 14px; }
+
+  /* ── REPR GRID ── */
+  .repr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .repr-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 18px 16px;
+  }
+  .repr-card .icon { font-size: 22px; margin-bottom: 8px; }
+  .repr-card .name { font-family: 'DM Mono', monospace; font-size: 13px; color: #fff; margin-bottom: 6px; }
+  .repr-card .desc { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .repr-card .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+  .badge.good { color: var(--accent2); background: rgba(78,205,196,.1); }
+  .badge.bad  { color: var(--accent4); background: rgba(242,107,94,.1); }
+
+  /* ── CODE ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    margin: 12px 0 24px;
+    position: relative;
+  }
+  pre .lang-tag {
+    position: absolute;
+    top: 10px; right: 14px;
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .kw   { color: var(--tk-kw); }
+  .type { color: var(--tk-type); }
+  .str  { color: var(--tk-str); }
+  .num  { color: var(--tk-num); }
+  .cmt  { color: var(--tk-cmt); font-style: italic; }
+  .fn   { color: var(--tk-fn); }
+  .ann  { color: var(--tk-ann); }
+  .op   { color: var(--tk-op); }
+
+  /* ── COMPLEXITY TABLE ── */
+  .tbl-wrap { overflow-x: auto; margin: 12px 0 28px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    min-width: 560px;
+  }
+  thead tr { background: var(--surface2); }
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    color: var(--muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(37,43,59,.6);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  .c-good { color: var(--accent2); }
+  .c-ok   { color: var(--accent3); }
+  .c-bad  { color: var(--accent4); }
+  .c-rep  { color: var(--accent); font-weight: 500; }
+
+  /* ── ARROW FLOW ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 16px 0 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+  .flow-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: #fff;
+  }
+  .flow-arrow { color: var(--muted); font-size: 18px; }
+
+  /* ── TIPS ── */
+  .tip {
+    background: rgba(124,106,247,.07);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    color: var(--muted);
+    margin: 0 0 18px;
+  }
+  .tip strong { color: var(--text); }
+
+  /* ── CHEAT GRID ── */
+  .cheat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 32px; }
+  .cheat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .cheat-card h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent3);
+    margin-bottom: 10px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .cheat-card ul { list-style: none; }
+  .cheat-card li {
+    font-size: 13px;
+    color: var(--muted);
+    padding: 3px 0;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .cheat-card li::before { content: '▸'; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+  /* ── NAV TABS ── */
+  .nav { display: flex; gap: 6px; flex-wrap: wrap; margin: 28px 0 0; }
+  .nav-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .nav-item:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ── SCROLL ANCHORS ── */
+  section { scroll-margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<div class="hero">
+  <div class="hero-eyebrow">Graph Theory · Java · DSA Interview Prep</div>
+  <h1>Graph <span>Representation</span><br>Conversions in Java</h1>
+  <p class="hero-sub">All four representations — Adjacency Matrix, Adjacency List, Edge List, Incidence Matrix — with every pairwise conversion.</p>
+  <div class="hero-pills">
+    <span class="pill pill-purple">Adjacency Matrix</span>
+    <span class="pill pill-teal">Adjacency List</span>
+    <span class="pill pill-yellow">Edge List</span>
+    <span class="pill pill-red">Incidence Matrix</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<div class="container">
+  <div class="nav">
+    <a class="nav-item" href="#representations">Representations</a>
+    <a class="nav-item" href="#matrix-to-list">Matrix → List</a>
+    <a class="nav-item" href="#list-to-matrix">List → Matrix</a>
+    <a class="nav-item" href="#matrix-to-edges">Matrix → Edges</a>
+    <a class="nav-item" href="#edges-to-matrix">Edges → Matrix</a>
+    <a class="nav-item" href="#list-to-edges">List → Edges</a>
+    <a class="nav-item" href="#edges-to-list">Edges → List</a>
+    <a class="nav-item" href="#incidence">Incidence Matrix</a>
+    <a class="nav-item" href="#complexity">Complexity</a>
+    <a class="nav-item" href="#cheatsheet">Cheat Sheet</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════ REPRESENTATIONS ═══════════════════════ -->
+<div class="container">
+  <section id="representations">
+    <p class="sec-label">§ 01</p>
+    <h2>The Four Representations</h2>
+    <div class="sec-divider"></div>
+    <div class="repr-grid">
+      <div class="repr-card">
+        <div class="icon">🔲</div>
+        <div class="name">Adjacency Matrix</div>
+        <div class="desc">2D array <code>int[V][V]</code>. <code>mat[u][v]=1</code> means edge u→v exists.</div>
+        <div class="badges">
+          <span class="badge good">O(1) edge check</span>
+          <span class="badge bad">O(V²) space</span>
+        </div>
+      </div>
+      <div class="repr-card">
+        <div class="icon">📋</div>
+        <div class="name">Adjacency List</div>
+        <div class="desc"><code>List&lt;List&lt;Integer&gt;&gt;</code>. Each vertex stores its neighbours.</div>
+        <div class="badges">
+          <span class="badge good">O(V+E) space</span>
+          <span class="badge good">Fast traversal</span>
+        </div>
+      </div>
+      <div class="repr-card">
+        <div class="icon">🔗</div>
+        <div class="name">Edge List</div>
+        <div class="desc">List of <code>[u, v]</code> or <code>[u, v, w]</code> pairs. Compact, Kruskal-friendly.</div>
+        <div class="badges">
+          <span class="badge good">O(E) space</span>
+          <span class="badge bad">O(E) edge check</span>
+        </div>
+      </div>
+      <div class="repr-card">
+        <div class="icon">🧩</div>
+        <div class="name">Incidence Matrix</div>
+        <div class="desc"><code>int[V][E]</code>. Rows = vertices, columns = edges. Rarely used in interviews.</div>
+        <div class="badges">
+          <span class="badge bad">O(V·E) space</span>
+          <span class="badge">Multigraph safe</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Visual Example (4 vertices, directed)</h3>
+    <pre><span class="cmt">// Graph:  0→1, 0→2, 1→3, 2→3</span>
+
+<span class="cmt">// Adjacency Matrix          Adjacency List        Edge List</span>
+<span class="cmt">//   0 1 2 3               0 → [1,2]             [0,1]</span>
+<span class="cmt">// 0[0,1,1,0]              1 → [3]               [0,2]</span>
+<span class="cmt">// 1[0,0,0,1]              2 → [3]               [1,3]</span>
+<span class="cmt">// 2[0,0,0,1]              3 → []                [2,3]</span>
+<span class="cmt">// 3[0,0,0,0]</span></pre>
+  </section>
+
+  <!-- ═══════════════════════ MATRIX → LIST ═══════════════════════ -->
+  <section id="matrix-to-list">
+    <p class="sec-label">§ 02</p>
+    <h2>Adjacency Matrix <span class="tag">→ Adjacency List</span></h2>
+    <div class="sec-divider"></div>
+
+    <div class="flow">
+      <div class="flow-node">int[][] mat</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">List&lt;List&lt;Integer&gt;&gt; adj</div>
+    </div>
+
+    <p class="tip"><strong>Strategy:</strong> For each row <code>u</code>, scan all columns <code>v</code>. If <code>mat[u][v] == 1</code>, add <code>v</code> to <code>adj.get(u)</code>. Time: O(V²) — you must inspect every cell.</p>
+
+    <pre><span class="lang-tag">java</span><span class="kw">import</span> java.util.*;
+
+<span class="kw">public class</span> <span class="type">GraphConvert</span> {
+
+    <span class="cmt">// ── Directed graph ──────────────────────────────────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; <span class="fn">matrixToList</span>(<span class="kw">int</span>[][] mat) {
+        <span class="kw">int</span> V <span class="op">=</span> mat.length;
+        <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> V; i<span class="op">++</span>)
+            adj.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> V; u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span> v <span class="op">=</span> <span class="num">0</span>; v <span class="op">&lt;</span> V; v<span class="op">++</span>)
+                <span class="kw">if</span> (mat[u][v] <span class="op">==</span> <span class="num">1</span>)
+                    adj.get(u).add(v);
+
+        <span class="kw">return</span> adj;
+    }
+
+    <span class="cmt">// ── Weighted directed graph ──────────────────────────────────</span>
+    <span class="cmt">// adj[u] = list of int[]{v, weight}</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; <span class="fn">weightedMatrixToList</span>(<span class="kw">int</span>[][] mat) {
+        <span class="kw">int</span> V <span class="op">=</span> mat.length;
+        <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; adj <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> V; i<span class="op">++</span>) adj.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> V; u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span> v <span class="op">=</span> <span class="num">0</span>; v <span class="op">&lt;</span> V; v<span class="op">++</span>)
+                <span class="kw">if</span> (mat[u][v] <span class="op">!=</span> <span class="num">0</span>)
+                    adj.get(u).add(<span class="kw">new</span> <span class="kw">int</span>[]{v, mat[u][v]});
+
+        <span class="kw">return</span> adj;
+    }
+}</pre>
+  </section>
+
+  <!-- ═══════════════════════ LIST → MATRIX ═══════════════════════ -->
+  <section id="list-to-matrix">
+    <p class="sec-label">§ 03</p>
+    <h2>Adjacency List <span class="tag">→ Adjacency Matrix</span></h2>
+    <div class="sec-divider"></div>
+
+    <div class="flow">
+      <div class="flow-node">List&lt;List&lt;Integer&gt;&gt; adj</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">int[][] mat</div>
+    </div>
+
+    <p class="tip"><strong>Strategy:</strong> Allocate a <code>V×V</code> matrix of zeros. For each <code>u</code> and each neighbour <code>v</code> in <code>adj.get(u)</code>, set <code>mat[u][v] = 1</code>. Time: O(V+E), but the output itself is always O(V²).</p>
+
+    <pre><span class="lang-tag">java</span>    <span class="cmt">// ── Unweighted ──────────────────────────────────────────────</span>
+    <span class="kw">public static int</span>[][] <span class="fn">listToMatrix</span>(<span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj, <span class="kw">int</span> V) {
+        <span class="kw">int</span>[][] mat <span class="op">=</span> <span class="kw">new int</span>[V][V];
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> V; u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u))
+                mat[u][v] <span class="op">=</span> <span class="num">1</span>;
+        <span class="kw">return</span> mat;
+    }
+
+    <span class="cmt">// ── Weighted: adj[u] = list of int[]{v, w} ──────────────────</span>
+    <span class="kw">public static int</span>[][] <span class="fn">weightedListToMatrix</span>(<span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; adj, <span class="kw">int</span> V) {
+        <span class="kw">int</span>[][] mat <span class="op">=</span> <span class="kw">new int</span>[V][V];
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> V; u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span>[] edge : adj.get(u))
+                mat[u][edge[<span class="num">0</span>]] <span class="op">=</span> edge[<span class="num">1</span>];   <span class="cmt">// edge[0]=v, edge[1]=weight</span>
+        <span class="kw">return</span> mat;
+    }</pre>
+  </section>
+
+  <!-- ═══════════════════════ MATRIX → EDGES ═══════════════════════ -->
+  <section id="matrix-to-edges">
+    <p class="sec-label">§ 04</p>
+    <h2>Adjacency Matrix <span class="tag">→ Edge List</span></h2>
+    <div class="sec-divider"></div>
+
+    <div class="flow">
+      <div class="flow-node">int[][] mat</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">List&lt;int[]&gt; edges</div>
+    </div>
+
+    <p class="tip"><strong>Undirected graphs:</strong> Only iterate <code>v &gt;= u</code> (upper triangle) to avoid duplicate edges. For directed, scan the full matrix.</p>
+
+    <pre><span class="lang-tag">java</span>    <span class="cmt">// ── Directed ────────────────────────────────────────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; <span class="fn">matrixToEdges</span>(<span class="kw">int</span>[][] mat) {
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">int</span> V <span class="op">=</span> mat.length;
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> V; u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span> v <span class="op">=</span> <span class="num">0</span>; v <span class="op">&lt;</span> V; v<span class="op">++</span>)
+                <span class="kw">if</span> (mat[u][v] <span class="op">!=</span> <span class="num">0</span>)
+                    edges.add(<span class="kw">new int</span>[]{u, v, mat[u][v]});  <span class="cmt">// {from, to, weight}</span>
+        <span class="kw">return</span> edges;
+    }
+
+    <span class="cmt">// ── Undirected (upper triangle only) ────────────────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; <span class="fn">undirectedMatrixToEdges</span>(<span class="kw">int</span>[][] mat) {
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">int</span> V <span class="op">=</span> mat.length;
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> V; u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span> v <span class="op">=</span> u; v <span class="op">&lt;</span> V; v<span class="op">++</span>)      <span class="cmt">// v starts from u</span>
+                <span class="kw">if</span> (mat[u][v] <span class="op">!=</span> <span class="num">0</span>)
+                    edges.add(<span class="kw">new int</span>[]{u, v, mat[u][v]});
+        <span class="kw">return</span> edges;
+    }</pre>
+  </section>
+
+  <!-- ═══════════════════════ EDGES → MATRIX ═══════════════════════ -->
+  <section id="edges-to-matrix">
+    <p class="sec-label">§ 05</p>
+    <h2>Edge List <span class="tag">→ Adjacency Matrix</span></h2>
+    <div class="sec-divider"></div>
+
+    <div class="flow">
+      <div class="flow-node">List&lt;int[]&gt; edges</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">int[][] mat</div>
+    </div>
+
+    <pre><span class="lang-tag">java</span>    <span class="cmt">// edges = list of {u, v} or {u, v, weight}</span>
+    <span class="kw">public static int</span>[][] <span class="fn">edgesToMatrix</span>(<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges, <span class="kw">int</span> V, <span class="kw">boolean</span> directed) {
+        <span class="kw">int</span>[][] mat <span class="op">=</span> <span class="kw">new int</span>[V][V];
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+            <span class="kw">int</span> u <span class="op">=</span> e[<span class="num">0</span>], v <span class="op">=</span> e[<span class="num">1</span>];
+            <span class="kw">int</span> w <span class="op">=</span> (e.length <span class="op">==</span> <span class="num">3</span>) ? e[<span class="num">2</span>] : <span class="num">1</span>;   <span class="cmt">// default weight = 1</span>
+            mat[u][v] <span class="op">=</span> w;
+            <span class="kw">if</span> (<span class="op">!</span>directed) mat[v][u] <span class="op">=</span> w;        <span class="cmt">// symmetric for undirected</span>
+        }
+        <span class="kw">return</span> mat;
+    }</pre>
+  </section>
+
+  <!-- ═══════════════════════ LIST → EDGES ═══════════════════════ -->
+  <section id="list-to-edges">
+    <p class="sec-label">§ 06</p>
+    <h2>Adjacency List <span class="tag">→ Edge List</span></h2>
+    <div class="sec-divider"></div>
+
+    <div class="flow">
+      <div class="flow-node">List&lt;List&lt;Integer&gt;&gt; adj</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">List&lt;int[]&gt; edges</div>
+    </div>
+
+    <pre><span class="lang-tag">java</span>    <span class="cmt">// ── Unweighted directed ─────────────────────────────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; <span class="fn">listToEdges</span>(<span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj) {
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> adj.size(); u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u))
+                edges.add(<span class="kw">new int</span>[]{u, v});
+        <span class="kw">return</span> edges;
+    }
+
+    <span class="cmt">// ── Weighted directed: adj[u] = List of int[]{v, weight} ────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; <span class="fn">weightedListToEdges</span>(<span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; adj) {
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> adj.size(); u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span>[] e : adj.get(u))
+                edges.add(<span class="kw">new int</span>[]{u, e[<span class="num">0</span>], e[<span class="num">1</span>]});  <span class="cmt">// {from, to, weight}</span>
+        <span class="kw">return</span> edges;
+    }
+
+    <span class="cmt">// ── Undirected (deduplicate by only adding when v > u) ───────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; <span class="fn">undirectedListToEdges</span>(<span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj) {
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> u <span class="op">=</span> <span class="num">0</span>; u <span class="op">&lt;</span> adj.size(); u<span class="op">++</span>)
+            <span class="kw">for</span> (<span class="kw">int</span> v : adj.get(u))
+                <span class="kw">if</span> (v <span class="op">&gt;</span> u) edges.add(<span class="kw">new int</span>[]{u, v});
+        <span class="kw">return</span> edges;
+    }</pre>
+  </section>
+
+  <!-- ═══════════════════════ EDGES → LIST ═══════════════════════ -->
+  <section id="edges-to-list">
+    <p class="sec-label">§ 07</p>
+    <h2>Edge List <span class="tag">→ Adjacency List</span></h2>
+    <div class="sec-divider"></div>
+
+    <div class="flow">
+      <div class="flow-node">List&lt;int[]&gt; edges</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node">List&lt;List&lt;Integer&gt;&gt; adj</div>
+    </div>
+
+    <p class="tip"><strong>Note:</strong> You must supply <code>V</code> (vertex count) because the edge list alone doesn't always tell you about isolated vertices (degree 0).</p>
+
+    <pre><span class="lang-tag">java</span>    <span class="cmt">// ── Directed unweighted ─────────────────────────────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; <span class="fn">edgesToList</span>(<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges, <span class="kw">int</span> V) {
+        <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> V; i<span class="op">++</span>) adj.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) adj.get(e[<span class="num">0</span>]).add(e[<span class="num">1</span>]);
+        <span class="kw">return</span> adj;
+    }
+
+    <span class="cmt">// ── Directed weighted: edges = {u, v, w} ────────────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; <span class="fn">weightedEdgesToList</span>(<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges, <span class="kw">int</span> V) {
+        <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt;&gt; adj <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> V; i<span class="op">++</span>) adj.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) adj.get(e[<span class="num">0</span>]).add(<span class="kw">new int</span>[]{e[<span class="num">1</span>], e[<span class="num">2</span>]});
+        <span class="kw">return</span> adj;
+    }
+
+    <span class="cmt">// ── Undirected ──────────────────────────────────────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; <span class="fn">undirectedEdgesToList</span>(<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges, <span class="kw">int</span> V) {
+        <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> V; i<span class="op">++</span>) adj.add(<span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;());
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+            adj.get(e[<span class="num">0</span>]).add(e[<span class="num">1</span>]);
+            adj.get(e[<span class="num">1</span>]).add(e[<span class="num">0</span>]);  <span class="cmt">// reverse edge</span>
+        }
+        <span class="kw">return</span> adj;
+    }</pre>
+  </section>
+
+  <!-- ═══════════════════════ INCIDENCE MATRIX ═══════════════════════ -->
+  <section id="incidence">
+    <p class="sec-label">§ 08</p>
+    <h2>Incidence Matrix <span class="tag">↔ All</span></h2>
+    <div class="sec-divider"></div>
+
+    <div class="card">
+      <div class="card-title">What is the Incidence Matrix?</div>
+      <p>A <code>V × E</code> matrix where rows are vertices and columns are edges. For directed graphs: <code>+1</code> if vertex is the <em>source</em> of the edge, <code>-1</code> if it's the <em>destination</em>, <code>0</code> otherwise. For undirected: <code>1</code> for both endpoints.</p>
+    </div>
+
+    <h3>Edge List → Incidence Matrix</h3>
+    <pre><span class="lang-tag">java</span>    <span class="cmt">// edges = list of {u, v} (directed)</span>
+    <span class="kw">public static int</span>[][] <span class="fn">edgesToIncidence</span>(<span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges, <span class="kw">int</span> V) {
+        <span class="kw">int</span> E <span class="op">=</span> edges.size();
+        <span class="kw">int</span>[][] inc <span class="op">=</span> <span class="kw">new int</span>[V][E];
+        <span class="kw">for</span> (<span class="kw">int</span> j <span class="op">=</span> <span class="num">0</span>; j <span class="op">&lt;</span> E; j<span class="op">++</span>) {
+            <span class="kw">int</span> u <span class="op">=</span> edges.get(j)[<span class="num">0</span>];
+            <span class="kw">int</span> v <span class="op">=</span> edges.get(j)[<span class="num">1</span>];
+            inc[u][j] <span class="op">=</span>  <span class="num">1</span>;   <span class="cmt">// source</span>
+            inc[v][j] <span class="op">= -1</span>;   <span class="cmt">// destination</span>
+        }
+        <span class="kw">return</span> inc;
+    }</pre>
+
+    <h3>Incidence Matrix → Edge List</h3>
+    <pre><span class="lang-tag">java</span>    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; <span class="fn">incidenceToEdges</span>(<span class="kw">int</span>[][] inc) {
+        <span class="kw">int</span> V <span class="op">=</span> inc.length;
+        <span class="kw">int</span> E <span class="op">=</span> inc[<span class="num">0</span>].length;
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> <span class="kw">new</span> <span class="type">ArrayList</span>&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span> j <span class="op">=</span> <span class="num">0</span>; j <span class="op">&lt;</span> E; j<span class="op">++</span>) {
+            <span class="kw">int</span> src <span class="op">=</span> <span class="op">-</span><span class="num">1</span>, dst <span class="op">=</span> <span class="op">-</span><span class="num">1</span>;
+            <span class="kw">for</span> (<span class="kw">int</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> V; i<span class="op">++</span>) {
+                <span class="kw">if</span> (inc[i][j] <span class="op">==</span>  <span class="num">1</span>) src <span class="op">=</span> i;
+                <span class="kw">if</span> (inc[i][j] <span class="op">== -1</span>) dst <span class="op">=</span> i;
+            }
+            edges.add(<span class="kw">new int</span>[]{src, dst});
+        }
+        <span class="kw">return</span> edges;
+    }
+
+    <span class="cmt">// ── Incidence → Adjacency List (via edge list) ───────────────</span>
+    <span class="kw">public static</span> <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; <span class="fn">incidenceToList</span>(<span class="kw">int</span>[][] inc) {
+        <span class="kw">int</span> V <span class="op">=</span> inc.length;
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> incidenceToEdges(inc);
+        <span class="kw">return</span> edgesToList(edges, V);
+    }
+
+    <span class="cmt">// ── Adjacency List → Incidence ───────────────────────────────</span>
+    <span class="kw">public static int</span>[][] <span class="fn">listToIncidence</span>(<span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj) {
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> listToEdges(adj);
+        <span class="kw">return</span> edgesToIncidence(edges, adj.size());
+    }</pre>
+  </section>
+
+  <!-- ═══════════════════════ COMPLETE DRIVER ═══════════════════════ -->
+  <section>
+    <p class="sec-label">§ 09</p>
+    <h2>Complete Runnable Driver</h2>
+    <div class="sec-divider"></div>
+    <pre><span class="lang-tag">java</span><span class="kw">public class</span> <span class="type">Main</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="type">String</span>[] args) {
+        <span class="cmt">// Graph: 0→1, 0→2, 1→3, 2→3  (directed, 4 vertices)</span>
+        <span class="kw">int</span>[][] mat <span class="op">=</span> {
+            {<span class="num">0</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">0</span>},
+            {<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>},
+            {<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>},
+            {<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>}
+        };
+
+        <span class="cmt">// Matrix → List</span>
+        <span class="type">List</span>&lt;<span class="type">List</span>&lt;<span class="type">Integer</span>&gt;&gt; adj <span class="op">=</span> <span class="type">GraphConvert</span>.<span class="fn">matrixToList</span>(mat);
+        System.out.println(<span class="str">"Adjacency List: "</span> <span class="op">+</span> adj);
+
+        <span class="cmt">// List → Edge List</span>
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; edges <span class="op">=</span> <span class="type">GraphConvert</span>.<span class="fn">listToEdges</span>(adj);
+        edges.forEach(e <span class="op">-&gt;</span> System.out.println(<span class="str">"Edge: "</span> <span class="op">+</span> e[<span class="num">0</span>] <span class="op">+</span> <span class="str">"→"</span> <span class="op">+</span> e[<span class="num">1</span>]));
+
+        <span class="cmt">// Edge List → Incidence Matrix</span>
+        <span class="kw">int</span>[][] inc <span class="op">=</span> <span class="type">GraphConvert</span>.<span class="fn">edgesToIncidence</span>(edges, <span class="num">4</span>);
+        <span class="kw">for</span> (<span class="kw">int</span>[] row : inc) System.out.println(Arrays.toString(row));
+
+        <span class="cmt">// Incidence → back to Edge List</span>
+        <span class="type">List</span>&lt;<span class="kw">int</span>[]&gt; recovered <span class="op">=</span> <span class="type">GraphConvert</span>.<span class="fn">incidenceToEdges</span>(inc);
+        recovered.forEach(e <span class="op">-&gt;</span> System.out.println(<span class="str">"Recovered: "</span> <span class="op">+</span> e[<span class="num">0</span>] <span class="op">+</span> <span class="str">"→"</span> <span class="op">+</span> e[<span class="num">1</span>]));
+    }
+}</pre>
+  </section>
+
+  <!-- ═══════════════════════ COMPLEXITY TABLE ═══════════════════════ -->
+  <section id="complexity">
+    <p class="sec-label">§ 10</p>
+    <h2>Complexity Reference</h2>
+    <div class="sec-divider"></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Conversion</th>
+            <th>Time</th>
+            <th>Space (output)</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="c-rep">Matrix → List</td><td class="c-bad">O(V²)</td><td class="c-good">O(V+E)</td><td>Must scan full matrix</td></tr>
+          <tr><td class="c-rep">List → Matrix</td><td class="c-good">O(V+E)</td><td class="c-bad">O(V²)</td><td>Output always V² regardless</td></tr>
+          <tr><td class="c-rep">Matrix → Edges</td><td class="c-bad">O(V²)</td><td class="c-good">O(E)</td><td>Half-scan for undirected</td></tr>
+          <tr><td class="c-rep">Edges → Matrix</td><td class="c-good">O(E)</td><td class="c-bad">O(V²)</td><td>Need V as parameter</td></tr>
+          <tr><td class="c-rep">List → Edges</td><td class="c-good">O(V+E)</td><td class="c-good">O(E)</td><td>Skip v&lt;u for undirected</td></tr>
+          <tr><td class="c-rep">Edges → List</td><td class="c-good">O(V+E)</td><td class="c-good">O(V+E)</td><td>Need V as parameter</td></tr>
+          <tr><td class="c-rep">Edges → Incidence</td><td class="c-good">O(E)</td><td class="c-bad">O(V·E)</td><td>Rarely used in interviews</td></tr>
+          <tr><td class="c-rep">Incidence → Edges</td><td class="c-bad">O(V·E)</td><td class="c-good">O(E)</td><td>Scan each column</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Space comparison by representation</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Representation</th><th>Space</th><th>Edge Query</th><th>Neighbours</th><th>Best For</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="c-rep">Adjacency Matrix</td><td class="c-bad">O(V²)</td><td class="c-good">O(1)</td><td class="c-bad">O(V)</td><td>Dense graphs, quick edge checks</td></tr>
+          <tr><td class="c-rep">Adjacency List</td><td class="c-good">O(V+E)</td><td class="c-bad">O(deg)</td><td class="c-good">O(deg)</td><td>BFS, DFS, most graph problems</td></tr>
+          <tr><td class="c-rep">Edge List</td><td class="c-good">O(E)</td><td class="c-bad">O(E)</td><td class="c-bad">O(E)</td><td>Kruskal MST, sorting by weight</td></tr>
+          <tr><td class="c-rep">Incidence Matrix</td><td class="c-bad">O(V·E)</td><td class="c-ok">O(E)</td><td class="c-ok">O(E)</td><td>Multigraphs, network flow theory</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ CHEAT SHEET ═══════════════════════ -->
+  <section id="cheatsheet">
+    <p class="sec-label">§ 11</p>
+    <h2>Interview Cheat Sheet</h2>
+    <div class="sec-divider"></div>
+    <div class="cheat-grid">
+      <div class="cheat-card">
+        <h4>When to use each</h4>
+        <ul>
+          <li>BFS / DFS — use Adjacency List</li>
+          <li>Dijkstra / Prim — Adj List + PriorityQueue</li>
+          <li>Kruskal MST — Edge List (sort by weight)</li>
+          <li>Floyd-Warshall — Adjacency Matrix</li>
+          <li>Dense graph (E ≈ V²) — Matrix preferred</li>
+          <li>Sparse graph (E ≪ V²) — List preferred</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>Undirected edge pitfalls</h4>
+        <ul>
+          <li>Matrix: set both mat[u][v] and mat[v][u]</li>
+          <li>List: add v to adj[u] AND u to adj[v]</li>
+          <li>Edges → List: add both directions per edge</li>
+          <li>List → Edges: only add when v &gt; u to deduplicate</li>
+          <li>Matrix → Edges: iterate upper triangle only</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>Weighted graph patterns</h4>
+        <ul>
+          <li>Matrix: store weight directly, 0 = no edge</li>
+          <li>List: use int[]{neighbour, weight} pairs</li>
+          <li>Edge: int[]{u, v, weight} triples</li>
+          <li>Careful: weight 0 is ambiguous in matrix form</li>
+          <li>Use Integer.MAX_VALUE for "infinity" in Dijkstra</li>
+        </ul>
+      </div>
+      <div class="cheat-card">
+        <h4>Common mistakes</h4>
+        <ul>
+          <li>Forgetting to initialise all V lists in adj</li>
+          <li>Not passing V to edgesToList / edgesToMatrix</li>
+          <li>Off-by-one on vertex indices (0-based vs 1-based)</li>
+          <li>Double-counting edges in undirected conversions</li>
+          <li>Treating incidence matrix as adjacency matrix</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /container -->
+</body>
+</html>
