@@ -1,770 +1,1051 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>DFS Backtracking — Animated Lesson (Subsets / Permutations / Combinations)</title>
-<link rel="icon" type="image/png" href="../images/favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backtracking Visualizer — Permutations · Combinations · Subsets</title>
 <style>
   :root{
-    --bg:#0f1115; --panel:#161a22; --ink:#e6edf3; --muted:#8b949e;
-    --accent:#58a6ff; --good:#3fb950; --warn:#d29922; --bad:#f85149;
-    --line-hi:#264f78; --edge:#30363d;
+    --bg:#0f1117;
+    --panel:#171a23;
+    --panel-2:#1d212d;
+    --border:#2a2f3d;
+    --text:#e5e7eb;
+    --muted:#9aa3b2;
+    --green:#34d399;
+    --red:#f87171;
+    --yellow:#fbbf24;
+    --active:#818cf8;
+    --leaf:#34d399;
+    --accent:#60a5fa;
+    --mono:'SFMono-Regular',ui-monospace,'Cascadia Code','Consolas',monospace;
+    --sans:'DM Sans','Segoe UI',system-ui,-apple-system,sans-serif;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:Inter,Segoe UI,system-ui,Arial;}
-  header{padding:14px 20px;border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  header h1{font-size:18px;margin:0;font-weight:600}
-  header .sub{color:var(--muted);font-size:13px}
-  .wrap{display:grid;grid-template-columns: 1.1fr 1fr 1fr;gap:12px;padding:12px;height:calc(100vh - 60px)}
-  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
-  .panel h2{font-size:13px;margin:0;padding:10px 12px;border-bottom:1px solid var(--edge);background:#1b212c;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  button{background:#21262d;color:var(--ink);border:1px solid var(--edge);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px}
-  button:hover{border-color:var(--accent)}
-  button.primary{background:var(--accent);color:#0b0f14;border-color:var(--accent);font-weight:600}
-  button.active{background:#264f78;border-color:var(--accent)}
-  input[type=range]{accent-color:var(--accent)}
-  .pill{padding:3px 8px;border-radius:999px;background:#21262d;border:1px solid var(--edge);font-size:12px;color:var(--muted)}
-  /* tree canvas */
-  #treeWrap{flex:1;overflow:auto;position:relative}
-  svg.tree{display:block;min-width:100%;min-height:100%}
-  .node circle{fill:#1b212c;stroke:var(--edge);stroke-width:1.5}
-  .node.active circle{fill:#264f78;stroke:var(--accent);stroke-width:2.5}
-  .node.done circle{fill:#0f3a1d;stroke:var(--good)}
-  .node.leaf circle{stroke:var(--good)}
-  .node.pruned circle{stroke:var(--bad);stroke-dasharray:3 3}
-  .node text{fill:var(--ink);font-family:JetBrains Mono,Consolas,monospace;font-size:12px;text-anchor:middle;pointer-events:none}
-  .edge{stroke:var(--edge);stroke-width:1.5;fill:none}
-  .edge.active{stroke:var(--accent);stroke-width:2.5}
-  .edge.done{stroke:var(--good)}
-  /* code panel */
-  .code{flex:1;overflow:auto;font-family:JetBrains Mono,Consolas,monospace;font-size:13px;line-height:1.55}
-  .code pre{margin:0;padding:10px 0}
-  .ln{display:flex;padding:0 12px}
-  .ln .num{color:#5b6470;width:32px;text-align:right;padding-right:10px;user-select:none;flex-shrink:0}
-  .ln .src{white-space:pre}
-  .ln.hi{background:var(--line-hi)}
-  .kw{color:#ff7b72}
-  .fn{color:#d2a8ff}
-  .str{color:#a5d6ff}
-  .num2{color:#79c0ff}
-  .com{color:#8b949e;font-style:italic}
-  /* state strip */
-  .state{padding:10px 12px;border-top:1px solid var(--edge);background:#1b212c;font-family:JetBrains Mono,Consolas,monospace;font-size:13px}
-  .state .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px}
-  .chip{background:#0f1115;border:1px solid var(--edge);padding:2px 8px;border-radius:6px}
-  .chip.path{border-color:var(--accent);color:#a5d6ff}
-  .chip.added{border-color:var(--good);color:#7ee787}
-  .narrate{color:var(--muted);font-size:12px;padding:6px 12px;border-top:1px dashed var(--edge);min-height:34px}
-  .toolbar{padding:10px 12px;border-bottom:1px solid var(--edge);background:#1b212c;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .input-mini{background:#0f1115;color:var(--ink);border:1px solid var(--edge);border-radius:6px;padding:4px 8px;width:90px;font-family:inherit}
-  @media (max-width:1200px){ .wrap{grid-template-columns:1fr 1fr;grid-auto-rows:minmax(360px,auto);height:auto} }
-  @media (max-width:760px){ .wrap{grid-template-columns:1fr} }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  body{display:flex;flex-direction:column;min-height:100vh;font-size:14px;}
+
+  header{
+    padding:14px 18px;border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,#161a24,#12151d);
+    position:sticky;top:0;z-index:30;
+  }
+  h1{margin:0 0 4px;font-size:18px;font-weight:700;letter-spacing:.3px;}
+  h1 .sub{font-weight:400;color:var(--muted);font-size:13px;margin-left:8px;}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:10px;}
+  .tabs{display:flex;gap:6px;background:var(--panel);padding:4px;border-radius:10px;border:1px solid var(--border);}
+  .tab{
+    border:0;background:transparent;color:var(--muted);font-family:var(--sans);
+    padding:7px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;
+    transition:all .2s ease;
+  }
+  .tab:hover{color:var(--text);}
+  .tab.active{background:var(--active);color:#0b0d13;}
+
+  .inputs{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .field{display:flex;flex-direction:column;gap:3px;}
+  .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;}
+  .field input{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:7px 9px;border-radius:7px;font-family:var(--mono);font-size:13px;width:120px;
+  }
+  .field input.small{width:60px;}
+  .field input:focus{outline:none;border-color:var(--active);}
+  .btn{
+    border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+    padding:8px 14px;border-radius:8px;cursor:pointer;font-family:var(--sans);font-weight:600;font-size:13px;
+    transition:all .15s ease;
+  }
+  .btn:hover{border-color:var(--active);color:#fff;}
+  .btn.primary{background:var(--active);color:#0b0d13;border-color:var(--active);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  main{flex:1;display:flex;min-height:0;min-width:0;}
+  .gutter{
+    flex:none;width:7px;cursor:col-resize;background:var(--border);
+    transition:background .15s ease;position:relative;
+  }
+  .gutter:hover,.gutter.drag{background:var(--active);}
+  .gutter::after{
+    content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:3px;height:34px;border-radius:3px;background:rgba(255,255,255,.25);
+  }
+  @media(max-width:900px){
+    main{flex-direction:column;}
+    .gutter{display:none;}
+    .sidebar{width:auto!important;border-left:0!important;border-top:1px solid var(--border);}
+  }
+
+  /* Tree area */
+  .tree-wrap{display:flex;flex-direction:column;min-width:0;flex:1;}
+  .tree-scroll{
+    flex:1;overflow:auto;position:relative;background:
+      radial-gradient(circle at 1px 1px,rgba(255,255,255,.035) 1px,transparent 0);
+    background-size:22px 22px;min-height:340px;
+  }
+  .tree-canvas{position:relative;margin:0 auto;}
+  svg.edges{position:absolute;top:0;left:0;pointer-events:none;overflow:visible;}
+  .edge{
+    stroke:#3a4150;stroke-width:2;fill:none;
+    stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+    transition:stroke-dashoffset .45s ease,stroke .3s ease,opacity .3s ease;
+    opacity:0;
+  }
+  .edge.shown{stroke-dashoffset:0;opacity:1;}
+  .edge.active{stroke:var(--active);stroke-width:3;}
+  .edge.dim{stroke:#262b36;opacity:.5;}
+
+  .node{
+    position:absolute;transform:translate(-50%,0) scale(.7);
+    background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:7px 9px;min-width:64px;text-align:center;
+    opacity:0;transition:all .35s cubic-bezier(.34,1.4,.5,1);
+    z-index:5;
+  }
+  .node.shown{opacity:1;transform:translate(-50%,0) scale(1);}
+  .node .nlabel{font-size:10px;color:var(--muted);margin-bottom:3px;letter-spacing:.4px;}
+  .node .npath{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;}
+  .node.current{border-color:var(--active);box-shadow:0 0 0 3px rgba(129,140,248,.25),0 0 18px rgba(129,140,248,.4);}
+  .node.onpath{border-color:var(--active);}
+  .node.dim{opacity:.45;}
+  .node.dim.shown{transform:translate(-50%,0) scale(.95);}
+  .node.leaf{border-color:var(--leaf);background:linear-gradient(180deg,#16271f,#13201a);}
+  .node.leaf .npath{color:var(--leaf);}
+  .node.leaf .check{display:inline-block;margin-left:5px;color:var(--leaf);font-weight:700;}
+  .node.leaf.current{box-shadow:0 0 0 3px rgba(52,211,153,.25),0 0 20px rgba(52,211,153,.5);}
+  .node.result:not(.leaf){border-color:#2f6b54;}
+  .node.deadleaf{border-color:#4a3340;background:linear-gradient(180deg,#231a20,#1d161b);}
+  .node.deadleaf .npath{color:#b08aa0;}
+  .node.deadleaf .cross{display:inline-block;margin-left:5px;color:var(--red);font-weight:700;}
+  .node.deadleaf.current{box-shadow:0 0 0 3px rgba(248,113,113,.2),0 0 16px rgba(248,113,113,.35);}
+  .node .badge{
+    position:absolute;top:-9px;right:-9px;background:var(--leaf);color:#06140d;
+    font-size:10px;font-weight:700;border-radius:20px;padding:1px 6px;
+  }
+
+  /* Array panel */
+  .array-panel{border-bottom:1px solid var(--border);background:var(--panel);padding:14px 18px;}
+  .panel-title{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px;font-weight:700;}
+  .arr-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;}
+  .cell{
+    display:flex;flex-direction:column;align-items:center;gap:5px;transition:transform .25s ease;
+  }
+  .cell .box{
+    width:46px;height:46px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:17px;font-weight:600;border:2px solid var(--border);
+    background:var(--panel-2);transition:all .3s ease;position:relative;
+  }
+  .cell .idx{font-family:var(--mono);font-size:11px;color:var(--muted);}
+  .cell.considering .box{border-color:var(--yellow);box-shadow:0 0 14px rgba(251,191,36,.4);color:var(--yellow);}
+  .cell.chosen .box{border-color:var(--green);background:rgba(52,211,153,.16);color:var(--green);box-shadow:0 0 14px rgba(52,211,153,.4);transform:translateY(-3px);}
+  .cell.excluded .box{opacity:.32;border-style:dashed;}
+  .cell .vbadge{
+    font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;
+    border:1px solid var(--border);
+  }
+  .cell .vbadge.t{color:var(--red);border-color:#5b2b2b;background:rgba(248,113,113,.12);}
+  .cell .vbadge.f{color:var(--green);border-color:#2f5b45;background:rgba(52,211,153,.1);}
+  .startptr{
+    font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:8px;
+  }
+
+  /* Sidebar */
+  .sidebar{width:400px;flex:none;min-width:260px;background:var(--panel);border-left:1px solid var(--border);padding:14px;overflow:auto;display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:11px 12px;}
+  .card h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);}
+  .kv{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:13px;padding:2px 0;}
+  .kv span:first-child{color:var(--muted);}
+  .pathbox{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--green);word-break:break-all;}
+  .msg{font-size:12.5px;line-height:1.5;color:var(--text);min-height:34px;}
+  .msg .hl{color:var(--yellow);font-family:var(--mono);}
+  .results-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow:auto;}
+  .res-item{font-family:var(--mono);font-size:13px;background:rgba(52,211,153,.08);border:1px solid #2f5b45;border-radius:6px;padding:4px 8px;color:var(--leaf);animation:pop .3s ease;}
+  @keyframes pop{from{opacity:0;transform:translateX(8px);}to{opacity:1;transform:translateX(0);}}
+  .depth-bars{display:flex;gap:4px;align-items:flex-end;height:30px;}
+  .depth-bars .db{flex:1;background:var(--active);border-radius:3px 3px 0 0;opacity:.3;transition:opacity .2s,height .2s;}
+  .depth-bars .db.on{opacity:1;}
+
+  /* Java code panel */
+  .code-card{padding:0;overflow:hidden;}
+  .code-card h3{padding:11px 12px 8px;margin:0;}
+  .code-panel{
+    margin:0;font-family:var(--mono);font-size:12px;line-height:1.6;
+    overflow-y:auto;overflow-x:hidden;max-height:340px;background:#0d1016;border-top:1px solid var(--border);
+  }
+  .code-line{
+    display:flex;align-items:flex-start;padding:1px 10px 1px 0;
+    transition:background .25s ease,box-shadow .25s ease;
+    border-left:3px solid transparent;
+  }
+  .code-line .ln{
+    display:inline-block;width:26px;text-align:right;padding-right:8px;margin-right:8px;
+    color:#4b5363;border-right:1px solid var(--border);user-select:none;flex:none;
+  }
+  .code-line .ct{
+    color:#c9d1d9;white-space:pre-wrap;word-break:break-word;
+    flex:1;min-width:0;text-indent:-1.2em;padding-left:1.2em;
+  }
+  .code-line.active{
+    background:rgba(251,191,36,.14);border-left-color:var(--yellow);
+    box-shadow:inset 0 0 12px rgba(251,191,36,.08);
+  }
+  .code-line.active .ct{color:#fde68a;}
+  .code-line.active .ln{color:var(--yellow);}
+  .tok-kw{color:#ff7b9c;}
+  .tok-ty{color:#7ee787;}
+  .tok-fn{color:#79c0ff;}
+  .tok-nm{color:#f0a45d;}
+  .tok-cm{color:#6b7484;font-style:italic;}
+
+  /* Controls (docked top-right in toolbar) */
+  .controls{
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-left:auto;
+    padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--panel);
+  }
+  .controls .btn{padding:7px 10px;font-size:12px;}
+  .stepinfo{font-family:var(--mono);font-size:12px;color:var(--muted);padding:0 4px;}
+  .stepinfo b{color:var(--text);}
+  .speed{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+  .speed input[type=range]{width:90px;}
+  input[type=range]{accent-color:var(--active);cursor:pointer;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:8px 18px;border-top:1px solid var(--border);background:var(--panel);}
+  .legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block;}
 </style>
 </head>
 <body>
 <header>
-  <h1>🌳 DFS Backtracking — Animated</h1>
-  <span class="sub">Watch the recursion tree grow, then read the same logic in Python and Java.</span>
-  <span style="flex:1"></span>
-  <span class="pill" id="modePill">mode: subsets</span>
-  <span class="pill" id="speedPill">speed: 1x</span>
+  <h1>Backtracking Visualizer <span class="sub">recursion tree · array traversal · live state</span></h1>
+  <div class="toolbar">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-algo="subsets">Subsets</button>
+      <button class="tab" data-algo="subseq">Subsequences</button>
+      <button class="tab" data-algo="subdup">Subsets II (dups)</button>
+      <button class="tab" data-algo="comb">Combinations</button>
+      <button class="tab" data-algo="subsum">Subset Sum =k</button>
+      <button class="tab" data-algo="perm">Permutations</button>
+    </div>
+    <div class="inputs">
+      <div class="field">
+        <label>Array (comma sep)</label>
+        <input id="arrInput" value="1,2,3">
+      </div>
+      <div class="field" id="kField">
+        <label id="kLabel">k</label>
+        <input id="kInput" class="small" value="2">
+      </div>
+      <button class="btn primary" id="regen">Regenerate ▸</button>
+    </div>
+    <div class="controls">
+      <button class="btn" id="prevBtn">◂ Prev</button>
+      <button class="btn primary" id="playBtn">▶ Play</button>
+      <button class="btn" id="nextBtn">Next ▸</button>
+      <button class="btn" id="resetBtn">⟲ Reset</button>
+      <div class="stepinfo">Step <b id="stepCur">0</b> / <b id="stepTot">0</b></div>
+      <div class="speed">
+        Speed
+        <input type="range" id="speed" min="120" max="1400" value="650" step="20">
+        <span id="speedVal">650ms</span>
+      </div>
+    </div>
+  </div>
 </header>
 
-<div class="wrap">
-
-  <!-- LEFT: TREE -->
-  <div class="panel">
-    <h2>Recursion Tree</h2>
-    <div class="toolbar">
-      <button data-mode="subsets" class="modeBtn active">Subsets</button>
-      <button data-mode="permutations" class="modeBtn">Permutations</button>
-      <button data-mode="combinations" class="modeBtn">Combinations (k)</button>
-      <span class="pill">nums =</span>
-      <input id="numsInput" class="input-mini" value="1,2,3" />
-      <span class="pill" id="kWrap" style="display:none">k = <input id="kInput" class="input-mini" style="width:40px" value="2" /></span>
-      <button id="buildBtn">Build</button>
-      <span style="flex:1"></span>
-      <button id="prevBtn">⟨ Step</button>
-      <button id="playBtn" class="primary">▶ Play</button>
-      <button id="nextBtn">Step ⟩</button>
-      <button id="resetBtn">↺ Reset</button>
-      <input id="speed" type="range" min="1" max="10" value="5" />
+<main>
+  <div class="tree-wrap">
+    <div class="array-panel">
+      <div class="panel-title">Array Traversal — level loop pointer</div>
+      <div class="arr-row" id="arrRow"></div>
+      <div class="startptr" id="startPtr"></div>
     </div>
-    <div id="treeWrap">
-      <svg class="tree" id="treeSvg"></svg>
+    <div class="tree-scroll" id="treeScroll">
+      <div class="tree-canvas" id="treeCanvas">
+        <svg class="edges" id="edges"></svg>
+      </div>
     </div>
-    <div class="state">
-      <div class="row"><span class="chip">path =</span><span id="pathChips"></span></div>
-      <div class="row"><span class="chip">result =</span><span id="resChips"></span></div>
-      <div class="row"><span class="chip">step</span><span class="chip" id="stepCounter">0 / 0</span></div>
-    </div>
-    <div class="narrate" id="narrate">Press ▶ Play to walk the DFS.</div>
   </div>
 
-  <!-- MIDDLE: PYTHON -->
-  <div class="panel">
-    <h2>Python (the “pseudocode”)</h2>
-    <div class="code" id="pyCode"></div>
-  </div>
+  <div class="gutter" id="gutter"></div>
 
-  <!-- RIGHT: JAVA -->
-  <div class="panel">
-    <h2>Java (same shape, different syntax)</h2>
-    <div class="code" id="javaCode"></div>
-  </div>
+  <aside class="sidebar">
+    <div class="card code-card">
+      <h3>Java — executing line lights up</h3>
+      <div class="code-panel" id="codePanel"></div>
+    </div>
+    <div class="card">
+      <h3>Narration</h3>
+      <div class="msg" id="msg">Press <b>Next</b> or <b>Play</b> to begin.</div>
+    </div>
+    <div class="card">
+      <h3>Current path[]</h3>
+      <div class="pathbox" id="curPath">[ ]</div>
+    </div>
+    <div class="card">
+      <h3>State</h3>
+      <div class="kv"><span id="trackerLabel">visited[]</span><span id="trackerVal">—</span></div>
+      <div class="kv"><span>recursion depth</span><span id="depthVal">0</span></div>
+      <div class="depth-bars" id="depthBars"></div>
+    </div>
+    <div class="card">
+      <h3>Results so far (<span id="resCount">0</span>)</h3>
+      <div class="results-list" id="resList"></div>
+    </div>
+  </aside>
+</main>
 
+<div class="legend">
+  <span><i class="dot" style="background:var(--yellow)"></i>Considering</span>
+  <span><i class="dot" style="background:var(--green)"></i>Included / chosen</span>
+  <span><i class="dot" style="background:var(--red)"></i>Excluded / backtracked</span>
+  <span><i class="dot" style="background:var(--active)"></i>Active path (root→current)</span>
+  <span><i class="dot" style="background:var(--leaf)"></i>Leaf / result ✓</span>
 </div>
 
 <script>
-/* =========================================================================
-   1) The three backtracking algorithms — each instrumented to emit EVENTS.
-      Every event carries: a tree-node id, the line tag to highlight in code,
-      the current `path`, optional `result` snapshot, and a narration string.
-   ========================================================================= */
+"use strict";
 
-// helpers
-const clone = a => a.slice();
-let NID = 0;
-function nextId(){ return 'n'+(NID++); }
+/* ============================================================
+   TRACE GENERATION
+   Each algorithm runs and records:
+     - nodes[]: {id,parentId,depth,path,isLeaf,producesResult}
+     - steps[]: chronological events driving the animation.
+   Every step carries a full snapshot so rendering is stateless.
+   ============================================================ */
 
-/* ---------- SUBSETS ---------- */
-// Classic "include/exclude is implicit via for-loop + start index".
-// Every node IS a subset (we record on entry).
-function traceSubsets(nums){
-  NID = 0;
-  const events = [];
-  const result = [];
-  const rootId = nextId();
+function makeGenerator(){
+  let nodes, steps, results, stack;
 
-  events.push({type:'enter', id:rootId, parent:null, edgeLabel:null,
-    path:[], line:'add',
-    note:`enter dfs(start=0, path=[]) — record subset []`});
-  result.push([]);
-  events.push({type:'record', id:rootId, path:[], result:clone(result).map(clone),
-    line:'add', note:`result.append([])  →  result has ${result.length} subset(s)`});
-
-  function dfs(start, path, parentId){
-    for(let i=start;i<nums.length;i++){
-      const childId = nextId();
-      events.push({type:'enter', id:childId, parent:parentId, edgeLabel:`+${nums[i]}`,
-        path:clone(path).concat(nums[i]), line:'for',
-        note:`for i=${i}: choose ${nums[i]} → push to path`});
-      path.push(nums[i]);
-      events.push({type:'record', id:childId, path:clone(path), result:null,
-        line:'add', note:`record subset ${JSON.stringify(path)}`});
-      result.push(clone(path));
-      events.push({type:'snapshot', id:childId, path:clone(path),
-        result:clone(result).map(clone), line:'add',
-        note:`result now has ${result.length} subsets`});
-      dfs(i+1, path, childId);
-      path.pop();
-      events.push({type:'leave', id:childId, path:clone(path), line:'pop',
-        note:`backtrack: pop ${nums[i]} → path=${JSON.stringify(path)}`});
-    }
-    events.push({type:'return', id:parentId, path:clone(path), line:'return',
-      note:`return from dfs(start=${start})`});
+  function snap(extra){
+    return Object.assign({
+      path:[],            // values in current[]
+      visited:null,       // permutations boolean array
+      start:null,         // combinations/subsets start index
+      considering:null,   // index currently looked at in loop
+      chosen:null,        // index just chosen
+      activePath:stack.slice(),
+      results:results.map(r=>r.slice()),
+      depth:stack.length-1<0?0:stack.length-1,
+      line:null,          // active Java source line for this step
+      sum:null,           // running sum (subset-sum)
+      skip:null,          // index skipped due to duplicate
+      msg:''
+    }, extra);
   }
-  dfs(0, [], rootId);
-  return {events, finalResult: result};
-}
 
-/* ---------- PERMUTATIONS ---------- */
-// Use a `used[]` boolean array. Leaves (path.length === n) are recorded.
-function tracePermutations(nums){
-  NID = 0;
-  const events = [];
-  const result = [];
-  const used = new Array(nums.length).fill(false);
-  const rootId = nextId();
+  function pushStep(node, extra){
+    steps.push({node, snap:snap(extra)});
+  }
 
-  events.push({type:'enter', id:rootId, parent:null, edgeLabel:null,
-    path:[], line:'def', note:`enter dfs(path=[]) used=${JSON.stringify(used)}`});
-
-  function dfs(path, parentId){
-    if(path.length === nums.length){
-      events.push({type:'record', id:parentId, path:clone(path), result:null,
-        line:'leaf', note:`leaf reached → record permutation ${JSON.stringify(path)}`});
-      result.push(clone(path));
-      events.push({type:'snapshot', id:parentId, path:clone(path),
-        result:clone(result).map(clone), line:'leaf',
-        note:`result now has ${result.length} permutation(s)`, leaf:true});
-      return;
-    }
-    for(let i=0;i<nums.length;i++){
-      if(used[i]){
-        const prunedId = nextId();
-        events.push({type:'pruned', id:prunedId, parent:parentId, edgeLabel:`${nums[i]}✗`,
-          path:clone(path), line:'skip',
-          note:`skip ${nums[i]} (already used)`});
-        continue;
+  /* ---------- Permutations ---------- (line #s map into JAVA_CODE.perm) */
+  function perm(arr){
+    const n=arr.length;
+    const visited=new Array(n).fill(false);
+    function rec(parentId, path){
+      const id=nodes.length;
+      const isLeaf=path.length===n;
+      nodes.push({id,parentId,depth:path.length,path:path.slice(),
+        isLeaf,producesResult:isLeaf});
+      stack.push(id);
+      pushStep(id,{path:path.slice(),visited:visited.slice(),line:0,
+        msg:parentId===null?'Start: empty permutation. Try every unused element.'
+            :`Enter call with path = [${path.join(',')}].`});
+      pushStep(id,{path:path.slice(),visited:visited.slice(),line:1,
+        msg:`Check base case: path size ${path.length} ${isLeaf?'==':'!='} ${n}.`});
+      if(isLeaf){
+        results.push(path.slice());
+        pushStep(id,{path:path.slice(),visited:visited.slice(),line:2,
+          msg:`Record permutation [${path.join(',')}]. ✓`});
+        stack.pop();
+        pushStep(id,{path:path.slice(),visited:visited.slice(),line:3,msg:'Return (leaf complete).'});
+        return;
       }
-      const childId = nextId();
-      events.push({type:'enter', id:childId, parent:parentId, edgeLabel:`+${nums[i]}`,
-        path:clone(path).concat(nums[i]), line:'for',
-        note:`choose ${nums[i]} → mark used[${i}]=true`});
-      used[i]=true; path.push(nums[i]);
-      dfs(path, childId);
-      path.pop(); used[i]=false;
-      events.push({type:'leave', id:childId, path:clone(path), line:'pop',
-        note:`backtrack: unchoose ${nums[i]} → used[${i}]=false`});
-    }
-    events.push({type:'return', id:parentId, path:clone(path), line:'return',
-      note:`return from dfs(path=${JSON.stringify(path)})`});
-  }
-  dfs([], rootId);
-  return {events, finalResult: result};
-}
-
-/* ---------- COMBINATIONS C(n,k) ---------- */
-// Pick k elements from nums, in order. Leaves are paths of length k.
-function traceCombinations(nums, k){
-  NID = 0;
-  const events = [];
-  const result = [];
-  const rootId = nextId();
-
-  events.push({type:'enter', id:rootId, parent:null, edgeLabel:null,
-    path:[], line:'def', note:`enter dfs(start=0, path=[]) — need ${k} picks`});
-
-  function dfs(start, path, parentId){
-    if(path.length === k){
-      events.push({type:'record', id:parentId, path:clone(path), result:null,
-        line:'leaf', note:`path size==k → record ${JSON.stringify(path)}`});
-      result.push(clone(path));
-      events.push({type:'snapshot', id:parentId, path:clone(path),
-        result:clone(result).map(clone), line:'leaf',
-        note:`result now has ${result.length} combination(s)`, leaf:true});
-      return;
-    }
-    // Optional pruning: not enough remaining
-    const need = k - path.length;
-    for(let i=start;i<nums.length;i++){
-      if(nums.length - i < need){
-        const prunedId = nextId();
-        events.push({type:'pruned', id:prunedId, parent:parentId, edgeLabel:`prune`,
-          path:clone(path), line:'prune',
-          note:`prune: only ${nums.length-i} left but need ${need}`});
-        break;
+      for(let i=0;i<n;i++){
+        pushStep(id,{path:path.slice(),visited:visited.slice(),considering:i,line:5,
+          msg:`Loop i=${i} → consider value ${arr[i]}.`});
+        if(visited[i]){
+          pushStep(id,{path:path.slice(),visited:visited.slice(),considering:i,line:6,
+            msg:`visited[${i}] is true → skip.`});
+          continue;
+        }
+        visited[i]=true; path.push(arr[i]);
+        pushStep(id,{path:path.slice(),visited:visited.slice(),chosen:i,line:7,
+          msg:`Mark visited[${i}]=true, add ${arr[i]} to path.`});
+        pushStep(id,{path:path.slice(),visited:visited.slice(),chosen:i,line:9,
+          msg:`Recurse with path [${path.join(',')}].`});
+        rec(id, path);
+        path.pop(); visited[i]=false;
+        pushStep(id,{path:path.slice(),visited:visited.slice(),considering:i,line:10,
+          msg:`Backtrack: remove ${arr[i]}, set visited[${i}]=false.`});
       }
-      const childId = nextId();
-      events.push({type:'enter', id:childId, parent:parentId, edgeLabel:`+${nums[i]}`,
-        path:clone(path).concat(nums[i]), line:'for',
-        note:`pick ${nums[i]} (i=${i})`});
-      path.push(nums[i]);
-      dfs(i+1, path, childId);
-      path.pop();
-      events.push({type:'leave', id:childId, path:clone(path), line:'pop',
-        note:`backtrack: drop ${nums[i]}`});
+      stack.pop();
+      pushStep(id,{path:path.slice(),visited:visited.slice(),line:13,
+        msg:`All options tried at this node → return.`});
     }
-    events.push({type:'return', id:parentId, path:clone(path), line:'return',
-      note:`return from dfs(start=${start})`});
+    rec(null, []);
   }
-  dfs(0, [], rootId);
-  return {events, finalResult: result};
+
+  /* ---------- Combinations ---------- (line #s map into JAVA_CODE.comb) */
+  function comb(arr,k){
+    const n=arr.length;
+    function rec(parentId,start,path){
+      const id=nodes.length;
+      const isLeaf=path.length===k;
+      nodes.push({id,parentId,depth:path.length,path:path.slice(),
+        isLeaf,producesResult:isLeaf});
+      stack.push(id);
+      pushStep(id,{path:path.slice(),start,line:0,
+        msg:parentId===null?`Start: pick ${k} elements. start index = 0.`
+            :`Enter call: path=[${path.join(',')}], start=${start}.`});
+      pushStep(id,{path:path.slice(),start,line:1,
+        msg:`Check base case: path size ${path.length} ${isLeaf?'==':'!='} k(${k}).`});
+      if(isLeaf){
+        results.push(path.slice());
+        pushStep(id,{path:path.slice(),start,line:2,
+          msg:`Record combination [${path.join(',')}]. ✓`});
+        stack.pop();
+        pushStep(id,{path:path.slice(),start,line:3,msg:'Return (leaf complete).'});
+        return;
+      }
+      for(let i=start;i<n;i++){
+        pushStep(id,{path:path.slice(),start,considering:i,line:5,
+          msg:`Loop i=${i} (from start ${start}) → consider value ${arr[i]}.`});
+        path.push(arr[i]);
+        pushStep(id,{path:path.slice(),start,chosen:i,line:6,
+          msg:`Add ${arr[i]} to path.`});
+        pushStep(id,{path:path.slice(),start,chosen:i,line:7,
+          msg:`Recurse with start ${i+1} (no reuse).`});
+        rec(id,i+1,path);
+        path.pop();
+        pushStep(id,{path:path.slice(),start,considering:i,line:8,
+          msg:`Backtrack: remove ${arr[i]}, advance loop.`});
+      }
+      stack.pop();
+      pushStep(id,{path:path.slice(),start,line:10,msg:'Loop done at this node → return.'});
+    }
+    rec(null,0,[]);
+  }
+
+  /* ---------- Subsets ---------- (line #s map into JAVA_CODE.subsets) */
+  function subsets(arr){
+    const n=arr.length;
+    function rec(parentId,start,path){
+      const id=nodes.length;
+      const isLeaf=(start===n);
+      nodes.push({id,parentId,depth:path.length,path:path.slice(),
+        isLeaf,producesResult:true});
+      stack.push(id);
+      pushStep(id,{path:path.slice(),start,line:0,
+        msg:parentId===null?'Start: every node is a subset. Record it, then extend.'
+            :`Enter call: path=[${path.join(',')}], start=${start}.`});
+      results.push(path.slice());
+      pushStep(id,{path:path.slice(),start,line:1,
+        msg:`Record subset [${path.join(',')}]. ✓`});
+      for(let i=start;i<n;i++){
+        pushStep(id,{path:path.slice(),start,considering:i,line:2,
+          msg:`Loop i=${i} (from start ${start}) → consider value ${arr[i]}.`});
+        path.push(arr[i]);
+        pushStep(id,{path:path.slice(),start,chosen:i,line:3,
+          msg:`Include ${arr[i]} (add to path).`});
+        pushStep(id,{path:path.slice(),start,chosen:i,line:4,
+          msg:`Recurse with start ${i+1}.`});
+        rec(id,i+1,path);
+        path.pop();
+        pushStep(id,{path:path.slice(),start,considering:i,line:5,
+          msg:`Backtrack: exclude ${arr[i]}, advance loop.`});
+      }
+      stack.pop();
+      pushStep(id,{path:path.slice(),start,line:7,msg:'No more elements to add → return.'});
+    }
+    rec(null,0,[]);
+  }
+
+  /* ---------- Subsequences (pick / not-pick) ---------- (JAVA_CODE.subseq) */
+  function subseq(arr){
+    const n=arr.length;
+    function rec(parentId,idx,path){
+      const id=nodes.length;
+      const isLeaf=(idx===n);
+      nodes.push({id,parentId,depth:idx,path:path.slice(),
+        isLeaf,producesResult:isLeaf});
+      stack.push(id);
+      pushStep(id,{path:path.slice(),start:idx,line:0,
+        msg:parentId===null?'Start at idx 0. At each index: pick it or skip it.'
+            :`Enter call: idx=${idx}, path=[${path.join(',')}].`});
+      pushStep(id,{path:path.slice(),start:idx,line:1,
+        msg:`Base case: idx ${idx} ${isLeaf?'==':'!='} length ${n}.`});
+      if(isLeaf){
+        results.push(path.slice());
+        pushStep(id,{path:path.slice(),start:idx,line:2,
+          msg:`Leaf reached → record subsequence [${path.join(',')}]. ✓`});
+        stack.pop();
+        pushStep(id,{path:path.slice(),start:idx,line:3,msg:'Return.'});
+        return;
+      }
+      // PICK
+      pushStep(id,{path:path.slice(),start:idx,considering:idx,chosen:idx,line:5,
+        msg:`PICK arr[${idx}]=${arr[idx]} → add to path.`});
+      path.push(arr[idx]);
+      pushStep(id,{path:path.slice(),start:idx,chosen:idx,line:6,
+        msg:`Recurse idx=${idx+1} keeping ${arr[idx]}.`});
+      rec(id,idx+1,path);
+      path.pop();
+      // NOT PICK
+      pushStep(id,{path:path.slice(),start:idx,considering:idx,line:7,
+        msg:`Un-pick arr[${idx}]=${arr[idx]} (remove from path).`});
+      pushStep(id,{path:path.slice(),start:idx,considering:idx,line:8,
+        msg:`Recurse idx=${idx+1} WITHOUT ${arr[idx]}.`});
+      rec(id,idx+1,path);
+      stack.pop();
+      pushStep(id,{path:path.slice(),start:idx,line:9,msg:'Both branches done → return.'});
+    }
+    rec(null,0,[]);
+  }
+
+  /* ---------- Subset Sum == k (pick / not-pick) ---------- (JAVA_CODE.subsum) */
+  function subsum(arr,k){
+    const n=arr.length;
+    function rec(parentId,idx,sum,path){
+      const id=nodes.length;
+      const isLeaf=(idx===n);
+      const hit=isLeaf && sum===k;
+      nodes.push({id,parentId,depth:idx,path:path.slice(),
+        isLeaf,producesResult:hit});
+      stack.push(id);
+      pushStep(id,{path:path.slice(),start:idx,sum,line:0,
+        msg:parentId===null?`Start: find subsequences summing to k=${k}.`
+            :`Enter call: idx=${idx}, sum=${sum}, path=[${path.join(',')}].`});
+      pushStep(id,{path:path.slice(),start:idx,sum,line:1,
+        msg:`Base case: idx ${idx} ${isLeaf?'==':'!='} length ${n}.`});
+      if(isLeaf){
+        pushStep(id,{path:path.slice(),start:idx,sum,line:2,
+          msg:hit?`sum ${sum} == k ${k} → record [${path.join(',')}]. ✓`
+                 :`sum ${sum} != k ${k} → discard.`});
+        if(hit) results.push(path.slice());
+        stack.pop();
+        pushStep(id,{path:path.slice(),start:idx,sum,line:3,msg:'Return.'});
+        return;
+      }
+      // INCLUDE
+      pushStep(id,{path:path.slice(),start:idx,sum,considering:idx,chosen:idx,line:5,
+        msg:`Include arr[${idx}]=${arr[idx]}.`});
+      path.push(arr[idx]);
+      pushStep(id,{path:path.slice(),start:idx,sum:sum+arr[idx],chosen:idx,line:6,
+        msg:`Recurse idx=${idx+1}, sum=${sum+arr[idx]}.`});
+      rec(id,idx+1,sum+arr[idx],path);
+      path.pop();
+      // EXCLUDE
+      pushStep(id,{path:path.slice(),start:idx,sum,considering:idx,line:7,
+        msg:`Exclude arr[${idx}]=${arr[idx]} (remove).`});
+      pushStep(id,{path:path.slice(),start:idx,sum,considering:idx,line:8,
+        msg:`Recurse idx=${idx+1}, sum=${sum}.`});
+      rec(id,idx+1,sum,path);
+      stack.pop();
+      pushStep(id,{path:path.slice(),start:idx,sum,line:9,msg:'Both branches done → return.'});
+    }
+    rec(null,0,0,[]);
+  }
+
+  /* ---------- Subsets II (with duplicates) ---------- (JAVA_CODE.subdup) */
+  function subdup(arr){
+    const n=arr.length; // arr is pre-sorted by caller
+    function rec(parentId,start,path){
+      const id=nodes.length;
+      const isLeaf=(start===n);
+      nodes.push({id,parentId,depth:path.length,path:path.slice(),
+        isLeaf,producesResult:true});
+      stack.push(id);
+      pushStep(id,{path:path.slice(),start,line:0,
+        msg:parentId===null?'Sorted input so duplicates are adjacent. Every node is a subset.'
+            :`Enter call: path=[${path.join(',')}], start=${start}.`});
+      results.push(path.slice());
+      pushStep(id,{path:path.slice(),start,line:1,
+        msg:`Record subset [${path.join(',')}]. ✓`});
+      for(let i=start;i<n;i++){
+        pushStep(id,{path:path.slice(),start,considering:i,line:2,
+          msg:`Loop i=${i} → consider value ${arr[i]}.`});
+        if(i>start && arr[i]===arr[i-1]){
+          pushStep(id,{path:path.slice(),start,considering:i,skip:i,line:3,
+            msg:`arr[${i}]==arr[${i-1}] (${arr[i]}) and i>start → SKIP duplicate.`});
+          continue;
+        }
+        path.push(arr[i]);
+        pushStep(id,{path:path.slice(),start,chosen:i,line:4,
+          msg:`Add ${arr[i]} to path.`});
+        pushStep(id,{path:path.slice(),start,chosen:i,line:5,
+          msg:`Recurse with start ${i+1}.`});
+        rec(id,i+1,path);
+        path.pop();
+        pushStep(id,{path:path.slice(),start,considering:i,line:6,
+          msg:`Backtrack: remove ${arr[i]}.`});
+      }
+      stack.pop();
+      pushStep(id,{path:path.slice(),start,line:8,msg:'Loop done → return.'});
+    }
+    rec(null,0,[]);
+  }
+
+  return function generate(algo,arr,k){
+    nodes=[]; steps=[]; results=[]; stack=[];
+    if(algo==='perm') perm(arr);
+    else if(algo==='comb') comb(arr,k);
+    else if(algo==='subsets') subsets(arr);
+    else if(algo==='subseq') subseq(arr);
+    else if(algo==='subsum') subsum(arr,k);
+    else if(algo==='subdup') subdup(arr);
+    // mark exit step index for each node (last step that references it)
+    const enterStep={}, exitStep={};
+    steps.forEach((s,idx)=>{
+      if(enterStep[s.node]===undefined) enterStep[s.node]=idx;
+      exitStep[s.node]=idx;
+    });
+    nodes.forEach(nd=>{ nd.enterStep=enterStep[nd.id]; nd.exitStep=exitStep[nd.id]; });
+    return {nodes,steps,results:results.length};
+  };
 }
+const generateTrace = makeGenerator();
 
-/* =========================================================================
-   2) Code panels — Python + Java for each mode, with line tags that match
-      the events emitted above.
-   ========================================================================= */
-
-const CODE = {
-  subsets: {
-    py: [
-      ['def','def subsets(nums):'],
-      ['',  '    result = []'],
-      ['def','    def dfs(start, path):'],
-      ['add','        result.append(path[:])           # every node is a subset'],
-      ['for','        for i in range(start, len(nums)):'],
-      ['',  '            path.append(nums[i])          # CHOOSE'],
-      ['',  '            dfs(i + 1, path)              # EXPLORE'],
-      ['pop','            path.pop()                    # UN-CHOOSE (backtrack)'],
-      ['return','    dfs(0, [])'],
-      ['',  '    return result'],
-    ],
-    java: [
-      ['def','public List<List<Integer>> subsets(int[] nums) {'],
-      ['',  '    List<List<Integer>> result = new ArrayList<>();'],
-      ['',  '    dfs(nums, 0, new ArrayList<>(), result);'],
-      ['',  '    return result;'],
-      ['',  '}'],
-      ['def','private void dfs(int[] nums, int start, List<Integer> path, List<List<Integer>> result) {'],
-      ['add','    result.add(new ArrayList<>(path));        // record current subset'],
-      ['for','    for (int i = start; i < nums.length; i++) {'],
-      ['',  '        path.add(nums[i]);                     // CHOOSE'],
-      ['',  '        dfs(nums, i + 1, path, result);        // EXPLORE'],
-      ['pop','        path.remove(path.size() - 1);          // UN-CHOOSE'],
-      ['',  '    }'],
-      ['return','}'],
-    ],
-  },
-
-  permutations: {
-    py: [
-      ['def','def permute(nums):'],
-      ['',  '    result, used = [], [False]*len(nums)'],
-      ['def','    def dfs(path):'],
-      ['leaf','        if len(path) == len(nums):'],
-      ['leaf','            result.append(path[:]); return'],
-      ['for','        for i in range(len(nums)):'],
-      ['skip','            if used[i]: continue           # already in path'],
-      ['',  '            used[i] = True; path.append(nums[i])    # CHOOSE'],
-      ['',  '            dfs(path)                                # EXPLORE'],
-      ['pop','            path.pop(); used[i] = False              # UN-CHOOSE'],
-      ['return','    dfs([])'],
-      ['',  '    return result'],
-    ],
-    java: [
-      ['def','public List<List<Integer>> permute(int[] nums) {'],
-      ['',  '    List<List<Integer>> result = new ArrayList<>();'],
-      ['',  '    boolean[] used = new boolean[nums.length];'],
-      ['',  '    dfs(nums, used, new ArrayList<>(), result);'],
-      ['',  '    return result;'],
-      ['',  '}'],
-      ['def','private void dfs(int[] nums, boolean[] used, List<Integer> path, List<List<Integer>> result) {'],
-      ['leaf','    if (path.size() == nums.length) {'],
-      ['leaf','        result.add(new ArrayList<>(path)); return;'],
-      ['',  '    }'],
-      ['for','    for (int i = 0; i < nums.length; i++) {'],
-      ['skip','        if (used[i]) continue;'],
-      ['',  '        used[i] = true; path.add(nums[i]);      // CHOOSE'],
-      ['',  '        dfs(nums, used, path, result);          // EXPLORE'],
-      ['pop','        path.remove(path.size()-1); used[i] = false; // UN-CHOOSE'],
-      ['',  '    }'],
-      ['return','}'],
-    ],
-  },
-
-  combinations: {
-    py: [
-      ['def','def combine(nums, k):'],
-      ['',  '    result = []'],
-      ['def','    def dfs(start, path):'],
-      ['leaf','        if len(path) == k:'],
-      ['leaf','            result.append(path[:]); return'],
-      ['for','        for i in range(start, len(nums)):'],
-      ['prune','            if len(nums) - i < k - len(path): break  # not enough left'],
-      ['',  '            path.append(nums[i])                       # CHOOSE'],
-      ['',  '            dfs(i + 1, path)                           # EXPLORE'],
-      ['pop','            path.pop()                                  # UN-CHOOSE'],
-      ['return','    dfs(0, [])'],
-      ['',  '    return result'],
-    ],
-    java: [
-      ['def','public List<List<Integer>> combine(int[] nums, int k) {'],
-      ['',  '    List<List<Integer>> result = new ArrayList<>();'],
-      ['',  '    dfs(nums, k, 0, new ArrayList<>(), result);'],
-      ['',  '    return result;'],
-      ['',  '}'],
-      ['def','private void dfs(int[] nums, int k, int start, List<Integer> path, List<List<Integer>> result) {'],
-      ['leaf','    if (path.size() == k) {'],
-      ['leaf','        result.add(new ArrayList<>(path)); return;'],
-      ['',  '    }'],
-      ['for','    for (int i = start; i < nums.length; i++) {'],
-      ['prune','        if (nums.length - i < k - path.size()) break;  // pruning'],
-      ['',  '        path.add(nums[i]);                              // CHOOSE'],
-      ['',  '        dfs(nums, k, i + 1, path, result);              // EXPLORE'],
-      ['pop','        path.remove(path.size() - 1);                   // UN-CHOOSE'],
-      ['',  '    }'],
-      ['return','}'],
-    ],
-  },
+/* ============================================================
+   JAVA SOURCE (line index == `line` field emitted in steps)
+   ============================================================ */
+const JAVA_CODE = {
+  perm:[
+    'void permute(int[] nums, List<Integer> path, boolean[] visited) {',
+    '  if (path.size() == nums.length) {',
+    '    result.add(new ArrayList<>(path));',
+    '    return;',
+    '  }',
+    '  for (int i = 0; i < nums.length; i++) {',
+    '    if (visited[i]) continue;',
+    '    visited[i] = true; path.add(nums[i]);',
+    '',
+    '    permute(nums, path, visited);',
+    '    path.remove(path.size()-1); visited[i] = false;',
+    '  }',
+    '  return;',
+    '}'
+  ],
+  comb:[
+    'void combine(int[] nums, int k, int start, List<Integer> path) {',
+    '  if (path.size() == k) {',
+    '    result.add(new ArrayList<>(path));',
+    '    return;',
+    '  }',
+    '  for (int i = start; i < nums.length; i++) {',
+    '    path.add(nums[i]);',
+    '    combine(nums, k, i + 1, path);',
+    '    path.remove(path.size() - 1);',
+    '  }',
+    '}'
+  ],
+  subsets:[
+    'void subsets(int[] nums, int start, List<Integer> path) {',
+    '  result.add(new ArrayList<>(path));',
+    '  for (int i = start; i < nums.length; i++) {',
+    '    path.add(nums[i]);',
+    '    subsets(nums, i + 1, path);',
+    '    path.remove(path.size() - 1);',
+    '  }',
+    '  return;',
+    '}'
+  ]
 };
+// extra algorithms (pick/not-pick & duplicates)
+JAVA_CODE.subseq=[
+  'void generate(int[] arr, int idx, List<Integer> cur) {',
+  '  if (idx == arr.length) {',
+  '    result.add(new ArrayList<>(cur));',
+  '    return;',
+  '  }',
+  '  cur.add(arr[idx]);            // PICK',
+  '  generate(arr, idx + 1, cur);',
+  '  cur.remove(cur.size() - 1);   // un-pick',
+  '  generate(arr, idx + 1, cur);  // NOT pick',
+  '}'
+];
+JAVA_CODE.subsum=[
+  'void solve(int[] arr, int idx, int sum, int k, List<Integer> cur) {',
+  '  if (idx == arr.length) {',
+  '    if (sum == k) result.add(new ArrayList<>(cur));',
+  '    return;',
+  '  }',
+  '  cur.add(arr[idx]);                        // include',
+  '  solve(arr, idx+1, sum + arr[idx], k, cur);',
+  '  cur.remove(cur.size() - 1);               // exclude',
+  '  solve(arr, idx+1, sum, k, cur);',
+  '}'
+];
+JAVA_CODE.subdup=[
+  'void subsetsDup(int[] nums, int start, List<Integer> path) {',
+  '  result.add(new ArrayList<>(path));',
+  '  for (int i = start; i < nums.length; i++) {',
+  '    if (i > start && nums[i] == nums[i-1]) continue;',
+  '    path.add(nums[i]);',
+  '    subsetsDup(nums, i + 1, path);',
+  '    path.remove(path.size() - 1);',
+  '  }',
+  '  return;',
+  '}'
+];
 
-/* simple syntax highlighting */
-function hi(src, lang){
-  let s = src.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // comments
-  s = s.replace(/(#.*$)/g,'<span class="com">$1</span>');
-  s = s.replace(/(\/\/.*$)/g,'<span class="com">$1</span>');
-  // strings
-  s = s.replace(/("[^"]*")/g,'<span class="str">$1</span>');
-  // keywords
-  const kws = lang==='py'
-    ? /\b(def|return|for|in|if|else|elif|continue|break|range|len|True|False|append|pop)\b/g
-    : /\b(public|private|void|int|new|return|for|if|else|continue|break|boolean|class|List|ArrayList|Integer|true|false)\b/g;
-  s = s.replace(kws,'<span class="kw">$1</span>');
-  // numbers
-  s = s.replace(/\b(\d+)\b/g,'<span class="num2">$1</span>');
+// minimal Java syntax highlighter (escape first, then tokenize)
+function hl(line){
+  let code=line, comment='';
+  const ci=line.indexOf('//');
+  if(ci>=0){ code=line.slice(0,ci); comment=line.slice(ci); }
+  let s=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s=s.replace(/\b(void|int|boolean|return|if|for|new|continue|static|public|class)\b/g,'<span class="tok-kw">$1</span>');
+  s=s.replace(/\b(List|ArrayList|Integer|String|System)\b/g,'<span class="tok-ty">$1</span>');
+  s=s.replace(/\b(permute|combine|subsets|generate|solve|subsetsDup)\b(?=\()/g,'<span class="tok-fn">$1</span>');
+  s=s.replace(/\b(\d+)\b/g,'<span class="tok-nm">$1</span>');
+  if(comment){
+    const c=comment.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    s+='<span class="tok-cm">'+c+'</span>';
+  }
   return s;
 }
 
-function renderCode(panelEl, lines, lang){
-  panelEl.innerHTML = '<pre>' + lines.map((row,idx)=>{
-    const [tag, src] = row;
-    return `<div class="ln" data-tag="${tag}" data-idx="${idx}"><span class="num">${idx+1}</span><span class="src">${hi(src,lang)}</span></div>`;
-  }).join('') + '</pre>';
-}
+/* ============================================================
+   LAYOUT — assign (x,y) to every node (classic tidy tree)
+   ============================================================ */
+const SLOT_W=86, LEVEL_H=104, PAD_X=60, PAD_Y=34;
 
-function highlightLine(panelEl, tag){
-  panelEl.querySelectorAll('.ln.hi').forEach(n=>n.classList.remove('hi'));
-  if(!tag) return;
-  // highlight first matching tag (most relevant top-of-block line)
-  const all = panelEl.querySelectorAll(`.ln[data-tag="${tag}"]`);
-  all.forEach(n=>n.classList.add('hi'));
-  if(all.length){
-    all[0].scrollIntoView({block:'nearest', behavior:'smooth'});
+function layout(nodes){
+  const childrenOf={};
+  nodes.forEach(n=>{ if(n.parentId!==null){ (childrenOf[n.parentId]=childrenOf[n.parentId]||[]).push(n.id);} });
+  let counter=0;
+  function assign(id){
+    const kids=childrenOf[id]||[];
+    if(kids.length===0){ nodes[id].slot=counter++; }
+    else{
+      kids.forEach(assign);
+      nodes[id].slot=(nodes[kids[0]].slot+nodes[kids[kids.length-1]].slot)/2;
+    }
   }
-}
-
-/* =========================================================================
-   3) Tree rendering — incremental layout as nodes appear.
-   ========================================================================= */
-
-const svg = document.getElementById('treeSvg');
-const NS = 'http://www.w3.org/2000/svg';
-
-let nodesById = {};   // id -> {id, parent, depth, label, edgeLabel, x, y, el, edgeEl}
-let activeNodeId = null;
-
-function clearTree(){
-  svg.innerHTML = '';
-  nodesById = {};
-  activeNodeId = null;
-}
-
-const LEVEL_H = 80;
-const NODE_R = 22;
-
-function relayout(){
-  // group by depth
-  const byDepth = {};
-  Object.values(nodesById).forEach(n=>{
-    (byDepth[n.depth] = byDepth[n.depth] || []).push(n);
+  if(nodes.length) assign(0);
+  let maxSlot=0,maxDepth=0;
+  nodes.forEach(n=>{
+    n.x=PAD_X+n.slot*SLOT_W;
+    n.y=PAD_Y+n.depth*LEVEL_H;
+    maxSlot=Math.max(maxSlot,n.slot);
+    maxDepth=Math.max(maxDepth,n.depth);
   });
-  const maxDepth = Math.max(0, ...Object.keys(byDepth).map(Number));
-  // give each node x slot per depth in the order they appear
-  const widthPerLevel = {};
-  Object.entries(byDepth).forEach(([d,arr])=>{
-    arr.sort((a,b)=>a.order-b.order);
-    arr.forEach((n,i)=> n.slot = i);
-    widthPerLevel[d] = arr.length;
-  });
-  const maxCount = Math.max(...Object.values(widthPerLevel), 1);
-  const W = Math.max(720, maxCount * 90 + 80);
-  const H = (maxDepth+1) * LEVEL_H + 60;
-  svg.setAttribute('width', W);
-  svg.setAttribute('height', H);
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-
-  Object.values(nodesById).forEach(n=>{
-    const arr = byDepth[n.depth];
-    const step = W / (arr.length + 1);
-    n.x = step * (n.slot + 1);
-    n.y = 30 + n.depth * LEVEL_H;
-  });
-
-  // redraw edges + reposition nodes
-  Object.values(nodesById).forEach(n=>{
-    if(n.edgeEl && n.parent && nodesById[n.parent]){
-      const p = nodesById[n.parent];
-      n.edgeEl.setAttribute('d', `M ${p.x} ${p.y+NODE_R} C ${p.x} ${(p.y+n.y)/2}, ${n.x} ${(p.y+n.y)/2}, ${n.x} ${n.y-NODE_R}`);
-      if(n.edgeLabelEl){
-        n.edgeLabelEl.setAttribute('x', (p.x+n.x)/2);
-        n.edgeLabelEl.setAttribute('y', (p.y+n.y)/2);
-      }
-    }
-    if(n.gEl){
-      n.gEl.setAttribute('transform', `translate(${n.x},${n.y})`);
-    }
-  });
+  return {width:PAD_X*2+maxSlot*SLOT_W, height:PAD_Y*2+maxDepth*LEVEL_H};
 }
 
-let nodeOrderCounter = 0;
+/* ============================================================
+   STATE + DOM
+   ============================================================ */
+const D = {
+  treeScroll:document.getElementById('treeScroll'),
+  canvas:document.getElementById('treeCanvas'),
+  edges:document.getElementById('edges'),
+  arrRow:document.getElementById('arrRow'),
+  startPtr:document.getElementById('startPtr'),
+  msg:document.getElementById('msg'),
+  curPath:document.getElementById('curPath'),
+  trackerLabel:document.getElementById('trackerLabel'),
+  trackerVal:document.getElementById('trackerVal'),
+  depthVal:document.getElementById('depthVal'),
+  depthBars:document.getElementById('depthBars'),
+  resCount:document.getElementById('resCount'),
+  resList:document.getElementById('resList'),
+  stepCur:document.getElementById('stepCur'),
+  stepTot:document.getElementById('stepTot'),
+  codePanel:document.getElementById('codePanel'),
+};
 
-function addNode(id, parent, depth, label, edgeLabel, pruned=false){
-  if(nodesById[id]) return nodesById[id];
-  // edge first (so it draws under the node)
-  let edgeEl=null, edgeLabelEl=null;
-  if(parent){
-    edgeEl = document.createElementNS(NS,'path');
-    edgeEl.setAttribute('class','edge');
-    svg.appendChild(edgeEl);
-    if(edgeLabel){
-      edgeLabelEl = document.createElementNS(NS,'text');
-      edgeLabelEl.setAttribute('class','edge-label');
-      edgeLabelEl.setAttribute('fill','#8b949e');
-      edgeLabelEl.setAttribute('font-size','11');
-      edgeLabelEl.setAttribute('text-anchor','middle');
-      edgeLabelEl.textContent = edgeLabel;
-      svg.appendChild(edgeLabelEl);
-    }
-  }
-  const g = document.createElementNS(NS,'g');
-  g.setAttribute('class','node' + (pruned?' pruned':''));
-  const c = document.createElementNS(NS,'circle');
-  c.setAttribute('r', NODE_R);
-  g.appendChild(c);
-  const t = document.createElementNS(NS,'text');
-  t.setAttribute('dy','4');
-  t.textContent = label;
-  g.appendChild(t);
-  svg.appendChild(g);
+let algo='perm', arr=[1,2,3], kVal=2;
+let trace=null, cur=0, playing=false, timer=null, speed=650;
+let nodeEls=[], edgeEls=[];
 
-  const node = {id, parent, depth, label, edgeLabel,
-    el:c, gEl:g, edgeEl, edgeLabelEl, pruned,
-    order: nodeOrderCounter++};
-  nodesById[id] = node;
-  relayout();
-  return node;
-}
+function buildTree(){
+  algo = document.querySelector('.tab.active').dataset.algo;
+  arr = document.getElementById('arrInput').value.split(',')
+        .map(s=>s.trim()).filter(s=>s.length).map(s=>isNaN(+s)?s:+s);
+  if(arr.length===0) arr=[1,2,3];
+  const binary = (algo==='subseq'||algo==='subsum');
+  const cap = binary?5:6;               // binary trees grow as 2^n
+  if(arr.length>cap) arr=arr.slice(0,cap);
+  if(algo==='subdup') arr=arr.slice().sort((a,b)=> a>b?1:(a<b?-1:0)); // duplicates adjacent
 
-function setActive(id){
-  if(activeNodeId && nodesById[activeNodeId]){
-    nodesById[activeNodeId].gEl.classList.remove('active');
-    if(nodesById[activeNodeId].edgeEl)
-      nodesById[activeNodeId].edgeEl.classList.remove('active');
-  }
-  activeNodeId = id;
-  if(id && nodesById[id]){
-    nodesById[id].gEl.classList.add('active');
-    if(nodesById[id].edgeEl)
-      nodesById[id].edgeEl.classList.add('active');
-  }
-}
-
-function markDone(id){
-  const n = nodesById[id]; if(!n) return;
-  n.gEl.classList.add('done');
-  if(n.edgeEl) n.edgeEl.classList.add('done');
-}
-function markLeaf(id){
-  const n = nodesById[id]; if(!n) return;
-  n.gEl.classList.add('leaf');
-}
-function setLabel(id, label){
-  const n = nodesById[id]; if(!n) return;
-  n.gEl.querySelector('text').textContent = label;
-}
-
-/* =========================================================================
-   4) Driver — playback engine
-   ========================================================================= */
-
-let MODE = 'subsets';
-let TRACE = null;       // {events, finalResult}
-let STEP = 0;
-let TIMER = null;
-let BASE_DELAY = 700;   // ms
-
-const pyPanel = document.getElementById('pyCode');
-const javaPanel = document.getElementById('javaCode');
-const treeSvg = document.getElementById('treeSvg');
-const pathChips = document.getElementById('pathChips');
-const resChips = document.getElementById('resChips');
-const stepCounter = document.getElementById('stepCounter');
-const narrate = document.getElementById('narrate');
-const modePill = document.getElementById('modePill');
-const speedPill = document.getElementById('speedPill');
-
-function rebuild(){
-  const nums = document.getElementById('numsInput').value
-    .split(',').map(s=>s.trim()).filter(Boolean).map(s=>{
-      const n = Number(s); return Number.isNaN(n) ? s : n;
-    });
-  const k = Number(document.getElementById('kInput').value)||2;
-  modePill.textContent = 'mode: ' + MODE;
-  document.getElementById('kWrap').style.display = MODE==='combinations' ? '' : 'none';
-  if(MODE==='subsets')      TRACE = traceSubsets(nums);
-  else if(MODE==='permutations') TRACE = tracePermutations(nums);
-  else                       TRACE = traceCombinations(nums, k);
-
-  renderCode(pyPanel, CODE[MODE].py, 'py');
-  renderCode(javaPanel, CODE[MODE].java, 'java');
-
-  clearTree();
-  nodeOrderCounter = 0;
-  STEP = 0;
-  pathChips.innerHTML = '';
-  resChips.innerHTML = '';
-  stepCounter.textContent = `0 / ${TRACE.events.length}`;
-  narrate.textContent = `Loaded ${TRACE.events.length} steps for ${MODE}([${nums.join(',')}])${MODE==='combinations'?', k='+k:''}. Press ▶ Play.`;
-  // Pre-create the root so the canvas isn't empty
-  applyEvent(TRACE.events[0]);
-  STEP = 1;
-  stepCounter.textContent = `${STEP} / ${TRACE.events.length}`;
-}
-
-function depthOf(id){
-  let n = nodesById[id], d=0;
-  while(n && n.parent){ n = nodesById[n.parent]; d++; }
-  return d;
-}
-
-function applyEvent(ev){
-  if(!ev) return;
-  switch(ev.type){
-    case 'enter': {
-      const depth = ev.parent ? (depthOf(ev.parent)+1) : 0;
-      const label = ev.path && ev.path.length ? `[${ev.path.join(',')}]` : '[]';
-      addNode(ev.id, ev.parent, depth, label, ev.edgeLabel||'');
-      setActive(ev.id);
-      break;
-    }
-    case 'pruned': {
-      const depth = ev.parent ? (depthOf(ev.parent)+1) : 0;
-      addNode(ev.id, ev.parent, depth, '✗', ev.edgeLabel||'', true);
-      break;
-    }
-    case 'record': {
-      // visual cue: pulse the active node
-      if(nodesById[ev.id]){
-        nodesById[ev.id].gEl.classList.add('leaf');
-      }
-      break;
-    }
-    case 'snapshot': {
-      // result was just updated — show in chips
-      if(ev.result){
-        resChips.innerHTML = ev.result.map(r =>
-          `<span class="chip added">[${r.join(',')}]</span>`).join('');
-      }
-      break;
-    }
-    case 'leave': {
-      markDone(ev.id);
-      // active goes back to parent
-      const n = nodesById[ev.id];
-      if(n && n.parent) setActive(n.parent);
-      break;
-    }
-    case 'return': {
-      markDone(ev.id);
-      break;
-    }
-  }
-  // path display
-  if(ev.path){
-    pathChips.innerHTML = ev.path.length
-      ? ev.path.map(v=>`<span class="chip path">${v}</span>`).join('')
-      : '<span class="chip">∅</span>';
-  }
-  // code highlight
-  if(ev.line){
-    highlightLine(pyPanel, ev.line);
-    highlightLine(javaPanel, ev.line);
-  }
-  if(ev.note) narrate.textContent = ev.note;
-}
-
-function step(forward=true){
-  if(!TRACE) return;
-  if(forward){
-    if(STEP >= TRACE.events.length) return;
-    applyEvent(TRACE.events[STEP]);
-    STEP++;
+  const showK = (algo==='comb'||algo==='subsum');
+  document.getElementById('kField').style.display = showK?'flex':'none';
+  document.getElementById('kLabel').textContent = (algo==='subsum')?'target k':'k (size)';
+  if(algo==='subsum'){
+    kVal = parseInt(document.getElementById('kInput').value);
+    if(isNaN(kVal)) kVal=3;
   } else {
-    // rebuilding backwards is expensive — we simply replay from 0.
-    if(STEP<=1) return;
-    const target = STEP-2;
-    clearTree(); nodeOrderCounter=0;
-    pathChips.innerHTML=''; resChips.innerHTML='';
-    for(let i=0;i<=target;i++) applyEvent(TRACE.events[i]);
-    STEP = target+1;
+    kVal = Math.max(1,Math.min(arr.length, parseInt(document.getElementById('kInput').value)||2));
+    document.getElementById('kInput').value=kVal;
   }
-  stepCounter.textContent = `${STEP} / ${TRACE.events.length}`;
-}
 
-function play(){
-  if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; return; }
-  document.getElementById('playBtn').textContent='⏸ Pause';
-  TIMER = setInterval(()=>{
-    if(STEP >= TRACE.events.length){
-      clearInterval(TIMER); TIMER=null;
-      document.getElementById('playBtn').textContent='▶ Play';
-      narrate.textContent = `✅ Done. Found ${TRACE.finalResult.length} ${MODE}.`;
-      return;
+  trace = generateTrace(algo, arr, kVal);
+  const dim = layout(trace.nodes);
+
+  // build DOM
+  D.canvas.style.width=dim.width+'px';
+  D.canvas.style.height=dim.height+'px';
+  D.edges.setAttribute('width',dim.width);
+  D.edges.setAttribute('height',dim.height);
+  D.edges.innerHTML='';
+  // remove old node els
+  nodeEls.forEach(e=>e.remove());
+  nodeEls=[]; edgeEls=[];
+
+  trace.nodes.forEach(nd=>{
+    if(nd.parentId!==null){
+      const p=trace.nodes[nd.parentId];
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',p.x); line.setAttribute('y1',p.y+22);
+      line.setAttribute('x2',nd.x); line.setAttribute('y2',nd.y-4);
+      const len=Math.hypot(nd.x-p.x,(nd.y-4)-(p.y+22));
+      line.classList.add('edge');
+      line.style.setProperty('--len',len);
+      D.edges.appendChild(line);
+      edgeEls[nd.id]=line;
     }
-    step(true);
-  }, BASE_DELAY);
+    const el=document.createElement('div');
+    let cls='node';
+    if(nd.isLeaf && nd.producesResult) cls+=' leaf';
+    else if(nd.isLeaf) cls+=' deadleaf';
+    else if(nd.producesResult) cls+=' result';
+    el.className=cls;
+    el.style.left=nd.x+'px';
+    el.style.top=nd.y+'px';
+    const lbl = nd.parentId===null?'root':(nd.isLeaf?'leaf':'depth '+nd.depth);
+    const mark = nd.producesResult?'<span class="check">✓</span>'
+               : (nd.isLeaf?'<span class="cross">✗</span>':'');
+    el.innerHTML=`<div class="nlabel">${lbl}</div>
+      <div class="npath">[${nd.path.join(',')}]${mark}</div>`;
+    D.canvas.appendChild(el);
+    nodeEls[nd.id]=el;
+  });
+
+  // array cells
+  D.arrRow.innerHTML='';
+  arr.forEach((v,i)=>{
+    const c=document.createElement('div');
+    c.className='cell'; c.dataset.i=i;
+    c.innerHTML=`<div class="box">${v}</div><div class="idx">i=${i}</div>`+
+      (algo==='perm'?`<div class="vbadge f">F</div>`:'');
+    D.arrRow.appendChild(c);
+  });
+
+  // depth bars
+  const maxD = algo==='perm'?arr.length:(algo==='comb'?kVal:arr.length);
+  D.depthBars.innerHTML='';
+  for(let i=0;i<=maxD;i++){
+    const b=document.createElement('div'); b.className='db';
+    b.style.height=(30*(i+1)/(maxD+1))+'px';
+    D.depthBars.appendChild(b);
+  }
+
+  D.trackerLabel.textContent =
+    algo==='perm'?'visited[]':
+    (algo==='subsum')?'sum / target':
+    (algo==='subseq'||algo==='subsum')?'idx pointer':'start index';
+  D.stepTot.textContent=trace.steps.length-1;
+
+  // render Java code lines
+  D.codePanel.innerHTML='';
+  JAVA_CODE[algo].forEach((ln,i)=>{
+    const row=document.createElement('div');
+    row.className='code-line'; row.dataset.line=i;
+    row.innerHTML=`<span class="ln">${i}</span><span class="ct">${ln===''?'&nbsp;':hl(ln)}</span>`;
+    D.codePanel.appendChild(row);
+  });
+
+  cur=0;
+  render();
 }
 
-/* wire UI */
-document.querySelectorAll('.modeBtn').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    document.querySelectorAll('.modeBtn').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    MODE = b.dataset.mode;
-    if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; }
-    rebuild();
+/* ============================================================
+   RENDER a given step
+   ============================================================ */
+function render(){
+  const total=trace.steps.length;
+  cur=Math.max(0,Math.min(cur,total-1));
+  const step=trace.steps[cur];
+  const s=step.snap;
+  const activeSet=new Set(s.activePath);
+  const currentNode=s.activePath[s.activePath.length-1];
+
+  // nodes
+  trace.nodes.forEach(nd=>{
+    const el=nodeEls[nd.id];
+    const shown = nd.enterStep<=cur;
+    el.classList.toggle('shown',shown);
+    el.classList.toggle('onpath',activeSet.has(nd.id));
+    el.classList.toggle('current',nd.id===currentNode);
+    const done = nd.exitStep<cur && !activeSet.has(nd.id) && !nd.isLeaf;
+    el.classList.toggle('dim',done);
   });
-});
-document.getElementById('buildBtn').addEventListener('click', ()=>{
-  if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; }
-  rebuild();
-});
-document.getElementById('playBtn').addEventListener('click', play);
-document.getElementById('nextBtn').addEventListener('click', ()=>step(true));
-document.getElementById('prevBtn').addEventListener('click', ()=>step(false));
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  if(TIMER){ clearInterval(TIMER); TIMER=null; document.getElementById('playBtn').textContent='▶ Play'; }
-  rebuild();
-});
-document.getElementById('speed').addEventListener('input', e=>{
-  const v = Number(e.target.value);
-  // map slider 1..10 → 1500ms .. 80ms
-  BASE_DELAY = Math.round(1600 - v*150);
-  speedPill.textContent = `speed: ${v}x`;
-  if(TIMER){ clearInterval(TIMER); TIMER=null; play(); }
-});
+  // edges
+  trace.nodes.forEach(nd=>{
+    if(nd.parentId===null) return;
+    const line=edgeEls[nd.id];
+    const shown = nd.enterStep<=cur;
+    line.classList.toggle('shown',shown);
+    const onPath = activeSet.has(nd.id) && activeSet.has(nd.parentId);
+    line.classList.toggle('active',onPath);
+    line.classList.toggle('dim', shown && !onPath && nd.exitStep<cur);
+  });
 
-/* boot */
-rebuild();
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- KIRO_HOME_BUTTON_START -->
-<style id="kiro-home-button-style">
-  .kiro-home-btn{
-    position:fixed;
-    right:18px;
-    bottom:84px;
-    width:52px;height:52px;
-    border-radius:50%;
-    background:#6c5ce7;
-    color:#ffffff;
-    display:flex;align-items:center;justify-content:center;
-    text-decoration:none;
-    font-size:24px;line-height:1;
-    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
-    border:2px solid rgba(255,255,255,.85);
-    z-index:99998;
-    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  // auto-scroll to current node
+  if(currentNode!=null && nodeEls[currentNode]){
+    const el=nodeEls[currentNode];
+    const r=el.offsetTop, c=el.offsetLeft;
+    D.treeScroll.scrollTo({
+      top:Math.max(0,r-D.treeScroll.clientHeight/2+30),
+      left:Math.max(0,c-D.treeScroll.clientWidth/2),
+      behavior:'smooth'
+    });
   }
-  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
-  .kiro-home-btn:active{transform:scale(.95);}
-  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
-  @media print{.kiro-home-btn{display:none!important;}}
-</style>
-<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
-  <span aria-hidden="true">&#x1F3E0;</span>
-</a>
-<!-- KIRO_HOME_BUTTON_END -->
 
+  // array panel
+  [...D.arrRow.children].forEach((c,i)=>{
+    c.classList.remove('considering','chosen','excluded');
+    if(s.considering===i) c.classList.add('considering');
+    if(s.chosen===i) c.classList.add('chosen');
+    if(algo==='perm'){
+      const used=s.visited&&s.visited[i];
+      const badge=c.querySelector('.vbadge');
+      if(badge){ badge.textContent=used?'T':'F'; badge.className='vbadge '+(used?'t':'f'); }
+      if(used && s.chosen!==i) c.classList.add('excluded');
+    } else {
+      if(s.start!=null && i<s.start) c.classList.add('excluded');
+      if(s.skip===i){ c.classList.remove('considering'); c.classList.add('excluded'); }
+    }
+  });
+  const binary=(algo==='subseq'||algo==='subsum');
+  if(algo==='perm'){
+    D.startPtr.textContent='';
+  } else if(binary){
+    D.startPtr.innerHTML = s.start!=null
+      ? `▸ idx = ${s.start} — decide: pick or skip arr[${s.start}]`+
+        (algo==='subsum'&&s.sum!=null?`  ·  running sum = ${s.sum}`:'') : '';
+  } else {
+    D.startPtr.innerHTML = s.start!=null
+      ? `▶ start = ${s.start} (loop scans indices ${s.start}…${arr.length-1})` : '';
+  }
+
+  // sidebar
+  D.msg.innerHTML = s.msg.replace(/\[([^\]]*)\]/g,'<span class="hl">[$1]</span>');
+  D.curPath.textContent='[ '+s.path.join(', ')+' ]';
+  if(algo==='perm'){
+    D.trackerVal.textContent = s.visited?'['+s.visited.map(b=>b?'T':'F').join(',')+']':'—';
+  } else if(algo==='subsum'){
+    D.trackerVal.textContent = (s.sum!=null?s.sum:'—')+' / '+kVal;
+  } else {
+    D.trackerVal.textContent = s.start!=null?s.start:'—';
+  }
+  D.depthVal.textContent=s.depth;
+  [...D.depthBars.children].forEach((b,i)=>b.classList.toggle('on',i<=s.depth));
+
+  // results
+  D.resCount.textContent=s.results.length;
+  D.resList.innerHTML='';
+  s.results.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='res-item'; d.textContent='['+r.join(', ')+']';
+    D.resList.appendChild(d);
+  });
+
+  D.stepCur.textContent=cur;
+  document.getElementById('prevBtn').disabled=cur<=0;
+  document.getElementById('nextBtn').disabled=cur>=total-1;
+
+  // highlight executing Java line
+  const codeLines=D.codePanel.children;
+  for(let i=0;i<codeLines.length;i++){
+    const on = (s.line===i);
+    codeLines[i].classList.toggle('active',on);
+    if(on) codeLines[i].scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+function next(){ if(cur<trace.steps.length-1){cur++;render();} else stop(); }
+function prev(){ if(cur>0){cur--;render();} }
+function stop(){ playing=false; clearInterval(timer); document.getElementById('playBtn').innerHTML='▶ Play'; }
+function play(){
+  if(playing){ stop(); return; }
+  if(cur>=trace.steps.length-1) cur=0;
+  playing=true; document.getElementById('playBtn').innerHTML='❚❚ Pause';
+  timer=setInterval(()=>{
+    if(cur>=trace.steps.length-1){ stop(); return; }
+    next();
+  },speed);
+}
+
+document.getElementById('nextBtn').onclick=()=>{stop();next();};
+document.getElementById('prevBtn').onclick=()=>{stop();prev();};
+document.getElementById('playBtn').onclick=play;
+document.getElementById('resetBtn').onclick=()=>{stop();cur=0;render();};
+document.getElementById('regen').onclick=()=>{stop();buildTree();};
+document.getElementById('speed').oninput=e=>{
+  speed=+e.target.value; document.getElementById('speedVal').textContent=speed+'ms';
+  if(playing){ stop(); play(); }
+};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); stop();
+  const a=t.dataset.algo;
+  const arrIn=document.getElementById('arrInput'), kIn=document.getElementById('kInput');
+  if(a==='subdup'){
+    const vals=arrIn.value.split(',').map(s=>s.trim());
+    if(new Set(vals).size===vals.length) arrIn.value='1,2,2'; // ensure a duplicate to show skip
+  } else if(a==='subsum'){
+    arrIn.value='1,2,3'; kIn.value='3';
+  } else if(a==='comb'){
+    if((parseInt(kIn.value)||0)<1) kIn.value='2';
+  }
+  buildTree();
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='ArrowRight'){stop();next();}
+  else if(e.key==='ArrowLeft'){stop();prev();}
+  else if(e.key===' '){e.preventDefault();play();}
+});
+[document.getElementById('arrInput'),document.getElementById('kInput')].forEach(inp=>{
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){stop();buildTree();} });
+});
+
+// init
+buildTree();
+
+/* ============================================================
+   RESIZABLE SPLITTER (drag gutter to adjust tree / sidebar)
+   ============================================================ */
+(function(){
+  const gutter=document.getElementById('gutter');
+  const sidebar=document.querySelector('.sidebar');
+  const mainEl=document.querySelector('main');
+  let dragging=false;
+  function down(e){ dragging=true; gutter.classList.add('drag');
+    document.body.style.cursor='col-resize'; document.body.style.userSelect='none';
+    e.preventDefault(); }
+  function move(e){
+    if(!dragging) return;
+    const cx = e.touches?e.touches[0].clientX:e.clientX;
+    const rect=mainEl.getBoundingClientRect();
+    let w=rect.right-cx;
+    w=Math.max(260,Math.min(rect.width-320,w));
+    sidebar.style.width=w+'px';
+  }
+  function up(){ if(!dragging) return; dragging=false; gutter.classList.remove('drag');
+    document.body.style.cursor=''; document.body.style.userSelect=''; }
+  gutter.addEventListener('mousedown',down);
+  gutter.addEventListener('touchstart',down,{passive:false});
+  window.addEventListener('mousemove',move);
+  window.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('mouseup',up);
+  window.addEventListener('touchend',up);
+})();
+</script>
 </body>
 </html>
