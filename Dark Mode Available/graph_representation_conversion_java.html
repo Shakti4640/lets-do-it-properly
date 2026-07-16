@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Representation Conversions</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --panel2: #0f141a; --text: #e6edf3; --muted: #8b949e;
+    --border: #30363d; --accent: #4493f8; --accent-soft: #10305c; --purple: #a371f7; --purple-soft: #2a1f45;
+    --code-bg: #0b0f14; --grid-head: #d2a477; --flash: #2ea04366; --shadow: rgba(0,0,0,0.5);
+    --node: #1f2630; --node-stroke: #d2a477; --edge: #58636f;
+    --c-keyword: #ff7b72; --c-string: #a5d6ff; --c-number: #79c0ff; --c-comment: #7d8590; --c-func: #d2a8ff; --c-type: #ffa657;
+  }
+  html[data-theme="light"] {
+    --bg: #f6f8fa; --panel: #ffffff; --panel2: #f0f3f6; --text: #1f2328; --muted: #57606a;
+    --border: #d0d7de; --accent: #0969da; --accent-soft: #ddf4ff; --purple: #8250df; --purple-soft: #efe6ff;
+    --code-bg: #f6f8fa; --grid-head: #953800; --flash: #2ea04333; --shadow: rgba(31,35,40,0.12);
+    --node: #eef2f6; --node-stroke: #953800; --edge: #b3bcc4;
+    --c-keyword: #cf222e; --c-string: #0a3069; --c-number: #0550ae; --c-comment: #6e7781; --c-func: #8250df; --c-type: #953800;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.55; transition: background .25s, color .25s; }
+  .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+
+  #hamburger, #themeToggle { position: fixed; top: 10px; z-index: 120; width: 42px; height: 42px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text);
+    cursor: pointer; box-shadow: 0 1px 3px var(--shadow); display: flex; align-items: center; justify-content: center; }
+  #hamburger { left: 12px; font-size: 20px; }
+  #themeToggle { right: 12px; font-size: 18px; }
+  #hamburger:hover, #themeToggle:hover { background: var(--accent-soft); }
+
+  #menuOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+  #menuOverlay.open { display: block; }
+  #sideMenu { position: fixed; top: 0; left: 0; height: 100%; width: 280px; max-width: 80%;
+    background: var(--panel); border-right: 1px solid var(--border); z-index: 110;
+    transform: translateX(-100%); transition: transform .25s ease; padding: 64px 12px 12px; overflow-y: auto; }
+  #sideMenu.open { transform: translateX(0); }
+  #sideMenu h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 8px 8px 12px; }
+  #sideMenu button { display: block; width: 100%; text-align: left; padding: 10px 12px; margin: 2px 0;
+    border: none; border-radius: 6px; background: transparent; color: var(--text); font-size: 15px; cursor: pointer; }
+  #sideMenu button:hover { background: var(--accent-soft); }
+  #sideMenu button.active { background: var(--accent); color: #fff; }
+
+  .page-head { text-align: center; padding: 26px 60px 10px; }
+  .page-head h1 { margin: 0; font-size: 25px; font-weight: 700; }
+  .page-head h1 .arrow { color: var(--accent); }
+  .page-head .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .tabbar { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; padding: 8px 16px;
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 40; }
+  .tabbar button { border: 1px solid transparent; background: transparent; color: var(--muted);
+    padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+  .tabbar button:hover { color: var(--text); background: var(--panel); }
+  .tabbar button.active { background: var(--panel); color: var(--accent); border-color: var(--border); font-weight: 600; }
+
+  main { max-width: 1000px; margin: 0 auto; padding: 18px 20px 80px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fade .2s; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .lbl-row { text-align: center; color: var(--muted); font-size: 12px; margin: 4px 0 6px; letter-spacing: .04em; }
+  .conv-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 14px; }
+  .conv-btn { background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .conv-btn:hover { color: var(--text); }
+  .conv-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .pill-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pill { background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+    padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 12.5px; }
+  .pill.active { background: var(--purple-soft); color: var(--purple); border-color: var(--purple); font-weight: 600; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .panel-head { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; background: var(--panel2); }
+  .panel-head .lbl { color: var(--muted); }
+  .panel-head .name { color: var(--text); font-weight: 600; margin-left: 6px; }
+  .panel-body { padding: 14px; min-height: 120px; }
+
+  svg.graph { width: 100%; height: 210px; display: block; margin-bottom: 6px; }
+  svg.graph .edge-line { stroke: var(--edge); stroke-width: 2; transition: stroke .3s, stroke-width .3s; }
+  svg.graph .edge-line.hot { stroke: var(--accent); stroke-width: 3.5; }
+  svg.graph .edge-w { fill: var(--muted); font-size: 11px; }
+  svg.graph .edge-w.hot { fill: var(--accent); font-weight: 700; }
+  svg.graph .node-c { fill: var(--node); stroke: var(--node-stroke); stroke-width: 2; }
+  svg.graph .node-t { fill: var(--node-stroke); font-size: 13px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+
+  table.edges { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.edges th, table.edges td { padding: 5px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  table.edges th { color: var(--muted); font-weight: 500; }
+  table.edges tr.hot td { background: var(--accent-soft); color: var(--text); }
+  table.edges tr.pop td { animation: rowpop .35s; }
+  @keyframes rowpop { from { background: var(--flash); } to { background: transparent; } }
+
+  table.matrix { border-collapse: collapse; margin: 4px auto; font-size: 13px; }
+  table.matrix th { color: var(--grid-head); font-weight: 700; padding: 5px 9px; }
+  table.matrix td { border: 1px solid var(--border); width: 30px; height: 30px; text-align: center;
+    color: var(--muted); transition: background .35s, color .35s, transform .2s; }
+  table.matrix td.set { color: var(--text); font-weight: 700; }
+  table.matrix td.flash { background: var(--flash); color: var(--text); transform: scale(1.12); }
+
+  .list-out { font-size: 13.5px; }
+  .list-out .row { padding: 4px 2px; border-bottom: 1px dashed var(--border); transition: background .3s; }
+  .list-out .row.hot { background: var(--accent-soft); border-radius: 4px; }
+  .list-out .row .nid { color: var(--grid-head); font-weight: 700; }
+  .list-out .row .arr { color: var(--muted); }
+  .chip { display: inline-block; background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 5px; padding: 1px 7px; margin: 2px 3px; }
+  .chip.pop { animation: pop .32s; }
+  .chip.hot { border-color: var(--accent); color: var(--accent); }
+  @keyframes pop { from { transform: scale(.55); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .controls { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 18px 0 12px; }
+  .controls button { background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .controls button:hover { background: var(--accent-soft); }
+  .controls button.play { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .controls .stepcount { align-self: center; color: var(--muted); font-size: 12px; background: var(--panel);
+    border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; }
+
+  .step-desc { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 12px 16px; margin: 6px 0 16px; font-size: 13.5px; min-height: 20px; }
+  .step-desc .cmt { color: var(--c-comment); }
+
+  .code-wrap { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 16px; }
+  .code-head { padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; color: var(--c-comment); background: var(--panel2); }
+  pre { background: var(--code-bg); margin: 0; padding: 6px 0; overflow-x: auto; }
+  pre .cline { display: block; padding: 1px 16px; font-size: 13px; line-height: 1.5; white-space: pre; }
+  pre .cline.hot { background: var(--accent-soft); }
+  .tok-keyword { color: var(--c-keyword); } .tok-string { color: var(--c-string); } .tok-number { color: var(--c-number); }
+  .tok-comment { color: var(--c-comment); font-style: italic; } .tok-func { color: var(--c-func); } .tok-type { color: var(--c-type); }
+
+  h2.sec { font-size: 22px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+  h3 { margin-top: 24px; }
+  .note { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 10px 14px; border-radius: 6px; margin: 14px 0; }
+  .inline-code { background: var(--code-bg); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-family: Consolas, monospace; font-size: 90%; }
+  table.info { border-collapse: collapse; width: 100%; font-size: 14px; margin: 14px 0; }
+  table.info th, table.info td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+  table.info th { background: var(--panel2); }
+</style>
+</head>
+<body>
+<button id="hamburger" aria-label="Open menu">&#9776;</button>
+<button id="themeToggle" aria-label="Toggle theme">&#9728;</button>
+
+<div id="menuOverlay"></div>
+<nav id="sideMenu"><h2>All Tabs</h2><div id="menuList"></div></nav>
+
+<div class="page-head">
+  <h1>Graph Representation <span class="arrow">&#8644;</span> Conversions</h1>
+  <div class="sub mono">// all six conversions, animated &middot; Java</div>
+</div>
+
+<div class="tabbar" id="tabbar"></div>
+<main id="main"></main>
+
+<div id="panels" style="display:none">
+
+<section class="tab-panel" data-title="Converter">
+  <div class="lbl-row">pick a conversion</div>
+  <div class="conv-row">
+    <button class="conv-btn active" data-conv="edge2matrix">Edge &rarr; Matrix</button>
+    <button class="conv-btn" data-conv="edge2list">Edge &rarr; List</button>
+    <button class="conv-btn" data-conv="matrix2edge">Matrix &rarr; Edge</button>
+    <button class="conv-btn" data-conv="matrix2list">Matrix &rarr; List</button>
+    <button class="conv-btn" data-conv="list2edge">List &rarr; Edge</button>
+    <button class="conv-btn" data-conv="list2matrix">List &rarr; Matrix</button>
+  </div>
+
+  <div class="pill-row">
+    <button class="pill" data-mode="dir">Directed (unweighted)</button>
+    <button class="pill active" data-mode="dirw">Directed (weighted)</button>
+    <button class="pill" data-mode="undir">Undirected</button>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-head mono">
+        <span class="lbl">&#128196; From</span>
+        <span class="name" id="srcName">edges</span>
+      </div>
+      <div class="panel-body">
+        <svg class="graph" id="graphSvg" viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet"></svg>
+        <div id="srcBox"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head mono">
+        <span class="lbl">&#128190; To</span>
+        <span class="name" id="dstName">int[][] mat</span>
+      </div>
+      <div class="panel-body" id="dstBox"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="play" id="btnPlay">&#9654; Play</button>
+    <button id="btnPrev">&#9664; Prev</button>
+    <button id="btnNext">Next &#9654;</button>
+    <button id="btnReset">&#8635; Reset</button>
+    <span class="stepcount mono" id="stepCount">Step 1 / 8</span>
+  </div>
+
+  <div class="step-desc mono" id="stepDesc"></div>
+
+  <div class="code-wrap">
+    <div class="code-head mono" id="codeHead">// Java</div>
+    <pre class="mono" id="codeBox"></pre>
+  </div>
+</section>
+
+</div>
+
+<div id="panels2" style="display:none">
+
+<section class="tab-panel" data-title="How It Works">
+  <h2 class="sec">How It Works</h2>
+  <p>There are three ways to store the same graph. This tool shows how to turn any one of them into any other &mdash; six conversions in all. Pick a conversion, then press <strong>Play</strong> or step through with <strong>Next</strong> and <strong>Prev</strong>.</p>
+
+  <h3>The three forms</h3>
+  <table class="info">
+    <tr><th>Form</th><th>What it holds</th></tr>
+    <tr><td>Edge List</td><td>A plain list of links: (u, v, w).</td></tr>
+    <tr><td>Adjacency List</td><td>One list per node, holding that node's neighbors.</td></tr>
+    <tr><td>Adjacency Matrix</td><td>A V&times;V grid. Cell <span class="inline-code">m[u][v]</span> holds the edge.</td></tr>
+  </table>
+
+  <h3>The six conversions</h3>
+  <table class="info">
+    <tr><th>Button</th><th>Java method</th></tr>
+    <tr><td>Edge &rarr; Matrix</td><td class="mono">edgeToMatrix</td></tr>
+    <tr><td>Edge &rarr; List</td><td class="mono">edgeToList</td></tr>
+    <tr><td>Matrix &rarr; Edge</td><td class="mono">matrixToEdges</td></tr>
+    <tr><td>Matrix &rarr; List</td><td class="mono">matrixToList</td></tr>
+    <tr><td>List &rarr; Edge</td><td class="mono">listToEdges</td></tr>
+    <tr><td>List &rarr; Matrix</td><td class="mono">listToMatrix</td></tr>
+  </table>
+
+  <h3>What the colors mean</h3>
+  <ul>
+    <li>The <strong>blue</strong> item on the left (a row, cell, or chip) is the source piece being read now.</li>
+    <li>The matching graph edge lights up blue too.</li>
+    <li>On the right, the output cell/chip/row pops when it gets written.</li>
+    <li>The highlighted code line is the exact line doing that step.</li>
+  </ul>
+
+  <div class="note">The three modes change the result: <strong>unweighted</strong> makes every weight 1, <strong>weighted</strong> keeps the real weight, and <strong>undirected</strong> stores each link both ways. When going back to an edge list from an undirected graph, the mirror copy is skipped so each link shows once.</div>
+</section>
+
+<section class="tab-panel" data-title="Notes">
+  <h2 class="sec">Notes &amp; Tips</h2>
+
+  <h3>Speed at a glance</h3>
+  <table class="info">
+    <tr><th>Storage</th><th>Space</th><th>Check edge (u,v)</th><th>List neighbors</th></tr>
+    <tr><td>Edge List</td><td>O(E)</td><td>O(E)</td><td>O(E)</td></tr>
+    <tr><td>Adjacency List</td><td>O(V + E)</td><td>O(degree of u)</td><td>O(degree of u)</td></tr>
+    <tr><td>Adjacency Matrix</td><td>O(V&sup2;)</td><td>O(1)</td><td>O(V)</td></tr>
+  </table>
+
+  <h3>Which to pick</h3>
+  <ul>
+    <li>Few edges (sparse) &rarr; <strong>adjacency list</strong>. The safe default.</li>
+    <li>Many edges (dense) or lots of "is u linked to v?" checks &rarr; <strong>adjacency matrix</strong>.</li>
+    <li>You only loop over all edges (like Kruskal's) &rarr; keep the <strong>edge list</strong>.</li>
+  </ul>
+
+  <div class="note">Matrix trap: if a real weight can be 0, do not use 0 to mean "no edge". Use a marker like <span class="inline-code">Integer.MAX_VALUE</span> instead.</div>
+
+  <h3>The graph used</h3>
+  <p>5 nodes (0&ndash;4) and 6 edges: (0,1,4), (0,2,2), (1,3,7), (2,3,1), (3,4,3), (4,2,5).</p>
+
+  <h3>Keyboard</h3>
+  <ul>
+    <li><strong>Left / Right arrows</strong> move between tabs (wraps around).</li>
+    <li><strong>Escape</strong> closes the side menu.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============ TABS ============ */
+  var main = document.getElementById("main");
+  var panels = Array.prototype.slice.call(document.querySelectorAll(".tab-panel"));
+  panels.forEach(function (p) { main.appendChild(p); });
+  var tabbar = document.getElementById("tabbar"), menuList = document.getElementById("menuList");
+  var current = 0, tabBtns = [], menuBtns = [];
+  panels.forEach(function (panel, i) {
+    var title = panel.getAttribute("data-title") || ("Tab " + (i + 1));
+    var tb = document.createElement("button"); tb.textContent = title;
+    tb.addEventListener("click", function () { show(i); }); tabbar.appendChild(tb); tabBtns.push(tb);
+    var mb = document.createElement("button"); mb.textContent = title;
+    mb.addEventListener("click", function () { show(i); closeMenu(); }); menuList.appendChild(mb); menuBtns.push(mb);
+  });
+  function show(i) {
+    if (i < 0) i = panels.length - 1; if (i >= panels.length) i = 0; current = i;
+    panels.forEach(function (p, k) { p.classList.toggle("active", k === i); });
+    tabBtns.forEach(function (b, k) { b.classList.toggle("active", k === i); });
+    menuBtns.forEach(function (b, k) { b.classList.toggle("active", k === i); });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  document.addEventListener("keydown", function (e) {
+    var t = (e.target.tagName || "").toLowerCase(); if (t === "input" || t === "textarea") return;
+    if (e.key === "ArrowRight") show(current + 1);
+    else if (e.key === "ArrowLeft") show(current - 1);
+    else if (e.key === "Escape") closeMenu();
+  });
+
+  /* ============ HAMBURGER ============ */
+  var hb = document.getElementById("hamburger"), sideMenu = document.getElementById("sideMenu"), overlay = document.getElementById("menuOverlay"), menuOpen = false;
+  function openMenu() { menuOpen = true; sideMenu.classList.add("open"); overlay.classList.add("open"); hb.innerHTML = "&#10005;"; }
+  function closeMenu() { menuOpen = false; sideMenu.classList.remove("open"); overlay.classList.remove("open"); hb.innerHTML = "&#9776;"; }
+  hb.addEventListener("click", function () { menuOpen ? closeMenu() : openMenu(); });
+  overlay.addEventListener("click", closeMenu);
+
+  /* ============ THEME (dark default) ============ */
+  var themeToggle = document.getElementById("themeToggle"), root = document.documentElement;
+  function applyTheme(th) {
+    if (th === "light") root.setAttribute("data-theme", "light"); else root.removeAttribute("data-theme");
+    themeToggle.innerHTML = th === "light" ? "&#9790;" : "&#9728;";
+    try { localStorage.setItem("graphTheme", th); } catch (e) {}
+  }
+  var savedTheme = "dark"; try { savedTheme = localStorage.getItem("graphTheme") || "dark"; } catch (e) {}
+  applyTheme(savedTheme);
+  themeToggle.addEventListener("click", function () { applyTheme(root.getAttribute("data-theme") === "light" ? "dark" : "light"); });
+
+  /* ============ DATA ============ */
+  var EDGES = [[0,1,4],[0,2,2],[1,3,7],[2,3,1],[3,4,3],[4,2,5]];
+  var N = 5;
+  var POS = { 0:[180,38], 1:[292,112], 2:[70,112], 3:[214,178], 4:[112,182] };
+  var R = 17;
+
+  var conv = "edge2matrix";
+  var mode = "dirw";   // dir | dirw | undir
+  var step = 0, timer = null, items = [], model = null;
+
+  function isDirected() { return mode !== "undir"; }
+  function useWeight() { return mode !== "dir"; }
+
+  /* ============ JAVA CODE ============ */
+  var CODE = {
+    edge2matrix: [
+      "static int[][] edgeToMatrix(List<int[]> edges, int V, boolean dir) {",
+      "    int[][] m = new int[V][V];              // all zeros",
+      "    for (int[] e : edges) {",
+      "        m[e[0]][e[1]] = e[2];               // u -> v",
+      "        if (!dir) m[e[1]][e[0]] = e[2];     // mirror if undirected",
+      "    }",
+      "    return m;",
+      "}"
+    ],
+    edge2list: [
+      "static List<List<int[]>> edgeToList(List<int[]> edges, int V, boolean dir) {",
+      "    List<List<int[]>> adj = new ArrayList<>();",
+      "    for (int i = 0; i < V; i++) adj.add(new ArrayList<>());",
+      "    for (int[] e : edges) {",
+      "        adj.get(e[0]).add(new int[]{e[1], e[2]});",
+      "        if (!dir) adj.get(e[1]).add(new int[]{e[0], e[2]});",
+      "    }",
+      "    return adj;",
+      "}"
+    ],
+    matrix2edge: [
+      "static List<int[]> matrixToEdges(int[][] m, int V, boolean dir) {",
+      "    List<int[]> edges = new ArrayList<>();",
+      "    for (int u = 0; u < V; u++)",
+      "        for (int v = 0; v < V; v++) {",
+      "            if (m[u][v] == 0) continue;      // no edge here",
+      "            if (!dir && v < u) continue;     // skip mirror copy",
+      "            edges.add(new int[]{u, v, m[u][v]});",
+      "        }",
+      "    return edges;",
+      "}"
+    ],
+    matrix2list: [
+      "static List<List<int[]>> matrixToList(int[][] m, int V) {",
+      "    List<List<int[]>> adj = new ArrayList<>();",
+      "    for (int i = 0; i < V; i++) adj.add(new ArrayList<>());",
+      "    for (int u = 0; u < V; u++)",
+      "        for (int v = 0; v < V; v++)",
+      "            if (m[u][v] != 0)",
+      "                adj.get(u).add(new int[]{v, m[u][v]});",
+      "    return adj;",
+      "}"
+    ],
+    list2edge: [
+      "static List<int[]> listToEdges(List<List<int[]>> adj, boolean dir) {",
+      "    List<int[]> edges = new ArrayList<>();",
+      "    for (int u = 0; u < adj.size(); u++)",
+      "        for (int[] nb : adj.get(u)) {",
+      "            int v = nb[0], w = nb[1];",
+      "            if (!dir && v < u) continue;     // skip mirror copy",
+      "            edges.add(new int[]{u, v, w});",
+      "        }",
+      "    return edges;",
+      "}"
+    ],
+    list2matrix: [
+      "static int[][] listToMatrix(List<List<int[]>> adj, int V) {",
+      "    int[][] m = new int[V][V];",
+      "    for (int u = 0; u < V; u++)",
+      "        for (int[] nb : adj.get(u))",
+      "            m[u][nb[0]] = nb[1];",
+      "    return m;",
+      "}"
+    ]
+  };
+
+  var META = {
+    edge2matrix: { src: "edge", dst: "matrix", init: 1, done: 6, srcName: "edges", dstName: "int[][] mat" },
+    edge2list:   { src: "edge", dst: "list",   init: 2, done: 7, srcName: "edges", dstName: "List<List<int[]>> adj" },
+    matrix2edge: { src: "matrix", dst: "edge", init: 1, done: 8, srcName: "int[][] mat", dstName: "List<int[]> edges" },
+    matrix2list: { src: "matrix", dst: "list", init: 2, done: 7, srcName: "int[][] mat", dstName: "List<List<int[]>> adj" },
+    list2edge:   { src: "list", dst: "edge",   init: 1, done: 8, srcName: "List<List<int[]>> adj", dstName: "List<int[]> edges" },
+    list2matrix: { src: "list", dst: "matrix", init: 1, done: 5, srcName: "List<List<int[]>> adj", dstName: "int[][] mat" }
+  };
+
+  /* ============ HIGHLIGHTER ============ */
+  var KW = {};
+  ("boolean break class continue else for if int new return static void while true false null").split(" ").forEach(function (k) { KW[k] = 1; });
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function hl(code) {
+    var out = "", i = 0, n = code.length;
+    while (i < n) {
+      var c = code[i];
+      if (c === "/" && code[i+1] === "/") { var j = code.indexOf("\n", i); if (j < 0) j = n; out += '<span class="tok-comment">' + esc(code.slice(i, j)) + "</span>"; i = j; continue; }
+      if (/[0-9]/.test(c)) { var p = i; while (p < n && /[0-9]/.test(code[p])) p++; out += '<span class="tok-number">' + esc(code.slice(i, p)) + "</span>"; i = p; continue; }
+      if (/[A-Za-z_$]/.test(c)) { var w = i; while (w < n && /[A-Za-z0-9_$]/.test(code[w])) w++; var word = code.slice(i, w); var t = w; while (t < n && /\s/.test(code[t])) t++;
+        if (KW[word]) out += '<span class="tok-keyword">' + esc(word) + "</span>";
+        else if (code[t] === "(") out += '<span class="tok-func">' + esc(word) + "</span>";
+        else if (/^[A-Z]/.test(word)) out += '<span class="tok-type">' + esc(word) + "</span>";
+        else out += esc(word); i = w; continue; }
+      out += esc(c); i++;
+    }
+    return out;
+  }
+
+  /* ============ MODEL + ITEMS ============ */
+  function buildModel() {
+    var directed = isDirected(), weighted = useWeight();
+    var base = EDGES.map(function (e) { return [e[0], e[1], weighted ? e[2] : 1]; });
+    var M = [], A = [];
+    for (var i = 0; i < N; i++) { M.push([]); A.push([]); for (var j = 0; j < N; j++) M[i].push(0); }
+    base.forEach(function (e) {
+      M[e[0]][e[1]] = e[2]; A[e[0]].push([e[1], e[2]]);
+      if (!directed) { M[e[1]][e[0]] = e[2]; A[e[1]].push([e[0], e[2]]); }
+    });
+    return { directed: directed, weighted: weighted, base: base, M: M, A: A };
+  }
+
+  function computeItems() {
+    var m = model, dir = m.directed, its = [];
+    if (conv === "edge2matrix") {
+      m.base.forEach(function (e, i) {
+        var ops = [{ t: "m", r: e[0], c: e[1], w: e[2] }], hot = [3];
+        if (!dir) { ops.push({ t: "m", r: e[1], c: e[0], w: e[2] }); hot = [3, 4]; }
+        its.push({ gu: e[0], gv: e[1], w: e[2], src: { kind: "e", i: i }, ops: ops, hot: hot });
+      });
+    } else if (conv === "edge2list") {
+      m.base.forEach(function (e, i) {
+        var ops = [{ t: "l", u: e[0], v: e[1], w: e[2] }], hot = [4];
+        if (!dir) { ops.push({ t: "l", u: e[1], v: e[0], w: e[2] }); hot = [4, 5]; }
+        its.push({ gu: e[0], gv: e[1], w: e[2], src: { kind: "e", i: i }, ops: ops, hot: hot });
+      });
+    } else if (conv === "matrix2edge") {
+      for (var u = 0; u < N; u++) for (var v = 0; v < N; v++) {
+        if (m.M[u][v] === 0) continue; if (!dir && v < u) continue;
+        its.push({ gu: u, gv: v, w: m.M[u][v], src: { kind: "m", r: u, c: v }, ops: [{ t: "e", u: u, v: v, w: m.M[u][v] }], hot: [6] });
+      }
+    } else if (conv === "matrix2list") {
+      for (var a = 0; a < N; a++) for (var b = 0; b < N; b++) {
+        if (m.M[a][b] === 0) continue;
+        its.push({ gu: a, gv: b, w: m.M[a][b], src: { kind: "m", r: a, c: b }, ops: [{ t: "l", u: a, v: b, w: m.M[a][b] }], hot: [6] });
+      }
+    } else if (conv === "list2edge") {
+      for (var p = 0; p < N; p++) {
+        m.A[p].forEach(function (nb, idx) {
+          if (!dir && nb[0] < p) return;
+          its.push({ gu: p, gv: nb[0], w: nb[1], src: { kind: "l", u: p, idx: idx }, ops: [{ t: "e", u: p, v: nb[0], w: nb[1] }], hot: [6] });
+        });
+      }
+    } else if (conv === "list2matrix") {
+      for (var q = 0; q < N; q++) {
+        m.A[q].forEach(function (nb, idx) {
+          its.push({ gu: q, gv: nb[0], w: nb[1], src: { kind: "l", u: q, idx: idx }, ops: [{ t: "m", r: q, c: nb[0], w: nb[1] }], hot: [4] });
+        });
+      }
+    }
+    return its;
+  }
+
+  /* ============ BUILD VISUALS ============ */
+  var svg = document.getElementById("graphSvg");
+  function buildGraph() {
+    var directed = isDirected(), showW = useWeight(), parts = "";
+    parts += '<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"/></marker>';
+    parts += '<marker id="ahHot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>';
+    EDGES.forEach(function (e) {
+      var a = POS[e[0]], b = POS[e[1]], dx = b[0]-a[0], dy = b[1]-a[1], len = Math.sqrt(dx*dx+dy*dy);
+      var ux = dx/len, uy = dy/len;
+      var x1 = a[0]+ux*R, y1 = a[1]+uy*R, x2 = b[0]-ux*(R+(directed?6:0)), y2 = b[1]-uy*(R+(directed?6:0));
+      var mk = directed ? ' marker-end="url(#ah)"' : '';
+      parts += '<line class="edge-line" data-a="'+e[0]+'" data-b="'+e[1]+'" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"'+mk+'/>';
+      if (showW) { var mx = (x1+x2)/2 - uy*10, my = (y1+y2)/2 + ux*10;
+        parts += '<text class="edge-w" data-a="'+e[0]+'" data-b="'+e[1]+'" x="'+mx+'" y="'+my+'">'+(useWeight()?e[2]:1)+'</text>'; }
+    });
+    for (var v = 0; v < N; v++) { var p = POS[v];
+      parts += '<circle class="node-c" cx="'+p[0]+'" cy="'+p[1]+'" r="'+R+'"/>';
+      parts += '<text class="node-t" x="'+p[0]+'" y="'+p[1]+'">'+v+'</text>';
+    }
+    svg.innerHTML = parts;
+  }
+
+  function matrixHTML(prefix, M) {
+    var h = '<table class="matrix mono"><thead><tr><th></th>';
+    for (var c = 0; c < N; c++) h += "<th>"+c+"</th>";
+    h += "</tr></thead><tbody>";
+    for (var r = 0; r < N; r++) {
+      h += "<tr><th>"+r+"</th>";
+      for (var cc = 0; cc < N; cc++) {
+        var val = M ? M[r][cc] : 0, cls = (M && val !== 0) ? "set" : "";
+        h += '<td id="m-'+prefix+'-'+r+'-'+cc+'" class="'+cls+'">'+val+'</td>';
+      }
+      h += "</tr>";
+    }
+    return h + "</tbody></table>";
+  }
+  function listHTML(prefix, A) {
+    var h = '<div class="list-out mono">';
+    for (var u = 0; u < N; u++) {
+      h += '<div class="row" id="row-'+prefix+'-'+u+'"><span class="nid">'+u+'</span> <span class="arr">&rarr;</span> <span class="chips" id="chips-'+prefix+'-'+u+'">';
+      if (A) A[u].forEach(function (nb, idx) {
+        h += '<span class="chip" id="chip-'+prefix+'-'+u+'-'+idx+'">'+(useWeight() ? (nb[0]+", w="+nb[1]) : nb[0])+'</span>';
+      });
+      h += "</span></div>";
+    }
+    return h + "</div>";
+  }
+  function edgeHTML(prefix, edges) {
+    var h = '<table class="edges mono"><thead><tr><th>#</th><th>u</th><th>v</th><th>w</th></tr></thead><tbody id="ebody-'+prefix+'">';
+    if (edges) edges.forEach(function (e, i) {
+      h += '<tr id="erow-'+prefix+'-'+i+'"><td>'+i+'</td><td>'+e[0]+'</td><td>'+e[1]+'</td><td>'+e[2]+'</td></tr>';
+    });
+    return h + "</tbody></table>";
+  }
+
+  function buildSource() {
+    var meta = META[conv], box = document.getElementById("srcBox");
+    document.getElementById("srcName").textContent = meta.srcName;
+    if (meta.src === "edge") box.innerHTML = edgeHTML("src", model.base);
+    else if (meta.src === "matrix") box.innerHTML = matrixHTML("src", model.M);
+    else box.innerHTML = listHTML("src", model.A);
+  }
+  function buildOutput() {
+    var meta = META[conv], box = document.getElementById("dstBox");
+    document.getElementById("dstName").textContent = meta.dstName;
+    if (meta.dst === "matrix") box.innerHTML = matrixHTML("dst", null);
+    else if (meta.dst === "list") box.innerHTML = listHTML("dst", null);
+    else box.innerHTML = edgeHTML("dst", null);
+  }
+  var CODE_LABEL = {
+    edge2matrix: "edge list to adjacency matrix",
+    edge2list: "edge list to adjacency list",
+    matrix2edge: "adjacency matrix to edge list",
+    matrix2list: "adjacency matrix to adjacency list",
+    list2edge: "adjacency list to edge list",
+    list2matrix: "adjacency list to adjacency matrix"
+  };
+  function buildCode() {
+    document.getElementById("codeHead").textContent = "// Java — " + CODE_LABEL[conv];
+    document.getElementById("codeBox").innerHTML = CODE[conv].map(function (line, i) {
+      return '<span class="cline" data-l="'+i+'">' + (line === "" ? " " : hl(line)) + "</span>";
+    }).join("");
+  }
+
+  /* ============ RENDER ============ */
+  function clearHighlights() {
+    Array.prototype.forEach.call(svg.querySelectorAll(".edge-line"), function (l) { l.classList.remove("hot"); if (isDirected()) l.setAttribute("marker-end", "url(#ah)"); });
+    Array.prototype.forEach.call(svg.querySelectorAll(".edge-w"), function (t) { t.classList.remove("hot"); });
+    Array.prototype.forEach.call(document.querySelectorAll("#srcBox .hot, #srcBox .flash"), function (el) { el.classList.remove("hot", "flash"); });
+  }
+  function highlightGraph(gu, gv) {
+    Array.prototype.forEach.call(svg.querySelectorAll(".edge-line"), function (l) {
+      var a = +l.getAttribute("data-a"), b = +l.getAttribute("data-b");
+      if ((a===gu&&b===gv)||(a===gv&&b===gu)) { l.classList.add("hot"); if (isDirected()) l.setAttribute("marker-end", "url(#ahHot)"); }
+    });
+    Array.prototype.forEach.call(svg.querySelectorAll(".edge-w"), function (t) {
+      var a = +t.getAttribute("data-a"), b = +t.getAttribute("data-b");
+      if ((a===gu&&b===gv)||(a===gv&&b===gu)) t.classList.add("hot");
+    });
+  }
+
+  function render() {
+    var K = items.length, ai = (step >= 1 && step <= K) ? step - 1 : -1, applied = Math.min(step, K);
+    var meta = META[conv];
+
+    clearHighlights();
+    if (ai >= 0) {
+      var it = items[ai];
+      highlightGraph(it.gu, it.gv);
+      var s = it.src, el;
+      if (s.kind === "e") { el = document.getElementById("erow-src-"+s.i); if (el) el.classList.add("hot"); }
+      else if (s.kind === "m") { el = document.getElementById("m-src-"+s.r+"-"+s.c); if (el) el.classList.add("flash"); }
+      else { el = document.getElementById("chip-src-"+s.u+"-"+s.idx); if (el) el.classList.add("hot"); var row = document.getElementById("row-src-"+s.u); if (row) row.classList.add("hot"); }
+    }
+
+    var appliedOps = [], activeOps = ai >= 0 ? items[ai].ops : [];
+    for (var k = 0; k < applied; k++) items[k].ops.forEach(function (o) { appliedOps.push(o); });
+    function isActive(o) { return activeOps.indexOf(o) !== -1; }
+
+    if (meta.dst === "matrix") {
+      for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) { var cell = document.getElementById("m-dst-"+r+"-"+c); cell.textContent = "0"; cell.className = ""; }
+      appliedOps.forEach(function (o) { var cell = document.getElementById("m-dst-"+o.r+"-"+o.c); cell.textContent = o.w; cell.classList.add("set"); if (isActive(o)) cell.classList.add("flash"); });
+    } else if (meta.dst === "list") {
+      var buckets = {}; for (var u = 0; u < N; u++) buckets[u] = [];
+      appliedOps.forEach(function (o) { buckets[o.u].push({ v: o.v, w: o.w, act: isActive(o) }); });
+      for (var n = 0; n < N; n++) {
+        var box = document.getElementById("chips-dst-"+n), rowHot = false;
+        box.innerHTML = buckets[n].map(function (x) { if (x.act) rowHot = true; return '<span class="chip '+(x.act?"pop hot":"")+'">'+(useWeight() ? (x.v+", w="+x.w) : x.v)+"</span>"; }).join("");
+        document.getElementById("row-dst-"+n).classList.toggle("hot", rowHot);
+      }
+    } else {
+      var body = document.getElementById("ebody-dst"), rows = "";
+      appliedOps.forEach(function (o, i) { rows += '<tr class="'+(isActive(o)?"pop hot":"")+'"><td>'+i+'</td><td>'+o.u+'</td><td>'+o.v+'</td><td>'+o.w+'</td></tr>'; });
+      body.innerHTML = rows;
+    }
+
+    // code
+    var hot = (step === 0) ? [meta.init] : (step === K + 1) ? [meta.done] : items[ai].hot;
+    Array.prototype.forEach.call(document.querySelectorAll("#codeBox .cline"), function (ln) {
+      ln.classList.toggle("hot", hot.indexOf(+ln.getAttribute("data-l")) !== -1);
+    });
+
+    document.getElementById("stepCount").textContent = "Step " + (step + 1) + " / " + (K + 2);
+    document.getElementById("stepDesc").innerHTML = describe(ai);
+    document.getElementById("btnPlay").innerHTML = timer ? "&#10073;&#10073; Pause" : "&#9654; Play";
+  }
+
+  function describe(ai) {
+    var meta = META[conv], K = items.length, c = '<span class="cmt">';
+    if (step === 0) {
+      var t = meta.dst === "matrix" ? "int[][] m = new int["+N+"]["+N+"] &mdash; all zeros"
+            : meta.dst === "list" ? "make one empty list for each of the "+N+" nodes"
+            : "make an empty edge list";
+      return c + "// start: " + t + "</span>";
+    }
+    if (step === K + 1) {
+      var from = meta.src === "edge" ? "edge list" : meta.src === "matrix" ? "matrix" : "adjacency list";
+      return c + "// done &mdash; built the " + (meta.dst === "matrix" ? "matrix" : meta.dst === "list" ? "adjacency list" : "edge list") + " from the " + from + "</span>";
+    }
+    var it = items[ai], u = it.gu, v = it.gv, w = it.w, undir = !isDirected(), s;
+    if (conv === "edge2matrix") s = "edge "+u+"&rarr;"+v+" (w="+w+"): m["+u+"]["+v+"] = "+w + (undir ? " and m["+v+"]["+u+"]" : "");
+    else if (conv === "edge2list") s = "edge "+u+"&rarr;"+v+": adj.get("+u+").add({"+v+", "+w+"})" + (undir ? " + adj.get("+v+")" : "");
+    else if (conv === "matrix2edge") s = "m["+u+"]["+v+"]="+w+" &rarr; add edge ("+u+", "+v+", "+w+")";
+    else if (conv === "matrix2list") s = "m["+u+"]["+v+"]="+w+" &rarr; adj.get("+u+").add({"+v+", "+w+"})";
+    else if (conv === "list2edge") s = "adj["+u+"] holds {"+v+", "+w+"} &rarr; add edge ("+u+", "+v+", "+w+")";
+    else s = "adj["+u+"] holds {"+v+", "+w+"} &rarr; m["+u+"]["+v+"] = "+w;
+    return c + "// " + s + "</span>";
+  }
+
+  /* ============ CONTROLS ============ */
+  function stopPlay() { if (timer) { clearInterval(timer); timer = null; } }
+  function goto(i) { stopPlay(); step = Math.max(0, Math.min(items.length + 1, i)); render(); }
+  function rebuild() { stopPlay(); model = buildModel(); items = computeItems(); step = 0; buildGraph(); buildSource(); buildOutput(); buildCode(); render(); }
+
+  document.getElementById("btnNext").addEventListener("click", function () { goto(step + 1); });
+  document.getElementById("btnPrev").addEventListener("click", function () { goto(step - 1); });
+  document.getElementById("btnReset").addEventListener("click", function () { goto(0); });
+  document.getElementById("btnPlay").addEventListener("click", function () {
+    if (timer) { stopPlay(); render(); return; }
+    if (step >= items.length + 1) step = 0;
+    timer = setInterval(function () {
+      if (step >= items.length + 1) { stopPlay(); render(); return; }
+      step++; render();
+    }, 950);
+    render();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".conv-btn"), function (btn) {
+    btn.addEventListener("click", function () {
+      conv = btn.getAttribute("data-conv");
+      document.querySelectorAll(".conv-btn").forEach(function (b) { b.classList.toggle("active", b === btn); });
+      rebuild();
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".pill"), function (btn) {
+    btn.addEventListener("click", function () {
+      mode = btn.getAttribute("data-mode");
+      document.querySelectorAll(".pill").forEach(function (b) { b.classList.toggle("active", b === btn); });
+      rebuild();
+    });
+  });
+
+  /* ============ INIT ============ */
+  rebuild();
+  show(0);
+})();
+</script>
+</body>
+</html>
