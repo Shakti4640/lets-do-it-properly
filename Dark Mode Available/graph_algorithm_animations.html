@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="https://shakti4640.github.io/lets-do-it-properly/images/favicon.png">
+<title>Graph Algorithm Animations</title>
+<style>
+  html[data-theme="light"] {
+    --bg: #f4f7fa; --panel: #ffffff; --panel2: #f0f3f6; --text: #14213d; --muted: #5b6779;
+    --border: #d5dde6; --accent: #2563eb; --accent-soft: #dbeafe; --shadow: rgba(20,33,61,0.14);
+    --edge: #9aa7b4; --n-fill: #eef2f6; --n-stroke: #64748b; --n-tx: #14213d; --halo: #ffffff;
+    --code-bg: #f6f8fa; --c-kw: #cf222e; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-typ: #953800;
+  }
+  html[data-theme="dark"] {
+    --bg: #0d1117; --panel: #161b22; --panel2: #0f141a; --text: #e6edf3; --muted: #8b949e;
+    --border: #30363d; --accent: #4493f8; --accent-soft: #10305c; --shadow: rgba(0,0,0,0.5);
+    --edge: #58636f; --n-fill: #1f2630; --n-stroke: #8b949e; --n-tx: #e6edf3; --halo: #161b22;
+    --code-bg: #0b0f14; --c-kw: #ff7b72; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #7d8590; --c-typ: #ffa657;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.55; transition: background .25s, color .25s; }
+
+  /* fixed corner buttons */
+  #hamburger, #themeToggle { position: fixed; top: 10px; z-index: 120; width: 42px; height: 42px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text);
+    cursor: pointer; box-shadow: 0 1px 3px var(--shadow); display: flex; align-items: center; justify-content: center; }
+  #hamburger { left: 12px; font-size: 20px; }
+  #themeToggle { right: 12px; font-size: 18px; }
+  #hamburger:hover, #themeToggle:hover { background: var(--accent-soft); }
+
+  /* slide-in algorithm menu */
+  #menuOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+  #menuOverlay.open { display: block; }
+  #sideMenu { position: fixed; top: 0; left: 0; height: 100%; width: 320px; max-width: 84%;
+    background: var(--panel); border-right: 1px solid var(--border); z-index: 110;
+    transform: translateX(-100%); transition: transform .25s ease; padding: 60px 12px 16px; overflow-y: auto; }
+  #sideMenu.open { transform: translateX(0); }
+  #sideMenu .mcat { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+    margin: 14px 8px 3px; }
+  #sideMenu button { display: block; width: 100%; text-align: left; padding: 7px 10px; margin: 1px 0;
+    border: none; border-left: 4px solid transparent; border-radius: 6px; background: transparent;
+    color: var(--text); font-size: 13.5px; cursor: pointer; }
+  #sideMenu button:hover { background: var(--accent-soft); }
+  #sideMenu button.active { background: var(--accent); color: #fff; }
+
+  /* framed page */
+  .frame { max-width: 1100px; margin: 18px auto 40px; padding: 8px 22px 26px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 18px;
+    box-shadow: 0 0 0 6px var(--accent-soft), 0 14px 44px var(--shadow); }
+  .page-head { text-align: center; padding: 18px 60px 12px; }
+  .page-head h1 { margin: 0; font-size: 26px; font-weight: 800; }
+  .page-head .sub { color: var(--muted); font-size: 13.5px; margin-top: 5px; }
+  .page-head .sub kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 5px;
+    font-size: 12px; background: var(--panel2); }
+
+  /* the single viewer card */
+  .card { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--panel); }
+  .card.flash { box-shadow: 0 0 0 3px var(--accent); }
+  .band { display: flex; align-items: center; gap: 12px; padding: 11px 16px; color: #fff;
+    background: linear-gradient(135deg, #4493f8, #1d4ed8); }
+  .band h2 { margin: 0; font-size: 18px; }
+  .band p { margin: 1px 0 0; font-size: 12.5px; opacity: .92; }
+  .band .num { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+  .band .bcat { margin-left: auto; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em;
+    background: rgba(255,255,255,0.22); padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .cat-trav  .band { background: linear-gradient(135deg, #4493f8, #1d4ed8); }
+  .cat-topo  .band { background: linear-gradient(135deg, #14b8a6, #0f766e); }
+  .cat-sp    .band { background: linear-gradient(135deg, #f59e0b, #b45309); }
+  .cat-tree  .band { background: linear-gradient(135deg, #22c55e, #15803d); }
+  .cat-euler .band { background: linear-gradient(135deg, #a371f7, #7e22ce); }
+  .cat-color .band { background: linear-gradient(135deg, #ec4899, #be185d); }
+  .cat-tsp   .band { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+  .cat-flow  .band { background: linear-gradient(135deg, #0ea5e9, #0369a1); }
+  .card .body { padding: 12px 16px 16px; }
+  .blurb { margin: 2px 0 12px; font-size: 13.5px; color: var(--muted); }
+
+  /* prev / next bar */
+  .navbar { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; flex-wrap: wrap; }
+  .navbar button { border: 1px solid var(--border); background: var(--panel2); color: var(--text);
+    border-radius: 8px; padding: 7px 14px; font-size: 13.5px; cursor: pointer; }
+  .navbar button:hover { background: var(--accent-soft); }
+  .navbar .pos { color: var(--muted); font-size: 13px; }
+
+  /* animation player */
+  .anim { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .stage { flex: 1 1 380px; min-width: 300px; }
+  .stage svg { width: 100%; height: auto; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; }
+  .side { flex: 1 1 260px; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
+  .ctrl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; width: 100%; }
+  .ctrl button { border: 1px solid var(--border); background: var(--panel2); color: var(--text);
+    border-radius: 7px; padding: 6px 11px; font-size: 13px; cursor: pointer; }
+  .ctrl button:hover:not(:disabled) { background: var(--accent-soft); }
+  .ctrl button:disabled { opacity: .4; cursor: default; }
+  .ctrl button.playing { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .ctrl select { border: 1px solid var(--border); background: var(--panel2); color: var(--text);
+    border-radius: 7px; padding: 6px 6px; font-size: 13px; }
+  .ctrl .stepinfo { margin-left: auto; color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+  .cap { min-height: 52px; background: var(--panel2); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: 8px; padding: 8px 11px; font-size: 13.5px; }
+  .aux { margin: 0; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 11px; font-family: Consolas, "Liberation Mono", Menlo, monospace; font-size: 12px;
+    white-space: pre; overflow: auto; max-height: 300px; }
+
+  /* java code box — always open */
+  .codebox { margin-top: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel2); overflow: hidden; }
+  .codebox .codehead { padding: 9px 13px; font-size: 13.5px; font-weight: 700; }
+  pre.code { margin: 0; padding: 12px 16px; background: var(--code-bg); border-top: 1px solid var(--border);
+    border-radius: 0 0 10px 10px; font-family: Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12.5px; line-height: 1.55; overflow: auto; color: var(--text); }
+  pre.code .kw  { color: var(--c-kw); font-weight: 600; }
+  pre.code .typ { color: var(--c-typ); }
+  pre.code .str { color: var(--c-str); }
+  pre.code .num { color: var(--c-num); }
+  pre.code .cmt { color: var(--c-cmt); font-style: italic; }
+
+  /* SVG node states — fixed colors that read well in both themes */
+  .node circle { fill: var(--n-fill); stroke: var(--n-stroke); stroke-width: 2; }
+  .node text.idl { fill: var(--n-tx); font-size: 13px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  .node text.sub { fill: var(--accent); font-size: 11px; font-weight: 700; text-anchor: middle;
+    paint-order: stroke; stroke: var(--halo); stroke-width: 3px; }
+  .node.fr   circle { fill: #fbbf24; stroke: #b45309; } .node.fr   text.idl { fill: #3b2503; }
+  .node.act  circle { fill: #2563eb; stroke: #1e3a8a; } .node.act  text.idl { fill: #ffffff; }
+  .node.vis  circle { fill: #93c5fd; stroke: #2563eb; } .node.vis  text.idl { fill: #0c2452; }
+  .node.done circle { fill: #4ade80; stroke: #15803d; } .node.done text.idl { fill: #052e12; }
+  .node.path circle { fill: #8b5cf6; stroke: #6d28d9; } .node.path text.idl { fill: #ffffff; }
+  .node.rej  circle { fill: #fca5a5; stroke: #b91c1c; } .node.rej  text.idl { fill: #450a0a; }
+  .node.dim { opacity: .3; }
+  .node.c1 circle { fill: #f87171; stroke: #b91c1c; } .node.c1 text.idl { fill: #450a0a; }
+  .node.c2 circle { fill: #60a5fa; stroke: #1d4ed8; } .node.c2 text.idl { fill: #0c2452; }
+  .node.c3 circle { fill: #4ade80; stroke: #15803d; } .node.c3 text.idl { fill: #052e12; }
+  .node.c4 circle { fill: #facc15; stroke: #a16207; } .node.c4 text.idl { fill: #3b2f03; }
+
+  /* SVG edge states */
+  .edge line { stroke: var(--edge); stroke-width: 2; }
+  .edge .ah { fill: var(--edge); stroke: none; }
+  .edge text.wl { fill: var(--muted); font-size: 11.5px; font-weight: 600; text-anchor: middle;
+    paint-order: stroke; stroke: var(--halo); stroke-width: 3.5px; }
+  .edge.act  line { stroke: #2563eb; stroke-width: 4; }   .edge.act  .ah { fill: #2563eb; } .edge.act  text.wl { fill: #2563eb; }
+  .edge.tree line { stroke: #16a34a; stroke-width: 4; }   .edge.tree .ah { fill: #16a34a; } .edge.tree text.wl { fill: #16a34a; }
+  .edge.path line { stroke: #8b5cf6; stroke-width: 5; }   .edge.path .ah { fill: #8b5cf6; } .edge.path text.wl { fill: #8b5cf6; }
+  .edge.flow line { stroke: #f97316; stroke-width: 4; }   .edge.flow .ah { fill: #f97316; } .edge.flow text.wl { fill: #f97316; }
+  .edge.rej  line { stroke: #ef4444; stroke-width: 2.5; stroke-dasharray: 6 5; } .edge.rej .ah { fill: #ef4444; } .edge.rej text.wl { fill: #ef4444; }
+  .edge.dim { opacity: .22; }
+
+  /* color legend */
+  details.legend { margin-top: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel2); }
+  details.legend summary { cursor: pointer; padding: 9px 13px; font-size: 13.5px; font-weight: 700; }
+  details.legend .legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+    gap: 6px 16px; font-size: 13px; padding: 4px 14px 12px; }
+  .chip { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 7px;
+    vertical-align: -2px; border: 2px solid transparent; }
+  .linechip { display: inline-block; width: 22px; height: 4px; border-radius: 2px; margin-right: 7px; vertical-align: 3px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 18px; }
+</style>
+</head>
+<body id="top">
+
+<button id="hamburger" aria-label="Open the list of algorithms" title="All algorithms">&#9776;</button>
+<button id="themeToggle" aria-label="Switch between light and dark mode" title="Light / dark">&#9790;</button>
+<div id="menuOverlay"></div>
+<nav id="sideMenu" aria-label="All algorithms"></nav>
+<div class="frame">
+  <header class="page-head">
+    <h1>Graph Algorithm Animations</h1>
+    <div class="sub">32 algorithms, one animation at a time. Press <kbd>&#8592;</kbd> <kbd>&#8594;</kbd> to switch algorithms,
+      or pick one from the &#9776; menu (top-left).</div>
+  </header>
+
+  <section class="card cat-trav" id="viewer">
+    <div class="band">
+      <span class="num" id="vNum">1</span>
+      <div><h2 id="vTitle">Loading&#8230;</h2><p id="vIdea"></p></div>
+      <span class="bcat" id="vCat"></span>
+    </div>
+    <div class="body">
+      <div class="navbar">
+        <button id="prevAlg" aria-label="Previous algorithm">&#9664; Previous</button>
+        <span class="pos" id="vPos"></span>
+        <button id="nextAlg" aria-label="Next algorithm">Next &#9654;</button>
+      </div>
+      <p class="blurb" id="vBlurb"></p>
+      <div class="anim" id="vAnim"></div>
+
+      <div class="codebox" id="codeBox">
+        <div class="codehead">Java code for this algorithm</div>
+        <pre class="code" id="codePre"></pre>
+      </div>
+
+      <details class="legend">
+        <summary>What the colors mean (same on every algorithm)</summary>
+        <div class="legend-grid">
+          <div><span class="chip" style="background:#eef2f6;border-color:#64748b"></span>Not seen yet</div>
+          <div><span class="chip" style="background:#fbbf24;border-color:#b45309"></span>Waiting (in queue / stack)</div>
+          <div><span class="chip" style="background:#2563eb;border-color:#1e3a8a"></span>Current node</div>
+          <div><span class="chip" style="background:#93c5fd;border-color:#2563eb"></span>Seen / visited</div>
+          <div><span class="chip" style="background:#4ade80;border-color:#15803d"></span>Finished</div>
+          <div><span class="chip" style="background:#8b5cf6;border-color:#6d28d9"></span>Part of the final answer</div>
+          <div><span class="chip" style="background:#fca5a5;border-color:#b91c1c"></span>Blocked / rejected</div>
+          <div><span class="linechip" style="background:#2563eb"></span>Edge being checked</div>
+          <div><span class="linechip" style="background:#16a34a"></span>Edge kept (tree / match)</div>
+          <div><span class="linechip" style="background:#8b5cf6"></span>Edge on the final answer</div>
+          <div><span class="linechip" style="background:#f97316"></span>Edge carrying flow</div>
+          <div><span class="linechip" style="background:#ef4444"></span>Edge dropped (dashed)</div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <footer>Use &#9654; Play to watch, or Step to move one action at a time. Your last algorithm is remembered.</footer>
+</div>
+
+<script>
+"use strict";
+/* ---------- tiny helpers ---------- */
+var SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs){ var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+function G(directed, nodes, edges, opt){
+  return Object.assign({
+    directed: directed,
+    nodes: nodes.map(function(n){ return {id:n[0], x:n[1], y:n[2]}; }),
+    edges: edges.map(function(e){ return {u:e[0], v:e[1], w:e[2]}; })
+  }, opt || {});
+}
+function ekey(g, u, v){ return g.directed ? u+">"+v : (u < v ? u+"|"+v : v+"|"+u); }
+function adj(g){
+  var m = {};
+  g.nodes.forEach(function(n){ m[n.id] = []; });
+  g.edges.forEach(function(E){
+    m[E.u].push({v:E.v, w:E.w});
+    if (!g.directed) m[E.v].push({v:E.u, w:E.w});
+  });
+  Object.keys(m).forEach(function(k){ m[k].sort(function(a,b){ return a.v < b.v ? -1 : 1; }); });
+  return m;
+}
+/* step recorder: mutate state, then rec(message) saves a snapshot */
+function Rec(g){
+  var r = { g:g, steps:[], n:{}, e:{}, lab:{}, elab:{}, aux:"" };
+  r.N  = function(id, s){ if (s == null) delete r.n[id]; else r.n[id] = s; return r; };
+  r.E  = function(u, v, s){ var k = ekey(g,u,v); if (s == null) delete r.e[k]; else r.e[k] = s; return r; };
+  r.L  = function(id, t){ if (t == null) delete r.lab[id]; else r.lab[id] = t; return r; };
+  r.EL = function(u, v, t){ var k = ekey(g,u,v); if (t == null) delete r.elab[k]; else r.elab[k] = t; return r; };
+  r.A  = function(t){ r.aux = t; return r; };
+  r.rec = function(m){
+    r.steps.push({ m:m, n:Object.assign({},r.n), e:Object.assign({},r.e),
+      lab:Object.assign({},r.lab), elab:Object.assign({},r.elab), aux:r.aux });
+    return r;
+  };
+  return r;
+}
+
+/* ---------- the animation player ---------- */
+function mkPlayer(mount, spec){
+  var g = spec.graph, steps = spec.steps;
+  var r = g.r || 16, vb = g.vb || "0 0 510 350";
+  mount.innerHTML = "";
+
+  var ctrl = document.createElement("div"); ctrl.className = "ctrl";
+  function mkBtn(txt, label){ var b = document.createElement("button"); b.textContent = txt; b.setAttribute("aria-label", label); return b; }
+  var bReset = mkBtn("\u27F2 Reset", "Restart the animation");
+  var bPrev  = mkBtn("\u25C0 Back", "One step back");
+  var bPlay  = mkBtn("\u25B6 Play", "Play the animation");
+  var bNext  = mkBtn("Step \u25B6", "One step forward");
+  var sel = document.createElement("select"); sel.setAttribute("aria-label", "Speed");
+  [["1600","Slow"],["850","Normal"],["420","Fast"]].forEach(function(o){
+    var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1];
+    if (o[0] === "850") op.selected = true; sel.appendChild(op);
+  });
+  var info = document.createElement("span"); info.className = "stepinfo";
+  ctrl.append(bReset, bPrev, bPlay, bNext, sel, info);
+
+  var stage = document.createElement("div"); stage.className = "stage";
+  var svg = el("svg", {viewBox: vb, role: "img"});
+  svg.setAttribute("aria-label", "Animated graph");
+  stage.appendChild(svg);
+
+  var side = document.createElement("div"); side.className = "side";
+  var cap = document.createElement("div"); cap.className = "cap";
+  var aux = document.createElement("pre"); aux.className = "aux";
+  side.append(cap, aux);
+  mount.append(ctrl, stage, side);
+
+  var P = {}; g.nodes.forEach(function(n){ P[n.id] = n; });
+  var edgeEls = [], nodeEls = {};
+
+  g.edges.forEach(function(E){
+    var a = P[E.u], b = P[E.v];
+    var grp = el("g", {"class": "edge"});
+    var dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+    var x1 = a.x, y1 = a.y, x2 = b.x, y2 = b.y;
+    if (g.directed){
+      x1 = a.x + ux*(r+1); y1 = a.y + uy*(r+1);
+      var tipx = b.x - ux*(r+2), tipy = b.y - uy*(r+2);
+      var bx = tipx - ux*10, by = tipy - uy*10;
+      x2 = bx; y2 = by;
+      grp.appendChild(el("polygon", {"class":"ah", points:
+        tipx+","+tipy+" "+(bx - uy*5)+","+(by + ux*5)+" "+(bx + uy*5)+","+(by - ux*5)}));
+    }
+    grp.insertBefore(el("line", {x1:x1, y1:y1, x2:x2, y2:y2}), grp.firstChild);
+    var mx = (a.x+b.x)/2 - uy*12, my = (a.y+b.y)/2 + ux*12;
+    var wl = el("text", {"class":"wl", x:mx, y:my});
+    wl.textContent = (E.w !== undefined) ? E.w : "";
+    grp.appendChild(wl);
+    svg.appendChild(grp);
+    edgeEls.push({k: ekey(g, E.u, E.v), grp: grp, wl: wl, w: E.w});
+  });
+  g.nodes.forEach(function(n){
+    var grp = el("g", {"class": "node"});
+    grp.appendChild(el("circle", {cx:n.x, cy:n.y, r:r}));
+    var t = el("text", {"class":"idl", x:n.x, y:n.y}); t.textContent = n.id; grp.appendChild(t);
+    var s = el("text", {"class":"sub", x:n.x, y:n.y + r + 13}); grp.appendChild(s);
+    svg.appendChild(grp);
+    nodeEls[n.id] = {grp: grp, sub: s};
+  });
+
+  var idx = 0, timer = null;
+  function apply(i){
+    idx = i; var st = steps[i];
+    for (var id in nodeEls){
+      nodeEls[id].grp.setAttribute("class", "node" + (st.n[id] ? " " + st.n[id] : ""));
+      nodeEls[id].sub.textContent = st.lab[id] || "";
+    }
+    edgeEls.forEach(function(ed){
+      ed.grp.setAttribute("class", "edge" + (st.e[ed.k] ? " " + st.e[ed.k] : ""));
+      var ov = st.elab[ed.k];
+      ed.wl.textContent = (ov !== undefined) ? ov : ((ed.w !== undefined) ? ed.w : "");
+    });
+    cap.textContent = st.m;
+    aux.textContent = st.aux || "";
+    aux.style.display = st.aux ? "" : "none";
+    info.textContent = "Step " + (i+1) + " / " + steps.length;
+    bPrev.disabled = (i === 0);
+    bNext.disabled = (i === steps.length - 1);
+    if (i === steps.length - 1) stop();
+  }
+  function stop(){
+    if (timer){ clearInterval(timer); timer = null; }
+    bPlay.textContent = "\u25B6 Play"; bPlay.classList.remove("playing");
+  }
+  function play(){
+    if (timer){ stop(); return; }
+    if (idx >= steps.length - 1) apply(0);
+    bPlay.textContent = "\u23F8 Pause"; bPlay.classList.add("playing");
+    timer = setInterval(function(){
+      if (idx < steps.length - 1) apply(idx + 1); else stop();
+    }, parseInt(sel.value, 10));
+  }
+  bReset.onclick = function(){ stop(); apply(0); };
+  bPrev.onclick  = function(){ stop(); if (idx > 0) apply(idx - 1); };
+  bNext.onclick  = function(){ stop(); if (idx < steps.length - 1) apply(idx + 1); };
+  bPlay.onclick  = play;
+  sel.onchange   = function(){ if (timer){ clearInterval(timer); timer = null; bPlay.classList.remove("playing"); bPlay.textContent = "\u25B6 Play"; play(); } };
+  apply(0);
+  return { stop: stop };
+}
+
+/* ---------- shared graphs ---------- */
+var GU = G(false,
+  [["A",60,170],["B",165,75],["C",165,265],["D",270,170],["E",330,285],["F",360,105],["G",440,250],["H",455,120]],
+  [["A","B"],["A","C"],["B","D"],["C","D"],["C","E"],["D","F"],["E","F"],["E","G"],["F","H"],["G","H"]]);
+var GDAG = G(true,
+  [["A",65,85],["B",65,250],["C",185,85],["D",185,250],["E",305,145],["F",315,300],["G",440,210]],
+  [["A","C"],["B","C"],["B","D"],["C","E"],["D","E"],["D","F"],["E","G"],["F","G"]]);
+var GDAGW = G(true,
+  [["A",65,85],["B",65,250],["C",185,85],["D",185,250],["E",305,145],["F",315,300],["G",440,210]],
+  [["A","C",2],["A","D",6],["B","C",4],["B","D",3],["C","E",2],["D","E",1],["D","F",5],["E","G",2],["F","G",1]]);
+var GW = G(false,
+  [["A",60,170],["B",165,70],["C",165,270],["D",270,170],["E",345,285],["F",380,90],["G",460,195]],
+  [["A","B",4],["A","C",3],["B","C",2],["B","D",5],["C","D",3],["C","E",6],["D","E",1],["D","F",5],["E","F",2],["E","G",7],["F","G",4]]);
+var GBF = G(true,
+  [["S",55,170],["A",185,85],["B",185,255],["C",320,170],["T",455,170]],
+  [["S","A",6],["S","B",7],["B","A",-4],["A","C",5],["C","T",3],["B","T",9]]);
+var GFW = G(true,
+  [["1",140,85],["2",340,85],["3",340,265],["4",140,265]],
+  [["1","2",3],["2","3",2],["2","4",5],["3","4",1],["4","1",6]]);
+var GJ = G(true,
+  [["Q",70,60],["A",145,185],["B",305,95],["C",305,270],["D",455,185]],
+  [["A","B",3],["A","C",4],["B","C",-2],["C","D",2],["Q","A",0],["Q","B",0],["Q","C",0],["Q","D",0]]);
+var GEU = G(false,
+  [["A",120,115],["B",270,65],["C",265,225],["D",395,150],["E",400,300]],
+  [["A","B"],["B","C"],["C","A"],["C","D"],["D","E"],["E","C"]]);
+var GHAM = G(false,
+  [["A",100,110],["B",255,60],["C",405,110],["D",390,285],["E",140,290]],
+  [["A","B"],["A","E"],["B","C"],["B","D"],["C","D"],["C","E"]]);
+var GBIP2 = G(false,
+  [["A",80,90],["B",195,90],["C",195,210],["D",80,210],["P",360,60],["Q",458,140],["R",425,265],["S",315,265],["T",280,140]],
+  [["A","B"],["B","C"],["C","D"],["D","A"],["P","Q"],["Q","R"],["R","S"],["S","T"],["T","P"]]);
+var GKC = G(false,
+  [["A",120,95],["B",300,70],["C",210,235],["D",435,120],["E",360,275]],
+  [["A","B"],["A","C"],["B","C"],["B","D"],["B","E"],["C","E"],["D","E"]]);
+var GC = G(false,
+  [["A",60,105],["B",175,60],["C",150,235],["D",285,125],["E",275,290],["F",395,80],["G",385,255],["H",470,170]],
+  [["A","B"],["A","C"],["B","C"],["B","D"],["C","E"],["D","E"],["D","F"],["E","G"],["F","G"],["F","H"],["G","H"]]);
+/* A* grid: 3 rows x 6 cols, cells C and I removed (walls). Start A, goal F. */
+var GA = (function(){
+  var rows = [["A","B","C","D","E","F"],["G","H","I","J","K","L"],["M","N","O","P","Q","R"]];
+  var gone = {C:1, I:1};
+  var nodes = [], edges = [], pos = {};
+  for (var ri = 0; ri < 3; ri++) for (var ci = 0; ci < 6; ci++){
+    var id = rows[ri][ci]; if (gone[id]) continue;
+    nodes.push([id, 65 + ci*78, 68 + ri*110]);
+    pos[id] = [ri, ci];
+  }
+  for (var ri2 = 0; ri2 < 3; ri2++) for (var ci2 = 0; ci2 < 6; ci2++){
+    var a = rows[ri2][ci2]; if (gone[a]) continue;
+    if (ci2 < 5){ var b = rows[ri2][ci2+1]; if (!gone[b]) edges.push([a,b]); }
+    if (ri2 < 2){ var c = rows[ri2+1][ci2]; if (!gone[c]) edges.push([a,c]); }
+  }
+  var g = G(false, nodes, edges, {r: 14});
+  g.pos = pos;
+  return g;
+})();
+/* TSP city sets (complete graphs) */
+var W5 = {AB:18, AC:33, AD:29, AE:17, BC:18, BD:24, BE:27, CD:17, CE:33, DE:20};
+var W6 = Object.assign({AF:16, BF:13, CF:20, DF:14, EF:15}, W5);
+function wd(W, a, b){ return W[a < b ? a+b : b+a]; }
+function cityG(ids, coords, W){
+  var edges = [];
+  for (var i = 0; i < ids.length; i++) for (var j = i+1; j < ids.length; j++)
+    edges.push([ids[i], ids[j], wd(W, ids[i], ids[j])]);
+  return G(false, coords.filter(function(c){ return ids.indexOf(c[0]) >= 0; }), edges);
+}
+var CITY = [["A",110,115],["B",300,65],["C",450,175],["D",330,300],["E",120,275],["F",250,185]];
+var T4 = cityG(["A","B","C","D"], CITY, W5);
+var T5 = cityG(["A","B","C","D","E"], CITY, W5);
+var T6 = cityG(["A","B","C","D","E","F"], CITY, W6);
+var GFLOW = G(true,
+  [["S",55,170],["A",185,85],["B",185,255],["C",320,85],["D",320,255],["T",455,170]],
+  [["S","A",8],["S","B",7],["A","C",6],["A","D",3],["B","C",2],["B","D",6],["C","T",7],["D","T",8]]);
+var GBIPM = G(false,
+  [["L1",155,60],["L2",155,140],["L3",155,220],["L4",155,300],["R1",365,60],["R2",365,140],["R3",365,220],["R4",365,300]],
+  [["L1","R1"],["L1","R2"],["L2","R1"],["L3","R2"],["L3","R3"],["L4","R3"],["L4","R4"]]);
+
+var BUILD = {};
+</script>
+
+<script>
+/* ---------- traversal + topological sort + tree builders ---------- */
+BUILD["dfs"] = function(){
+  var g = GU, A = adj(g), r = Rec(g), seen = {}, st = [];
+  function S(){ return "Stack (top is last):\n" + (st.length ? st.join(" \u2192 ") : "(empty)"); }
+  r.A(S()).rec("DFS starts at A. It always goes deeper before it goes wider.");
+  function go(u, from){
+    seen[u] = 1; st.push(u);
+    if (from) r.E(from, u, "tree");
+    r.N(u, "act").A(S()).rec("Visit " + u + (from ? " (came from " + from + ")" : "") + " and push it on the stack.");
+    r.N(u, "vis");
+    A[u].forEach(function(nb){
+      if (!seen[nb.v]) go(nb.v, u);
+      else if (!r.e[ekey(g, u, nb.v)]) r.E(u, nb.v, "dim");
+    });
+    st.pop();
+    r.N(u, "done").A(S()).rec(u + " has no new neighbors left. Pop it \u2014 done.");
+  }
+  go("A", null);
+  r.rec("DFS finished. Green edges form the DFS tree; faint edges led to already-visited nodes.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["bfs"] = function(){
+  var g = GU, A = adj(g), r = Rec(g), seen = {A:1}, q = ["A"];
+  function Q(){ return "Queue (front is first):\n" + (q.length ? q.join("  ") : "(empty)"); }
+  r.N("A", "fr").A(Q()).rec("BFS starts at A. A goes into the queue.");
+  while (q.length){
+    var u = q.shift();
+    r.N(u, "act").A(Q()).rec("Take " + u + " from the front of the queue.");
+    A[u].forEach(function(nb){
+      if (!seen[nb.v]){
+        seen[nb.v] = 1; q.push(nb.v);
+        r.N(nb.v, "fr").E(u, nb.v, "tree").A(Q()).rec(u + " discovers " + nb.v + ". " + nb.v + " joins the queue.");
+      }
+    });
+    r.N(u, "done").A(Q()).rec(u + " is done \u2014 all its neighbors are known now.");
+  }
+  r.rec("BFS finished. It swept the graph ring by ring, nearest nodes first.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["topo-dfs"] = function(){
+  var g = GDAG, A = adj(g), r = Rec(g), seen = {}, order = [];
+  function O(){ return "Order so far (front first):\n" + (order.length ? order.join(" \u2192 ") : "(empty)"); }
+  r.A(O()).rec("Rule: DFS the whole DAG. When a node FINISHES, put it at the FRONT of the order.");
+  function go(u){
+    seen[u] = 1;
+    r.N(u, "act").A(O()).rec("Visit " + u + ".");
+    r.N(u, "vis");
+    A[u].forEach(function(nb){
+      if (!seen[nb.v]){ r.E(u, nb.v, "tree"); go(nb.v); }
+      else if (!r.e[ekey(g, u, nb.v)]) r.E(u, nb.v, "dim");
+    });
+    order.unshift(u);
+    r.N(u, "done").A(O()).rec(u + " is finished \u2192 it goes to the FRONT of the order.");
+  }
+  ["A","B","C","D","E","F","G"].forEach(function(s){
+    if (!seen[s]){ r.A(O()).rec("Node " + s + " is not seen yet \u2014 start a new DFS there."); go(s); }
+  });
+  order.forEach(function(id, i){ r.L(id, "#" + (i+1)); });
+  r.A(O()).rec("Done: " + order.join(" \u2192 ") + ". Every edge points forward in this order.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["kahn"] = function(){
+  var g = GDAG, A = adj(g), r = Rec(g), indeg = {};
+  g.nodes.forEach(function(n){ indeg[n.id] = 0; });
+  g.edges.forEach(function(E){ indeg[E.v]++; });
+  g.nodes.forEach(function(n){ r.L(n.id, "in:" + indeg[n.id]); });
+  var q = g.nodes.map(function(n){ return n.id; }).filter(function(id){ return indeg[id] === 0; }).sort();
+  q.forEach(function(id){ r.N(id, "fr"); });
+  var order = [];
+  function AX(){ return "Queue: " + (q.length ? q.join(", ") : "(empty)") +
+    "\nOrder: " + (order.length ? order.join(" \u2192 ") : "(empty)"); }
+  r.A(AX()).rec("Count the incoming edges of every node (the 'in' number). Nodes with in = 0 start in the queue.");
+  while (q.length){
+    var u = q.shift();
+    order.push(u);
+    r.N(u, "act").A(AX()).rec("Take " + u + " (in = 0) and add it to the order.");
+    A[u].forEach(function(nb){
+      var v = nb.v; indeg[v]--;
+      r.E(u, v, "dim").L(v, "in:" + indeg[v]);
+      if (indeg[v] === 0){
+        q.push(v); q.sort();
+        r.N(v, "fr").A(AX()).rec("Remove edge " + u + "\u2192" + v + ". Now " + v + " has in = 0 \u2192 it joins the queue.");
+      } else {
+        r.A(AX()).rec("Remove edge " + u + "\u2192" + v + ". " + v + " still has " + indeg[v] + " incoming edge(s).");
+      }
+    });
+    r.N(u, "done").L(u, "#" + order.length).A(AX()).rec(u + " takes position " + order.length + " in the order.");
+  }
+  r.rec("All nodes placed: " + order.join(" \u2192 ") + ". A valid topological order.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["span-tree"] = function(){
+  var g = GU, A = adj(g), r = Rec(g), seen = {}, kept = 0;
+  r.rec("Goal: keep n - 1 = 7 edges that connect all 8 nodes with no cycle. We walk with DFS.");
+  function go(u, from){
+    seen[u] = 1;
+    r.N(u, "act").rec("Visit " + u + "." + (from ? " Edge " + from + "\u2013" + u + " reached a NEW node \u2192 keep it (tree edge)." : ""));
+    r.N(u, "vis");
+    A[u].forEach(function(nb){
+      var v = nb.v, k = ekey(g, u, v);
+      if (!seen[v]){ r.E(u, v, "tree"); kept++; go(v, u); }
+      else if (!r.e[k]){
+        r.E(u, v, "rej").rec("Edge " + u + "\u2013" + v + ": " + v + " was already reached \u2192 this edge would close a cycle. Drop it.");
+      }
+    });
+    r.N(u, "done");
+  }
+  go("A", null);
+  r.rec("Spanning tree done: " + kept + " green edges, all nodes connected, no cycles.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["out-tree"] = function(){
+  var g = GU, A = adj(g), r = Rec(g), seen = {A:1}, q = ["A"];
+  r.N("A", "act").L("A", "root").rec("Pick A as the root. Every tree edge will point AWAY from A.");
+  while (q.length){
+    var u = q.shift();
+    r.N(u, "act");
+    A[u].forEach(function(nb){
+      var v = nb.v;
+      if (!seen[v]){
+        seen[v] = 1; q.push(v);
+        r.E(u, v, "tree").EL(u, v, u + "\u2192" + v).N(v, "fr")
+         .rec("Edge reaches new node " + v + " \u2192 keep it, pointing away from the root: " + u + "\u2192" + v + ".");
+      }
+    });
+    r.N(u, "done");
+  }
+  r.rec("Out-tree done. Follow the arrows on the green edges: every node is reached FROM the root A.");
+  return { graph: g, steps: r.steps };
+};
+</script>
+
+<script>
+/* ---------- shortest path builders ---------- */
+BUILD["dijkstra"] = function(){
+  var g = GW, A = adj(g), r = Rec(g);
+  var dist = {}, done = {}, prev = {};
+  g.nodes.forEach(function(n){ dist[n.id] = Infinity; r.L(n.id, "\u221E"); });
+  dist.A = 0; r.L("A", "0").N("A", "fr");
+  function DT(){ return "Best distance from A:\n" + g.nodes.map(function(n){
+    return n.id + ": " + (dist[n.id] === Infinity ? "\u221E" : dist[n.id]) + (done[n.id] ? "  \u2713 settled" : "");
+  }).join("\n"); }
+  r.A(DT()).rec("Every node starts at distance \u221E, except the start A at 0.");
+  for (;;){
+    var u = null;
+    g.nodes.forEach(function(n){ if (!done[n.id] && dist[n.id] < Infinity && (u === null || dist[n.id] < dist[u])) u = n.id; });
+    if (u === null) break;
+    done[u] = 1;
+    r.N(u, "act").A(DT()).rec("Pick " + u + " \u2014 the closest node not settled yet (distance " + dist[u] + ").");
+    A[u].forEach(function(nb){
+      var v = nb.v; if (done[v]) return;
+      var nd = dist[u] + nb.w;
+      r.E(u, v, "act");
+      if (nd < dist[v]){
+        dist[v] = nd; prev[v] = u;
+        r.L(v, String(nd)).N(v, "fr").A(DT()).rec("Edge " + u + "\u2013" + v + ": " + dist[u] + " + " + nb.w + " = " + nd + " \u2014 better! Update " + v + ".");
+      } else {
+        r.A(DT()).rec("Edge " + u + "\u2013" + v + ": " + dist[u] + " + " + nb.w + " = " + nd + " \u2014 not better than " + dist[v] + ". Keep " + dist[v] + ".");
+      }
+      r.E(u, v, null);
+    });
+    r.N(u, "done").A(DT()).rec(u + " is settled for good at distance " + dist[u] + ". It will never improve.");
+  }
+  var p = "G", path = ["G"];
+  while (prev[p]){ path.unshift(prev[p]); p = prev[p]; }
+  path.forEach(function(x, i){ r.N(x, "path"); if (i > 0) r.E(path[i-1], x, "path"); });
+  r.rec("Done. Purple shows the shortest path " + path.join(" \u2192 ") + " with total length " + dist.G + ".");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["bellman"] = function(){
+  var g = GBF, r = Rec(g);
+  var dist = {S:0};
+  g.nodes.forEach(function(n){ if (n.id !== "S") dist[n.id] = Infinity; r.L(n.id, n.id === "S" ? "0" : "\u221E"); });
+  var ED = g.edges.slice().sort(function(a,b){ return (a.u + a.v) < (b.u + b.v) ? -1 : 1; });
+  function DT(){ return "Distance from S:\n" + g.nodes.map(function(n){
+    return n.id + ": " + (dist[n.id] === Infinity ? "\u221E" : dist[n.id]); }).join("\n"); }
+  r.N("S", "act").A(DT()).rec("Start: S = 0, all others \u221E. We relax ALL 6 edges, round after round.");
+  for (var round = 1; round <= g.nodes.length - 1; round++){
+    var changed = false;
+    r.A(DT()).rec("Round " + round + " (of at most " + (g.nodes.length - 1) + "): try every edge once.");
+    ED.forEach(function(E){
+      r.E(E.u, E.v, "act");
+      if (dist[E.u] !== Infinity && dist[E.u] + E.w < dist[E.v]){
+        dist[E.v] = dist[E.u] + E.w; changed = true;
+        r.L(E.v, String(dist[E.v])).N(E.v, "vis").A(DT())
+         .rec("Relax " + E.u + "\u2192" + E.v + " (weight " + E.w + "): new best for " + E.v + " is " + dist[E.v] + ".");
+      } else {
+        r.A(DT()).rec("Edge " + E.u + "\u2192" + E.v + ": no improvement" + (dist[E.u] === Infinity ? " (" + E.u + " is still \u221E)." : "."));
+      }
+      r.E(E.u, E.v, null);
+    });
+    if (!changed){ r.rec("Round " + round + " changed nothing \u2192 distances are final. Stop early."); break; }
+  }
+  r.rec("Note the negative edge B\u2192A (-4): it made A cheaper (3) than the direct edge S\u2192A (6). Bellman-Ford handles that; Dijkstra could not.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["floyd"] = function(){
+  var g = GFW, r = Rec(g), ids = ["1","2","3","4"];
+  var d = {}, doneK = {};
+  ids.forEach(function(i){ d[i] = {}; ids.forEach(function(j){ d[i][j] = (i === j) ? 0 : Infinity; }); });
+  g.edges.forEach(function(E){ d[E.u][E.v] = E.w; });
+  function pad(s){ s = String(s); while (s.length < 4) s = " " + s; return s; }
+  function M(){
+    var s = "to:  " + ids.map(pad).join("") + "\n";
+    ids.forEach(function(i){ s += "from " + i + ":" + ids.map(function(j){ return pad(d[i][j] === Infinity ? "\u221E" : d[i][j]); }).join("") + "\n"; });
+    return s;
+  }
+  function base(x){ return doneK[x] ? "done" : null; }
+  r.A(M()).rec("The table starts with the direct edges only. \u221E means: no way found yet.");
+  ids.forEach(function(k){
+    r.N(k, "act").A(M()).rec("Round k = " + k + ": may any pair get shorter by going THROUGH node " + k + "?");
+    ids.forEach(function(i){ ids.forEach(function(j){
+      if (i === j || i === k || j === k) return;
+      if (d[i][k] + d[k][j] < d[i][j]){
+        d[i][j] = d[i][k] + d[k][j];
+        r.N(i, "fr").N(j, "vis").A(M())
+         .rec(i + " \u2192 " + j + " gets shorter through " + k + ": " + d[i][k] + " + " + d[k][j] + " = " + d[i][j] + ".");
+        r.N(i, base(i)).N(j, base(j));
+      }
+    }); });
+    doneK[k] = 1; r.N(k, "done");
+  });
+  r.A(M()).rec("Done. The table now holds the shortest distance for EVERY pair \u2014 all with one triple loop.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["johnson"] = function(){
+  var g = GJ, r = Rec(g);
+  var qe = [["Q","A"],["Q","B"],["Q","C"],["Q","D"]];
+  qe.forEach(function(e){ r.E(e[0], e[1], "dim"); });
+  r.N("Q", "dim").rec("This graph has a negative edge (B\u2192C = -2), so Dijkstra alone would fail. Johnson repairs the weights first.");
+  r.N("Q", "act");
+  qe.forEach(function(e){ r.E(e[0], e[1], "act"); });
+  r.rec("Step 1: add a helper node Q with a 0-cost edge to every node.");
+  r.L("A", "h=0").L("B", "h=0").L("C", "h=-2").L("D", "h=0");
+  r.rec("Step 2: run Bellman-Ford from Q once. Each node gets a height h = its distance from Q. Only C drops to -2 (via Q\u2192B\u2192C).");
+  qe.forEach(function(e){ r.E(e[0], e[1], "dim"); });
+  r.N("Q", "dim");
+  r.rec("Step 3: re-weight every edge with the rule: new w = old w + h(from) - h(to). Q's job is done.");
+  [["A","B",3,3],["A","C",4,6],["B","C",-2,0],["C","D",2,0]].forEach(function(e){
+    r.E(e[0], e[1], "act").EL(e[0], e[1], String(e[3]))
+     .rec("Edge " + e[0] + "\u2192" + e[1] + ": " + e[2] + " + h(" + e[0] + ") - h(" + e[1] + ") = " + e[3] + ". Not negative anymore!");
+    r.E(e[0], e[1], null);
+  });
+  r.rec("All weights are now \u2265 0, and every shortest path stays the same path. Safe for Dijkstra.");
+  r.N("A", "act").L("A", "0").L("B", "\u221E").L("C", "\u221E").L("D", "\u221E");
+  r.rec("Step 4: run fast Dijkstra from each node on the new weights. Watch it from A:");
+  r.L("B", "3").L("C", "6").N("B", "fr").N("C", "fr").rec("From A: B = 3, C = 6 (new weights). A is settled.");
+  r.N("A", "done").N("B", "act").L("C", "3").rec("Settle B (3). Through B: C = 3 + 0 = 3 \u2014 better than 6.");
+  r.N("B", "done").N("C", "act").L("D", "3").N("D", "fr").rec("Settle C (3). Through C: D = 3 + 0 = 3.");
+  r.N("C", "done").N("D", "done").rec("Settle D. Dijkstra is finished on the safe weights.");
+  r.L("A", "0").L("B", "3").L("C", "1").L("D", "3");
+  r.rec("Step 5: convert back: real dist = Dijkstra dist - h(from) + h(to). Example A\u2192C: 3 - 0 + (-2) = 1, which is A\u2192B\u2192C = 3 - 2. Correct!");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["bfs-sp"] = function(){
+  var g = GU, A = adj(g), r = Rec(g);
+  var seen = {A:1}, dist = {A:0}, prev = {}, q = ["A"];
+  r.N("A", "fr").L("A", "0").rec("All edges cost the same, so 'shortest' means FEWEST edges. BFS finds exactly that. Start at A, goal: H.");
+  while (q.length){
+    var u = q.shift();
+    r.N(u, "act");
+    A[u].forEach(function(nb){
+      var v = nb.v;
+      if (!seen[v]){
+        seen[v] = 1; dist[v] = dist[u] + 1; prev[v] = u; q.push(v);
+        r.N(v, "fr").L(v, String(dist[v])).E(u, v, "tree")
+         .rec(v + " is first reached from " + u + " \u2192 distance " + dist[v] + ". Remember its parent: " + u + ".");
+      }
+    });
+    r.N(u, "done");
+  }
+  r.rec("BFS done. Each label is the fewest edges from A. Now walk back from H using the parents.");
+  var p = "H", path = ["H"];
+  while (prev[p]){ path.unshift(prev[p]); p = prev[p]; }
+  path.forEach(function(x, i){ r.N(x, "path"); if (i > 0) r.E(path[i-1], x, "path"); });
+  r.rec("Shortest path: " + path.join(" \u2192 ") + " \u2014 " + (path.length - 1) + " edges. No weighted algorithm needed.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["dag-sp"] = function(){
+  var g = GDAGW, A = adj(g), r = Rec(g);
+  var order = ["A","B","C","D","E","F","G"];
+  var dist = {A:0}, prev = {};
+  g.nodes.forEach(function(n){ if (n.id !== "A") dist[n.id] = Infinity; r.L(n.id, n.id === "A" ? "0" : "\u221E"); });
+  r.A("Topological order:\n" + order.join(" \u2192 ")).rec("Step 1: sort the DAG topologically (here: " + order.join(", ") + "). Then relax each node ONCE, in this order.");
+  order.forEach(function(u){
+    if (dist[u] === Infinity){
+      r.N(u, "rej").rec(u + " is unreachable from A (distance \u221E) \u2014 nothing to relax. Skip it.");
+      r.N(u, "dim");
+      return;
+    }
+    r.N(u, "act").rec("Take " + u + " (distance " + dist[u] + "). Relax its outgoing edges.");
+    A[u].forEach(function(nb){
+      var v = nb.v, nd = dist[u] + nb.w;
+      r.E(u, v, "act");
+      if (nd < dist[v]){
+        dist[v] = nd; prev[v] = u;
+        r.L(v, String(nd)).N(v, "fr").rec("Edge " + u + "\u2192" + v + ": " + nd + " is better \u2192 update " + v + ".");
+      } else {
+        r.rec("Edge " + u + "\u2192" + v + ": " + nd + " is not better than " + dist[v] + ".");
+      }
+      r.E(u, v, null);
+    });
+    r.N(u, "done");
+  });
+  var p = "G", path = ["G"];
+  while (prev[p]){ path.unshift(prev[p]); p = prev[p]; }
+  path.forEach(function(x, i){ r.N(x, "path"); if (i > 0) r.E(path[i-1], x, "path"); });
+  r.rec("One single pass was enough because a DAG can never loop back. Shortest path to G: " + path.join(" \u2192 ") + " = " + dist.G + ".");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["astar"] = function(){
+  var g = GA, A = adj(g), r = Rec(g);
+  var goal = "F";
+  function h(id){ var p = g.pos[id], q = g.pos[goal]; return Math.abs(p[0]-q[0]) + Math.abs(p[1]-q[1]); }
+  var gd = {A:0}, fd = {A:h("A")}, prev = {}, open = ["A"], closed = {};
+  function OP(){ return "Open list (sorted by f):\n" + open.slice().sort(cmp).map(function(id){
+    return id + ": f=" + fd[id] + " (g=" + gd[id] + " + h=" + h(id) + ")"; }).join("\n"); }
+  function cmp(a, b){ return (fd[a] - fd[b]) || (h(a) - h(b)) || (a < b ? -1 : 1); }
+  r.N("A", "fr").L("A", "f=" + fd.A).A(OP())
+   .rec("Start A (top-left), goal F (top-right). The two gray gaps (missing cells) are walls. f = g (cost so far) + h (grid distance left).");
+  var found = false;
+  while (open.length && !found){
+    open.sort(cmp);
+    var u = open.shift();
+    closed[u] = 1;
+    r.N(u, "act").A(OP()).rec("Expand " + u + " \u2014 it has the smallest f = " + fd[u] + ".");
+    var nbs = A[u];
+    for (var i = 0; i < nbs.length; i++){
+      var v = nbs[i].v;
+      if (closed[v]) continue;
+      var ng = gd[u] + 1;
+      if (gd[v] === undefined || ng < gd[v]){
+        gd[v] = ng; fd[v] = ng + h(v); prev[v] = u;
+        if (open.indexOf(v) < 0) open.push(v);
+        r.N(v, "fr").L(v, "f=" + fd[v]).E(u, v, "act").A(OP())
+         .rec("Discover " + v + ": g=" + ng + ", h=" + h(v) + " \u2192 f=" + fd[v] + ". " + (h(v) > h(u) ? "It points away from the goal, so its f is bigger \u2014 it will wait." : "Low f \u2014 promising."));
+        r.E(u, v, null);
+        if (v === goal){ found = true; break; }
+      }
+    }
+    r.N(u, "done");
+  }
+  var p = goal, path = [goal];
+  while (prev[p]){ path.unshift(prev[p]); p = prev[p]; }
+  path.forEach(function(x, i){ r.N(x, "path"); if (i > 0) r.E(path[i-1], x, "path"); });
+  r.A(OP()).rec("Goal found! Path: " + path.join(" \u2192 ") + " (length " + (path.length - 1) + "). The h guess kept A* from wasting time on cells that move away from F.");
+  return { graph: g, steps: r.steps };
+};
+</script>
+
+<script>
+/* ---------- MST + Euler/Hamilton + coloring builders ---------- */
+BUILD["prim"] = function(){
+  var g = GW, r = Rec(g);
+  var inT = {A:1}, total = 0, count = 0;
+  r.N("A", "done").rec("Prim starts with just node A. Each round: take the cheapest edge that leaves the tree.");
+  while (count < g.nodes.length - 1){
+    var cand = g.edges.filter(function(E){ return (inT[E.u] ? 1 : 0) + (inT[E.v] ? 1 : 0) === 1; })
+                      .sort(function(a, b){ return a.w - b.w; });
+    var list = cand.map(function(E){ return E.u + "\u2013" + E.v + " (" + E.w + ")"; }).join("\n");
+    var best = cand[0];
+    var nu = inT[best.u] ? best.v : best.u;
+    r.E(best.u, best.v, "act").A("Edges leaving the tree (cheap first):\n" + list)
+     .rec("Cheapest edge out of the tree: " + best.u + "\u2013" + best.v + " with weight " + best.w + ".");
+    inT[nu] = 1; total += best.w; count++;
+    r.E(best.u, best.v, "tree").N(nu, "done")
+     .rec("Add it. " + nu + " joins the tree. Tree weight so far: " + total + ".");
+  }
+  r.A("").rec("All 7 nodes connected with 6 edges. Minimum spanning tree weight: " + total + ".");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["kruskal"] = function(){
+  var g = GW, r = Rec(g);
+  var parent = {};
+  g.nodes.forEach(function(n){ parent[n.id] = n.id; });
+  function find(x){ while (parent[x] !== x) x = parent[x]; return x; }
+  var ED = g.edges.slice().sort(function(a, b){ return a.w - b.w || ((a.u + a.v) < (b.u + b.v) ? -1 : 1); });
+  var st = {}, total = 0, count = 0;
+  function LS(){ return "Edges, cheap first:\n" + ED.map(function(E){
+    var k = E.u + "\u2013" + E.v + " (" + E.w + ")";
+    return (st[k] === undefined ? "  " : (st[k] ? "\u2713 " : "\u2717 ")) + k; }).join("\n"); }
+  r.A(LS()).rec("Sort ALL edges from cheap to costly. Take them one by one; never close a cycle.");
+  for (var i = 0; i < ED.length && count < g.nodes.length - 1; i++){
+    var E = ED[i], k = E.u + "\u2013" + E.v + " (" + E.w + ")";
+    r.E(E.u, E.v, "act").A(LS()).rec("Look at " + E.u + "\u2013" + E.v + " (weight " + E.w + ").");
+    var ru = find(E.u), rv = find(E.v);
+    if (ru !== rv){
+      parent[ru] = rv; st[k] = 1; total += E.w; count++;
+      r.E(E.u, E.v, "tree").N(E.u, "done").N(E.v, "done").A(LS())
+       .rec(E.u + " and " + E.v + " were in different groups \u2192 keep the edge. Weight so far: " + total + ".");
+    } else {
+      st[k] = 0;
+      r.E(E.u, E.v, "rej").A(LS())
+       .rec(E.u + " and " + E.v + " are ALREADY connected \u2192 this edge would close a cycle. Drop it.");
+    }
+  }
+  r.A(LS()).rec("6 edges kept \u2192 tree complete. Total weight " + total + " \u2014 the same minimum as Prim finds.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["hierholzer"] = function(){
+  var g = GEU, r = Rec(g);
+  r.L("A","deg 2").L("B","deg 2").L("C","deg 4").L("D","deg 2").L("E","deg 2")
+   .rec("Every node has an EVEN number of edges, so an Euler circuit exists (every edge used exactly once).");
+  var w1 = [["A","B"],["B","C"],["C","A"]];
+  w1.forEach(function(e, i){
+    r.N(e[0], "vis").N(e[1], "act").E(e[0], e[1], "tree").EL(e[0], e[1], String(i + 1))
+     .rec("Walk loop 1: take edge " + e[0] + "\u2013" + e[1] + ". Never reuse an edge.");
+  });
+  r.rec("Loop 1 closed: A \u2192 B \u2192 C \u2192 A. But edges at C are still unused \u2014 we are not done.");
+  r.N("C", "fr").rec("Find a node ON our loop that still has unused edges: that is C. Start a second loop there.");
+  var w2 = [["C","D"],["D","E"],["E","C"]];
+  w2.forEach(function(e){
+    r.N(e[0], "vis").N(e[1], "act").E(e[0], e[1], "act")
+     .rec("Walk loop 2: take edge " + e[0] + "\u2013" + e[1] + ".");
+  });
+  r.rec("Loop 2 closed: C \u2192 D \u2192 E \u2192 C. Now splice loop 2 INTO loop 1 at node C.");
+  var fin = [["A","B"],["B","C"],["C","D"],["D","E"],["E","C"],["C","A"]];
+  fin.forEach(function(e, i){ r.E(e[0], e[1], "path").EL(e[0], e[1], String(i + 1)); });
+  ["A","B","C","D","E"].forEach(function(n){ r.N(n, "path"); });
+  r.rec("Final Euler circuit: A \u2192 B \u2192 C \u2192 D \u2192 E \u2192 C \u2192 A. The numbers show the order; every edge is used exactly once.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["ham"] = function(){
+  var g = GHAM, A = adj(g), r = Rec(g);
+  var path = ["A"], inP = {A:1};
+  function P(){ return "Path: " + path.join(" \u2192 "); }
+  r.N("A", "act").A(P()).rec("Goal: visit every node exactly ONCE and come back to A. We try paths and undo bad choices.");
+  function go(u){
+    if (path.length === g.nodes.length){
+      var closes = A[u].some(function(nb){ return nb.v === "A"; });
+      if (closes){
+        r.E(u, "A", "path");
+        path.forEach(function(x, i){ r.N(x, "path"); if (i > 0) r.E(path[i-1], x, "path"); });
+        r.A(P() + " \u2192 A").rec("All 5 nodes are on the path AND edge " + u + "\u2013A closes the loop. Hamiltonian cycle found!");
+        return true;
+      }
+      r.A(P()).rec("All nodes are on the path, but there is no edge " + u + "\u2013A to close the loop. Dead end.");
+      return false;
+    }
+    var extended = false;
+    for (var i = 0; i < A[u].length; i++){
+      var v = A[u][i].v;
+      if (inP[v]) continue;
+      extended = true;
+      path.push(v); inP[v] = 1;
+      r.N(u, "vis").N(v, "act").E(u, v, "tree").A(P()).rec("Extend the path to " + v + ".");
+      if (go(v)) return true;
+      path.pop(); delete inP[v];
+      r.N(v, "rej").E(u, v, "rej").A(P()).rec("Nothing works beyond " + v + ". BACKTRACK: remove " + v + ", try another neighbor of " + u + ".");
+      r.N(v, null).E(u, v, null).N(u, "act");
+    }
+    if (!extended) r.A(P()).rec(u + " has no unvisited neighbors. Dead end.");
+    return false;
+  }
+  go("A");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["bipartite"] = function(){
+  var g = GBIP2, A = adj(g), r = Rec(g);
+  var col = {};
+  r.rec("Try to 2-color the graph with BFS: neighbors must always get the other color. Left: a 4-ring. Right: a 5-ring.");
+  var comps = [["A", "the 4-ring"], ["P", "the 5-ring"]];
+  for (var ci = 0; ci < comps.length; ci++){
+    var s = comps[ci][0];
+    col[s] = 1; var q = [s];
+    r.N(s, "c1").rec("Start " + comps[ci][1] + " at " + s + ": give it RED.");
+    while (q.length){
+      var u = q.shift();
+      for (var i = 0; i < A[u].length; i++){
+        var v = A[u][i].v;
+        if (col[v] === undefined){
+          col[v] = 3 - col[u]; q.push(v);
+          r.N(v, "c" + col[v]).E(u, v, "tree")
+           .rec(v + " is next to " + u + " \u2192 it must get the other color (" + (col[v] === 1 ? "red" : "blue") + ").");
+        } else if (col[v] === col[u]){
+          r.E(u, v, "rej").N(u, "rej").N(v, "rej")
+           .rec("Conflict! Edge " + u + "\u2013" + v + " joins two nodes of the SAME color. This part is NOT 2-colorable.");
+          r.rec("Why? The 5-ring has an ODD number of nodes. Any odd cycle makes 2 colors impossible. The 4-ring (even) was fine.");
+          return { graph: g, steps: r.steps };
+        }
+      }
+    }
+    if (ci === 0) r.rec("The 4-ring worked perfectly with 2 colors. Now check the 5-ring.");
+  }
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["kcolor"] = function(){
+  var g = GKC, A = adj(g), r = Rec(g);
+  var K = 3, order = ["A","B","C","D","E"], col = {};
+  function CS(){ return "k = 3 colors allowed\n" + order.map(function(id){
+    return id + ": " + (col[id] ? "color " + col[id] : "-"); }).join("\n"); }
+  r.A(CS()).rec("Question: can this graph be colored with k = 3 colors? Try node by node; undo when stuck.");
+  function solve(i){
+    if (i === order.length) return true;
+    var u = order[i];
+    for (var c = 1; c <= K; c++){
+      var clash = null;
+      A[u].forEach(function(nb){ if (col[nb.v] === c) clash = nb.v; });
+      if (clash){
+        r.N(u, "fr").A(CS()).rec(u + ": color " + c + " clashes with neighbor " + clash + ". Try the next color.");
+        continue;
+      }
+      col[u] = c;
+      r.N(u, "c" + c).A(CS()).rec(u + " takes color " + c + ".");
+      if (solve(i + 1)) return true;
+      delete col[u];
+      r.N(u, "fr").A(CS()).rec("BACKTRACK: " + u + "'s color " + c + " blocked a later node. Remove it and try the next color.");
+    }
+    r.N(u, "rej").A(CS()).rec(u + " has NO legal color left \u2192 go back one more node.");
+    r.N(u, null);
+    return false;
+  }
+  var ok = solve(0);
+  r.rec(ok ? "Success: 3 colors are enough. Note how D had to switch from color 1 to color 3 so that E could be colored."
+           : "No coloring with 3 colors exists.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["greedy-color"] = function(){
+  var g = GC, A = adj(g), r = Rec(g);
+  var col = {}, used = 0;
+  r.rec("Greedy: go in plain order A, B, C, ... and give each node the LOWEST color its neighbors do not use.");
+  g.nodes.forEach(function(n){
+    var u = n.id, taken = {};
+    A[u].forEach(function(nb){ if (col[nb.v]) taken[col[nb.v]] = nb.v; });
+    var c = 1; while (taken[c]) c++;
+    col[u] = c; if (c > used) used = c;
+    var why = Object.keys(taken).length
+      ? "Neighbors already use " + Object.keys(taken).map(function(x){ return "color " + x + " (" + taken[x] + ")"; }).join(", ") + " \u2192 lowest free is " + c + "."
+      : "No neighbor is colored yet \u2192 take color 1.";
+    r.N(u, "c" + c).rec(u + " gets color " + c + ". " + why);
+  });
+  r.rec("Done with " + used + " colors. Simple and fast \u2014 but a bad visiting order can waste colors on other graphs.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["welsh"] = function(){
+  var g = GC, A = adj(g), r = Rec(g);
+  var deg = {};
+  g.nodes.forEach(function(n){ deg[n.id] = A[n.id].length; });
+  var order = g.nodes.map(function(n){ return n.id; })
+    .sort(function(a, b){ return deg[b] - deg[a] || (a < b ? -1 : 1); });
+  g.nodes.forEach(function(n){ r.L(n.id, "deg " + deg[n.id]); });
+  r.A("Order (highest degree first):\n" + order.join(", ")).rec("Welsh-Powell: sort nodes by degree, biggest first: " + order.join(", ") + ".");
+  var col = {}, c = 0, colored = 0;
+  while (colored < order.length){
+    c++;
+    r.rec("Take color " + c + ". Walk the sorted list and give it to every node that has no color-" + c + " neighbor.");
+    order.forEach(function(u){
+      if (col[u]) return;
+      var clash = null;
+      A[u].forEach(function(nb){ if (col[nb.v] === c) clash = nb.v; });
+      if (clash){
+        r.N(u, "fr").rec(u + " cannot take color " + c + " \u2014 its neighbor " + clash + " already has it. Skip for now.");
+        r.N(u, null);
+      } else {
+        col[u] = c; colored++;
+        r.N(u, "c" + c).rec(u + " takes color " + c + ".");
+      }
+    });
+  }
+  r.rec("Done with " + c + " colors. High-degree (hard) nodes were handled first, one color class at a time.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["dsatur"] = function(){
+  var g = GC, A = adj(g), r = Rec(g);
+  var col = {}, deg = {};
+  g.nodes.forEach(function(n){ deg[n.id] = A[n.id].length; });
+  function sat(u){
+    var s = {};
+    A[u].forEach(function(nb){ if (col[nb.v]) s[col[nb.v]] = 1; });
+    return Object.keys(s).length;
+  }
+  function labels(){ g.nodes.forEach(function(n){ if (!col[n.id]) r.L(n.id, "s:" + sat(n.id)); else r.L(n.id, null); }); }
+  labels();
+  r.rec("DSatur: always color the node whose neighbors already use the MOST different colors (highest saturation s). Ties: higher degree first.");
+  var left = g.nodes.length;
+  while (left > 0){
+    var pick = null;
+    g.nodes.forEach(function(n){
+      var u = n.id; if (col[u]) return;
+      if (pick === null || sat(u) > sat(pick) || (sat(u) === sat(pick) && (deg[u] > deg[pick] || (deg[u] === deg[pick] && u < pick)))) pick = u;
+    });
+    var taken = {};
+    A[pick].forEach(function(nb){ if (col[nb.v]) taken[col[nb.v]] = 1; });
+    var c = 1; while (taken[c]) c++;
+    r.N(pick, "act").rec("Pick " + pick + " (saturation " + sat(pick) + ", degree " + deg[pick] + ") \u2014 it is the most squeezed node right now.");
+    col[pick] = c; left--;
+    labels();
+    r.N(pick, "c" + c).rec(pick + " takes the lowest legal color: " + c + ". Watch the s-numbers of its neighbors rise.");
+  }
+  r.rec("Done with 3 colors. DSatur usually needs fewer colors than plain greedy because it handles squeezed nodes early.");
+  return { graph: g, steps: r.steps };
+};
+</script>
+
+<script>
+/* ---------- traveling salesman builders ---------- */
+BUILD["tsp-brute"] = function(){
+  var g = T4, r = Rec(g);
+  var perms = [["B","C","D"],["B","D","C"],["C","B","D"],["C","D","B"],["D","B","C"],["D","C","B"]];
+  var best = Infinity, bestT = null, tried = [];
+  function AX(){ return "Tours tried:\n" + tried.join("\n") + (best < Infinity ? "\nBest so far: " + best : ""); }
+  r.rec("Only 4 cities \u2192 just try ALL 3! = 6 possible orders, each starting and ending at A.");
+  perms.forEach(function(p){
+    var tour = ["A"].concat(p, ["A"]), len = 0, i;
+    for (i = 0; i < 4; i++) len += wd(W5, tour[i], tour[i+1]);
+    for (i = 0; i < 4; i++) r.E(tour[i], tour[i+1], "act");
+    tried.push(tour.join("-") + " = " + len);
+    var better = len < best;
+    if (better){ best = len; bestT = tour; }
+    r.A(AX()).rec("Tour " + tour.join(" \u2192 ") + " costs " + len + (better ? " \u2014 new best!" : " \u2014 not better than " + best + "."));
+    for (i = 0; i < 4; i++) r.E(tour[i], tour[i+1], null);
+  });
+  for (var j = 0; j < 4; j++){ r.E(bestT[j], bestT[j+1], "path"); r.N(bestT[j], "path"); }
+  r.A(AX()).rec("Best tour: " + bestT.join(" \u2192 ") + " = " + best + ". Exact, but it explodes fast: 10 cities already mean 181,440 tours.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["tsp-back"] = function(){
+  var g = T5, r = Rec(g);
+  var best = Infinity, bestPath = null;
+  var path = ["A"], inP = {A:1}, others = ["B","C","D","E"];
+  function AX(len){ return "Path: " + path.join("-") + " (cost " + len + ")\nBest full tour: " + (best === Infinity ? "none yet" : best); }
+  r.N("A", "act").A(AX(0)).rec("Like brute force, but smarter: if a HALF-built path already costs as much as the best full tour, cut the whole branch (prune).");
+  function go(u, len){
+    if (path.length === 5){
+      var total = len + wd(W5, u, "A");
+      if (total < best){
+        best = total; bestPath = path.slice();
+        r.A(AX(len)).rec("Full tour " + path.join(" \u2192 ") + " \u2192 A costs " + total + " \u2014 NEW BEST.");
+      } else {
+        r.A(AX(len)).rec("Full tour costs " + total + " \u2265 " + best + " \u2014 worse. Throw it away.");
+      }
+      return;
+    }
+    for (var i = 0; i < others.length; i++){
+      var v = others[i];
+      if (inP[v]) continue;
+      var nl = len + wd(W5, u, v);
+      if (nl >= best){
+        r.E(u, v, "rej").A(AX(len)).rec("Step " + u + " \u2192 " + v + " would already cost " + nl + " \u2265 best " + best + ". PRUNE \u2014 skip this whole branch.");
+        r.E(u, v, null);
+        continue;
+      }
+      path.push(v); inP[v] = 1;
+      r.E(u, v, "act").N(v, "vis").A(AX(nl)).rec("Extend to " + v + " (cost so far " + nl + ").");
+      go(v, nl);
+      path.pop(); delete inP[v];
+      r.E(u, v, null).N(v, null);
+    }
+  }
+  go("A", 0);
+  var t = bestPath.concat(["A"]);
+  for (var j = 0; j < 5; j++){ r.E(t[j], t[j+1], "path"); r.N(t[j], "path"); }
+  r.rec("Best tour: " + t.join(" \u2192 ") + " = " + best + ". Pruning skipped many branches that brute force would have fully explored.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["tsp-dp"] = function(){
+  var g = T4, r = Rec(g);
+  var lines = [];
+  function AX(){ return lines.join("\n"); }
+  var entries = [
+    ["dp[{B}, end B] = 18",  "Cheapest way to visit set {B} ending at B: ride A\u2192B = 18.", ["B"]],
+    ["dp[{C}, end C] = 33",  "Visit {C} ending at C: A\u2192C = 33.", ["C"]],
+    ["dp[{D}, end D] = 29",  "Visit {D} ending at D: A\u2192D = 29.", ["D"]],
+    ["dp[{B,C}, end C] = 36", "dp[{B},B] + BC = 18 + 18. Reuse the smaller answer!", ["B","C"]],
+    ["dp[{B,C}, end B] = 51", "dp[{C},C] + CB = 33 + 18.", ["B","C"]],
+    ["dp[{B,D}, end D] = 42", "dp[{B},B] + BD = 18 + 24.", ["B","D"]],
+    ["dp[{B,D}, end B] = 53", "dp[{D},D] + DB = 29 + 24.", ["B","D"]],
+    ["dp[{C,D}, end D] = 50", "dp[{C},C] + CD = 33 + 17.", ["C","D"]],
+    ["dp[{C,D}, end C] = 46", "dp[{D},D] + DC = 29 + 17.", ["C","D"]],
+    ["dp[{B,C,D}, end B] = 64", "min(dp[{C,D},C] + CB, dp[{C,D},D] + DB) = min(46+18, 50+24).", ["B","C","D"]],
+    ["dp[{B,C,D}, end C] = 59", "min(dp[{B,D},B] + BC, dp[{B,D},D] + DC) = min(53+18, 42+17).", ["B","C","D"]],
+    ["dp[{B,C,D}, end D] = 53", "min(dp[{B,C},B] + BD, dp[{B,C},C] + CD) = min(51+24, 36+17).", ["B","C","D"]],
+    ["answer = 82", "Close the tour: min(64 + BA 18, 59 + CA 33, 53 + DA 29) = min(82, 92, 82).", ["A","B","C","D"]]
+  ];
+  r.rec("Held-Karp idea: dp[set, end] = cheapest path from A that visits exactly that set of cities and stops at 'end'. Small sets first, then build bigger sets from them.");
+  entries.forEach(function(en){
+    lines.push(en[0]);
+    en[2].forEach(function(id){ r.N(id, "vis"); });
+    r.A(AX()).rec(en[0] + "  \u2014  " + en[1]);
+    en[2].forEach(function(id){ r.N(id, null); });
+  });
+  var t = ["A","D","C","B","A"];
+  for (var j = 0; j < 4; j++){ r.E(t[j], t[j+1], "path"); r.N(t[j], "path"); }
+  r.A(AX()).rec("Trace the mins back: best tour A \u2192 D \u2192 C \u2192 B \u2192 A = 82. Cost O(2^n \u00B7 n\u00B2) \u2014 heavy, but far better than n! brute force.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["tsp-nn"] = function(){
+  var g = T6, r = Rec(g);
+  var cur = "A", unv = {B:1,C:1,D:1,E:1,F:1}, tour = ["A"], total = 0;
+  r.N("A", "act").rec("Nearest Neighbor: from the current city, always ride to the CLOSEST city you have not visited yet.");
+  while (Object.keys(unv).length){
+    var ks = Object.keys(unv).sort(), lst = [], bestV = null;
+    ks.forEach(function(v){
+      lst.push(cur + "\u2013" + v + " = " + wd(W6, cur, v));
+      r.E(cur, v, "act");
+      if (bestV === null || wd(W6, cur, v) < wd(W6, cur, bestV)) bestV = v;
+    });
+    r.A("Choices from " + cur + ":\n" + lst.join("\n")).rec("From " + cur + ", compare the distances to every unvisited city.");
+    ks.forEach(function(v){ r.E(cur, v, null); });
+    total += wd(W6, cur, bestV);
+    delete unv[bestV];
+    r.E(cur, bestV, "tree").N(cur, "vis").N(bestV, "act")
+     .rec("Closest is " + bestV + " (" + wd(W6, cur, bestV) + "). Ride there. Total so far: " + total + ".");
+    tour.push(bestV); cur = bestV;
+  }
+  total += wd(W6, cur, "A"); tour.push("A");
+  r.E(cur, "A", "tree").rec("All cities visited \u2192 ride home to A (" + wd(W6, cur, "A") + "). Tour total: " + total + ".");
+  for (var j = 0; j < tour.length - 1; j++){ r.E(tour[j], tour[j+1], "path"); r.N(tour[j], "path"); }
+  r.rec("Tour: " + tour.join(" \u2192 ") + " = " + total + ". Very fast, usually decent \u2014 but greedy choices can trap it far from home.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["tsp-edges"] = function(){
+  var g = T6, r = Rec(g);
+  var parent = {};
+  g.nodes.forEach(function(n){ parent[n.id] = n.id; });
+  function find(x){ while (parent[x] !== x) x = parent[x]; return x; }
+  var ED = g.edges.slice().sort(function(a, b){ return a.w - b.w || ((a.u + a.v) < (b.u + b.v) ? -1 : 1); });
+  var deg = {}, count = 0, total = 0, st = {};
+  g.nodes.forEach(function(n){ deg[n.id] = 0; });
+  function LS(){ return "Edges, cheap first:\n" + ED.map(function(E){
+    var k = E.u + "\u2013" + E.v + " (" + E.w + ")";
+    return (st[k] === undefined ? "  " : (st[k] ? "\u2713 " : "\u2717 ")) + k; }).join("\n"); }
+  r.A(LS()).rec("Sorted Edges: take the cheapest edges first, like Kruskal \u2014 but a tour lets each city touch only 2 edges, and no early small loops.");
+  for (var i = 0; i < ED.length && count < 6; i++){
+    var E = ED[i], k = E.u + "\u2013" + E.v + " (" + E.w + ")";
+    r.E(E.u, E.v, "act").A(LS()).rec("Look at " + E.u + "\u2013" + E.v + " (" + E.w + ").");
+    if (deg[E.u] === 2 || deg[E.v] === 2){
+      st[k] = 0;
+      r.E(E.u, E.v, "rej").A(LS()).rec((deg[E.u] === 2 ? E.u : E.v) + " already touches 2 tour edges \u2014 a third is not allowed. Drop it.");
+    } else if (find(E.u) === find(E.v) && count < 5){
+      st[k] = 0;
+      r.E(E.u, E.v, "rej").A(LS()).rec("This would close a SMALL loop before all 6 cities are in. Drop it.");
+    } else {
+      st[k] = 1; deg[E.u]++; deg[E.v]++; total += E.w; count++;
+      parent[find(E.u)] = find(E.v);
+      r.E(E.u, E.v, "tree").A(LS()).rec("Keep it (" + count + " of 6 tour edges). " + (count === 6 ? "That closes the full tour!" : ""));
+    }
+  }
+  g.edges.forEach(function(E){
+    var k = E.u + "\u2013" + E.v + " (" + E.w + ")";
+    if (st[k] === 1){ r.E(E.u, E.v, "path"); r.N(E.u, "path"); r.N(E.v, "path"); }
+    else r.E(E.u, E.v, null);
+  });
+  r.A(LS()).rec("Tour total: " + total + ". Note: Nearest Neighbor found 101 on this same map \u2014 different greedy rules give different tours.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["christofides"] = function(){
+  var g = T5, r = Rec(g);
+  r.rec("Christofides builds a tour with a QUALITY PROMISE: never worse than 1.5\u00D7 the perfect tour (needs distances that obey the triangle rule).");
+  var mst = [["A","E"],["C","D"],["A","B"],["B","C"]];
+  mst.forEach(function(e){
+    r.E(e[0], e[1], "tree").rec("Step 1 \u2014 build the minimum spanning tree: add " + e[0] + "\u2013" + e[1] + " (" + wd(W5, e[0], e[1]) + ").");
+  });
+  r.L("A", "deg 2").L("B", "deg 2").L("C", "deg 2").L("D", "deg 1").L("E", "deg 1");
+  r.N("D", "fr").N("E", "fr").rec("Step 2 \u2014 find nodes with an ODD number of tree edges: D and E. (There is always an even count of odd ones.)");
+  r.E("D", "E", "act").rec("Step 3 \u2014 pair the odd nodes with the cheapest perfect matching. Here that is simply the edge D\u2013E (20).");
+  r.E("D", "E", "tree").N("D", "done").N("E", "done")
+   .rec("Add the matching to the tree. Now EVERY node has an even number of edges \u2192 an Euler circuit exists.");
+  var eul = [["A","B"],["B","C"],["C","D"],["D","E"],["E","A"]];
+  eul.forEach(function(e, i){ r.E(e[0], e[1], "path").EL(e[0], e[1], String(i + 1)); });
+  r.rec("Step 4 \u2014 walk the Euler circuit: A \u2192 B \u2192 C \u2192 D \u2192 E \u2192 A (numbers show the order).");
+  ["A","B","C","D","E"].forEach(function(n){ r.N(n, "path").L(n, null); });
+  r.rec("Step 5 \u2014 shortcut repeated cities. None repeat here, so the tour is ready: length 18+18+17+20+17 = 90, guaranteed \u2264 1.5\u00D7 optimal.");
+  return { graph: g, steps: r.steps };
+};
+</script>
+
+<script>
+/* ---------- maximum flow builders ---------- */
+var FLOW_PATHS = [["S","A","C","T"],["S","A","D","T"],["S","B","C","T"],["S","B","D","T"]];
+function runFlow(r, g, paths, foundWord){
+  var flow = {}, cap = {};
+  g.edges.forEach(function(E){ var k = ekey(g, E.u, E.v); flow[k] = 0; cap[k] = E.w; r.EL(E.u, E.v, "0/" + E.w); });
+  var total = 0;
+  paths.forEach(function(p){
+    var b = Infinity, i, k;
+    for (i = 0; i < p.length - 1; i++){ k = ekey(g, p[i], p[i+1]); b = Math.min(b, cap[k] - flow[k]); }
+    for (i = 0; i < p.length - 1; i++) r.E(p[i], p[i+1], "act");
+    r.rec(foundWord + " " + p.join(" \u2192 ") + ". Its tightest edge has room for " + b + " more unit(s).");
+    total += b;
+    for (i = 0; i < p.length - 1; i++){
+      k = ekey(g, p[i], p[i+1]); flow[k] += b;
+      r.EL(p[i], p[i+1], flow[k] + "/" + cap[k]).E(p[i], p[i+1], flow[k] > 0 ? "flow" : null);
+    }
+    r.rec("Push " + b + " unit(s) along it. Labels show flow/capacity. Total flow: " + total + ".");
+  });
+  return total;
+}
+
+BUILD["ford"] = function(){
+  var g = GFLOW, r = Rec(g);
+  r.N("S", "act").N("T", "act")
+   .rec("Goal: push as much flow as possible from S to T. Edge labels mean flow/capacity. Ford-Fulkerson: repeat \u2014 find ANY path with spare room (here via DFS), fill it.");
+  r.rec("Key trick (residual graph): used capacity can also be pushed BACK. That lets a later path undo part of an earlier greedy choice.");
+  var total = runFlow(r, g, FLOW_PATHS, "DFS finds the path");
+  r.rec("No S\u2192T path with spare room is left: S\u2192A and S\u2192B are both full. Maximum flow = " + total + ".");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["edmonds"] = function(){
+  var g = GFLOW, r = Rec(g);
+  r.N("S", "act").N("T", "act")
+   .rec("Edmonds-Karp is Ford-Fulkerson with one fix: always take the SHORTEST augmenting path (found by BFS). That bounds the number of rounds \u2014 O(V\u00B7E) of them.");
+  var total = runFlow(r, g, FLOW_PATHS, "BFS finds the shortest path");
+  r.rec("BFS finds no more paths with spare room. Maximum flow = " + total + ". Same answer as any Ford-Fulkerson run \u2014 but with a guaranteed running time.");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["dinic"] = function(){
+  var g = GFLOW, r = Rec(g);
+  r.N("S", "act").rec("Dinic works in PHASES. Each phase: (1) label levels with BFS, (2) push a whole 'blocking flow' along level-by-level paths at once.");
+  r.L("S", "L0").L("A", "L1").L("B", "L1").L("C", "L2").L("D", "L2").L("T", "L3");
+  r.N("A", "fr").N("B", "fr").N("C", "vis").N("D", "vis").N("T", "done")
+   .rec("Phase 1, BFS levels: S=0, A,B=1, C,D=2, T=3. Only edges that go one level DOWN (L to L+1) may be used.");
+  var total = runFlow(r, g, FLOW_PATHS, "Blocking-flow DFS finds");
+  r.rec("The level graph is saturated (that was the blocking flow). Phase 1 done with flow " + total + ".");
+  r.N("A", "rej").N("B", "rej")
+   .rec("Phase 2, BFS again on the leftovers: S\u2192A and S\u2192B are full, so T gets NO level. No new phase possible \u2192 stop. Maximum flow = " + total + ".");
+  return { graph: g, steps: r.steps };
+};
+
+BUILD["hopcroft"] = function(){
+  var g = GBIPM, r = Rec(g);
+  r.rec("Bipartite matching: pair left nodes with right nodes, each node in at most ONE pair. Hopcroft-Karp augments along many shortest paths per phase.");
+  ["L1","L2","L3","L4"].forEach(function(id){ r.N(id, "fr"); });
+  r.rec("Phase 1: all left nodes are free (unmatched). Look for shortest augmenting paths \u2014 right now that is a single free edge.");
+  r.N("L1", "done").N("R1", "done").E("L1", "R1", "tree").rec("Match L1\u2013R1.");
+  r.N("L2", "rej").rec("L2's only neighbor R1 is already taken in this phase \u2192 L2 stays free for now.");
+  r.N("L2", "fr");
+  r.N("L3", "done").N("R2", "done").E("L3", "R2", "tree").rec("Match L3\u2013R2.");
+  r.N("L4", "done").N("R3", "done").E("L4", "R3", "tree").rec("Match L4\u2013R3. Phase 1 ends with 3 pairs \u2014 and it grabbed them all in one sweep.");
+  r.rec("Phase 2: L2 is still free. BFS layers the graph in alternating edges: unmatched, matched, unmatched, ... until it hits a free right node (R4).");
+  var pth = [["L2","R1"],["R1","L1"],["L1","R2"],["R2","L3"],["L3","R3"],["R3","L4"],["L4","R4"]];
+  pth.forEach(function(e, i){
+    r.E(e[0], e[1], "act").rec("Augmenting path, edge " + (i+1) + ": " + e[0] + "\u2013" + e[1] + " (" + (i % 2 === 0 ? "unmatched \u2014 will BECOME a pair" : "matched \u2014 will be RELEASED") + ").");
+  });
+  r.rec("The path L2-R1 | L1-R2 | L3-R3 | L4-R4 alternates free/matched edges. FLIP every edge on it: matched becomes free, free becomes matched.");
+  [["L2","R1"],["L1","R2"],["L3","R3"],["L4","R4"]].forEach(function(e){ r.E(e[0], e[1], "path"); r.N(e[0], "path").N(e[1], "path"); });
+  r.E("L1","R1",null).E("L3","R2",null).E("L4","R3",null);
+  r.rec("The flip turned 3 pairs into 4: L2\u2013R1, L1\u2013R2, L3\u2013R3, L4\u2013R4. A perfect matching \u2014 no free node left, so the algorithm stops.");
+  return { graph: g, steps: r.steps };
+};
+</script>
+
+<script>
+/* ---------- algorithm registry ---------- */
+var CATS = {
+  trav:  ["Graph traversal", "#4493f8"],
+  topo:  ["Topological sorting", "#14b8a6"],
+  sp:    ["Shortest path", "#f59e0b"],
+  tree:  ["Trees & spanning trees", "#22c55e"],
+  euler: ["Euler & Hamilton", "#a371f7"],
+  color: ["Graph coloring", "#ec4899"],
+  tsp:   ["Traveling salesman", "#ef4444"],
+  flow:  ["Maximum flow", "#0ea5e9"]
+};
+var ALGOS = [
+  {id:"dfs", cat:"trav", title:"Depth-first search (DFS)", idea:"Go as deep as you can, back up when stuck.",
+   blurb:"DFS uses a stack. It follows one path all the way down, then backs up and tries the next branch. Watch the stack grow and shrink on the right."},
+  {id:"bfs", cat:"trav", title:"Breadth-first search (BFS)", idea:"Visit near nodes first, then move out ring by ring.",
+   blurb:"BFS uses a queue. It visits every neighbor of the start first, then their neighbors, and so on. Yellow nodes are waiting in the queue."},
+  {id:"topo-dfs", cat:"topo", title:"Topological sort (DFS based)", idea:"Finish a node last? Put it first.",
+   blurb:"Run DFS over the whole DAG. Each time a node is fully finished, put it at the FRONT of the order. The result: every edge points forward."},
+  {id:"kahn", cat:"topo", title:"Kahn's algorithm (BFS based)", idea:"Always take a node with no incoming edges left.",
+   blurb:"Count the edges pointing INTO each node (shown under it). Repeatedly take a node with in = 0, place it in the order, and lower the counts of its targets."},
+  {id:"dijkstra", cat:"sp", title:"Dijkstra's algorithm", idea:"Always settle the closest unsettled node.",
+   blurb:"Each node keeps its best known distance from the start (label under it). Each round the closest unfinished node is settled for good (green). Needs non-negative weights."},
+  {id:"bellman", cat:"sp", title:"Bellman-Ford algorithm", idea:"Relax every edge, round after round.",
+   blurb:"Go over ALL edges in rounds. If an edge offers a shorter way to its target, update it. Works even with negative edges, like the -4 edge here."},
+  {id:"floyd", cat:"sp", title:"Floyd-Warshall algorithm", idea:"Every pair, allowing one more middle stop per round.",
+   blurb:"A table holds the best distance for EVERY pair. Round k asks: does going through node k make any pair shorter? Watch the table fill in."},
+  {id:"johnson", cat:"sp", title:"Johnson's algorithm", idea:"Repair negative weights, then run Dijkstra.",
+   blurb:"A helper node Q and one Bellman-Ford run give every node a height h. Re-weighting with h removes all negative edges without changing any shortest path. Then fast Dijkstra runs from every node."},
+  {id:"bfs-sp", cat:"sp", title:"Shortest path, unweighted graph", idea:"BFS already finds it: fewest edges wins.",
+   blurb:"When every edge costs the same, plain BFS reaches each node with the fewest edges. Remember parents, then walk back from the goal to read the path."},
+  {id:"dag-sp", cat:"sp", title:"Shortest path in a DAG", idea:"Sort once, relax each node once.",
+   blurb:"No cycles means no coming back. So: topologically sort, then relax each node's outgoing edges once, in order. One pass beats Dijkstra here."},
+  {id:"astar", cat:"sp", title:"A* algorithm", idea:"Dijkstra with a sense of direction.",
+   blurb:"A* always expands the node with the smallest f = g + h: real cost so far plus a guess of the cost left (grid distance to the goal). The guess pulls the search toward the goal."},
+  {id:"span-tree", cat:"tree", title:"Spanning tree", idea:"Keep only edges that reach a new node.",
+   blurb:"Walk the graph with DFS. Edges that discover a new node join the tree (green); edges that reach an old node would close a cycle and are dropped (red dashed)."},
+  {id:"out-tree", cat:"tree", title:"Graph to out-tree", idea:"Pick a root, point every tree edge away from it.",
+   blurb:"An out-tree (arborescence) has every edge pointing away from one root. BFS from the root and give each discovering edge the direction root \u2192 leaf (see edge labels)."},
+  {id:"prim", cat:"tree", title:"Prim's algorithm", idea:"Grow one tree by the cheapest edge out of it.",
+   blurb:"Start with one node. Each round, of all edges leaving the tree, take the cheapest. The tree grows node by node into the minimum spanning tree."},
+  {id:"kruskal", cat:"tree", title:"Kruskal's algorithm", idea:"Cheapest edge first, but never close a cycle.",
+   blurb:"Sort all edges from cheap to costly. Keep an edge if its two ends are in different groups; drop it if they are already connected. Stop at n - 1 kept edges."},
+  {id:"hierholzer", cat:"euler", title:"Hierholzer's algorithm", idea:"Walk a loop, splice in more loops.",
+   blurb:"An Euler circuit uses every EDGE exactly once; it exists when all degrees are even. Walk any loop, find a node on it with unused edges, walk a second loop there, splice it in."},
+  {id:"ham", cat:"euler", title:"Hamiltonian cycle (backtracking)", idea:"Visit every node once; undo bad choices.",
+   blurb:"A Hamiltonian cycle visits every NODE exactly once and returns home. No fast rule exists, so we extend a path step by step and backtrack whenever we get stuck."},
+  {id:"bipartite", cat:"color", title:"2-colorability (bipartite check)", idea:"Two colors, neighbors always different.",
+   blurb:"BFS-color the graph: red, then blue, then red... If an edge ever joins two same-colored nodes, 2 colors are impossible. That happens exactly on odd cycles \u2014 like the 5-ring."},
+  {id:"kcolor", cat:"color", title:"k-colorability (backtracking)", idea:"Try colors one by one; undo when stuck.",
+   blurb:"Can 3 colors do it? Go node by node, trying the lowest legal color. When a node has no legal color, back up and recolor an earlier node. Watch D switch to unblock E."},
+  {id:"greedy-color", cat:"color", title:"Greedy coloring", idea:"In plain order, take the lowest free color.",
+   blurb:"Visit nodes in the order A, B, C, ... and give each one the smallest color number its neighbors do not already use. Fast, simple, order-dependent."},
+  {id:"welsh", cat:"color", title:"Welsh-Powell heuristic", idea:"Busiest nodes first, one color class at a time.",
+   blurb:"Sort nodes by degree, biggest first. Give color 1 to every node (in that order) that has no color-1 neighbor. Then repeat with color 2, and so on."},
+  {id:"dsatur", cat:"color", title:"DSatur heuristic", idea:"Color the most squeezed node next.",
+   blurb:"Saturation (label s) = how many DIFFERENT colors a node's neighbors already use. Always color the node with the highest saturation \u2014 the one running out of options."},
+  {id:"tsp-brute", cat:"tsp", title:"TSP \u2014 brute force", idea:"Try every possible tour.",
+   blurb:"With 4 cities there are only 3! = 6 tours from A. Check all of them, keep the best. Exact, but the count explodes: n cities mean (n-1)! tours."},
+  {id:"tsp-back", cat:"tsp", title:"TSP \u2014 backtracking", idea:"Cut a branch as soon as it cannot win.",
+   blurb:"Build tours step by step, but PRUNE: the moment a partial path costs as much as the best finished tour, skip that whole branch. Exact, often much faster than brute force."},
+  {id:"tsp-dp", cat:"tsp", title:"TSP \u2014 dynamic programming", idea:"Solve small city-sets once, reuse them.",
+   blurb:"Held-Karp: dp[set, end] = cheapest path from A visiting exactly 'set' and stopping at 'end'. Build from small sets to big ones. O(2^n \u00B7 n\u00B2) \u2014 heavy but far better than n!."},
+  {id:"tsp-nn", cat:"tsp", title:"TSP \u2014 Nearest Neighbor", idea:"Always ride to the closest unvisited city.",
+   blurb:"A greedy heuristic: from the current city go to the nearest unvisited one, then home at the end. Very fast, usually decent, no quality promise."},
+  {id:"tsp-edges", cat:"tsp", title:"TSP \u2014 Sorted Edges", idea:"Cheapest edges first, tour rules enforced.",
+   blurb:"Take edges cheap-to-costly like Kruskal, but: no city may touch 3 tour edges, and no small loop may close early. The kept edges form the tour."},
+  {id:"christofides", cat:"tsp", title:"Christofides algorithm", idea:"Tree + matching + Euler walk = tour with a promise.",
+   blurb:"MST, then pair the odd-degree nodes with a cheapest matching, walk the Euler circuit, shortcut repeats. The tour is guaranteed \u2264 1.5\u00D7 the optimal one."},
+  {id:"ford", cat:"flow", title:"Ford-Fulkerson algorithm", idea:"Find a path with spare room, fill it, repeat.",
+   blurb:"Push flow from S to T. Any path with leftover capacity gets filled (DFS finds one). The residual trick lets later paths undo earlier greedy choices."},
+  {id:"edmonds", cat:"flow", title:"Edmonds-Karp algorithm", idea:"Ford-Fulkerson, but always the shortest path.",
+   blurb:"Same idea as Ford-Fulkerson, but BFS always picks the SHORTEST augmenting path. That small rule guarantees a polynomial running time, O(V\u00B7E\u00B2)."},
+  {id:"dinic", cat:"flow", title:"Dinic's algorithm", idea:"Level the graph, push a blocking flow, repeat.",
+   blurb:"Each phase: BFS gives every node a level, then one sweep pushes flow along ALL level-by-level paths at once (a blocking flow). Few phases, fast: O(V\u00B2E)."},
+  {id:"hopcroft", cat:"flow", title:"Hopcroft-Karp algorithm", idea:"Match many augmenting paths per phase.",
+   blurb:"Bipartite matching as a flow problem. Each phase finds a whole batch of shortest augmenting paths and flips them all. Only O(\u221AV) phases are ever needed."}
+];
+
+/* ---------- viewer ---------- */
+var current = -1, player = null;
+var viewer = document.getElementById("viewer");
+function show(i){
+  current = ((i % ALGOS.length) + ALGOS.length) % ALGOS.length;
+  var a = ALGOS[current];
+  if (player) player.stop();
+  viewer.className = "card cat-" + a.cat;
+  document.getElementById("vNum").textContent = current + 1;
+  document.getElementById("vTitle").textContent = a.title;
+  document.getElementById("vIdea").textContent = a.idea;
+  document.getElementById("vCat").textContent = CATS[a.cat][0];
+  document.getElementById("vPos").textContent = (current + 1) + " / " + ALGOS.length;
+  document.getElementById("vBlurb").textContent = a.blurb;
+  if (typeof renderJava === "function") renderJava(a);
+  var mount = document.getElementById("vAnim");
+  try { player = mkPlayer(mount, BUILD[a.id]()); }
+  catch (err){ mount.innerHTML = ""; mount.textContent = "Could not build this animation: " + err.message; player = null; }
+  document.querySelectorAll("#sideMenu button[data-idx]").forEach(function(b){
+    b.classList.toggle("active", parseInt(b.dataset.idx, 10) === current);
+  });
+  try {
+    localStorage.setItem("gaa_alg", a.id);
+    history.replaceState(null, "", "#" + a.id);
+  } catch (e) {}
+  viewer.classList.add("flash");
+  setTimeout(function(){ viewer.classList.remove("flash"); }, 400);
+}
+
+/* ---------- hamburger menu (algorithm switcher) ---------- */
+var menu = document.getElementById("sideMenu");
+var overlay = document.getElementById("menuOverlay");
+var burger = document.getElementById("hamburger");
+(function buildMenu(){
+  var lastCat = null;
+  ALGOS.forEach(function(a, i){
+    if (a.cat !== lastCat){
+      lastCat = a.cat;
+      var h = document.createElement("div");
+      h.className = "mcat"; h.textContent = CATS[a.cat][0];
+      h.style.color = CATS[a.cat][1];
+      menu.appendChild(h);
+    }
+    var b = document.createElement("button");
+    b.textContent = (i + 1) + ". " + a.title;
+    b.dataset.idx = i;
+    b.style.borderLeftColor = CATS[a.cat][1];
+    b.onclick = function(){ show(i); closeMenu(); };
+    menu.appendChild(b);
+  });
+})();
+function openMenu(){ menu.classList.add("open"); overlay.classList.add("open"); burger.innerHTML = "&#10005;"; }
+function closeMenu(){ menu.classList.remove("open"); overlay.classList.remove("open"); burger.innerHTML = "&#9776;"; }
+burger.onclick = function(){ menu.classList.contains("open") ? closeMenu() : openMenu(); };
+overlay.onclick = closeMenu;
+document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeMenu(); });
+
+/* ---------- prev / next + arrow keys ---------- */
+document.getElementById("prevAlg").onclick = function(){ show(current - 1); };
+document.getElementById("nextAlg").onclick = function(){ show(current + 1); };
+document.addEventListener("keydown", function(e){
+  var t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
+  if (e.key === "ArrowLeft"){ e.preventDefault(); show(current - 1); }
+  if (e.key === "ArrowRight"){ e.preventDefault(); show(current + 1); }
+});
+
+/* ---------- theme (light default, saved) ---------- */
+var themeBtn = document.getElementById("themeToggle");
+function setTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.innerHTML = (t === "dark") ? "&#9788;" : "&#9790;";
+  try { localStorage.setItem("gaa_theme", t); } catch (e) {}
+}
+themeBtn.onclick = function(){
+  setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+};
+setTheme("dark"); // always open in dark mode; the toggle still works for this visit
+
+/* ---------- start ---------- */
+var startId = (location.hash || "").replace("#", "");
+var savedAlg = null;
+try { savedAlg = localStorage.getItem("gaa_alg"); } catch (e) {}
+var startIdx = ALGOS.findIndex(function(a){ return a.id === startId; });
+if (startIdx < 0) startIdx = ALGOS.findIndex(function(a){ return a.id === savedAlg; });
+if (startIdx < 0) startIdx = 0;
+show(startIdx);
+</script>
+
+<script>
+/* ---------- Java code, part 1: traversal, topo sort, shortest path ---------- */
+var JAVA = {};
+
+JAVA["dfs"] = `void dfs(List<List<Integer>> adj, int u, boolean[] seen) {
+    seen[u] = true;                      // mark u as visited
+    System.out.println("visit " + u);
+    for (int v : adj.get(u))             // every neighbor of u
+        if (!seen[v])
+            dfs(adj, v, seen);           // go deeper first
+    // backing up happens by itself when the call returns
+}`;
+
+JAVA["bfs"] = `void bfs(List<List<Integer>> adj, int start) {
+    boolean[] seen = new boolean[adj.size()];
+    Queue<Integer> q = new ArrayDeque<>();
+    seen[start] = true;
+    q.add(start);
+    while (!q.isEmpty()) {
+        int u = q.poll();                // take from the FRONT
+        System.out.println("visit " + u);
+        for (int v : adj.get(u))
+            if (!seen[v]) {              // discover a new node
+                seen[v] = true;
+                q.add(v);                // it waits at the back
+            }
+    }
+}`;
+
+JAVA["topo-dfs"] = `Deque<Integer> order = new ArrayDeque<>();
+
+List<Integer> topoSort(List<List<Integer>> adj) {
+    boolean[] seen = new boolean[adj.size()];
+    for (int s = 0; s < adj.size(); s++)
+        if (!seen[s]) dfs(adj, s, seen); // cover every node
+    return new ArrayList<>(order);       // front first
+}
+
+void dfs(List<List<Integer>> adj, int u, boolean[] seen) {
+    seen[u] = true;
+    for (int v : adj.get(u))
+        if (!seen[v]) dfs(adj, v, seen);
+    order.addFirst(u);                   // finished LAST -> placed FIRST
+}`;
+
+JAVA["kahn"] = `List<Integer> kahn(List<List<Integer>> adj) {
+    int n = adj.size();
+    int[] indeg = new int[n];
+    for (List<Integer> out : adj)
+        for (int v : out) indeg[v]++;    // count incoming edges
+    Queue<Integer> q = new ArrayDeque<>();
+    for (int u = 0; u < n; u++)
+        if (indeg[u] == 0) q.add(u);     // free nodes start in the queue
+    List<Integer> order = new ArrayList<>();
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        order.add(u);
+        for (int v : adj.get(u))
+            if (--indeg[v] == 0)         // remove u's outgoing edges
+                q.add(v);                // v just became free
+    }
+    if (order.size() < n)
+        throw new IllegalStateException("graph has a cycle");
+    return order;
+}`;
+
+JAVA["dijkstra"] = `int[] dijkstra(List<int[]>[] adj, int src) { // adj[u] = list of {v, w}
+    int n = adj.length;
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+    boolean[] done = new boolean[n];
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
+    pq.add(new int[]{src, 0});
+    while (!pq.isEmpty()) {
+        int u = pq.poll()[0];
+        if (done[u]) continue;
+        done[u] = true;                  // settled for good
+        for (int[] e : adj[u]) {
+            int v = e[0], w = e[1];
+            if (dist[u] + w < dist[v]) { // relax the edge
+                dist[v] = dist[u] + w;
+                pq.add(new int[]{v, dist[v]});
+            }
+        }
+    }
+    return dist;                         // needs weights >= 0
+}`;
+
+JAVA["bellman"] = `int[] bellmanFord(int n, List<int[]> edges, int src) { // edge = {u, v, w}
+    int[] dist = new int[n];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+    for (int round = 1; round <= n - 1; round++) {
+        boolean changed = false;
+        for (int[] e : edges)            // relax ALL edges each round
+            if (dist[e[0]] != Integer.MAX_VALUE
+                    && dist[e[0]] + e[2] < dist[e[1]]) {
+                dist[e[1]] = dist[e[0]] + e[2];
+                changed = true;
+            }
+        if (!changed) break;             // nothing moved -> done early
+    }
+    for (int[] e : edges)                // one extra check round:
+        if (dist[e[0]] != Integer.MAX_VALUE
+                && dist[e[0]] + e[2] < dist[e[1]])
+            throw new IllegalStateException("negative cycle!");
+    return dist;                         // negative EDGES are fine
+}`;
+
+JAVA["floyd"] = `int[][] floydWarshall(int[][] d) { // d[i][j] = direct edge, else INF
+    int n = d.length;                    // use INF = Integer.MAX_VALUE / 2
+    for (int k = 0; k < n; k++)          // allowed middle stop
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (d[i][k] + d[k][j] < d[i][j])
+                    d[i][j] = d[i][k] + d[k][j]; // shorter through k
+    return d;                            // every pair, O(n^3)
+}`;
+
+JAVA["johnson"] = `int[][] johnson(int n, List<int[]> edges) {
+    // 1) helper node q (index n) with a 0-cost edge to every node
+    List<int[]> plus = new ArrayList<>(edges);
+    for (int v = 0; v < n; v++) plus.add(new int[]{n, v, 0});
+    // 2) ONE Bellman-Ford from q gives each node a height h
+    int[] h = bellmanFord(n + 1, plus, n);
+    // 3) re-weight: w2 = w + h[u] - h[v]  -> never negative
+    List<int[]>[] adj = new List[n];
+    for (int i = 0; i < n; i++) adj[i] = new ArrayList<>();
+    for (int[] e : edges)
+        adj[e[0]].add(new int[]{e[1], e[2] + h[e[0]] - h[e[1]]});
+    // 4) fast Dijkstra from EVERY node on the safe weights
+    int[][] dist = new int[n][];
+    for (int s = 0; s < n; s++) dist[s] = dijkstra(adj, s);
+    // 5) convert back: real = dist2 - h[u] + h[v]
+    for (int u = 0; u < n; u++)
+        for (int v = 0; v < n; v++)
+            if (dist[u][v] != Integer.MAX_VALUE)
+                dist[u][v] += h[v] - h[u];
+    return dist;
+}`;
+
+JAVA["bfs-sp"] = `List<Integer> shortestPath(List<List<Integer>> adj, int s, int t) {
+    int[] parent = new int[adj.size()];
+    Arrays.fill(parent, -1);
+    boolean[] seen = new boolean[adj.size()];
+    Queue<Integer> q = new ArrayDeque<>();
+    seen[s] = true;
+    q.add(s);
+    while (!q.isEmpty()) {               // plain BFS...
+        int u = q.poll();
+        for (int v : adj.get(u))
+            if (!seen[v]) {
+                seen[v] = true;
+                parent[v] = u;           // ...but remember the parent
+                q.add(v);
+            }
+    }
+    LinkedList<Integer> path = new LinkedList<>();
+    for (int x = t; x != -1; x = parent[x])
+        path.addFirst(x);                // walk back from the goal
+    return path;                         // fewest edges possible
+}`;
+
+JAVA["dag-sp"] = `int[] dagShortestPath(List<int[]>[] adj, List<Integer> topo, int src) {
+    int[] dist = new int[adj.length];    // adj[u] = list of {v, w}
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[src] = 0;
+    for (int u : topo) {                 // ONE pass, in topological order
+        if (dist[u] == Integer.MAX_VALUE) continue; // unreachable
+        for (int[] e : adj[u])
+            if (dist[u] + e[1] < dist[e[0]])
+                dist[e[0]] = dist[u] + e[1];  // relax once, never again
+    }
+    return dist;                         // works because a DAG cannot loop back
+}`;
+
+JAVA["astar"] = `int aStar(List<int[]>[] adj, int s, int t, int[] h) { // h = guess to goal
+    int n = adj.length;
+    int[] g = new int[n];                // real cost so far
+    Arrays.fill(g, Integer.MAX_VALUE);
+    g[s] = 0;
+    boolean[] closed = new boolean[n];
+    PriorityQueue<int[]> open = new PriorityQueue<>((a, b) -> a[1] - b[1]);
+    open.add(new int[]{s, h[s]});        // sorted by f = g + h
+    while (!open.isEmpty()) {
+        int u = open.poll()[0];
+        if (u == t) return g[t];         // goal expanded -> shortest found
+        if (closed[u]) continue;
+        closed[u] = true;
+        for (int[] e : adj[u]) {
+            int v = e[0], w = e[1];
+            if (g[u] + w < g[v]) {
+                g[v] = g[u] + w;
+                open.add(new int[]{v, g[v] + h[v]}); // guess pulls to goal
+            }
+        }
+    }
+    return -1;                           // h must never OVERestimate
+}`;
+</script>
+
+<script>
+/* ---------- Java code, part 2: trees, Euler/Hamilton, coloring ---------- */
+JAVA["span-tree"] = `List<int[]> spanningTree(List<List<Integer>> adj) {
+    List<int[]> tree = new ArrayList<>();
+    boolean[] seen = new boolean[adj.size()];
+    dfs(adj, 0, seen, tree);
+    return tree;                         // n - 1 edges, no cycles
+}
+
+void dfs(List<List<Integer>> adj, int u, boolean[] seen, List<int[]> tree) {
+    seen[u] = true;
+    for (int v : adj.get(u))
+        if (!seen[v]) {
+            tree.add(new int[]{u, v});   // reached a NEW node -> keep edge
+            dfs(adj, v, seen, tree);
+        }                                // old node -> would close a cycle
+}`;
+
+JAVA["out-tree"] = `List<int[]> toOutTree(List<List<Integer>> adj, int root) {
+    List<int[]> edges = new ArrayList<>(); // each {from, to}, from = parent
+    boolean[] seen = new boolean[adj.size()];
+    Queue<Integer> q = new ArrayDeque<>();
+    seen[root] = true;
+    q.add(root);
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        for (int v : adj.get(u))
+            if (!seen[v]) {
+                seen[v] = true;
+                edges.add(new int[]{u, v}); // points AWAY from the root
+                q.add(v);
+            }
+    }
+    return edges;                        // an out-tree (arborescence)
+}`;
+
+JAVA["prim"] = `int prim(List<int[]>[] adj) {             // adj[u] = list of {v, w}
+    int n = adj.length, total = 0, taken = 0;
+    boolean[] inTree = new boolean[n];
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
+    pq.add(new int[]{0, 0});             // start the tree at node 0
+    while (taken < n && !pq.isEmpty()) {
+        int[] e = pq.poll();             // cheapest edge leaving the tree
+        int u = e[0];
+        if (inTree[u]) continue;         // both ends inside -> skip
+        inTree[u] = true;
+        total += e[1];
+        taken++;
+        for (int[] nb : adj[u])
+            if (!inTree[nb[0]])
+                pq.add(new int[]{nb[0], nb[1]});
+    }
+    return total;                        // minimum spanning tree weight
+}`;
+
+JAVA["kruskal"] = `int[] parent;
+int find(int x) {                        // union-find with path shortening
+    return parent[x] == x ? x : (parent[x] = find(parent[x]));
+}
+
+int kruskal(int n, List<int[]> edges) {  // edge = {u, v, w}
+    edges.sort((a, b) -> a[2] - b[2]);   // cheap first
+    parent = new int[n];
+    for (int i = 0; i < n; i++) parent[i] = i;
+    int total = 0, kept = 0;
+    for (int[] e : edges) {
+        int ru = find(e[0]), rv = find(e[1]);
+        if (ru == rv) continue;          // already connected -> cycle -> drop
+        parent[ru] = rv;                 // join the two groups
+        total += e[2];
+        if (++kept == n - 1) break;      // tree complete
+    }
+    return total;
+}`;
+
+JAVA["hierholzer"] = `List<Integer> eulerCircuit(Map<Integer, Deque<Integer>> adj, int start) {
+    // works when EVERY node has an even number of edges
+    Deque<Integer> stack = new ArrayDeque<>();
+    LinkedList<Integer> circuit = new LinkedList<>();
+    stack.push(start);
+    while (!stack.isEmpty()) {
+        int u = stack.peek();
+        if (!adj.get(u).isEmpty()) {
+            int v = adj.get(u).poll();   // use edge u-v ...
+            adj.get(v).remove(Integer.valueOf(u)); // ... exactly once
+            stack.push(v);               // keep walking the loop
+        } else {
+            circuit.addFirst(stack.pop()); // stuck -> splice happens here
+        }
+    }
+    return circuit;                      // every edge used exactly once
+}`;
+
+JAVA["ham"] = `boolean hamCycle(boolean[][] adj, int[] path, boolean[] used, int pos) {
+    int n = adj.length;
+    if (pos == n)                        // all nodes are on the path:
+        return adj[path[n - 1]][path[0]];  // can we close the loop?
+    int u = path[pos - 1];
+    for (int v = 1; v < n; v++) {
+        if (used[v] || !adj[u][v]) continue;
+        path[pos] = v;                   // try v
+        used[v] = true;
+        if (hamCycle(adj, path, used, pos + 1)) return true;
+        used[v] = false;                 // BACKTRACK: undo v, try another
+    }
+    return false;
+}
+// start with: path[0] = 0; used[0] = true; call pos = 1
+`;
+
+JAVA["bipartite"] = `boolean isBipartite(List<List<Integer>> adj) {
+    int n = adj.size();
+    int[] color = new int[n];            // 0 = none, 1 and 2 = the colors
+    for (int s = 0; s < n; s++) {        // every component
+        if (color[s] != 0) continue;
+        color[s] = 1;
+        Queue<Integer> q = new ArrayDeque<>();
+        q.add(s);
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            for (int v : adj.get(u)) {
+                if (color[v] == 0) {
+                    color[v] = 3 - color[u]; // the OTHER color
+                    q.add(v);
+                } else if (color[v] == color[u])
+                    return false;        // same color meets -> odd cycle
+            }
+        }
+    }
+    return true;                         // 2 colors were enough
+}`;
+
+JAVA["kcolor"] = `boolean kColor(boolean[][] adj, int[] color, int u, int k) {
+    int n = adj.length;
+    if (u == n) return true;             // every node got a color
+    for (int c = 1; c <= k; c++) {
+        boolean ok = true;
+        for (int v = 0; v < n; v++)
+            if (adj[u][v] && color[v] == c) ok = false; // neighbor uses c
+        if (!ok) continue;
+        color[u] = c;                    // try color c on u
+        if (kColor(adj, color, u + 1, k)) return true;
+        color[u] = 0;                    // BACKTRACK: c blocked someone later
+    }
+    return false;                        // nothing legal -> go back a node
+}`;
+
+JAVA["greedy-color"] = `int[] greedyColoring(List<List<Integer>> adj) {
+    int n = adj.size();
+    int[] color = new int[n];            // 0 = not colored yet
+    for (int u = 0; u < n; u++) {        // plain order 0, 1, 2, ...
+        boolean[] taken = new boolean[n + 2];
+        for (int v : adj.get(u))
+            if (color[v] > 0) taken[color[v]] = true;
+        int c = 1;
+        while (taken[c]) c++;            // lowest color no neighbor uses
+        color[u] = c;
+    }
+    return color;                        // fast, but order-dependent
+}`;
+
+JAVA["welsh"] = `int[] welshPowell(List<List<Integer>> adj) {
+    int n = adj.size();
+    Integer[] order = new Integer[n];
+    for (int i = 0; i < n; i++) order[i] = i;
+    Arrays.sort(order, (a, b) ->         // biggest degree first
+        adj.get(b).size() - adj.get(a).size());
+    int[] color = new int[n];
+    int c = 0, colored = 0;
+    while (colored < n) {
+        c++;                             // open the next color class
+        for (int u : order) {
+            if (color[u] != 0) continue;
+            boolean ok = true;
+            for (int v : adj.get(u))
+                if (color[v] == c) ok = false;
+            if (ok) { color[u] = c; colored++; } // u joins class c
+        }
+    }
+    return color;
+}`;
+
+JAVA["dsatur"] = `int[] dsatur(List<List<Integer>> adj) {
+    int n = adj.size();
+    int[] color = new int[n];
+    Set<Integer>[] around = new HashSet[n]; // colors already next to a node
+    for (int i = 0; i < n; i++) around[i] = new HashSet<>();
+    for (int step = 0; step < n; step++) {
+        int pick = -1;                   // most SQUEEZED uncolored node:
+        for (int u = 0; u < n; u++) {    // highest saturation, then degree
+            if (color[u] != 0) continue;
+            if (pick == -1
+                || around[u].size() > around[pick].size()
+                || (around[u].size() == around[pick].size()
+                    && adj.get(u).size() > adj.get(pick).size()))
+                pick = u;
+        }
+        int c = 1;
+        while (around[pick].contains(c)) c++; // lowest legal color
+        color[pick] = c;
+        for (int v : adj.get(pick))
+            around[v].add(c);            // neighbors get more squeezed
+    }
+    return color;
+}`;
+</script>
+
+<script>
+/* ---------- Java code, part 3: TSP + maximum flow ---------- */
+JAVA["tsp-brute"] = `int best = Integer.MAX_VALUE;
+
+void bruteForce(int[][] d, int[] tour, boolean[] used, int pos, int len) {
+    int n = d.length;
+    if (pos == n) {                      // tour complete -> close it home
+        best = Math.min(best, len + d[tour[n - 1]][0]);
+        return;
+    }
+    for (int v = 1; v < n; v++) {        // try EVERY next city
+        if (used[v]) continue;
+        used[v] = true;
+        tour[pos] = v;
+        bruteForce(d, tour, used, pos + 1, len + d[tour[pos - 1]][v]);
+        used[v] = false;
+    }
+}
+// start: tour[0] = 0; used[0] = true; pos = 1; len = 0
+// exact, but (n-1)! tours -> explodes fast`;
+
+JAVA["tsp-back"] = `int best = Integer.MAX_VALUE;
+
+void backtrack(int[][] d, int[] tour, boolean[] used, int pos, int len) {
+    if (len >= best) return;             // PRUNE: cannot win anymore
+    int n = d.length;
+    if (pos == n) {
+        best = Math.min(best, len + d[tour[n - 1]][0]);
+        return;
+    }
+    for (int v = 1; v < n; v++) {
+        if (used[v]) continue;
+        used[v] = true;
+        tour[pos] = v;
+        backtrack(d, tour, used, pos + 1, len + d[tour[pos - 1]][v]);
+        used[v] = false;                 // undo, try the next city
+    }
+}
+// same as brute force + one pruning line -> often MUCH faster`;
+
+JAVA["tsp-dp"] = `int heldKarp(int[][] d) {                // Held-Karp, O(2^n * n^2)
+    int n = d.length, FULL = 1 << (n - 1); // bit i = city i+1 visited
+    int INF = Integer.MAX_VALUE / 2;
+    int[][] dp = new int[FULL][n];
+    for (int[] row : dp) Arrays.fill(row, INF);
+    for (int v = 1; v < n; v++)
+        dp[1 << (v - 1)][v] = d[0][v];   // base: ride 0 -> v
+    for (int set = 1; set < FULL; set++)
+        for (int end = 1; end < n; end++) {
+            if ((set & (1 << (end - 1))) == 0 || dp[set][end] >= INF) continue;
+            for (int nxt = 1; nxt < n; nxt++) {   // extend the set by nxt
+                if ((set & (1 << (nxt - 1))) != 0) continue;
+                int ns = set | (1 << (nxt - 1));
+                dp[ns][nxt] = Math.min(dp[ns][nxt],
+                                       dp[set][end] + d[end][nxt]);
+            }
+        }
+    int best = Integer.MAX_VALUE;
+    for (int end = 1; end < n; end++)    // close the tour back to city 0
+        best = Math.min(best, dp[FULL - 1][end] + d[end][0]);
+    return best;
+}`;
+
+JAVA["tsp-nn"] = `int nearestNeighbor(int[][] d) {
+    int n = d.length, u = 0, total = 0;
+    boolean[] used = new boolean[n];
+    used[0] = true;
+    for (int step = 1; step < n; step++) {
+        int pick = -1;
+        for (int v = 0; v < n; v++)      // closest city not visited yet
+            if (!used[v] && (pick == -1 || d[u][v] < d[u][pick]))
+                pick = v;
+        used[pick] = true;
+        total += d[u][pick];
+        u = pick;                        // ride there
+    }
+    return total + d[u][0];              // ride home; fast, no promise
+}`;
+
+JAVA["tsp-edges"] = `int[] parent;
+int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }
+
+int sortedEdges(int n, List<int[]> edges) { // edge = {u, v, w}
+    edges.sort((a, b) -> a[2] - b[2]);   // cheap first, like Kruskal
+    parent = new int[n];
+    for (int i = 0; i < n; i++) parent[i] = i;
+    int[] deg = new int[n];
+    int total = 0, kept = 0;
+    for (int[] e : edges) {
+        if (kept == n) break;            // a full tour has n edges
+        if (deg[e[0]] == 2 || deg[e[1]] == 2)
+            continue;                    // a city may touch only 2 edges
+        boolean sameGroup = find(e[0]) == find(e[1]);
+        if (sameGroup && kept < n - 1)
+            continue;                    // would close a SMALL loop early
+        parent[find(e[0])] = find(e[1]);
+        deg[e[0]]++; deg[e[1]]++;
+        total += e[2];
+        kept++;
+    }
+    return total;
+}`;
+
+JAVA["christofides"] = `int christofides(int[][] d) {    // needs the triangle rule
+    // 1) minimum spanning tree (Prim or Kruskal)
+    List<int[]> mst = minimumSpanningTree(d);
+    // 2) nodes with an ODD number of tree edges (always evenly many)
+    List<Integer> odd = oddDegreeNodes(mst, d.length);
+    // 3) cheapest perfect matching among the odd nodes
+    List<int[]> match = minWeightPerfectMatching(odd, d);
+    // 4) tree + matching -> all degrees even -> Euler circuit exists
+    List<Integer> euler = eulerCircuit(union(mst, match));
+    // 5) shortcut: walk the circuit, skip cities already visited
+    List<Integer> tour = new ArrayList<>();
+    boolean[] seen = new boolean[d.length];
+    for (int u : euler)
+        if (!seen[u]) { seen[u] = true; tour.add(u); }
+    tour.add(tour.get(0));
+    return tourLength(tour, d);          // guaranteed <= 1.5 x optimal
+}`;
+
+JAVA["ford"] = `int maxFlow(int[][] cap, int s, int t) { // cap = capacity matrix
+    int total = 0;
+    while (true) {
+        int pushed = dfs(cap, s, t, Integer.MAX_VALUE,
+                         new boolean[cap.length]);
+        if (pushed == 0) return total;   // no path with room left
+        total += pushed;
+    }
+}
+
+int dfs(int[][] cap, int u, int t, int room, boolean[] seen) {
+    if (u == t) return room;
+    seen[u] = true;
+    for (int v = 0; v < cap.length; v++) {
+        if (seen[v] || cap[u][v] <= 0) continue;
+        int pushed = dfs(cap, v, t, Math.min(room, cap[u][v]), seen);
+        if (pushed > 0) {
+            cap[u][v] -= pushed;         // use the edge
+            cap[v][u] += pushed;         // residual: lets us UNDO later
+            return pushed;
+        }
+    }
+    return 0;
+}`;
+
+JAVA["edmonds"] = `int edmondsKarp(int[][] cap, int s, int t) {
+    int n = cap.length, total = 0;
+    while (true) {
+        int[] parent = new int[n];       // BFS -> SHORTEST path with room
+        Arrays.fill(parent, -1);
+        parent[s] = s;
+        Queue<Integer> q = new ArrayDeque<>();
+        q.add(s);
+        while (!q.isEmpty() && parent[t] == -1) {
+            int u = q.poll();
+            for (int v = 0; v < n; v++)
+                if (parent[v] == -1 && cap[u][v] > 0) {
+                    parent[v] = u;
+                    q.add(v);
+                }
+        }
+        if (parent[t] == -1) return total; // T unreachable -> done
+        int b = Integer.MAX_VALUE;       // bottleneck of the path
+        for (int v = t; v != s; v = parent[v])
+            b = Math.min(b, cap[parent[v]][v]);
+        for (int v = t; v != s; v = parent[v]) {
+            cap[parent[v]][v] -= b;
+            cap[v][parent[v]] += b;      // residual back-edge
+        }
+        total += b;                      // shortest-path rule -> O(V*E^2)
+    }
+}`;
+
+JAVA["dinic"] = `int[] level, next;
+
+int dinic(int[][] cap, int s, int t) {
+    int total = 0;
+    while (bfsLevels(cap, s, t)) {       // one PHASE per level graph
+        next = new int[cap.length];
+        int pushed;
+        while ((pushed = dfsBlock(cap, s, t, Integer.MAX_VALUE)) > 0)
+            total += pushed;             // fill the whole blocking flow
+    }
+    return total;                        // O(V^2 * E)
+}
+
+boolean bfsLevels(int[][] cap, int s, int t) {
+    level = new int[cap.length];
+    Arrays.fill(level, -1);
+    level[s] = 0;
+    Queue<Integer> q = new ArrayDeque<>();
+    q.add(s);
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        for (int v = 0; v < cap.length; v++)
+            if (level[v] == -1 && cap[u][v] > 0) {
+                level[v] = level[u] + 1;
+                q.add(v);
+            }
+    }
+    return level[t] != -1;               // false -> no more phases
+}
+
+int dfsBlock(int[][] cap, int u, int t, int room) {
+    if (u == t) return room;
+    for (; next[u] < cap.length; next[u]++) { // skip dead edges forever
+        int v = next[u];
+        if (cap[u][v] <= 0 || level[v] != level[u] + 1) continue;
+        int pushed = dfsBlock(cap, v, t, Math.min(room, cap[u][v]));
+        if (pushed > 0) {
+            cap[u][v] -= pushed;
+            cap[v][u] += pushed;
+            return pushed;
+        }
+    }
+    return 0;
+}`;
+
+JAVA["hopcroft"] = `int[] matchL, matchR, dist;
+
+int hopcroftKarp(List<List<Integer>> adj, int nL, int nR) {
+    matchL = new int[nL]; matchR = new int[nR];
+    Arrays.fill(matchL, -1); Arrays.fill(matchR, -1);
+    int pairs = 0;
+    while (bfs(adj, nL))                 // layer the graph (one phase)
+        for (int u = 0; u < nL; u++)
+            if (matchL[u] == -1 && dfs(adj, u))
+                pairs++;                 // many flips per phase
+    return pairs;                        // only O(sqrt(V)) phases needed
+}
+
+boolean bfs(List<List<Integer>> adj, int nL) {
+    dist = new int[nL];
+    Queue<Integer> q = new ArrayDeque<>();
+    boolean foundFree = false;
+    for (int u = 0; u < nL; u++) {
+        dist[u] = (matchL[u] == -1) ? 0 : -1; // start from free lefts
+        if (dist[u] == 0) q.add(u);
+    }
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        for (int r : adj.get(u)) {
+            int w = matchR[r];           // follow the matched edge back
+            if (w == -1) foundFree = true;      // a free right node!
+            else if (dist[w] == -1) { dist[w] = dist[u] + 1; q.add(w); }
+        }
+    }
+    return foundFree;
+}
+
+boolean dfs(List<List<Integer>> adj, int u) {
+    for (int r : adj.get(u)) {
+        int w = matchR[r];
+        if (w == -1 || (dist[w] == dist[u] + 1 && dfs(adj, w))) {
+            matchL[u] = r;               // FLIP the path edges
+            matchR[r] = u;
+            return true;
+        }
+    }
+    dist[u] = -1;                        // dead for this phase
+    return false;
+}`;
+
+/* ---------- simple Java syntax coloring + renderer ---------- */
+function hi(src){
+  var esc = src.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return esc.replace(
+    /(\/\/[^\n]*)|("(?:[^"\\]|\\.)*")|\b(int|void|new|return|if|else|for|while|boolean|true|false|null|static|class|public|private|final|import|break|continue|this|throw|throws|char|double|long|var)\b|\b([A-Z][A-Za-z0-9_]*)\b|\b(\d+)\b/g,
+    function(m, cmt, str, kw, typ, num){
+      if (cmt) return '<span class="cmt">' + cmt + '</span>';
+      if (str) return '<span class="str">' + str + '</span>';
+      if (kw)  return '<span class="kw">'  + kw  + '</span>';
+      if (typ) return '<span class="typ">' + typ + '</span>';
+      if (num) return '<span class="num">' + num + '</span>';
+      return m;
+    });
+}
+function renderJava(a){
+  var box = document.getElementById("codeBox");
+  var pre = document.getElementById("codePre");
+  var src = (typeof JAVA !== "undefined") ? JAVA[a.id] : null;
+  if (!src){ box.style.display = "none"; return; }
+  box.style.display = "";
+  pre.innerHTML = hi(src);
+}
+if (typeof document !== "undefined" && document.getElementById && document.getElementById("codeBox"))
+  renderJava(ALGOS[current]);
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>
