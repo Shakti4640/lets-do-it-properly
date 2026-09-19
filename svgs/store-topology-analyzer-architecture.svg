@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3400 2620" width="6800" height="5240" preserveAspectRatio="xMidYMid meet" font-family="'Segoe UI', Arial, sans-serif">
+  <!-- ============================================================= -->
+  <!-- Store Topology Analyzer (CCC Topology Optimizer v2.1)         -->
+  <!-- Python: CLI + Streamlit web over one shared engine            -->
+  <!-- Regions: Package tree | Layered modules | Runtime | Trace     -->
+  <!-- NOTE: dark code boxes set colour via inline style / fill-less -->
+  <!--       class only (never a fill attr on a filled class).       -->
+  <!-- ============================================================= -->
+  <style>
+    .title    { font: bold 40px 'Segoe UI', Arial, sans-serif; fill:#0d1b2a; }
+    .subtitle { font: 18px 'Segoe UI', Arial, sans-serif; fill:#37474f; }
+    .region   { font: bold 26px 'Segoe UI', Arial, sans-serif; fill:#0d1b2a; }
+    .stereo   { font: italic 12px 'Consolas','Courier New',monospace; }
+    .clsname  { font: bold 15px 'Consolas','Courier New',monospace; fill:#ffffff; }
+    .member   { font: 12px 'Consolas','Courier New',monospace; fill:#1a2b3c; }
+    .codeln   { font: 12.5px 'Consolas','Courier New',monospace; }   /* NO fill: set inline for dark boxes */
+    .tree     { font: 13px 'Consolas','Courier New',monospace; fill:#263238; }
+    .treedir  { font: bold 13px 'Consolas','Courier New',monospace; }
+    .arrlbl   { font: italic 12.5px 'Segoe UI', Arial, sans-serif; fill:#2e3b45; }
+    .legtxt   { font: 14px 'Segoe UI', Arial, sans-serif; fill:#1a2b3c; }
+    .legttl   { font: bold 15px 'Segoe UI', Arial, sans-serif; fill:#0d1b2a; }
+    .step     { font: bold 16px 'Segoe UI', Arial, sans-serif; fill:#ffffff; }
+    .stepdesc { font: 14px 'Segoe UI', Arial, sans-serif; fill:#1a2b3c; }
+    .topolbl  { font: bold 14px 'Segoe UI', Arial, sans-serif; fill:#ffffff; }
+    .dblbl    { font: 12px 'Segoe UI', Arial, sans-serif; fill:#eceff1; }
+    .note     { font: 13px 'Segoe UI', Arial, sans-serif; fill:#37474f; }
+    .divider  { stroke:#90a4ae; stroke-width:1; }
+  </style>
+  <defs>
+    <marker id="assoc" markerWidth="14" markerHeight="14" refX="11" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10 z" fill="#263238"/>
+    </marker>
+    <marker id="dep" markerWidth="16" markerHeight="16" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10" fill="none" stroke="#5d4037" stroke-width="1.8"/>
+    </marker>
+    <marker id="flow" markerWidth="14" markerHeight="14" refX="11" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10 z" fill="#37474f"/>
+    </marker>
+    <marker id="ext" markerWidth="16" markerHeight="16" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10" fill="none" stroke="#2e7d32" stroke-width="1.8"/>
+    </marker>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#0d1b2a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="3400" height="2620" fill="#f4f7fa"/>
+  <text x="40" y="55" class="title">Store Topology Analyzer &#8212; CCC Topology Optimizer &#183; Architecture</text>
+  <text x="42" y="86" class="subtitle">Python decision-support app: two front-ends (CLI run.py + a Streamlit web app) driving ONE shared topology_engine &#183; CAIA constraint-aware auto store selection &#183; what-if planning &#183; Excel with live formulas + interactive maps.</text>
+
+  <!-- ===================== LEGENDS ===================== -->
+  <rect x="40" y="104" width="1520" height="150" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="60" y="130" class="legttl">Notation legend</text>
+  <line x1="65" y1="156" x2="150" y2="156" stroke="#263238" stroke-width="2.2" marker-end="url(#assoc)"/>
+  <text x="160" y="161" class="legtxt">solid, filled head = <tspan font-weight="bold">calls / drives</tspan></text>
+  <line x1="470" y1="156" x2="560" y2="156" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <text x="570" y="161" class="legtxt">dashed = <tspan font-weight="bold">uses / imports</tspan></text>
+  <line x1="900" y1="156" x2="990" y2="156" stroke="#2e7d32" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ext)"/>
+  <text x="1000" y="161" class="legtxt">dashed green = external library / file</text>
+  <line x1="65" y1="186" x2="150" y2="186" stroke="#37474f" stroke-width="2.4" marker-end="url(#flow)"/>
+  <text x="160" y="191" class="legtxt">solid = runtime data flow</text>
+  <circle cx="470" cy="186" r="13" fill="#0d1b2a"/><text x="470" y="191" text-anchor="middle" class="step">n</text>
+  <text x="495" y="191" class="legtxt">ordered step in a trace</text>
+  <rect x="800" y="176" width="26" height="22" rx="4" fill="#e53935"/>
+  <text x="836" y="191" class="legtxt">module box: &#171;module&#187; / key functions</text>
+  <text x="60" y="228" class="note">Python modules &amp; functions shown as boxes (not classes). Both front-ends contain NO business logic &#8212; they only gather input and call the engine.</text>
+
+  <!-- Layer colour legend -->
+  <rect x="1580" y="104" width="1780" height="150" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1600" y="130" class="legttl">Layer colour coding (consistent across all views)</text>
+  <g font-family="'Segoe UI',Arial" font-size="14" fill="#1a2b3c">
+    <rect x="1600" y="146" width="20" height="20" rx="4" fill="#1e88e5"/><text x="1628" y="161">CLI entry (run.py)</text>
+    <rect x="1600" y="176" width="20" height="20" rx="4" fill="#00897b"/><text x="1628" y="191">Web UI (Streamlit app + pages)</text>
+    <rect x="1600" y="206" width="20" height="20" rx="4" fill="#d81b60"/><text x="1628" y="221">Shared state (utils)</text>
+    <rect x="2020" y="146" width="20" height="20" rx="4" fill="#6d4c41"/><text x="2048" y="161">Engine config / params</text>
+    <rect x="2020" y="176" width="20" height="20" rx="4" fill="#fb8c00"/><text x="2048" y="191">Data ranking</text>
+    <rect x="2020" y="206" width="20" height="20" rx="4" fill="#e53935"/><text x="2048" y="221">Store assignment (optimizer + CAIA)</text>
+    <rect x="2500" y="146" width="20" height="20" rx="4" fill="#8e24aa"/><text x="2528" y="161">Maps</text>
+    <rect x="2500" y="176" width="20" height="20" rx="4" fill="#3949ab"/><text x="2528" y="191">What-if planning</text>
+    <rect x="2500" y="206" width="20" height="20" rx="4" fill="#455a64"/><text x="2528" y="221">External libraries</text>
+    <rect x="2860" y="146" width="20" height="20" rx="4" fill="#43a047"/><text x="2888" y="161">Files &amp; formats</text>
+    <rect x="2860" y="176" width="20" height="20" rx="4" fill="#26a69a"/><text x="2888" y="191">Streamlit pages</text>
+    <text x="2860" y="221" class="note">one colour per layer, everywhere</text>
+  </g>
+
+  <!-- ============================================================= -->
+  <!-- REGION 1 : PACKAGE TREE (left column)                         -->
+  <!-- ============================================================= -->
+  <rect x="40" y="280" width="700" height="1180" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="60" y="316" class="region">1 &#183; Package tree</text>
+  <text x="60" y="340" class="note">Folders named for what they do. Colours match the module boxes &amp; runtime nodes.</text>
+
+  <text x="62" y="372" class="tree" xml:space="preserve"><tspan x="62" dy="0" class="treedir" fill="#0d1b2a">Store_Topology_Analyzer/</tspan><tspan x="62" dy="21">&#9500;&#9472; README.md</tspan><tspan x="62" dy="21">&#9500;&#9472; requirements.txt  (pandas, numpy, openpyxl,</tspan><tspan x="62" dy="21">&#9474;     pyyaml, geopandas, folium, sklearn, geopy)</tspan><tspan x="62" dy="21">&#9500;&#9472; requirements_web.txt  (+ streamlit, plotly)</tspan><tspan x="62" dy="21">&#9500;&#9472; <tspan fill="#1565c0" font-weight="bold">run.py</tspan>  (CLI entry &#183; orchestration)</tspan><tspan x="62" dy="21">&#9500;&#9472; run.bat</tspan><tspan x="62" dy="21">&#9500;&#9472; <tspan fill="#00695c" font-weight="bold">frontend/</tspan>  (Streamlit web UI)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#00695c" font-weight="bold">app.py</tspan>  (web entry)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; .streamlit/config.toml  (theme)</tspan><tspan x="62" dy="21">&#9474;  &#9492;&#9472; <tspan fill="#00897b" font-weight="bold">pages/</tspan></tspan><tspan x="62" dy="21">&#9474;     &#9500;&#9472; 1_Upload.py &#183; 2_Configure.py</tspan><tspan x="62" dy="21">&#9474;     &#9500;&#9472; 3_Results.py &#183; 4_Map.py</tspan><tspan x="62" dy="21">&#9474;     &#9492;&#9472; 5_Export.py &#183; 6_Scenarios.py</tspan><tspan x="62" dy="21">&#9500;&#9472; <tspan fill="#0d1b2a" font-weight="bold">topology_engine/</tspan>  (the shared engine)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; __init__.py  (version)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#6d4c41" font-weight="bold">params.py</tspan>  (colors, column patterns)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#6d4c41" font-weight="bold">config.py</tspan>  (YAML + CLI merge + validate)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#e65100" font-weight="bold">data_ranking/ranker.py</tspan></tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#c62828" font-weight="bold">store_assignment/</tspan></tspan><tspan x="62" dy="21">&#9474;  &#9474;  &#9500;&#9472; <tspan fill="#c62828" font-weight="bold">optimizer.py</tspan>  (two-pass + Excel + map)</tspan><tspan x="62" dy="21">&#9474;  &#9474;  &#9492;&#9472; <tspan fill="#c62828" font-weight="bold">auto_select.py</tspan>  (CAIA &#183; 5 phases)</tspan><tspan x="62" dy="21">&#9474;  &#9492;&#9472; <tspan fill="#6a1b9a" font-weight="bold">maps/interactive.py</tspan>  (Leaflet reassign)</tspan><tspan x="62" dy="21">&#9500;&#9472; <tspan fill="#283593" font-weight="bold">whatif_planning/</tspan>  (scenario modeling)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; engine.py  (ScenarioEngine)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; config.py  (scenario + result dataclasses)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; coverage.py &#183; gap_detector.py</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; placement.py &#183; what_if.py</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; comparison.py &#183; history.py</tspan><tspan x="62" dy="21">&#9474;  &#9492;&#9472; store_locations.py &#183; export.py</tspan><tspan x="62" dy="21">&#9492;&#9472; <tspan fill="#ad1457" font-weight="bold">utils/state.py</tspan>  (session state, temp</tspan><tspan x="62" dy="21">      bridge, data-integrity checks)</tspan></text>
+
+  <rect x="60" y="1330" width="660" height="112" rx="8" fill="#f8fafc" stroke="#cfd8dc"/>
+  <text x="76" y="1354" class="legttl">Run it</text>
+  <text x="76" y="1378" class="member">CLI:  py run.py --file matrix.xlsx --mode auto --max-stores 5</text>
+  <text x="76" y="1400" class="member">Web:  cd frontend  &amp;&amp;  py -m streamlit run app.py</text>
+  <text x="76" y="1424" class="note">Both paths call the same topology_engine, so results always agree.</text>
+
+  <!-- ============================================================= -->
+  <!-- REGION 2 : LAYERED MODULE VIEW                                -->
+  <!-- ============================================================= -->
+  <text x="760" y="316" class="region">2 &#183; Layered modules &#8212; two front-ends, one engine, a what-if layer</text>
+  <text x="760" y="340" class="note">The CLI and the Streamlit web app both only gather input and call topology_engine; utils/state keeps the web run byte-identical to the CLI.</text>
+
+  <!-- ===== Band A : entry points ===== -->
+  <rect x="780" y="360" width="430" height="152" rx="6" fill="#ffffff" stroke="#1e88e5" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="780" y="360" width="430" height="40" rx="6" fill="#1e88e5"/><rect x="780" y="388" width="430" height="12" fill="#1e88e5"/>
+  <text x="995" y="378" text-anchor="middle" class="stereo" fill="#e3f2fd">&#171;CLI entry&#187;</text>
+  <text x="995" y="396" text-anchor="middle" class="clsname">run.py</text>
+  <text x="792" y="422" class="member">+ build_parser() &#183; resolve_config()</text>
+  <text x="792" y="442" class="member">+ main(): detect &#8594; rank &#8594; select &#8594; optimize</text>
+  <line x1="780" y1="452" x2="1210" y2="452" class="divider"/>
+  <text x="792" y="472" class="member">modes: preferred &#183; auto &#183; rank-only</text>
+  <text x="792" y="492" class="member">&#183; apply-changes &#183; scenario</text>
+
+  <rect x="1250" y="360" width="600" height="152" rx="6" fill="#ffffff" stroke="#00897b" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1250" y="360" width="600" height="40" rx="6" fill="#00897b"/><rect x="1250" y="388" width="600" height="12" fill="#00897b"/>
+  <text x="1550" y="378" text-anchor="middle" class="stereo" fill="#e0f2f1">&#171;web entry &#183; Streamlit multipage&#187;</text>
+  <text x="1550" y="396" text-anchor="middle" class="clsname">frontend/app.py + pages/</text>
+  <text x="1262" y="422" class="member">app.py: page config, init_session_state, sidebar status</text>
+  <text x="1262" y="442" class="member">pages: 1_Upload &#8594; 2_Configure &#8594; 3_Results &#8594; 4_Map</text>
+  <text x="1272" y="462" class="member">&#8594; 5_Export &#8594; 6_Scenarios</text>
+  <line x1="1250" y1="472" x2="1850" y2="472" class="divider"/>
+  <text x="1262" y="492" class="member">only gathers input + shows output &#8212; no business logic</text>
+
+  <rect x="1890" y="360" width="430" height="152" rx="6" fill="#ffffff" stroke="#d81b60" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1890" y="360" width="430" height="40" rx="6" fill="#d81b60"/><rect x="1890" y="388" width="430" height="12" fill="#d81b60"/>
+  <text x="2105" y="378" text-anchor="middle" class="stereo" fill="#fce4ec">&#171;shared state&#187;</text>
+  <text x="2105" y="396" text-anchor="middle" class="clsname">utils/state.py</text>
+  <text x="1902" y="422" class="member">+ init_session_state()</text>
+  <text x="1902" y="442" class="member">+ save_upload_to_temp()  (temp-file bridge)</text>
+  <text x="1902" y="462" class="member">+ sanitize_* &#183; assert_df_integrity()</text>
+  <line x1="1890" y1="472" x2="2320" y2="472" class="divider"/>
+  <text x="1902" y="492" class="member">web reads the SAME bytes as the CLI</text>
+
+  <!-- ===== Band B : engine config / params ===== -->
+  <rect x="780" y="540" width="520" height="122" rx="6" fill="#ffffff" stroke="#6d4c41" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="780" y="540" width="520" height="40" rx="6" fill="#6d4c41"/><rect x="780" y="568" width="520" height="12" fill="#6d4c41"/>
+  <text x="1040" y="566" text-anchor="middle" class="clsname">topology_engine/config.py</text>
+  <text x="792" y="602" class="member">Config dataclass &#183; load_config(yaml)</text>
+  <text x="792" y="622" class="member">merge_cli_and_config() &#183; validate()</text>
+  <text x="792" y="646" class="stereo" fill="#5d4037">CLI flags override YAML; nothing hard-coded</text>
+
+  <rect x="1340" y="540" width="480" height="122" rx="6" fill="#ffffff" stroke="#6d4c41" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1340" y="540" width="480" height="40" rx="6" fill="#6d4c41"/><rect x="1340" y="568" width="480" height="12" fill="#6d4c41"/>
+  <text x="1580" y="566" text-anchor="middle" class="clsname">topology_engine/params.py</text>
+  <text x="1352" y="602" class="member">map colors &#183; marker styles</text>
+  <text x="1352" y="622" class="member">column-detection patterns (fuzzy matching)</text>
+  <text x="1352" y="646" class="stereo" fill="#5d4037">tunable constants used across the engine</text>
+
+  <!-- ===== Band C : engine core ===== -->
+  <rect x="780" y="690" width="560" height="188" rx="6" fill="#ffffff" stroke="#fb8c00" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="780" y="690" width="560" height="40" rx="6" fill="#fb8c00"/><rect x="780" y="718" width="560" height="12" fill="#fb8c00"/>
+  <text x="1060" y="708" text-anchor="middle" class="stereo" fill="#fff3e0">&#171;data_ranking&#187;</text>
+  <text x="1060" y="726" text-anchor="middle" class="clsname">ranker.py</text>
+  <text x="792" y="752" class="member">+ detect_input_format(df) &#183; detect_sheet(file)</text>
+  <text x="792" y="772" class="member">+ rank_distance_matrix(): sort &#8594; rank &#8594; pivot</text>
+  <line x1="780" y1="782" x2="1340" y2="782" class="divider"/>
+  <text x="792" y="802" class="member">raw matrix &#8594; one row per CCC with</text>
+  <text x="792" y="822" class="member">Rank1..N Store / Distance / Time</text>
+  <text x="792" y="842" class="member">aggregates OPD per CCC; fuzzy column names</text>
+  <text x="792" y="864" class="stereo" fill="#e65100">no intermediate file &#8212; feeds the optimizer directly</text>
+
+  <rect x="1360" y="690" width="560" height="188" rx="6" fill="#ffffff" stroke="#e53935" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1360" y="690" width="560" height="40" rx="6" fill="#e53935"/><rect x="1360" y="718" width="560" height="12" fill="#e53935"/>
+  <text x="1640" y="708" text-anchor="middle" class="stereo" fill="#ffebee">&#171;store_assignment&#187;</text>
+  <text x="1640" y="726" text-anchor="middle" class="clsname">optimizer.py</text>
+  <text x="1372" y="752" class="member">+ load_data() &#183; optimize_assignments()</text>
+  <text x="1382" y="772" class="member">Pass 1: demand placement (best in-SLA store)</text>
+  <text x="1382" y="792" class="member">Pass 2: corridor fill (0-demand coverage)</text>
+  <text x="1372" y="814" class="member">+ calculate_store_metrics()  (OPD, P90, STEM)</text>
+  <line x1="1360" y1="824" x2="1920" y2="824" class="divider"/>
+  <text x="1372" y="844" class="member">+ save_results_with_formulas()  (live-formula Excel)</text>
+  <text x="1372" y="864" class="member">+ visualize_on_map()  (static folium map)</text>
+
+  <rect x="1940" y="690" width="560" height="188" rx="6" fill="#ffffff" stroke="#e53935" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1940" y="690" width="560" height="40" rx="6" fill="#e53935"/><rect x="1940" y="718" width="560" height="12" fill="#e53935"/>
+  <text x="2220" y="708" text-anchor="middle" class="stereo" fill="#ffebee">&#171;auto mode &#183; CAIA&#187;</text>
+  <text x="2220" y="726" text-anchor="middle" class="clsname">auto_select.py</text>
+  <text x="1952" y="752" class="member">+ auto_select_stores()  &#8212; 5 phases:</text>
+  <text x="1952" y="774" class="member">0 initial assign  &#183;  1 P90 trim</text>
+  <text x="1952" y="794" class="member">2 OPD balance  &#183;  3 max_stores  &#183;  4 STEM check</text>
+  <line x1="1940" y1="806" x2="2500" y2="806" class="divider"/>
+  <text x="1952" y="826" class="member">moves individual CCCs (not whole stores)</text>
+  <text x="1952" y="846" class="member">returns selected/removed stores + per-CCC map</text>
+  <text x="1952" y="866" class="member">+ unmapped info (never dropped silently)</text>
+
+  <rect x="2520" y="690" width="560" height="188" rx="6" fill="#ffffff" stroke="#8e24aa" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2520" y="690" width="560" height="40" rx="6" fill="#8e24aa"/><rect x="2520" y="718" width="560" height="12" fill="#8e24aa"/>
+  <text x="2800" y="708" text-anchor="middle" class="stereo" fill="#f3e5f5">&#171;maps&#187;</text>
+  <text x="2800" y="726" text-anchor="middle" class="clsname">interactive.py</text>
+  <text x="2532" y="752" class="member">+ build_interactive_map()</text>
+  <text x="2542" y="772" class="member">Leaflet, click / bulk-select to reassign</text>
+  <text x="2532" y="794" class="member">+ apply_changes_to_excel()</text>
+  <text x="2542" y="814" class="member">exported JSON changes &#8594; Excel</text>
+  <line x1="2520" y1="824" x2="3080" y2="824" class="divider"/>
+  <text x="2532" y="844" class="member">self-contained HTML (opens in browser)</text>
+  <text x="2532" y="864" class="member">also: static map from optimizer</text>
+
+  <!-- ===== Band D : what-if planning ===== -->
+  <rect x="780" y="908" width="1760" height="212" rx="6" fill="#ffffff" stroke="#3949ab" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="780" y="908" width="1760" height="40" rx="6" fill="#3949ab"/><rect x="780" y="936" width="1760" height="12" fill="#3949ab"/>
+  <text x="1660" y="934" text-anchor="middle" class="clsname">whatif_planning &#8212; scenario modeling (reuses the same ranked data + optimizer)</text>
+  <text x="792" y="972" class="member"><tspan font-weight="bold">engine.py</tspan>  ScenarioEngine.run_scenario() / compare_scenarios()  &#8212; orchestrates one or many scenarios</text>
+  <text x="792" y="996" class="member"><tspan font-weight="bold">coverage.py</tspan>  served-demand curves       <tspan font-weight="bold">gap_detector.py</tspan>  demand-weighted clusters of under-served CCCs</text>
+  <text x="792" y="1020" class="member"><tspan font-weight="bold">placement.py</tspan>  where a new store helps most     <tspan font-weight="bold">what_if.py</tspan>  add / move a store, then re-optimize the whole topology</text>
+  <text x="792" y="1044" class="member"><tspan font-weight="bold">comparison.py</tspan>  rank scenarios     <tspan font-weight="bold">history.py</tspan>  snapshots     <tspan font-weight="bold">store_locations.py</tspan>  resolve lat/lng     <tspan font-weight="bold">export.py</tspan>  Excel + maps</text>
+  <line x1="780" y1="1058" x2="2540" y2="1058" class="divider"/>
+  <text x="792" y="1080" class="member">config.py: scenario config + result dataclasses (coverage %, per-store metrics, gap regions, recommendations)</text>
+  <text x="792" y="1104" class="stereo" fill="#283593">answers "which stores should we operate, and where are the gaps?" &#8212; without changing the core engine</text>
+
+  <!-- ===== External libraries panel ===== -->
+  <rect x="2560" y="908" width="800" height="212" rx="10" fill="#f8fafc" stroke="#455a64" stroke-width="1.8" filter="url(#shadow)"/>
+  <text x="2580" y="936" class="legttl">External libraries</text>
+  <text x="2580" y="962" class="member">Data / Excel: pandas &#183; numpy &#183; openpyxl</text>
+  <text x="2580" y="984" class="member">&#160;&#160;(+ pywin32 for live-formula Excel on Windows)</text>
+  <text x="2580" y="1006" class="member">Config: pyyaml</text>
+  <text x="2580" y="1028" class="member">Geo / maps: geopandas &#183; folium &#183; geopy</text>
+  <text x="2580" y="1050" class="member">ML: scikit-learn (clustering for gaps / placement)</text>
+  <line x1="2580" y1="1062" x2="3340" y2="1062" class="divider"/>
+  <text x="2580" y="1084" class="member">Web: streamlit &#183; streamlit-folium &#183; plotly</text>
+  <text x="2580" y="1106" class="note">engine falls back to a built-in k-medoids if sklearn is absent</text>
+
+  <!-- ===== Band E : files in / out ===== -->
+  <rect x="780" y="1140" width="2580" height="108" rx="8" fill="#eef7ee" stroke="#43a047" stroke-width="1.8"/>
+  <text x="796" y="1166" class="legttl" style="fill:#2e7d32">Files &amp; formats</text>
+  <text x="796" y="1190" class="member"><tspan font-weight="bold">In:</tspan>  Excel .xlsx / .xlsm (raw distance matrix OR pre-ranked pivot) &#183; GeoJSON / GPKG / SHP (map geo) &#183; YAML config &amp; scenarios &#183; JSON changes</text>
+  <text x="796" y="1214" class="member"><tspan font-weight="bold">Out:</tspan>  *_optimized.xlsx  (Output sheet + Store Scorecards Summary + Uncovered CCCs) &#183; *_map.html (static) &#183; *_interactive.html (click-to-reassign)</text>
+  <text x="796" y="1238" class="note">auto-versioned outputs (_v2, _v3, &#8230;) so nothing is overwritten &#183; all data stays on the local machine (no server, no database)</text>
+
+  <!-- ===== Region 2 relationship arrows ===== -->
+  <!-- app -> utils/state -->
+  <line x1="1852" y1="430" x2="1888" y2="430" stroke="#263238" stroke-width="2.2" marker-end="url(#assoc)"/>
+  <rect x="1700" y="520" width="130" height="18" rx="3" fill="#f4f7fa"/><text x="1704" y="534" class="arrlbl">session state</text>
+
+  <!-- run.py -> config -->
+  <line x1="920" y1="512" x2="960" y2="538" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <!-- Streamlit -> config -->
+  <line x1="1420" y1="512" x2="1160" y2="538" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="1040" y="518" width="150" height="18" rx="3" fill="#f4f7fa"/><text x="1044" y="532" class="arrlbl" fill="#5d4037">resolve config</text>
+
+  <!-- config -> ranker ; params -> optimizer -->
+  <line x1="1010" y1="662" x2="1050" y2="688" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="900" y="666" width="150" height="18" rx="3" fill="#f4f7fa"/><text x="904" y="680" class="arrlbl" fill="#5d4037">drives pipeline</text>
+  <line x1="1600" y1="662" x2="1630" y2="688" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+
+  <!-- ranker -> optimizer -->
+  <line x1="1340" y1="762" x2="1358" y2="762" stroke="#263238" stroke-width="2.2" marker-end="url(#assoc)"/>
+  <rect x="1232" y="672" width="126" height="18" rx="3" fill="#f4f7fa"/><text x="1236" y="686" class="arrlbl">ranked pivot</text>
+
+  <!-- auto_select -> optimizer -->
+  <line x1="1940" y1="806" x2="1922" y2="806" stroke="#263238" stroke-width="2.2" marker-end="url(#assoc)"/>
+  <rect x="1970" y="884" width="330" height="18" rx="3" fill="#f4f7fa"/><text x="1976" y="898" class="arrlbl">auto mode &#8594; per-CCC assignments preserved</text>
+
+  <!-- optimizer -> maps (over the top) -->
+  <polyline points="1918,700 1918,678 2800,678 2800,688" fill="none" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="2160" y="668" width="280" height="18" rx="3" fill="#f4f7fa"/><text x="2164" y="682" class="arrlbl" fill="#5d4037">writes static + interactive maps</text>
+
+  <!-- whatif -> optimizer -->
+  <line x1="1640" y1="906" x2="1640" y2="880" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="1650" y="884" width="150" height="18" rx="3" fill="#f4f7fa"/><text x="1654" y="898" class="arrlbl" fill="#5d4037">reuses engine</text>
+
+  <!-- maps -> external (folium) -->
+  <line x1="2800" y1="878" x2="2800" y2="906" stroke="#2e7d32" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ext)"/>
+  <rect x="2810" y="884" width="120" height="18" rx="3" fill="#f4f7fa"/><text x="2814" y="898" class="arrlbl" fill="#2e7d32">folium HTML</text>
+
+  <!-- whatif -> external -->
+  <line x1="2540" y1="1010" x2="2558" y2="1010" stroke="#2e7d32" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ext)"/>
+
+  <!-- ============================================================= -->
+  <!-- REGION 3 : RUNTIME / DATA-FLOW TOPOLOGY                       -->
+  <!-- ============================================================= -->
+  <rect x="760" y="1300" width="2600" height="540" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="780" y="1336" class="region">3 &#183; Runtime / data flow &#8212; Excel &#8594; detect &amp; rank &#8594; select stores &#8594; two-pass optimize &#8594; Excel + maps</text>
+
+  <!-- Input Excel -->
+  <rect x="780" y="1520" width="200" height="120" rx="10" fill="#43a047" filter="url(#shadow)"/>
+  <text x="880" y="1560" text-anchor="middle" class="topolbl">Input Excel</text>
+  <text x="880" y="1584" text-anchor="middle" class="dblbl">raw distance matrix</text>
+  <text x="880" y="1602" text-anchor="middle" class="dblbl">OR pre-ranked pivot</text>
+  <text x="880" y="1624" text-anchor="middle" class="dblbl">.xlsx / .xlsm</text>
+
+  <!-- Entry -->
+  <rect x="1020" y="1512" width="250" height="56" rx="8" fill="#00897b" filter="url(#shadow)"/>
+  <text x="1145" y="1538" text-anchor="middle" class="topolbl">Streamlit web app</text>
+  <text x="1145" y="1558" text-anchor="middle" class="dblbl">Upload &#8594; Configure &#8594; Results</text>
+  <rect x="1020" y="1588" width="250" height="56" rx="8" fill="#1e88e5" filter="url(#shadow)"/>
+  <text x="1145" y="1614" text-anchor="middle" class="topolbl">CLI  run.py</text>
+  <text x="1145" y="1634" text-anchor="middle" class="dblbl">flags / YAML config</text>
+
+  <!-- detect + rank -->
+  <rect x="1310" y="1520" width="230" height="120" rx="8" fill="#fb8c00" filter="url(#shadow)"/>
+  <text x="1425" y="1556" text-anchor="middle" class="topolbl">detect + rank</text>
+  <text x="1425" y="1580" text-anchor="middle" class="dblbl">detect_input_format</text>
+  <text x="1425" y="1600" text-anchor="middle" class="dblbl">rank_distance_matrix</text>
+  <text x="1425" y="1620" text-anchor="middle" class="dblbl">(only if raw) &#8594; pivot</text>
+
+  <!-- mode branch -->
+  <rect x="1580" y="1512" width="270" height="56" rx="8" fill="#ef5350" filter="url(#shadow)"/>
+  <text x="1715" y="1538" text-anchor="middle" class="topolbl">preferred mode</text>
+  <text x="1715" y="1558" text-anchor="middle" class="dblbl">use the given store list</text>
+  <rect x="1580" y="1588" width="270" height="56" rx="8" fill="#c62828" filter="url(#shadow)"/>
+  <text x="1715" y="1614" text-anchor="middle" class="topolbl">auto mode &#8212; CAIA</text>
+  <text x="1715" y="1634" text-anchor="middle" class="dblbl">selects stores (5 phases)</text>
+
+  <!-- optimizer -->
+  <rect x="1890" y="1520" width="240" height="120" rx="8" fill="#e53935" filter="url(#shadow)"/>
+  <text x="2010" y="1556" text-anchor="middle" class="topolbl">optimizer</text>
+  <text x="2010" y="1580" text-anchor="middle" class="dblbl">two-pass assign:</text>
+  <text x="2010" y="1600" text-anchor="middle" class="dblbl">demand + corridor fill</text>
+  <text x="2010" y="1620" text-anchor="middle" class="dblbl">+ per-store metrics</text>
+
+  <!-- outputs -->
+  <rect x="2170" y="1520" width="290" height="120" rx="8" fill="#1565c0" filter="url(#shadow)"/>
+  <text x="2315" y="1552" text-anchor="middle" class="topolbl">Outputs</text>
+  <text x="2315" y="1576" text-anchor="middle" class="dblbl">*_optimized.xlsx (formulas,</text>
+  <text x="2315" y="1594" text-anchor="middle" class="dblbl">scorecards, Uncovered CCCs)</text>
+  <text x="2315" y="1616" text-anchor="middle" class="dblbl">static + interactive maps</text>
+
+  <!-- what-if branch -->
+  <rect x="2500" y="1476" width="320" height="70" rx="8" fill="#3949ab" filter="url(#shadow)"/>
+  <text x="2660" y="1504" text-anchor="middle" class="topolbl">what-if planning (optional)</text>
+  <text x="2660" y="1526" text-anchor="middle" class="dblbl">coverage &#183; gaps &#183; placement &#183; add/move &#183; compare</text>
+
+  <!-- geo note -->
+  <path d="M2500,1590 a60,10 0 0,0 120,0 v40 a60,10 0 0,1 -120,0 z" fill="#607d8b"/>
+  <path d="M2500,1590 a60,10 0 0,1 120,0" fill="none" stroke="#37474f" stroke-width="1.5"/>
+  <text x="2560" y="1618" text-anchor="middle" class="dblbl">geo file</text>
+  <text x="2650" y="1600" class="arrlbl" style="fill:#2e7d32">GeoJSON / GPKG / SHP</text>
+  <text x="2650" y="1620" class="arrlbl" style="fill:#2e7d32">&#8594; colours the maps</text>
+
+  <!-- flow arrows -->
+  <line x1="980" y1="1595" x2="1018" y2="1580" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <line x1="980" y1="1605" x2="1018" y2="1616" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <circle cx="998" cy="1500" r="12" fill="#0d1b2a"/><text x="998" y="1505" text-anchor="middle" class="step" font-size="13">1</text>
+  <line x1="1270" y1="1540" x2="1308" y2="1560" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <line x1="1270" y1="1616" x2="1308" y2="1600" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <circle cx="1288" cy="1500" r="12" fill="#0d1b2a"/><text x="1288" y="1505" text-anchor="middle" class="step" font-size="13">2</text>
+  <line x1="1540" y1="1558" x2="1578" y2="1540" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <line x1="1540" y1="1602" x2="1578" y2="1614" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <circle cx="1560" cy="1490" r="12" fill="#0d1b2a"/><text x="1560" y="1495" text-anchor="middle" class="step" font-size="13">3</text>
+  <line x1="1850" y1="1540" x2="1888" y2="1560" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <line x1="1850" y1="1616" x2="1888" y2="1600" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <circle cx="1868" cy="1490" r="12" fill="#0d1b2a"/><text x="1868" y="1495" text-anchor="middle" class="step" font-size="13">4</text>
+  <line x1="2130" y1="1580" x2="2168" y2="1580" stroke="#37474f" stroke-width="2.4" marker-end="url(#flow)"/>
+  <circle cx="2149" cy="1500" r="12" fill="#0d1b2a"/><text x="2149" y="1505" text-anchor="middle" class="step" font-size="13">5</text>
+  <!-- what-if reuse -->
+  <polyline points="2010,1520 2010,1466 2660,1466 2660,1474" fill="none" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="2160" y="1454" width="360" height="18" rx="3" fill="#f4f7fa"/><text x="2164" y="1468" class="arrlbl" style="fill:#5d4037">what-if reuses the ranked data + optimizer</text>
+
+  <text x="780" y="1700" class="note"><tspan font-weight="bold">Read it as:</tspan> &#9312; a front-end loads the Excel &#8594; &#9313; the engine auto-detects the format and ranks it if raw &#8594; &#9314; you pick preferred stores or let CAIA choose &#8594; &#9315; the optimizer runs the two-pass</text>
+  <text x="780" y="1724" class="note">assignment and scores each store &#8594; &#9316; it writes an Excel workbook (with live formulas) plus static and click-to-reassign maps. The what-if layer branches off the same ranked data.</text>
+  <text x="780" y="1756" class="note">One local Python process &#8212; no server or database. The only "services" are files on disk; the CLI and web app produce identical results because they share the engine.</text>
+
+  <!-- ============================================================= -->
+  <!-- REGION 4 : END-TO-END TRACE (web, auto / CAIA mode)          -->
+  <!-- ============================================================= -->
+  <rect x="760" y="1880" width="2600" height="640" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="780" y="1916" class="region">4 &#183; Trace &#8212; the web workflow in auto (CAIA) mode</text>
+
+  <g class="stepdesc">
+    <circle cx="805" cy="1954" r="14" fill="#0d1b2a"/><text x="805" y="1959" text-anchor="middle" class="step">1</text>
+    <text x="832" y="1959"><tspan font-weight="bold">Upload</tspan> &#8212; drop the Excel; utils/state writes it to a temp file (identical bytes to the CLI); ranker detects format + stores.</text>
+    <circle cx="805" cy="1994" r="14" fill="#0d1b2a"/><text x="805" y="1999" text-anchor="middle" class="step">2</text>
+    <text x="832" y="1999"><tspan font-weight="bold">Configure</tspan> &#8212; choose Auto (CAIA), set constraints (max_stores, min/max OPD, max P90 time), pick a geo file, exclude stores.</text>
+    <circle cx="805" cy="2034" r="14" fill="#0d1b2a"/><text x="805" y="2039" text-anchor="middle" class="step">3</text>
+    <text x="832" y="2039"><tspan font-weight="bold">Results (Run)</tspan> &#8212; auto_select_stores() runs the 5-phase CAIA &#8594; stores + per-CCC assignments; optimizer does the two-pass assign + metrics.</text>
+    <circle cx="805" cy="2074" r="14" fill="#0d1b2a"/><text x="805" y="2079" text-anchor="middle" class="step">4</text>
+    <text x="832" y="2079">KPIs, per-store scorecards and charts render (plotly); any <tspan font-weight="bold">Uncovered CCCs</tspan> are shown, never dropped silently.</text>
+    <circle cx="805" cy="2114" r="14" fill="#0d1b2a"/><text x="805" y="2119" text-anchor="middle" class="step">5</text>
+    <text x="832" y="2119"><tspan font-weight="bold">Map</tspan> &#8212; build_interactive_map() draws a Leaflet map; click / bulk-select CCCs to reassign, then apply the changes.</text>
+    <circle cx="805" cy="2154" r="14" fill="#0d1b2a"/><text x="805" y="2159" text-anchor="middle" class="step">6</text>
+    <text x="832" y="2159"><tspan font-weight="bold">Export</tspan> &#8212; download *_optimized.xlsx (live formulas + scorecards + Uncovered CCCs) and the map HTML; save the config YAML.</text>
+    <circle cx="805" cy="2194" r="14" fill="#0d1b2a"/><text x="805" y="2199" text-anchor="middle" class="step">7</text>
+    <text x="832" y="2199"><tspan font-weight="bold">Scenarios</tspan> &#8212; run gap detection / placement / what-if, compare scenarios, and snapshot to history.</text>
+  </g>
+
+  <line x1="800" y1="2240" x2="3340" y2="2240" class="divider"/>
+  <text x="800" y="2268" class="legttl">Same config drives the CLI &#8212; identical results, no GUI</text>
+  <rect x="800" y="2284" width="1180" height="210" rx="8" fill="#0d1b2a"/>
+  <text x="816" y="2310" class="codeln" style="fill:#80cbc4"># my_config.yaml  (the web and CLI read the same shape)</text>
+  <text x="816" y="2332" class="codeln" style="fill:#90caf9">city:</text><text x="880" y="2332" class="codeln" style="fill:#ffcc80">"Metro-1"</text>
+  <text x="816" y="2354" class="codeln" style="fill:#90caf9">file:</text><text x="878" y="2354" class="codeln" style="fill:#ffcc80">"distance_matrix.xlsx"</text>
+  <text x="816" y="2376" class="codeln" style="fill:#90caf9">mode:</text><text x="884" y="2376" class="codeln" style="fill:#e0e0e0">auto</text>
+  <text x="816" y="2398" class="codeln" style="fill:#90caf9">auto_constraints:</text>
+  <text x="836" y="2420" class="codeln" style="fill:#90caf9">max_stores:</text><text x="972" y="2420" class="codeln" style="fill:#e0e0e0">5</text><text x="1010" y="2420" class="codeln" style="fill:#90caf9">min_opd:</text><text x="1116" y="2420" class="codeln" style="fill:#e0e0e0">10</text><text x="1150" y="2420" class="codeln" style="fill:#90caf9">max_p90_time:</text><text x="1312" y="2420" class="codeln" style="fill:#e0e0e0">25</text>
+  <text x="836" y="2442" class="codeln" style="fill:#90caf9">geo:</text><text x="890" y="2442" class="codeln" style="fill:#ffcc80">"tiles.geojson"</text>
+  <text x="816" y="2468" class="codeln" style="fill:#80cbc4">$ py run.py --config my_config.yaml</text>
+
+  <line x1="2020" y1="2256" x2="2020" y2="2494" class="divider"/>
+  <text x="2050" y="2280" class="legttl">Why one engine, two front-ends</text>
+  <text x="2050" y="2306" class="note">&#8226; The web pages and run.py both only collect input</text>
+  <text x="2050" y="2328" class="note">&#160;&#160;and call topology_engine &#8212; zero business logic in either.</text>
+  <text x="2050" y="2354" class="note">&#8226; utils/state saves uploads to a temp file so pandas sees</text>
+  <text x="2050" y="2376" class="note">&#160;&#160;the exact same bytes the CLI would read.</text>
+  <text x="2050" y="2402" class="note">&#8226; So a result you get in the browser matches the CLI run</text>
+  <text x="2050" y="2424" class="note">&#160;&#160;of the same file + config, every time.</text>
+  <text x="2050" y="2452" class="note">&#8226; CAIA never discards whole stores blindly &#8212; it moves</text>
+  <text x="2050" y="2474" class="note">&#160;&#160;individual CCCs and reports whatever truly can't be served.</text>
+
+  <text x="780" y="2508" class="note" font-size="12">Self-contained SVG &#183; viewBox 3400&#215;2620 (rendered 6800&#215;5240) &#183; layer-coloured across the package tree, module view &amp; runtime. Based on the real Store_Topology_Analyzer source.</text>
+</svg>

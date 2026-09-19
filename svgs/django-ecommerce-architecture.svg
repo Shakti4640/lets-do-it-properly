@@ -1,0 +1,547 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3400 2560" width="6800" height="5120" preserveAspectRatio="xMidYMid meet" font-family="'Segoe UI', Arial, sans-serif">
+  <!-- ============================================================= -->
+  <!-- Django E-commerce App — architecture reference diagram        -->
+  <!-- Single Django 5 + DRF project (MTV monolith), apps as columns -->
+  <!-- Regions: Project tree | App/MTV layers | Runtime | Trace      -->
+  <!-- Representative (canonical Django layout), not a specific repo. -->
+  <!-- ============================================================= -->
+  <style>
+    .title    { font: bold 40px 'Segoe UI', Arial, sans-serif; fill:#0d1b2a; }
+    .subtitle { font: 18px 'Segoe UI', Arial, sans-serif; fill:#37474f; }
+    .region   { font: bold 26px 'Segoe UI', Arial, sans-serif; fill:#0d1b2a; }
+    .stereo   { font: italic 12px 'Consolas','Courier New',monospace; }
+    .clsname  { font: bold 15px 'Consolas','Courier New',monospace; fill:#ffffff; }
+    .member   { font: 12px 'Consolas','Courier New',monospace; fill:#1a2b3c; }
+    .tree     { font: 13px 'Consolas','Courier New',monospace; fill:#263238; }
+    .treedir  { font: bold 13px 'Consolas','Courier New',monospace; }
+    .arrlbl   { font: italic 12.5px 'Segoe UI', Arial, sans-serif; fill:#2e3b45; }
+    .legtxt   { font: 14px 'Segoe UI', Arial, sans-serif; fill:#1a2b3c; }
+    .legttl   { font: bold 15px 'Segoe UI', Arial, sans-serif; fill:#0d1b2a; }
+    .step     { font: bold 16px 'Segoe UI', Arial, sans-serif; fill:#ffffff; }
+    .stepdesc { font: 14px 'Segoe UI', Arial, sans-serif; fill:#1a2b3c; }
+    .topolbl  { font: bold 14px 'Segoe UI', Arial, sans-serif; fill:#ffffff; }
+    .dblbl    { font: 12px 'Segoe UI', Arial, sans-serif; fill:#eceff1; }
+    .note     { font: 13px 'Segoe UI', Arial, sans-serif; fill:#37474f; }
+    .divider  { stroke:#90a4ae; stroke-width:1; }
+  </style>
+  <defs>
+    <marker id="assoc" markerWidth="14" markerHeight="14" refX="11" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10 z" fill="#263238"/>
+    </marker>
+    <marker id="dep" markerWidth="16" markerHeight="16" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10" fill="none" stroke="#5d4037" stroke-width="1.8"/>
+    </marker>
+    <marker id="flow" markerWidth="14" markerHeight="14" refX="11" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10 z" fill="#37474f"/>
+    </marker>
+    <marker id="async" markerWidth="16" markerHeight="16" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10" fill="none" stroke="#ad1457" stroke-width="2"/>
+    </marker>
+    <marker id="ext" markerWidth="16" markerHeight="16" refX="10" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L12,5 L0,10" fill="none" stroke="#2e7d32" stroke-width="1.8"/>
+    </marker>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#0d1b2a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="3400" height="2560" fill="#f4f7fa"/>
+  <text x="40" y="55" class="title">Django E-commerce App &#8212; Architecture</text>
+  <text x="42" y="86" class="subtitle">One Django 5 project (MTV monolith + Django REST Framework). Business features are split into apps &#8212; accounts, catalog, cart, orders, payments, notifications &#8212; over Postgres, with Redis cache + Celery for background work. Representative canonical layout.</text>
+
+  <!-- ===================== LEGENDS ===================== -->
+  <!-- UML notation legend -->
+  <rect x="40" y="104" width="1560" height="150" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="60" y="130" class="legttl">Notation legend</text>
+  <line x1="65" y1="156" x2="150" y2="156" stroke="#263238" stroke-width="2.2" marker-end="url(#assoc)"/>
+  <text x="160" y="161" class="legtxt">solid, filled head = <tspan font-weight="bold">calls / drives</tspan></text>
+  <line x1="560" y1="156" x2="650" y2="156" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <text x="660" y="161" class="legtxt">dashed = <tspan font-weight="bold">uses / depends on</tspan></text>
+  <line x1="1080" y1="156" x2="1170" y2="156" stroke="#ad1457" stroke-width="2.2" stroke-dasharray="3 6" marker-end="url(#async)"/>
+  <text x="1180" y="161" class="legtxt">magenta = async Celery task</text>
+  <line x1="65" y1="186" x2="150" y2="186" stroke="#2e7d32" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ext)"/>
+  <text x="160" y="191" class="legtxt">dashed green = external service / DB</text>
+  <line x1="560" y1="186" x2="650" y2="186" stroke="#37474f" stroke-width="2.4" marker-end="url(#flow)"/>
+  <text x="660" y="191" class="legtxt">solid = runtime request flow</text>
+  <circle cx="1085" cy="186" r="13" fill="#0d1b2a"/><text x="1085" y="191" text-anchor="middle" class="step">n</text>
+  <text x="1110" y="191" class="legtxt">ordered step in a trace</text>
+  <rect x="60" y="212" width="26" height="22" rx="4" fill="#e53935"/>
+  <text x="96" y="230" class="legtxt">box: name / fields / methods &#183; &#171;stereotype&#187; shows the Django role (View, Serializer, Model &#8230;)</text>
+
+  <!-- App colour legend -->
+  <rect x="1620" y="104" width="1740" height="150" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="1640" y="130" class="legttl">Django app colour coding (each app = one column, like a bounded feature)</text>
+  <g font-family="'Segoe UI',Arial" font-size="14" fill="#1a2b3c">
+    <rect x="1640" y="146" width="20" height="20" rx="4" fill="#43a047"/><text x="1668" y="161">accounts (users / auth)</text>
+    <rect x="1640" y="176" width="20" height="20" rx="4" fill="#fb8c00"/><text x="1668" y="191">catalog (products)</text>
+    <rect x="1640" y="206" width="20" height="20" rx="4" fill="#1e88e5"/><text x="1668" y="221">cart</text>
+    <rect x="2040" y="146" width="20" height="20" rx="4" fill="#e53935"/><text x="2068" y="161">orders</text>
+    <rect x="2040" y="176" width="20" height="20" rx="4" fill="#8e24aa"/><text x="2068" y="191">payments</text>
+    <rect x="2040" y="206" width="20" height="20" rx="4" fill="#d81b60"/><text x="2068" y="221">notifications (async)</text>
+    <rect x="2400" y="146" width="20" height="20" rx="4" fill="#546e7a"/><text x="2428" y="161">core / common (shared)</text>
+    <rect x="2400" y="176" width="20" height="20" rx="4" fill="#6d4c41"/><text x="2428" y="191">config (project settings)</text>
+    <rect x="2400" y="206" width="20" height="20" rx="4" fill="#455a64"/><text x="2428" y="221">web server / middleware</text>
+    <rect x="2820" y="146" width="20" height="20" rx="4" fill="#2e7d32"/><text x="2848" y="161">Postgres / Redis / gateways</text>
+    <text x="2820" y="191" class="note">Django "apps" are the analog of the</text>
+    <text x="2820" y="211" class="note">microservices in the other diagram.</text>
+  </g>
+
+  <!-- ============================================================= -->
+  <!-- REGION 1 : PROJECT TREE (left column)                         -->
+  <!-- ============================================================= -->
+  <rect x="40" y="280" width="700" height="1010" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="60" y="316" class="region">1 &#183; Project tree</text>
+  <text x="60" y="340" class="note">Canonical Django layout: a config package + one app per feature. Colours match the app columns &amp; runtime nodes.</text>
+
+  <text x="62" y="372" class="tree" xml:space="preserve"><tspan x="62" dy="0" class="treedir" fill="#0d1b2a">shop/  (Django 5 + DRF)</tspan><tspan x="62" dy="21">&#9500;&#9472; manage.py</tspan><tspan x="62" dy="21">&#9500;&#9472; requirements.txt  (django, djangorestframework,</tspan><tspan x="62" dy="21">&#9474;     celery, redis, psycopg, gunicorn, django-environ)</tspan><tspan x="62" dy="21">&#9500;&#9472; .env</tspan><tspan x="62" dy="21">&#9500;&#9472; <tspan fill="#6d4c41" font-weight="bold">config/</tspan>  (project package)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; settings/  base.py &#183; dev.py &#183; prod.py</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; urls.py  (root URLconf)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; wsgi.py &#183; asgi.py</tspan><tspan x="62" dy="21">&#9474;  &#9492;&#9472; celery.py  (Celery app)</tspan><tspan x="62" dy="21">&#9500;&#9472; apps/</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#2e7d32" font-weight="bold">accounts/</tspan>  (User, Address)</tspan><tspan x="62" dy="21">&#9474;  &#9474;  models.py &#183; serializers.py &#183; views.py</tspan><tspan x="62" dy="21">&#9474;  &#9474;  urls.py &#183; services.py &#183; admin.py &#183; migrations/</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#e65100" font-weight="bold">catalog/</tspan>  (Product, Category)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#1565c0" font-weight="bold">cart/</tspan>  (Cart, CartItem)</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#c62828" font-weight="bold">orders/</tspan>  (Order, OrderItem)</tspan><tspan x="62" dy="21">&#9474;  &#9474;  + signals.py &#183; tasks.py</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#6a1b9a" font-weight="bold">payments/</tspan>  (Payment)</tspan><tspan x="62" dy="21">&#9474;  &#9474;  + gateway.py &#183; webhooks.py &#183; tasks.py</tspan><tspan x="62" dy="21">&#9474;  &#9500;&#9472; <tspan fill="#ad1457" font-weight="bold">notifications/</tspan></tspan><tspan x="62" dy="21">&#9474;  &#9474;  tasks.py (send_email/sms) &#183; models.py</tspan><tspan x="62" dy="21">&#9474;  &#9492;&#9472; <tspan fill="#546e7a" font-weight="bold">core/</tspan>  base models, permissions,</tspan><tspan x="62" dy="21">&#9474;     pagination, exceptions (shared)</tspan><tspan x="62" dy="21">&#9500;&#9472; templates/  (admin + optional MTV pages)</tspan><tspan x="62" dy="21">&#9500;&#9472; static/  &#183;  media/</tspan><tspan x="62" dy="21">&#9492;&#9472; tests/</tspan></text>
+
+  <rect x="60" y="1052" width="660" height="216" rx="8" fill="#f8fafc" stroke="#cfd8dc"/>
+  <text x="76" y="1078" class="legttl">Each app is a small MTV + DRF stack</text>
+  <text x="76" y="1102" class="member">urls.py     &#8594; routes to views</text>
+  <text x="76" y="1124" class="member">views.py    &#8594; DRF ViewSet / APIView (request handling)</text>
+  <text x="76" y="1146" class="member">serializers &#8594; validate + shape JSON (in &amp; out)</text>
+  <text x="76" y="1168" class="member">services.py &#8594; business logic (kept out of views)</text>
+  <text x="76" y="1190" class="member">models.py   &#8594; ORM tables (one Postgres schema)</text>
+  <line x1="76" y1="1204" x2="704" y2="1204" class="divider"/>
+  <text x="76" y="1228" class="note">Run: python manage.py runserver  (dev)</text>
+  <text x="76" y="1250" class="note">Prod: gunicorn config.wsgi + celery -A config worker</text>
+
+  <!-- ============================================================= -->
+  <!-- REGION 2 : APP / MTV LAYER VIEW                               -->
+  <!-- ============================================================= -->
+  <text x="760" y="316" class="region">2 &#183; Apps as columns &#8212; each is a URL &#8594; View &#8594; Serializer &#8594; Service &#8594; Model stack</text>
+  <text x="760" y="340" class="note">One shared request pipeline (server + middleware + router) fans out to every app's DRF view. All models live in one Postgres database.</text>
+
+  <!-- shared band: WSGI + middleware + router -->
+  <rect x="760" y="360" width="470" height="110" rx="8" fill="#455a64" filter="url(#shadow)"/>
+  <text x="995" y="392" text-anchor="middle" class="topolbl">Gunicorn (WSGI)</text>
+  <text x="995" y="414" text-anchor="middle" class="dblbl">serves config.wsgi:application</text>
+  <text x="995" y="434" text-anchor="middle" class="dblbl">N worker processes</text>
+  <text x="995" y="454" text-anchor="middle" class="dblbl">(ASGI + Uvicorn for async)</text>
+
+  <rect x="1260" y="360" width="1000" height="110" rx="8" fill="#6d4c41" filter="url(#shadow)"/>
+  <text x="1760" y="392" text-anchor="middle" class="topolbl">Middleware chain  (runs on every request, reversed on the response)</text>
+  <text x="1760" y="416" text-anchor="middle" class="dblbl">SecurityMiddleware &#183; SessionMiddleware &#183; CommonMiddleware &#183; CsrfViewMiddleware</text>
+  <text x="1760" y="436" text-anchor="middle" class="dblbl">AuthenticationMiddleware &#183; MessageMiddleware &#183; (+ DRF auth / throttling in the view)</text>
+  <text x="1760" y="456" text-anchor="middle" class="dblbl">WhiteNoise serves static files</text>
+
+  <rect x="2290" y="360" width="1070" height="110" rx="8" fill="#1e88e5" filter="url(#shadow)"/>
+  <text x="2825" y="392" text-anchor="middle" class="topolbl">Root URLconf + DRF Router</text>
+  <text x="2825" y="416" text-anchor="middle" class="dblbl">config/urls.py includes each app's urls.py</text>
+  <text x="2825" y="436" text-anchor="middle" class="dblbl">DefaultRouter registers ViewSets &#8594; /api/accounts, /api/catalog, /api/cart, /api/orders, /api/payments</text>
+  <text x="2825" y="456" text-anchor="middle" class="dblbl">matches the URL and dispatches to the right View</text>
+
+  <!-- router dispatches to each app view (arrows drawn later) -->
+
+  <!-- ===== Column: accounts (green) ===== -->
+  <rect x="760" y="510" width="470" height="175" rx="6" fill="#ffffff" stroke="#43a047" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="760" y="510" width="470" height="44" rx="6" fill="#43a047"/><rect x="760" y="540" width="470" height="14" fill="#43a047"/>
+  <text x="995" y="529" text-anchor="middle" class="stereo" fill="#e8f5e9">&#171;@ViewSet (DRF)&#187;</text>
+  <text x="995" y="548" text-anchor="middle" class="clsname">AccountViewSet</text>
+  <text x="772" y="576" class="member">+ register() &#183; login() &#8594; JWT</text>
+  <text x="772" y="596" class="member">+ me() &#183; addresses()</text>
+  <line x1="760" y1="608" x2="1230" y2="608" class="divider"/>
+  <text x="772" y="628" class="member">authenticated via SimpleJWT</text>
+  <text x="772" y="648" class="member">permissions from core</text>
+  <text x="772" y="672" class="stereo" fill="#2e7d32">app: accounts</text>
+
+  <rect x="760" y="700" width="470" height="140" rx="6" fill="#ffffff" stroke="#43a047" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="760" y="700" width="470" height="44" rx="6" fill="#43a047"/><rect x="760" y="730" width="470" height="14" fill="#43a047"/>
+  <text x="995" y="719" text-anchor="middle" class="stereo" fill="#e8f5e9">&#171;ModelSerializer&#187;</text>
+  <text x="995" y="738" text-anchor="middle" class="clsname">UserSerializer &#183; AddressSerializer</text>
+  <text x="772" y="766" class="member">validate + shape JSON (in &amp; out)</text>
+  <text x="772" y="786" class="member">RegisterSerializer: password rules</text>
+  <line x1="760" y1="798" x2="1230" y2="798" class="divider"/>
+  <text x="772" y="818" class="member">write_only password, read_only id</text>
+
+  <rect x="760" y="855" width="470" height="160" rx="6" fill="#ffffff" stroke="#43a047" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="760" y="855" width="470" height="44" rx="6" fill="#43a047"/><rect x="760" y="885" width="470" height="14" fill="#43a047"/>
+  <text x="995" y="874" text-anchor="middle" class="stereo" fill="#e8f5e9">&#171;service&#187;</text>
+  <text x="995" y="893" text-anchor="middle" class="clsname">AccountService</text>
+  <text x="772" y="921" class="member">+ create_user(data) &#8594; hash password</text>
+  <text x="772" y="941" class="member">+ issue_tokens(user) &#8594; access + refresh</text>
+  <line x1="760" y1="953" x2="1230" y2="953" class="divider"/>
+  <text x="772" y="973" class="member">business logic kept out of the view</text>
+  <text x="772" y="993" class="member">reused by API + admin actions</text>
+
+  <rect x="760" y="1030" width="470" height="195" rx="6" fill="#ffffff" stroke="#43a047" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="760" y="1030" width="470" height="44" rx="6" fill="#43a047"/><rect x="760" y="1060" width="470" height="14" fill="#43a047"/>
+  <text x="995" y="1049" text-anchor="middle" class="stereo" fill="#e8f5e9">&#171;models.Model&#187;</text>
+  <text x="995" y="1068" text-anchor="middle" class="clsname">User &#183; Address</text>
+  <text x="772" y="1096" class="member">User(AbstractUser): email, is_active</text>
+  <text x="772" y="1116" class="member">Address: user (FK), line1, city, pincode</text>
+  <line x1="760" y1="1128" x2="1230" y2="1128" class="divider"/>
+  <text x="772" y="1148" class="member">ORM &#8594; auth_user + accounts_address</text>
+  <text x="772" y="1168" class="member">migrations track schema changes</text>
+  <text x="772" y="1192" class="stereo" fill="#2e7d32">one Postgres DB (shared)</text>
+
+  <!-- ===== Column: catalog (orange) ===== -->
+  <rect x="1290" y="510" width="470" height="175" rx="6" fill="#ffffff" stroke="#fb8c00" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1290" y="510" width="470" height="44" rx="6" fill="#fb8c00"/><rect x="1290" y="540" width="470" height="14" fill="#fb8c00"/>
+  <text x="1525" y="529" text-anchor="middle" class="stereo" fill="#fff3e0">&#171;@ModelViewSet&#187;</text>
+  <text x="1525" y="548" text-anchor="middle" class="clsname">ProductViewSet</text>
+  <text x="1302" y="576" class="member">+ list() &#183; retrieve()</text>
+  <text x="1302" y="596" class="member">+ search / filter / paginate</text>
+  <line x1="1290" y1="608" x2="1760" y2="608" class="divider"/>
+  <text x="1302" y="628" class="member">read-mostly; cached in Redis</text>
+  <text x="1302" y="648" class="member">public (AllowAny) read access</text>
+  <text x="1302" y="672" class="stereo" fill="#e65100">app: catalog</text>
+
+  <rect x="1290" y="700" width="470" height="140" rx="6" fill="#ffffff" stroke="#fb8c00" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1290" y="700" width="470" height="44" rx="6" fill="#fb8c00"/><rect x="1290" y="730" width="470" height="14" fill="#fb8c00"/>
+  <text x="1525" y="719" text-anchor="middle" class="stereo" fill="#fff3e0">&#171;ModelSerializer&#187;</text>
+  <text x="1525" y="738" text-anchor="middle" class="clsname">ProductSerializer &#183; CategorySerializer</text>
+  <text x="1302" y="766" class="member">nested category, price, stock</text>
+  <text x="1302" y="786" class="member">image URLs from media storage</text>
+  <line x1="1290" y1="798" x2="1760" y2="798" class="divider"/>
+  <text x="1302" y="818" class="member">SerializerMethodField for computed fields</text>
+
+  <rect x="1290" y="855" width="470" height="160" rx="6" fill="#ffffff" stroke="#fb8c00" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1290" y="855" width="470" height="44" rx="6" fill="#fb8c00"/><rect x="1290" y="885" width="470" height="14" fill="#fb8c00"/>
+  <text x="1525" y="874" text-anchor="middle" class="stereo" fill="#fff3e0">&#171;service&#187;</text>
+  <text x="1525" y="893" text-anchor="middle" class="clsname">CatalogService</text>
+  <text x="1302" y="921" class="member">+ search(query, filters)</text>
+  <text x="1302" y="941" class="member">+ check_availability(sku, qty)</text>
+  <line x1="1290" y1="953" x2="1760" y2="953" class="divider"/>
+  <text x="1302" y="973" class="member">wraps queryset + caching</text>
+  <text x="1302" y="993" class="member">used by cart + orders</text>
+
+  <rect x="1290" y="1030" width="470" height="195" rx="6" fill="#ffffff" stroke="#fb8c00" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1290" y="1030" width="470" height="44" rx="6" fill="#fb8c00"/><rect x="1290" y="1060" width="470" height="14" fill="#fb8c00"/>
+  <text x="1525" y="1049" text-anchor="middle" class="stereo" fill="#fff3e0">&#171;models.Model&#187;</text>
+  <text x="1525" y="1068" text-anchor="middle" class="clsname">Product &#183; Category</text>
+  <text x="1302" y="1096" class="member">Product: name, sku (uniq), price,</text>
+  <text x="1302" y="1116" class="member">stock, category (FK), is_active</text>
+  <text x="1302" y="1136" class="member">Category: name, slug, parent (FK)</text>
+  <line x1="1290" y1="1148" x2="1760" y2="1148" class="divider"/>
+  <text x="1302" y="1168" class="member">indexes on sku, category</text>
+  <text x="1302" y="1192" class="stereo" fill="#e65100">one Postgres DB (shared)</text>
+
+  <!-- ===== Column: cart (blue) ===== -->
+  <rect x="1820" y="510" width="470" height="175" rx="6" fill="#ffffff" stroke="#1e88e5" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1820" y="510" width="470" height="44" rx="6" fill="#1e88e5"/><rect x="1820" y="540" width="470" height="14" fill="#1e88e5"/>
+  <text x="2055" y="529" text-anchor="middle" class="stereo" fill="#e3f2fd">&#171;@ViewSet&#187;</text>
+  <text x="2055" y="548" text-anchor="middle" class="clsname">CartViewSet</text>
+  <text x="1832" y="576" class="member">+ get_cart() &#183; add_item() &#183; remove_item()</text>
+  <text x="1832" y="596" class="member">+ apply_coupon()</text>
+  <line x1="1820" y1="608" x2="2290" y2="608" class="divider"/>
+  <text x="1832" y="628" class="member">per-user cart (IsAuthenticated)</text>
+  <text x="1832" y="648" class="member">or session cart for guests</text>
+  <text x="1832" y="672" class="stereo" fill="#1565c0">app: cart</text>
+
+  <rect x="1820" y="700" width="470" height="140" rx="6" fill="#ffffff" stroke="#1e88e5" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1820" y="700" width="470" height="44" rx="6" fill="#1e88e5"/><rect x="1820" y="730" width="470" height="14" fill="#1e88e5"/>
+  <text x="2055" y="719" text-anchor="middle" class="stereo" fill="#e3f2fd">&#171;ModelSerializer&#187;</text>
+  <text x="2055" y="738" text-anchor="middle" class="clsname">CartSerializer &#183; CartItemSerializer</text>
+  <text x="1832" y="766" class="member">nested items + line totals</text>
+  <text x="1832" y="786" class="member">grand total (computed)</text>
+  <line x1="1820" y1="798" x2="2290" y2="798" class="divider"/>
+  <text x="1832" y="818" class="member">validates qty &gt; 0</text>
+
+  <rect x="1820" y="855" width="470" height="160" rx="6" fill="#ffffff" stroke="#1e88e5" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1820" y="855" width="470" height="44" rx="6" fill="#1e88e5"/><rect x="1820" y="885" width="470" height="14" fill="#1e88e5"/>
+  <text x="2055" y="874" text-anchor="middle" class="stereo" fill="#e3f2fd">&#171;service&#187;</text>
+  <text x="2055" y="893" text-anchor="middle" class="clsname">CartService</text>
+  <text x="1832" y="921" class="member">+ add_item(sku, qty) &#8594; check stock</text>
+  <text x="1832" y="941" class="member">+ recalc_totals() &#183; clear()</text>
+  <line x1="1820" y1="953" x2="2290" y2="953" class="divider"/>
+  <text x="1832" y="973" class="member">calls CatalogService for availability</text>
+  <text x="1832" y="993" class="member">read by OrderService at checkout</text>
+
+  <rect x="1820" y="1030" width="470" height="195" rx="6" fill="#ffffff" stroke="#1e88e5" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="1820" y="1030" width="470" height="44" rx="6" fill="#1e88e5"/><rect x="1820" y="1060" width="470" height="14" fill="#1e88e5"/>
+  <text x="2055" y="1049" text-anchor="middle" class="stereo" fill="#e3f2fd">&#171;models.Model&#187;</text>
+  <text x="2055" y="1068" text-anchor="middle" class="clsname">Cart &#183; CartItem</text>
+  <text x="1832" y="1096" class="member">Cart: user (OneToOne), updated_at</text>
+  <text x="1832" y="1116" class="member">CartItem: cart (FK), product (FK), qty</text>
+  <line x1="1820" y1="1128" x2="2290" y2="1128" class="divider"/>
+  <text x="1832" y="1148" class="member">unique(cart, product)</text>
+  <text x="1832" y="1192" class="stereo" fill="#1565c0">one Postgres DB (shared)</text>
+
+  <!-- ===== Column: orders (red) ===== -->
+  <rect x="2360" y="510" width="470" height="175" rx="6" fill="#ffffff" stroke="#e53935" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2360" y="510" width="470" height="44" rx="6" fill="#e53935"/><rect x="2360" y="540" width="470" height="14" fill="#e53935"/>
+  <text x="2595" y="529" text-anchor="middle" class="stereo" fill="#ffebee">&#171;@ModelViewSet&#187;</text>
+  <text x="2595" y="548" text-anchor="middle" class="clsname">OrderViewSet</text>
+  <text x="2372" y="576" class="member">+ create() &#8594; checkout</text>
+  <text x="2372" y="596" class="member">+ list() &#183; retrieve() &#183; cancel()</text>
+  <line x1="2360" y1="608" x2="2830" y2="608" class="divider"/>
+  <text x="2372" y="628" class="member">IsAuthenticated; user sees own orders</text>
+  <text x="2372" y="648" class="member">throttled to stop double-submit</text>
+  <text x="2372" y="672" class="stereo" fill="#c62828">app: orders</text>
+
+  <rect x="2360" y="700" width="470" height="140" rx="6" fill="#ffffff" stroke="#e53935" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2360" y="700" width="470" height="44" rx="6" fill="#e53935"/><rect x="2360" y="730" width="470" height="14" fill="#e53935"/>
+  <text x="2595" y="719" text-anchor="middle" class="stereo" fill="#ffebee">&#171;ModelSerializer&#187;</text>
+  <text x="2595" y="738" text-anchor="middle" class="clsname">Order &#183; Checkout Serializers</text>
+  <text x="2372" y="766" class="member">CheckoutSerializer: address, payment method</text>
+  <text x="2372" y="786" class="member">OrderSerializer: items, status, total (read-only)</text>
+  <line x1="2360" y1="798" x2="2830" y2="798" class="divider"/>
+  <text x="2372" y="818" class="member">validates cart is not empty</text>
+
+  <rect x="2360" y="855" width="470" height="160" rx="6" fill="#ffffff" stroke="#e53935" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2360" y="855" width="470" height="44" rx="6" fill="#e53935"/><rect x="2360" y="885" width="470" height="14" fill="#e53935"/>
+  <text x="2595" y="874" text-anchor="middle" class="stereo" fill="#ffebee">&#171;service &#183; @transaction.atomic&#187;</text>
+  <text x="2595" y="893" text-anchor="middle" class="clsname">OrderService</text>
+  <text x="2372" y="921" class="member">+ place_order(user, checkout):</text>
+  <text x="2372" y="941" class="member">snapshot cart &#8594; reserve stock &#8594; charge</text>
+  <text x="2372" y="961" class="member">&#8594; create Order + items &#8594; clear cart</text>
+  <line x1="2360" y1="971" x2="2830" y2="971" class="divider"/>
+  <text x="2372" y="991" class="member">all-or-nothing; emits order_placed signal</text>
+
+  <rect x="2360" y="1030" width="470" height="195" rx="6" fill="#ffffff" stroke="#e53935" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2360" y="1030" width="470" height="44" rx="6" fill="#e53935"/><rect x="2360" y="1060" width="470" height="14" fill="#e53935"/>
+  <text x="2595" y="1049" text-anchor="middle" class="stereo" fill="#ffebee">&#171;models.Model&#187;</text>
+  <text x="2595" y="1068" text-anchor="middle" class="clsname">Order &#183; OrderItem</text>
+  <text x="2372" y="1096" class="member">Order: user (FK), status, total, created_at</text>
+  <text x="2372" y="1116" class="member">OrderItem: order (FK), product, qty, unit_price</text>
+  <line x1="2360" y1="1128" x2="2830" y2="1128" class="divider"/>
+  <text x="2372" y="1148" class="member">status: CREATED &#8594; PAID &#8594; SHIPPED</text>
+  <text x="2372" y="1168" class="member">price snapshotted at order time</text>
+  <text x="2372" y="1192" class="stereo" fill="#c62828">one Postgres DB (shared)</text>
+
+  <!-- ===== Column: payments (purple) ===== -->
+  <rect x="2890" y="510" width="470" height="175" rx="6" fill="#ffffff" stroke="#8e24aa" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2890" y="510" width="470" height="44" rx="6" fill="#8e24aa"/><rect x="2890" y="540" width="470" height="14" fill="#8e24aa"/>
+  <text x="3125" y="529" text-anchor="middle" class="stereo" fill="#f3e5f5">&#171;@ViewSet&#187;</text>
+  <text x="3125" y="548" text-anchor="middle" class="clsname">PaymentViewSet</text>
+  <text x="2902" y="576" class="member">+ create_intent(order)</text>
+  <text x="2902" y="596" class="member">+ webhook()  &#8594; gateway callback</text>
+  <line x1="2890" y1="608" x2="3360" y2="608" class="divider"/>
+  <text x="2902" y="628" class="member">webhook is CSRF-exempt + signature-checked</text>
+  <text x="2902" y="648" class="member">idempotent on provider_ref</text>
+  <text x="2902" y="672" class="stereo" fill="#6a1b9a">app: payments</text>
+
+  <rect x="2890" y="700" width="470" height="140" rx="6" fill="#ffffff" stroke="#8e24aa" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2890" y="700" width="470" height="44" rx="6" fill="#8e24aa"/><rect x="2890" y="730" width="470" height="14" fill="#8e24aa"/>
+  <text x="3125" y="719" text-anchor="middle" class="stereo" fill="#f3e5f5">&#171;ModelSerializer&#187;</text>
+  <text x="3125" y="738" text-anchor="middle" class="clsname">PaymentSerializer</text>
+  <text x="2902" y="766" class="member">amount, status, provider_ref</text>
+  <text x="2902" y="786" class="member">client_secret (write-once)</text>
+  <line x1="2890" y1="798" x2="3360" y2="798" class="divider"/>
+  <text x="2902" y="818" class="member">never exposes gateway secret keys</text>
+
+  <rect x="2890" y="855" width="470" height="160" rx="6" fill="#ffffff" stroke="#8e24aa" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2890" y="855" width="470" height="44" rx="6" fill="#8e24aa"/><rect x="2890" y="885" width="470" height="14" fill="#8e24aa"/>
+  <text x="3125" y="874" text-anchor="middle" class="stereo" fill="#f3e5f5">&#171;service&#187;</text>
+  <text x="3125" y="893" text-anchor="middle" class="clsname">PaymentService</text>
+  <text x="2902" y="921" class="member">+ charge(order, method) &#8594; gateway.py</text>
+  <text x="2902" y="941" class="member">+ verify_webhook_signature(payload)</text>
+  <line x1="2890" y1="953" x2="3360" y2="953" class="divider"/>
+  <text x="2902" y="973" class="member">gateway.py wraps Stripe / Razorpay SDK</text>
+  <text x="2902" y="993" class="member">called by OrderService during checkout</text>
+
+  <rect x="2890" y="1030" width="470" height="195" rx="6" fill="#ffffff" stroke="#8e24aa" stroke-width="2.2" filter="url(#shadow)"/>
+  <rect x="2890" y="1030" width="470" height="44" rx="6" fill="#8e24aa"/><rect x="2890" y="1060" width="470" height="14" fill="#8e24aa"/>
+  <text x="3125" y="1049" text-anchor="middle" class="stereo" fill="#f3e5f5">&#171;models.Model&#187;</text>
+  <text x="3125" y="1068" text-anchor="middle" class="clsname">Payment</text>
+  <text x="2902" y="1096" class="member">order (FK), amount, currency</text>
+  <text x="2902" y="1116" class="member">status: PENDING / SUCCESS / FAILED</text>
+  <text x="2902" y="1136" class="member">provider_ref (unique), created_at</text>
+  <line x1="2890" y1="1148" x2="3360" y2="1148" class="divider"/>
+  <text x="2902" y="1168" class="member">webhook updates status later</text>
+  <text x="2902" y="1192" class="stereo" fill="#6a1b9a">one Postgres DB (shared)</text>
+
+  <!-- ===== bottom band: Postgres (full width) ===== -->
+  <rect x="760" y="1250" width="2600" height="62" rx="8" fill="#2e7d32" filter="url(#shadow)"/>
+  <text x="2060" y="1278" text-anchor="middle" class="topolbl">PostgreSQL &#8212; ONE database shared by every app (the ORM maps each app's models to tables)</text>
+  <text x="2060" y="1300" text-anchor="middle" class="dblbl">auth_user &#183; accounts_address &#183; catalog_product / category &#183; cart_cart / cartitem &#183; orders_order / orderitem &#183; payments_payment  &#8212; kept consistent by migrations</text>
+
+  <!-- ===== Region 2 arrows ===== -->
+  <!-- request through the shared band -->
+  <line x1="1230" y1="415" x2="1258" y2="415" stroke="#37474f" stroke-width="2.4" marker-end="url(#flow)"/>
+  <line x1="2260" y1="415" x2="2288" y2="415" stroke="#37474f" stroke-width="2.4" marker-end="url(#flow)"/>
+
+  <!-- router -> views dispatch rail -->
+  <line x1="2825" y1="470" x2="2825" y2="490" stroke="#1e88e5" stroke-width="2.4" fill="none"/>
+  <line x1="995" y1="490" x2="3125" y2="490" stroke="#1e88e5" stroke-width="2.4" fill="none"/>
+  <g stroke="#1e88e5" stroke-width="2.4" fill="none">
+    <line x1="995" y1="490" x2="995" y2="508" marker-end="url(#flow)"/>
+    <line x1="1525" y1="490" x2="1525" y2="508" marker-end="url(#flow)"/>
+    <line x1="2055" y1="490" x2="2055" y2="508" marker-end="url(#flow)"/>
+    <line x1="2595" y1="490" x2="2595" y2="508" marker-end="url(#flow)"/>
+    <line x1="3125" y1="490" x2="3125" y2="508" marker-end="url(#flow)"/>
+  </g>
+  <rect x="1180" y="474" width="330" height="18" rx="3" fill="#f4f7fa"/><text x="1186" y="488" class="arrlbl" fill="#1565c0">URL match &#8594; dispatch to the matching ViewSet</text>
+
+  <!-- per-column vertical chains -->
+  <g stroke="#263238" stroke-width="2.2" fill="none">
+    <line x1="995"  y1="685" x2="995"  y2="698" marker-end="url(#assoc)"/>
+    <line x1="1525" y1="685" x2="1525" y2="698" marker-end="url(#assoc)"/>
+    <line x1="2055" y1="685" x2="2055" y2="698" marker-end="url(#assoc)"/>
+    <line x1="2595" y1="685" x2="2595" y2="698" marker-end="url(#assoc)"/>
+    <line x1="3125" y1="685" x2="3125" y2="698" marker-end="url(#assoc)"/>
+    <line x1="995"  y1="840" x2="995"  y2="853" marker-end="url(#assoc)"/>
+    <line x1="1525" y1="840" x2="1525" y2="853" marker-end="url(#assoc)"/>
+    <line x1="2055" y1="840" x2="2055" y2="853" marker-end="url(#assoc)"/>
+    <line x1="2595" y1="840" x2="2595" y2="853" marker-end="url(#assoc)"/>
+    <line x1="3125" y1="840" x2="3125" y2="853" marker-end="url(#assoc)"/>
+  </g>
+  <g stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" fill="none">
+    <line x1="995"  y1="1015" x2="995"  y2="1028" marker-end="url(#dep)"/>
+    <line x1="1525" y1="1015" x2="1525" y2="1028" marker-end="url(#dep)"/>
+    <line x1="2055" y1="1015" x2="2055" y2="1028" marker-end="url(#dep)"/>
+    <line x1="2595" y1="1015" x2="2595" y2="1028" marker-end="url(#dep)"/>
+    <line x1="3125" y1="1015" x2="3125" y2="1028" marker-end="url(#dep)"/>
+  </g>
+  <text x="1004" y="695" class="arrlbl">validate</text>
+  <text x="1004" y="850" class="arrlbl">call service</text>
+  <text x="1004" y="1025" class="arrlbl">ORM</text>
+
+  <!-- models -> Postgres -->
+  <g stroke="#2e7d32" stroke-width="2.2" fill="none">
+    <line x1="995"  y1="1225" x2="995"  y2="1248" marker-end="url(#ext)"/>
+    <line x1="1525" y1="1225" x2="1525" y2="1248" marker-end="url(#ext)"/>
+    <line x1="2055" y1="1225" x2="2055" y2="1248" marker-end="url(#ext)"/>
+    <line x1="2595" y1="1225" x2="2595" y2="1248" marker-end="url(#ext)"/>
+    <line x1="3125" y1="1225" x2="3125" y2="1248" marker-end="url(#ext)"/>
+  </g>
+
+  <!-- cross-app service calls -->
+  <line x1="2358" y1="930" x2="2294" y2="930" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="2130" y="906" width="164" height="18" rx="3" fill="#f4f7fa"/><text x="2134" y="920" class="arrlbl" fill="#5d4037">reads cart at checkout</text>
+  <line x1="2832" y1="900" x2="2886" y2="900" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="2836" y="864" width="120" height="18" rx="3" fill="#f4f7fa"/><text x="2840" y="878" class="arrlbl" fill="#5d4037">charge</text>
+  <line x1="1818" y1="930" x2="1764" y2="930" stroke="#5d4037" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#dep)"/>
+  <rect x="1600" y="906" width="164" height="18" rx="3" fill="#f4f7fa"/><text x="1604" y="920" class="arrlbl" fill="#5d4037">check stock (catalog)</text>
+
+  <!-- ============================================================= -->
+  <!-- REGION 3 : RUNTIME TOPOLOGY                                   -->
+  <!-- ============================================================= -->
+  <rect x="40" y="1340" width="3320" height="560" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="60" y="1376" class="region">3 &#183; Runtime &#8212; one deployment: Nginx &#8594; Gunicorn/Django &#8594; Postgres, with Redis cache + Celery workers</text>
+
+  <!-- Browser -->
+  <rect x="80" y="1540" width="160" height="96" rx="8" fill="#37474f" filter="url(#shadow)"/>
+  <text x="160" y="1580" text-anchor="middle" class="topolbl">Browser /</text>
+  <text x="160" y="1600" text-anchor="middle" class="topolbl">API client</text>
+  <text x="160" y="1622" text-anchor="middle" class="dblbl">HTTPS + JSON</text>
+
+  <!-- Nginx -->
+  <rect x="300" y="1540" width="190" height="96" rx="8" fill="#455a64" filter="url(#shadow)"/>
+  <text x="395" y="1576" text-anchor="middle" class="topolbl">Nginx</text>
+  <text x="395" y="1598" text-anchor="middle" class="dblbl">reverse proxy + TLS</text>
+  <text x="395" y="1618" text-anchor="middle" class="dblbl">serves static / media</text>
+
+  <!-- Django (Gunicorn) hub -->
+  <rect x="560" y="1512" width="380" height="150" rx="8" fill="#1e88e5" filter="url(#shadow)"/>
+  <text x="750" y="1548" text-anchor="middle" class="topolbl">Gunicorn (WSGI) &#8594; Django</text>
+  <text x="750" y="1572" text-anchor="middle" class="dblbl">N worker processes</text>
+  <text x="750" y="1592" text-anchor="middle" class="dblbl">middleware &#8594; URLconf &#8594; View</text>
+  <text x="750" y="1612" text-anchor="middle" class="dblbl">&#8594; Serializer &#8594; Service &#8594; ORM</text>
+  <text x="750" y="1636" text-anchor="middle" class="dblbl">(one process, all apps)</text>
+
+  <!-- Postgres -->
+  <path d="M1045,1522 a75,13 0 0,0 150,0 v104 a75,13 0 0,1 -150,0 z" fill="#2e7d32"/>
+  <path d="M1045,1522 a75,13 0 0,1 150,0" fill="none" stroke="#1b5e20" stroke-width="1.5"/>
+  <text x="1120" y="1566" text-anchor="middle" class="topolbl">PostgreSQL</text>
+  <text x="1120" y="1588" text-anchor="middle" class="dblbl">one database</text>
+  <text x="1120" y="1606" text-anchor="middle" class="dblbl">all app tables</text>
+
+  <!-- Redis -->
+  <rect x="1010" y="1720" width="240" height="86" rx="8" fill="#c62828" filter="url(#shadow)"/>
+  <text x="1130" y="1752" text-anchor="middle" class="topolbl">Redis</text>
+  <text x="1130" y="1774" text-anchor="middle" class="dblbl">cache + session store</text>
+  <text x="1130" y="1794" text-anchor="middle" class="dblbl">+ Celery broker</text>
+
+  <!-- Celery worker + beat -->
+  <rect x="1300" y="1714" width="260" height="56" rx="8" fill="#d81b60" filter="url(#shadow)"/>
+  <text x="1430" y="1740" text-anchor="middle" class="topolbl">Celery worker</text>
+  <text x="1430" y="1760" text-anchor="middle" class="dblbl">runs tasks off the request</text>
+  <rect x="1300" y="1780" width="260" height="56" rx="8" fill="#ad1457" filter="url(#shadow)"/>
+  <text x="1430" y="1806" text-anchor="middle" class="topolbl">Celery beat</text>
+  <text x="1430" y="1826" text-anchor="middle" class="dblbl">scheduled / periodic jobs</text>
+
+  <!-- static/media -->
+  <rect x="300" y="1700" width="190" height="70" rx="8" fill="#607d8b" filter="url(#shadow)"/>
+  <text x="395" y="1730" text-anchor="middle" class="topolbl">static / media</text>
+  <text x="395" y="1752" text-anchor="middle" class="dblbl">WhiteNoise / S3</text>
+
+  <!-- Payment gateway -->
+  <rect x="1620" y="1540" width="300" height="72" rx="8" fill="#2e7d32" filter="url(#shadow)"/>
+  <text x="1770" y="1570" text-anchor="middle" class="topolbl">Payment gateway</text>
+  <text x="1770" y="1592" text-anchor="middle" class="dblbl">Stripe / Razorpay (HTTPS)</text>
+
+  <!-- Email/SMS -->
+  <rect x="1620" y="1720" width="300" height="72" rx="8" fill="#2e7d32" filter="url(#shadow)"/>
+  <text x="1770" y="1750" text-anchor="middle" class="topolbl">Email / SMS provider</text>
+  <text x="1770" y="1772" text-anchor="middle" class="dblbl">SES / SendGrid / Twilio</text>
+
+  <!-- arrows -->
+  <line x1="240" y1="1588" x2="298" y2="1588" stroke="#37474f" stroke-width="2.6" marker-end="url(#flow)"/>
+  <circle cx="269" cy="1520" r="12" fill="#0d1b2a"/><text x="269" y="1525" text-anchor="middle" class="step" font-size="13">1</text>
+  <line x1="490" y1="1588" x2="558" y2="1588" stroke="#37474f" stroke-width="2.6" marker-end="url(#flow)"/>
+  <circle cx="524" cy="1520" r="12" fill="#0d1b2a"/><text x="524" y="1525" text-anchor="middle" class="step" font-size="13">2</text>
+  <text x="500" y="1512" class="arrlbl">proxy dynamic</text>
+  <line x1="395" y1="1636" x2="395" y2="1698" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <text x="404" y="1676" class="arrlbl">static/media</text>
+  <line x1="940" y1="1560" x2="1043" y2="1560" stroke="#2e7d32" stroke-width="2.4" stroke-dasharray="6 5" marker-end="url(#ext)"/>
+  <circle cx="990" cy="1522" r="12" fill="#0d1b2a"/><text x="990" y="1527" text-anchor="middle" class="step" font-size="13">3</text>
+  <text x="948" y="1544" class="arrlbl" style="fill:#2e7d32">SQL via ORM</text>
+  <line x1="760" y1="1662" x2="1090" y2="1718" stroke="#37474f" stroke-width="2.2" marker-end="url(#flow)"/>
+  <circle cx="900" cy="1690" r="12" fill="#0d1b2a"/><text x="900" y="1695" text-anchor="middle" class="step" font-size="13">4</text>
+  <rect x="760" y="1676" width="200" height="18" rx="3" fill="#f4f7fa"/><text x="764" y="1690" class="arrlbl">cache get/set + enqueue tasks</text>
+  <line x1="1250" y1="1748" x2="1298" y2="1744" stroke="#ad1457" stroke-width="2.4" stroke-dasharray="3 6" marker-end="url(#async)"/>
+  <circle cx="1274" cy="1700" r="12" fill="#0d1b2a"/><text x="1274" y="1705" text-anchor="middle" class="step" font-size="13">5</text>
+  <line x1="1560" y1="1742" x2="1618" y2="1750" stroke="#2e7d32" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#ext)"/>
+  <circle cx="1590" cy="1706" r="12" fill="#0d1b2a"/><text x="1590" y="1711" text-anchor="middle" class="step" font-size="13">6</text>
+  <text x="1566" y="1730" class="arrlbl" style="fill:#2e7d32">send email/SMS</text>
+  <!-- Django -> payment gateway (sync, over the top) -->
+  <polyline points="900,1512 900,1488 1770,1488 1770,1538" fill="none" stroke="#2e7d32" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#ext)"/>
+  <rect x="1140" y="1478" width="420" height="18" rx="3" fill="#f4f7fa"/><text x="1146" y="1492" class="arrlbl" style="fill:#2e7d32">PaymentService &#8594; gateway during checkout (HTTPS, synchronous)</text>
+
+  <text x="60" y="1852" class="note"><tspan font-weight="bold">Read it as:</tspan> &#9312; browser hits Nginx over HTTPS &#8594; &#9313; Nginx proxies dynamic requests to a Gunicorn worker running Django (and serves static/media itself) &#8594; &#9314; the view/service reads &amp; writes Postgres via the ORM</text>
+  <text x="60" y="1876" class="note">&#8594; &#9315; Django caches in Redis and enqueues background tasks &#8594; &#9316; Celery workers pull tasks from Redis &#8594; &#9317; and call email/SMS providers. The payment gateway is called synchronously during checkout. One deployable, scaled by adding Gunicorn + Celery processes.</text>
+
+  <!-- ============================================================= -->
+  <!-- REGION 4 : END-TO-END TRACE (place an order)                 -->
+  <!-- ============================================================= -->
+  <rect x="40" y="1940" width="3320" height="580" rx="10" fill="#ffffff" stroke="#b0bec5" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="60" y="1976" class="region">4 &#183; Request trace &#8212; "place an order" (POST /api/orders)</text>
+
+  <g class="stepdesc">
+    <circle cx="85" cy="2014" r="14" fill="#0d1b2a"/><text x="85" y="2019" text-anchor="middle" class="step">1</text>
+    <text x="112" y="2019"><tspan font-weight="bold">POST /api/orders</tspan> (Bearer JWT) &#8594; Nginx &#8594; Gunicorn &#8594; Django middleware (security, session, auth sets request.user).</text>
+    <circle cx="85" cy="2050" r="14" fill="#0d1b2a"/><text x="85" y="2055" text-anchor="middle" class="step">2</text>
+    <text x="112" y="2055">Router dispatches to <tspan font-weight="bold">OrderViewSet.create()</tspan>; DRF runs authentication + permissions + throttling.</text>
+    <circle cx="85" cy="2086" r="14" fill="#0d1b2a"/><text x="85" y="2091" text-anchor="middle" class="step">3</text>
+    <text x="112" y="2091"><tspan font-weight="bold">CheckoutSerializer</tspan> validates the body (address, payment method) &#8212; returns 400 on bad input.</text>
+    <circle cx="85" cy="2122" r="14" fill="#0d1b2a"/><text x="85" y="2127" text-anchor="middle" class="step">4</text>
+    <text x="112" y="2127">The view calls <tspan font-weight="bold">OrderService.place_order()</tspan> inside <tspan font-weight="bold">@transaction.atomic</tspan>.</text>
+    <circle cx="85" cy="2158" r="14" fill="#0d1b2a"/><text x="85" y="2163" text-anchor="middle" class="step">5</text>
+    <text x="112" y="2163">Service reads the cart (CartService), checks stock (CatalogService) and decrements it (row locks).</text>
+    <circle cx="85" cy="2194" r="14" fill="#0d1b2a"/><text x="85" y="2199" text-anchor="middle" class="step">6</text>
+    <text x="112" y="2199">Calls <tspan font-weight="bold">PaymentService.charge()</tspan> &#8594; payment gateway (HTTPS). If it fails, the whole transaction rolls back.</text>
+    <circle cx="85" cy="2230" r="14" fill="#0d1b2a"/><text x="85" y="2235" text-anchor="middle" class="step">7</text>
+    <text x="112" y="2235">Creates <tspan font-weight="bold">Order + OrderItems</tspan> (price snapshot), clears the cart, then commits the transaction.</text>
+    <circle cx="85" cy="2266" r="14" fill="#0d1b2a"/><text x="85" y="2271" text-anchor="middle" class="step">8</text>
+    <text x="112" y="2271">An <tspan font-weight="bold">order_placed signal</tspan> enqueues a Celery task &#8594; notifications.send_email (async, off the request thread).</text>
+    <circle cx="85" cy="2302" r="14" fill="#0d1b2a"/><text x="85" y="2307" text-anchor="middle" class="step">9</text>
+    <text x="112" y="2307"><tspan font-weight="bold">OrderSerializer</tspan> renders the body; DRF returns <tspan font-weight="bold">201 Created</tspan>; Nginx passes it back to the client.</text>
+  </g>
+
+  <line x1="2000" y1="2000" x2="2000" y2="2500" class="divider"/>
+  <text x="2030" y="2024" class="legttl">Request &amp; response</text>
+  <rect x="2030" y="2038" width="1300" height="230" rx="8" fill="#0d1b2a"/>
+  <text x="2046" y="2064" class="member" style="fill:#80cbc4"># request</text>
+  <text x="2046" y="2086" class="member" style="fill:#90caf9">POST /api/orders</text><text x="2260" y="2086" class="member" style="fill:#e0e0e0">Authorization: Bearer &lt;jwt&gt;</text>
+  <text x="2046" y="2108" class="member" style="fill:#e0e0e0">{ "address_id": 12, "payment_method": "card" }</text>
+  <text x="2046" y="2136" class="member" style="fill:#80cbc4"># response  201 Created</text>
+  <text x="2046" y="2158" class="member" style="fill:#e0e0e0">{ "id": 5001, "status": "PAID",</text>
+  <text x="2046" y="2180" class="member" style="fill:#e0e0e0">&#160;&#160;"total": "1499.00",</text>
+  <text x="2046" y="2202" class="member" style="fill:#e0e0e0">&#160;&#160;"items": [ {"sku": "SKU-1", "qty": 2, "unit_price": "499.00"}, ... ] }</text>
+  <text x="2046" y="2230" class="member" style="fill:#ffcc80"># 400 on invalid body &#183; 402/409 if payment or stock fails (tx rolled back)</text>
+  <text x="2046" y="2252" class="member" style="fill:#80cbc4"># email is sent later by Celery &#8212; the response does NOT wait for it</text>
+
+  <text x="2030" y="2300" class="legttl">Why it's safe</text>
+  <text x="2030" y="2326" class="note">&#8226; Steps 5&#8211;7 run in one DB transaction &#8212; stock, payment record and order</text>
+  <text x="2030" y="2348" class="note">&#160;&#160;commit together or not at all (no half-placed orders).</text>
+  <text x="2030" y="2374" class="note">&#8226; The payment webhook (async) later confirms/settles and updates status,</text>
+  <text x="2030" y="2396" class="note">&#160;&#160;idempotent on provider_ref.</text>
+  <text x="2030" y="2422" class="note">&#8226; Slow work (email, receipts) is pushed to Celery so the API stays fast.</text>
+  <text x="2030" y="2448" class="note">&#8226; The same views/services back the Django admin and any server-rendered</text>
+  <text x="2030" y="2470" class="note">&#160;&#160;templates &#8212; one codebase, one database.</text>
+
+  <text x="60" y="2508" class="note" font-size="12">Self-contained SVG &#183; viewBox 3400&#215;2560 (rendered 6800&#215;5120) &#183; app-coloured across the project tree, layer view &amp; runtime. Representative Django 5 + DRF e-commerce layout.</text>
+</svg>
