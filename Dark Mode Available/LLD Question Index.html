@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LLD Question Index</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --text:#1a1d23; --muted:#5b616e;
+  --border:#e3e5e9; --accent:#3457d5; --accent2:#e8edff; --chip:#eef0f4;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161a; --card:#1c1f26; --text:#e8eaed; --muted:#9aa0ac;
+    --border:#2b2f38; --accent:#7d9bff; --accent2:#1e2740; --chip:#242832;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161a; --card:#1c1f26; --text:#e8eaed; --muted:#9aa0ac;
+  --border:#2b2f38; --accent:#7d9bff; --accent2:#1e2740; --chip:#242832;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+header{
+  position:sticky; top:0; z-index:5;
+  padding:14px 16px calc(12px + env(safe-area-inset-top,0px));
+  padding-top:calc(14px + env(safe-area-inset-top,0px));
+  background:var(--bg); border-bottom:1px solid var(--border);
+}
+h1{font-size:1.15rem; margin:0 0 4px; letter-spacing:-.01em;}
+.sub{color:var(--muted); font-size:.82rem; margin-bottom:10px;}
+#search{
+  width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+  background:var(--card); color:var(--text); font-size:.95rem;
+}
+#search:focus{outline:2px solid var(--accent); outline-offset:1px;}
+main{max-width:980px; margin:0 auto; padding:14px 16px 40px;}
+.nav{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 4px; overflow-x:auto;}
+.nav a{
+  font-size:.72rem; padding:5px 9px; border-radius:999px; background:var(--chip);
+  color:var(--muted); text-decoration:none; white-space:nowrap; border:1px solid var(--border);
+}
+section{margin-top:26px;}
+.sec-head{display:flex; align-items:baseline; gap:8px; margin-bottom:10px;}
+.sec-head h2{font-size:1rem; margin:0;}
+.sec-head .count{font-size:.75rem; color:var(--muted); background:var(--chip); padding:2px 8px; border-radius:999px;}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:12px;
+  padding:12px 13px; text-decoration:none; color:var(--text); display:flex;
+  align-items:center; justify-content:space-between; gap:8px; transition:border-color .15s;
+}
+.card:hover{border-color:var(--accent);}
+.card span.name{font-size:.86rem; line-height:1.25;}
+.card span.go{color:var(--accent); font-size:.8rem; flex-shrink:0;}
+.hidden{display:none !important;}
+.empty{color:var(--muted); font-size:.85rem; padding:20px 4px;}
+footer{color:var(--muted); font-size:.72rem; text-align:center; padding:20px 0 30px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>LLD Question Index</h1>
+  <div class="sub">Low-Level Design questions, sectioned by domain — <span id="totalCount"></span> diagrams</div>
+  <input id="search" type="text" placeholder="Search a question (e.g. cache, uber, parking)…" autocomplete="off">
+  <div class="nav" id="navLinks"></div>
+</header>
+<main id="main"></main>
+<footer>Diagrams hosted externally — tap a card to open the SVG.</footer>
+
+<script>
+const BASE = "https://shakti4640.github.io/lets-do-it-properly/LLD_svgs/";
+
+// [section title, [file names without .svg]]
+const DATA = [
+["Booking & Reservation", ["AirlineManagementDemo","BookMyShowDemo","ConcertTicketBookingDemo","HotelBookingDemo","CarRentalDemo","MeetingRoomSchedulerDemo","CalendarApplicationDemo","ParkingLotDemo","SeatLockingDemo","ElevatorSystemDemo"]],
+["E-Commerce & Retail Ops", ["ShoppingCartECommerceDemo","BookstoreSystem","InventoryManagementDemo","WarehouseManagementSystemDemo","OrderManagementDemo","OrderFulfillmentSystemDemo","CouponDiscountEngineDemo","VendingMachineDemo","RealEstateListingPlatformDemo","OnlineAuctionSystemDemo"]],
+["Food, Grocery & Delivery Logistics", ["FoodDeliveryDemo","GroceryDeliveryAppDemo","PharmacyMedicineDeliveryDemo","DeliveryRoutePlannerDemo","CarpoolingRidePoolingDemo","UberDemo","RestaurantManagementDemo","HotelHousekeepingServiceDemo"]],
+["Social Media & Communication", ["TwitterFeedSystemDemo","InstagramPhotoSharingDemo","LinkedInDemo","ChatApplicationDemo","CommunityDiscussionDemo","CommunityQAPlatformDemo","NotificationSystemDemo","TruecallerDemo","ContentModerationSystemDemo"]],
+["Payments, Banking & Finance", ["PaymentSystemDemo","DigitalWalletPaymentAppDemo","DigitalBankingSystemDemo","ATMDemo","SplitwiseDemo","StockExchangeDemo","StockTradingOrderMatchingEngineDemo","InsuranceClaimProcessingSystemDemo","LoyaltyRewardsProgramDemo"]],
+["Streaming, Media & Discovery", ["VideoStreamingNetflixDemo","MusicStreamingSpotifyDemo","RecommendationEngineDemo","SearchAutocompleteDemo","LeaderboardSystemDemo","CricBuzzDemo"]],
+["Auth, Security & Access Control", ["AuthenticationSystemDemo","OAuthSSOSystemDemo","RBACDemo"]],
+["Infra — Networking & Traffic Control", ["APIGatewayDemo","APIThrottlingDemo","RateLimiterDemo","LoadBalancerDemo","CircuitBreakerDemo","RetryWithBackoffDemo","ServiceDiscoveryDemo","DNSResolverDemo","CDNSystemDemo"]],
+["Infra — Storage & Data", ["CacheSystemDemo","LRULFUCacheDemo","DistributedFileSystemDemo","CloudFileStorageDropboxDemo","FileSystemDemo","DatabaseConnectionPoolDemo","DistributedLockManagerDemo","DistributedIDGeneratorDemo"]],
+["Infra — Messaging & Async Processing", ["MessageQueueKafkaLiteDemo","PubSubMessageBrokerDemo","ProducerConsumerDemo","ThreadPoolExecutorDemo","TaskSchedulerDemo","WorkflowBPMEngineDemo"]],
+["Observability & DevOps", ["LoggingFrameworkDemo","MetricsMonitoringDemo","HealthCheckMonitorDemo","DistributedTracingSystemDemo","CICDPipelineSystemDemo","ConfigManagementServiceDemo","FeatureFlagSystemDemo","URLShortenerDemo","WebCrawlerDemo"]],
+["Games & Simulations", ["ChessGameDemo","TicTacToeDemo","SnakeAndLadderDemo","MultiplayerGameLobbyDemo","OnlineJudgeCodeRunnerDemo","TrafficLightSystemDemo","SmartHomeAutomationDemo"]],
+["Enterprise, Productivity & Education", ["CodeReviewPRSystemDemo","CollaborativeDocumentEditorDemo","LearningManagementDemo","OnlineExaminationSystemDemo","JobPortalRecruitmentSystemDemo","LibraryManagementDemo","OnlineVotingDemo"]]
+];
+
+function niceName(f){
+  return f.replace(/Demo$/,"").replace(/([a-z])([A-Z])/g,"$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g,"$1 $2");
+}
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-"); }
+
+const main = document.getElementById("main");
+const nav = document.getElementById("navLinks");
+let total = 0;
+
+DATA.forEach(([title, files])=>{
+  total += files.length;
+  const id = slug(title);
+  const navA = document.createElement("a");
+  navA.href = "#"+id; navA.textContent = title;
+  nav.appendChild(navA);
+
+  const sec = document.createElement("section");
+  sec.id = id;
+  sec.dataset.sectionName = title.toLowerCase();
+  sec.innerHTML = `<div class="sec-head"><h2>${title}</h2><span class="count">${files.length}</span></div><div class="grid"></div>`;
+  const grid = sec.querySelector(".grid");
+  files.forEach(f=>{
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = BASE + f + ".svg";
+    a.target = "_blank"; a.rel = "noopener";
+    const name = niceName(f);
+    a.dataset.name = name.toLowerCase();
+    a.innerHTML = `<span class="name">${name}</span><span class="go">↗</span>`;
+    grid.appendChild(a);
+  });
+  main.appendChild(sec);
+});
+document.getElementById("totalCount").textContent = total;
+
+document.getElementById("search").addEventListener("input", e=>{
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll("section").forEach(sec=>{
+    let visible = 0;
+    sec.querySelectorAll(".card").forEach(card=>{
+      const match = !q || card.dataset.name.includes(q);
+      card.classList.toggle("hidden", !match);
+      if(match) visible++;
+    });
+    sec.classList.toggle("hidden", visible===0 && !!q);
+  });
+});
+</script>
+</body>
+</html>
