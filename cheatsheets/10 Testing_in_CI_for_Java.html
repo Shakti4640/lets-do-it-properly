@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testing in CI for Java (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* Dockerfile words, YAML keys, shell sub-commands */
+  pre .typ { color: var(--c-typ); }                    /* image names, types */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers, ports */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* flags like --name, -p */
+  pre .fn  { color: var(--c-fn); }                     /* commands like docker, compose */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Testing in CI for Java<span class="sub">The pyramid as a budget · unit · Spring slices · integration with Testcontainers · contract (Pact) · end-to-end · test data · flaky tests · speed (parallel, sharding, caching) · coverage gates · performance tests as a stage · the pipeline (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Not "how to write a test" (the Spring Boot sheet covers JUnit/MockMvc basics) but how to build a test suite that CI can run fast, reliably, and usefully. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. The pyramid as a time and trust budget</h2>
+<table>
+  <thead><tr><th>Layer</th><th>What it checks</th><th>Speed per test</th><th>Share of tests</th><th>When it runs</th><th>Java tools</th></tr></thead>
+  <tbody>
+    <tr><td><b>Unit</b></td><td>One class or function, collaborators faked. Logic, edge cases, calculations.</td><td>ms</td><td>~70%</td><td>Every PR, every local build</td><td>JUnit 5, AssertJ, Mockito</td></tr>
+    <tr><td><b>Slice / component</b></td><td>One layer with Spring wiring: controller + JSON + validation; repository + real DB.</td><td>100 ms–2 s (context start, cached)</td><td>~15%</td><td>Every PR</td><td><code>@WebMvcTest</code>, <code>@DataJpaTest</code>, <code>@JsonTest</code>, Testcontainers</td></tr>
+    <tr><td><b>Integration</b></td><td>The whole service with real dependencies (DB, Kafka, Redis) in containers; HTTP in, effects out.</td><td>1–10 s</td><td>~10%</td><td>Every PR (fast subset) + main</td><td><code>@SpringBootTest</code> + Testcontainers, WireMock for third parties</td></tr>
+    <tr><td><b>Contract</b></td><td>Does this consumer's expectation match that provider's actual API? Without deploying both.</td><td>s</td><td>per API pair</td><td>Every PR on either side</td><td>Pact, Spring Cloud Contract</td></tr>
+    <tr><td><b>End-to-end</b></td><td>Real deployed system, user journeys through the UI/API.</td><td>10 s–min</td><td>~5% (a handful of journeys)</td><td>After deploy to a preview/staging env; nightly</td><td>Playwright, REST Assured/Karate, k6 smoke</td></tr>
+    <tr><td><b>Performance</b></td><td>Latency/throughput under load; regressions.</td><td>min</td><td>a few scenarios</td><td>Nightly or on demand against staging</td><td>Gatling, k6, JMeter</td></tr>
+    <tr><td><b>Mutation</b></td><td>Do the tests actually fail when the code is wrong?</td><td>min–hours</td><td>—</td><td>Weekly / on critical modules</td><td>PIT (pitest)</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Why the shape matters</th><th>Consequence</th></tr></thead>
+  <tbody>
+    <tr><td>Feedback time</td><td>A 2-minute PR suite gets run before every push; a 40-minute one gets skipped and batched.</td></tr>
+    <tr><td>Precision of failure</td><td>A unit test names the broken class; an e2e test says "checkout failed somewhere".</td></tr>
+    <tr><td>Flakiness</td><td>Each network hop, clock, and container is a new way to fail randomly. Push logic down the pyramid.</td></tr>
+    <tr><td>Cost</td><td>E2E needs an environment per run; unit tests need a JVM.</td></tr>
+    <tr><td>Trust</td><td>Tests that are fast and deterministic get fixed when red; slow flaky ones get re-run and ignored.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># what a healthy Spring service repo looks like in numbers (rough)</span>
+src/test/java …   800 unit tests          ~20 s
+                   120 slice tests          ~40 s   (3–4 cached Spring contexts)
+                    40 integration tests    ~90 s   (Testcontainers: Postgres + Kafka + Redis started once)
+                     6 consumer contracts   ~5 s
+                     8 e2e journeys          ~4 min  (against the preview environment, separate job)
+PR gate: unit + slice + integration + contracts ≈ 3 min on a 4-core runner (with Gradle/Maven caches)</pre>
+<div class="tips"><b>Mental model:</b> the pyramid is a <i>budget</i>, not a rule. You have ~5 minutes of PR time and ~1 hour of nightly time to spend. Buy as much confidence as you can per second: unit tests are cheap bulk, e2e tests are expensive luxuries you keep to a few.</div>
+<div class="tricky">
+  <div class="q">Q. The team has 900 tests and they all go through <code>@SpringBootTest</code>. The suite takes 25 minutes. What is the actual problem?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Everything is an integration test. Most of those 900 are testing logic that needs no Spring context at all. Move them to plain JUnit (ms each), keep a few dozen true integration tests, and make the remaining <code>@SpringBootTest</code>s share one context (same config → cached). 25 min becomes 3.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Unit tests that are worth running</h2>
+<pre><span class="cmt">// pure logic, no Spring, no I/O — the bulk of the suite</span>
+<span class="kw">class</span> <span class="typ">CouponEngineTest</span> {
+    <span class="kw">private final</span> <span class="typ">Clock</span> clock = <span class="typ">Clock</span>.fixed(<span class="typ">Instant</span>.parse(<span class="str">"2026-10-25T10:00:00Z"</span>), <span class="typ">ZoneOffset</span>.UTC);   <span class="cmt">// inject time</span>
+    <span class="kw">private final</span> <span class="typ">CouponEngine</span> engine = <span class="kw">new</span> <span class="typ">CouponEngine</span>(clock);
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">percentageCouponAppliesAfterTax</span>() {
+        <span class="kw">var</span> cart = <span class="typ">Cart</span>.of(line(<span class="str">"A1"</span>, <span class="num">2</span>, <span class="str">"199.50"</span>), line(<span class="str">"B7"</span>, <span class="num">1</span>, <span class="str">"100.00"</span>));
+        <span class="kw">var</span> total = engine.total(cart, <span class="typ">Coupon</span>.percent(<span class="num">10</span>));
+        assertThat(total.amount()).isEqualByComparingTo(<span class="str">"449.10"</span>);     <span class="cmt">// AssertJ: readable failure messages</span>
+    }
+
+    <span class="ann">@ParameterizedTest</span>(name = <span class="str">"{0} → {1}"</span>)
+    <span class="ann">@CsvSource</span>({ <span class="str">"0, 499.00"</span>, <span class="str">"10, 449.10"</span>, <span class="str">"100, 0.00"</span> })
+    <span class="kw">void</span> <span class="fn">percentTable</span>(<span class="kw">int</span> pct, <span class="typ">String</span> expected) { … }
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">expiredCouponIsRejected</span>() {
+        assertThatThrownBy(() -&gt; engine.total(cart, <span class="typ">Coupon</span>.expiredAt(<span class="str">"2026-10-24T00:00:00Z"</span>)))
+            .isInstanceOf(<span class="typ">CouponExpiredException</span>.<span class="kw">class</span>)
+            .hasMessageContaining(<span class="str">"expired"</span>);
+    }
+}
+
+<span class="cmt">// collaborator boundary: mock what you don't own, keep the thing under test real</span>
+<span class="ann">@ExtendWith</span>(<span class="typ">MockitoExtension</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="typ">OrderServiceTest</span> {
+    <span class="ann">@Mock</span> <span class="typ">OrderRepository</span> repo;
+    <span class="ann">@Mock</span> <span class="typ">PaymentClient</span> payments;
+    <span class="ann">@InjectMocks</span> <span class="typ">OrderService</span> service;
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">paymentFailureLeavesOrderPending</span>() {
+        when(payments.charge(any())).thenThrow(<span class="kw">new</span> <span class="typ">PaymentDeclined</span>());
+        assertThatThrownBy(() -&gt; service.place(cmd)).isInstanceOf(<span class="typ">PaymentDeclined</span>.<span class="kw">class</span>);
+        verify(repo).save(argThat(o -&gt; o.status() == <span class="typ">OrderStatus</span>.PENDING));
+        verifyNoMoreInteractions(payments);
+    }
+}</pre>
+<table>
+  <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>One behaviour per test; name it as a sentence</td><td>A red test tells you what broke without reading the body.</td></tr>
+    <tr><td>Arrange–Act–Assert, no logic in tests</td><td>Tests with <code>if</code>/loops have bugs too.</td></tr>
+    <tr><td>Inject <code>Clock</code>, random, and IDs</td><td>Deterministic; no <code>Thread.sleep</code>, no <code>LocalDate.now()</code>.</td></tr>
+    <tr><td>Mock at the boundary you own (ports), not inside the domain</td><td>Mocking every class means tests re-state the implementation and break on refactor.</td></tr>
+    <tr><td>Test behaviour, not getters/setters/Lombok</td><td>Coverage theatre.</td></tr>
+    <tr><td>Builders / fixtures for test data</td><td><code>anOrder().withStatus(PAID).build()</code> keeps tests readable and resilient to constructor changes.</td></tr>
+    <tr><td>Property-based tests for pure functions</td><td>jqwik generates thousands of inputs: money rounding, parsers, serializers.</td></tr>
+    <tr><td>ArchUnit for structure</td><td>"Controllers must not depend on repositories", "no cycles between packages" — enforced in a test.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Spring in unit tests</td><td><code>@SpringBootTest</code> to test a price calculation.</td><td>Plain class, <code>new</code> it, 2 ms.</td></tr>
+    <tr><td>Over-mocking</td><td>Mocks returning mocks; <code>verify</code> on every internal call.</td><td>Mock external systems; assert outcomes (returned value, state saved, message published).</td></tr>
+    <tr><td>Time bombs</td><td>Test asserts "expires in 30 days" using <code>LocalDate.now()</code>; fails on month ends and leap years.</td><td>Fixed <code>Clock</code>.</td></tr>
+    <tr><td>Shared mutable fixtures</td><td>Static list mutated by tests; order-dependent failures.</td><td>Fresh fixtures per test (<code>@BeforeEach</code>), or immutable constants.</td></tr>
+    <tr><td>Asserting with <code>assertTrue(a.equals(b))</code></td><td>Failure says "expected true".</td><td>AssertJ <code>assertThat(a).isEqualTo(b)</code> → prints both values.</td></tr>
+    <tr><td>Catching exceptions to fail</td><td><code>try { … } catch (Exception e) { fail(); }</code></td><td><code>assertThatThrownBy</code> / <code>assertThrows</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A test passes with the real implementation and still passes when you delete the method body. What is it worth?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Nothing — it asserts nothing meaningful (or only mock interactions). This is exactly what mutation testing (PIT) finds: it mutates the code and reports tests that stay green. Fix the assertion or delete the test; it is costing CI time for no information.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Integration tests with Testcontainers — real dependencies, fast enough</h2>
+<pre><span class="cmt">// one shared set of containers for the whole suite (reused across test classes in the same JVM)</span>
+<span class="kw">public abstract class</span> <span class="typ">IntegrationTestBase</span> {
+    <span class="kw">static final</span> <span class="typ">PostgreSQLContainer</span>&lt;?&gt; postgres = <span class="kw">new</span> <span class="typ">PostgreSQLContainer</span>&lt;&gt;(<span class="str">"postgres:16-alpine"</span>).withReuse(<span class="kw">true</span>);
+    <span class="kw">static final</span> <span class="typ">KafkaContainer</span> kafka = <span class="kw">new</span> <span class="typ">KafkaContainer</span>(<span class="typ">DockerImageName</span>.parse(<span class="str">"apache/kafka-native:3.9.0"</span>)).withReuse(<span class="kw">true</span>);
+    <span class="kw">static final</span> <span class="typ">GenericContainer</span>&lt;?&gt; redis = <span class="kw">new</span> <span class="typ">GenericContainer</span>&lt;&gt;(<span class="str">"redis:7-alpine"</span>).withExposedPorts(<span class="num">6379</span>).withReuse(<span class="kw">true</span>);
+
+    <span class="kw">static</span> { <span class="typ">Startables</span>.deepStart(postgres, kafka, redis).join(); }        <span class="cmt">// start in parallel, once per JVM</span>
+
+    <span class="ann">@DynamicPropertySource</span>
+    <span class="kw">static void</span> <span class="fn">props</span>(<span class="typ">DynamicPropertyRegistry</span> r) {
+        r.add(<span class="str">"spring.datasource.url"</span>, postgres::getJdbcUrl);
+        r.add(<span class="str">"spring.datasource.username"</span>, postgres::getUsername);
+        r.add(<span class="str">"spring.datasource.password"</span>, postgres::getPassword);
+        r.add(<span class="str">"spring.kafka.bootstrap-servers"</span>, kafka::getBootstrapServers);
+        r.add(<span class="str">"spring.data.redis.host"</span>, redis::getHost);
+        r.add(<span class="str">"spring.data.redis.port"</span>, () -&gt; redis.getMappedPort(<span class="num">6379</span>));
+    }
+}
+<span class="cmt">// Boot 3.1+: @ServiceConnection on the container field replaces the DynamicPropertySource for supported types</span>
+
+<span class="ann">@SpringBootTest</span>(webEnvironment = RANDOM_PORT)
+<span class="ann">@ActiveProfiles</span>(<span class="str">"test"</span>)
+<span class="kw">class</span> <span class="typ">OrderFlowIT</span> <span class="kw">extends</span> <span class="typ">IntegrationTestBase</span> {
+    <span class="ann">@Autowired</span> <span class="typ">TestRestTemplate</span> http;        <span class="cmt">// or RestClient / WebTestClient</span>
+    <span class="ann">@Autowired</span> <span class="typ">OrderRepository</span> orders;
+    <span class="kw">static</span> <span class="typ">WireMockServer</span> payments = <span class="kw">new</span> <span class="typ">WireMockServer</span>(options().dynamicPort());   <span class="cmt">// fake the third party</span>
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">placingAnOrderStoresItAndPublishesEvent</span>() {
+        payments.stubFor(post(<span class="str">"/charge"</span>).willReturn(okJson(<span class="str">"{\"status\":\"APPROVED\"}"</span>)));
+
+        <span class="kw">var</span> resp = http.postForEntity(<span class="str">"/api/orders"</span>, newOrderRequest(), <span class="typ">OrderDto</span>.<span class="kw">class</span>);
+
+        assertThat(resp.getStatusCode()).isEqualTo(<span class="typ">HttpStatus</span>.CREATED);
+        assertThat(orders.findById(resp.getBody().id())).isPresent();
+        <span class="kw">try</span> (<span class="kw">var</span> consumer = testConsumer(kafka, <span class="str">"orders"</span>)) {                   <span class="cmt">// assert the side effect</span>
+            <span class="kw">var</span> records = <span class="typ">KafkaTestUtils</span>.getRecords(consumer, <span class="typ">Duration</span>.ofSeconds(<span class="num">10</span>));
+            assertThat(records).extracting(r -&gt; r.key()).contains(resp.getBody().customerId());
+        }
+        payments.verify(postRequestedFor(urlEqualTo(<span class="str">"/charge"</span>)));
+    }
+}</pre>
+<table>
+  <thead><tr><th>Technique</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><b>Singleton containers</b> (static + base class, or JUnit extension)</td><td>Start Postgres once (3 s), not per class (3 s × 40).</td></tr>
+    <tr><td><b>Context caching</b></td><td>Spring caches the <code>ApplicationContext</code> per unique config. Keep <code>@MockitoBean</code> sets and profiles identical across integration tests → one context.</td></tr>
+    <tr><td><b>Reuse</b> (<code>withReuse(true)</code> + <code>testcontainers.reuse.enable=true</code> in <code>~/.testcontainers.properties</code>)</td><td>Locally, containers survive between runs (seconds saved per run). Off in CI (fresh runner anyway).</td></tr>
+    <tr><td><b>Isolation per test</b></td><td><code>@Transactional</code> rollback for repository tests; for HTTP tests (separate thread, no rollback) truncate tables in <code>@BeforeEach</code> or use unique data per test.</td></tr>
+    <tr><td><b>Same DB engine as prod</b></td><td>Postgres 16 image, not H2. Flyway runs the real migrations against it — free migration testing.</td></tr>
+    <tr><td><b>WireMock / MockServer</b> for third parties</td><td>Deterministic, offline, can simulate timeouts and 500s.</td></tr>
+    <tr><td><b>Awaitility</b> for async</td><td><code>await().atMost(10, SECONDS).untilAsserted(() -&gt; …)</code> — never <code>Thread.sleep</code>.</td></tr>
+    <tr><td><b>LocalStack</b> for AWS</td><td>S3/SQS/SNS/Secrets Manager in a container.</td></tr>
+    <tr><td><b>Failsafe + <code>*IT</code> naming</b> (Maven) / separate <code>integrationTest</code> source set (Gradle)</td><td>Unit and integration tests run and report separately; <code>mvn test</code> stays fast.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>H2 in tests</td><td>Passes on H2, fails on Postgres (JSONB, <code>ON CONFLICT</code>, window functions).</td><td>Testcontainers with the production engine and version.</td></tr>
+    <tr><td>Container per test class</td><td>40 classes × 3 s Postgres start = 2 minutes wasted.</td><td>Static singleton containers.</td></tr>
+    <tr><td>New context per class</td><td>Each class has its own <code>@MockitoBean</code> → 40 contexts × 8 s.</td><td>Standardise test configuration; group by context; check the log line "Spring test ApplicationContext cache statistics".</td></tr>
+    <tr><td><code>Thread.sleep(5000)</code> for Kafka</td><td>Slow and still flaky.</td><td>Awaitility with a sensible timeout.</td></tr>
+    <tr><td>Calling the real third-party sandbox</td><td>Network, rate limits, their downtime = your red build.</td><td>WireMock; contract tests for the shape.</td></tr>
+    <tr><td>Tests depend on order</td><td>Test B assumes A created the customer.</td><td>Each test creates what it needs; random order (<code>junit.jupiter.testmethod.order.default = random</code>) to expose coupling.</td></tr>
+    <tr><td>Docker not available in CI</td><td>"Could not find a valid Docker environment".</td><td>Hosted runners have Docker; in a <code>container:</code> job or K8s runner use Testcontainers Cloud, a DinD sidecar, or run those tests on a VM runner.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>@SpringBootTest</code> with <code>@Transactional</code> on the test: the HTTP call hits the controller but the repository assertion finds no row. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The HTTP request is served on a <i>different thread</i> with its own transaction; your test's transaction (which you were hoping would roll back) is separate and sees nothing uncommitted — and the controller's commit is real, so rollback does not clean it. For HTTP-level tests drop <code>@Transactional</code> and clean the DB explicitly.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Contract tests — Pact and Spring Cloud Contract</h2>
+<p>Service A (consumer) calls service B (provider). An e2e test needs both deployed. A <b>contract test</b> splits that: the consumer writes down what it expects (the contract), tests itself against a stub generated from it, and the provider replays the same contract against its real code in <i>its</i> CI. Both sides verify independently; a broker tracks which versions are compatible.</p>
+<pre><span class="cmt">// CONSUMER side (orders-service calls payments-service) — Pact JVM, JUnit 5</span>
+<span class="ann">@ExtendWith</span>(<span class="typ">PactConsumerTestExt</span>.<span class="kw">class</span>)
+<span class="ann">@PactTestFor</span>(providerName = <span class="str">"payments-service"</span>)
+<span class="kw">class</span> <span class="typ">PaymentsClientPactTest</span> {
+
+    <span class="ann">@Pact</span>(consumer = <span class="str">"orders-service"</span>)
+    <span class="typ">V4Pact</span> <span class="fn">chargeApproved</span>(<span class="typ">PactDslWithProvider</span> builder) {
+        <span class="kw">return</span> builder
+            .given(<span class="str">"customer 42 has a valid card"</span>)                    <span class="cmt">// provider state</span>
+            .uponReceiving(<span class="str">"a charge request"</span>)
+                .path(<span class="str">"/charges"</span>).method(<span class="str">"POST"</span>)
+                .body(newJsonBody(b -&gt; { b.stringType(<span class="str">"customerId"</span>, <span class="str">"42"</span>); b.decimalType(<span class="str">"amount"</span>, <span class="num">499.00</span>); }).build())
+            .willRespondWith()
+                .status(<span class="num">201</span>)
+                .body(newJsonBody(b -&gt; { b.stringType(<span class="str">"status"</span>, <span class="str">"APPROVED"</span>); b.uuid(<span class="str">"chargeId"</span>); }).build())   <span class="cmt">// types, not exact values</span>
+            .toPact(<span class="typ">V4Pact</span>.<span class="kw">class</span>);
+    }
+
+    <span class="ann">@Test</span>
+    <span class="ann">@PactTestFor</span>(pactMethod = <span class="str">"chargeApproved"</span>)
+    <span class="kw">void</span> <span class="fn">clientParsesApprovedCharge</span>(<span class="typ">MockServer</span> server) {
+        <span class="kw">var</span> client = <span class="kw">new</span> <span class="typ">PaymentsClient</span>(<span class="typ">RestClient</span>.create(server.getUrl()));
+        <span class="kw">var</span> result = client.charge(<span class="str">"42"</span>, <span class="kw">new</span> <span class="typ">BigDecimal</span>(<span class="str">"499.00"</span>));
+        assertThat(result.status()).isEqualTo(<span class="typ">ChargeStatus</span>.APPROVED);     <span class="cmt">// test passes → pact file written to target/pacts</span>
+    }
+}
+<span class="cmt">// CI: ./mvnw test pact:publish  → Pact Broker (or PactFlow) with consumer version = git sha, branch = main</span>
+
+<span class="cmt">// PROVIDER side (payments-service) — verify every consumer's pact against the real app</span>
+<span class="ann">@Provider</span>(<span class="str">"payments-service"</span>)
+<span class="ann">@PactBroker</span>(url = <span class="str">"${PACT_BROKER_URL}"</span>, consumerVersionSelectors = { <span class="ann">@VersionSelector</span>(mainBranch = <span class="kw">true</span>), <span class="ann">@VersionSelector</span>(deployedOrReleased = <span class="kw">true</span>) })
+<span class="ann">@SpringBootTest</span>(webEnvironment = RANDOM_PORT)
+<span class="kw">class</span> <span class="typ">PaymentsProviderPactTest</span> {
+    <span class="ann">@LocalServerPort</span> <span class="kw">int</span> port;
+    <span class="ann">@MockitoBean</span> <span class="typ">CardGateway</span> gateway;                  <span class="cmt">// fake the provider's own downstream</span>
+
+    <span class="ann">@BeforeEach</span> <span class="kw">void</span> <span class="fn">target</span>(<span class="typ">PactVerificationContext</span> ctx) { ctx.setTarget(<span class="kw">new</span> <span class="typ">HttpTestTarget</span>(<span class="str">"localhost"</span>, port)); }
+
+    <span class="ann">@TestTemplate</span> <span class="ann">@ExtendWith</span>(<span class="typ">PactVerificationSpringProvider</span>.<span class="kw">class</span>)
+    <span class="kw">void</span> <span class="fn">verify</span>(<span class="typ">PactVerificationContext</span> ctx) { ctx.verifyInteraction(); }
+
+    <span class="ann">@State</span>(<span class="str">"customer 42 has a valid card"</span>)
+    <span class="kw">void</span> <span class="fn">validCard</span>() { when(gateway.authorize(any())).thenReturn(<span class="typ">Authorization</span>.approved()); }
+}
+<span class="cmt">// CI gate before deploying either side:  pact-broker can-i-deploy --pacticipant payments-service --version $SHA --to-environment production</span></pre>
+<table>
+  <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Consumer-driven</b></td><td>The consumer states only the fields it uses → the provider can change everything else freely.</td></tr>
+    <tr><td><b>Matchers</b></td><td>"a string", "a UUID", "a number ≥ 0" — not literal values. Literal contracts break on every data change.</td></tr>
+    <tr><td><b>Provider states</b></td><td>"given customer 42 exists": the provider sets up that state (mock or seed) before replay.</td></tr>
+    <tr><td><b>Pact Broker / PactFlow</b></td><td>Stores pacts and verification results per version; <code>can-i-deploy</code> answers "is this version compatible with what is in prod?".</td></tr>
+    <tr><td><b>Webhooks</b></td><td>New pact published → trigger the provider's verification build. Breakage found in minutes, in the right repo.</td></tr>
+    <tr><td><b>Spring Cloud Contract</b></td><td>Provider-driven alternative: contracts in Groovy/YAML in the provider repo; generates provider tests + consumer stubs (stub runner). Good when one team owns both sides.</td></tr>
+    <tr><td><b>Messaging contracts</b></td><td>Pact and SCC both support async messages (Kafka events): consumer states the event shape it needs.</td></tr>
+    <tr><td><b>OpenAPI as a contract</b></td><td>Lighter option: validate provider responses against the spec (<code>openapi-validator</code>, Schemathesis) and generate consumer clients. Catches shape drift, not consumer needs.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Exact-value contracts</td><td><code>"chargeId": "a1b2…"</code> literal → provider's random UUID fails verification.</td><td>Type/regex matchers.</td></tr>
+    <tr><td>Contract = full API test</td><td>Consumer asserts 40 fields it never reads.</td><td>Only what the consumer uses; that is the point.</td></tr>
+    <tr><td>Pacts in git, no broker</td><td>Versions and environments impossible to track; <code>can-i-deploy</code> unavailable.</td><td>Broker (self-hosted docker image) or PactFlow.</td></tr>
+    <tr><td>Provider verifies only <code>main</code> pacts</td><td>A consumer's feature branch publishes a pact; provider never sees it until merge.</td><td>Version selectors: main branch + deployed/released + matching branch name.</td></tr>
+    <tr><td>Business logic in provider states</td><td>State setup calls the real DB and payment gateway.</td><td>Mock the provider's downstreams in the verification test; states only set up data.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Contract tests pass on both sides. Can you skip integration tests between the two services?</div>
+  <details><summary>Reveal hint</summary><div class="hint">You can skip the <i>deployed-together</i> integration test for API shape — that is what contracts replace. They do not test network config, auth between services, timeouts, or whether the provider's DB has the data. Keep a thin e2e smoke journey for those; let contracts carry the field-level detail.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. End-to-end tests — few, stable, against a real environment</h2>
+<table>
+  <thead><tr><th>Decision</th><th>Guidance</th></tr></thead>
+  <tbody>
+    <tr><td>How many</td><td>5–15 critical journeys (sign up, search, add to cart, pay, see order). Everything else lives lower in the pyramid.</td></tr>
+    <tr><td>Where they run</td><td>Against an ephemeral <b>preview environment</b> per PR (best), or staging after deploy. Never against prod except read-only smoke/synthetics.</td></tr>
+    <tr><td>Who owns them</td><td>The team that owns the journey; e2e in a separate "QA repo" rots.</td></tr>
+    <tr><td>Tools</td><td>API: REST Assured, Karate, Playwright's APIRequest. UI: Playwright (auto-wait, traces, parallel), Selenium if you must.</td></tr>
+    <tr><td>Data</td><td>Each run seeds its own data via API/SQL and cleans up; or a fresh DB per preview env. Never depend on "the test user from last year".</td></tr>
+    <tr><td>Stability</td><td>Auto-waiting selectors (<code>getByRole</code>), retries at the step level, no fixed sleeps, isolated test accounts.</td></tr>
+    <tr><td>Artifacts</td><td>Playwright trace + video + HAR on failure uploaded as CI artifacts; otherwise debugging is guesswork.</td></tr>
+    <tr><td>Smoke after deploy</td><td>3–5 of those journeys run in the deploy pipeline right after rollout; failure triggers rollback.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// REST Assured journey against the preview env (BASE_URL from CI)</span>
+<span class="ann">@Tag</span>(<span class="str">"e2e"</span>)
+<span class="kw">class</span> <span class="typ">CheckoutJourneyE2E</span> {
+    <span class="kw">static final</span> <span class="typ">String</span> BASE = <span class="typ">System</span>.getenv().getOrDefault(<span class="str">"BASE_URL"</span>, <span class="str">"http://localhost:8080"</span>);
+    <span class="kw">static</span> <span class="typ">String</span> token;
+
+    <span class="ann">@BeforeAll</span> <span class="kw">static void</span> <span class="fn">login</span>() { token = given().baseUri(BASE).body(testUser()).post(<span class="str">"/auth/login"</span>).then().statusCode(<span class="num">200</span>).extract().path(<span class="str">"token"</span>); }
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">addToCartAndPay</span>() {
+        <span class="typ">String</span> cartId = given().baseUri(BASE).auth().oauth2(token)
+            .body(<span class="str">"""{"sku":"E2E-SKU-1","qty":1}"""</span>).contentType(JSON)
+            .post(<span class="str">"/api/cart/items"</span>).then().statusCode(<span class="num">201</span>).extract().path(<span class="str">"cartId"</span>);
+
+        given().baseUri(BASE).auth().oauth2(token)
+            .post(<span class="str">"/api/cart/{id}/checkout"</span>, cartId).then()
+            .statusCode(<span class="num">201</span>)
+            .body(<span class="str">"status"</span>, equalTo(<span class="str">"PAID"</span>))
+            .time(lessThan(<span class="num">2000L</span>));                                      <span class="cmt">// a crude latency guard</span>
+    }
+}
+<span class="cmt"># CI: ./mvnw -Dgroups=e2e -Dtest='*E2E' test  with BASE_URL=https://api-pr-482.preview.shop.example   (run after Argo reports Healthy)</span>
+
+<span class="cmt">// Playwright (TypeScript is the common choice even for Java shops; Playwright for Java exists too)</span>
+test(<span class="str">'checkout'</span>, <span class="kw">async</span> ({ page }) =&gt; {
+  <span class="kw">await</span> page.goto(process.env.BASE_URL!);
+  <span class="kw">await</span> page.getByRole(<span class="str">'button'</span>, { name: <span class="str">'Add to cart'</span> }).first().click();
+  <span class="kw">await</span> page.getByRole(<span class="str">'link'</span>, { name: <span class="str">'Checkout'</span> }).click();
+  <span class="kw">await</span> expect(page.getByText(<span class="str">'Order confirmed'</span>)).toBeVisible();   <span class="cmt">// auto-waits; no sleep</span>
+});</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>E2E for everything</td><td>400 UI tests, 90 minutes, 10% flaky — "the e2e suite" nobody trusts.</td><td>A dozen journeys; push assertions down to integration/unit/contract tests.</td></tr>
+    <tr><td>Shared staging data</td><td>Two PR runs edit the same test user; both fail.</td><td>Preview env per PR, or unique data per run (suffix with the run id).</td></tr>
+    <tr><td>CSS selectors</td><td><code>.btn.btn-primary:nth-child(3)</code> breaks on every restyle.</td><td>Roles/labels/test ids (<code>data-testid</code>).</td></tr>
+    <tr><td>E2E blocking every PR</td><td>8-minute e2e in the PR gate; developers batch commits to avoid it.</td><td>PR: unit/slice/integration/contract. E2E after deploy to preview, reported back to the PR as a check but not required for a draft.</td></tr>
+    <tr><td>No artifacts on failure</td><td>"It failed at step 7" and nothing else.</td><td>Trace/video/screenshots/logs uploaded; link in the PR comment.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. An e2e test fails only in CI, never locally. Top three causes?</div>
+  <details><summary>Reveal hint</summary><div class="hint">(1) Timing — CI is slower; a hidden fixed wait or a race the auto-wait doesn't cover. (2) Data — CI env lacks the record your local DB has, or a parallel run changed it. (3) Environment — different base URL/feature flag/time zone/locale, or a dependency (payments sandbox) unreachable from the runner. Grab the trace first; guess second.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Flaky tests — detect, quarantine, fix</h2>
+<table>
+  <thead><tr><th>Cause</th><th>Symptom</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><b>Timing / async</b></td><td>Passes with a sleep, fails under load.</td><td>Awaitility / Playwright auto-wait; assert on the condition, not on elapsed time.</td></tr>
+    <tr><td><b>Order dependence / shared state</b></td><td>Fails only when run with another test or in parallel.</td><td>Fresh state per test; random method order to surface it; no static mutable fields.</td></tr>
+    <tr><td><b>Time &amp; locale</b></td><td>Fails on the 31st, at midnight UTC, on a CI runner in another TZ, or because <code>String.format</code> used a comma decimal.</td><td>Injected <code>Clock</code>; <code>-Duser.timezone=UTC -Duser.language=en</code> in Surefire/Gradle; explicit <code>Locale</code> in formatting.</td></tr>
+    <tr><td><b>Ports and files</b></td><td>"Address already in use"; temp files colliding.</td><td>Random ports (<code>RANDOM_PORT</code>, Testcontainers mapped ports); <code>@TempDir</code>.</td></tr>
+    <tr><td><b>Randomness</b></td><td>Fails 1 in 50 with a different generated value.</td><td>Seeded random; print the seed on failure (jqwik does).</td></tr>
+    <tr><td><b>Resource limits</b></td><td>OOM / timeouts on small runners; container start timeouts.</td><td>Right-size the runner; <code>-Xmx</code> for forks; longer container startup timeouts; fewer parallel forks.</td></tr>
+    <tr><td><b>Network</b></td><td>Docker Hub rate limit; third-party sandbox down.</td><td>Registry mirror/login; WireMock instead of sandboxes.</td></tr>
+    <tr><td><b>Hash/iteration order</b></td><td>Asserting on <code>HashMap</code>/<code>Set</code> order.</td><td>Order-insensitive assertions (<code>containsExactlyInAnyOrder</code>).</td></tr>
+    <tr><td><b>Leaky mocks</b></td><td>Static mocks (<code>mockStatic</code>) not closed; Mockito strictness.</td><td>try-with-resources on <code>MockedStatic</code>; <code>@ExtendWith(MockitoExtension)</code> strict stubs.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># find flaky tests: rerun failures and record which pass on retry (Surefire)</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;artifactId&gt;</span>maven-surefire-plugin<span class="kw">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;configuration&gt;</span>
+    <span class="kw">&lt;rerunFailingTestsCount&gt;</span>2<span class="kw">&lt;/rerunFailingTestsCount&gt;</span>       <span class="cmt">&lt;!-- report marks them "flaky" instead of hiding them --&gt;</span>
+    <span class="kw">&lt;runOrder&gt;</span>random<span class="kw">&lt;/runOrder&gt;</span>                               <span class="cmt">&lt;!-- shuffle classes to expose coupling --&gt;</span>
+    <span class="kw">&lt;argLine&gt;</span>-Duser.timezone=UTC -Duser.language=en -Xmx1g<span class="kw">&lt;/argLine&gt;</span>
+  <span class="kw">&lt;/configuration&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span>
+<span class="cmt"># Gradle: test-retry plugin (org.gradle.test-retry) with maxRetries 2, failOnPassedAfterRetry false → marks flaky; Develocity shows flaky history</span>
+<span class="cmt"># JUnit 5: junit.jupiter.testclass.order.default = org.junit.jupiter.api.ClassOrderer$Random (junit-platform.properties)</span>
+
+<span class="cmt"># quarantine, don't delete</span>
+<span class="ann">@Tag</span>(<span class="str">"flaky"</span>) <span class="ann">@Disabled</span>(<span class="str">"FLAKY-123: Kafka consumer race, see ticket"</span>)      <span class="cmt">// with a ticket and an owner</span>
+<span class="cmt"># CI runs tag "flaky" in a separate non-blocking job so you see when they start passing reliably</span>
+./mvnw test <span class="ann">-DexcludedGroups</span>=flaky          ·   ./mvnw test <span class="ann">-Dgroups</span>=flaky <span class="ann">-Dmaven.test.failure.ignore</span>=true
+
+<span class="cmt"># reproduce locally under stress</span>
+<span class="kw">for</span> i <span class="kw">in</span> $(seq 1 20); <span class="kw">do</span> ./mvnw <span class="ann">-q</span> test <span class="ann">-Dtest</span>=OrderFlowIT || <span class="kw">break</span>; <span class="kw">done</span>     <span class="cmt"># run 20× ; stress -c 4 in another terminal to steal CPU</span></pre>
+<table>
+  <thead><tr><th>Process</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Track flake rate per test (CI test reports, Develocity, BuildPulse, Datadog CI)</td><td>You can't fix what you don't measure; 1% flaky × 1,000 tests = a red build every run.</td></tr>
+    <tr><td>Quarantine within a day, fix within a sprint, delete if nobody owns it</td><td>A quarantined test is a known gap; an ignored red test is noise that hides real failures.</td></tr>
+    <tr><td>Retries report, never hide</td><td>"Passed on retry" must be visible — it is a bug with a 50% detection rate.</td></tr>
+    <tr><td>Flakiness budget</td><td>Treat suite reliability like an SLO (e.g. &lt; 0.5% of runs fail for non-code reasons).</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>"Re-run until green"</td><td>The team's muscle memory is the re-run button; a real regression gets re-run 3 times too.</td><td>Automatic retry <i>with reporting</i>; flaky tests quarantined and tracked.</td></tr>
+    <tr><td>Deleting flaky tests</td><td>The behaviour is now untested.</td><td>Quarantine with a ticket; fix the root cause (usually async or shared state).</td></tr>
+    <tr><td>Bigger sleeps</td><td><code>Thread.sleep(5000)</code> → <code>10000</code>; suite slower, still flaky under load.</td><td>Condition-based waiting with a generous timeout: fast when ready, tolerant when slow.</td></tr>
+    <tr><td>Running flaky tests in the PR gate</td><td>Every PR has a 20% chance of a false red.</td><td>Exclude the <code>flaky</code> tag from the gate; run it separately and visibly.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A test fails 1 in 30 runs with <code>expected [PAID] but was [PENDING]</code>. It reads the order right after posting it. What is it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Asynchrony: payment is confirmed via a Kafka/SQS consumer after the HTTP response. The test races the consumer. Use Awaitility to wait for <code>PAID</code> (up to N seconds), and consider asserting the <i>event</i> rather than the eventual state if that is the actual contract.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Speed — parallelism, sharding, caching, selection</h2>
+<table>
+  <thead><tr><th>Lever</th><th>Maven</th><th>Gradle</th><th>Gain</th></tr></thead>
+  <tbody>
+    <tr><td><b>Parallel test classes in one JVM</b></td><td>Surefire: <code>&lt;parallel&gt;classes&lt;/parallel&gt;</code> + <code>&lt;threadCount&gt;4&lt;/threadCount&gt;</code>; or JUnit 5 <code>junit.jupiter.execution.parallel.enabled=true</code> + <code>mode.default=concurrent</code></td><td>JUnit 5 properties (same)</td><td>2–4× on unit tests; needs thread-safe tests (no static state).</td></tr>
+    <tr><td><b>Parallel JVM forks</b></td><td><code>&lt;forkCount&gt;1C&lt;/forkCount&gt;</code> + <code>&lt;reuseForks&gt;true&lt;/reuseForks&gt;</code></td><td><code>maxParallelForks = cores/2</code></td><td>Isolation + parallelism; each fork pays JVM start and context start.</td></tr>
+    <tr><td><b>Parallel modules</b></td><td><code>-T 1C</code></td><td><code>org.gradle.parallel=true</code></td><td>Multi-module repos.</td></tr>
+    <tr><td><b>Build/test cache</b></td><td>Maven Build Cache Extension (skips unchanged modules' tests)</td><td>Remote build cache: <code>test</code> task <code>FROM-CACHE</code> when inputs unchanged</td><td>PRs touching one module run only that module's tests.</td></tr>
+    <tr><td><b>Test sharding across CI jobs</b></td><td>Split by tag/package: <code>-Dgroups=fast</code>, <code>-Dtest='com.shop.order.**'</code>; or Surefire <code>includesFile</code> generated from a split</td><td>Multiple <code>Test</code> tasks by tag/package; Develocity Test Distribution</td><td>Wall time ÷ shards; matrix job per shard.</td></tr>
+    <tr><td><b>Test impact analysis</b></td><td>Only tests affected by the diff: Develocity Predictive Test Selection, Sealights, or a homegrown module-level map</td><td>same</td><td>Big repos: 70–90% fewer tests on typical PRs.</td></tr>
+    <tr><td><b>Spring context reuse</b></td><td>Identical test config → one context per JVM</td><td>same</td><td>Often the single biggest win for integration suites.</td></tr>
+    <tr><td><b>Container reuse / singletons</b></td><td>Static containers (Section 2)</td><td>same</td><td>Minutes.</td></tr>
+    <tr><td><b>Dependency cache</b></td><td><code>setup-java cache: maven</code></td><td><code>gradle/actions/setup-gradle</code></td><td>Minutes per job.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># GitHub Actions: shard integration tests across 3 jobs by package, unit tests in one</span>
+<span class="kw">jobs</span>:
+  <span class="kw">unit</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: actions/setup-java@v4
+        <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="num">21</span>, <span class="kw">cache</span>: maven }
+      - <span class="kw">run</span>: ./mvnw -B -ntp -T 1C test                                      <span class="cmt"># Surefire: unit tests only (*Test)</span>
+      - <span class="kw">uses</span>: actions/upload-artifact@v4
+        <span class="kw">if</span>: always()
+        <span class="kw">with</span>: { <span class="kw">name</span>: unit-reports, <span class="kw">path</span>: <span class="str">'**/target/surefire-reports/*.xml'</span> }
+  <span class="kw">integration</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">strategy</span>:
+      <span class="kw">fail-fast</span>: <span class="kw">false</span>
+      <span class="kw">matrix</span>:
+        <span class="kw">shard</span>: [<span class="str">'com.shop.order.**'</span>, <span class="str">'com.shop.payment.**'</span>, <span class="str">'com.shop.catalog.**,com.shop.common.**'</span>]
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: actions/setup-java@v4
+        <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="num">21</span>, <span class="kw">cache</span>: maven }
+      - <span class="kw">uses</span>: docker/login-action@v3                                         <span class="cmt"># avoid Docker Hub pull limits for Testcontainers</span>
+        <span class="kw">with</span>: { <span class="kw">username</span>: <span class="str">${{ secrets.DOCKERHUB_USER }}</span>, <span class="kw">password</span>: <span class="str">${{ secrets.DOCKERHUB_TOKEN }}</span> }
+      - <span class="kw">run</span>: ./mvnw -B -ntp -DskipUnitTests verify -Dit.test=<span class="str">"${{ matrix.shard }}"</span>   <span class="cmt"># Failsafe only, filtered</span>
+      - <span class="kw">uses</span>: actions/upload-artifact@v4
+        <span class="kw">if</span>: always()
+        <span class="kw">with</span>: { <span class="kw">name</span>: <span class="str">it-reports-${{ strategy.job-index }}</span>, <span class="kw">path</span>: <span class="str">'**/target/failsafe-reports/*.xml'</span> }
+  <span class="kw">report</span>:
+    <span class="kw">needs</span>: [unit, integration]
+    <span class="kw">if</span>: always()
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/download-artifact@v4
+        <span class="kw">with</span>: { <span class="kw">pattern</span>: <span class="str">'*-reports*'</span>, <span class="kw">merge-multiple</span>: <span class="kw">true</span>, <span class="kw">path</span>: reports }
+      - <span class="kw">uses</span>: mikepenz/action-junit-report@v5                                <span class="cmt"># one merged test summary on the PR</span>
+        <span class="kw">with</span>: { <span class="kw">report_paths</span>: <span class="str">'reports/**/*.xml'</span>, <span class="kw">check_name</span>: Tests }
+
+<span class="cmt"># JUnit 5 parallel (src/test/resources/junit-platform.properties)</span>
+junit.jupiter.execution.parallel.enabled = true
+junit.jupiter.execution.parallel.mode.default = concurrent
+junit.jupiter.execution.parallel.mode.classes.default = concurrent
+junit.jupiter.execution.parallel.config.strategy = dynamic
+junit.jupiter.execution.parallel.config.dynamic.factor = 1
+<span class="cmt"># mark tests that cannot run in parallel:  @Execution(SAME_THREAD)  or  @ResourceLock("database")</span></pre>
+<table>
+  <thead><tr><th>Where the time really goes (measure first)</th><th>How to see it</th></tr></thead>
+  <tbody>
+    <tr><td>Spring context starts</td><td>Count "Started … in N seconds" lines; context cache statistics log (<code>logging.level.org.springframework.test.context.cache=DEBUG</code>).</td></tr>
+    <tr><td>Container starts</td><td>Testcontainers logs; one Postgres start ≈ 2–4 s, Kafka ≈ 5–10 s.</td></tr>
+    <tr><td>Slowest tests</td><td>Surefire/Failsafe XML has per-test time; <code>sort -k time</code>; Gradle <code>--scan</code>; Develocity/Allure dashboards.</td></tr>
+    <tr><td>Dependency download</td><td>CI log "Downloading from central" lines → cache misconfigured.</td></tr>
+    <tr><td>Compilation</td><td><code>-T 1C</code>, incremental (Gradle), fewer annotation processors.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Parallel without isolation</td><td>Turn on JUnit parallelism; 30 tests fail from shared static state.</td><td>Fix shared state first; <code>@ResourceLock</code> for the few that need serialization.</td></tr>
+    <tr><td>Sharding by file count</td><td>One shard has all the slow Kafka tests.</td><td>Shard by measured duration (test-split tools, Develocity), or by package with timing balance.</td></tr>
+    <tr><td>Skipping tests to go faster</td><td><code>-DskipTests</code> on PRs "temporarily".</td><td>Make them fast; selection/caching so unaffected tests don't run.</td></tr>
+    <tr><td>Giant runner for everything</td><td>One 16-core job runs everything serially.</td><td>Several small jobs in parallel; wall time matters, not CPU.</td></tr>
+    <tr><td>Report per shard</td><td>Three separate check runs; no overview.</td><td>Merge reports into one check; upload per-shard artifacts.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You enabled JUnit parallel execution and the suite got <i>slower</i>. How?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Likely the tests are I/O-bound on one shared resource (one Postgres container, one Kafka), so threads queue on it; or Spring contexts are now being created concurrently and competing for CPU/memory; or <code>dynamic.factor</code> created more threads than cores. Parallelise CPU-bound unit tests; keep integration tests serial per resource or give each fork its own container.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Coverage and quality gates — useful, not theatre</h2>
+<table>
+  <thead><tr><th>Metric</th><th>What it tells you</th><th>What it does not</th></tr></thead>
+  <tbody>
+    <tr><td><b>Line / branch coverage</b> (JaCoCo)</td><td>Which code was <i>executed</i> by tests. Zero-coverage areas are definitely untested.</td><td>Whether anything was <i>asserted</i>. 100% coverage with no asserts is possible.</td></tr>
+    <tr><td><b>Coverage on new code</b> (Sonar "new code" period)</td><td>Whether the PR brought tests with it.</td><td>—</td></tr>
+    <tr><td><b>Mutation score</b> (PIT)</td><td>Whether tests <i>detect</i> changes: mutants killed / total.</td><td>Slow; run on core modules.</td></tr>
+    <tr><td><b>Test count / duration trend</b></td><td>Suite health over time.</td><td>—</td></tr>
+    <tr><td><b>Flake rate</b></td><td>Trust in the suite.</td><td>—</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">&lt;!-- JaCoCo: measure everything, gate sensibly (Maven) --&gt;</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>org.jacoco<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>jacoco-maven-plugin<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;version&gt;</span>0.8.12<span class="kw">&lt;/version&gt;</span>
+  <span class="kw">&lt;executions&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;goals&gt;&lt;goal&gt;</span>prepare-agent<span class="kw">&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;</span>                        <span class="cmt">&lt;!-- unit (Surefire) --&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;id&gt;</span>it-agent<span class="kw">&lt;/id&gt;&lt;goals&gt;&lt;goal&gt;</span>prepare-agent-integration<span class="kw">&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;</span>   <span class="cmt">&lt;!-- integration (Failsafe) --&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;id&gt;</span>merge<span class="kw">&lt;/id&gt;&lt;phase&gt;</span>verify<span class="kw">&lt;/phase&gt;&lt;goals&gt;&lt;goal&gt;</span>merge<span class="kw">&lt;/goal&gt;&lt;/goals&gt;</span>
+      <span class="kw">&lt;configuration&gt;&lt;fileSets&gt;&lt;fileSet&gt;&lt;directory&gt;</span>${project.build.directory}<span class="kw">&lt;/directory&gt;&lt;includes&gt;&lt;include&gt;</span>*.exec<span class="kw">&lt;/include&gt;&lt;/includes&gt;&lt;/fileSet&gt;&lt;/fileSets&gt;</span>
+        <span class="kw">&lt;destFile&gt;</span>${project.build.directory}/jacoco-merged.exec<span class="kw">&lt;/destFile&gt;&lt;/configuration&gt;</span>
+    <span class="kw">&lt;/execution&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;id&gt;</span>report<span class="kw">&lt;/id&gt;&lt;phase&gt;</span>verify<span class="kw">&lt;/phase&gt;&lt;goals&gt;&lt;goal&gt;</span>report<span class="kw">&lt;/goal&gt;&lt;/goals&gt;</span>
+      <span class="kw">&lt;configuration&gt;&lt;dataFile&gt;</span>${project.build.directory}/jacoco-merged.exec<span class="kw">&lt;/dataFile&gt;&lt;/configuration&gt;&lt;/execution&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;id&gt;</span>check<span class="kw">&lt;/id&gt;&lt;phase&gt;</span>verify<span class="kw">&lt;/phase&gt;&lt;goals&gt;&lt;goal&gt;</span>check<span class="kw">&lt;/goal&gt;&lt;/goals&gt;</span>
+      <span class="kw">&lt;configuration&gt;</span>
+        <span class="kw">&lt;dataFile&gt;</span>${project.build.directory}/jacoco-merged.exec<span class="kw">&lt;/dataFile&gt;</span>
+        <span class="kw">&lt;rules&gt;&lt;rule&gt;</span>
+          <span class="kw">&lt;element&gt;</span>PACKAGE<span class="kw">&lt;/element&gt;</span>                                            <span class="cmt">&lt;!-- per package: one untested package can't hide behind the average --&gt;</span>
+          <span class="kw">&lt;limits&gt;&lt;limit&gt;&lt;counter&gt;</span>BRANCH<span class="kw">&lt;/counter&gt;&lt;value&gt;</span>COVEREDRATIO<span class="kw">&lt;/value&gt;&lt;minimum&gt;</span>0.60<span class="kw">&lt;/minimum&gt;&lt;/limit&gt;&lt;/limits&gt;</span>
+        <span class="kw">&lt;/rule&gt;&lt;/rules&gt;</span>
+        <span class="kw">&lt;excludes&gt;&lt;exclude&gt;</span>**/config/**<span class="kw">&lt;/exclude&gt;&lt;exclude&gt;</span>**/*Dto*<span class="kw">&lt;/exclude&gt;&lt;exclude&gt;</span>**/generated/**<span class="kw">&lt;/exclude&gt;&lt;/excludes&gt;</span>
+      <span class="kw">&lt;/configuration&gt;</span>
+    <span class="kw">&lt;/execution&gt;</span>
+  <span class="kw">&lt;/executions&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span>
+
+<span class="cmt"># Sonar quality gate on NEW code (the gate that actually changes behaviour)</span>
+<span class="cmt">#   Coverage on new code ≥ 80% · Duplicated lines on new code ≤ 3% · New blocker/critical issues = 0 · Security hotspots reviewed 100%</span>
+./mvnw <span class="ann">-B</span> verify sonar:sonar <span class="ann">-Dsonar.projectKey</span>=shop-api <span class="ann">-Dsonar.coverage.jacoco.xmlReportPaths</span>=target/site/jacoco/jacoco.xml
+<span class="cmt"># CI: the Sonar PR decoration + "Quality Gate" check; `sonar.qualitygate.wait=true` makes the build fail on a red gate</span>
+
+<span class="cmt"># mutation testing on the core module, weekly</span>
+./mvnw <span class="ann">-pl</span> core org.pitest:pitest-maven:mutationCoverage <span class="ann">-DtargetClasses</span>=<span class="str">'com.shop.pricing.*'</span> <span class="ann">-DmutationThreshold</span>=70</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Global 80% line coverage gate</td><td>Teams write assert-free tests for getters to pass; DTOs inflate the number; the gate blocks a hotfix.</td><td>Gate on <b>new code</b> (Sonar) and per-package branch coverage floors; exclude generated/DTO/config.</td></tr>
+    <tr><td>Coverage from unit tests only</td><td>Integration-tested code shows 0%.</td><td>Merge Surefire + Failsafe <code>.exec</code> files before reporting.</td></tr>
+    <tr><td>Chasing 100%</td><td>Weeks spent testing <code>toString()</code>.</td><td>Diminishing returns past ~80%; spend the time on mutation testing of critical logic.</td></tr>
+    <tr><td>Coverage as the only quality signal</td><td>"We have 85%" while prod has weekly incidents.</td><td>Track change failure rate and escaped defects; coverage is a smoke detector, not a safety certificate.</td></tr>
+    <tr><td>Gate without visibility</td><td>Build fails "coverage 59.8% &lt; 60%" with no hint where.</td><td>PR comment with per-file coverage diff (<code>madrapps/jacoco-report</code>, Codecov, Sonar decoration).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Branch coverage is 85% but PIT reports a mutation score of 40% on the pricing module. Which number should worry you?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The 40%. Six in ten code changes in pricing would go undetected by the suite — the tests execute the code but don't check its results. Add assertions on outputs (totals, rounding, boundaries) rather than more tests that merely run the code.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Test data and environments</h2>
+<table>
+  <thead><tr><th>Approach</th><th>How</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Builders / object mothers</b></td><td><code>anOrder().paid().withItems(2).build()</code> — defaults everywhere, override what matters.</td><td>Unit and slice tests.</td></tr>
+    <tr><td><b>Programmatic seeding</b></td><td>Insert via repositories/SQL in <code>@BeforeEach</code>; Instancio/EasyRandom for bulk objects.</td><td>Integration tests.</td></tr>
+    <tr><td><b>Flyway test migrations</b></td><td><code>src/test/resources/db/testdata/R__seed.sql</code> on a separate Flyway location, applied only in the test profile.</td><td>Reference data (countries, tax rates).</td></tr>
+    <tr><td><b>Datasets per test</b> (<code>@Sql</code>)</td><td><code>@Sql("/sql/order-with-coupon.sql")</code> before, <code>@Sql(executionPhase = AFTER_TEST_METHOD)</code> cleanup.</td><td>Repository tests with specific states.</td></tr>
+    <tr><td><b>Golden / approval files</b></td><td>Expected JSON/PDF stored; test diffs output (ApprovalTests, JSONAssert).</td><td>Serialization, reports, API responses.</td></tr>
+    <tr><td><b>Anonymised prod snapshot</b></td><td>Masked copy refreshed weekly (pg_dump + anonymisation script, or tools like Tonic/Neosync).</td><td>Staging performance and migration rehearsals. Never raw prod data in lower envs.</td></tr>
+    <tr><td><b>Synthetic load data</b></td><td>Generated to realistic volumes/skew for performance tests.</td><td>Perf stage.</td></tr>
+    <tr><td><b>Ephemeral environment per PR</b></td><td>Namespace + DB (or schema) created on PR open, destroyed on close (Release Engineering sheet).</td><td>E2E and manual review without shared-env collisions.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// test data builder</span>
+<span class="kw">public final class</span> <span class="typ">OrderBuilder</span> {
+    <span class="kw">private</span> <span class="typ">Long</span> customerId = <span class="num">42L</span>;
+    <span class="kw">private</span> <span class="typ">OrderStatus</span> status = <span class="typ">OrderStatus</span>.NEW;
+    <span class="kw">private final</span> <span class="typ">List</span>&lt;<span class="typ">LineItem</span>&gt; items = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;(<span class="typ">List</span>.of(aLine().build()));
+    <span class="kw">public static</span> <span class="typ">OrderBuilder</span> <span class="fn">anOrder</span>() { <span class="kw">return new</span> <span class="typ">OrderBuilder</span>(); }
+    <span class="kw">public</span> <span class="typ">OrderBuilder</span> <span class="fn">paid</span>() { status = <span class="typ">OrderStatus</span>.PAID; <span class="kw">return this</span>; }
+    <span class="kw">public</span> <span class="typ">OrderBuilder</span> <span class="fn">forCustomer</span>(<span class="kw">long</span> id) { customerId = id; <span class="kw">return this</span>; }
+    <span class="kw">public</span> <span class="typ">OrderBuilder</span> <span class="fn">withItems</span>(<span class="typ">LineItem</span>... li) { items.clear(); items.addAll(<span class="typ">List</span>.of(li)); <span class="kw">return this</span>; }
+    <span class="kw">public</span> <span class="typ">Order</span> <span class="fn">build</span>() { <span class="kw">return new</span> <span class="typ">Order</span>(customerId, status, <span class="typ">List</span>.copyOf(items)); }
+}
+
+<span class="cmt">// clean DB between HTTP-level integration tests (fast: one statement)</span>
+<span class="ann">@BeforeEach</span> <span class="kw">void</span> <span class="fn">clean</span>() { jdbc.execute(<span class="str">"TRUNCATE orders, order_lines, outbox RESTART IDENTITY CASCADE"</span>); }
+<span class="cmt">// or: @Sql(scripts = "/sql/clean.sql", executionPhase = BEFORE_TEST_METHOD) on the class</span>
+
+<span class="cmt"># anonymise a prod dump for staging (sketch — run inside the DB, never export raw first)</span>
+<span class="kw">UPDATE</span> customers <span class="kw">SET</span> email = <span class="str">'user'</span> || id || <span class="str">'@example.test'</span>, full_name = <span class="str">'Customer '</span> || id, phone = <span class="kw">NULL</span>;
+<span class="kw">UPDATE</span> payments  <span class="kw">SET</span> card_last4 = <span class="str">'0000'</span>, token = md5(random()::text);</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Prod data in test envs</td><td>Real customer emails in staging; a test sends them marketing.</td><td>Anonymise before it leaves prod; or synthetic data.</td></tr>
+    <tr><td>One shared fixture file</td><td><code>test-data.sql</code> with 400 rows every test depends on; changing one row breaks 30 tests.</td><td>Each test creates its own minimal data via builders.</td></tr>
+    <tr><td>Hard-coded IDs</td><td><code>findById(1L)</code> — breaks when the sequence moves.</td><td>Use the ID returned by the insert.</td></tr>
+    <tr><td>Slow cleanup</td><td><code>deleteAll()</code> on 12 repositories per test (12 queries + cascades).</td><td>One <code>TRUNCATE … CASCADE</code>, or a transaction rollback where applicable.</td></tr>
+    <tr><td>Shared staging DB for e2e</td><td>Parallel PR runs trample each other.</td><td>Ephemeral env or run-scoped data.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>TRUNCATE</code> between tests is fast, but a repository test using <code>@Transactional</code> rollback is faster still. Why not use rollback everywhere?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Rollback only works when the test and the code under test share one transaction/thread. HTTP-level tests, async listeners, <code>REQUIRES_NEW</code> paths, and anything that commits (outbox pollers) escape it. Use rollback for <code>@DataJpaTest</code>-style tests, truncate for full-stack ones.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Performance tests as a pipeline stage — Gatling and k6</h2>
+<table>
+  <thead><tr><th>Type</th><th>Question</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td><b>Smoke / sanity</b></td><td>Does it respond under a trickle of load?</td><td>After every deploy (1 min).</td></tr>
+    <tr><td><b>Load</b></td><td>Does it meet SLOs at expected peak (e.g. 500 rps, p99 &lt; 500 ms)?</td><td>Nightly on staging; before big releases.</td></tr>
+    <tr><td><b>Stress</b></td><td>Where does it break, and how (graceful or cliff)?</td><td>Quarterly / capacity planning.</td></tr>
+    <tr><td><b>Soak / endurance</b></td><td>Does it leak or degrade over hours?</td><td>Weekly, 2–8 hours; watch heap, connections, latency drift.</td></tr>
+    <tr><td><b>Spike</b></td><td>Sudden 10× — does autoscaling and backpressure cope?</td><td>Before sales events.</td></tr>
+    <tr><td><b>Regression</b></td><td>Did this PR make p99 worse than main?</td><td>On PR for hot paths, compared against a baseline.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// Gatling (Java DSL, runs as a Maven/Gradle plugin or standalone)</span>
+<span class="kw">public class</span> <span class="typ">CheckoutSimulation</span> <span class="kw">extends</span> <span class="typ">Simulation</span> {
+    <span class="typ">HttpProtocolBuilder</span> http = http.baseUrl(<span class="typ">System</span>.getProperty(<span class="str">"baseUrl"</span>, <span class="str">"https://staging.shop.example"</span>))
+        .acceptHeader(<span class="str">"application/json"</span>).userAgentHeader(<span class="str">"gatling"</span>);
+
+    <span class="typ">ScenarioBuilder</span> browseAndBuy = scenario(<span class="str">"browse and buy"</span>)
+        .feed(csv(<span class="str">"skus.csv"</span>).circular())
+        .exec(http(<span class="str">"search"</span>).get(<span class="str">"/api/products?q=#{sku}"</span>).check(status().is(<span class="num">200</span>)))
+        .pause(<span class="typ">Duration</span>.ofSeconds(<span class="num">1</span>), <span class="typ">Duration</span>.ofSeconds(<span class="num">3</span>))
+        .exec(http(<span class="str">"add"</span>).post(<span class="str">"/api/cart/items"</span>).body(<span class="typ">StringBody</span>(<span class="str">"{\"sku\":\"#{sku}\",\"qty\":1}"</span>)).asJson()
+            .check(status().is(<span class="num">201</span>), jsonPath(<span class="str">"$.cartId"</span>).saveAs(<span class="str">"cartId"</span>)))
+        .exec(http(<span class="str">"checkout"</span>).post(<span class="str">"/api/cart/#{cartId}/checkout"</span>).check(status().is(<span class="num">201</span>)));
+
+    {
+        setUp(browseAndBuy.injectOpen(
+                rampUsersPerSec(<span class="num">1</span>).to(<span class="num">50</span>).during(<span class="typ">Duration</span>.ofMinutes(<span class="num">2</span>)),     <span class="cmt">// ramp</span>
+                constantUsersPerSec(<span class="num">50</span>).during(<span class="typ">Duration</span>.ofMinutes(<span class="num">5</span>))))      <span class="cmt">// steady state</span>
+            .protocols(http)
+            .assertions(                                                       <span class="cmt">// the gate: fail the build if violated</span>
+                global().responseTime().percentile(<span class="num">99.0</span>).lt(<span class="num">500</span>),
+                global().failedRequests().percent().lt(<span class="num">1.0</span>),
+                details(<span class="str">"checkout"</span>).responseTime().percentile(<span class="num">95.0</span>).lt(<span class="num">800</span>));
+    }
+}
+<span class="cmt"># ./mvnw gatling:test -DbaseUrl=https://staging.shop.example   → HTML report in target/gatling; non-zero exit on failed assertions</span>
+
+<span class="cmt">// k6 (JavaScript, single binary, Grafana-native) — same idea</span>
+<span class="kw">import</span> http <span class="kw">from</span> <span class="str">'k6/http'</span>; <span class="kw">import</span> { check, sleep } <span class="kw">from</span> <span class="str">'k6'</span>;
+<span class="kw">export const</span> options = {
+  scenarios: { steady: { executor: <span class="str">'constant-arrival-rate'</span>, rate: <span class="num">50</span>, timeUnit: <span class="str">'1s'</span>, duration: <span class="str">'5m'</span>, preAllocatedVUs: <span class="num">100</span> } },
+  thresholds: { http_req_duration: [<span class="str">'p(99)&lt;500'</span>], http_req_failed: [<span class="str">'rate&lt;0.01'</span>] },    <span class="cmt">// gate</span>
+};
+<span class="kw">export default function</span> () {
+  <span class="kw">const</span> r = http.get(<span class="str">`${__ENV.BASE_URL}/api/products?q=phone`</span>);
+  check(r, { <span class="str">'200'</span>: (res) =&gt; res.status === <span class="num">200</span> });
+  sleep(<span class="num">1</span>);
+}
+<span class="cmt"># k6 run -e BASE_URL=https://staging.shop.example checkout.js --out experimental-prometheus-rw   (metrics into Prometheus → Grafana)</span></pre>
+<table>
+  <thead><tr><th>Doing it right</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><b>Open model</b> (arrival rate) over closed model (fixed VUs)</td><td>Real users don't wait for the previous one; constant arrival rate shows queueing collapse, fixed VUs hides it.</td></tr>
+    <tr><td>Prod-like environment and data volumes</td><td>A 10-row table has no index problems. Perf-test staging must be sized like prod (or a known fraction) with realistic data.</td></tr>
+    <tr><td>Warm-up and steady state</td><td>JIT and caches need minutes; measure only the steady window.</td></tr>
+    <tr><td>Thresholds from SLOs</td><td>p99 &lt; 500 ms, error rate &lt; 1%, not "it felt fine".</td></tr>
+    <tr><td>Load generator ≠ bottleneck</td><td>Run k6/Gatling from a separate machine/pod with enough CPU; watch its own CPU.</td></tr>
+    <tr><td>Observe the system, not just the client</td><td>Correlate with Grafana: CPU, GC, DB connections, Kafka lag. The client tells you <i>that</i> it is slow; the server tells you <i>why</i>.</td></tr>
+    <tr><td>Baseline and trend</td><td>Store results (k6 → Prometheus, Gatling Enterprise/Grafana); alert on regression vs last week, not only absolute thresholds.</td></tr>
+    <tr><td>Isolate side effects</td><td>Test accounts, test payment gateway sandbox or stub, clean-up job after.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Perf test from a laptop</td><td>Wi-Fi and a 4-core laptop cap at 200 rps; "the server is slow".</td><td>Dedicated runner in the same region; monitor generator CPU.</td></tr>
+    <tr><td>Against a tiny staging</td><td>1 pod, <code>db.t4g.micro</code>; numbers mean nothing.</td><td>Scale staging up for the test window (it's IaC) or test in a perf env.</td></tr>
+    <tr><td>Load test in the PR gate</td><td>10 minutes per PR; or so short it measures JIT warm-up.</td><td>Nightly full run; PR gets a 1-minute smoke on hot endpoints if anything.</td></tr>
+    <tr><td>Only averages</td><td>Mean 120 ms while p99 is 4 s.</td><td>p95/p99 and error rate; histograms.</td></tr>
+    <tr><td>Soak never run</td><td>Memory leak found in prod after 3 days.</td><td>Weekly 4-hour soak with heap and connection-count graphs.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. At 50 rps p99 is 300 ms; at 60 rps it jumps to 5 s and never recovers. What kind of limit is that, and what metric confirms it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">A saturated fixed-size resource: the DB connection pool (Hikari <code>pending</code> &gt; 0, <code>acquire</code> time rising), Tomcat threads, or CPU throttling. Requests queue, latency explodes, and with an open-model load the queue only grows. The fix is capacity or backpressure (timeouts, bulkheads, rate limits), not a bigger timeout.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. The test pipeline end to end, and quick reference</h2>
+<pre><span class="cmt"># what runs where</span>
+local (pre-push)      unit + slice                      &lt; 1 min       ./mvnw test
+PR gate               unit + slice + integration (sharded) + contracts + static checks + coverage on new code      ~3–5 min
+after merge → dev     same + build image + consumer contract publish + provider verification trigger
+after deploy → preview/staging   e2e journeys (Playwright/REST Assured) + smoke perf (1 min) + can-i-deploy
+nightly               full CodeQL · full e2e · load test (Gatling/k6) with thresholds · flaky-tag run · mutation tests on core
+weekly                soak test · dependency updates (Renovate) with full suite</pre>
+<table>
+  <thead><tr><th>Checklist for a CI-ready test suite</th></tr></thead>
+  <tbody>
+    <tr><td>Unit tests need no Spring, no Docker, no network; run in parallel; &lt; 1 minute total.</td></tr>
+    <tr><td>Slice and integration tests share Spring contexts and singleton Testcontainers; real DB engine; Flyway migrations run in tests.</td></tr>
+    <tr><td>Third parties stubbed with WireMock; AWS with LocalStack; time with <code>Clock</code>.</td></tr>
+    <tr><td>Unit (<code>*Test</code>, Surefire) and integration (<code>*IT</code>, Failsafe) separated; JUnit XML uploaded and summarised on the PR.</td></tr>
+    <tr><td>Contracts published to a broker; <code>can-i-deploy</code> before deploy.</td></tr>
+    <tr><td>E2E: a dozen journeys, against an ephemeral env, traces on failure, not blocking drafts.</td></tr>
+    <tr><td>Flaky tests retried <i>with reporting</i>, quarantined by tag, tracked with owners.</td></tr>
+    <tr><td>Coverage merged (unit + IT), gated on new code and per-package branch floors; PIT on core modules.</td></tr>
+    <tr><td>Perf tests nightly with SLO thresholds from a dedicated runner against a sized environment; results trended.</td></tr>
+    <tr><td><code>-Duser.timezone=UTC</code>, random order, strict Mockito, <code>timeout-minutes</code> on CI jobs.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Unit tests only</td><td><code>./mvnw test</code> · <code>./gradlew test</code></td></tr>
+    <tr><td>Integration tests only</td><td><code>./mvnw -DskipUnitTests verify</code> (Surefire skip property you define) · <code>./gradlew integrationTest</code></td></tr>
+    <tr><td>One test / class / package</td><td><code>-Dtest=OrderServiceTest#placesOrder</code> · <code>-Dit.test='com.shop.order.**'</code> · <code>--tests 'com.shop.order.*'</code></td></tr>
+    <tr><td>By tag</td><td><code>-Dgroups=fast -DexcludedGroups=flaky</code> · Gradle <code>useJUnitPlatform { includeTags("fast") }</code></td></tr>
+    <tr><td>Rerun failures / random order</td><td><code>-Dsurefire.rerunFailingTestsCount=2 -Dsurefire.runOrder=random</code></td></tr>
+    <tr><td>Coverage report</td><td><code>./mvnw verify</code> → <code>target/site/jacoco/index.html</code> · <code>./gradlew jacocoTestReport</code></td></tr>
+    <tr><td>Mutation</td><td><code>./mvnw org.pitest:pitest-maven:mutationCoverage</code> · <code>./gradlew pitest</code></td></tr>
+    <tr><td>Contracts</td><td><code>./mvnw test pact:publish</code> · <code>pact-broker can-i-deploy --pacticipant X --version $SHA --to-environment production</code></td></tr>
+    <tr><td>E2E against an env</td><td><code>BASE_URL=https://… ./mvnw -Dgroups=e2e test</code> · <code>npx playwright test --trace on</code></td></tr>
+    <tr><td>Load</td><td><code>./mvnw gatling:test -DbaseUrl=…</code> · <code>k6 run -e BASE_URL=… script.js</code></td></tr>
+    <tr><td>Testcontainers reuse locally</td><td><code>echo testcontainers.reuse.enable=true &gt;&gt; ~/.testcontainers.properties</code></td></tr>
+    <tr><td>Context cache stats</td><td><code>logging.level.org.springframework.test.context.cache=DEBUG</code></td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) the pyramid is a time budget — logic in unit tests, wiring in slices, a few real-dependency integration tests, a handful of e2e journeys; 2) real engines via Testcontainers, singleton containers, shared Spring contexts; 3) contracts (Pact) replace deployed-together API tests; <code>can-i-deploy</code> gates releases; 4) no sleeps, no <code>now()</code>, no shared state — Awaitility, <code>Clock</code>, fresh data; 5) flaky tests are bugs: retry with reporting, quarantine with an owner, fix within a sprint; 6) parallelise and shard for wall time, cache for repeat runs, merge reports into one check; 7) gate coverage on new code, measure mutation score where it matters, run perf tests nightly against SLO thresholds.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Your PR pipeline takes 25 minutes. What do you do first?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Measure, don't guess: pull the per-test timings and context/container start counts from the last run. Nine times out of ten the answer is "60 Spring contexts and 40 Postgres starts" → unify test configuration and use singleton containers (25 → 8 min), then move <code>@SpringBootTest</code> logic tests to plain JUnit, then shard what's left across jobs. Only after that look at caching and test selection.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("testing-ci-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("testing-ci-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

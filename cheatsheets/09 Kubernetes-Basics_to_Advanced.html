@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubernetes — Basics to Advanced (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* YAML keys, kubectl verbs */
+  pre .typ { color: var(--c-typ); }                    /* kinds, images */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers, ports */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* flags like -n, --replicas */
+  pre .fn  { color: var(--c-fn); }                     /* commands like kubectl, helm */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Kubernetes — Basics to Advanced<span class="sub">What it is · cluster parts · Pods · Deployments · Services · config · storage · scaling · kubectl · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Click "Reveal hint" on screen. Hints auto-open when printed. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What is Kubernetes? (the big idea)</h2>
+<p><b>Kubernetes</b> (K8s) runs your containers across many machines. You tell it the state you <i>want</i> ("3 copies of my API, always up, reachable on port 80"). It makes that happen and keeps it true: if a container dies, it starts a new one; if a machine dies, it moves the work.</p>
+<table>
+  <thead><tr><th>Problem without K8s</th><th>What K8s does</th></tr></thead>
+  <tbody>
+    <tr><td>A container crashes at 3 am.</td><td>Restarts it. Nobody wakes up.</td></tr>
+    <tr><td>Traffic triples.</td><td>Adds more copies (scales out), then removes them later.</td></tr>
+    <tr><td>You have 50 servers. Which one runs what?</td><td>Picks a machine for each container (scheduling) based on free CPU and RAM.</td></tr>
+    <tr><td>New version to ship, no downtime allowed.</td><td>Rolling update: swaps old copies for new ones a few at a time; rolls back if they fail.</td></tr>
+    <tr><td>Containers need to find each other.</td><td>Gives each group a stable name and IP (Service) plus built-in DNS.</td></tr>
+    <tr><td>Passwords and config differ per environment.</td><td>ConfigMaps and Secrets, mounted as files or env vars.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Mental model:</b> you write a wish list (YAML). A set of loops called <b>controllers</b> watch the real world and keep nudging it until it matches your list. This is "desired state vs actual state". You never say "start a container"; you say "I want 3 of these".</div>
+<div class="tips"><b>Docker vs Kubernetes:</b> Docker builds and runs one container on one machine. Kubernetes runs <i>many</i> containers on <i>many</i> machines and keeps them healthy. K8s does not need Docker; it uses any OCI runtime (containerd, CRI-O) to run the same images.</div>
+<div class="tricky">
+  <div class="q">Q. You delete a Pod that a Deployment made. What happens?</div>
+  <details><summary>Reveal hint</summary><div class="hint">A new Pod appears within seconds. The Deployment's controller sees "want 3, have 2" and fixes it. To really remove it, delete or scale down the <i>Deployment</i>, not the Pod.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Cluster parts — control plane and nodes</h2>
+<p>A <b>cluster</b> = a <b>control plane</b> (the brain) + <b>worker nodes</b> (the muscles, where your Pods run).</p>
+<table>
+  <thead><tr><th>Part</th><th>Where</th><th>Job (plain words)</th></tr></thead>
+  <tbody>
+    <tr><td><b>kube-apiserver</b></td><td>Control plane</td><td>The front door. Every command (<code>kubectl</code>, controllers, kubelets) talks to it over REST. Checks who you are and what you may do.</td></tr>
+    <tr><td><b>etcd</b></td><td>Control plane</td><td>The database. Stores every object (Pods, Services, Secrets…) as key-value. Lose etcd = lose the cluster state. Back it up.</td></tr>
+    <tr><td><b>kube-scheduler</b></td><td>Control plane</td><td>Sees a new Pod with no node, picks the best node (free resources, rules, affinities), writes the choice.</td></tr>
+    <tr><td><b>kube-controller-manager</b></td><td>Control plane</td><td>Runs the control loops: ReplicaSet, Deployment, Node, Job, Endpoint controllers…</td></tr>
+    <tr><td><b>cloud-controller-manager</b></td><td>Control plane</td><td>Talks to the cloud (make a load balancer, attach a disk).</td></tr>
+    <tr><td><b>kubelet</b></td><td>Every node</td><td>The node agent. Reads which Pods should run here, tells the container runtime to start them, reports health back.</td></tr>
+    <tr><td><b>kube-proxy</b></td><td>Every node</td><td>Sets up network rules (iptables / IPVS) so Service IPs reach the right Pods.</td></tr>
+    <tr><td><b>Container runtime</b></td><td>Every node</td><td>containerd or CRI-O. Pulls images and runs containers.</td></tr>
+    <tr><td><b>CNI plugin</b></td><td>Every node</td><td>Gives Pods IPs and connects them (Calico, Cilium, Flannel, AWS VPC CNI…).</td></tr>
+    <tr><td><b>CoreDNS</b></td><td>Runs as Pods</td><td>Name lookup inside the cluster: <code>my-svc.my-ns.svc.cluster.local</code>.</td></tr>
+  </tbody>
+</table>
+<h3>What happens when you run <code>kubectl apply -f deploy.yaml</code></h3>
+<table>
+  <thead><tr><th>#</th><th>Step</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>kubectl</code> sends the YAML to the API server. It checks auth and admission rules, then saves the Deployment in etcd.</td></tr>
+    <tr><td>2</td><td>Deployment controller sees it and makes a <b>ReplicaSet</b>. ReplicaSet controller makes 3 <b>Pod</b> objects (no node yet).</td></tr>
+    <tr><td>3</td><td>Scheduler sees Pods with no node, picks a node for each, writes <code>nodeName</code>.</td></tr>
+    <tr><td>4</td><td>The kubelet on each chosen node sees "a Pod for me", pulls the image, asks containerd to start it, reports status.</td></tr>
+    <tr><td>5</td><td>If a Service matches the Pod labels, the Endpoints update and kube-proxy adds the new Pod IP to its rules.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Local clusters to learn on:</b> <code>minikube</code>, <code>kind</code> (Kubernetes in Docker), <code>k3d</code>, or Docker Desktop's built-in cluster. All run a full control plane on your laptop.</div>
+<div class="tricky">
+  <div class="q">Q. The control plane goes down. Do your running apps stop?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. Pods already running keep running — kubelets and kube-proxy on the nodes keep working. But nothing <i>new</i> happens: no rescheduling, no scaling, no <code>kubectl</code>. That is why production uses 3 or 5 control-plane nodes.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Objects and YAML — the shape of everything</h2>
+<p>Every Kubernetes object is a YAML (or JSON) document with the same four top-level parts.</p>
+<pre><span class="kw">apiVersion</span>: <span class="typ">apps/v1</span>          <span class="cmt"># which API group and version defines this kind</span>
+<span class="kw">kind</span>: <span class="typ">Deployment</span>              <span class="cmt"># what type of object</span>
+<span class="kw">metadata</span>:                     <span class="cmt"># name, namespace, labels, annotations</span>
+  <span class="kw">name</span>: api
+  <span class="kw">namespace</span>: shop
+  <span class="kw">labels</span>: { app: api, tier: backend }
+<span class="kw">spec</span>:                         <span class="cmt"># what you WANT (you write this)</span>
+  ...
+<span class="kw">status</span>:                       <span class="cmt"># what IS (the cluster writes this; never edit it)</span>
+  ...</pre>
+<table>
+  <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>apiVersion</code></td><td><code>v1</code> for core kinds (Pod, Service, ConfigMap). <code>apps/v1</code> for Deployment, StatefulSet, DaemonSet. <code>batch/v1</code> for Job, CronJob. <code>networking.k8s.io/v1</code> for Ingress, NetworkPolicy.</td></tr>
+    <tr><td><code>metadata.name</code></td><td>Unique inside its namespace and kind. Lowercase, dashes.</td></tr>
+    <tr><td><code>metadata.labels</code></td><td>Key/value tags. <b>Used for selection</b> (Services and Deployments find Pods by labels).</td></tr>
+    <tr><td><code>metadata.annotations</code></td><td>Key/value notes for tools (e.g. ingress class settings). Not used for selection.</td></tr>
+    <tr><td><code>spec</code></td><td>Desired state. Different for each kind.</td></tr>
+    <tr><td><code>status</code></td><td>Observed state. Read with <code>kubectl get -o yaml</code> or <code>describe</code>.</td></tr>
+  </tbody>
+</table>
+<h3>Namespaces — folders for objects</h3>
+<table>
+  <thead><tr><th>Namespace</th><th>Holds</th></tr></thead>
+  <tbody>
+    <tr><td><code>default</code></td><td>Where things go if you give no namespace. Avoid using it for real apps.</td></tr>
+    <tr><td><code>kube-system</code></td><td>Cluster parts: CoreDNS, kube-proxy, CNI, metrics-server.</td></tr>
+    <tr><td><code>kube-public</code></td><td>Readable by everyone; rarely used.</td></tr>
+    <tr><td>yours (<code>shop</code>, <code>team-a</code>)</td><td>One per team or app or environment. Quotas and RBAC attach here.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Labels</td><td>No labels, or labels that differ between Deployment and Service by one letter.</td><td>Use a fixed set: <code>app</code>, <code>version</code>, <code>tier</code>. Copy-paste the same selector block.</td></tr>
+    <tr><td>Namespaces</td><td>Everything in <code>default</code>.</td><td>One namespace per app or team; set <code>kubectl config set-context --current --namespace=shop</code>.</td></tr>
+    <tr><td>Editing status</td><td>Writing fields under <code>status</code>.</td><td>Never. Only controllers write status.</td></tr>
+    <tr><td>Indentation</td><td>Tabs in YAML.</td><td>Two spaces. Run <code>kubectl apply --dry-run=client -f x.yaml</code> to check syntax.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Cluster-wide vs namespaced:</b> Nodes, PersistentVolumes, Namespaces, ClusterRoles, StorageClasses live at cluster level. Pods, Services, Deployments, ConfigMaps, Secrets, PVCs live inside a namespace. <code>kubectl api-resources</code> lists both.</div>
+<div class="tricky">
+  <div class="q">Q. Are labels and annotations the same thing?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. <b>Labels</b> are for selecting and grouping (short values, indexed). <b>Annotations</b> are free-form notes for tools and humans (can be long JSON). A Service picks Pods by labels, never by annotations.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Pods — the smallest unit</h2>
+<p>A <b>Pod</b> is one or more containers that share one IP, one network namespace, and can share volumes. Usually a Pod holds <b>one</b> main container. You almost never create Pods by hand; a Deployment does it.</p>
+<pre><span class="kw">apiVersion</span>: <span class="typ">v1</span>
+<span class="kw">kind</span>: <span class="typ">Pod</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: api
+  <span class="kw">labels</span>: { app: api }
+<span class="kw">spec</span>:
+  <span class="kw">containers</span>:
+  - <span class="kw">name</span>: api
+    <span class="kw">image</span>: <span class="typ">ghcr.io/shop/api:1.4.2</span>
+    <span class="kw">ports</span>: [{ <span class="kw">containerPort</span>: <span class="num">8080</span> }]
+    <span class="kw">env</span>:
+    - { <span class="kw">name</span>: LOG_LEVEL, <span class="kw">value</span>: <span class="str">"info"</span> }
+    <span class="kw">resources</span>:
+      <span class="kw">requests</span>: { cpu: <span class="str">"250m"</span>, memory: <span class="str">"256Mi"</span> }   <span class="cmt"># what the scheduler reserves</span>
+      <span class="kw">limits</span>:   { cpu: <span class="str">"1"</span>,    memory: <span class="str">"512Mi"</span> }   <span class="cmt"># hard cap; over memory = OOMKilled</span>
+    <span class="kw">readinessProbe</span>:                                <span class="cmt"># "can I get traffic?"</span>
+      <span class="kw">httpGet</span>: { path: /ready, port: <span class="num">8080</span> }
+      <span class="kw">periodSeconds</span>: <span class="num">5</span>
+    <span class="kw">livenessProbe</span>:                                 <span class="cmt"># "am I stuck? restart me"</span>
+      <span class="kw">httpGet</span>: { path: /health, port: <span class="num">8080</span> }
+      <span class="kw">initialDelaySeconds</span>: <span class="num">10</span>
+  <span class="kw">restartPolicy</span>: Always</pre>
+<h3>Pod phases and what they mean</h3>
+<table>
+  <thead><tr><th>Status you see</th><th>Meaning</th><th>Usual fix</th></tr></thead>
+  <tbody>
+    <tr><td><code>Pending</code></td><td>Not placed on a node yet, or image still pulling.</td><td><code>describe pod</code>: not enough CPU/RAM, no node matches, PVC not bound.</td></tr>
+    <tr><td><code>ContainerCreating</code></td><td>Node is setting up volumes, network, pulling image.</td><td>Wait; if stuck, check volume mounts and secrets exist.</td></tr>
+    <tr><td><code>Running</code></td><td>At least one container is up.</td><td>—</td></tr>
+    <tr><td><code>CrashLoopBackOff</code></td><td>Container keeps dying; K8s waits longer each time before restart.</td><td><code>logs --previous</code>. App error, bad command, missing env.</td></tr>
+    <tr><td><code>ImagePullBackOff</code> / <code>ErrImagePull</code></td><td>Cannot fetch the image.</td><td>Wrong name/tag, private registry with no <code>imagePullSecrets</code>.</td></tr>
+    <tr><td><code>OOMKilled</code></td><td>Used more memory than its limit.</td><td>Raise the limit or fix the leak.</td></tr>
+    <tr><td><code>Completed</code></td><td>Ran to the end (Jobs).</td><td>Normal for batch work.</td></tr>
+    <tr><td><code>Terminating</code></td><td>Being shut down; waiting for <code>terminationGracePeriodSeconds</code> (default 30s).</td><td>If stuck: a finalizer or a process ignoring SIGTERM.</td></tr>
+  </tbody>
+</table>
+<h3>The three probes</h3>
+<table>
+  <thead><tr><th>Probe</th><th>Question</th><th>On failure</th></tr></thead>
+  <tbody>
+    <tr><td><b>startupProbe</b></td><td>Has the app finished booting?</td><td>Other probes wait. After the limit, container restarts. Use for slow starters (JVM).</td></tr>
+    <tr><td><b>readinessProbe</b></td><td>Can it serve requests right now?</td><td>Pod is removed from the Service's endpoints. No restart.</td></tr>
+    <tr><td><b>livenessProbe</b></td><td>Is it alive, or stuck for good?</td><td>Container is <b>restarted</b>.</td></tr>
+  </tbody>
+</table>
+<h3>Multi-container patterns</h3>
+<table>
+  <thead><tr><th>Pattern</th><th>What the extra container does</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><b>Init container</b></td><td>Runs first, to the end, before the main one starts.</td><td>Wait for DB, run migrations, fetch config.</td></tr>
+    <tr><td><b>Sidecar</b></td><td>Runs beside the main container for its whole life.</td><td>Log shipper, service-mesh proxy (Envoy), config reloader.</td></tr>
+    <tr><td><b>Ambassador</b></td><td>Proxies outbound calls on localhost.</td><td>Connection pool to a DB.</td></tr>
+    <tr><td><b>Adapter</b></td><td>Reshapes output for the outside.</td><td>Turn app logs into Prometheus metrics.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Bare Pods</td><td><code>kind: Pod</code> in production. If the node dies, the Pod is gone for good.</td><td>Use a Deployment (or StatefulSet / DaemonSet / Job). They re-create Pods.</td></tr>
+    <tr><td>Resources</td><td>No <code>requests</code> / <code>limits</code>. The scheduler packs blindly; one Pod can starve the node.</td><td>Always set requests; set memory limits. Be careful with CPU limits (throttling).</td></tr>
+    <tr><td>Liveness probe</td><td>Liveness that calls the database. DB hiccup → every Pod restarts → outage.</td><td>Liveness checks only the process itself. Readiness can check dependencies.</td></tr>
+    <tr><td>Tag</td><td><code>image: api:latest</code>. Nodes may run different builds; rollbacks impossible.</td><td>Pin a version or digest.</td></tr>
+    <tr><td>Containers per Pod</td><td>App + DB in one Pod.</td><td>One app per Pod. Different Pods scale and fail on their own.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>CPU units:</b> <code>1</code> = one core, <code>500m</code> = half a core (m = milli). <b>Memory:</b> <code>Mi</code> / <code>Gi</code> are powers of 2 (1 Mi = 1,048,576 bytes); <code>M</code> / <code>G</code> are powers of 10. Mixing them up is a classic slip.</div>
+<div class="tricky">
+  <div class="q">Q. Readiness probe fails on 1 of 3 Pods. Does K8s restart it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. Readiness only pulls the Pod out of the Service so it gets no traffic. When the probe passes again, traffic returns. Only the <b>liveness</b> probe restarts containers.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Workloads — Deployment, ReplicaSet, StatefulSet, DaemonSet, Job</h2>
+<table>
+  <thead><tr><th>Kind</th><th>Use for</th><th>Key trait</th></tr></thead>
+  <tbody>
+    <tr><td><b>Deployment</b></td><td>Stateless apps: web, API, workers.</td><td>Rolling updates and rollbacks. Manages ReplicaSets, which manage Pods.</td></tr>
+    <tr><td><b>ReplicaSet</b></td><td>"Keep N identical Pods". You rarely write one directly.</td><td>Made by Deployments. One per Deployment version.</td></tr>
+    <tr><td><b>StatefulSet</b></td><td>Databases, queues, anything with identity and its own disk.</td><td>Stable names (<code>db-0</code>, <code>db-1</code>), one PVC per Pod, ordered start/stop.</td></tr>
+    <tr><td><b>DaemonSet</b></td><td>One Pod on <i>every</i> node.</td><td>Log agents, monitoring, CNI, node tools.</td></tr>
+    <tr><td><b>Job</b></td><td>Run to completion once.</td><td>Retries on failure; <code>completions</code>, <code>parallelism</code>.</td></tr>
+    <tr><td><b>CronJob</b></td><td>Jobs on a schedule.</td><td>Cron syntax; makes a Job each tick.</td></tr>
+  </tbody>
+</table>
+<h3>A production-shaped Deployment</h3>
+<pre><span class="kw">apiVersion</span>: <span class="typ">apps/v1</span>
+<span class="kw">kind</span>: <span class="typ">Deployment</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api, <span class="kw">namespace</span>: shop }
+<span class="kw">spec</span>:
+  <span class="kw">replicas</span>: <span class="num">3</span>
+  <span class="kw">selector</span>:
+    <span class="kw">matchLabels</span>: { app: api }          <span class="cmt"># MUST match template.metadata.labels</span>
+  <span class="kw">strategy</span>:
+    <span class="kw">type</span>: RollingUpdate
+    <span class="kw">rollingUpdate</span>: { <span class="kw">maxSurge</span>: <span class="num">1</span>, <span class="kw">maxUnavailable</span>: <span class="num">0</span> }   <span class="cmt"># add 1 new, never drop below 3</span>
+  <span class="kw">template</span>:                            <span class="cmt"># the Pod recipe</span>
+    <span class="kw">metadata</span>:
+      <span class="kw">labels</span>: { app: api }
+    <span class="kw">spec</span>:
+      <span class="kw">containers</span>:
+      - <span class="kw">name</span>: api
+        <span class="kw">image</span>: <span class="typ">ghcr.io/shop/api:1.4.2</span>
+        <span class="kw">ports</span>: [{ <span class="kw">containerPort</span>: <span class="num">8080</span> }]
+        <span class="kw">resources</span>:
+          <span class="kw">requests</span>: { cpu: <span class="str">"250m"</span>, memory: <span class="str">"256Mi"</span> }
+          <span class="kw">limits</span>:   { memory: <span class="str">"512Mi"</span> }
+        <span class="kw">readinessProbe</span>: { <span class="kw">httpGet</span>: { path: /ready, port: <span class="num">8080</span> } }</pre>
+<h3>Rollouts</h3>
+<pre><span class="fn">kubectl</span> <span class="kw">set</span> image deployment/api api=<span class="typ">ghcr.io/shop/api:1.5.0</span>   <span class="cmt"># or edit the YAML and apply</span>
+<span class="fn">kubectl</span> <span class="kw">rollout</span> status deployment/api        <span class="cmt"># watch the swap</span>
+<span class="fn">kubectl</span> <span class="kw">rollout</span> history deployment/api
+<span class="fn">kubectl</span> <span class="kw">rollout</span> undo deployment/api          <span class="cmt"># back to the previous ReplicaSet</span>
+<span class="fn">kubectl</span> <span class="kw">rollout</span> undo deployment/api <span class="ann">--to-revision=2</span>
+<span class="fn">kubectl</span> <span class="kw">rollout</span> restart deployment/api       <span class="cmt"># re-create all Pods (e.g. after a ConfigMap change)</span>
+<span class="fn">kubectl</span> <span class="kw">scale</span> deployment/api <span class="ann">--replicas=5</span></pre>
+<table>
+  <thead><tr><th>Strategy</th><th>How</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td><b>RollingUpdate</b> (default)</td><td>Replace a few Pods at a time. <code>maxSurge</code> = extra Pods allowed; <code>maxUnavailable</code> = how many may be down.</td><td>Most apps. Zero downtime if readiness probes are honest.</td></tr>
+    <tr><td><b>Recreate</b></td><td>Kill all old, then start new.</td><td>App cannot run two versions at once (schema locks, singletons).</td></tr>
+    <tr><td>Blue/green, canary</td><td>Not built in. Done with two Deployments + Service label switch, or tools like Argo Rollouts / Flagger.</td><td>Safer releases with live traffic tests.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Selector mismatch</td><td><code>selector.matchLabels</code> ≠ <code>template.labels</code>. The apply fails, or the Deployment adopts the wrong Pods.</td><td>Keep them identical. The selector is immutable after creation.</td></tr>
+    <tr><td>Rolling with no readiness</td><td>New Pods counted "ready" the instant they start; users hit half-booted apps.</td><td>Add a readiness probe. Rolling updates wait for it.</td></tr>
+    <tr><td>Database as Deployment</td><td>Postgres in a Deployment with one shared PVC.</td><td>StatefulSet with <code>volumeClaimTemplates</code>, or a managed cloud DB.</td></tr>
+    <tr><td>Config change, no restart</td><td>Edit ConfigMap and wait. Env vars from it never refresh.</td><td><code>rollout restart</code>, or hash the ConfigMap into a Pod annotation so a change triggers a rollout.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>How a rollout works:</b> the Deployment makes a <i>new</i> ReplicaSet, scales it up while scaling the old one down. The old ReplicaSet stays at 0 replicas so <code>rollout undo</code> can scale it back. <code>revisionHistoryLimit</code> (default 10) controls how many are kept.</div>
+<div class="tricky">
+  <div class="q">Q. <code>kubectl get rs</code> shows 4 ReplicaSets for one Deployment. Is something broken?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. Each past version keeps an empty ReplicaSet (0/0/0) for rollback history. Only one should have running Pods. Lower <code>revisionHistoryLimit</code> if the list bothers you.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Services — a stable address for moving Pods</h2>
+<p>Pods come and go and their IPs change. A <b>Service</b> gives a group of Pods (picked by labels) one fixed name and IP, and spreads traffic across them.</p>
+<pre><span class="kw">apiVersion</span>: <span class="typ">v1</span>
+<span class="kw">kind</span>: <span class="typ">Service</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api, <span class="kw">namespace</span>: shop }
+<span class="kw">spec</span>:
+  <span class="kw">type</span>: ClusterIP                 <span class="cmt"># default: reachable only inside the cluster</span>
+  <span class="kw">selector</span>: { app: api }          <span class="cmt"># which Pods — must match the Pod labels</span>
+  <span class="kw">ports</span>:
+  - <span class="kw">port</span>: <span class="num">80</span>                      <span class="cmt"># the Service's own port</span>
+    <span class="kw">targetPort</span>: <span class="num">8080</span>              <span class="cmt"># the container's port</span>
+    <span class="kw">protocol</span>: TCP
+<span class="cmt"># inside the cluster: http://api.shop.svc.cluster.local  (or just http://api from the same namespace)</span></pre>
+<table>
+  <thead><tr><th>Type</th><th>Reachable from</th><th>How</th><th>Use for</th></tr></thead>
+  <tbody>
+    <tr><td><b>ClusterIP</b> (default)</td><td>Inside the cluster only</td><td>Virtual IP + DNS name</td><td>Service-to-service calls (API → DB).</td></tr>
+    <tr><td><b>NodePort</b></td><td>Outside, via <code>&lt;any-node-ip&gt;:30000-32767</code></td><td>Opens the same port on every node</td><td>Dev, demos, bare metal without a load balancer.</td></tr>
+    <tr><td><b>LoadBalancer</b></td><td>Internet</td><td>Cloud makes a real LB that points at the NodePorts</td><td>Public entry point. One LB per Service = costly.</td></tr>
+    <tr><td><b>ExternalName</b></td><td>Inside</td><td>DNS CNAME to an outside host</td><td>Point <code>db</code> at <code>mydb.rds.amazonaws.com</code>.</td></tr>
+    <tr><td><b>Headless</b> (<code>clusterIP: None</code>)</td><td>Inside</td><td>DNS returns every Pod IP, no load balancing</td><td>StatefulSets: talk to <code>db-0.db</code> directly.</td></tr>
+  </tbody>
+</table>
+<h3>How traffic flows</h3>
+<table>
+  <thead><tr><th>Piece</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td><b>Endpoints / EndpointSlice</b></td><td>The live list of ready Pod IPs behind a Service. Updated when Pods pass or fail readiness.</td></tr>
+    <tr><td><b>kube-proxy</b></td><td>Writes iptables / IPVS rules on each node: "traffic to Service IP:80 → pick one of these Pod IPs:8080".</td></tr>
+    <tr><td><b>CoreDNS</b></td><td>Maps <code>api.shop.svc.cluster.local</code> → the Service's ClusterIP.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>No endpoints</td><td>Service exists but <code>kubectl get endpoints api</code> is empty. Selector does not match Pod labels, or Pods are not Ready.</td><td>Compare <code>kubectl get pods --show-labels</code> with the selector. Check readiness.</td></tr>
+    <tr><td>Port mix-up</td><td><code>port</code> and <code>targetPort</code> swapped.</td><td><code>port</code> = Service side, <code>targetPort</code> = container side. If omitted, targetPort = port.</td></tr>
+    <tr><td>Public per service</td><td>A LoadBalancer Service for each of 20 microservices.</td><td>One Ingress (or Gateway) in front; services stay ClusterIP.</td></tr>
+    <tr><td>Hard-coded IPs</td><td>App config with a Pod IP.</td><td>Always use the Service DNS name.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Debug trick:</b> <code>kubectl run tmp --rm -it --image=busybox -- sh</code> then <code>nslookup api.shop</code> and <code>wget -qO- http://api.shop</code>. If DNS works but the request hangs, look at endpoints and NetworkPolicies.</div>
+<div class="tricky">
+  <div class="q">Q. Two Pods behind one Service. One fails its readiness probe. What does the Service do?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It drops that Pod from its endpoint list, so all traffic goes to the healthy one. When the probe passes again, the Pod comes back. No restart happens.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Ingress and Gateway — HTTP from the outside world</h2>
+<p>An <b>Ingress</b> is a set of HTTP routing rules (host and path → Service). It does nothing by itself; an <b>Ingress controller</b> (NGINX, Traefik, HAProxy, cloud ALB) reads the rules and does the routing. One public IP can serve many apps.</p>
+<pre><span class="kw">apiVersion</span>: <span class="typ">networking.k8s.io/v1</span>
+<span class="kw">kind</span>: <span class="typ">Ingress</span>
+<span class="kw">metadata</span>:
+  <span class="kw">name</span>: shop
+  <span class="kw">annotations</span>:
+    cert-manager.io/cluster-issuer: <span class="str">letsencrypt</span>      <span class="cmt"># auto TLS certificate</span>
+<span class="kw">spec</span>:
+  <span class="kw">ingressClassName</span>: nginx                           <span class="cmt"># which controller handles this</span>
+  <span class="kw">tls</span>:
+  - { <span class="kw">hosts</span>: [<span class="str">shop.example.com</span>], <span class="kw">secretName</span>: shop-tls }
+  <span class="kw">rules</span>:
+  - <span class="kw">host</span>: shop.example.com
+    <span class="kw">http</span>:
+      <span class="kw">paths</span>:
+      - { <span class="kw">path</span>: /api, <span class="kw">pathType</span>: Prefix, <span class="kw">backend</span>: { <span class="kw">service</span>: { <span class="kw">name</span>: api, <span class="kw">port</span>: { <span class="kw">number</span>: <span class="num">80</span> } } } }
+      - { <span class="kw">path</span>: /,    <span class="kw">pathType</span>: Prefix, <span class="kw">backend</span>: { <span class="kw">service</span>: { <span class="kw">name</span>: web, <span class="kw">port</span>: { <span class="kw">number</span>: <span class="num">80</span> } } } }</pre>
+<table>
+  <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>pathType: Prefix</code></td><td><code>/api</code> matches <code>/api</code>, <code>/api/users</code>…</td></tr>
+    <tr><td><code>pathType: Exact</code></td><td>Only the exact path.</td></tr>
+    <tr><td><code>ingressClassName</code></td><td>Picks the controller when more than one is installed.</td></tr>
+    <tr><td>Annotations</td><td>Controller-specific extras: rewrites, timeouts, rate limits, sticky sessions.</td></tr>
+    <tr><td><b>Gateway API</b></td><td>The newer, richer replacement: <code>GatewayClass</code> → <code>Gateway</code> → <code>HTTPRoute</code>. Role-split (platform team owns Gateway, app team owns routes), header matching, traffic splits — no annotations needed.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Nothing happens</td><td>Ingress applied but no controller installed. The object just sits there.</td><td>Install a controller (<code>helm install ingress-nginx …</code>); check <code>kubectl get ingressclass</code>.</td></tr>
+    <tr><td>404 from controller</td><td>Host header does not match <code>rules.host</code>, or backend Service name/port wrong.</td><td><code>curl -H "Host: shop.example.com" http://&lt;lb-ip&gt;/api</code>. <code>describe ingress</code> shows the backends and their endpoints.</td></tr>
+    <tr><td>TLS by hand</td><td>Copying certificates into Secrets every 90 days.</td><td>cert-manager + Let's Encrypt renews for you.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Ingress vs LoadBalancer Service — when do you need each?</div>
+  <details><summary>Reveal hint</summary><div class="hint">A <b>LoadBalancer Service</b> exposes one Service on one IP, any protocol (TCP/UDP). An <b>Ingress</b> routes HTTP(S) by host/path to many Services behind one IP, with TLS. In practice: one LoadBalancer Service for the Ingress controller, then Ingress rules for all your apps.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Config and Secrets</h2>
+<p>Keep settings out of the image. A <b>ConfigMap</b> holds plain settings; a <b>Secret</b> holds passwords, tokens, keys. Both can be used as env vars or mounted as files.</p>
+<pre><span class="kw">apiVersion</span>: <span class="typ">v1</span>
+<span class="kw">kind</span>: <span class="typ">ConfigMap</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api-config }
+<span class="kw">data</span>:
+  LOG_LEVEL: <span class="str">"debug"</span>
+  app.properties: |                 <span class="cmt"># a whole file as one key</span>
+    server.port=8080
+    feature.x=true
+---
+<span class="kw">apiVersion</span>: <span class="typ">v1</span>
+<span class="kw">kind</span>: <span class="typ">Secret</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: db-secret }
+<span class="kw">type</span>: Opaque
+<span class="kw">stringData</span>:                       <span class="cmt"># plain text here; K8s base64-encodes it for you</span>
+  DB_PASSWORD: <span class="str">s3cr3t</span>
+---
+<span class="cmt"># using them in a Pod spec</span>
+<span class="kw">containers</span>:
+- <span class="kw">name</span>: api
+  <span class="kw">envFrom</span>:
+  - <span class="kw">configMapRef</span>: { <span class="kw">name</span>: api-config }   <span class="cmt"># every key becomes an env var</span>
+  <span class="kw">env</span>:
+  - <span class="kw">name</span>: DB_PASSWORD
+    <span class="kw">valueFrom</span>: { <span class="kw">secretKeyRef</span>: { <span class="kw">name</span>: db-secret, <span class="kw">key</span>: DB_PASSWORD } }
+  <span class="kw">volumeMounts</span>:
+  - { <span class="kw">name</span>: cfg, <span class="kw">mountPath</span>: /etc/app, <span class="kw">readOnly</span>: true }
+<span class="kw">volumes</span>:
+- <span class="kw">name</span>: cfg
+  <span class="kw">configMap</span>: { <span class="kw">name</span>: api-config }      <span class="cmt"># /etc/app/app.properties appears as a file</span></pre>
+<pre><span class="fn">kubectl</span> <span class="kw">create</span> configmap api-config <span class="ann">--from-literal</span>=LOG_LEVEL=debug <span class="ann">--from-file</span>=app.properties
+<span class="fn">kubectl</span> <span class="kw">create</span> secret generic db-secret <span class="ann">--from-literal</span>=DB_PASSWORD=s3cr3t
+<span class="fn">kubectl</span> <span class="kw">create</span> secret docker-registry regcred <span class="ann">--docker-server</span>=ghcr.io <span class="ann">--docker-username</span>=u <span class="ann">--docker-password</span>=t
+<span class="fn">kubectl</span> <span class="kw">create</span> secret tls shop-tls <span class="ann">--cert</span>=tls.crt <span class="ann">--key</span>=tls.key
+<span class="fn">kubectl</span> <span class="kw">get</span> secret db-secret <span class="ann">-o</span> jsonpath=<span class="str">'{.data.DB_PASSWORD}'</span> | base64 <span class="ann">-d</span>   <span class="cmt"># read it back</span></pre>
+<table>
+  <thead><tr><th>Env var vs file mount</th><th>Env var</th><th>Mounted file</th></tr></thead>
+  <tbody>
+    <tr><td>Updates when the ConfigMap changes?</td><td><b>No</b>. Pod must restart.</td><td><b>Yes</b>, within about a minute (not for <code>subPath</code> mounts).</td></tr>
+    <tr><td>Good for</td><td>A few simple flags.</td><td>Whole config files, certificates.</td></tr>
+    <tr><td>Visible in</td><td><code>kubectl describe pod</code>, process list, crash dumps.</td><td>Only inside the container's file system.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>"Secrets are encrypted"</td><td>Trusting base64. It is encoding, not encryption. Anyone with <code>get secret</code> can read it.</td><td>Turn on etcd encryption at rest, lock down RBAC on Secrets, or use an external store (Vault, AWS Secrets Manager via External Secrets Operator / CSI driver).</td></tr>
+    <tr><td>Secrets in git</td><td>Committing Secret YAML with real values.</td><td>Sealed Secrets, SOPS, or External Secrets — the repo holds only encrypted or reference data.</td></tr>
+    <tr><td>Env var secrets</td><td>Passwords as env vars; they leak into logs and <code>describe</code>.</td><td>Mount as files when the app supports it.</td></tr>
+    <tr><td>Size</td><td>Stuffing a 5 MB file into a ConfigMap.</td><td>Limit is 1 MiB. Use a volume or an image for big files.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You edit a ConfigMap used as env vars. The app still shows old values. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Env vars are set once at container start. Run <code>kubectl rollout restart deployment/api</code>, or mount the ConfigMap as a file and make the app re-read it.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Storage — Volumes, PV, PVC, StorageClass</h2>
+<p>A container's disk is wiped on restart. For data that must last, a Pod asks for storage with a <b>PersistentVolumeClaim</b> (PVC). The cluster fills the claim with a <b>PersistentVolume</b> (PV) — a real disk — made on demand by a <b>StorageClass</b>.</p>
+<table>
+  <thead><tr><th>Object</th><th>Who writes it</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Volume</b> (in a Pod)</td><td>App team</td><td>A folder mounted into containers. Many kinds: <code>emptyDir</code>, <code>configMap</code>, <code>secret</code>, <code>persistentVolumeClaim</code>, <code>hostPath</code>…</td></tr>
+    <tr><td><b>PVC</b></td><td>App team</td><td>"I need 20 Gi, read-write, fast class." Lives in a namespace.</td></tr>
+    <tr><td><b>PV</b></td><td>Cluster / storage driver</td><td>The actual disk (EBS, Azure Disk, NFS, Ceph…). Cluster-wide.</td></tr>
+    <tr><td><b>StorageClass</b></td><td>Platform team</td><td>A recipe: which driver, what disk type, reclaim policy. Enables <b>dynamic provisioning</b>.</td></tr>
+    <tr><td><b>CSI driver</b></td><td>Vendor</td><td>The plugin that actually creates, attaches and mounts disks.</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">apiVersion</span>: <span class="typ">v1</span>
+<span class="kw">kind</span>: <span class="typ">PersistentVolumeClaim</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: pg-data }
+<span class="kw">spec</span>:
+  <span class="kw">accessModes</span>: [ReadWriteOnce]       <span class="cmt"># one node may mount it read-write</span>
+  <span class="kw">storageClassName</span>: gp3
+  <span class="kw">resources</span>: { <span class="kw">requests</span>: { <span class="kw">storage</span>: <span class="num">20Gi</span> } }
+---
+<span class="cmt"># in the Pod spec</span>
+<span class="kw">volumes</span>:
+- <span class="kw">name</span>: data
+  <span class="kw">persistentVolumeClaim</span>: { <span class="kw">claimName</span>: pg-data }
+<span class="kw">containers</span>:
+- <span class="kw">name</span>: db
+  <span class="kw">volumeMounts</span>: [{ <span class="kw">name</span>: data, <span class="kw">mountPath</span>: /var/lib/postgresql/data }]</pre>
+<table>
+  <thead><tr><th>Access mode</th><th>Meaning</th><th>Typical disk</th></tr></thead>
+  <tbody>
+    <tr><td><code>ReadWriteOnce</code> (RWO)</td><td>One node, read-write.</td><td>Block disks (EBS, PD, Azure Disk).</td></tr>
+    <tr><td><code>ReadOnlyMany</code> (ROX)</td><td>Many nodes, read only.</td><td>Shared file systems.</td></tr>
+    <tr><td><code>ReadWriteMany</code> (RWX)</td><td>Many nodes, read-write.</td><td>NFS, EFS, Azure Files, CephFS.</td></tr>
+    <tr><td><code>ReadWriteOncePod</code></td><td>One Pod only.</td><td>Strictest.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Reclaim policy</th><th>When the PVC is deleted…</th></tr></thead>
+  <tbody>
+    <tr><td><code>Delete</code> (default for dynamic)</td><td>The PV and the real disk are deleted. <b>Data gone.</b></td></tr>
+    <tr><td><code>Retain</code></td><td>PV stays as <code>Released</code>; disk is kept. Admin cleans up by hand.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>hostPath in prod</td><td>Mounting a node folder. The Pod moves to another node and the data "disappears".</td><td>PVC with a real StorageClass. <code>hostPath</code> is for single-node dev or node agents.</td></tr>
+    <tr><td>RWO shared by many Pods</td><td>Deployment with 3 replicas all mounting one RWO PVC → Pods stuck in <code>ContainerCreating</code> (Multi-Attach error).</td><td>Use RWX storage, or a StatefulSet with one PVC per Pod.</td></tr>
+    <tr><td>emptyDir for data</td><td>Keeping uploads in <code>emptyDir</code>. It lives only as long as the Pod.</td><td><code>emptyDir</code> is scratch space only. Use a PVC or object storage (S3).</td></tr>
+    <tr><td>Pending PVC</td><td>Waiting forever.</td><td><code>describe pvc</code>: wrong StorageClass name, no default class, or <code>WaitForFirstConsumer</code> (binds only when a Pod uses it — normal).</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Default StorageClass:</b> <code>kubectl get sc</code> shows one marked <code>(default)</code>. A PVC with no <code>storageClassName</code> uses it. No default = PVC stays Pending.</div>
+<div class="tricky">
+  <div class="q">Q. You <code>kubectl delete pvc pg-data</code>. Is the database data gone?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Depends on the StorageClass's <code>reclaimPolicy</code>. <code>Delete</code> (the common default) removes the disk too. <code>Retain</code> keeps it. Check before you delete, and take snapshots of real data.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Scheduling and scaling</h2>
+<h3>Where does a Pod land? (scheduler rules)</h3>
+<table>
+  <thead><tr><th>Tool</th><th>Says</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><b>Requests</b></td><td>"Only nodes with this much free CPU/RAM."</td><td><code>requests: { cpu: 500m }</code></td></tr>
+    <tr><td><b>nodeSelector</b></td><td>"Only nodes with this label."</td><td><code>nodeSelector: { disktype: ssd }</code></td></tr>
+    <tr><td><b>Node affinity</b></td><td>Same, but richer: required or preferred, operators (In, NotIn, Exists).</td><td>Prefer zone <code>a</code>, require <code>gpu=true</code>.</td></tr>
+    <tr><td><b>Pod affinity / anti-affinity</b></td><td>"Near / away from Pods with these labels."</td><td>Spread API replicas across nodes (anti-affinity on <code>app=api</code>).</td></tr>
+    <tr><td><b>topologySpreadConstraints</b></td><td>"Spread evenly across zones/nodes."</td><td><code>maxSkew: 1, topologyKey: zone</code></td></tr>
+    <tr><td><b>Taints &amp; tolerations</b></td><td>Node says "keep off unless you tolerate me."</td><td>GPU nodes tainted; only GPU Pods tolerate.</td></tr>
+    <tr><td><b>PriorityClass</b></td><td>Higher priority Pods can evict lower ones when the cluster is full.</td><td>Critical system Pods.</td></tr>
+  </tbody>
+</table>
+<pre><span class="fn">kubectl</span> <span class="kw">taint</span> nodes node-7 gpu=true:NoSchedule        <span class="cmt"># only tolerating Pods may land here</span>
+<span class="fn">kubectl</span> <span class="kw">cordon</span> node-3                                <span class="cmt"># no new Pods on this node</span>
+<span class="fn">kubectl</span> <span class="kw">drain</span> node-3 <span class="ann">--ignore-daemonsets</span> <span class="ann">--delete-emptydir-data</span>   <span class="cmt"># move Pods off (maintenance)</span>
+<span class="fn">kubectl</span> <span class="kw">uncordon</span> node-3</pre>
+<h3>Three kinds of scaling</h3>
+<table>
+  <thead><tr><th>Scaler</th><th>Changes</th><th>Based on</th><th>Needs</th></tr></thead>
+  <tbody>
+    <tr><td><b>HPA</b> (Horizontal Pod Autoscaler)</td><td>Number of Pods</td><td>CPU %, memory, custom metrics (requests/sec, queue depth)</td><td>metrics-server; <code>requests</code> set on the Pod.</td></tr>
+    <tr><td><b>VPA</b> (Vertical)</td><td>Pod requests/limits</td><td>Observed usage</td><td>Restarts Pods to apply. Do not mix with HPA on CPU.</td></tr>
+    <tr><td><b>Cluster Autoscaler / Karpenter</b></td><td>Number of nodes</td><td>Pending Pods that do not fit</td><td>Cloud permissions.</td></tr>
+    <tr><td><b>KEDA</b></td><td>Pods (even to zero)</td><td>Event sources: Kafka lag, SQS, cron</td><td>Event-driven workers.</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">apiVersion</span>: <span class="typ">autoscaling/v2</span>
+<span class="kw">kind</span>: <span class="typ">HorizontalPodAutoscaler</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api }
+<span class="kw">spec</span>:
+  <span class="kw">scaleTargetRef</span>: { <span class="kw">apiVersion</span>: apps/v1, <span class="kw">kind</span>: Deployment, <span class="kw">name</span>: api }
+  <span class="kw">minReplicas</span>: <span class="num">2</span>
+  <span class="kw">maxReplicas</span>: <span class="num">10</span>
+  <span class="kw">metrics</span>:
+  - <span class="kw">type</span>: Resource
+    <span class="kw">resource</span>: { <span class="kw">name</span>: cpu, <span class="kw">target</span>: { <span class="kw">type</span>: Utilization, <span class="kw">averageUtilization</span>: <span class="num">70</span> } }
+<span class="cmt"># quick version:  kubectl autoscale deployment api --min=2 --max=10 --cpu-percent=70</span></pre>
+<h3>Staying up during disruption</h3>
+<table>
+  <thead><tr><th>Object</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><b>PodDisruptionBudget</b></td><td>"At least 2 of my Pods must stay up" during drains and upgrades. <code>minAvailable: 2</code> or <code>maxUnavailable: 1</code>.</td></tr>
+    <tr><td><b>ResourceQuota</b></td><td>Caps total CPU/RAM/objects a namespace may use.</td></tr>
+    <tr><td><b>LimitRange</b></td><td>Default and max requests/limits per container in a namespace.</td></tr>
+    <tr><td><b>QoS class</b></td><td>Guaranteed (requests = limits) → Burstable → BestEffort (none). Under memory pressure, BestEffort is evicted first.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>HPA with no requests</td><td>HPA shows <code>&lt;unknown&gt;</code> and never scales.</td><td>CPU % is relative to <code>requests</code>. Set them.</td></tr>
+    <tr><td>Replicas in YAML + HPA</td><td>Every <code>kubectl apply</code> resets replicas to the YAML value, fighting the HPA.</td><td>Remove <code>replicas</code> from the Deployment when an HPA owns it.</td></tr>
+    <tr><td>Single replica</td><td><code>replicas: 1</code> and a node drain → downtime.</td><td>2+ replicas, anti-affinity across nodes, a PDB.</td></tr>
+    <tr><td>CPU limits</td><td>Tight CPU limits cause throttling and slow p99s even with idle cores.</td><td>Set CPU <i>requests</i>; consider no CPU limit; always set memory limits.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A Pod is Pending with "0/5 nodes are available: 5 Insufficient memory". Nodes have free RAM. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The scheduler counts <b>requests</b>, not real usage. If other Pods have reserved (requested) the memory, it is "taken" even if idle. Lower over-sized requests, add nodes, or let the Cluster Autoscaler act.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Security — RBAC, ServiceAccounts, NetworkPolicy, Pod hardening</h2>
+<h3>Who may do what: RBAC</h3>
+<table>
+  <thead><tr><th>Object</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>ServiceAccount</b></td><td>An identity for Pods (apps), not humans. Each namespace has <code>default</code>. Its token is mounted into the Pod.</td></tr>
+    <tr><td><b>Role</b> / <b>ClusterRole</b></td><td>A list of allowed verbs on resources. Role = one namespace; ClusterRole = cluster-wide or reusable.</td></tr>
+    <tr><td><b>RoleBinding</b> / <b>ClusterRoleBinding</b></td><td>Gives a Role to a user, group, or ServiceAccount.</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">apiVersion</span>: <span class="typ">rbac.authorization.k8s.io/v1</span>
+<span class="kw">kind</span>: <span class="typ">Role</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: pod-reader, <span class="kw">namespace</span>: shop }
+<span class="kw">rules</span>:
+- <span class="kw">apiGroups</span>: [<span class="str">""</span>]                         <span class="cmt"># "" = core group</span>
+  <span class="kw">resources</span>: [pods, pods/log]
+  <span class="kw">verbs</span>: [get, list, watch]
+---
+<span class="kw">kind</span>: <span class="typ">RoleBinding</span>
+<span class="kw">apiVersion</span>: <span class="typ">rbac.authorization.k8s.io/v1</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: read-pods, <span class="kw">namespace</span>: shop }
+<span class="kw">subjects</span>:
+- { <span class="kw">kind</span>: ServiceAccount, <span class="kw">name</span>: ci-bot, <span class="kw">namespace</span>: shop }
+<span class="kw">roleRef</span>: { <span class="kw">kind</span>: Role, <span class="kw">name</span>: pod-reader, <span class="kw">apiGroup</span>: rbac.authorization.k8s.io }</pre>
+<pre><span class="fn">kubectl</span> <span class="kw">auth</span> can-i delete pods <span class="ann">-n</span> shop                         <span class="cmt"># can I?</span>
+<span class="fn">kubectl</span> <span class="kw">auth</span> can-i list secrets <span class="ann">--as</span>=system:serviceaccount:shop:ci-bot   <span class="cmt"># can that account?</span>
+<span class="fn">kubectl</span> <span class="kw">auth</span> whoami</pre>
+<h3>Network rules: NetworkPolicy</h3>
+<p>By default <b>every Pod can talk to every Pod</b>. A NetworkPolicy is a firewall at the Pod level. Once any policy selects a Pod, everything not allowed is blocked (for that direction). Needs a CNI that enforces it (Calico, Cilium — not plain Flannel).</p>
+<pre><span class="kw">apiVersion</span>: <span class="typ">networking.k8s.io/v1</span>
+<span class="kw">kind</span>: <span class="typ">NetworkPolicy</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: db-only-from-api, <span class="kw">namespace</span>: shop }
+<span class="kw">spec</span>:
+  <span class="kw">podSelector</span>: { <span class="kw">matchLabels</span>: { app: db } }     <span class="cmt"># applies to the DB Pods</span>
+  <span class="kw">policyTypes</span>: [Ingress]
+  <span class="kw">ingress</span>:
+  - <span class="kw">from</span>:
+    - <span class="kw">podSelector</span>: { <span class="kw">matchLabels</span>: { app: api } }
+    <span class="kw">ports</span>: [{ <span class="kw">protocol</span>: TCP, <span class="kw">port</span>: <span class="num">5432</span> }]</pre>
+<h3>Pod hardening: securityContext</h3>
+<pre><span class="kw">spec</span>:
+  <span class="kw">serviceAccountName</span>: api
+  <span class="kw">automountServiceAccountToken</span>: false        <span class="cmt"># most apps never call the K8s API</span>
+  <span class="kw">securityContext</span>:
+    <span class="kw">runAsNonRoot</span>: true
+    <span class="kw">runAsUser</span>: <span class="num">10001</span>
+    <span class="kw">fsGroup</span>: <span class="num">10001</span>
+    <span class="kw">seccompProfile</span>: { <span class="kw">type</span>: RuntimeDefault }
+  <span class="kw">containers</span>:
+  - <span class="kw">name</span>: api
+    <span class="kw">securityContext</span>:
+      <span class="kw">allowPrivilegeEscalation</span>: false
+      <span class="kw">readOnlyRootFilesystem</span>: true
+      <span class="kw">capabilities</span>: { <span class="kw">drop</span>: [ALL] }</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>cluster-admin for apps</td><td>Binding <code>cluster-admin</code> to a ServiceAccount "to make CI work".</td><td>Least privilege: a Role with only the verbs needed, in one namespace.</td></tr>
+    <tr><td>Default SA token</td><td>Every Pod gets a token that can call the API.</td><td><code>automountServiceAccountToken: false</code> unless the app truly needs the API.</td></tr>
+    <tr><td>Flat network</td><td>No NetworkPolicies; a hacked frontend Pod can reach the DB.</td><td>Default-deny policy per namespace, then allow needed paths.</td></tr>
+    <tr><td>Root containers</td><td>Containers run as root with all capabilities.</td><td>Pod Security Standards <code>restricted</code> profile; enforce with the built-in Pod Security Admission labels on the namespace.</td></tr>
+    <tr><td>Image trust</td><td>Any image from anywhere.</td><td>Private registry, image scanning, signed images (cosign), admission policies (Kyverno / OPA Gatekeeper).</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Pod Security Admission:</b> label a namespace <code>pod-security.kubernetes.io/enforce=restricted</code> and the API server rejects Pods that run as root, mount hostPath, add capabilities, and so on. Free, built in, no extra install.</div>
+<div class="tricky">
+  <div class="q">Q. You apply a NetworkPolicy that allows API → DB. Now the DB cannot resolve DNS. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">If the policy has <code>policyTypes: [Egress]</code> (or an egress rule), all egress not listed is blocked — including UDP 53 to CoreDNS. Add an egress rule to <code>kube-system</code> on port 53. Ingress-only policies do not have this problem.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. kubectl — the commands you will type every day</h2>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Where am I?</td><td><code>kubectl config current-context</code> · <code>kubectl config get-contexts</code> · <code>kubectl config use-context prod</code></td></tr>
+    <tr><td>Set default namespace</td><td><code>kubectl config set-context --current --namespace=shop</code></td></tr>
+    <tr><td>List things</td><td><code>kubectl get pods</code> · <code>get all</code> · <code>get pods -A</code> (all namespaces) · <code>-o wide</code> · <code>-w</code> (watch)</td></tr>
+    <tr><td>Filter by label</td><td><code>kubectl get pods -l app=api</code> · <code>--show-labels</code></td></tr>
+    <tr><td>Full detail + events</td><td><code>kubectl describe pod api-7d9f-x2k</code></td></tr>
+    <tr><td>Raw object</td><td><code>kubectl get deploy api -o yaml</code> · <code>-o json</code> · <code>-o jsonpath='{.spec.replicas}'</code></td></tr>
+    <tr><td>Apply / delete files</td><td><code>kubectl apply -f dir/</code> · <code>kubectl delete -f app.yaml</code> · <code>kubectl apply -k overlays/prod</code> (Kustomize)</td></tr>
+    <tr><td>Dry run / diff</td><td><code>kubectl apply --dry-run=server -f x.yaml</code> · <code>kubectl diff -f x.yaml</code></td></tr>
+    <tr><td>Logs</td><td><code>kubectl logs -f deploy/api</code> · <code>-c sidecar</code> · <code>--previous</code> (crashed container) · <code>--since=10m</code> · <code>-l app=api --all-containers</code></td></tr>
+    <tr><td>Shell in</td><td><code>kubectl exec -it api-7d9f-x2k -- sh</code></td></tr>
+    <tr><td>Port forward</td><td><code>kubectl port-forward svc/api 8080:80</code> → <code>localhost:8080</code></td></tr>
+    <tr><td>Copy files</td><td><code>kubectl cp api-7d9f-x2k:/tmp/dump.sql ./dump.sql</code></td></tr>
+    <tr><td>Quick test Pod</td><td><code>kubectl run tmp --rm -it --image=busybox -- sh</code></td></tr>
+    <tr><td>Scale / rollout</td><td><code>kubectl scale deploy/api --replicas=5</code> · <code>rollout status|undo|restart deploy/api</code></td></tr>
+    <tr><td>Edit live</td><td><code>kubectl edit deploy api</code> (opens an editor; avoid in prod — use git)</td></tr>
+    <tr><td>Patch one field</td><td><code>kubectl patch deploy api -p '{"spec":{"replicas":3}}'</code></td></tr>
+    <tr><td>Cluster events</td><td><code>kubectl get events --sort-by=.lastTimestamp</code> · <code>-A</code></td></tr>
+    <tr><td>Resource use</td><td><code>kubectl top nodes</code> · <code>kubectl top pods</code> (needs metrics-server)</td></tr>
+    <tr><td>Field docs</td><td><code>kubectl explain deployment.spec.strategy</code> · <code>kubectl api-resources</code></td></tr>
+    <tr><td>Generate YAML</td><td><code>kubectl create deploy api --image=x --dry-run=client -o yaml &gt; deploy.yaml</code></td></tr>
+  </tbody>
+</table>
+<h3>Short names</h3>
+<table>
+  <thead><tr><th>Full</th><th>Short</th><th>Full</th><th>Short</th></tr></thead>
+  <tbody>
+    <tr><td>pods</td><td><code>po</code></td><td>deployments</td><td><code>deploy</code></td></tr>
+    <tr><td>services</td><td><code>svc</code></td><td>replicasets</td><td><code>rs</code></td></tr>
+    <tr><td>namespaces</td><td><code>ns</code></td><td>statefulsets</td><td><code>sts</code></td></tr>
+    <tr><td>configmaps</td><td><code>cm</code></td><td>daemonsets</td><td><code>ds</code></td></tr>
+    <tr><td>persistentvolumeclaims</td><td><code>pvc</code></td><td>ingresses</td><td><code>ing</code></td></tr>
+    <tr><td>nodes</td><td><code>no</code></td><td>horizontalpodautoscalers</td><td><code>hpa</code></td></tr>
+  </tbody>
+</table>
+<h3>Debug order when a Pod is unhappy</h3>
+<pre><span class="fn">kubectl</span> <span class="kw">get</span> pods <span class="ann">-o</span> wide                     <span class="cmt"># 1. status, restarts, node</span>
+<span class="fn">kubectl</span> <span class="kw">describe</span> pod &lt;name&gt;                 <span class="cmt"># 2. Events at the bottom: pull errors, probe failures, scheduling</span>
+<span class="fn">kubectl</span> <span class="kw">logs</span> &lt;name&gt; <span class="ann">--previous</span>              <span class="cmt"># 3. why did the last run die</span>
+<span class="fn">kubectl</span> <span class="kw">exec</span> <span class="ann">-it</span> &lt;name&gt; <span class="ann">--</span> sh                <span class="cmt"># 4. look around (env, files, curl localhost)</span>
+<span class="fn">kubectl</span> <span class="kw">get</span> endpoints &lt;svc&gt;                 <span class="cmt"># 5. is the Service actually pointing at Pods?</span>
+<span class="fn">kubectl</span> <span class="kw">get</span> events <span class="ann">--sort-by</span>=.lastTimestamp  <span class="cmt"># 6. anything else going on in the namespace</span>
+<span class="fn">kubectl</span> <span class="kw">debug</span> <span class="ann">-it</span> &lt;name&gt; <span class="ann">--image</span>=busybox <span class="ann">--target</span>=api   <span class="cmt"># 7. attach a debug container (distroless images)</span></pre>
+<div class="tips"><b>Imperative vs declarative:</b> <code>kubectl create</code> / <code>run</code> / <code>expose</code> are quick and good for learning. For real systems, write YAML, keep it in git, and use <code>kubectl apply</code> (or a GitOps tool like Argo CD / Flux) so the repo is the source of truth.</div>
+<div class="tricky">
+  <div class="q">Q. <code>kubectl apply</code> says "field is immutable" when you change a Deployment's selector. How do you fix it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Selectors cannot change after creation. Delete and re-create the Deployment (<code>kubectl delete deploy api</code> then <code>apply</code>), or keep the old selector. Plan labels up front.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 12 ============================= -->
+<h2 id="s12">12. Helm, Kustomize, and the wider ecosystem</h2>
+<table>
+  <thead><tr><th>Tool</th><th>What it is</th><th>Use when</th></tr></thead>
+  <tbody>
+    <tr><td><b>Kustomize</b></td><td>Built into <code>kubectl -k</code>. A base folder of YAML plus overlays (dev/prod) that patch it. No templates.</td><td>Your own apps; you want plain YAML you can read.</td></tr>
+    <tr><td><b>Helm</b></td><td>Package manager. A <b>chart</b> = templates + <code>values.yaml</code>. A <b>release</b> = a chart installed with some values.</td><td>Installing third-party software (ingress-nginx, Prometheus, Postgres) and sharing your app as a package.</td></tr>
+    <tr><td><b>Argo CD / Flux</b></td><td>GitOps: watch a git repo, keep the cluster matching it.</td><td>Production deploys with audit trail and auto-sync.</td></tr>
+    <tr><td><b>Operators / CRDs</b></td><td>A <b>CustomResourceDefinition</b> adds a new kind (e.g. <code>PostgresCluster</code>); an <b>operator</b> is a controller that manages it.</td><td>Running complex stateful software "the Kubernetes way".</td></tr>
+    <tr><td><b>Prometheus + Grafana</b></td><td>Metrics and dashboards (kube-prometheus-stack chart).</td><td>Every cluster.</td></tr>
+    <tr><td><b>Loki / ELK / Fluent Bit</b></td><td>Central logs (Pod logs vanish with the Pod).</td><td>Every cluster.</td></tr>
+    <tr><td><b>Istio / Linkerd / Cilium mesh</b></td><td>Service mesh: mTLS, retries, traffic splits via sidecars or eBPF.</td><td>Many services; strict security or canary needs.</td></tr>
+    <tr><td><b>cert-manager</b></td><td>Auto TLS certificates.</td><td>Any public Ingress.</td></tr>
+    <tr><td><b>k9s / Lens</b></td><td>Terminal UI / desktop UI for clusters.</td><td>Daily driving.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Helm basics</span>
+<span class="fn">helm</span> <span class="kw">repo</span> add bitnami https://charts.bitnami.com/bitnami <span class="ann">&amp;&amp;</span> <span class="fn">helm</span> <span class="kw">repo</span> update
+<span class="fn">helm</span> <span class="kw">search</span> repo postgres
+<span class="fn">helm</span> <span class="kw">show</span> values bitnami/postgresql &gt; values.yaml          <span class="cmt"># see every knob</span>
+<span class="fn">helm</span> <span class="kw">install</span> db bitnami/postgresql <span class="ann">-n</span> shop <span class="ann">-f</span> values.yaml   <span class="cmt"># release "db"</span>
+<span class="fn">helm</span> <span class="kw">upgrade</span> <span class="ann">--install</span> db bitnami/postgresql <span class="ann">-n</span> shop <span class="ann">--set</span> auth.password=x
+<span class="fn">helm</span> <span class="kw">list</span> <span class="ann">-A</span>  ·  <span class="fn">helm</span> <span class="kw">history</span> db  ·  <span class="fn">helm</span> <span class="kw">rollback</span> db <span class="num">1</span>  ·  <span class="fn">helm</span> <span class="kw">uninstall</span> db
+<span class="fn">helm</span> <span class="kw">template</span> db bitnami/postgresql <span class="ann">-f</span> values.yaml        <span class="cmt"># render YAML without installing</span>
+
+<span class="cmt"># Kustomize layout</span>
+base/            kustomization.yaml + deployment.yaml + service.yaml
+overlays/prod/   kustomization.yaml  (resources: [../../base], patches, replicas, images)
+<span class="fn">kubectl</span> <span class="kw">apply</span> <span class="ann">-k</span> overlays/prod</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Helm values</td><td><code>--set</code> flags typed in a terminal, lost forever.</td><td>A <code>values-prod.yaml</code> in git; <code>helm upgrade --install -f</code>.</td></tr>
+    <tr><td>Hand edits in prod</td><td><code>kubectl edit</code> on live objects; git no longer matches reality.</td><td>Change git, let CI/GitOps apply. Argo CD will even undo manual drift.</td></tr>
+    <tr><td>Chart version</td><td>Installing a chart with no <code>--version</code>.</td><td>Pin chart and app versions; upgrade on purpose.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 6 rules to remember:</b> 1) Deployments, not bare Pods; 2) labels must match selectors; 3) set requests and limits; 4) readiness probes make rollouts safe; 5) Secrets are not encrypted by default; 6) YAML in git, apply from git.</div>
+<div class="tricky">
+  <div class="q">Q. Helm or Kustomize?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Both, often. Helm for software you <i>install</i> (charts others wrote). Kustomize for YAML you <i>own</i> and want to keep simple per environment. Many teams render a Helm chart and then patch it with Kustomize.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("k8s-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("k8s-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

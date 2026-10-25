@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redis — Basics to Advanced (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* Redis commands, Java keywords */
+  pre .typ { color: var(--c-typ); }                    /* types, classes */
+  pre .str { color: var(--c-str); }                    /* strings, keys */
+  pre .num { color: var(--c-num); }                    /* numbers, TTLs */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* annotations @Cacheable, flags */
+  pre .fn  { color: var(--c-fn); }                     /* method names */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Redis — Basics to Advanced<span class="sub">What it is · data types · keys &amp; TTL · caching patterns · Spring Data Redis · pub/sub &amp; streams · locks &amp; rate limits · persistence · cluster · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Click "Reveal hint" on screen. Hints auto-open when printed. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What is Redis? (the big idea)</h2>
+<p><b>Redis</b> is an in-memory key-value store. Every key maps to a value that has a <i>type</i> (string, hash, list, set, sorted set, stream…), and each type has its own fast commands. Because everything lives in RAM and commands are tiny, a single Redis server answers ~100k+ requests per second with sub-millisecond latency. It is used as a <b>cache</b>, a <b>session store</b>, a <b>counter</b>, a <b>queue</b>, a <b>lock</b>, a <b>leaderboard</b>, and a <b>pub/sub bus</b>.</p>
+<table>
+  <thead><tr><th>Fact</th><th>Consequence</th></tr></thead>
+  <tbody>
+    <tr><td><b>Single-threaded command execution</b></td><td>Commands run one at a time, in order. No locks needed, every command is atomic. One slow command (<code>KEYS *</code>, a huge <code>SMEMBERS</code>) blocks everyone.</td></tr>
+    <tr><td><b>Everything in RAM</b></td><td>Data size ≤ memory. Set <code>maxmemory</code> and an eviction policy, or Redis will refuse writes (or the OS will kill it).</td></tr>
+    <tr><td><b>Optional persistence</b></td><td>Snapshots (RDB) and/or an append-only log (AOF). Default durability is weaker than a database.</td></tr>
+    <tr><td><b>Binary-safe strings</b></td><td>Keys and values are byte arrays. JSON, protobuf, images — anything up to 512 MB (keep values small).</td></tr>
+    <tr><td><b>Replication &amp; cluster</b></td><td>Replicas for reads and failover (Sentinel); Cluster for sharding across nodes.</td></tr>
+  </tbody>
+</table>
+<h3>Where Redis sits in a Java backend</h3>
+<table>
+  <thead><tr><th>Use</th><th>How</th><th>Type used</th></tr></thead>
+  <tbody>
+    <tr><td>Cache DB rows / API responses</td><td><code>@Cacheable</code>, cache-aside</td><td>String (serialized object), Hash</td></tr>
+    <tr><td>HTTP sessions across many app instances</td><td>Spring Session Data Redis</td><td>Hash + TTL</td></tr>
+    <tr><td>Rate limiting, counters, "seen today"</td><td><code>INCR</code> + <code>EXPIRE</code>; HyperLogLog</td><td>String, HLL</td></tr>
+    <tr><td>Distributed lock / leader election</td><td><code>SET NX PX</code>, Redisson</td><td>String</td></tr>
+    <tr><td>Leaderboards, delayed jobs, time-ordered data</td><td>Sorted set by score</td><td>ZSET</td></tr>
+    <tr><td>Simple queues / work lists</td><td><code>LPUSH</code> + <code>BRPOP</code>; Streams with consumer groups</td><td>List, Stream</td></tr>
+    <tr><td>Real-time fan-out (chat, live updates)</td><td>Pub/Sub, Streams</td><td>—</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># talk to it</span>
+<span class="fn">docker</span> run <span class="ann">-d</span> <span class="ann">-p</span> <span class="num">6379</span>:<span class="num">6379</span> <span class="ann">--name</span> redis <span class="typ">redis:7-alpine</span>
+<span class="fn">redis-cli</span>                               <span class="cmt"># interactive shell; redis-cli -h host -p 6379 -a password</span>
+<span class="num">127.0.0.1:6379</span>&gt; <span class="kw">SET</span> user:42:name <span class="str">"Asha"</span>
+OK
+<span class="num">127.0.0.1:6379</span>&gt; <span class="kw">GET</span> user:42:name
+<span class="str">"Asha"</span>
+<span class="num">127.0.0.1:6379</span>&gt; <span class="kw">INFO</span> memory              <span class="cmt"># used_memory_human, maxmemory, evicted_keys …</span>
+<span class="num">127.0.0.1:6379</span>&gt; <span class="kw">MONITOR</span>                  <span class="cmt"># live stream of every command (dev only — heavy)</span></pre>
+<div class="tips"><b>Mental model:</b> a giant, very fast <code>HashMap&lt;String, Something&gt;</code> that lives on a server, where every <code>Something</code> knows a few clever tricks (increment, push, rank, expire) and the whole map can be shared by all your app instances.</div>
+<div class="tricky">
+  <div class="q">Q. Redis is single-threaded. So how does it serve 100k requests per second?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Each command touches RAM and takes microseconds, and the event loop never waits on disk. Network I/O is handled by extra threads since Redis 6 (<code>io-threads</code>), but command execution stays on one thread — which is exactly what makes every command atomic without locks.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Data types and their key commands</h2>
+<table>
+  <thead><tr><th>Type</th><th>Holds</th><th>Core commands</th><th>Typical use</th></tr></thead>
+  <tbody>
+    <tr><td><b>String</b></td><td>Bytes, up to 512 MB. Numbers are strings that <code>INCR</code> understands.</td><td><code>SET GET SETNX SETEX MSET MGET INCR INCRBY DECR APPEND GETDEL GETEX STRLEN</code></td><td>Cached JSON, counters, flags, locks.</td></tr>
+    <tr><td><b>Hash</b></td><td>Field → value map inside one key.</td><td><code>HSET HGET HMGET HGETALL HINCRBY HDEL HEXISTS HLEN HSCAN</code></td><td>One object with many fields (user profile), update one field without rewriting all.</td></tr>
+    <tr><td><b>List</b></td><td>Ordered, duplicates allowed; fast at both ends (linked list).</td><td><code>LPUSH RPUSH LPOP RPOP LRANGE LLEN LTRIM BLPOP BRPOP LMOVE</code></td><td>Queues, recent-N items (<code>LPUSH</code> + <code>LTRIM 0 99</code>).</td></tr>
+    <tr><td><b>Set</b></td><td>Unordered, unique members.</td><td><code>SADD SREM SISMEMBER SMEMBERS SCARD SINTER SUNION SDIFF SRANDMEMBER SSCAN</code></td><td>Tags, "who liked this", unique visitors, intersections.</td></tr>
+    <tr><td><b>Sorted set (ZSET)</b></td><td>Unique members, each with a double <i>score</i>; kept sorted.</td><td><code>ZADD ZSCORE ZRANK ZRANGE (BYSCORE/REV) ZINCRBY ZREM ZCARD ZPOPMIN ZRANGEBYSCORE</code></td><td>Leaderboards, delayed jobs (score = run-at), sliding windows, autocomplete.</td></tr>
+    <tr><td><b>Stream</b></td><td>Append-only log of entries with IDs; consumer groups.</td><td><code>XADD XRANGE XREAD XGROUP XREADGROUP XACK XPENDING XLEN</code></td><td>Event log, reliable queue with acks, like a mini Kafka.</td></tr>
+    <tr><td><b>Bitmap</b></td><td>Bits inside a string.</td><td><code>SETBIT GETBIT BITCOUNT BITOP</code></td><td>Daily active users (bit = user id), feature flags.</td></tr>
+    <tr><td><b>HyperLogLog</b></td><td>Approximate unique count in 12 KB (0.81% error).</td><td><code>PFADD PFCOUNT PFMERGE</code></td><td>Unique visitors per page per day without storing ids.</td></tr>
+    <tr><td><b>Geo</b></td><td>Lat/long points (on a ZSET).</td><td><code>GEOADD GEOSEARCH GEODIST</code></td><td>"Stores within 5 km".</td></tr>
+    <tr><td><b>JSON</b> / <b>Search</b> / <b>TimeSeries</b></td><td>Redis Stack modules.</td><td><code>JSON.SET JSON.GET FT.SEARCH TS.ADD</code></td><td>Document store with secondary indexes; metrics.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># strings and counters</span>
+<span class="kw">SET</span> page:home:views <span class="num">0</span>
+<span class="kw">INCR</span> page:home:views                         <span class="cmt"># atomic, returns the new value</span>
+<span class="kw">SET</span> session:abc <span class="str">"{...}"</span> <span class="kw">EX</span> <span class="num">1800</span>                <span class="cmt"># value + 30 min TTL in one command</span>
+<span class="kw">SET</span> lock:report <span class="str">"worker-7"</span> <span class="kw">NX PX</span> <span class="num">30000</span>        <span class="cmt"># only if Not eXists, expire in 30 s → a lock</span>
+
+<span class="cmt"># hash: one object, many fields</span>
+<span class="kw">HSET</span> user:42 name <span class="str">"Asha"</span> email <span class="str">"a@x.io"</span> logins <span class="num">0</span>
+<span class="kw">HINCRBY</span> user:42 logins <span class="num">1</span>
+<span class="kw">HGETALL</span> user:42
+
+<span class="cmt"># list as a queue</span>
+<span class="kw">LPUSH</span> jobs:email <span class="str">"{\"to\":\"a@x.io\"}"</span>
+<span class="kw">BRPOP</span> jobs:email <span class="num">5</span>                           <span class="cmt"># blocking pop, wait up to 5 s</span>
+
+<span class="cmt"># sorted set leaderboard</span>
+<span class="kw">ZADD</span> leaderboard <span class="num">1500</span> <span class="str">"asha"</span> <span class="num">1320</span> <span class="str">"ravi"</span>
+<span class="kw">ZINCRBY</span> leaderboard <span class="num">50</span> <span class="str">"ravi"</span>
+<span class="kw">ZREVRANGE</span> leaderboard <span class="num">0</span> <span class="num">9</span> <span class="kw">WITHSCORES</span>          <span class="cmt"># top 10</span>
+<span class="kw">ZRANK</span> leaderboard <span class="str">"ravi"</span>                     <span class="cmt"># position (0-based, ascending)</span>
+
+<span class="cmt"># set operations</span>
+<span class="kw">SADD</span> likes:post:9 u1 u2 u3
+<span class="kw">SADD</span> likes:post:10 u2 u3 u4
+<span class="kw">SINTER</span> likes:post:9 likes:post:10            <span class="cmt"># u2 u3</span>
+<span class="kw">SISMEMBER</span> likes:post:9 u1                    <span class="cmt"># 1</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Object storage</td><td>One huge JSON string per user; change one field = read, parse, rewrite 20 KB.</td><td>Hash per object when you update fields separately; JSON string when you always read/write the whole thing.</td></tr>
+    <tr><td>Set vs List</td><td>Checking membership with <code>LRANGE</code> + loop in Java (O(n), moves the whole list).</td><td><code>SISMEMBER</code> on a Set (O(1)).</td></tr>
+    <tr><td>Big collections</td><td><code>SMEMBERS</code> / <code>HGETALL</code> / <code>LRANGE 0 -1</code> on a 1M-member key → blocks the server.</td><td><code>SSCAN</code> / <code>HSCAN</code> / <code>ZSCAN</code> in pages, or keep keys small.</td></tr>
+    <tr><td>Unique counting</td><td>A Set of 50M visitor ids per day = GBs.</td><td>HyperLogLog: 12 KB, ~1% error, good enough for analytics.</td></tr>
+    <tr><td>Time-ordered data</td><td>A List you search by timestamp.</td><td>Sorted set with the timestamp as score: <code>ZRANGEBYSCORE k 0 (now</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Delayed jobs with a ZSET:</b> <code>ZADD delayed &lt;run_at_epoch_ms&gt; jobId</code>; a worker loop runs <code>ZRANGEBYSCORE delayed 0 &lt;now&gt; LIMIT 0 10</code>, then <code>ZREM</code> each (or <code>ZPOPMIN</code> if scores ≤ now). Use a Lua script to pop-and-remove atomically.</div>
+<div class="tricky">
+  <div class="q">Q. <code>INCR counter</code> when <code>counter</code> holds <code>"abc"</code>. What happens?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Error: "value is not an integer or out of range". Redis strings are untyped bytes; <code>INCR</code> works only if the bytes parse as a 64-bit integer. If the key does not exist, <code>INCR</code> treats it as 0 and returns 1.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Keys, expiry, eviction, memory</h2>
+<table>
+  <thead><tr><th>Command</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>EXPIRE k 60</code> · <code>PEXPIRE k 60000</code> · <code>EXPIREAT k &lt;unix&gt;</code></td><td>Set a TTL (seconds / ms / absolute). <code>SET k v EX 60</code> does it in one step.</td></tr>
+    <tr><td><code>TTL k</code> · <code>PTTL k</code></td><td>Remaining time. <code>-1</code> = no expiry, <code>-2</code> = key gone.</td></tr>
+    <tr><td><code>PERSIST k</code></td><td>Remove the TTL.</td></tr>
+    <tr><td><code>EXISTS k</code> · <code>DEL k</code> · <code>UNLINK k</code></td><td>Check / delete / delete in the background (use <code>UNLINK</code> for big keys).</td></tr>
+    <tr><td><code>TYPE k</code> · <code>OBJECT ENCODING k</code> · <code>MEMORY USAGE k</code></td><td>What it is, how it is stored, how many bytes.</td></tr>
+    <tr><td><code>RENAME</code> · <code>RENAMENX</code></td><td>Rename (atomic — handy for "build new, swap in").</td></tr>
+    <tr><td><code>SCAN 0 MATCH user:* COUNT 500</code></td><td>Iterate keys in pages without blocking. Returns a cursor; repeat until it is 0.</td></tr>
+    <tr><td><code>KEYS pattern</code></td><td>Lists all matching keys <b>in one blocking pass</b>. Never in production.</td></tr>
+    <tr><td><code>DBSIZE</code> · <code>FLUSHDB</code> · <code>FLUSHALL</code></td><td>Count keys / wipe this DB / wipe everything. Rename or disable FLUSH* in prod config.</td></tr>
+    <tr><td><code>SELECT 1</code></td><td>Switch logical DB (0–15). Not in Cluster; prefer key prefixes over DB numbers.</td></tr>
+  </tbody>
+</table>
+<h3>Key naming</h3>
+<pre><span class="str">user:42</span>                   <span class="cmt"># object by id</span>
+<span class="str">user:42:orders</span>            <span class="cmt"># a related collection</span>
+<span class="str">cache:product:v2:9001</span>     <span class="cmt"># cache entries with a version segment → bump v2→v3 to invalidate all</span>
+<span class="str">ratelimit:api:203.0.113.5:2026-10-25T10:31</span>
+<span class="str">lock:order:9001</span>
+<span class="str">{user:42}:profile  {user:42}:cart</span>   <span class="cmt"># {hash tag} keeps related keys on the same Cluster slot</span></pre>
+<h3>How expiry really works</h3>
+<table>
+  <thead><tr><th>Mechanism</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Lazy</td><td>When a key is accessed and found expired, it is deleted then.</td></tr>
+    <tr><td>Active</td><td>10× per second Redis samples 20 keys with TTL and deletes expired ones; repeats while &gt; 25% were expired.</td></tr>
+    <tr><td>Result</td><td>Expired keys may linger a bit in memory, but are never returned to a client. <code>INFO</code> shows <code>expired_keys</code>.</td></tr>
+  </tbody>
+</table>
+<h3>Eviction when <code>maxmemory</code> is reached</h3>
+<table>
+  <thead><tr><th>Policy</th><th>Evicts</th><th>Use for</th></tr></thead>
+  <tbody>
+    <tr><td><code>noeviction</code> (default)</td><td>Nothing — writes fail with OOM error.</td><td>Redis as a database / queue where losing data is worse than failing.</td></tr>
+    <tr><td><code>allkeys-lru</code></td><td>Least recently used, any key.</td><td><b>Pure cache</b>. The usual choice.</td></tr>
+    <tr><td><code>volatile-lru</code></td><td>LRU among keys that have a TTL.</td><td>Mixed: cached keys have TTL, important keys do not.</td></tr>
+    <tr><td><code>allkeys-lfu</code> / <code>volatile-lfu</code></td><td>Least frequently used.</td><td>Hot-set caches where a few keys are read constantly.</td></tr>
+    <tr><td><code>volatile-ttl</code></td><td>Soonest to expire first.</td><td>Rare.</td></tr>
+    <tr><td><code>allkeys-random</code> / <code>volatile-random</code></td><td>Random.</td><td>Rare.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># redis.conf (or CONFIG SET at runtime)</span>
+maxmemory 2gb
+maxmemory-policy allkeys-lru
+<span class="cmt"># check pressure</span>
+<span class="kw">INFO</span> stats        <span class="cmt"># evicted_keys, keyspace_hits, keyspace_misses → hit ratio</span>
+<span class="kw">INFO</span> memory       <span class="cmt"># used_memory, mem_fragmentation_ratio (&gt; 1.5 = fragmented; activedefrag yes)</span>
+<span class="kw">MEMORY DOCTOR</span>
+<span class="fn">redis-cli</span> <span class="ann">--bigkeys</span>     <span class="cmt"># find the largest key per type (uses SCAN, safe)</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>No TTL on cache keys</td><td>Cache grows until OOM; stale data forever.</td><td>Every cache key gets a TTL (with jitter: 10 min ± 60 s to avoid synchronized expiry storms).</td></tr>
+    <tr><td><code>KEYS *</code> in code</td><td>"Find all sessions" with <code>KEYS session:*</code> on 5M keys → 2-second freeze.</td><td><code>SCAN</code>, or maintain an index Set of the keys you need.</td></tr>
+    <tr><td>Default eviction</td><td><code>noeviction</code> on a cache → app gets OOM errors under load.</td><td><code>allkeys-lru</code> for caches; monitor <code>evicted_keys</code>.</td></tr>
+    <tr><td>Big keys</td><td>One Hash with 10M fields; one List with 50M items. Deleting it freezes Redis; Cluster cannot split it.</td><td>Shard by key: <code>user:42:events:2026-10</code>. Keep values &lt; 100 KB, collections &lt; ~10k members.</td></tr>
+    <tr><td>Hot keys</td><td>One key read 200k/s on one Cluster node while others idle.</td><td>Client-side cache, replicate the value under N keys, or local Caffeine in front.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You <code>SET k v EX 60</code>, then <code>SET k v2</code>. What is the TTL now?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Gone — plain <code>SET</code> replaces the key and clears the TTL. Use <code>SET k v2 KEEPTTL</code> (Redis 6+) or set the TTL again. Commands that <i>modify</i> a value (<code>INCR</code>, <code>HSET</code>, <code>LPUSH</code>) keep the TTL; commands that <i>replace</i> it do not.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Caching patterns and their failure modes</h2>
+<table>
+  <thead><tr><th>Pattern</th><th>How</th><th>Pros</th><th>Cons</th></tr></thead>
+  <tbody>
+    <tr><td><b>Cache-aside</b> (lazy loading)</td><td>App: GET cache → miss → read DB → SET cache with TTL → return.</td><td>Simple; only requested data is cached; cache failure = slower, not broken.</td><td>First request is slow; stale until TTL unless you evict on write.</td></tr>
+    <tr><td><b>Read-through</b></td><td>Cache library loads on miss (<code>@Cacheable</code> does this).</td><td>Same as above, less code.</td><td>Same.</td></tr>
+    <tr><td><b>Write-through</b></td><td>Write to cache and DB together (<code>@CachePut</code>).</td><td>Cache always fresh for written keys.</td><td>Write latency ×2; caches data never read.</td></tr>
+    <tr><td><b>Write-behind</b></td><td>Write to cache; flush to DB async.</td><td>Very fast writes.</td><td>Data loss if Redis dies before flush. Rare in Java shops.</td></tr>
+    <tr><td><b>Evict on write</b></td><td>On update: write DB, then <code>DEL</code> the cache key (<code>@CacheEvict</code>).</td><td>Next read refills with fresh data.</td><td>Race: a concurrent reader can refill with the old value (see below).</td></tr>
+  </tbody>
+</table>
+<h3>The three classic cache problems</h3>
+<table>
+  <thead><tr><th>Problem</th><th>What happens</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><b>Stampede / dog-pile</b></td><td>A hot key expires; 500 requests miss at once and all hit the DB.</td><td>Lock the refill (<code>SET lock:k NX PX 5000</code>; others wait or serve stale), jittered TTLs, early refresh (refresh when TTL &lt; 10%), Caffeine's <code>refreshAfterWrite</code> locally.</td></tr>
+    <tr><td><b>Penetration</b></td><td>Requests for ids that do not exist always miss and always hit the DB.</td><td>Cache the negative result (<code>"NULL"</code> with a short TTL), or a Bloom filter of valid ids.</td></tr>
+    <tr><td><b>Avalanche</b></td><td>Many keys expire at the same second (all loaded at deploy time), or Redis restarts empty.</td><td>TTL jitter; warm-up on start; circuit breaker + rate limit toward the DB; persistence so Redis comes back warm.</td></tr>
+    <tr><td><b>Stale after update (race)</b></td><td>T1 reads DB (old), T2 writes DB + DELs cache, T1 SETs cache (old) → stale until TTL.</td><td>Short TTLs as a safety net; delete <i>after</i> the DB commit; "delayed double delete"; or version the key.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// cache-aside by hand with Spring's StringRedisTemplate</span>
+<span class="kw">public</span> <span class="typ">Product</span> <span class="fn">find</span>(<span class="kw">long</span> id) {
+    <span class="typ">String</span> key = <span class="str">"cache:product:v1:"</span> + id;
+    <span class="typ">String</span> json = redis.opsForValue().get(key);
+    <span class="kw">if</span> (json != <span class="kw">null</span>) <span class="kw">return</span> <span class="str">"NULL"</span>.equals(json) ? <span class="kw">null</span> : mapper.readValue(json, <span class="typ">Product</span>.<span class="kw">class</span>);
+
+    <span class="typ">Product</span> p = repo.findById(id).orElse(<span class="kw">null</span>);
+    <span class="typ">Duration</span> ttl = p == <span class="kw">null</span> ? <span class="typ">Duration</span>.ofSeconds(<span class="num">60</span>)                       <span class="cmt">// negative cache, short</span>
+                           : <span class="typ">Duration</span>.ofMinutes(<span class="num">10</span>).plusSeconds(rnd.nextInt(<span class="num">60</span>)); <span class="cmt">// jitter</span>
+    redis.opsForValue().set(key, p == <span class="kw">null</span> ? <span class="str">"NULL"</span> : mapper.writeValueAsString(p), ttl);
+    <span class="kw">return</span> p;
+}
+
+<span class="ann">@Transactional</span>
+<span class="kw">public void</span> <span class="fn">update</span>(<span class="typ">Product</span> p) {
+    repo.save(p);
+    <span class="typ">TransactionSynchronizationManager</span>.registerSynchronization(<span class="kw">new</span> <span class="typ">TransactionSynchronization</span>() {
+        <span class="kw">public void</span> <span class="fn">afterCommit</span>() { redis.delete(<span class="str">"cache:product:v1:"</span> + p.getId()); }   <span class="cmt">// evict AFTER commit</span>
+    });
+}</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Caching everything</td><td>Every repository call wrapped in <code>@Cacheable</code>.</td><td>Cache what is read often, changes rarely, and is expensive. Measure hit ratio; &lt; 80% usually means the cache is not paying for itself.</td></tr>
+    <tr><td>Evict before commit</td><td><code>DEL</code> inside the transaction; a reader refills from the still-old DB row before commit.</td><td>Evict after commit (above), or accept a short TTL.</td></tr>
+    <tr><td>Cache as source of truth</td><td>Business data lives only in Redis with <code>allkeys-lru</code>.</td><td>Cache is disposable. If a key must not vanish, it is not a cache — use <code>noeviction</code> + persistence, or a database.</td></tr>
+    <tr><td>Two-level ignorance</td><td>Hitting Redis over the network for a value read 10k times per second per instance.</td><td>Local Caffeine (ms TTL) in front of Redis in front of the DB.</td></tr>
+    <tr><td>Serialization</td><td>Java serialization (<code>JdkSerializationRedisSerializer</code>): big, slow, breaks on class change.</td><td>JSON (Jackson) or a compact binary (Kryo/protobuf); version the key prefix when the shape changes.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. After a deploy, the API is slow for 2 minutes and the DB is at 100% CPU, then it recovers. What is it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Cold cache (avalanche). Either Redis was flushed/restarted without persistence, or the key prefix changed. Mitigate with persistence, a warm-up job for the hottest keys, and a rate limiter / bulkhead between the app and the DB.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Spring Boot and Redis</h2>
+<pre><span class="cmt"># pom: spring-boot-starter-data-redis (Lettuce client, async, thread-safe) + spring-boot-starter-cache</span>
+<span class="kw">spring</span>:
+  <span class="kw">data.redis</span>:
+    <span class="kw">host</span>: redis
+    <span class="kw">port</span>: <span class="num">6379</span>
+    <span class="kw">password</span>: <span class="str">${REDIS_PASSWORD}</span>
+    <span class="kw">timeout</span>: 2s                        <span class="cmt"># command timeout</span>
+    <span class="kw">lettuce.pool</span>: { <span class="kw">max-active</span>: <span class="num">16</span>, <span class="kw">max-idle</span>: <span class="num">8</span>, <span class="kw">min-idle</span>: <span class="num">2</span> }   <span class="cmt"># needs commons-pool2; optional</span>
+    <span class="cmt"># cluster: spring.data.redis.cluster.nodes: [a:6379,b:6379]   sentinel: spring.data.redis.sentinel.master/nodes</span>
+  <span class="kw">cache</span>:
+    <span class="kw">type</span>: redis
+    <span class="kw">redis</span>: { <span class="kw">time-to-live</span>: 10m, <span class="kw">cache-null-values</span>: <span class="kw">false</span>, <span class="kw">key-prefix</span>: <span class="str">"shop:"</span>, <span class="kw">use-key-prefix</span>: <span class="kw">true</span> }</pre>
+<pre><span class="cmt">// 1) Declarative caching</span>
+<span class="ann">@EnableCaching</span>
+<span class="ann">@Configuration</span>
+<span class="kw">class</span> <span class="typ">CacheConfig</span> {
+    <span class="ann">@Bean</span>
+    <span class="typ">RedisCacheManagerBuilderCustomizer</span> <span class="fn">caches</span>() {
+        <span class="kw">var</span> json = <span class="typ">RedisSerializationContext</span>.<span class="typ">SerializationPair</span>.fromSerializer(<span class="kw">new</span> <span class="typ">GenericJackson2JsonRedisSerializer</span>());
+        <span class="kw">return</span> b -&gt; b
+            .withCacheConfiguration(<span class="str">"products"</span>, <span class="typ">RedisCacheConfiguration</span>.defaultCacheConfig()
+                 .entryTtl(<span class="typ">Duration</span>.ofMinutes(<span class="num">10</span>)).serializeValuesWith(json))
+            .withCacheConfiguration(<span class="str">"rates"</span>, <span class="typ">RedisCacheConfiguration</span>.defaultCacheConfig()
+                 .entryTtl(<span class="typ">Duration</span>.ofHours(<span class="num">1</span>)).serializeValuesWith(json));
+    }
+}
+
+<span class="ann">@Service</span>
+<span class="kw">class</span> <span class="typ">ProductService</span> {
+    <span class="ann">@Cacheable</span>(cacheNames = <span class="str">"products"</span>, key = <span class="str">"#id"</span>, unless = <span class="str">"#result == null"</span>, sync = <span class="kw">true</span>)  <span class="cmt">// sync: one loader per key per JVM</span>
+    <span class="kw">public</span> <span class="typ">ProductDto</span> <span class="fn">find</span>(<span class="kw">long</span> id) { ... }
+
+    <span class="ann">@CachePut</span>(cacheNames = <span class="str">"products"</span>, key = <span class="str">"#result.id"</span>)
+    <span class="kw">public</span> <span class="typ">ProductDto</span> <span class="fn">save</span>(<span class="typ">ProductDto</span> d) { ... }
+
+    <span class="ann">@CacheEvict</span>(cacheNames = <span class="str">"products"</span>, key = <span class="str">"#id"</span>)
+    <span class="kw">public void</span> <span class="fn">delete</span>(<span class="kw">long</span> id) { ... }
+
+    <span class="ann">@CacheEvict</span>(cacheNames = <span class="str">"products"</span>, allEntries = <span class="kw">true</span>)
+    <span class="kw">public void</span> <span class="fn">reloadAll</span>() { ... }
+}
+
+<span class="cmt">// 2) Direct access</span>
+<span class="ann">@Component</span>
+<span class="kw">class</span> <span class="typ">Counters</span> {
+    <span class="kw">private final</span> <span class="typ">StringRedisTemplate</span> redis;      <span class="cmt">// String keys/values; use RedisTemplate&lt;String,Object&gt; with a JSON serializer for objects</span>
+    <span class="fn">Counters</span>(<span class="typ">StringRedisTemplate</span> redis) { <span class="kw">this</span>.redis = redis; }
+
+    <span class="kw">long</span> <span class="fn">hit</span>(<span class="typ">String</span> page) {
+        <span class="typ">Long</span> n = redis.opsForValue().increment(<span class="str">"views:"</span> + page);
+        <span class="kw">if</span> (n != <span class="kw">null</span> &amp;&amp; n == <span class="num">1</span>) redis.expire(<span class="str">"views:"</span> + page, <span class="typ">Duration</span>.ofDays(<span class="num">1</span>));
+        <span class="kw">return</span> n;
+    }
+    <span class="kw">void</span> <span class="fn">addToLeaderboard</span>(<span class="typ">String</span> user, <span class="kw">double</span> score) { redis.opsForZSet().incrementScore(<span class="str">"lb"</span>, user, score); }
+    <span class="typ">Set</span>&lt;<span class="typ">String</span>&gt; <span class="fn">top10</span>() { <span class="kw">return</span> redis.opsForZSet().reverseRange(<span class="str">"lb"</span>, <span class="num">0</span>, <span class="num">9</span>); }
+}
+
+<span class="cmt">// 3) Sessions shared across instances: add spring-session-data-redis → done (HttpSession lives in Redis)</span>
+<span class="cmt">// 4) Testing: Testcontainers  @Container @ServiceConnection static GenericContainer&lt;?&gt; redis = new GenericContainer&lt;&gt;("redis:7-alpine").withExposedPorts(6379);</span></pre>
+<table>
+  <thead><tr><th>Piece</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><b>Lettuce</b> (default) vs <b>Jedis</b></td><td>Lettuce: netty, one shared connection, reactive support. Jedis: simple, blocking, needs a pool. Stay with Lettuce.</td></tr>
+    <tr><td><b>Redisson</b></td><td>Higher-level: distributed locks, semaphores, maps, rate limiters, Spring Cache integration. Add when you need locks done right.</td></tr>
+    <tr><td><code>@Cacheable</code> key</td><td>Default key = all parameters (via <code>SimpleKey</code>). Set <code>key = "#id"</code> or a <code>KeyGenerator</code>; keys must be stable across instances.</td></tr>
+    <tr><td><code>sync = true</code></td><td>Prevents the stampede inside one JVM only. Across instances you still need a Redis lock or accept a few duplicate loads.</td></tr>
+    <tr><td>Reactive</td><td><code>ReactiveStringRedisTemplate</code> with WebFlux.</td></tr>
+    <tr><td>Health</td><td>Actuator adds a <code>redis</code> health indicator automatically.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Default serializer</td><td><code>RedisTemplate&lt;Object,Object&gt;</code> with JDK serialization: keys look like <code>\xac\xed\x00\x05t\x00</code> in redis-cli.</td><td><code>StringRedisTemplate</code>, or set <code>StringRedisSerializer</code> for keys and Jackson for values.</td></tr>
+    <tr><td>No TTL via annotations</td><td><code>@Cacheable</code> with the default manager: entries live forever.</td><td><code>spring.cache.redis.time-to-live</code> or per-cache configuration (above).</td></tr>
+    <tr><td>Caching inside the same class</td><td>Method A calls cached method B in the same bean → cache bypassed (proxy).</td><td>Call through another bean, or cache at the boundary.</td></tr>
+    <tr><td>Redis down = app down</td><td>Every request fails because the cache threw.</td><td>A <code>CacheErrorHandler</code> that logs and falls through to the DB; Resilience4j around direct calls.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>@Cacheable</code> returns a <code>ProductDto</code>, but after a redeploy reads fail with a Jackson "unknown type id" error. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint"><code>GenericJackson2JsonRedisSerializer</code> stores the class name in the JSON. You renamed or moved the DTO, so old entries cannot be read. Version the cache name or key prefix (<code>products-v2</code>) on every shape change, and flush on deploy if needed.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Atomicity — transactions, pipelining, Lua scripts</h2>
+<table>
+  <thead><tr><th>Tool</th><th>What it is</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Single command</b></td><td>Always atomic (<code>INCR</code>, <code>HSET</code> multiple fields, <code>SET NX</code>).</td><td>Prefer a command that does it all in one step.</td></tr>
+    <tr><td><b>MULTI / EXEC</b></td><td>Queue several commands; run them together with no other client in between. No rollback — a failing command does not undo the others.</td><td>"Do these 3 writes together." Not for read-then-decide logic (reads return only at EXEC).</td></tr>
+    <tr><td><b>WATCH</b></td><td>Optimistic lock: EXEC fails if a watched key changed.</td><td>Check-and-set loops. Clunky; Lua is usually cleaner.</td></tr>
+    <tr><td><b>Pipelining</b></td><td>Send N commands without waiting for each reply. Not atomic, just fewer round trips.</td><td>Bulk loads, 1000 <code>GET</code>s → one network round trip.</td></tr>
+    <tr><td><b>Lua script</b> (<code>EVAL</code> / <code>EVALSHA</code>)</td><td>A small program that runs atomically on the server. Can read, decide, and write.</td><td>Rate limiters, locks with owner check, pop-and-remove, any compare-and-act.</td></tr>
+    <tr><td><b>Functions</b> (Redis 7)</td><td>Named, persisted Lua libraries (<code>FUNCTION LOAD</code>, <code>FCALL</code>).</td><td>Same as scripts, better lifecycle.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># MULTI/EXEC: move 100 from a to b</span>
+<span class="kw">MULTI</span>
+<span class="kw">DECRBY</span> balance:a <span class="num">100</span>
+<span class="kw">INCRBY</span> balance:b <span class="num">100</span>
+<span class="kw">EXEC</span>
+
+<span class="cmt"># Lua: release a lock only if I own it (the correct way to unlock)</span>
+<span class="kw">EVAL</span> <span class="str">"if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end"</span> <span class="num">1</span> lock:order:9 worker-7
+
+<span class="cmt"># Lua: fixed-window rate limit — allow 100 requests per 60 s per key</span>
+<span class="kw">EVAL</span> <span class="str">"local n = redis.call('INCR', KEYS[1])
+if n == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+return n &lt;= tonumber(ARGV[2]) and 1 or 0"</span> <span class="num">1</span> rl:api:203.0.113.5 <span class="num">60</span> <span class="num">100</span></pre>
+<pre><span class="cmt">// Spring: scripts and pipelines</span>
+<span class="kw">private static final</span> <span class="typ">RedisScript</span>&lt;<span class="typ">Long</span>&gt; UNLOCK = <span class="typ">RedisScript</span>.of(
+    <span class="str">"if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end"</span>, <span class="typ">Long</span>.<span class="kw">class</span>);
+<span class="typ">Long</span> released = redis.execute(UNLOCK, <span class="typ">List</span>.of(<span class="str">"lock:order:9"</span>), <span class="str">"worker-7"</span>);
+
+<span class="typ">List</span>&lt;<span class="typ">Object</span>&gt; results = redis.executePipelined((<span class="typ">RedisCallback</span>&lt;<span class="typ">Object</span>&gt;) c -&gt; {
+    <span class="kw">for</span> (<span class="typ">String</span> id : ids) c.stringCommands().get((<span class="str">"cache:product:"</span> + id).getBytes());
+    <span class="kw">return</span> <span class="kw">null</span>;
+});</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Read-then-write in Java</td><td><code>GET stock</code> → if &gt; 0 → <code>DECR stock</code>. Two users both see 1, both decrement → −1.</td><td>Lua script (check and decrement atomically), or <code>DECR</code> then undo if the result went negative.</td></tr>
+    <tr><td>Expecting rollback</td><td>MULTI with a bad command in the middle; assuming the others undo.</td><td>Only syntax errors abort the whole EXEC. Runtime errors (wrong type) let the rest run. Validate first or use Lua.</td></tr>
+    <tr><td>Long Lua</td><td>A script that loops over 1M members.</td><td>Scripts block the server like any command. Keep them to a few operations.</td></tr>
+    <tr><td>Random/time in Lua</td><td>Using <code>os.time()</code> or <code>math.random</code> inside scripts that replicate.</td><td>Pass time and random values in as ARGV so replicas run the same thing.</td></tr>
+    <tr><td>N round trips</td><td>Loop of 1,000 <code>GET</code> calls = 1,000 × network latency.</td><td><code>MGET</code>, or pipelining.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Why is "GET the lock value, compare in Java, then DEL" an unsafe way to release a lock?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Between your GET and DEL the lock can expire and another worker can acquire it; your DEL then removes <i>their</i> lock. The compare-and-delete must be atomic — hence the Lua script.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Distributed locks, rate limiting, idempotency</h2>
+<h3>Distributed lock</h3>
+<pre><span class="cmt"># acquire: unique owner token + TTL, in one atomic command</span>
+<span class="kw">SET</span> lock:order:9 <span class="str">"7f3a-…-uuid"</span> <span class="kw">NX PX</span> <span class="num">30000</span>       <span class="cmt"># OK = got it; nil = someone else has it</span>
+<span class="cmt"># release: Lua compare-and-delete (Section 5)</span>
+<span class="cmt"># extend (if work takes longer): Lua — if GET == token then PEXPIRE</span></pre>
+<pre><span class="cmt">// Redisson does all of this (watchdog auto-extends while the thread lives)</span>
+<span class="typ">RLock</span> lock = redisson.getLock(<span class="str">"lock:order:9"</span>);
+<span class="kw">if</span> (lock.tryLock(<span class="num">2</span>, <span class="num">30</span>, <span class="typ">TimeUnit</span>.SECONDS)) {       <span class="cmt">// wait up to 2 s, hold max 30 s</span>
+    <span class="kw">try</span> { process(order); } <span class="kw">finally</span> { lock.unlock(); }
+}</pre>
+<table>
+  <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Always set a TTL.</td><td>A crashed holder must not lock forever.</td></tr>
+    <tr><td>Store a unique token; release only if it matches.</td><td>You must not delete someone else's lock after yours expired.</td></tr>
+    <tr><td>TTL &gt; worst-case work time, or extend it.</td><td>If the lock expires mid-work, two workers run at once.</td></tr>
+    <tr><td>A single Redis is not a perfectly safe lock.</td><td>Failover to a replica that missed the SET can hand the lock to two clients. Redlock (N independent masters) narrows this; for money-critical mutual exclusion use the database (<code>SELECT … FOR UPDATE</code>, advisory locks) or a fencing token.</td></tr>
+  </tbody>
+</table>
+<h3>Rate limiting</h3>
+<table>
+  <thead><tr><th>Algorithm</th><th>How in Redis</th><th>Trade-off</th></tr></thead>
+  <tbody>
+    <tr><td><b>Fixed window</b></td><td><code>INCR rl:user:42:2026-10-25T10:31</code> + <code>EXPIRE 60</code>; allow if ≤ limit.</td><td>Simplest. Allows 2× burst at window edges.</td></tr>
+    <tr><td><b>Sliding window log</b></td><td>ZSET of timestamps: <code>ZADD now now</code>, <code>ZREMRANGEBYSCORE 0 now-60s</code>, <code>ZCARD</code> ≤ limit. In Lua.</td><td>Exact. Memory per request.</td></tr>
+    <tr><td><b>Sliding window counter</b></td><td>Weighted mix of current and previous fixed window.</td><td>Cheap and smooth; approximate.</td></tr>
+    <tr><td><b>Token bucket</b></td><td>Hash {tokens, last_refill}; Lua refills by elapsed time and takes one.</td><td>Allows controlled bursts. What Resilience4j/Bucket4j implement (Bucket4j has a Redis backend).</td></tr>
+  </tbody>
+</table>
+<h3>Idempotency keys</h3>
+<pre><span class="cmt"># client sends Idempotency-Key: 8c1f…  on POST /payments</span>
+<span class="kw">SET</span> idem:8c1f… <span class="str">"PROCESSING"</span> <span class="kw">NX EX</span> <span class="num">86400</span>        <span class="cmt"># nil → duplicate: return the stored response or 409</span>
+<span class="cmt"># … do the work …</span>
+<span class="kw">SET</span> idem:8c1f… <span class="str">"{status:201, body:…}"</span> <span class="kw">EX</span> <span class="num">86400</span>  <span class="cmt"># store the result for replays</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>SETNX</code> then <code>EXPIRE</code></td><td>Two commands: crash between them = lock with no TTL.</td><td><code>SET k v NX PX ms</code> — one command.</td></tr>
+    <tr><td>Lock without owner check</td><td><code>DEL lock</code> on release.</td><td>Token + Lua compare-and-delete.</td></tr>
+    <tr><td>Redis lock for correctness-critical money</td><td>Trusting a single Redis to prevent double payment.</td><td>DB-level uniqueness/locks as the final guard; Redis lock to reduce contention only.</td></tr>
+    <tr><td>Rate limit per instance</td><td>In-memory counter in each of 8 pods → limit is 8× what you meant.</td><td>Shared counter in Redis.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Worker A takes a lock with TTL 30 s, then a GC pause of 40 s hits. What happens?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The lock expires at 30 s; worker B acquires it; A wakes up and keeps working believing it still holds the lock → two writers. Defences: watchdog extension (only helps if the thread is alive, not paused), short critical sections, and a <b>fencing token</b> (increasing number stored with the lock) that the downstream store rejects if stale.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Pub/Sub, Lists as queues, and Streams</h2>
+<table>
+  <thead><tr><th>Mechanism</th><th>Delivery</th><th>Persistence</th><th>Consumers</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Pub/Sub</b> (<code>PUBLISH</code> / <code>SUBSCRIBE</code>)</td><td>Fire-and-forget to whoever is listening <i>right now</i>.</td><td>None. Offline subscribers miss messages.</td><td>All subscribers get every message.</td><td>Cache invalidation broadcasts, live UI updates, chat presence.</td></tr>
+    <tr><td><b>List queue</b> (<code>LPUSH</code> / <code>BRPOP</code>)</td><td>Each item to exactly one popper.</td><td>Yes (as long as Redis persists). Lost if the worker crashes after pop.</td><td>Competing workers.</td><td>Simple background jobs.</td></tr>
+    <tr><td><b>Stream</b> (<code>XADD</code> / <code>XREADGROUP</code> / <code>XACK</code>)</td><td>Each entry to one consumer in a group; unacked entries can be re-claimed.</td><td>Yes, with retention (<code>MAXLEN</code>).</td><td>Consumer groups, replay from any ID, multiple groups per stream.</td><td>Reliable queues, event logs, when Kafka is too heavy.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># pub/sub</span>
+<span class="kw">SUBSCRIBE</span> cache:invalidate                  <span class="cmt"># blocks the connection; use a dedicated one</span>
+<span class="kw">PUBLISH</span> cache:invalidate <span class="str">"product:9001"</span>     <span class="cmt"># returns number of receivers</span>
+
+<span class="cmt"># streams</span>
+<span class="kw">XADD</span> orders * type created id <span class="num">9001</span> total <span class="num">499</span>              <span class="cmt"># * = auto ID "1729850000000-0"</span>
+<span class="kw">XADD</span> orders <span class="kw">MAXLEN</span> ~ <span class="num">100000</span> * type paid id <span class="num">9001</span>              <span class="cmt"># cap length (approx, cheap)</span>
+<span class="kw">XGROUP CREATE</span> orders billing $ <span class="kw">MKSTREAM</span>                     <span class="cmt"># group "billing", start from new entries</span>
+<span class="kw">XREADGROUP GROUP</span> billing worker-1 <span class="kw">COUNT</span> <span class="num">10</span> <span class="kw">BLOCK</span> <span class="num">5000</span> <span class="kw">STREAMS</span> orders &gt;   <span class="cmt"># &gt; = never-delivered entries</span>
+<span class="kw">XACK</span> orders billing <span class="num">1729850000000-0</span>                          <span class="cmt"># done with it</span>
+<span class="kw">XPENDING</span> orders billing                                     <span class="cmt"># delivered but not acked (crashed workers)</span>
+<span class="kw">XAUTOCLAIM</span> orders billing worker-2 <span class="num">60000</span> <span class="num">0</span>                   <span class="cmt"># take over entries idle &gt; 60 s</span>
+<span class="kw">XRANGE</span> orders - + <span class="kw">COUNT</span> <span class="num">5</span>                                   <span class="cmt"># read history</span></pre>
+<pre><span class="cmt">// Spring Data Redis stream listener</span>
+<span class="ann">@Bean</span>
+<span class="typ">StreamMessageListenerContainer</span>&lt;<span class="typ">String</span>, <span class="typ">MapRecord</span>&lt;<span class="typ">String</span>,<span class="typ">String</span>,<span class="typ">String</span>&gt;&gt; <span class="fn">container</span>(<span class="typ">RedisConnectionFactory</span> cf) {
+    <span class="kw">var</span> c = <span class="typ">StreamMessageListenerContainer</span>.create(cf,
+        <span class="typ">StreamMessageListenerContainerOptions</span>.builder().pollTimeout(<span class="typ">Duration</span>.ofSeconds(<span class="num">2</span>)).build());
+    c.receive(<span class="typ">Consumer</span>.from(<span class="str">"billing"</span>, <span class="str">"worker-"</span> + hostname),
+              <span class="typ">StreamOffset</span>.create(<span class="str">"orders"</span>, <span class="typ">ReadOffset</span>.lastConsumed()),
+              msg -&gt; { handle(msg.getValue()); redis.opsForStream().acknowledge(<span class="str">"billing"</span>, msg); });
+    c.start();
+    <span class="kw">return</span> c;
+}
+<span class="cmt">// Pub/Sub: RedisMessageListenerContainer + MessageListenerAdapter, or redisTemplate.convertAndSend("channel", payload)</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Pub/Sub for jobs</td><td>Using <code>PUBLISH</code> for "send email" — a restart loses every message in flight.</td><td>Streams (or a List) for work that must happen; Pub/Sub only for "nice to know now".</td></tr>
+    <tr><td>List queue with no ack</td><td><code>BRPOP</code> → worker dies → job gone.</td><td><code>LMOVE src processing RIGHT LEFT</code> (reliable queue) or Streams with <code>XACK</code>.</td></tr>
+    <tr><td>Unbounded stream</td><td><code>XADD</code> forever without <code>MAXLEN</code> → memory full.</td><td><code>MAXLEN ~ N</code> or <code>MINID</code> trimming; <code>XTRIM</code> job.</td></tr>
+    <tr><td>Ignoring pending</td><td>Never checking <code>XPENDING</code>; crashed workers' entries sit forever.</td><td>A reaper using <code>XAUTOCLAIM</code>; dead-letter after N deliveries.</td></tr>
+    <tr><td>Redis instead of Kafka</td><td>100 MB/s of events, 7-day retention, many consumer teams, on Redis Streams.</td><td>Streams fit modest volumes and short retention. Beyond that, Kafka.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Two consumers in the <i>same</i> group and two in a <i>different</i> group read a stream. Who gets an entry?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Exactly one consumer in each group. Groups are independent cursors over the same log (like Kafka consumer groups); within a group, entries are load-balanced. So billing gets every order once, analytics gets every order once.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Persistence — RDB and AOF</h2>
+<table>
+  <thead><tr><th>Mode</th><th>How</th><th>Data loss on crash</th><th>Cost</th></tr></thead>
+  <tbody>
+    <tr><td><b>None</b></td><td>Pure memory.</td><td>Everything.</td><td>Fastest. OK for a pure cache that can rebuild.</td></tr>
+    <tr><td><b>RDB</b> snapshots</td><td>Fork a child; write the whole dataset to <code>dump.rdb</code> every N seconds if M keys changed (<code>save 900 1</code>, <code>save 300 10</code>…).</td><td>Up to the last snapshot (minutes).</td><td>Compact file, fast restart. Fork needs extra memory (copy-on-write) — spikes on big datasets.</td></tr>
+    <tr><td><b>AOF</b> append-only file</td><td>Every write command appended to a log; replayed on start. <code>appendfsync</code> <code>always</code> / <code>everysec</code> (default) / <code>no</code>.</td><td>≤ 1 s with <code>everysec</code>; ~0 with <code>always</code> (slow).</td><td>Bigger file, slower restart; rewritten in the background (<code>BGREWRITEAOF</code>). Redis 7 uses a multi-part AOF (base RDB + incremental).</td></tr>
+    <tr><td><b>RDB + AOF</b></td><td>Both on (<code>aof-use-rdb-preamble yes</code>).</td><td>≤ 1 s.</td><td>Recommended when data matters.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># redis.conf</span>
+appendonly yes
+appendfsync everysec
+save 3600 1 300 100 60 10000
+<span class="cmt"># runtime</span>
+<span class="kw">BGSAVE</span>                 <span class="cmt"># snapshot now, in the background</span>
+<span class="kw">LASTSAVE</span>
+<span class="kw">INFO</span> persistence       <span class="cmt"># rdb_last_bgsave_status, aof_enabled, aof_last_write_status</span>
+<span class="kw">CONFIG GET</span> dir         <span class="cmt"># where dump.rdb / appendonly.aof live → back this folder up</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Queue with no persistence</td><td>Jobs in a List, <code>appendonly no</code>, server reboots → jobs gone.</td><td>AOF <code>everysec</code> at least; for a cache, persistence can be off.</td></tr>
+    <tr><td>Memory headroom</td><td>Redis at 90% of RAM; BGSAVE forks and the box swaps or OOMs.</td><td>Leave 30–50% free for fork copy-on-write, or use a replica for snapshots.</td></tr>
+    <tr><td>Persistence as backup</td><td>Only the local <code>dump.rdb</code>.</td><td>Copy RDB files off-host on a schedule; test restores.</td></tr>
+    <tr><td>Docker without a volume</td><td><code>docker run redis</code> and expecting data after <code>docker rm</code>.</td><td>Mount <code>/data</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. With <code>appendfsync everysec</code>, Redis replied OK to your write. Is it on disk?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Not necessarily — it is in the OS buffer and will be fsynced within about a second. A power loss in that window loses it. Redis trades a little durability for speed; if you need the DB-like guarantee, your data belongs in a DB (or <code>appendfsync always</code> at a big cost).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Replication, Sentinel, Cluster</h2>
+<table>
+  <thead><tr><th>Setup</th><th>What it gives</th><th>What it does not</th><th>Pick when</th></tr></thead>
+  <tbody>
+    <tr><td><b>Single node</b></td><td>Simplest.</td><td>No failover; limited to one machine's RAM.</td><td>Dev, small caches you can lose.</td></tr>
+    <tr><td><b>Primary + replicas</b></td><td>Async copies for read scaling and a warm standby.</td><td>No automatic failover. Replica lag → stale reads; writes acked by primary may be lost on failover.</td><td>Read-heavy, manual ops OK.</td></tr>
+    <tr><td><b>Sentinel</b></td><td>Monitors primary + replicas; promotes a replica automatically; clients ask Sentinel "who is primary now?".</td><td>No sharding — the dataset still fits one node.</td><td>HA for a single-shard dataset. Most common HA for self-hosted.</td></tr>
+    <tr><td><b>Cluster</b></td><td>Sharding across nodes: 16,384 hash slots spread over primaries, each with replicas; automatic failover built in.</td><td>Multi-key commands only work when all keys are in the same slot; no <code>SELECT</code> DB; some commands behave differently.</td><td>Dataset or throughput beyond one machine.</td></tr>
+    <tr><td><b>Managed</b> (ElastiCache, Memorystore, Azure Cache, Redis Cloud)</td><td>Patching, failover, backups done for you.</td><td>Costs money; some commands/modules restricted.</td><td>Most production systems.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># replication</span>
+<span class="kw">REPLICAOF</span> primary-host <span class="num">6379</span>          <span class="cmt"># on the replica (REPLICAOF NO ONE to promote)</span>
+<span class="kw">INFO</span> replication                     <span class="cmt"># role, connected_slaves, master_repl_offset, lag</span>
+<span class="kw">WAIT</span> <span class="num">1</span> <span class="num">1000</span>                          <span class="cmt"># block until ≥1 replica acked the previous writes (max 1 s)</span>
+
+<span class="cmt"># cluster</span>
+<span class="fn">redis-cli</span> <span class="ann">--cluster</span> create a:<span class="num">6379</span> b:<span class="num">6379</span> c:<span class="num">6379</span> d:<span class="num">6379</span> e:<span class="num">6379</span> f:<span class="num">6379</span> <span class="ann">--cluster-replicas</span> <span class="num">1</span>
+<span class="kw">CLUSTER INFO</span>  ·  <span class="kw">CLUSTER NODES</span>  ·  <span class="kw">CLUSTER KEYSLOT</span> user:42
+<span class="fn">redis-cli</span> <span class="ann">-c</span>                         <span class="cmt"># -c follows MOVED redirects</span></pre>
+<table>
+  <thead><tr><th>Cluster concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Hash slot</td><td><code>CRC16(key) % 16384</code>. Each primary owns a range of slots.</td></tr>
+    <tr><td>Hash tag <code>{…}</code></td><td>Only the part inside braces is hashed: <code>{user:42}:cart</code> and <code>{user:42}:profile</code> share a slot → <code>MGET</code> and Lua on both work.</td></tr>
+    <tr><td><code>MOVED</code> / <code>ASK</code></td><td>Redirects when a key lives elsewhere (or is migrating). Smart clients (Lettuce) cache the slot map and follow them.</td></tr>
+    <tr><td>Resharding</td><td>Move slots between nodes online: <code>redis-cli --cluster reshard</code>.</td></tr>
+    <tr><td>Minimum size</td><td>3 primaries (+ 3 replicas) for a majority vote.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Reading from replicas blindly</td><td>Write to primary, read from replica 1 ms later, value missing.</td><td>Replication is async. Read from the primary when you need read-your-write; replicas for tolerant reads.</td></tr>
+    <tr><td>Multi-key across slots</td><td><code>MGET a b c</code> or Lua on keys in different slots → <code>CROSSSLOT</code> error.</td><td>Hash tags for related keys; otherwise issue separate commands.</td></tr>
+    <tr><td>Hard-coded primary host</td><td>Failover happens; app keeps writing to the old (now replica) → READONLY errors.</td><td>Connect via Sentinel / Cluster-aware client / the managed endpoint; Lettuce handles topology refresh (<code>enablePeriodicRefresh</code>).</td></tr>
+    <tr><td>Cluster for a 2 GB dataset</td><td>Operational complexity for nothing.</td><td>Sentinel (or managed single-shard) until you truly outgrow one node.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your lock survived a Sentinel failover — or did it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Maybe not. If the primary died right after acknowledging <code>SET lock NX</code> and before the replica received it, the promoted replica has no lock and another client can take it. Async replication means Redis locks are "probably exclusive". <code>WAIT</code> reduces the window; a DB or fencing token closes it.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Operations, security, troubleshooting, quick reference</h2>
+<table>
+  <thead><tr><th>Symptom</th><th>Check</th><th>Likely cause / fix</th></tr></thead>
+  <tbody>
+    <tr><td>Latency spikes</td><td><code>SLOWLOG GET 20</code>, <code>LATENCY DOCTOR</code>, <code>redis-cli --latency</code></td><td>Big <code>KEYS</code>/<code>SMEMBERS</code>/<code>DEL</code> of a huge key; BGSAVE fork on a big dataset; swap. Use <code>SCAN</code>, <code>UNLINK</code>, more RAM.</td></tr>
+    <tr><td>OOM command not allowed</td><td><code>INFO memory</code></td><td><code>maxmemory</code> reached with <code>noeviction</code>. Add TTLs, switch to <code>allkeys-lru</code> for caches, or grow.</td></tr>
+    <tr><td>Hit ratio low</td><td><code>INFO stats</code> → <code>keyspace_hits / (hits + misses)</code></td><td>TTL too short, key includes something unique per request, cache too small (evictions).</td></tr>
+    <tr><td>Connection refused / timeouts from the app</td><td><code>INFO clients</code>, <code>CLIENT LIST</code>, <code>maxclients</code></td><td>Too many connections (pool per thread?), network, or Redis blocked by a slow command.</td></tr>
+    <tr><td>READONLY You can't write against a read only replica</td><td><code>INFO replication</code></td><td>App is talking to a replica after failover. Fix client topology handling.</td></tr>
+    <tr><td>Memory grows but keys don't</td><td><code>INFO memory</code> → <code>mem_fragmentation_ratio</code></td><td>Fragmentation. <code>activedefrag yes</code>, or restart during a window.</td></tr>
+    <tr><td>Data vanished after restart</td><td><code>INFO persistence</code>, <code>CONFIG GET dir</code></td><td>No persistence, or container without a volume.</td></tr>
+  </tbody>
+</table>
+<h3>Security basics</h3>
+<pre><span class="cmt"># redis.conf</span>
+bind 10.0.0.5                        <span class="cmt"># never 0.0.0.0 on a public box</span>
+protected-mode yes
+requirepass &lt;long-random&gt;            <span class="cmt"># or ACLs (Redis 6+):</span>
+<span class="kw">ACL SETUSER</span> shop-api on &gt;secret ~cache:* ~session:* +@read +@write -@dangerous
+rename-command FLUSHALL ""           <span class="cmt"># disable in prod (or ACL -flushall)</span>
+tls-port 6380                        <span class="cmt"># TLS for anything crossing a network you don't own</span></pre>
+<h3>Daily commands</h3>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Is it alive?</td><td><code>PING</code> → PONG · <code>INFO server</code></td></tr>
+    <tr><td>Memory / keys</td><td><code>INFO memory</code> · <code>DBSIZE</code> · <code>redis-cli --bigkeys</code> · <code>MEMORY USAGE k</code></td></tr>
+    <tr><td>Who is connected</td><td><code>CLIENT LIST</code> · <code>CLIENT KILL id 42</code></td></tr>
+    <tr><td>Slow commands</td><td><code>SLOWLOG GET 10</code> · <code>CONFIG SET slowlog-log-slower-than 10000</code> (µs)</td></tr>
+    <tr><td>Live traffic</td><td><code>MONITOR</code> (briefly!) · <code>redis-cli --stat</code></td></tr>
+    <tr><td>Config</td><td><code>CONFIG GET maxmemory*</code> · <code>CONFIG SET maxmemory-policy allkeys-lru</code> · <code>CONFIG REWRITE</code></td></tr>
+    <tr><td>Find keys safely</td><td><code>redis-cli --scan --pattern 'session:*' | head</code></td></tr>
+    <tr><td>Delete by pattern safely</td><td><code>redis-cli --scan --pattern 'cache:v1:*' | xargs -L 500 redis-cli UNLINK</code></td></tr>
+    <tr><td>Snapshot now</td><td><code>BGSAVE</code> · <code>LASTSAVE</code></td></tr>
+    <tr><td>Dump a key</td><td><code>TYPE k</code> then <code>GET</code> / <code>HGETALL</code> / <code>LRANGE k 0 -1</code> / <code>SMEMBERS</code> / <code>ZRANGE k 0 -1 WITHSCORES</code> / <code>XRANGE k - +</code></td></tr>
+  </tbody>
+</table>
+<h3>Redis vs the alternatives</h3>
+<table>
+  <thead><tr><th>Need</th><th>Redis</th><th>Instead / alongside</th></tr></thead>
+  <tbody>
+    <tr><td>Local in-process cache</td><td>Network hop each time.</td><td><b>Caffeine</b> — microseconds, per instance. Often both: Caffeine in front of Redis.</td></tr>
+    <tr><td>Simple cache only, no data structures</td><td>Fine.</td><td><b>Memcached</b> — multi-threaded, simpler, no persistence/types. Redis usually wins on features.</td></tr>
+    <tr><td>Durable, high-volume event streaming</td><td>Streams up to modest scale.</td><td><b>Kafka</b> — disk-based log, long retention, huge throughput.</td></tr>
+    <tr><td>Source of truth for business data</td><td>No.</td><td>A database. Redis holds derived or disposable data.</td></tr>
+    <tr><td>Drop-in compatible alternatives</td><td>—</td><td><b>Valkey</b> (Linux Foundation fork, BSD license), <b>KeyDB</b>, <b>Dragonfly</b> — same protocol, same clients.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) every cache key gets a TTL with jitter; 2) <code>SCAN</code>, never <code>KEYS</code>; small keys, never giant collections; 3) <code>allkeys-lru</code> for caches, <code>noeviction</code> + AOF for data you cannot lose; 4) one atomic command or a Lua script for check-and-act; 5) <code>SET NX PX</code> + owner token for locks, and don't trust them with money; 6) Pub/Sub for broadcasts, Streams for work; 7) JSON serializer + versioned key prefixes in Spring.</div>
+<div class="tricky">
+  <div class="q">Q. Redis uses 6 GB but <code>DBSIZE</code> says 1 million small keys (~200 MB of data). Where is the memory?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Check <code>mem_fragmentation_ratio</code> (allocator fragmentation after churn), a few huge keys hiding in the count (<code>--bigkeys</code>), client output buffers (a slow subscriber on Pub/Sub can hold GBs — <code>CLIENT LIST</code> shows <code>omem</code>), and the replication backlog. Each has its own fix: activedefrag, split keys, <code>client-output-buffer-limit</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("redis-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("redis-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

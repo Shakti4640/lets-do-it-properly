@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostgreSQL &amp; SQL — Basics to Advanced (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* SQL keywords */
+  pre .typ { color: var(--c-typ); }                    /* data types, table names */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* psql meta-commands, hints */
+  pre .fn  { color: var(--c-fn); }                     /* functions like COUNT, NOW */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>PostgreSQL &amp; SQL — Beyond the Basics<span class="sub">Indexes · EXPLAIN · transactions &amp; isolation · MVCC &amp; VACUUM · locks · types (JSONB, arrays) · partitioning · pooling · JPA pitfalls · migrations · tuning (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Assumes you already know joins, CTEs, temp tables and window functions — they are left out on purpose. Click "Reveal hint" on screen. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. How PostgreSQL works (the big picture)</h2>
+<p>PostgreSQL is a <b>process-per-connection</b> relational database. Every client connection gets its own backend process. Data lives in 8 KB <b>pages</b> on disk, cached in <b>shared_buffers</b>; every change is first written to the <b>WAL</b> (write-ahead log) so a crash can be replayed. Rows are never updated in place — a new row version is written and the old one is marked dead (<b>MVCC</b>). That one fact explains VACUUM, bloat, and why readers never block writers.</p>
+<table>
+  <thead><tr><th>Piece</th><th>Plain meaning</th><th>Why you care</th></tr></thead>
+  <tbody>
+    <tr><td><b>Backend process</b></td><td>One OS process per connection (~5–10 MB each).</td><td>500 idle connections is already heavy → use a pool (Section 8).</td></tr>
+    <tr><td><b>Shared buffers</b></td><td>Postgres' own page cache in RAM.</td><td>Typical 25% of RAM. The OS file cache holds the rest.</td></tr>
+    <tr><td><b>WAL</b></td><td>Append-only log of every change, fsync'd at commit.</td><td>Commit speed = WAL disk speed. Also feeds replication.</td></tr>
+    <tr><td><b>Heap</b></td><td>The table file: pages of row versions (tuples).</td><td>Updates add tuples; dead ones need VACUUM.</td></tr>
+    <tr><td><b>Indexes</b></td><td>Separate files pointing at heap tuples.</td><td>Every index slows writes; pick carefully.</td></tr>
+    <tr><td><b>Planner</b></td><td>Turns SQL into a plan using table <b>statistics</b>.</td><td>Stale stats = bad plans. <code>ANALYZE</code>.</td></tr>
+    <tr><td><b>Autovacuum</b></td><td>Background workers that clean dead tuples and refresh stats.</td><td>Never turn it off. Tune it for hot tables.</td></tr>
+    <tr><td><b>Checkpointer / bgwriter</b></td><td>Flush dirty pages from RAM to the data files.</td><td>Checkpoint spikes show up as latency bumps.</td></tr>
+  </tbody>
+</table>
+<h3>What happens to one query</h3>
+<table>
+  <thead><tr><th>#</th><th>Step</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><b>Parse</b> the SQL text; <b>rewrite</b> views and rules.</td></tr>
+    <tr><td>2</td><td><b>Plan</b>: estimate row counts from <code>pg_statistic</code>, cost each way (seq scan vs index scan, hash vs nested loop join), pick the cheapest.</td></tr>
+    <tr><td>3</td><td><b>Execute</b>: pull pages into shared buffers, check each tuple's visibility against your snapshot, produce rows.</td></tr>
+    <tr><td>4</td><td>On write: new tuple into heap, index entries added, WAL record written; at COMMIT the WAL is flushed to disk.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Mental model:</b> a table is a notebook where you only ever <i>append</i> new versions of a line and cross out the old one. Readers look at the version that was current when they started reading. A janitor (VACUUM) later erases the crossed-out lines so the space can be reused.</div>
+<div class="tricky">
+  <div class="q">Q. Why does an <code>UPDATE</code> of one column on a 50-column row cost as much as an insert?</div>
+  <details><summary>Reveal hint</summary><div class="hint">MVCC: Postgres writes a whole new row version and must add index entries for it (unless the update is HOT — no indexed column changed and the new version fits on the same page). That is why wide tables with many indexes have expensive updates.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Indexes — types, when they help, when they hurt</h2>
+<table>
+  <thead><tr><th>Type</th><th>Good for</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><b>B-tree</b> (default)</td><td>=, &lt;, &gt;, BETWEEN, ORDER BY, LIKE 'abc%' (prefix). 95% of indexes.</td><td><code>CREATE INDEX ON orders (customer_id, created_at DESC);</code></td></tr>
+    <tr><td><b>Hash</b></td><td>Only =. Slightly smaller than B-tree. Rarely worth it.</td><td><code>CREATE INDEX ON t USING hash (col);</code></td></tr>
+    <tr><td><b>GIN</b></td><td>"Contains" on many values per row: JSONB, arrays, full-text.</td><td><code>CREATE INDEX ON docs USING gin (payload jsonb_path_ops);</code></td></tr>
+    <tr><td><b>GiST</b></td><td>Geometry, ranges, nearest-neighbour, exclusion constraints.</td><td><code>CREATE INDEX ON bookings USING gist (room, during);</code></td></tr>
+    <tr><td><b>BRIN</b></td><td>Huge append-only tables where the column correlates with physical order (timestamps). Tiny index.</td><td><code>CREATE INDEX ON events USING brin (created_at);</code></td></tr>
+    <tr><td><b>Partial</b></td><td>Index only the rows you query.</td><td><code>CREATE INDEX ON orders (created_at) WHERE status = 'NEW';</code></td></tr>
+    <tr><td><b>Expression</b></td><td>Queries on a function of a column.</td><td><code>CREATE INDEX ON users (lower(email));</code></td></tr>
+    <tr><td><b>Covering (INCLUDE)</b></td><td>Index-only scans: all needed columns live in the index.</td><td><code>CREATE INDEX ON orders (customer_id) INCLUDE (total, status);</code></td></tr>
+    <tr><td><b>Unique</b></td><td>Enforce uniqueness (also an index).</td><td><code>CREATE UNIQUE INDEX ON users (lower(email));</code></td></tr>
+  </tbody>
+</table>
+<h3>Composite index rules</h3>
+<table>
+  <thead><tr><th>Rule</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Leftmost prefix</td><td>Index <code>(a, b, c)</code> serves <code>WHERE a=…</code>, <code>a=… AND b=…</code>, <code>a=… AND b=… AND c=…</code>. It does <b>not</b> serve <code>WHERE b=…</code> alone.</td></tr>
+    <tr><td>Equality first, range last</td><td><code>WHERE customer_id = 7 AND created_at &gt; …</code> → index <code>(customer_id, created_at)</code>, not the reverse.</td></tr>
+    <tr><td>ORDER BY uses the index</td><td><code>(customer_id, created_at DESC)</code> lets <code>ORDER BY created_at DESC LIMIT 20</code> read 20 rows and stop.</td></tr>
+    <tr><td>Selectivity</td><td>An index on <code>status</code> with 3 values is near useless alone — the planner prefers a seq scan. Put it in a partial index instead.</td></tr>
+    <tr><td>One index per query shape, not per column</td><td>Five single-column indexes rarely beat one well-ordered composite.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">-- build without blocking writes (takes longer; may leave an INVALID index if it fails)</span>
+<span class="kw">CREATE INDEX CONCURRENTLY</span> idx_orders_cust_created <span class="kw">ON</span> orders (customer_id, created_at <span class="kw">DESC</span>);
+
+<span class="cmt">-- find indexes nobody uses (candidates to drop)</span>
+<span class="kw">SELECT</span> indexrelname, idx_scan, pg_size_pretty(pg_relation_size(indexrelid))
+<span class="kw">FROM</span> pg_stat_user_indexes <span class="kw">WHERE</span> idx_scan = <span class="num">0</span> <span class="kw">ORDER BY</span> pg_relation_size(indexrelid) <span class="kw">DESC</span>;
+
+<span class="cmt">-- find missing indexes: tables with many seq scans on many rows</span>
+<span class="kw">SELECT</span> relname, seq_scan, seq_tup_read, idx_scan <span class="kw">FROM</span> pg_stat_user_tables <span class="kw">ORDER BY</span> seq_tup_read <span class="kw">DESC LIMIT</span> <span class="num">10</span>;
+
+<span class="cmt">-- rebuild a bloated index online</span>
+<span class="kw">REINDEX INDEX CONCURRENTLY</span> idx_orders_cust_created;</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Function on the column</td><td><code>WHERE lower(email) = 'x'</code> with an index on <code>email</code> → seq scan.</td><td>Expression index on <code>lower(email)</code>, or store it lower-cased.</td></tr>
+    <tr><td>Implicit cast</td><td><code>WHERE id = '42'</code> is fine, but <code>WHERE varchar_col = 42</code> casts the <i>column</i> → no index. Also JDBC sending <code>text</code> for a <code>uuid</code> column.</td><td>Match types. Check <code>EXPLAIN</code> for a <code>::text</code> on the column side.</td></tr>
+    <tr><td>Leading wildcard</td><td><code>LIKE '%foo%'</code> cannot use B-tree.</td><td><code>pg_trgm</code> GIN index, or full-text search.</td></tr>
+    <tr><td>Index everything</td><td>12 indexes on a write-heavy table.</td><td>Each index = extra write + extra VACUUM work. Drop unused ones (<code>idx_scan = 0</code>).</td></tr>
+    <tr><td>Foreign keys without index</td><td>FK column has no index → every parent delete/update seq-scans the child table; lock waits.</td><td>Index every FK column that you delete or join from.</td></tr>
+    <tr><td>Blocking build</td><td><code>CREATE INDEX</code> on a live 100 GB table locks writes for an hour.</td><td><code>CONCURRENTLY</code> (not inside a transaction block).</td></tr>
+    <tr><td>Nulls</td><td>Assuming <code>WHERE col IS NULL</code> can't use an index.</td><td>B-tree indexes nulls; a partial index <code>WHERE col IS NULL</code> is tiny and fast.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You have index <code>(status, created_at)</code>. Query: <code>WHERE created_at &gt; now() - interval '1 day'</code>. Index used?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Almost never — <code>status</code> is the leading column and is not constrained. Postgres would have to scan the whole index. Add an index led by <code>created_at</code>, or add <code>status IN (…)</code> to the query if that is what you mean.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. EXPLAIN — reading a query plan</h2>
+<pre><span class="kw">EXPLAIN</span> (<span class="kw">ANALYZE</span>, <span class="kw">BUFFERS</span>, <span class="kw">FORMAT TEXT</span>)
+<span class="kw">SELECT</span> o.id, o.total <span class="kw">FROM</span> orders o
+<span class="kw">WHERE</span> o.customer_id = <span class="num">42</span> <span class="kw">AND</span> o.created_at &gt; <span class="fn">now</span>() - <span class="kw">interval</span> <span class="str">'30 days'</span>
+<span class="kw">ORDER BY</span> o.created_at <span class="kw">DESC LIMIT</span> <span class="num">20</span>;
+
+<span class="cmt">Limit  (cost=0.43..45.12 rows=20 width=16) (actual time=0.031..0.088 rows=20 loops=1)
+  Buffers: shared hit=24
+  -&gt;  Index Scan using idx_orders_cust_created on orders o
+        (cost=0.43..1270.55 rows=568 width=16) (actual time=0.029..0.083 rows=20 loops=1)
+        Index Cond: ((customer_id = 42) AND (created_at &gt; (now() - '30 days'::interval)))
+        Buffers: shared hit=24
+Planning Time: 0.210 ms
+Execution Time: 0.112 ms</span></pre>
+<table>
+  <thead><tr><th>Read this</th><th>It means</th></tr></thead>
+  <tbody>
+    <tr><td><code>cost=0.43..45.12</code></td><td>Planner's guess: start-up cost .. total cost, in abstract units. Compare between plans, not to time.</td></tr>
+    <tr><td><code>rows=568</code> vs <code>actual rows=20</code></td><td>Estimated vs real. A gap of 10× or more = stale or missing statistics → bad plan choices higher up.</td></tr>
+    <tr><td><code>loops=1</code></td><td>How many times this node ran. In a Nested Loop the inner side shows <code>loops=N</code>; multiply <code>actual rows × loops</code>.</td></tr>
+    <tr><td><code>Buffers: shared hit=24 read=0</code></td><td>Pages from cache vs from disk. Big <code>read</code> = I/O bound. <code>temp read/written</code> = spilled to disk (raise <code>work_mem</code>).</td></tr>
+    <tr><td><code>Seq Scan</code></td><td>Read the whole table. Fine for small tables or when returning most rows; bad with <code>Filter</code> dropping 99%.</td></tr>
+    <tr><td><code>Index Scan</code></td><td>Walk the index, fetch each matching heap row.</td></tr>
+    <tr><td><code>Index Only Scan</code></td><td>Everything from the index; <code>Heap Fetches: 0</code> is the goal (needs a recently vacuumed table).</td></tr>
+    <tr><td><code>Bitmap Heap Scan</code></td><td>Index finds many rows; Postgres sorts pointers by page then reads. Middle ground.</td></tr>
+    <tr><td><code>Nested Loop</code> / <code>Hash Join</code> / <code>Merge Join</code></td><td>Small × indexed · build hash on smaller side · both sorted. A Nested Loop with a big inner <code>loops</code> count is the classic slow spot.</td></tr>
+    <tr><td><code>Sort</code> + <code>Sort Method: external merge Disk</code></td><td>Sorted on disk. Add an index that provides the order, or more <code>work_mem</code>.</td></tr>
+    <tr><td><code>Rows Removed by Filter: 98000</code></td><td>Read then thrown away. An index on that predicate would help.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Option</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>EXPLAIN</code></td><td>Plan only, does not run. Safe for huge queries.</td></tr>
+    <tr><td><code>EXPLAIN ANALYZE</code></td><td><b>Runs the query</b> and shows real times. Wrap writes in <code>BEGIN; … ROLLBACK;</code>.</td></tr>
+    <tr><td><code>BUFFERS</code></td><td>Cache vs disk per node. Always add it.</td></tr>
+    <tr><td><code>SETTINGS</code></td><td>Shows non-default planner settings in effect.</td></tr>
+    <tr><td><code>FORMAT JSON</code></td><td>Paste into explain.dalibo.com or explain.depesz.com for a visual.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">-- fix bad estimates</span>
+<span class="kw">ANALYZE</span> orders;                                        <span class="cmt">-- refresh statistics now</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ALTER COLUMN</span> status <span class="kw">SET STATISTICS</span> <span class="num">1000</span>;  <span class="cmt">-- more histogram buckets for a skewed column</span>
+<span class="kw">CREATE STATISTICS</span> st_city_zip (dependencies) <span class="kw">ON</span> city, zip <span class="kw">FROM</span> addresses;  <span class="cmt">-- correlated columns</span>
+
+<span class="cmt">-- the single most useful extension: which queries eat the most total time</span>
+<span class="kw">CREATE EXTENSION</span> pg_stat_statements;
+<span class="kw">SELECT</span> calls, round(total_exec_time) <span class="kw">AS</span> ms, round(mean_exec_time,<span class="num">2</span>) <span class="kw">AS</span> avg_ms, left(query,<span class="num">90</span>)
+<span class="kw">FROM</span> pg_stat_statements <span class="kw">ORDER BY</span> total_exec_time <span class="kw">DESC LIMIT</span> <span class="num">15</span>;</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Reading cost as time</td><td>"cost 1200 = 1.2 seconds".</td><td>Cost is relative. Use <code>ANALYZE</code> for real ms.</td></tr>
+    <tr><td>Testing with tiny data</td><td>Plan looks great on 100 dev rows.</td><td>Planner changes plans with size. Test on production-like volumes (or copy stats).</td></tr>
+    <tr><td>Forcing plans</td><td><code>SET enable_seqscan = off</code> in app code.</td><td>Fix the root cause: index, statistics, query shape. Hints (<code>pg_hint_plan</code>) are a last resort.</td></tr>
+    <tr><td>Ignoring slow query log</td><td>Finding slow queries by user complaints.</td><td><code>log_min_duration_statement = 500ms</code>, <code>auto_explain</code>, and <code>pg_stat_statements</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The plan shows a Nested Loop with the inner Index Scan at <code>loops=250000</code>. Each loop is 0.02 ms. Is that fine?</div>
+  <details><summary>Reveal hint</summary><div class="hint">250,000 × 0.02 ms = 5 s. The planner expected far fewer outer rows (check its <code>rows=</code>). Fix the estimate (ANALYZE, statistics target) so it switches to a Hash Join, or rewrite so the outer side is filtered first.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Transactions and isolation levels</h2>
+<p>A transaction makes several statements act as one: all or nothing (<b>atomic</b>), rules kept (<b>consistent</b>), hidden from others until commit (<b>isolated</b>), safe once committed (<b>durable</b>). Isolation has levels, and the default is weaker than many people think.</p>
+<table>
+  <thead><tr><th>Level</th><th>What you can see</th><th>Anomalies still possible</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>READ COMMITTED</b> (default)</td><td>Each <i>statement</i> sees data committed before that statement started.</td><td>Non-repeatable read (same row, two values in one txn), phantom rows, lost update with read-then-write.</td><td>Most OLTP. Fast, few serialization errors.</td></tr>
+    <tr><td><b>REPEATABLE READ</b></td><td>The whole <i>transaction</i> sees one snapshot taken at its first statement.</td><td>Write skew (two txns each check a rule, both pass, together they break it). Updates of rows changed by others fail with a serialization error.</td><td>Reports that must be consistent; multi-step reads.</td></tr>
+    <tr><td><b>SERIALIZABLE</b></td><td>As if transactions ran one after another. Postgres uses SSI: detects dangerous patterns and aborts one.</td><td>None — but you <b>must retry</b> on error 40001.</td><td>Money, inventory, anything with invariants across rows.</td></tr>
+    <tr><td><i>READ UNCOMMITTED</i></td><td>Accepted but behaves as READ COMMITTED. No dirty reads in Postgres, ever.</td><td>—</td><td>—</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">BEGIN ISOLATION LEVEL</span> SERIALIZABLE;
+<span class="kw">SELECT</span> balance <span class="kw">FROM</span> accounts <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">UPDATE</span> accounts <span class="kw">SET</span> balance = balance - <span class="num">100</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">UPDATE</span> accounts <span class="kw">SET</span> balance = balance + <span class="num">100</span> <span class="kw">WHERE</span> id = <span class="num">2</span>;
+<span class="kw">COMMIT</span>;        <span class="cmt">-- may fail: ERROR 40001 could not serialize access → retry the whole transaction</span>
+
+<span class="cmt">-- the lost-update problem under READ COMMITTED, and three fixes</span>
+<span class="cmt">-- bad: read, compute in app, write</span>
+<span class="kw">SELECT</span> qty <span class="kw">FROM</span> stock <span class="kw">WHERE</span> sku = <span class="str">'A'</span>;      <span class="cmt">-- 10   (another txn also reads 10)</span>
+<span class="kw">UPDATE</span> stock <span class="kw">SET</span> qty = <span class="num">9</span> <span class="kw">WHERE</span> sku = <span class="str">'A'</span>;    <span class="cmt">-- both write 9; one decrement lost</span>
+<span class="cmt">-- fix 1: atomic update</span>
+<span class="kw">UPDATE</span> stock <span class="kw">SET</span> qty = qty - <span class="num">1</span> <span class="kw">WHERE</span> sku = <span class="str">'A'</span> <span class="kw">AND</span> qty &gt; <span class="num">0</span> <span class="kw">RETURNING</span> qty;
+<span class="cmt">-- fix 2: pessimistic lock</span>
+<span class="kw">SELECT</span> qty <span class="kw">FROM</span> stock <span class="kw">WHERE</span> sku = <span class="str">'A'</span> <span class="kw">FOR UPDATE</span>;   <span class="cmt">-- others wait here until you commit</span>
+<span class="cmt">-- fix 3: optimistic lock (what JPA @Version does)</span>
+<span class="kw">UPDATE</span> stock <span class="kw">SET</span> qty = <span class="num">9</span>, version = version + <span class="num">1</span> <span class="kw">WHERE</span> sku = <span class="str">'A'</span> <span class="kw">AND</span> version = <span class="num">7</span>;   <span class="cmt">-- 0 rows updated → someone else won, retry</span></pre>
+<table>
+  <thead><tr><th>Statement</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>BEGIN</code> / <code>COMMIT</code> / <code>ROLLBACK</code></td><td>Start / save / discard. Without <code>BEGIN</code>, each statement is its own transaction (autocommit).</td></tr>
+    <tr><td><code>SAVEPOINT sp; … ROLLBACK TO sp;</code></td><td>Undo part of a transaction. Note: after any error, the whole txn is aborted until you rollback (to a savepoint or fully).</td></tr>
+    <tr><td><code>SET TRANSACTION ISOLATION LEVEL …</code></td><td>Must be the first statement in the transaction.</td></tr>
+    <tr><td><code>SELECT … FOR UPDATE</code> / <code>FOR SHARE</code></td><td>Row locks: exclusive / shared. <code>FOR NO KEY UPDATE</code> is lighter when you won't change the key.</td></tr>
+    <tr><td><code>SELECT … FOR UPDATE SKIP LOCKED</code></td><td>Take rows nobody else holds — perfect for job queues.</td></tr>
+    <tr><td><code>SELECT … FOR UPDATE NOWAIT</code></td><td>Error instead of waiting.</td></tr>
+    <tr><td><code>SET idle_in_transaction_session_timeout = '30s'</code></td><td>Kill sessions that opened a txn and went quiet — the #1 cause of lock pile-ups and VACUUM blocking.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Read-modify-write</td><td>Load in Java, change, save — under READ COMMITTED two users overwrite each other.</td><td>Atomic SQL (<code>SET x = x - 1</code>), <code>FOR UPDATE</code>, or a version column with retry.</td></tr>
+    <tr><td>Long transactions</td><td>Open a txn, call a payment API (3 s), then commit. Locks held and VACUUM blocked the whole time.</td><td>Do external calls outside the transaction. Transactions should last milliseconds.</td></tr>
+    <tr><td>No retry on 40001</td><td>Using SERIALIZABLE and surfacing serialization errors to users.</td><td>Retry loop (3 tries with backoff). Spring: <code>@Retryable(retryFor = CannotSerializeTransactionException.class)</code>.</td></tr>
+    <tr><td>Assuming REPEATABLE READ is enough</td><td>"Check balance ≥ 0 for both accounts, then withdraw" — write skew lets both pass.</td><td>SERIALIZABLE, or lock the rows you base the decision on.</td></tr>
+    <tr><td>Continuing after an error</td><td>Catching an SQL error mid-transaction and running more statements → "current transaction is aborted".</td><td>Rollback (to a savepoint) first.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Job queue in pure SQL:</b> <code>UPDATE jobs SET state='running', worker=$1 WHERE id = (SELECT id FROM jobs WHERE state='queued' ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING *;</code> — safe with many workers, no external queue needed for modest volumes.</div>
+<div class="tricky">
+  <div class="q">Q. Under READ COMMITTED you run <code>SELECT count(*) FROM t</code> twice in one transaction and get different numbers. Bug?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. READ COMMITTED takes a fresh snapshot per <i>statement</i>, so commits by others between your two selects are visible. If you need a stable view, use REPEATABLE READ for that transaction.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. MVCC, VACUUM, bloat, and transaction ID wraparound</h2>
+<table>
+  <thead><tr><th>Term</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Tuple</b></td><td>One row <i>version</i>. Each has hidden columns <code>xmin</code> (txn that created it) and <code>xmax</code> (txn that deleted/updated it).</td></tr>
+    <tr><td><b>Snapshot</b></td><td>"Which transaction IDs were committed when I started." Decides which tuple versions you see.</td></tr>
+    <tr><td><b>Dead tuple</b></td><td>A version no running transaction can see any more. Pure waste until vacuumed.</td></tr>
+    <tr><td><b>VACUUM</b></td><td>Marks dead tuples' space reusable, updates the visibility map (for index-only scans), freezes old tuples. Does <b>not</b> shrink the file.</td></tr>
+    <tr><td><b>VACUUM FULL</b></td><td>Rewrites the table into a new file, returns space to the OS. Takes an exclusive lock — avoid on live tables; use <code>pg_repack</code>.</td></tr>
+    <tr><td><b>ANALYZE</b></td><td>Refreshes planner statistics. Autovacuum does it too.</td></tr>
+    <tr><td><b>Bloat</b></td><td>Table/index much larger than its live data because dead space is not reused fast enough.</td></tr>
+    <tr><td><b>HOT update</b></td><td>Heap-Only Tuple: new version on the same page and no indexed column changed → no index writes. Keep <code>fillfactor</code> &lt; 100 on hot tables to allow it.</td></tr>
+    <tr><td><b>XID wraparound</b></td><td>Transaction IDs are 32-bit. Very old unfrozen tuples would "flip" to the future; Postgres forces an aggressive vacuum, and eventually <b>refuses writes</b>. Autovacuum prevents it — unless blocked.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">-- how bloated / how far behind?</span>
+<span class="kw">SELECT</span> relname, n_live_tup, n_dead_tup,
+       round(<span class="num">100.0</span> * n_dead_tup / <span class="fn">greatest</span>(n_live_tup,<span class="num">1</span>), <span class="num">1</span>) <span class="kw">AS</span> dead_pct,
+       last_autovacuum, last_autoanalyze
+<span class="kw">FROM</span> pg_stat_user_tables <span class="kw">ORDER BY</span> n_dead_tup <span class="kw">DESC LIMIT</span> <span class="num">10</span>;
+
+<span class="cmt">-- wraparound danger (age close to 2 billion = emergency; alert at ~ 500M)</span>
+<span class="kw">SELECT</span> datname, age(datfrozenxid) <span class="kw">FROM</span> pg_database <span class="kw">ORDER BY</span> <span class="num">2</span> <span class="kw">DESC</span>;
+
+<span class="cmt">-- what blocks vacuum: long transactions and idle-in-transaction sessions</span>
+<span class="kw">SELECT</span> pid, state, now() - xact_start <span class="kw">AS</span> age, left(query,<span class="num">60</span>)
+<span class="kw">FROM</span> pg_stat_activity <span class="kw">WHERE</span> xact_start <span class="kw">IS NOT NULL ORDER BY</span> xact_start <span class="kw">LIMIT</span> <span class="num">5</span>;
+
+<span class="cmt">-- make autovacuum visit a hot table sooner (defaults: 20% of rows + 50)</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">SET</span> (autovacuum_vacuum_scale_factor = <span class="num">0.02</span>, autovacuum_vacuum_threshold = <span class="num">1000</span>,
+                        autovacuum_analyze_scale_factor = <span class="num">0.01</span>);
+<span class="kw">VACUUM</span> (<span class="kw">VERBOSE</span>, <span class="kw">ANALYZE</span>) orders;                 <span class="cmt">-- manual, online, no exclusive lock</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Turning autovacuum off</td><td>"It slows my batch job" → off for months → bloat and wraparound shutdown.</td><td>Never off. Tune per-table thresholds; raise <code>autovacuum_vacuum_cost_limit</code> so it keeps up.</td></tr>
+    <tr><td>Giant delete</td><td><code>DELETE FROM events WHERE created_at &lt; …</code> on 500M rows: hours of dead tuples, WAL flood.</td><td>Partition by time and <code>DROP</code> old partitions (Section 6), or delete in batches of 10k with a pause.</td></tr>
+    <tr><td>Replica holding back vacuum</td><td>Long reports on a replica with <code>hot_standby_feedback=on</code> keep dead tuples alive on the primary.</td><td>Know the trade-off; set <code>max_standby_streaming_delay</code> or run heavy reports off a snapshot.</td></tr>
+    <tr><td>Counting rows</td><td><code>SELECT count(*)</code> on a 1B-row table for a dashboard.</td><td>MVCC means a full scan. Use <code>pg_class.reltuples</code> (estimate) or a counter table.</td></tr>
+    <tr><td>Queue tables</td><td>Insert + update + delete millions of rows a day in one table → index bloat.</td><td>Aggressive autovacuum settings, <code>fillfactor=70</code>, periodic <code>REINDEX CONCURRENTLY</code>; or a real queue.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You deleted 90% of a 100 GB table and ran <code>VACUUM</code>. Disk usage is still 100 GB. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Plain VACUUM only marks space inside the file as free for reuse; it releases the file tail only if the last pages are empty. To return space to the OS you need <code>VACUUM FULL</code> (exclusive lock) or <code>pg_repack</code> (online). Better: design so you drop partitions instead of deleting.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Locking and deadlocks</h2>
+<table>
+  <thead><tr><th>Lock</th><th>Taken by</th><th>Blocks</th></tr></thead>
+  <tbody>
+    <tr><td><b>Row lock</b> (FOR UPDATE / UPDATE / DELETE)</td><td>Writes to that row</td><td>Other writers of the same row. Readers are <b>never</b> blocked (MVCC).</td></tr>
+    <tr><td><b>ACCESS SHARE</b></td><td><code>SELECT</code></td><td>Only ACCESS EXCLUSIVE (DDL like DROP, most ALTER TABLE).</td></tr>
+    <tr><td><b>ROW EXCLUSIVE</b></td><td><code>INSERT/UPDATE/DELETE</code> (table level)</td><td>DDL and <code>CREATE INDEX</code> (non-concurrent).</td></tr>
+    <tr><td><b>SHARE</b></td><td><code>CREATE INDEX</code> (non-concurrent)</td><td>Writes to the table.</td></tr>
+    <tr><td><b>ACCESS EXCLUSIVE</b></td><td><code>DROP</code>, <code>TRUNCATE</code>, <code>VACUUM FULL</code>, many <code>ALTER TABLE</code>, <code>LOCK TABLE</code></td><td>Everything, even SELECT.</td></tr>
+    <tr><td><b>Advisory lock</b></td><td><code>pg_advisory_xact_lock(key)</code> — app-defined</td><td>Other sessions asking for the same key. For "only one worker does X".</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">-- who is waiting on whom</span>
+<span class="kw">SELECT</span> a.pid, a.state, a.wait_event_type, left(a.query,<span class="num">50</span>) <span class="kw">AS</span> query,
+       pg_blocking_pids(a.pid) <span class="kw">AS</span> blocked_by
+<span class="kw">FROM</span> pg_stat_activity a <span class="kw">WHERE</span> cardinality(pg_blocking_pids(a.pid)) &gt; <span class="num">0</span>;
+
+<span class="kw">SELECT</span> pg_cancel_backend(<span class="num">12345</span>);     <span class="cmt">-- stop the query</span>
+<span class="kw">SELECT</span> pg_terminate_backend(<span class="num">12345</span>);  <span class="cmt">-- kill the session</span>
+
+<span class="cmt">-- safe DDL on a busy table: never wait forever for the lock</span>
+<span class="kw">SET</span> lock_timeout = <span class="str">'3s'</span>;
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ADD COLUMN</span> note text;                     <span class="cmt">-- instant (no default rewrite since PG 11)</span>
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ADD CONSTRAINT</span> fk_cust <span class="kw">FOREIGN KEY</span> (customer_id) <span class="kw">REFERENCES</span> customers <span class="kw">NOT VALID</span>;
+<span class="kw">ALTER TABLE</span> orders <span class="kw">VALIDATE CONSTRAINT</span> fk_cust;            <span class="cmt">-- validation takes only a weak lock</span>
+
+<span class="cmt">-- one-at-a-time job across many app instances</span>
+<span class="kw">SELECT</span> pg_try_advisory_lock(<span class="fn">hashtext</span>(<span class="str">'nightly-report'</span>));  <span class="cmt">-- true = you got it; false = someone else runs it</span></pre>
+<h3>Deadlocks</h3>
+<p>Transaction A locks row 1 then wants row 2; B locks row 2 then wants row 1. Postgres detects this after <code>deadlock_timeout</code> (1 s) and kills one with <code>ERROR 40P01</code>. The other proceeds.</p>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Lock order</td><td>Code path 1 updates account A then B; path 2 updates B then A.</td><td>Always lock in a fixed order (e.g. by primary key ascending). <code>SELECT … ORDER BY id FOR UPDATE</code>.</td></tr>
+    <tr><td>Big updates</td><td><code>UPDATE … WHERE status='X'</code> touching 1M rows while users edit single rows.</td><td>Batches in key order; off-peak.</td></tr>
+    <tr><td>DDL in peak</td><td><code>ALTER TABLE</code> waits for a lock; meanwhile every new query queues behind it → outage.</td><td><code>lock_timeout</code> + retry; <code>CONCURRENTLY</code>; <code>NOT VALID</code> + <code>VALIDATE</code>; add columns without volatile defaults.</td></tr>
+    <tr><td>FK without index</td><td>Deleting a parent row holds locks while seq-scanning children.</td><td>Index FK columns.</td></tr>
+    <tr><td>Treating deadlock as a bug to catch</td><td>Catch 40P01 and give up.</td><td>Deadlocks can be made rare, not impossible. Retry the transaction.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Which ALTERs are cheap?</b> Add nullable column, add column with constant default (PG 11+), drop column (marks it hidden), rename, add <code>NOT VALID</code> constraint: fast. Change column type, add <code>NOT NULL</code> to a big table (PG &lt; 12 without a check constraint), set a volatile default: table rewrite — plan a window.</div>
+<div class="tricky">
+  <div class="q">Q. A plain <code>SELECT</code> is stuck for minutes. Postgres readers never block… so what is happening?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Readers do not block on <i>rows</i>, but a SELECT needs an ACCESS SHARE lock on the table, and something is holding (or waiting for) ACCESS EXCLUSIVE — typically an <code>ALTER TABLE</code> or <code>VACUUM FULL</code> that is itself queued behind an idle-in-transaction session. <code>pg_blocking_pids</code> will show the chain.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Data types worth knowing — JSONB, arrays, UUID, ranges, enums, time</h2>
+<table>
+  <thead><tr><th>Type</th><th>Use</th><th>Avoid / note</th></tr></thead>
+  <tbody>
+    <tr><td><code>bigint</code> / <code>bigint GENERATED ALWAYS AS IDENTITY</code></td><td>Primary keys. <code>IDENTITY</code> is the SQL-standard replacement for <code>serial</code>.</td><td><code>int</code> PKs overflow at 2.1 billion — it happens.</td></tr>
+    <tr><td><code>uuid</code></td><td>Globally unique ids; safe to generate in the app. <code>gen_random_uuid()</code> built in.</td><td>Random v4 UUIDs scatter B-tree inserts (slower, bigger). Prefer time-ordered UUIDv7 if you can.</td></tr>
+    <tr><td><code>text</code></td><td>All strings. <code>varchar(n)</code> only when the limit is a real rule.</td><td><code>char(n)</code> pads with spaces — never.</td></tr>
+    <tr><td><code>numeric(p,s)</code></td><td>Money and anything exact.</td><td><code>float</code>/<code>double</code> for money is a bug.</td></tr>
+    <tr><td><code>timestamptz</code></td><td>Any moment in time. Stored as UTC, shown in session time zone.</td><td><code>timestamp</code> (without tz) silently ignores zones. Java: <code>Instant</code>/<code>OffsetDateTime</code> ↔ <code>timestamptz</code>.</td></tr>
+    <tr><td><code>date</code>, <code>interval</code></td><td>Calendar dates; durations (<code>'1 day'</code>, <code>'90 minutes'</code>).</td><td>—</td></tr>
+    <tr><td><code>boolean</code></td><td>true/false/null.</td><td>Not <code>char(1) 'Y'/'N'</code>.</td></tr>
+    <tr><td><code>jsonb</code></td><td>Semi-structured data, flexible attributes. Indexable with GIN.</td><td><code>json</code> (no b) keeps text as-is; slower, not indexable — rarely what you want.</td></tr>
+    <tr><td><code>text[]</code>, <code>int[]</code></td><td>Small lists (tags). GIN-indexable with <code>@&gt;</code>, <code>&amp;&amp;</code>.</td><td>Not a replacement for a child table when you query/join by element often.</td></tr>
+    <tr><td><code>tstzrange</code>, <code>int4range</code></td><td>Periods; exclusion constraints prevent overlaps.</td><td>—</td></tr>
+    <tr><td><code>enum</code> type</td><td>Fixed small set.</td><td>Adding values is easy (<code>ALTER TYPE … ADD VALUE</code>), removing is not. Many teams prefer <code>text</code> + CHECK.</td></tr>
+    <tr><td><code>bytea</code></td><td>Small binaries.</td><td>Big files belong in object storage with a path in the DB.</td></tr>
+    <tr><td><code>inet</code>, <code>cidr</code>, <code>macaddr</code></td><td>Network addresses with real operators.</td><td>—</td></tr>
+    <tr><td>Generated columns</td><td><code>total numeric GENERATED ALWAYS AS (qty * price) STORED</code></td><td>Indexable, always consistent.</td></tr>
+  </tbody>
+</table>
+<h3>JSONB in practice</h3>
+<pre><span class="kw">CREATE TABLE</span> products (
+  id       bigint <span class="kw">GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  name     text <span class="kw">NOT NULL</span>,
+  attrs    jsonb <span class="kw">NOT NULL DEFAULT</span> <span class="str">'{}'</span>
+);
+<span class="kw">CREATE INDEX</span> <span class="kw">ON</span> products <span class="kw">USING</span> gin (attrs jsonb_path_ops);         <span class="cmt">-- fast @&gt; containment</span>
+<span class="kw">CREATE INDEX</span> <span class="kw">ON</span> products ((attrs-&gt;&gt;<span class="str">'brand'</span>));                      <span class="cmt">-- B-tree on one key for = and ORDER BY</span>
+
+<span class="kw">INSERT INTO</span> products (name, attrs) <span class="kw">VALUES</span> (<span class="str">'Phone'</span>, <span class="str">'{"brand":"Acme","color":"red","specs":{"ram_gb":8}}'</span>);
+
+<span class="kw">SELECT</span> attrs-&gt;&gt;<span class="str">'brand'</span>                 <span class="kw">AS</span> brand,            <span class="cmt">-- -&gt;&gt; text, -&gt; jsonb</span>
+       (attrs-&gt;<span class="str">'specs'</span>-&gt;&gt;<span class="str">'ram_gb'</span>)::int <span class="kw">AS</span> ram,
+       attrs #&gt;&gt; <span class="str">'{specs,ram_gb}'</span>      <span class="kw">AS</span> ram_path
+<span class="kw">FROM</span> products
+<span class="kw">WHERE</span> attrs @&gt; <span class="str">'{"color":"red"}'</span>                                   <span class="cmt">-- contains (uses GIN)</span>
+  <span class="kw">AND</span> attrs ? <span class="str">'brand'</span>                                             <span class="cmt">-- key exists</span>
+  <span class="kw">AND</span> jsonb_path_exists(attrs, <span class="str">'$.specs.ram_gb ? (@ &gt;= 8)'</span>);        <span class="cmt">-- SQL/JSON path</span>
+
+<span class="kw">UPDATE</span> products <span class="kw">SET</span> attrs = attrs || <span class="str">'{"color":"blue"}'</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;     <span class="cmt">-- merge / overwrite keys</span>
+<span class="kw">UPDATE</span> products <span class="kw">SET</span> attrs = attrs - <span class="str">'color'</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;                <span class="cmt">-- remove key</span>
+<span class="kw">UPDATE</span> products <span class="kw">SET</span> attrs = jsonb_set(attrs, <span class="str">'{specs,ram_gb}'</span>, <span class="str">'16'</span>) <span class="kw">WHERE</span> id = <span class="num">1</span>;
+
+<span class="cmt">-- explode an array of objects into rows</span>
+<span class="kw">SELECT</span> p.id, e-&gt;&gt;<span class="str">'sku'</span> <span class="kw">FROM</span> orders p, jsonb_array_elements(p.payload-&gt;<span class="str">'items'</span>) e;
+<span class="cmt">-- build JSON from rows (great for API responses)</span>
+<span class="kw">SELECT</span> jsonb_build_object(<span class="str">'id'</span>, id, <span class="str">'name'</span>, name) <span class="kw">FROM</span> products;
+<span class="kw">SELECT</span> jsonb_agg(jsonb_build_object(<span class="str">'id'</span>, id)) <span class="kw">FROM</span> products;</pre>
+<h3>Other handy syntax</h3>
+<pre><span class="cmt">-- UPSERT</span>
+<span class="kw">INSERT INTO</span> settings (key, value) <span class="kw">VALUES</span> (<span class="str">'theme'</span>, <span class="str">'dark'</span>)
+<span class="kw">ON CONFLICT</span> (key) <span class="kw">DO UPDATE SET</span> value = <span class="kw">EXCLUDED</span>.value, updated_at = <span class="fn">now</span>()
+<span class="kw">RETURNING</span> *;
+<span class="kw">INSERT INTO</span> seen (id) <span class="kw">VALUES</span> (<span class="num">7</span>) <span class="kw">ON CONFLICT DO NOTHING</span>;
+
+<span class="cmt">-- arrays</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> posts <span class="kw">WHERE</span> tags @&gt; <span class="kw">ARRAY</span>[<span class="str">'sql'</span>];         <span class="cmt">-- contains</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> posts <span class="kw">WHERE</span> tags &amp;&amp; <span class="kw">ARRAY</span>[<span class="str">'sql'</span>,<span class="str">'java'</span>];  <span class="cmt">-- overlaps</span>
+<span class="kw">SELECT</span> id <span class="kw">FROM</span> t <span class="kw">WHERE</span> id = <span class="kw">ANY</span>(<span class="str">$1</span>);                     <span class="cmt">-- pass a Java array/List instead of IN (?,?,?)</span>
+<span class="kw">SELECT</span> unnest(<span class="kw">ARRAY</span>[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>]);
+
+<span class="cmt">-- no overlapping bookings, enforced by the database</span>
+<span class="kw">CREATE EXTENSION</span> btree_gist;
+<span class="kw">ALTER TABLE</span> bookings <span class="kw">ADD CONSTRAINT</span> no_overlap
+  <span class="kw">EXCLUDE USING</span> gist (room_id <span class="kw">WITH</span> =, during <span class="kw">WITH</span> &amp;&amp;);
+
+<span class="cmt">-- LATERAL: top-3 orders per customer</span>
+<span class="kw">SELECT</span> c.id, o.* <span class="kw">FROM</span> customers c
+<span class="kw">CROSS JOIN LATERAL</span> (<span class="kw">SELECT</span> * <span class="kw">FROM</span> orders <span class="kw">WHERE</span> customer_id = c.id <span class="kw">ORDER BY</span> created_at <span class="kw">DESC LIMIT</span> <span class="num">3</span>) o;
+
+<span class="cmt">-- DISTINCT ON: latest row per key</span>
+<span class="kw">SELECT DISTINCT ON</span> (device_id) * <span class="kw">FROM</span> readings <span class="kw">ORDER BY</span> device_id, ts <span class="kw">DESC</span>;
+
+<span class="cmt">-- FILTER: several conditional counts in one pass</span>
+<span class="kw">SELECT</span> <span class="fn">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> status=<span class="str">'PAID'</span>) <span class="kw">AS</span> paid, <span class="fn">count</span>(*) <span class="kw">FILTER</span> (<span class="kw">WHERE</span> status=<span class="str">'NEW'</span>) <span class="kw">AS</span> new <span class="kw">FROM</span> orders;
+
+<span class="cmt">-- full-text search</span>
+<span class="kw">ALTER TABLE</span> articles <span class="kw">ADD COLUMN</span> tsv tsvector <span class="kw">GENERATED ALWAYS AS</span> (to_tsvector(<span class="str">'english'</span>, title || <span class="str">' '</span> || body)) <span class="kw">STORED</span>;
+<span class="kw">CREATE INDEX</span> <span class="kw">ON</span> articles <span class="kw">USING</span> gin (tsv);
+<span class="kw">SELECT</span> title <span class="kw">FROM</span> articles <span class="kw">WHERE</span> tsv @@ websearch_to_tsquery(<span class="str">'english'</span>, <span class="str">'postgres index -mysql'</span>)
+<span class="kw">ORDER BY</span> ts_rank(tsv, websearch_to_tsquery(<span class="str">'english'</span>, <span class="str">'postgres index'</span>)) <span class="kw">DESC</span>;</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>JSONB for everything</td><td>One <code>data jsonb</code> column holding the whole entity; no constraints, no FKs, slow updates (whole document rewritten).</td><td>Columns for what you query, join, or validate; JSONB only for truly variable attributes.</td></tr>
+    <tr><td>Time zones</td><td><code>timestamp</code> columns + server in IST + app in UTC → off by 5:30.</td><td><code>timestamptz</code> everywhere; store UTC; convert at the edge.</td></tr>
+    <tr><td>IN with 5,000 values</td><td>A 5,000-parameter <code>IN (?,?,…)</code>: plan cache misses, parameter limits.</td><td><code>= ANY(?)</code> with an array parameter, or a temp table / <code>VALUES</code> join.</td></tr>
+    <tr><td>Hand-written upsert</td><td>SELECT then INSERT or UPDATE → race condition, duplicate key errors.</td><td><code>INSERT … ON CONFLICT</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>WHERE attrs-&gt;&gt;'brand' = 'Acme'</code> is slow despite a GIN index on <code>attrs</code>. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">GIN with <code>jsonb_path_ops</code> only serves containment operators (<code>@&gt;</code>, <code>@?</code>, <code>@@</code>), not <code>-&gt;&gt;</code> equality. Either rewrite as <code>attrs @&gt; '{"brand":"Acme"}'</code>, or add a B-tree expression index on <code>(attrs-&gt;&gt;'brand')</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Constraints, schema design, partitioning</h2>
+<table>
+  <thead><tr><th>Constraint</th><th>Does</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><code>PRIMARY KEY</code></td><td>Unique + not null + index.</td><td>One per table. <code>bigint identity</code> or <code>uuid</code>.</td></tr>
+    <tr><td><code>FOREIGN KEY … ON DELETE CASCADE | RESTRICT | SET NULL</code></td><td>Child rows must point at a parent.</td><td>Index the FK column. <code>DEFERRABLE INITIALLY DEFERRED</code> lets you insert in any order inside a txn.</td></tr>
+    <tr><td><code>UNIQUE</code></td><td>No duplicates (nulls are distinct unless <code>NULLS NOT DISTINCT</code>, PG 15+).</td><td>Creates an index.</td></tr>
+    <tr><td><code>CHECK (qty &gt; 0)</code></td><td>Row-level rule.</td><td>Cheap. Put business invariants here, not only in Java.</td></tr>
+    <tr><td><code>NOT NULL</code></td><td>Required.</td><td>Default to NOT NULL; allow null on purpose only.</td></tr>
+    <tr><td><code>EXCLUDE</code></td><td>No two rows "overlap" by an operator.</td><td>Ranges, scheduling.</td></tr>
+  </tbody>
+</table>
+<h3>Partitioning (declarative)</h3>
+<pre><span class="kw">CREATE TABLE</span> events (
+  id         bigint <span class="kw">GENERATED ALWAYS AS IDENTITY</span>,
+  created_at timestamptz <span class="kw">NOT NULL</span>,
+  payload    jsonb,
+  <span class="kw">PRIMARY KEY</span> (id, created_at)                       <span class="cmt">-- the partition key must be part of any unique key</span>
+) <span class="kw">PARTITION BY RANGE</span> (created_at);
+
+<span class="kw">CREATE TABLE</span> events_2026_10 <span class="kw">PARTITION OF</span> events <span class="kw">FOR VALUES FROM</span> (<span class="str">'2026-10-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-11-01'</span>);
+<span class="kw">CREATE TABLE</span> events_2026_11 <span class="kw">PARTITION OF</span> events <span class="kw">FOR VALUES FROM</span> (<span class="str">'2026-11-01'</span>) <span class="kw">TO</span> (<span class="str">'2026-12-01'</span>);
+<span class="kw">CREATE TABLE</span> events_default <span class="kw">PARTITION OF</span> events <span class="kw">DEFAULT</span>;    <span class="cmt">-- catch-all so inserts never fail</span>
+
+<span class="kw">CREATE INDEX</span> <span class="kw">ON</span> events (created_at);                        <span class="cmt">-- created on every partition automatically</span>
+
+<span class="cmt">-- retention: instant, no dead tuples, no vacuum storm</span>
+<span class="kw">ALTER TABLE</span> events <span class="kw">DETACH PARTITION</span> events_2026_10 <span class="kw">CONCURRENTLY</span>;
+<span class="kw">DROP TABLE</span> events_2026_10;</pre>
+<table>
+  <thead><tr><th>Strategy</th><th>Split by</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>RANGE</b></td><td>Time, id ranges</td><td>Logs, events, orders by month. Retention by DROP.</td></tr>
+    <tr><td><b>LIST</b></td><td>Discrete values</td><td>Region, tenant, country.</td></tr>
+    <tr><td><b>HASH</b></td><td><code>hash(key) % N</code></td><td>Spread a huge table evenly when no natural range exists.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Partitioning small tables</td><td>Partitioning a 2 GB table "for performance".</td><td>Partition when the table is tens of GB+, or when you need to drop old data fast. Each partition adds planning cost.</td></tr>
+    <tr><td>Queries without the key</td><td><code>WHERE user_id = 7</code> on a table partitioned by <code>created_at</code> → scans every partition.</td><td>Always include the partition key in hot queries, or partition by what you filter on.</td></tr>
+    <tr><td>Creating partitions by hand</td><td>Forgetting to make next month's partition → inserts fail at midnight.</td><td>A <code>DEFAULT</code> partition as a safety net plus <code>pg_partman</code> or a cron job to pre-create.</td></tr>
+    <tr><td>Soft deletes everywhere</td><td><code>deleted_at</code> on every table, every query must remember <code>WHERE deleted_at IS NULL</code>.</td><td>Only where you need recovery/audit; add a partial index <code>WHERE deleted_at IS NULL</code>; or move to an archive table.</td></tr>
+    <tr><td>EAV tables</td><td><code>entity_id, attribute, value</code> for everything.</td><td>Real columns; <code>jsonb</code> for the variable part.</td></tr>
+    <tr><td>Natural keys as PK</td><td>Email as primary key; user changes email → update 12 tables.</td><td>Surrogate <code>bigint</code>/<code>uuid</code> PK, unique constraint on the natural key.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Schema per tenant vs row per tenant:</b> few big tenants → separate schemas (easy isolation, painful migrations ×N). Many small tenants → a <code>tenant_id</code> column on every table, composite indexes led by it, and Row Level Security (<code>CREATE POLICY … USING (tenant_id = current_setting('app.tenant')::int)</code>) so a missing WHERE can never leak data.</div>
+<div class="tricky">
+  <div class="q">Q. Can a partitioned table have a unique constraint on <code>email</code> alone when partitioned by <code>created_at</code>?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. Unique constraints and primary keys must include all partition key columns, because each partition has its own index and Postgres cannot check uniqueness across them. Enforce global uniqueness in a separate non-partitioned table, or partition by that key.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Connections, pooling, and the Java side</h2>
+<table>
+  <thead><tr><th>Fact</th><th>Consequence</th></tr></thead>
+  <tbody>
+    <tr><td>Each connection = one backend process.</td><td>Connecting is slow (~ms) and memory-heavy. Never open a connection per request.</td></tr>
+    <tr><td><code>max_connections</code> (default 100) is a hard cap.</td><td>Too many app instances × pool size → "too many clients already".</td></tr>
+    <tr><td>Postgres is fastest with <b>few</b> active connections.</td><td>Sweet spot ≈ (CPU cores × 2) + disks. 500 active connections on 8 cores is slower than 20.</td></tr>
+    <tr><td>Idle connections still cost RAM and snapshot work.</td><td>Keep pools small; use a server-side pooler when you have many apps.</td></tr>
+  </tbody>
+</table>
+<h3>HikariCP (Spring Boot default)</h3>
+<pre><span class="kw">spring.datasource</span>:
+  <span class="kw">url</span>: <span class="str">jdbc:postgresql://db:5432/shop?reWriteBatchedInserts=true&amp;ApplicationName=shop-api</span>
+  <span class="kw">hikari</span>:
+    <span class="kw">maximum-pool-size</span>: <span class="num">10</span>            <span class="cmt"># per instance; 5 instances = 50 connections. Small is good.</span>
+    <span class="kw">minimum-idle</span>: <span class="num">10</span>                 <span class="cmt"># keep it equal to max: a fixed pool is predictable</span>
+    <span class="kw">connection-timeout</span>: <span class="num">3000</span>         <span class="cmt"># ms to wait for a free connection before failing fast</span>
+    <span class="kw">max-lifetime</span>: <span class="num">1800000</span>            <span class="cmt"># 30 min: recycle before any network/LB idle timeout</span>
+    <span class="kw">leak-detection-threshold</span>: <span class="num">20000</span>  <span class="cmt"># log a stack trace if a connection is held &gt; 20 s</span>
+    <span class="kw">data-source-properties</span>:
+      <span class="kw">socketTimeout</span>: <span class="num">30</span>              <span class="cmt"># seconds; a dead DB host no longer hangs threads forever</span></pre>
+<table>
+  <thead><tr><th>Pooler</th><th>Where</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>HikariCP</b></td><td>Inside each JVM</td><td>Always. Fast, well-defaulted.</td></tr>
+    <tr><td><b>PgBouncer</b></td><td>In front of Postgres</td><td>Many app instances / serverless. <code>transaction</code> pooling mode multiplexes 1,000 client connections onto 20 server ones. Breaks session features (prepared statements by name, <code>SET</code>, advisory session locks, LISTEN).</td></tr>
+    <tr><td><b>RDS Proxy / Cloud SQL Auth Proxy / Supavisor</b></td><td>Managed</td><td>Same idea, cloud-run.</td></tr>
+  </tbody>
+</table>
+<h3>JDBC / JPA details that matter</h3>
+<table>
+  <thead><tr><th>Topic</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td>Prepared statements</td><td>pgjdbc sends unnamed prepared statements; after 5 uses of the same SQL it switches to a server-side named one (<code>prepareThreshold</code>). Great for OLTP; with PgBouncer transaction mode set <code>prepareThreshold=0</code> or use PgBouncer ≥ 1.21.</td></tr>
+    <tr><td>Batching</td><td><code>reWriteBatchedInserts=true</code> turns 1,000 <code>INSERT</code>s into multi-row inserts. Hibernate: <code>hibernate.jdbc.batch_size=50</code>, <code>order_inserts=true</code>, and <b>SEQUENCE</b> ids (IDENTITY disables batching).</td></tr>
+    <tr><td>Fetch size</td><td>Default: whole result set into memory. For big reads set <code>fetchSize</code> (e.g. 1000) <i>and</i> run inside a transaction with autocommit off, or the driver ignores it. Stream with <code>Stream&lt;T&gt;</code> repository methods + <code>@QueryHints(fetchSize)</code>.</td></tr>
+    <tr><td>Type mapping</td><td><code>timestamptz</code> ↔ <code>OffsetDateTime</code>/<code>Instant</code>; <code>uuid</code> ↔ <code>UUID</code>; <code>jsonb</code> ↔ <code>String</code> or a mapped type (Hibernate 6 <code>@JdbcTypeCode(SqlTypes.JSON)</code>); <code>numeric</code> ↔ <code>BigDecimal</code>; arrays ↔ <code>String[]</code>/<code>List</code> with Hibernate 6.</td></tr>
+    <tr><td>Enums</td><td>Java enum → <code>@Enumerated(EnumType.STRING)</code> into <code>text</code> + CHECK, or Hibernate 6 <code>@JdbcTypeCode(SqlTypes.NAMED_ENUM)</code> for a PG enum.</td></tr>
+    <tr><td>Read replicas</td><td><code>@Transactional(readOnly = true)</code> + a routing DataSource (or driver <code>targetServerType=preferSecondary</code>) sends reads to replicas. Replica lag means "read your own write" can fail — route right-after-write reads to the primary.</td></tr>
+    <tr><td>Statement timeout</td><td><code>SET statement_timeout = '5s'</code> per role or in the JDBC URL <code>options=-c%20statement_timeout=5s</code>; Spring <code>@Transactional(timeout=5)</code> for the txn.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Pool too big</td><td><code>maximum-pool-size: 200</code> "so requests never wait".</td><td>10–20 per instance; requests queue briefly in Hikari instead of thrashing Postgres.</td></tr>
+    <tr><td>Connection held during I/O</td><td>Transaction open while calling a REST API or sending email.</td><td>Finish the DB work, commit, then call out. Hikari leak detection will show you where.</td></tr>
+    <tr><td>No timeouts</td><td>DB failover → every thread blocks forever on a half-open socket.</td><td><code>socketTimeout</code>, <code>connection-timeout</code>, <code>statement_timeout</code>, <code>lock_timeout</code>.</td></tr>
+    <tr><td>Loading everything</td><td><code>findAll()</code> on a 5M-row table into a List.</td><td>Paginate (keyset, not OFFSET for deep pages), stream with fetch size, or push the work into SQL.</td></tr>
+    <tr><td>OFFSET pagination</td><td><code>LIMIT 20 OFFSET 200000</code> reads and throws away 200k rows.</td><td>Keyset: <code>WHERE (created_at, id) &lt; (:lastTs, :lastId) ORDER BY created_at DESC, id DESC LIMIT 20</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Hikari says 10 connections, 5 pods, but Postgres shows 80 connections from the app. Where from?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Usual suspects: Flyway/Liquibase and Actuator health checks use the same pool (fine), but a second DataSource bean, a scheduled job with its own pool, or old pods still terminating all add up. <code>SELECT application_name, count(*) FROM pg_stat_activity GROUP BY 1</code> with distinct <code>ApplicationName</code> per component tells you who.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Migrations, roles, backups, replication</h2>
+<h3>Schema migrations (Flyway / Liquibase)</h3>
+<pre><span class="cmt">-- src/main/resources/db/migration/V7__orders_add_note.sql   (Flyway: V&lt;version&gt;__&lt;desc&gt;.sql)</span>
+<span class="kw">SET</span> lock_timeout = <span class="str">'5s'</span>;
+<span class="kw">ALTER TABLE</span> orders <span class="kw">ADD COLUMN</span> note text;
+<span class="kw">CREATE INDEX CONCURRENTLY IF NOT EXISTS</span> idx_orders_note <span class="kw">ON</span> orders (note);   <span class="cmt">-- needs a non-transactional migration file</span></pre>
+<table>
+  <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Migrations are append-only; never edit a run one.</td><td>Checksums fail and environments drift.</td></tr>
+    <tr><td>Expand → migrate → contract.</td><td>Add the new column/table, deploy code that writes both, backfill, switch reads, then drop the old. Zero-downtime and rollback-friendly.</td></tr>
+    <tr><td>Big backfills outside the migration tool.</td><td>A 2-hour UPDATE inside Flyway blocks start-up and holds locks. Run batched jobs instead.</td></tr>
+    <tr><td><code>CONCURRENTLY</code> cannot run in a transaction.</td><td>Flyway: name the file <code>V8__…</code> and add <code>-- flyway:executeInTransaction=false</code>, or use a Java migration.</td></tr>
+    <tr><td>Hibernate <code>ddl-auto=validate</code>.</td><td>Catches entity/schema mismatch at start-up without ever changing the DB.</td></tr>
+  </tbody>
+</table>
+<h3>Roles and permissions</h3>
+<pre><span class="kw">CREATE ROLE</span> shop_app <span class="kw">LOGIN PASSWORD</span> <span class="str">'…'</span>;
+<span class="kw">CREATE ROLE</span> shop_migrator <span class="kw">LOGIN PASSWORD</span> <span class="str">'…'</span>;                      <span class="cmt">-- owns the schema, runs Flyway</span>
+<span class="kw">GRANT USAGE ON SCHEMA</span> public <span class="kw">TO</span> shop_app;
+<span class="kw">GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA</span> public <span class="kw">TO</span> shop_app;
+<span class="kw">ALTER DEFAULT PRIVILEGES FOR ROLE</span> shop_migrator <span class="kw">IN SCHEMA</span> public
+  <span class="kw">GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO</span> shop_app;        <span class="cmt">-- future tables too</span>
+<span class="kw">ALTER ROLE</span> shop_app <span class="kw">SET</span> statement_timeout = <span class="str">'10s'</span>;
+<span class="kw">CREATE ROLE</span> analyst <span class="kw">LOGIN</span>; <span class="kw">GRANT</span> pg_read_all_data <span class="kw">TO</span> analyst;         <span class="cmt">-- PG 14+ built-in read-only</span></pre>
+<h3>Backups and replication</h3>
+<table>
+  <thead><tr><th>Tool</th><th>What</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><code>pg_dump -Fc shop &gt; shop.dump</code> / <code>pg_restore -d shop shop.dump</code></td><td>Logical dump of one DB (custom format, parallel restore with <code>-j</code>).</td><td>Small/medium DBs, copying to dev, upgrades.</td></tr>
+    <tr><td><code>pg_basebackup</code> + WAL archiving (<code>pgBackRest</code>, <code>WAL-G</code>, <code>barman</code>)</td><td>Physical copy + continuous WAL → <b>point-in-time recovery</b>.</td><td>Production. Restore to "5 minutes before the bad DELETE".</td></tr>
+    <tr><td>Streaming replication</td><td>Standby replays the primary's WAL. Sync or async.</td><td>HA (failover) and read scaling. Managed by Patroni, or your cloud.</td></tr>
+    <tr><td>Logical replication / CDC</td><td><code>CREATE PUBLICATION</code> / <code>SUBSCRIPTION</code>; Debezium reads the WAL into Kafka.</td><td>Cross-version upgrades, selective replication, event streams from table changes.</td></tr>
+    <tr><td><code>pg_upgrade --link</code></td><td>Major version upgrade in minutes.</td><td>Yearly.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>App as superuser</td><td>App connects as <code>postgres</code>.</td><td>Least-privilege role; separate migrator role; no superuser from apps.</td></tr>
+    <tr><td>Untested backups</td><td>Nightly dump that nobody ever restored.</td><td>Automated restore test; measure time-to-restore; PITR for prod.</td></tr>
+    <tr><td>Replica = backup</td><td>"We have a standby, so we are safe."</td><td>A standby replays your <code>DROP TABLE</code> within seconds. Backups + PITR are separate.</td></tr>
+    <tr><td>Reading right after writing on a replica</td><td>User saves, page reloads from the replica, data "missing".</td><td>Read-your-writes: route to primary for a few seconds after a write, or use sync replication for that path.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Flyway fails with "Migration checksum mismatch" on production. What happened and what do you do?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Someone edited an already-applied migration file. Do not edit production history: restore the file to its original content, and put the intended change in a new <code>V&lt;next&gt;__</code> migration. <code>flyway repair</code> only resyncs checksums when you are sure the DB really has the new content.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Server tuning — the handful of settings that matter</h2>
+<table>
+  <thead><tr><th>Setting</th><th>Default</th><th>Start here</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>shared_buffers</code></td><td>128 MB</td><td>25% of RAM</td><td>Postgres' page cache. More is not always better (double caching with the OS).</td></tr>
+    <tr><td><code>effective_cache_size</code></td><td>4 GB</td><td>50–75% of RAM</td><td>A <i>hint</i> to the planner about total cache (PG + OS). Too low → planner avoids indexes.</td></tr>
+    <tr><td><code>work_mem</code></td><td>4 MB</td><td>16–64 MB</td><td>Per sort/hash <i>per node per query</i>. 100 connections × 5 sorts × 64 MB can exhaust RAM. Raise per session for reports: <code>SET work_mem = '256MB'</code>.</td></tr>
+    <tr><td><code>maintenance_work_mem</code></td><td>64 MB</td><td>512 MB – 2 GB</td><td>For VACUUM, CREATE INDEX. Big = faster index builds.</td></tr>
+    <tr><td><code>max_connections</code></td><td>100</td><td>Keep low; use pooling</td><td>Each costs memory; planner and locks scale badly with thousands.</td></tr>
+    <tr><td><code>random_page_cost</code></td><td>4.0</td><td>1.1 on SSD</td><td>Relative cost of random I/O. Default assumes spinning disks → under-uses indexes on SSDs.</td></tr>
+    <tr><td><code>checkpoint_completion_target</code> / <code>max_wal_size</code></td><td>0.9 / 1 GB</td><td>0.9 / 4–16 GB</td><td>Spread checkpoints; fewer forced checkpoints on write-heavy loads.</td></tr>
+    <tr><td><code>wal_compression</code></td><td>off</td><td>on (lz4/zstd)</td><td>Smaller WAL, cheaper replication.</td></tr>
+    <tr><td><code>synchronous_commit</code></td><td>on</td><td>on (off only for data you can lose)</td><td><code>off</code> = commits return before WAL hits disk; up to ~600 ms of loss on crash, big throughput win for logs/metrics.</td></tr>
+    <tr><td><code>autovacuum_vacuum_cost_limit</code></td><td>200</td><td>1000–2000</td><td>Lets autovacuum work faster. Pair with more <code>autovacuum_max_workers</code> on big servers.</td></tr>
+    <tr><td><code>log_min_duration_statement</code></td><td>-1</td><td>500 ms (prod), 0 (dev briefly)</td><td>Slow query log.</td></tr>
+    <tr><td><code>idle_in_transaction_session_timeout</code></td><td>0</td><td>30s–5min</td><td>Kills forgotten transactions.</td></tr>
+    <tr><td><code>statement_timeout</code></td><td>0</td><td>Per role (e.g. 10s app, none for migrator)</td><td>No runaway queries.</td></tr>
+    <tr><td><code>shared_preload_libraries</code></td><td>—</td><td><code>pg_stat_statements</code></td><td>Needs a restart; the best observability you can get.</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">SHOW</span> shared_buffers;                                 <span class="cmt">-- read one</span>
+<span class="kw">SELECT</span> name, setting, unit, source <span class="kw">FROM</span> pg_settings <span class="kw">WHERE</span> source &lt;&gt; <span class="str">'default'</span>;   <span class="cmt">-- everything you changed</span>
+<span class="kw">ALTER SYSTEM SET</span> work_mem = <span class="str">'32MB'</span>;  <span class="kw">SELECT</span> pg_reload_conf();   <span class="cmt">-- most settings: no restart</span>
+
+<span class="cmt">-- cache hit ratio (want &gt; 99% for OLTP)</span>
+<span class="kw">SELECT</span> round(<span class="num">100.0</span> * sum(blks_hit) / <span class="fn">greatest</span>(sum(blks_hit) + sum(blks_read),<span class="num">1</span>), <span class="num">2</span>) <span class="kw">AS</span> hit_pct <span class="kw">FROM</span> pg_stat_database;
+<span class="cmt">-- biggest tables and indexes</span>
+<span class="kw">SELECT</span> relname, pg_size_pretty(pg_total_relation_size(oid)) <span class="kw">FROM</span> pg_class <span class="kw">WHERE</span> relkind = <span class="str">'r'</span> <span class="kw">ORDER BY</span> pg_total_relation_size(oid) <span class="kw">DESC LIMIT</span> <span class="num">10</span>;
+<span class="cmt">-- current activity</span>
+<span class="kw">SELECT</span> state, count(*) <span class="kw">FROM</span> pg_stat_activity <span class="kw">GROUP BY</span> <span class="num">1</span>;</pre>
+<div class="tips"><b>Order of attack when the DB is slow:</b> 1) <code>pg_stat_statements</code> — which queries eat total time; 2) <code>EXPLAIN (ANALYZE, BUFFERS)</code> the top 3; 3) fix indexes / statistics / query shape; 4) check locks and idle-in-transaction; 5) check autovacuum is keeping up; 6) only then touch memory settings. Use <a href="https://pgtune.leopard.in.ua">pgtune</a> for a first config.</div>
+<div class="tricky">
+  <div class="q">Q. You set <code>work_mem = '1GB'</code> globally to stop sorts spilling to disk. Next morning the server was OOM-killed. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint"><code>work_mem</code> is per sort/hash operation, per query, per connection. A report with 4 hash joins on 50 connections can ask for 200 GB. Keep the global value modest and raise it only in the sessions that need it (<code>SET LOCAL work_mem</code> inside the reporting transaction).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. psql and quick reference</h2>
+<table>
+  <thead><tr><th>psql</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>psql "postgresql://user@host:5432/db"</code></td><td>Connect (URL form). <code>PGPASSWORD</code> env or <code>~/.pgpass</code> for the password.</td></tr>
+    <tr><td><code>\l</code> · <code>\c db</code> · <code>\dn</code></td><td>List databases · switch · list schemas.</td></tr>
+    <tr><td><code>\dt</code> · <code>\d orders</code> · <code>\d+ orders</code></td><td>List tables · describe (columns, indexes, FKs) · with sizes and storage.</td></tr>
+    <tr><td><code>\di</code> · <code>\df</code> · <code>\dv</code> · <code>\du</code></td><td>Indexes · functions · views · roles.</td></tr>
+    <tr><td><code>\x</code></td><td>Expanded (vertical) output. <code>\x auto</code>.</td></tr>
+    <tr><td><code>\timing</code></td><td>Show query time.</td></tr>
+    <tr><td><code>\e</code> · <code>\i file.sql</code> · <code>\o out.txt</code></td><td>Edit last query in $EDITOR · run a file · send output to a file.</td></tr>
+    <tr><td><code>\copy orders TO 'o.csv' CSV HEADER</code></td><td>Export/import CSV from the client side.</td></tr>
+    <tr><td><code>\watch 2</code></td><td>Re-run the last query every 2 s.</td></tr>
+    <tr><td><code>\sf fn_name</code> · <code>\ef</code></td><td>Show / edit a function body.</td></tr>
+    <tr><td><code>\?</code> · <code>\h ALTER TABLE</code></td><td>Help on psql commands · SQL syntax help.</td></tr>
+  </tbody>
+</table>
+<h3>Catalog queries you will reuse</h3>
+<pre><span class="cmt">-- columns of a table</span>
+<span class="kw">SELECT</span> column_name, data_type, is_nullable <span class="kw">FROM</span> information_schema.columns <span class="kw">WHERE</span> table_name = <span class="str">'orders'</span> <span class="kw">ORDER BY</span> ordinal_position;
+<span class="cmt">-- all indexes with definition</span>
+<span class="kw">SELECT</span> indexname, indexdef <span class="kw">FROM</span> pg_indexes <span class="kw">WHERE</span> tablename = <span class="str">'orders'</span>;
+<span class="cmt">-- foreign keys without an index on the referencing column</span>
+<span class="kw">SELECT</span> c.conrelid::regclass <span class="kw">AS</span> tbl, a.attname
+<span class="kw">FROM</span> pg_constraint c <span class="kw">JOIN</span> pg_attribute a <span class="kw">ON</span> a.attrelid = c.conrelid <span class="kw">AND</span> a.attnum = <span class="kw">ANY</span>(c.conkey)
+<span class="kw">WHERE</span> c.contype = <span class="str">'f'</span> <span class="kw">AND NOT EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> pg_index i <span class="kw">WHERE</span> i.indrelid = c.conrelid <span class="kw">AND</span> a.attnum = i.indkey[<span class="num">0</span>]);
+<span class="cmt">-- long-running queries right now</span>
+<span class="kw">SELECT</span> pid, now() - query_start <span class="kw">AS</span> runtime, state, left(query, <span class="num">80</span>)
+<span class="kw">FROM</span> pg_stat_activity <span class="kw">WHERE</span> state &lt;&gt; <span class="str">'idle'</span> <span class="kw">ORDER BY</span> runtime <span class="kw">DESC</span>;
+<span class="cmt">-- server version and uptime</span>
+<span class="kw">SELECT</span> version(), now() - pg_postmaster_start_time() <span class="kw">AS</span> uptime;</pre>
+<h3>Functions, triggers, and when to use them</h3>
+<pre><span class="kw">CREATE OR REPLACE FUNCTION</span> set_updated_at() <span class="kw">RETURNS</span> trigger <span class="kw">LANGUAGE</span> plpgsql <span class="kw">AS</span> $$
+<span class="kw">BEGIN</span>
+  NEW.updated_at := <span class="fn">now</span>();
+  <span class="kw">RETURN</span> NEW;
+<span class="kw">END</span> $$;
+<span class="kw">CREATE TRIGGER</span> trg_orders_updated <span class="kw">BEFORE UPDATE ON</span> orders <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> set_updated_at();</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Business logic in triggers</td><td>Triggers that call other triggers that send notifications; nobody knows why a row changed.</td><td>Triggers for mechanical things only (timestamps, audit copies, denormalized counters). Business rules in the service layer or as constraints.</td></tr>
+    <tr><td><code>SELECT *</code> in app code</td><td>Breaks when columns are added; drags <code>bytea</code>/<code>jsonb</code> blobs you don't need; blocks index-only scans.</td><td>List the columns. Projections in JPA.</td></tr>
+    <tr><td>Ignoring NULL semantics</td><td><code>WHERE col &lt;&gt; 'x'</code> silently drops NULL rows; <code>NOT IN (subquery with a NULL)</code> returns nothing.</td><td><code>IS DISTINCT FROM</code>; <code>NOT EXISTS</code> instead of <code>NOT IN</code>; <code>coalesce</code> deliberately.</td></tr>
+    <tr><td>String-built SQL</td><td><code>"… WHERE name = '" + name + "'"</code> — injection and no plan reuse.</td><td>Bind parameters, always. JPA, <code>JdbcClient</code>, prepared statements.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) index for your query shapes, not your columns, and index every FK; 2) <code>EXPLAIN (ANALYZE, BUFFERS)</code> before guessing; 3) READ COMMITTED is the default — use atomic updates, <code>FOR UPDATE</code>, or versions for read-modify-write; 4) short transactions, <code>idle_in_transaction_session_timeout</code> on; 5) never disable autovacuum; drop partitions instead of mass deletes; 6) <code>timestamptz</code>, <code>bigint</code>/<code>uuid</code> keys, <code>numeric</code> for money, <code>jsonb</code> only for the variable part; 7) small Hikari pools, timeouts everywhere, <code>pg_stat_statements</code> always on.</div>
+<div class="tricky">
+  <div class="q">Q. <code>SELECT * FROM users WHERE id NOT IN (SELECT user_id FROM orders)</code> returns zero rows, but you know many users have no orders. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">At least one <code>orders.user_id</code> is NULL. <code>x NOT IN (…, NULL)</code> is never true because <code>x &lt;&gt; NULL</code> is unknown. Use <code>NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id)</code> — it also plans better.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("postgres-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("postgres-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

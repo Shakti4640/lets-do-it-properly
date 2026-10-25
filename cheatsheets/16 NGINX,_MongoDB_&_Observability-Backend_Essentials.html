@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGINX, MongoDB &amp; Observability — Backend Essentials (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* nginx directives, Mongo operators, YAML keys */
+  pre .typ { color: var(--c-typ); }                    /* types, collections */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* annotations, flags */
+  pre .fn  { color: var(--c-fn); }                     /* method and function names */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>NGINX, MongoDB &amp; Observability — Backend Essentials<span class="sub">Part A: NGINX reverse proxy &amp; load balancing · Part B: MongoDB for Java devs · Part C: Prometheus, Grafana, OpenTelemetry with Spring Boot · Part D: SRE practice — incidents, on-call, postmortems, runbooks, chaos (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Four parts, one sheet. Sections 0–3 NGINX · 4–7 MongoDB · 8–11 Observability · 12–15 SRE practice. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">A0. NGINX — what it is and how it is built</h2>
+<p><b>NGINX</b> (engine-x) is a web server that is mostly used as a <b>reverse proxy</b>: it sits in front of your Java services, terminates TLS, and forwards requests to them. It also does <b>load balancing</b>, caching, compression, rate limiting, and static file serving. It handles tens of thousands of connections with a few worker processes because it is event-driven (epoll), not thread-per-connection.</p>
+<table>
+  <thead><tr><th>Term</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Reverse proxy</b></td><td>Clients talk to NGINX; NGINX talks to your app. The client never sees the app directly.</td></tr>
+    <tr><td><b>Forward proxy</b></td><td>The opposite: sits in front of <i>clients</i> (corporate proxy). Not what NGINX usually does.</td></tr>
+    <tr><td><b>Upstream</b></td><td>A named group of backend servers NGINX forwards to.</td></tr>
+    <tr><td><b>Master / worker processes</b></td><td>Master reads config and manages workers; each worker is single-threaded and handles thousands of connections with an event loop.</td></tr>
+    <tr><td><b>Directive / context</b></td><td>A config line (<code>listen 80;</code>) / the block it lives in (<code>http</code>, <code>server</code>, <code>location</code>, <code>upstream</code>).</td></tr>
+    <tr><td><b>Virtual host</b></td><td>A <code>server</code> block picked by <code>server_name</code> (the Host header) and port.</td></tr>
+    <tr><td><b>TLS termination</b></td><td>NGINX decrypts HTTPS; talks plain HTTP (or HTTPS again) to the app.</td></tr>
+    <tr><td><b>OpenResty / NGINX Plus / Kong / Ingress-NGINX</b></td><td>NGINX + Lua scripting / commercial build / API gateway built on it / the Kubernetes ingress controller built on it.</td></tr>
+  </tbody>
+</table>
+<h3>Why put NGINX in front of Spring Boot</h3>
+<table>
+  <thead><tr><th>Job</th><th>NGINX does it better because</th></tr></thead>
+  <tbody>
+    <tr><td>TLS</td><td>One place for certificates and renewal (certbot); frees the JVM from crypto work.</td></tr>
+    <tr><td>Load balancing + health checks</td><td>Spread traffic over N instances; drop dead ones.</td></tr>
+    <tr><td>Static files / SPA</td><td>Serves React builds at memory speed; your API stays an API.</td></tr>
+    <tr><td>Compression, caching, buffering</td><td>gzip/brotli; cache GET responses; absorb slow clients so Tomcat threads are freed fast.</td></tr>
+    <tr><td>Rate limiting, IP allow-lists, WAF</td><td>Protects before the request reaches Java.</td></tr>
+    <tr><td>One hostname, many services</td><td><code>/api/orders</code> → orders service, <code>/api/users</code> → users service.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># request flow:  browser → :443 NGINX (TLS, gzip, rate limit) → http://10.0.1.5:8080 Spring Boot → response back</span>
+<span class="fn">nginx</span> <span class="ann">-t</span>                  <span class="cmt"># test the config — always before reload</span>
+<span class="fn">nginx</span> <span class="ann">-s</span> reload           <span class="cmt"># graceful reload: new workers with new config, old ones finish their requests</span>
+<span class="fn">nginx</span> <span class="ann">-T</span>                  <span class="cmt"># dump the full merged config</span>
+<span class="fn">docker</span> run <span class="ann">-d</span> <span class="ann">-p</span> <span class="num">80</span>:<span class="num">80</span> <span class="ann">-v</span> ./nginx.conf:/etc/nginx/nginx.conf:ro <span class="typ">nginx:1.27-alpine</span>
+<span class="cmt"># files: /etc/nginx/nginx.conf (main) → include /etc/nginx/conf.d/*.conf (one file per site); logs in /var/log/nginx/</span></pre>
+<div class="tricky">
+  <div class="q">Q. NGINX has 4 worker processes. How many concurrent connections can it hold?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Roughly <code>worker_processes × worker_connections</code> (e.g. 4 × 1024 = 4096 by default, raise <code>worker_connections</code> to 10k+). Each connection is not a thread — it is an entry in the event loop, so the cost is a few KB, not a stack.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">A1. NGINX config — server, location, proxy_pass</h2>
+<pre><span class="cmt"># /etc/nginx/conf.d/shop.conf</span>
+<span class="kw">upstream</span> shop_api {
+    <span class="kw">server</span> <span class="str">10.0.1.5:8080</span>;
+    <span class="kw">server</span> <span class="str">10.0.1.6:8080</span>;
+    <span class="kw">keepalive</span> <span class="num">32</span>;                                 <span class="cmt"># reuse connections to the backends</span>
+}
+
+<span class="kw">server</span> {
+    <span class="kw">listen</span> <span class="num">80</span>;
+    <span class="kw">server_name</span> shop.example.com;
+    <span class="kw">return</span> <span class="num">301</span> <span class="str">https://$host$request_uri</span>;         <span class="cmt"># HTTP → HTTPS</span>
+}
+
+<span class="kw">server</span> {
+    <span class="kw">listen</span> <span class="num">443</span> ssl http2;
+    <span class="kw">server_name</span> shop.example.com;
+
+    <span class="kw">ssl_certificate</span>     /etc/letsencrypt/live/shop.example.com/fullchain.pem;
+    <span class="kw">ssl_certificate_key</span> /etc/letsencrypt/live/shop.example.com/privkey.pem;
+    <span class="kw">ssl_protocols</span> TLSv1.2 TLSv1.3;
+
+    <span class="kw">client_max_body_size</span> 10m;                     <span class="cmt"># default 1m → 413 on bigger uploads</span>
+    <span class="kw">gzip</span> on;  <span class="kw">gzip_types</span> application/json text/css application/javascript;
+
+    <span class="cmt"># SPA static files</span>
+    <span class="kw">location</span> / {
+        <span class="kw">root</span> /var/www/shop;
+        <span class="kw">try_files</span> $uri $uri/ /index.html;          <span class="cmt"># client-side routing</span>
+        <span class="kw">expires</span> 1h;
+    }
+
+    <span class="cmt"># API → Spring Boot</span>
+    <span class="kw">location</span> /api/ {
+        <span class="kw">proxy_pass</span> <span class="str">http://shop_api</span>;                 <span class="cmt"># no trailing slash: /api/orders stays /api/orders</span>
+        <span class="kw">proxy_http_version</span> 1.1;
+        <span class="kw">proxy_set_header</span> Connection "";             <span class="cmt"># needed for upstream keepalive</span>
+        <span class="kw">proxy_set_header</span> Host              $host;
+        <span class="kw">proxy_set_header</span> X-Real-IP         $remote_addr;
+        <span class="kw">proxy_set_header</span> X-Forwarded-For   $proxy_add_x_forwarded_for;
+        <span class="kw">proxy_set_header</span> X-Forwarded-Proto $scheme;
+        <span class="kw">proxy_connect_timeout</span> 3s;
+        <span class="kw">proxy_read_timeout</span>    30s;                   <span class="cmt"># default 60s; longer than your slowest legit request</span>
+        <span class="kw">proxy_next_upstream</span> error timeout http_502 http_503;   <span class="cmt"># retry another backend on these</span>
+    }
+
+    <span class="cmt"># hide actuator from the internet</span>
+    <span class="kw">location</span> /api/actuator/ { <span class="kw">return</span> <span class="num">404</span>; }
+
+    <span class="kw">location</span> = /health { <span class="kw">access_log</span> off; <span class="kw">return</span> <span class="num">200</span> <span class="str">"ok"</span>; }
+}</pre>
+<table>
+  <thead><tr><th><code>location</code> matcher</th><th>Meaning</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td><code>location = /path</code></td><td>Exact match.</td><td>1 (highest)</td></tr>
+    <tr><td><code>location ^~ /static/</code></td><td>Prefix; if it is the longest prefix match, stop — do not check regexes.</td><td>2</td></tr>
+    <tr><td><code>location ~ \.php$</code> · <code>~*</code> (case-insensitive)</td><td>Regex, first match in file order wins.</td><td>3</td></tr>
+    <tr><td><code>location /path/</code></td><td>Prefix; longest wins among prefixes.</td><td>4</td></tr>
+    <tr><td><code>location /</code></td><td>Catch-all prefix.</td><td>lowest</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th><code>proxy_pass</code> and the trailing slash</th><th>Request <code>/api/orders/1</code> becomes</th></tr></thead>
+  <tbody>
+    <tr><td><code>location /api/ { proxy_pass http://up; }</code></td><td><code>/api/orders/1</code> (URI passed unchanged)</td></tr>
+    <tr><td><code>location /api/ { proxy_pass http://up/; }</code></td><td><code>/orders/1</code> (the <code>/api/</code> prefix is replaced by <code>/</code>)</td></tr>
+    <tr><td><code>location /api/ { proxy_pass http://up/v2/; }</code></td><td><code>/v2/orders/1</code></td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Client IP</td><td>Spring logs <code>127.0.0.1</code> / the NGINX IP for every request.</td><td>Send <code>X-Forwarded-For</code>/<code>X-Real-IP</code>; in Boot set <code>server.forward-headers-strategy=framework</code> (or <code>native</code>) so <code>request.getRemoteAddr()</code> and <code>https</code> redirects are right.</td></tr>
+    <tr><td>Redirect loops / wrong scheme</td><td>App builds <code>http://</code> URLs behind an HTTPS proxy.</td><td><code>X-Forwarded-Proto</code> + forward-headers-strategy.</td></tr>
+    <tr><td>Reload without test</td><td><code>nginx -s reload</code> with a typo → old config keeps running silently, or the master dies.</td><td><code>nginx -t &amp;&amp; nginx -s reload</code>.</td></tr>
+    <tr><td>DNS cached forever</td><td><code>proxy_pass http://api.internal;</code> — NGINX resolves at start-up and never again; the backend moves → 502s.</td><td>Use <code>upstream</code> with IPs you manage, or a <code>resolver</code> + variable in <code>proxy_pass</code> (<code>set $u api.internal; proxy_pass http://$u:8080;</code>) to re-resolve.</td></tr>
+    <tr><td>Big uploads</td><td>413 Request Entity Too Large.</td><td><code>client_max_body_size</code> in the right <code>location</code>/<code>server</code>.</td></tr>
+    <tr><td>WebSockets fail</td><td>101 Upgrade never happens.</td><td><code>proxy_http_version 1.1; proxy_set_header Upgrade $http_upgrade; proxy_set_header Connection "upgrade";</code> and a long <code>proxy_read_timeout</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>location /api { proxy_pass http://up/; }</code> (no trailing slash in location, slash in proxy_pass). Request <code>/apiary</code> — what happens?</div>
+  <details><summary>Reveal hint</summary><div class="hint"><code>/api</code> is a prefix match, so <code>/apiary</code> matches it and is rewritten to <code>//ary</code>-ish nonsense upstream. Always end prefix locations for paths with a slash (<code>/api/</code>) unless you mean to catch siblings.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">A2. Load balancing, health, caching, rate limiting</h2>
+<pre><span class="kw">upstream</span> shop_api {
+    <span class="kw">least_conn</span>;                                   <span class="cmt"># or: ip_hash; hash $request_uri consistent; random two least_conn; default round-robin</span>
+    <span class="kw">server</span> <span class="str">10.0.1.5:8080</span> <span class="kw">weight</span>=3 <span class="kw">max_fails</span>=3 <span class="kw">fail_timeout</span>=10s;   <span class="cmt"># 3 failures → out for 10 s (passive health check)</span>
+    <span class="kw">server</span> <span class="str">10.0.1.6:8080</span>;
+    <span class="kw">server</span> <span class="str">10.0.1.7:8080</span> <span class="kw">backup</span>;                   <span class="cmt"># only used when the others are down</span>
+    <span class="kw">keepalive</span> <span class="num">64</span>;
+}
+
+<span class="cmt"># response cache for GET /api/catalog/*</span>
+<span class="kw">proxy_cache_path</span> /var/cache/nginx <span class="kw">levels</span>=1:2 <span class="kw">keys_zone</span>=api_cache:10m <span class="kw">max_size</span>=1g <span class="kw">inactive</span>=10m <span class="kw">use_temp_path</span>=off;
+<span class="kw">location</span> /api/catalog/ {
+    <span class="kw">proxy_cache</span> api_cache;
+    <span class="kw">proxy_cache_key</span> <span class="str">"$scheme$host$request_uri"</span>;
+    <span class="kw">proxy_cache_valid</span> <span class="num">200</span> 5m;
+    <span class="kw">proxy_cache_use_stale</span> error timeout updating http_500 http_502 http_503;   <span class="cmt"># serve stale while backend is sick</span>
+    <span class="kw">proxy_cache_lock</span> on;                          <span class="cmt"># one refill per key (stampede protection)</span>
+    <span class="kw">add_header</span> X-Cache-Status $upstream_cache_status;   <span class="cmt"># HIT / MISS / STALE / BYPASS</span>
+    <span class="kw">proxy_pass</span> <span class="str">http://shop_api</span>;
+}
+
+<span class="cmt"># rate limiting: 10 req/s per IP, bursts of 20 queued, beyond that 429</span>
+<span class="kw">limit_req_zone</span> $binary_remote_addr <span class="kw">zone</span>=api_rl:10m <span class="kw">rate</span>=10r/s;
+<span class="kw">limit_conn_zone</span> $binary_remote_addr <span class="kw">zone</span>=conn_rl:10m;
+<span class="kw">location</span> /api/ {
+    <span class="kw">limit_req</span> <span class="kw">zone</span>=api_rl <span class="kw">burst</span>=20 <span class="kw">nodelay</span>;
+    <span class="kw">limit_req_status</span> <span class="num">429</span>;
+    <span class="kw">limit_conn</span> conn_rl <span class="num">50</span>;
+    <span class="kw">proxy_pass</span> <span class="str">http://shop_api</span>;
+}
+
+<span class="cmt"># security headers + hide version</span>
+<span class="kw">server_tokens</span> off;
+<span class="kw">add_header</span> Strict-Transport-Security <span class="str">"max-age=31536000; includeSubDomains"</span> always;
+<span class="kw">add_header</span> X-Content-Type-Options nosniff always;
+<span class="kw">add_header</span> X-Frame-Options DENY always;
+
+<span class="cmt"># structured access log with timings</span>
+<span class="kw">log_format</span> json escape=json <span class="str">'{"t":"$time_iso8601","ip":"$remote_addr","m":"$request_method","uri":"$request_uri",'
+                              '"s":$status,"bytes":$body_bytes_sent,"rt":$request_time,"urt":"$upstream_response_time",'
+                              '"up":"$upstream_addr","ua":"$http_user_agent","rid":"$request_id"}'</span>;
+<span class="kw">access_log</span> /var/log/nginx/access.log json;
+<span class="kw">proxy_set_header</span> X-Request-Id $request_id;        <span class="cmt"># correlate with app logs</span></pre>
+<table>
+  <thead><tr><th>Method</th><th>Picks</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>round-robin</b> (default)</td><td>Next server in turn, weighted.</td><td>Stateless services of equal size.</td></tr>
+    <tr><td><b>least_conn</b></td><td>Fewest active connections.</td><td>Requests of uneven length.</td></tr>
+    <tr><td><b>ip_hash</b></td><td>Same client IP → same server.</td><td>Sticky sessions without a shared session store (fragile behind NAT).</td></tr>
+    <tr><td><b>hash $key consistent</b></td><td>Consistent hashing on any variable.</td><td>Cache affinity, per-tenant routing.</td></tr>
+    <tr><td><b>random two least_conn</b></td><td>Power of two choices.</td><td>Large pools.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Sticky sessions</td><td><code>ip_hash</code> to keep users on one pod because sessions are in Tomcat memory.</td><td>Stateless JWT or Spring Session in Redis; any pod can serve any request.</td></tr>
+    <tr><td>Retrying POSTs</td><td><code>proxy_next_upstream</code> with <code>non_idempotent</code> → a payment retried on another backend.</td><td>Default excludes non-idempotent methods; keep it so, or make POSTs idempotent with keys.</td></tr>
+    <tr><td>Health only passive</td><td>Users are the health check (<code>max_fails</code> only trips after failures).</td><td>Active checks need NGINX Plus or Ingress/LB; in Kubernetes rely on readiness probes + Service endpoints instead.</td></tr>
+    <tr><td>Caching with cookies/auth</td><td>Caching <code>/api/me</code> → user A sees user B's data.</td><td>Cache only public GETs; <code>proxy_cache_bypass $http_authorization</code>; include varying headers in the key.</td></tr>
+    <tr><td>Rate limit by IP only</td><td>All users behind one corporate NAT get limited together.</td><td>Key on an API key or user id header when authenticated; IP as fallback.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Backend returns in 20 ms, but clients see 2 s. <code>$upstream_response_time</code> is 0.02 and <code>$request_time</code> is 2.0. Where did the time go?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Between NGINX and the client: slow network, a huge response, or TLS handshakes with no keep-alive. The difference between those two variables is exactly the client-side time. Check <code>keepalive_timeout</code>, gzip, body size, and the CDN.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">A3. NGINX troubleshooting and quick reference</h2>
+<table>
+  <thead><tr><th>Status / symptom</th><th>Meaning</th><th>Check</th></tr></thead>
+  <tbody>
+    <tr><td><b>502 Bad Gateway</b></td><td>NGINX could not get a valid response: backend down, refused, or reset.</td><td>Is the app listening on the right IP/port (0.0.0.0, not 127.0.0.1)? <code>error.log</code> says "connect() failed (111)".</td></tr>
+    <tr><td><b>504 Gateway Timeout</b></td><td>Backend took longer than <code>proxy_read_timeout</code>.</td><td>Slow endpoint or GC pause; raise the timeout for that location or fix the endpoint.</td></tr>
+    <tr><td><b>503</b></td><td>All upstreams failed / <code>limit_conn</code> hit / maintenance return.</td><td>Backends marked down by <code>max_fails</code>.</td></tr>
+    <tr><td><b>413</b></td><td>Body too big.</td><td><code>client_max_body_size</code>.</td></tr>
+    <tr><td><b>499</b> (in logs)</td><td>Client closed the connection before NGINX answered.</td><td>Client timeouts shorter than yours; slow backend.</td></tr>
+    <tr><td><b>400 "upstream sent too big header"</b></td><td>Large cookies/JWT in response headers.</td><td><code>proxy_buffer_size 16k; proxy_buffers 4 32k;</code></td></tr>
+    <tr><td>Config change had no effect</td><td>Not reloaded, wrong file, or an <code>include</code> order issue.</td><td><code>nginx -T | grep …</code> to see the merged config; <code>nginx -s reload</code>.</td></tr>
+    <tr><td>Wrong <code>server</code> block answers</td><td>No <code>server_name</code> match → the <b>first</b> (or <code>default_server</code>) block is used.</td><td>Add <code>listen 443 ssl default_server;</code> to a catch-all that returns 444.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Command / variable</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><code>nginx -t</code> · <code>nginx -T</code> · <code>nginx -s reload|stop|quit</code></td><td>Test · dump · signal (quit = graceful).</td></tr>
+    <tr><td><code>tail -f /var/log/nginx/error.log</code></td><td>Upstream errors, config warnings.</td></tr>
+    <tr><td><code>curl -I https://host/api/x</code> · <code>curl -v --resolve host:443:1.2.3.4</code></td><td>Headers only · test a server block before DNS changes.</td></tr>
+    <tr><td><code>$request_time</code> · <code>$upstream_response_time</code> · <code>$upstream_addr</code> · <code>$upstream_cache_status</code> · <code>$request_id</code></td><td>Log variables for latency, routing, cache, correlation.</td></tr>
+    <tr><td><code>stub_status</code></td><td><code>location /nginx_status { stub_status; allow 10.0.0.0/8; deny all; }</code> → active connections, requests; scraped by nginx-prometheus-exporter.</td></tr>
+    <tr><td><code>return 444;</code></td><td>Close the connection with no response (bots, unknown hosts).</td></tr>
+    <tr><td><code>rewrite ^/old/(.*)$ /new/$1 permanent;</code></td><td>301 redirect rules.</td></tr>
+    <tr><td><code>map $http_user_agent $is_bot { default 0; ~*bot 1; }</code></td><td>Compute variables from others.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>In Kubernetes</b> you usually don't write nginx.conf at all: Ingress-NGINX generates it from Ingress objects and annotations (<code>nginx.ingress.kubernetes.io/proxy-body-size</code>, <code>…/limit-rps</code>, <code>…/proxy-read-timeout</code>). The concepts above are exactly what those annotations set.</div>
+<div class="tips"><b>NGINX vs the others:</b> <b>HAProxy</b> — pure L4/L7 load balancer, best health checks and stats, no static files. <b>Envoy</b> — modern proxy for service meshes (Istio), gRPC-native, dynamic config via xDS. <b>Traefik / Caddy</b> — auto-TLS, auto-discovery, simpler configs. <b>Cloud ALB/NLB</b> — managed; put NGINX behind it only when you need its features.</div>
+<div class="tricky">
+  <div class="q">Q. Spring Boot runs fine on <code>curl localhost:8080</code> on the same box, but NGINX gives 502 with "connect() failed (111: Connection refused)". Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Most often NGINX runs in a container (or another host) and <code>localhost</code> in its config means <i>itself</i>. Point <code>proxy_pass</code> at the app's reachable address (<code>host.docker.internal</code>, the service name, or the host IP), and make the app listen on <code>0.0.0.0</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">B4. MongoDB — what it is and when to pick it</h2>
+<p><b>MongoDB</b> is a document database. Instead of rows in tables, you store <b>documents</b> (JSON-like, stored as <b>BSON</b>) in <b>collections</b>. A document can hold nested objects and arrays, and documents in one collection do not need the same fields. Writes to a single document are atomic; multi-document transactions exist but are not the default way of working.</p>
+<table>
+  <thead><tr><th>SQL word</th><th>Mongo word</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Database</td><td>Database</td><td>Same idea.</td></tr>
+    <tr><td>Table</td><td><b>Collection</b></td><td>No fixed schema (optional JSON Schema validation).</td></tr>
+    <tr><td>Row</td><td><b>Document</b></td><td>Max 16 MB. Has an <code>_id</code> (default <code>ObjectId</code>, 12 bytes, time-ordered).</td></tr>
+    <tr><td>Column</td><td><b>Field</b></td><td>Can be nested: <code>address.city</code>.</td></tr>
+    <tr><td>JOIN</td><td><b>Embedding</b> or <code>$lookup</code></td><td>Design to avoid joins by embedding what you read together.</td></tr>
+    <tr><td>Primary key</td><td><code>_id</code></td><td>Always indexed, unique.</td></tr>
+    <tr><td>Index</td><td>Index</td><td>B-tree; compound, multikey (arrays), text, geo, TTL, partial, wildcard.</td></tr>
+    <tr><td>Transaction</td><td>Single-doc atomic; multi-doc ACID transactions on replica sets (4.0+)</td><td>Use sparingly; model so one document = one unit of change.</td></tr>
+    <tr><td>Replication / sharding</td><td><b>Replica set</b> (primary + secondaries) / <b>Sharded cluster</b> (mongos routers + config servers + shards)</td><td>Replica set is the minimum for production.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Pick MongoDB when</th><th>Prefer PostgreSQL when</th></tr></thead>
+  <tbody>
+    <tr><td>Data is naturally a document (order with its lines, product with variable attributes, user profile with settings).</td><td>Many entities reference each other and you query across them in many ways (reporting, ad-hoc joins).</td></tr>
+    <tr><td>Schema changes often or differs per record type (catalog, content, events).</td><td>Strong constraints, foreign keys, and multi-row transactions are central (ledger, inventory, bookings).</td></tr>
+    <tr><td>Horizontal write scaling across shards is needed early.</td><td>One big machine (or read replicas) is enough — which is most apps.</td></tr>
+    <tr><td>Fast iteration; the app owns validation.</td><td>The team knows SQL well; analysts need SQL access.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># run + shell</span>
+<span class="fn">docker</span> run <span class="ann">-d</span> <span class="ann">-p</span> <span class="num">27017</span>:<span class="num">27017</span> <span class="ann">--name</span> mongo <span class="ann">-e</span> MONGO_INITDB_ROOT_USERNAME=root <span class="ann">-e</span> MONGO_INITDB_ROOT_PASSWORD=secret <span class="typ">mongo:8</span>
+<span class="fn">mongosh</span> <span class="str">"mongodb://root:secret@localhost:27017/shop?authSource=admin"</span>
+shop&gt; <span class="fn">db.orders.insertOne</span>({ customerId: <span class="num">42</span>, status: <span class="str">"NEW"</span>, total: <span class="num">499.0</span>, createdAt: <span class="kw">new</span> <span class="typ">Date</span>(),
+        items: [ { sku: <span class="str">"A1"</span>, qty: <span class="num">2</span>, price: <span class="num">199.5</span> }, { sku: <span class="str">"B7"</span>, qty: <span class="num">1</span>, price: <span class="num">100</span> } ],
+        shipping: { city: <span class="str">"Pune"</span>, pin: <span class="str">"411001"</span> } })
+shop&gt; <span class="fn">db.orders.find</span>({ status: <span class="str">"NEW"</span>, <span class="str">"shipping.city"</span>: <span class="str">"Pune"</span> }).<span class="fn">sort</span>({ createdAt: <span class="num">-1</span> }).<span class="fn">limit</span>(<span class="num">10</span>)
+shop&gt; <span class="fn">show collections</span>   ·   <span class="fn">db.orders.countDocuments</span>()   ·   <span class="fn">db.orders.stats</span>()</pre>
+<div class="tips"><b>Mental model:</b> each document is a self-contained JSON file in a folder (collection). You pull one file and have everything you need for that screen. Design question #1 is always: "what do I read together?" — that goes in one document.</div>
+<div class="tricky">
+  <div class="q">Q. Is MongoDB "schemaless"?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The database does not enforce a schema by default, but your application always has one (the Java classes). Call it "schema-flexible". Use JSON Schema validation (<code>db.createCollection(…, { validator })</code>) to stop junk from entering, and version your documents (<code>schemaVersion: 2</code>) to migrate lazily.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">B5. Queries, updates, aggregation</h2>
+<table>
+  <thead><tr><th>Operator</th><th>Example</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>$eq $ne $gt $gte $lt $lte $in $nin</code></td><td><code>{ total: { $gte: 100, $lt: 500 } }</code></td><td>Comparisons.</td></tr>
+    <tr><td><code>$and $or $not $nor</code></td><td><code>{ $or: [ { status: "NEW" }, { total: { $gt: 1000 } } ] }</code></td><td>Logic (implicit AND between fields).</td></tr>
+    <tr><td><code>$exists $type</code></td><td><code>{ coupon: { $exists: false } }</code></td><td>Field presence / BSON type.</td></tr>
+    <tr><td><code>$regex</code></td><td><code>{ name: { $regex: "^Ac", $options: "i" } }</code></td><td>Prefix regex can use an index; <code>.*foo.*</code> cannot.</td></tr>
+    <tr><td><code>$elemMatch $all $size</code></td><td><code>{ items: { $elemMatch: { sku: "A1", qty: { $gt: 1 } } } }</code></td><td>Array queries. Without <code>$elemMatch</code>, conditions may match different elements.</td></tr>
+    <tr><td>Dot notation</td><td><code>{ "shipping.city": "Pune" }</code> · <code>{ "items.sku": "A1" }</code></td><td>Nested fields and array elements.</td></tr>
+    <tr><td>Projection</td><td><code>find({…}, { status: 1, total: 1, _id: 0 })</code></td><td>Return only these fields (like SELECT columns).</td></tr>
+    <tr><td><code>sort limit skip</code></td><td><code>.sort({ createdAt: -1 }).limit(20)</code></td><td>Skip is slow for deep pages → use range on a sort key (keyset).</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// updates: operators, never replace the whole doc by accident</span>
+<span class="fn">db.orders.updateOne</span>({ _id: id }, { <span class="kw">$set</span>: { status: <span class="str">"PAID"</span>, paidAt: <span class="kw">new</span> <span class="typ">Date</span>() }, <span class="kw">$inc</span>: { version: <span class="num">1</span> } })
+<span class="fn">db.orders.updateOne</span>({ _id: id, status: <span class="str">"NEW"</span> }, { <span class="kw">$set</span>: { status: <span class="str">"CANCELLED"</span> } })      <span class="cmt">// conditional = optimistic</span>
+<span class="fn">db.orders.updateOne</span>({ _id: id }, { <span class="kw">$push</span>: { items: { sku: <span class="str">"C3"</span>, qty: <span class="num">1</span> } } })                 <span class="cmt">// $push $pull $addToSet $pop</span>
+<span class="fn">db.orders.updateOne</span>({ _id: id, <span class="str">"items.sku"</span>: <span class="str">"A1"</span> }, { <span class="kw">$inc</span>: { <span class="str">"items.$.qty"</span>: <span class="num">1</span> } })        <span class="cmt">// $ = the matched array element</span>
+<span class="fn">db.counters.findOneAndUpdate</span>({ _id: <span class="str">"invoice"</span> }, { <span class="kw">$inc</span>: { seq: <span class="num">1</span> } }, { upsert: <span class="kw">true</span>, returnDocument: <span class="str">"after"</span> })  <span class="cmt">// atomic counter</span>
+<span class="fn">db.orders.deleteMany</span>({ status: <span class="str">"CANCELLED"</span>, createdAt: { <span class="kw">$lt</span>: cutoff } })
+
+<span class="cmt">// aggregation pipeline: stages run in order, like Unix pipes</span>
+<span class="fn">db.orders.aggregate</span>([
+  { <span class="kw">$match</span>: { status: <span class="str">"PAID"</span>, createdAt: { <span class="kw">$gte</span>: <span class="typ">ISODate</span>(<span class="str">"2026-10-01"</span>) } } },     <span class="cmt">// filter early → uses indexes</span>
+  { <span class="kw">$unwind</span>: <span class="str">"$items"</span> },                                                          <span class="cmt">// one doc per array element</span>
+  { <span class="kw">$group</span>: { _id: <span class="str">"$items.sku"</span>, units: { <span class="kw">$sum</span>: <span class="str">"$items.qty"</span> },
+              revenue: { <span class="kw">$sum</span>: { <span class="kw">$multiply</span>: [<span class="str">"$items.qty"</span>, <span class="str">"$items.price"</span>] } } } },
+  { <span class="kw">$sort</span>: { revenue: <span class="num">-1</span> } },
+  { <span class="kw">$limit</span>: <span class="num">10</span> },
+  { <span class="kw">$lookup</span>: { from: <span class="str">"products"</span>, localField: <span class="str">"_id"</span>, foreignField: <span class="str">"sku"</span>, as: <span class="str">"product"</span> } },   <span class="cmt">// left join</span>
+  { <span class="kw">$project</span>: { sku: <span class="str">"$_id"</span>, units: <span class="num">1</span>, revenue: <span class="num">1</span>, name: { <span class="kw">$first</span>: <span class="str">"$product.name"</span> }, _id: <span class="num">0</span> } }
+])
+<span class="cmt">// other stages: $addFields/$set, $facet (several pipelines at once), $bucket, $merge/$out (write results), $setWindowFields (window functions)</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Replace instead of update</td><td><code>save(doc)</code> / <code>replaceOne</code> with a stale object → silently overwrites fields another request changed.</td><td><code>$set</code> only the fields you changed; version field for optimistic locking (<code>@Version</code> in Spring Data).</td></tr>
+    <tr><td>Read-modify-write counters</td><td>Read <code>qty</code>, add 1 in Java, write back.</td><td><code>$inc</code> — atomic on the server.</td></tr>
+    <tr><td><code>$lookup</code> everywhere</td><td>Normalized like SQL, then <code>$lookup</code> 5 collections per page.</td><td>Embed what you read together; <code>$lookup</code> for occasional reporting.</td></tr>
+    <tr><td><code>$match</code> late</td><td>Pipeline unwinds a million docs then filters.</td><td><code>$match</code> (and <code>$project</code>) first so indexes apply and fewer docs flow.</td></tr>
+    <tr><td>Deep <code>skip</code></td><td><code>skip(100000).limit(20)</code>.</td><td>Range on an indexed sort key: <code>{ createdAt: { $lt: lastSeen } }</code>.</td></tr>
+    <tr><td>Regex search</td><td><code>{ name: /phone/i }</code> on a big collection.</td><td>Text index + <code>$text</code>, or Atlas Search / Elasticsearch.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>{ items: { sku: "A1", qty: 2 } }</code> vs <code>{ "items.sku": "A1", "items.qty": 2 }</code> vs <code>{ items: { $elemMatch: { sku: "A1", qty: 2 } } }</code> — which finds an order with an A1 line of qty 2?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The first needs an element that is <i>exactly</i> <code>{sku:"A1", qty:2}</code> (no other fields, same order) — fragile. The second matches if <i>some</i> element has sku A1 and <i>some</i> (possibly different) element has qty 2. Only <code>$elemMatch</code> requires both on the same element.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">B6. Schema design, indexes, transactions</h2>
+<table>
+  <thead><tr><th>Relationship</th><th>Model as</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>One-to-few, read together</td><td><b>Embed</b> an array</td><td>Order → its line items; user → addresses.</td></tr>
+    <tr><td>One-to-many, child read alone or grows without bound</td><td><b>Reference</b> from child to parent</td><td>Customer ← orders (<code>orders.customerId</code>).</td></tr>
+    <tr><td>One-to-squillions</td><td>Reference from child; never embed</td><td>Device ← sensor readings.</td></tr>
+    <tr><td>Many-to-many, small side</td><td>Array of ids on one side</td><td>Post → tag ids.</td></tr>
+    <tr><td>Frequently read summary</td><td><b>Duplicate</b> (denormalize) a few fields</td><td>Order stores <code>customerName</code> at purchase time (also historically correct!).</td></tr>
+    <tr><td>Time series</td><td><b>Bucket</b> pattern or a time-series collection</td><td>One doc per device per hour with an array of readings.</td></tr>
+    <tr><td>Different kinds in one place</td><td>Polymorphic docs with a <code>type</code> field</td><td>Products: book / phone / shirt in <code>products</code>.</td></tr>
+  </tbody>
+</table>
+<h3>Indexes</h3>
+<pre><span class="fn">db.orders.createIndex</span>({ customerId: <span class="num">1</span>, createdAt: <span class="num">-1</span> })                     <span class="cmt">// compound: ESR rule — Equality, Sort, Range</span>
+<span class="fn">db.orders.createIndex</span>({ <span class="str">"items.sku"</span>: <span class="num">1</span> })                                    <span class="cmt">// multikey (array field)</span>
+<span class="fn">db.users.createIndex</span>({ email: <span class="num">1</span> }, { unique: <span class="kw">true</span> })
+<span class="fn">db.orders.createIndex</span>({ status: <span class="num">1</span> }, { partialFilterExpression: { status: <span class="str">"NEW"</span> } })   <span class="cmt">// partial</span>
+<span class="fn">db.sessions.createIndex</span>({ expiresAt: <span class="num">1</span> }, { expireAfterSeconds: <span class="num">0</span> })             <span class="cmt">// TTL: auto-delete</span>
+<span class="fn">db.products.createIndex</span>({ name: <span class="str">"text"</span>, description: <span class="str">"text"</span> })                <span class="cmt">// text search</span>
+<span class="fn">db.stores.createIndex</span>({ location: <span class="str">"2dsphere"</span> })                             <span class="cmt">// geo</span>
+<span class="fn">db.orders.getIndexes</span>()   ·   <span class="fn">db.orders.dropIndex</span>(<span class="str">"status_1"</span>)
+<span class="fn">db.orders.find</span>({ customerId: <span class="num">42</span> }).<span class="fn">sort</span>({ createdAt: <span class="num">-1</span> }).<span class="fn">explain</span>(<span class="str">"executionStats"</span>)
+<span class="cmt">// look for: winningPlan.stage IXSCAN (good) vs COLLSCAN (bad); totalKeysExamined ≈ nReturned; no SORT stage (index gives order)</span></pre>
+<table>
+  <thead><tr><th>Rule</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>ESR</b></td><td>Compound index field order: Equality fields first, then Sort fields, then Range fields.</td></tr>
+    <tr><td>Covered query</td><td>All fields in the query and projection are in the index → no document fetch.</td></tr>
+    <tr><td>One multikey field per compound index</td><td>Cannot index two array fields in one compound index.</td></tr>
+    <tr><td>Index size</td><td>Indexes should fit in RAM (<code>db.collection.stats().totalIndexSize</code>); the working set too.</td></tr>
+    <tr><td>Build</td><td>Index builds are online since 4.2 but still cost CPU/IO; schedule on big collections.</td></tr>
+    <tr><td>Profiler</td><td><code>db.setProfilingLevel(1, { slowms: 100 })</code> → <code>db.system.profile.find().sort({ts:-1})</code>.</td></tr>
+  </tbody>
+</table>
+<h3>Transactions and write/read concerns</h3>
+<pre><span class="kw">const</span> session = <span class="fn">db.getMongo</span>().<span class="fn">startSession</span>();
+session.<span class="fn">withTransaction</span>(<span class="kw">async</span> () =&gt; {
+  <span class="kw">const</span> o = session.<span class="fn">getDatabase</span>(<span class="str">"shop"</span>).orders;
+  <span class="kw">const</span> s = session.<span class="fn">getDatabase</span>(<span class="str">"shop"</span>).stock;
+  <span class="kw">await</span> o.<span class="fn">updateOne</span>({ _id: id }, { <span class="kw">$set</span>: { status: <span class="str">"PAID"</span> } });
+  <span class="kw">await</span> s.<span class="fn">updateOne</span>({ sku: <span class="str">"A1"</span>, qty: { <span class="kw">$gte</span>: <span class="num">2</span> } }, { <span class="kw">$inc</span>: { qty: <span class="num">-2</span> } });
+}, { writeConcern: { w: <span class="str">"majority"</span> }, readConcern: { level: <span class="str">"snapshot"</span> } });</pre>
+<table>
+  <thead><tr><th>Concern</th><th>Options</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>writeConcern</b></td><td><code>w: 1</code> (primary only) · <code>w: "majority"</code> (default since 5.0) · <code>j: true</code> (journaled)</td><td>How many nodes must acknowledge. <code>majority</code> survives failover without rollback.</td></tr>
+    <tr><td><b>readConcern</b></td><td><code>local</code> · <code>majority</code> · <code>snapshot</code> · <code>linearizable</code></td><td>How committed the data you read must be. <code>majority</code> avoids reading data that may roll back.</td></tr>
+    <tr><td><b>readPreference</b></td><td><code>primary</code> · <code>primaryPreferred</code> · <code>secondary</code> · <code>nearest</code></td><td>Where to read. Secondaries lag — stale reads.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Unbounded arrays</td><td>Embedding every comment in the post doc; hits 16 MB, every update rewrites it.</td><td>Embed bounded lists (≤ a few hundred); reference the rest.</td></tr>
+    <tr><td>SQL schema in Mongo</td><td>One collection per entity, ids everywhere, <code>$lookup</code> to assemble a page.</td><td>Model by access pattern; one document per screen/aggregate.</td></tr>
+    <tr><td>Transactions as default</td><td>Every service method in a multi-doc transaction.</td><td>Design so the unit of change is one document; transactions for the rare cross-document invariant. Keep them short (60 s default limit).</td></tr>
+    <tr><td>Index on everything / nothing</td><td>No indexes beyond <code>_id</code> → COLLSCAN; or 20 indexes → slow writes.</td><td>Index per query shape following ESR; drop unused (<code>$indexStats</code>).</td></tr>
+    <tr><td><code>w: 0</code></td><td>Fire-and-forget writes "for speed".</td><td><code>majority</code>; measure before weakening.</td></tr>
+    <tr><td>Money as double</td><td><code>total: 499.99</code> (BSON double).</td><td><code>Decimal128</code> (<code>NumberDecimal("499.99")</code>), Java <code>BigDecimal</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Index <code>{ status: 1, createdAt: -1 }</code>. Query <code>find({ createdAt: { $gt: d } }).sort({ status: 1 })</code>. Is the index useful?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Barely. The leading field <code>status</code> is not constrained by equality, so the index cannot seek on <code>createdAt</code>; it may still be scanned fully to satisfy the sort. ESR says: equality on <code>status</code> first, then sort, then range. Match the index to the query shape or vice versa.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">B7. Spring Data MongoDB, replica sets, operations</h2>
+<pre><span class="cmt"># pom: spring-boot-starter-data-mongodb</span>
+<span class="kw">spring.data.mongodb</span>:
+  <span class="kw">uri</span>: <span class="str">mongodb://app:${MONGO_PASSWORD}@m1:27017,m2:27017,m3:27017/shop?replicaSet=rs0&amp;authSource=admin&amp;w=majority&amp;retryWrites=true</span>
+  <span class="kw">auto-index-creation</span>: <span class="kw">false</span>        <span class="cmt"># create indexes with a migration tool (Mongock) in prod, not on start-up</span></pre>
+<pre><span class="ann">@Document</span>(collection = <span class="str">"orders"</span>)
+<span class="ann">@CompoundIndex</span>(name = <span class="str">"cust_created"</span>, def = <span class="str">"{'customerId': 1, 'createdAt': -1}"</span>)
+<span class="kw">public class</span> <span class="typ">Order</span> {
+    <span class="ann">@Id</span> <span class="kw">private</span> <span class="typ">String</span> id;                              <span class="cmt">// ObjectId as hex string; or ObjectId / UUID</span>
+    <span class="ann">@Indexed</span> <span class="kw">private</span> <span class="typ">Long</span> customerId;
+    <span class="kw">private</span> <span class="typ">OrderStatus</span> status;                        <span class="cmt">// enums stored as strings</span>
+    <span class="ann">@Field</span>(targetType = <span class="typ">FieldType</span>.DECIMAL128) <span class="kw">private</span> <span class="typ">BigDecimal</span> total;
+    <span class="kw">private</span> <span class="typ">List</span>&lt;<span class="typ">LineItem</span>&gt; items;                     <span class="cmt">// embedded</span>
+    <span class="ann">@DBRef</span>(lazy = <span class="kw">true</span>) <span class="kw">private</span> <span class="typ">Customer</span> customer;     <span class="cmt">// reference (avoid; prefer storing the id)</span>
+    <span class="ann">@Version</span> <span class="kw">private</span> <span class="typ">Long</span> version;                     <span class="cmt">// optimistic locking</span>
+    <span class="ann">@CreatedDate</span> <span class="kw">private</span> <span class="typ">Instant</span> createdAt;           <span class="cmt">// needs @EnableMongoAuditing</span>
+}
+
+<span class="kw">public interface</span> <span class="typ">OrderRepository</span> <span class="kw">extends</span> <span class="typ">MongoRepository</span>&lt;<span class="typ">Order</span>, <span class="typ">String</span>&gt; {
+    <span class="typ">Page</span>&lt;<span class="typ">Order</span>&gt; <span class="fn">findByCustomerIdAndStatus</span>(<span class="typ">Long</span> customerId, <span class="typ">OrderStatus</span> status, <span class="typ">Pageable</span> p);
+    <span class="ann">@Query</span>(<span class="str">"{ 'items.sku': ?0, 'createdAt': { $gte: ?1 } }"</span>)
+    <span class="typ">List</span>&lt;<span class="typ">Order</span>&gt; <span class="fn">withSkuSince</span>(<span class="typ">String</span> sku, <span class="typ">Instant</span> since);
+    <span class="ann">@Aggregation</span>(pipeline = { <span class="str">"{ $match: { status: 'PAID' } }"</span>, <span class="str">"{ $group: { _id: '$customerId', total: { $sum: '$total' } } }"</span> })
+    <span class="typ">List</span>&lt;<span class="typ">CustomerTotal</span>&gt; <span class="fn">totalsByCustomer</span>();
+}
+
+<span class="cmt">// MongoTemplate for anything dynamic / partial updates</span>
+mongo.updateFirst(query(where(<span class="str">"_id"</span>).is(id).and(<span class="str">"status"</span>).is(<span class="str">"NEW"</span>)),
+                  <span class="kw">new</span> <span class="typ">Update</span>().set(<span class="str">"status"</span>, <span class="str">"PAID"</span>).inc(<span class="str">"version"</span>, <span class="num">1</span>), <span class="typ">Order</span>.<span class="kw">class</span>);
+<span class="cmt">// transactions: @EnableTransactionManagement + a MongoTransactionManager bean, then @Transactional (replica set required)</span>
+<span class="cmt">// tests: Testcontainers MongoDBContainer("mongo:8") with @ServiceConnection (starts a single-node replica set → transactions work)</span></pre>
+<h3>Replica sets and sharding</h3>
+<table>
+  <thead><tr><th>Piece</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Replica set</b></td><td>1 primary (all writes) + 2+ secondaries (replicate the oplog). Automatic election on primary failure (~seconds). Minimum 3 members for production.</td></tr>
+    <tr><td><b>Oplog</b></td><td>Capped collection of all writes; secondaries tail it. Also the source for <b>Change Streams</b> (<code>db.orders.watch()</code>) — CDC without Debezium.</td></tr>
+    <tr><td><b>Arbiter</b></td><td>Votes but holds no data. Avoid when you can afford a real third member.</td></tr>
+    <tr><td><b>Sharded cluster</b></td><td><code>mongos</code> routers + config servers + N shards (each a replica set). Data split by <b>shard key</b> (ranged or hashed).</td></tr>
+    <tr><td><b>Shard key</b></td><td>Cannot be changed easily; must be in most queries (else scatter-gather) and spread writes (avoid monotonic keys like timestamp unless hashed).</td></tr>
+    <tr><td><b>Atlas</b></td><td>MongoDB's managed cloud; also Atlas Search (Lucene), Vector Search, Data Federation.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Ops command</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>rs.status()</code> · <code>rs.conf()</code> · <code>rs.stepDown()</code></td><td>Replica set health · config · force a new primary.</td></tr>
+    <tr><td><code>db.currentOp({ "secs_running": { $gt: 5 } })</code> · <code>db.killOp(opid)</code></td><td>Long-running operations.</td></tr>
+    <tr><td><code>db.serverStatus()</code> · <code>db.stats()</code> · <code>db.collection.stats()</code></td><td>Connections, memory, WiredTiger cache; sizes.</td></tr>
+    <tr><td><code>mongodump</code> / <code>mongorestore</code> · <code>mongoexport</code> / <code>mongoimport</code></td><td>BSON backup/restore · JSON/CSV.</td></tr>
+    <tr><td><code>db.collection.validate()</code></td><td>Check structure.</td></tr>
+    <tr><td><code>db.adminCommand({ setParameter: 1, logLevel: 1 })</code></td><td>Verbosity.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>@DBRef</code> everywhere</td><td>Entity graph like JPA; each access is an extra query (N+1).</td><td>Store ids; embed read-together data; <code>$lookup</code> only in aggregations.</td></tr>
+    <tr><td>Index creation on boot</td><td><code>auto-index-creation=true</code> builds indexes when the first pod starts in prod.</td><td>Mongock / Liquibase-Mongo migrations; explicit, reviewed.</td></tr>
+    <tr><td>Single node in prod</td><td>No failover, no transactions, no change streams.</td><td>3-member replica set (or Atlas).</td></tr>
+    <tr><td>Reading secondaries for consistency</td><td><code>readPreference=secondary</code> for "read your own write".</td><td>Primary for anything the user just changed; secondaries for analytics.</td></tr>
+    <tr><td>Connection string without <code>replicaSet</code></td><td>Driver connects to one host; failover leaves the app pointing at a secondary.</td><td>List all hosts + <code>replicaSet=</code> (or <code>mongodb+srv://</code>).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Spring Data saves a <code>BigDecimal</code> and Mongo shows <code>"499.99"</code> as a string. Why, and does it matter?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Default mapping stores <code>BigDecimal</code> as a string to avoid precision loss. Strings sort and compare lexically (<code>"50" &gt; "499.99"</code>) and cannot be summed in aggregations. Use <code>@Field(targetType = DECIMAL128)</code> or set the converter globally.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">C8. Observability — the three signals and the stack</h2>
+<p><b>Observability</b> means you can ask new questions about a running system without shipping new code. It rests on three signals: <b>metrics</b> (numbers over time), <b>logs</b> (events with text), and <b>traces</b> (the path of one request across services). The modern stack: <b>Micrometer</b> inside the JVM, <b>OpenTelemetry</b> as the wire standard, <b>Prometheus</b> to store metrics, <b>Grafana</b> to draw them, plus <b>Loki</b>/<b>Elastic</b> for logs and <b>Tempo</b>/<b>Jaeger</b> for traces.</p>
+<table>
+  <thead><tr><th>Signal</th><th>Answers</th><th>Shape</th><th>Cost</th><th>Tools</th></tr></thead>
+  <tbody>
+    <tr><td><b>Metrics</b></td><td>"How many? How fast? Is it trending up?"</td><td>Name + labels → time series of numbers. Pre-aggregated.</td><td>Cheap, fixed per series. Cardinality is the danger.</td><td>Prometheus, Micrometer, Datadog, CloudWatch</td></tr>
+    <tr><td><b>Logs</b></td><td>"What exactly happened at 10:31:07 for order 9001?"</td><td>Timestamped lines (make them JSON).</td><td>Expensive per event. Volume is the danger.</td><td>Loki, Elasticsearch/OpenSearch, Datadog, CloudWatch Logs</td></tr>
+    <tr><td><b>Traces</b></td><td>"Where did the 2 s go across 6 services?"</td><td>Trace = tree of spans; span = one operation with start, duration, attributes.</td><td>Expensive at 100%; sample.</td><td>Tempo, Jaeger, Zipkin, Datadog APM, X-Ray</td></tr>
+    <tr><td><i>Profiles</i> (the 4th)</td><td>"Which method burns the CPU?"</td><td>Continuous flame graphs.</td><td>Low overhead with async-profiler / JFR.</td><td>Pyroscope, Datadog Profiler, JFR</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Piece</th><th>Role in a Spring Boot system</th></tr></thead>
+  <tbody>
+    <tr><td><b>Micrometer</b></td><td>The metrics API inside the JVM (like SLF4J for logs). Boot auto-instruments HTTP, JVM, DB pool, Kafka, caches. You add your own meters.</td></tr>
+    <tr><td><b>Micrometer Tracing</b></td><td>The tracing API in Boot 3 (replaces Spring Cloud Sleuth); bridges to OpenTelemetry or Brave.</td></tr>
+    <tr><td><b>OpenTelemetry (OTel)</b></td><td>Vendor-neutral spec + SDK + protocol (OTLP) for all three signals. The <b>OTel Collector</b> receives, processes, and exports to any backend. The <b>Java agent</b> auto-instruments without code changes.</td></tr>
+    <tr><td><b>Prometheus</b></td><td>Pulls (<i>scrapes</i>) <code>/actuator/prometheus</code> every 15–60 s, stores time series, evaluates alert rules, exposes PromQL.</td></tr>
+    <tr><td><b>Alertmanager</b></td><td>Groups, dedupes, routes alerts from Prometheus to Slack/PagerDuty.</td></tr>
+    <tr><td><b>Grafana</b></td><td>Dashboards and alerting over Prometheus, Loki, Tempo, and 100 other sources. Correlates metrics → logs → traces by labels and trace ids.</td></tr>
+    <tr><td><b>Loki</b></td><td>Log store indexed by labels (not full text) — cheap; query with LogQL. Promtail / Alloy / Fluent Bit ship logs.</td></tr>
+    <tr><td><b>Tempo / Jaeger</b></td><td>Trace stores. Tempo indexes only by trace id (cheap); find traces from logs/metrics (exemplars).</td></tr>
+    <tr><td><b>Datadog / New Relic / Dynatrace</b></td><td>All-in-one SaaS. Less assembly, higher bill.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># flow for one request</span>
+browser → NGINX (adds X-Request-Id) → Spring Boot (Micrometer records http.server.requests timer; a trace span is started;
+          traceId/spanId put into MDC) → RestClient to payments (traceparent header propagated) → Postgres (span)
+Prometheus scrapes /actuator/prometheus every 15 s  ·  logs (JSON, with traceId) → Loki  ·  spans → OTLP → Collector → Tempo
+Grafana: panel shows p99 latency up → click exemplar → the trace → click span → logs for that traceId</pre>
+<div class="tips"><b>Mental model:</b> metrics are the car's dashboard (speed, fuel — always visible, cheap); logs are the trip diary (everything that happened, heavy); traces are the GPS route of a single trip across roads (services). You look at the dashboard first, then open the diary at the right time.</div>
+<div class="tricky">
+  <div class="q">Q. Why do Prometheus and Grafana usually come together, and which one holds the data?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Prometheus is the database and alert engine; Grafana is only the screen. Grafana stores dashboards and users, not metrics. Delete Grafana and you lose charts; delete Prometheus and you lose history.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">C9. Metrics — Micrometer in Spring Boot, Prometheus, PromQL</h2>
+<pre><span class="cmt"># pom: spring-boot-starter-actuator + io.micrometer:micrometer-registry-prometheus</span>
+<span class="kw">management</span>:
+  <span class="kw">endpoints.web.exposure.include</span>: health,prometheus,metrics
+  <span class="kw">metrics</span>:
+    <span class="kw">tags</span>: { <span class="kw">application</span>: <span class="str">${spring.application.name}</span>, <span class="kw">env</span>: <span class="str">${ENV:local}</span> }   <span class="cmt"># common labels on every series</span>
+    <span class="kw">distribution</span>:
+      <span class="kw">percentiles-histogram</span>: { <span class="str">http.server.requests</span>: <span class="kw">true</span> }                   <span class="cmt"># histogram buckets → p99 in PromQL</span>
+      <span class="kw">slo</span>: { <span class="str">http.server.requests</span>: 100ms,250ms,500ms,1s }
+  <span class="kw">prometheus.metrics.export.enabled</span>: <span class="kw">true</span></pre>
+<pre><span class="cmt">// meter types</span>
+<span class="typ">Counter</span> orders   = <span class="typ">Counter</span>.builder(<span class="str">"shop.orders.placed"</span>).tag(<span class="str">"channel"</span>, <span class="str">"web"</span>).register(registry);   <span class="cmt">// only goes up</span>
+<span class="typ">Timer</span>   payTimer = <span class="typ">Timer</span>.builder(<span class="str">"shop.payment.duration"</span>).publishPercentileHistogram().register(registry);
+<span class="typ">Gauge</span>.builder(<span class="str">"shop.cart.open"</span>, carts, <span class="typ">Map</span>::size).register(registry);                             <span class="cmt">// current value, sampled</span>
+<span class="typ">DistributionSummary</span> size = <span class="typ">DistributionSummary</span>.builder(<span class="str">"shop.order.items"</span>).register(registry);    <span class="cmt">// sizes, not time</span>
+
+orders.increment();
+payTimer.record(() -&gt; gateway.charge(order));
+size.record(order.items().size());
+
+<span class="cmt">// annotations (need micrometer-observation / AOP)</span>
+<span class="ann">@Timed</span>(value = <span class="str">"shop.report.build"</span>, histogram = <span class="kw">true</span>)
+<span class="ann">@Counted</span>(<span class="str">"shop.report.requests"</span>)
+<span class="ann">@Observed</span>(name = <span class="str">"checkout"</span>, contextualName = <span class="str">"checkout-flow"</span>)       <span class="cmt">// metrics + trace span in one</span></pre>
+<table>
+  <thead><tr><th>Built-in meter (Boot)</th><th>Tells you</th></tr></thead>
+  <tbody>
+    <tr><td><code>http_server_requests_seconds_{count,sum,bucket}</code></td><td>Request rate, latency, errors by <code>uri</code>, <code>status</code>, <code>method</code>, <code>exception</code>, <code>outcome</code>.</td></tr>
+    <tr><td><code>jvm_memory_used_bytes</code>, <code>jvm_gc_pause_seconds</code>, <code>jvm_threads_live_threads</code></td><td>Heap by area, GC pauses, threads.</td></tr>
+    <tr><td><code>hikaricp_connections_{active,idle,pending}</code>, <code>hikaricp_connections_acquire_seconds</code></td><td>Pool health; pending &gt; 0 = starved.</td></tr>
+    <tr><td><code>tomcat_threads_busy_threads</code>, <code>executor_*</code></td><td>Thread saturation.</td></tr>
+    <tr><td><code>spring_kafka_listener_seconds</code>, <code>kafka_consumer_fetch_manager_records_lag</code></td><td>Listener time; lag.</td></tr>
+    <tr><td><code>cache_gets_total{result="hit|miss"}</code></td><td>Cache hit ratio.</td></tr>
+    <tr><td><code>logback_events_total{level="error"}</code></td><td>Error log rate — a great cheap alert.</td></tr>
+    <tr><td><code>process_cpu_usage</code>, <code>system_cpu_usage</code>, <code>process_uptime_seconds</code></td><td>CPU and restarts (uptime resets).</td></tr>
+  </tbody>
+</table>
+<h3>Prometheus scrape config and PromQL</h3>
+<pre><span class="cmt"># prometheus.yml</span>
+<span class="kw">scrape_configs</span>:
+- <span class="kw">job_name</span>: shop-api
+  <span class="kw">metrics_path</span>: /actuator/prometheus
+  <span class="kw">scrape_interval</span>: 15s
+  <span class="kw">static_configs</span>: [{ <span class="kw">targets</span>: [<span class="str">api-1:8080</span>, <span class="str">api-2:8080</span>] }]
+  <span class="cmt"># in Kubernetes: kubernetes_sd_configs + pod annotations, or a ServiceMonitor (Prometheus Operator)</span>
+
+<span class="cmt"># PromQL — the five queries you will write most</span>
+<span class="fn">sum</span>(<span class="fn">rate</span>(http_server_requests_seconds_count{application=<span class="str">"shop-api"</span>}[5m])) <span class="kw">by</span> (uri)            <span class="cmt"># requests/s per endpoint</span>
+<span class="fn">sum</span>(<span class="fn">rate</span>(http_server_requests_seconds_count{status=~<span class="str">"5.."</span>}[5m])) / <span class="fn">sum</span>(<span class="fn">rate</span>(http_server_requests_seconds_count[5m]))   <span class="cmt"># error ratio</span>
+<span class="fn">histogram_quantile</span>(<span class="num">0.99</span>, <span class="fn">sum</span>(<span class="fn">rate</span>(http_server_requests_seconds_bucket[5m])) <span class="kw">by</span> (le, uri))      <span class="cmt"># p99 latency per endpoint</span>
+jvm_memory_used_bytes{area=<span class="str">"heap"</span>} / jvm_memory_max_bytes{area=<span class="str">"heap"</span>}                                  <span class="cmt"># heap %</span>
+hikaricp_connections_pending &gt; <span class="num">0</span>                                                                        <span class="cmt"># pool starvation</span>
+<span class="fn">increase</span>(logback_events_total{level=<span class="str">"error"</span>}[10m])                                                   <span class="cmt"># errors in last 10 min</span>
+<span class="fn">up</span> == <span class="num">0</span>                                                                                                <span class="cmt"># scrape target down</span></pre>
+<table>
+  <thead><tr><th>PromQL idea</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>rate(x[5m])</code></td><td>Per-second rate of a <b>counter</b> over the window. Always wrap counters in <code>rate</code>/<code>increase</code>; never graph raw counters.</td></tr>
+    <tr><td><code>sum by (label)</code> / <code>avg</code> / <code>max</code></td><td>Aggregate across instances; keep the labels you care about.</td></tr>
+    <tr><td><code>histogram_quantile(q, sum by (le) (rate(bucket[5m])))</code></td><td>Percentile from histogram buckets. <code>le</code> must survive the aggregation.</td></tr>
+    <tr><td><code>{label=~"regex"}</code>, <code>!=</code>, <code>!~</code></td><td>Label matchers.</td></tr>
+    <tr><td><code>offset 1d</code></td><td>Compare with yesterday.</td></tr>
+    <tr><td>Recording rules</td><td>Precompute heavy expressions (<code>job:http_errors:ratio5m</code>) for dashboards and alerts.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>High-cardinality labels</td><td><code>tag("userId", id)</code> or <code>tag("orderId", …)</code> → millions of series, Prometheus OOM.</td><td>Labels only for bounded sets (status, method, region, uri <i>template</i>). IDs go in logs/traces.</td></tr>
+    <tr><td>Unbounded URIs</td><td><code>/orders/9001</code> as the <code>uri</code> label.</td><td>Boot uses the route template <code>/orders/{id}</code>; for unmatched paths (404 scans) it collapses to <code>UNKNOWN</code>/<code>root</code> — keep it that way.</td></tr>
+    <tr><td>Averages for latency</td><td>Dashboards of <code>sum/count</code> mean latency.</td><td>p50/p95/p99 from histograms; the mean hides the slow tail.</td></tr>
+    <tr><td>Client-side percentiles</td><td><code>publishPercentiles(0.99)</code> only → cannot aggregate across pods.</td><td><code>publishPercentileHistogram()</code> → compute percentiles in PromQL across all instances.</td></tr>
+    <tr><td>Scrape endpoint public</td><td><code>/actuator/prometheus</code> reachable via the ingress.</td><td>Management port 9090 internal only; NGINX returns 404 for <code>/actuator/</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A counter resets to 0 when the pod restarts. Does <code>rate()</code> show a negative spike?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. <code>rate</code> and <code>increase</code> detect counter resets and handle them. That is one reason you never graph raw counter values — the raw line drops to zero and lies; <code>rate</code> stays correct.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">C10. Tracing and logging — OpenTelemetry, correlation, Loki</h2>
+<pre><span class="cmt"># Option A — Micrometer Tracing bridged to OTel (code-level, Spring-native)</span>
+<span class="cmt"># pom: io.micrometer:micrometer-tracing-bridge-otel + io.opentelemetry:opentelemetry-exporter-otlp</span>
+<span class="kw">management</span>:
+  <span class="kw">tracing.sampling.probability</span>: <span class="num">0.1</span>              <span class="cmt"># 10%; 1.0 in dev</span>
+  <span class="kw">otlp.tracing.endpoint</span>: <span class="str">http://otel-collector:4318/v1/traces</span>
+  <span class="kw">observations.annotations.enabled</span>: <span class="kw">true</span>        <span class="cmt"># @Observed works</span>
+<span class="kw">logging.pattern.correlation</span>: <span class="str">"[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "</span>   <span class="cmt"># default already includes trace ids</span>
+
+<span class="cmt"># Option B — OpenTelemetry Java agent (zero code; also instruments JDBC, Kafka, Redis, HTTP clients)</span>
+java <span class="ann">-javaagent:</span>/otel/opentelemetry-javaagent.jar \
+     <span class="ann">-Dotel.service.name</span>=shop-api <span class="ann">-Dotel.exporter.otlp.endpoint</span>=http://otel-collector:4317 \
+     <span class="ann">-Dotel.traces.sampler</span>=parentbased_traceidratio <span class="ann">-Dotel.traces.sampler.arg</span>=0.1 <span class="ann">-jar</span> app.jar
+<span class="cmt"># pick ONE option — both at once = duplicate spans</span></pre>
+<pre><span class="cmt">// custom spans and attributes (Micrometer Observation API — works for metrics and traces)</span>
+<span class="typ">Observation</span>.createNotStarted(<span class="str">"inventory.reserve"</span>, registry)
+    .lowCardinalityKeyValue(<span class="str">"warehouse"</span>, wh.code())          <span class="cmt">// becomes a metric tag AND a span attribute</span>
+    .highCardinalityKeyValue(<span class="str">"orderId"</span>, order.id())          <span class="cmt">// span attribute only (never a metric tag)</span>
+    .observe(() -&gt; inventory.reserve(order));
+
+<span class="cmt">// or OTel API directly</span>
+<span class="typ">Span</span> span = tracer.spanBuilder(<span class="str">"pdf.render"</span>).startSpan();
+<span class="kw">try</span> (<span class="kw">var</span> scope = span.makeCurrent()) { render(); span.setAttribute(<span class="str">"pages"</span>, n); }
+<span class="kw">catch</span> (<span class="typ">Exception</span> e) { span.recordException(e); span.setStatus(<span class="typ">StatusCode</span>.ERROR); <span class="kw">throw</span> e; }
+<span class="kw">finally</span> { span.end(); }</pre>
+<table>
+  <thead><tr><th>Tracing concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Trace</b> / <b>trace id</b></td><td>One request end-to-end; a 128-bit id shared by all its spans.</td></tr>
+    <tr><td><b>Span</b></td><td>One unit of work (HTTP handler, SQL query, Kafka send) with parent, start, duration, attributes, events, status.</td></tr>
+    <tr><td><b>Context propagation</b></td><td>The <code>traceparent</code> header (W3C Trace Context) carries trace id + parent span id across HTTP; Kafka headers do the same. Spring's clients (<code>RestClient</code>, <code>WebClient</code>, <code>KafkaTemplate</code>) propagate automatically when built from the auto-configured builders.</td></tr>
+    <tr><td><b>Baggage</b></td><td>Key-values that travel with the trace (tenant id) and can be copied into MDC.</td></tr>
+    <tr><td><b>Sampling</b></td><td>Head-based (decide at the root: 10%) vs tail-based (Collector keeps slow/error traces: needs the <code>tailsampling</code> processor).</td></tr>
+    <tr><td><b>Exemplars</b></td><td>Prometheus histogram samples that carry a trace id → jump from a latency spike to an actual trace in Grafana.</td></tr>
+    <tr><td><b>OTel Collector</b></td><td>Receives OTLP, batches, adds k8s metadata, samples, exports to Tempo/Jaeger/Datadog. Run as sidecar/DaemonSet/gateway.</td></tr>
+    <tr><td><b>Async threads</b></td><td>Context is thread-local; <code>@Async</code>/executors lose it unless wrapped — Boot's <code>ContextPropagatingTaskDecorator</code> / <code>spring.task.execution.…</code> handle it when configured.</td></tr>
+  </tbody>
+</table>
+<h3>Logs that work with the rest</h3>
+<pre><span class="cmt"># Boot 3.4+: structured JSON logs to stdout (Loki / ELK / Datadog parse them)</span>
+<span class="kw">logging.structured.format.console</span>: ecs            <span class="cmt"># or logstash, gelf</span>
+<span class="kw">logging.level</span>: { <span class="str">com.shop</span>: INFO, <span class="str">org.springframework.web</span>: WARN }
+<span class="cmt"># → {"@timestamp":"…","log.level":"INFO","message":"order placed","trace.id":"4bf9…","span.id":"a1c2…","orderId":"9001",…}</span></pre>
+<pre><span class="cmt">// add business context to every line in this request</span>
+<span class="typ">MDC</span>.put(<span class="str">"orderId"</span>, id);   <span class="kw">try</span> { … } <span class="kw">finally</span> { <span class="typ">MDC</span>.remove(<span class="str">"orderId"</span>); }
+log.info(<span class="str">"order placed"</span>, kv(<span class="str">"customerId"</span>, cid), kv(<span class="str">"total"</span>, total));   <span class="cmt">// logstash-logback-encoder structured args</span>
+
+<span class="cmt"># LogQL in Grafana/Loki</span>
+{app=<span class="str">"shop-api"</span>, env=<span class="str">"prod"</span>} |= <span class="str">"order placed"</span> | json | total &gt; <span class="num">1000</span>
+{app=<span class="str">"shop-api"</span>} | json | trace_id=<span class="str">"4bf92f3577b34da6a3ce929d0e0e4736"</span>          <span class="cmt"># every line of one request across pods</span>
+<span class="fn">sum</span> <span class="kw">by</span> (level) (<span class="fn">rate</span>({app=<span class="str">"shop-api"</span>} | json [5m]))                           <span class="cmt"># log-derived metric</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Plain-text logs</td><td><code>2026-10-25 10:31 INFO Order 9001 placed by 42 total 499</code> — grep only.</td><td>JSON with fields; query by <code>orderId</code>, aggregate by <code>level</code>.</td></tr>
+    <tr><td>No correlation</td><td>Six services, six log streams, no shared id.</td><td>Trace id in every log line (automatic with Micrometer Tracing); <code>X-Request-Id</code> from NGINX as a fallback.</td></tr>
+    <tr><td>Logging PII / secrets</td><td>Request bodies with passwords, tokens, card numbers in logs.</td><td>Mask at the source; never log auth headers; review log statements like code.</td></tr>
+    <tr><td>100% tracing in prod</td><td>Trace storage bill explodes; latency overhead.</td><td>Head sampling 1–10%, tail sampling for errors/slow in the Collector.</td></tr>
+    <tr><td>Logging in a hot loop</td><td><code>log.info</code> per item in a 1M-item batch.</td><td>Log the summary; debug per item only when enabled (<code>isDebugEnabled</code>/placeholders).</td></tr>
+    <tr><td>Logs as metrics</td><td>Counting errors by grepping logs in a dashboard.</td><td>A real counter (<code>logback_events_total</code> exists already) — cheaper and alertable.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The trace shows the HTTP span but the Kafka consumer's work appears as a separate trace. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The producer did not propagate context into Kafka headers (plain <code>KafkaProducer</code> instead of the observation-enabled <code>KafkaTemplate</code>), or <code>spring.kafka.listener.observation-enabled</code> is off on the consumer, so the listener starts a new root. Turn on observation on both sides (or use the OTel agent, which instruments the Kafka clients).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">C11. Dashboards, alerting, SLOs — and the one-page recap</h2>
+<table>
+  <thead><tr><th>Method</th><th>Signals</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>RED</b> (per service)</td><td><b>R</b>ate, <b>E</b>rrors, <b>D</b>uration</td><td>The first row of every service dashboard: requests/s, error %, p50/p95/p99.</td></tr>
+    <tr><td><b>USE</b> (per resource)</td><td><b>U</b>tilization, <b>S</b>aturation, <b>E</b>rrors</td><td>CPU, memory, DB pool, thread pool, disk, queue depth.</td></tr>
+    <tr><td><b>Four golden signals</b> (Google SRE)</td><td>Latency, traffic, errors, saturation</td><td>RED + saturation.</td></tr>
+    <tr><td><b>SLI / SLO / error budget</b></td><td>SLI = measured ratio (good requests / all). SLO = target (99.9% of requests &lt; 500 ms over 30 days). Error budget = 1 − SLO.</td><td>Alert on <b>burn rate</b> (budget consumed too fast), not on every blip.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Prometheus alert rules (alerts.yml)</span>
+<span class="kw">groups</span>:
+- <span class="kw">name</span>: shop-api
+  <span class="kw">rules</span>:
+  - <span class="kw">alert</span>: HighErrorRate
+    <span class="kw">expr</span>: |
+      sum(rate(http_server_requests_seconds_count{application="shop-api",status=~"5.."}[5m]))
+        / sum(rate(http_server_requests_seconds_count{application="shop-api"}[5m])) &gt; 0.02
+    <span class="kw">for</span>: 5m                                      <span class="cmt"># must be true for 5 min → fewer flaps</span>
+    <span class="kw">labels</span>: { <span class="kw">severity</span>: page }
+    <span class="kw">annotations</span>:
+      <span class="kw">summary</span>: <span class="str">"shop-api 5xx &gt; 2% for 5m"</span>
+      <span class="kw">runbook</span>: <span class="str">https://wiki/runbooks/shop-api-errors</span>
+  - <span class="kw">alert</span>: SlowP99
+    <span class="kw">expr</span>: histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{application="shop-api"}[5m]))) &gt; 1
+    <span class="kw">for</span>: 10m
+    <span class="kw">labels</span>: { <span class="kw">severity</span>: ticket }
+  - <span class="kw">alert</span>: DbPoolStarved
+    <span class="kw">expr</span>: max(hikaricp_connections_pending{application="shop-api"}) &gt; 0
+    <span class="kw">for</span>: 2m
+  - <span class="kw">alert</span>: KafkaLagGrowing
+    <span class="kw">expr</span>: sum by (group) (kafka_consumergroup_lag) &gt; 10000
+    <span class="kw">for</span>: 10m
+  - <span class="kw">alert</span>: TargetDown
+    <span class="kw">expr</span>: up{job="shop-api"} == 0
+    <span class="kw">for</span>: 2m</pre>
+<table>
+  <thead><tr><th>Grafana skill</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Import ready dashboards</td><td>Dashboard IDs: JVM Micrometer <b>4701</b>, Spring Boot 3 <b>19004</b>, Node Exporter <b>1860</b>, Kafka exporter <b>7589</b>, NGINX <b>12708</b>, PostgreSQL <b>9628</b>.</td></tr>
+    <tr><td>Variables</td><td><code>$application</code>, <code>$instance</code> from <code>label_values(up, application)</code> → one dashboard for all services.</td></tr>
+    <tr><td>Panel types</td><td>Time series for rates/latency; stat for current values; heatmap for latency histograms; table for top-N.</td></tr>
+    <tr><td>Correlate</td><td>Data links from a panel to Loki (<code>{app="$application"} | json | trace_id="${__value.raw}"</code>) and Tempo; exemplars on histograms.</td></tr>
+    <tr><td>Alerting</td><td>Grafana alerting (unified) or Prometheus rules + Alertmanager; one system, not both.</td></tr>
+    <tr><td>As code</td><td>Dashboards JSON in git, provisioned via <code>provisioning/dashboards</code>; Grafonnet / Terraform provider.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Alert on causes</td><td>Page on CPU &gt; 80%, GC &gt; 200 ms, pod restarts.</td><td>Page on <b>symptoms users feel</b> (error ratio, latency SLO, availability). Causes go on dashboards and tickets.</td></tr>
+    <tr><td>No <code>for</code></td><td>Alert fires on one bad scrape; team learns to ignore it.</td><td><code>for: 5m</code>, sensible thresholds, every alert has a runbook link and an owner.</td></tr>
+    <tr><td>Dashboard sprawl</td><td>40 dashboards nobody opens.</td><td>One per service (RED + USE + dependencies) with a template variable; one overview.</td></tr>
+    <tr><td>Observability as an afterthought</td><td>Added during the first outage.</td><td>Actuator + Prometheus + JSON logs + tracing in the project template from day one (it is mostly config).</td></tr>
+    <tr><td>Watching only the app</td><td>No metrics for NGINX, Postgres, Redis, Kafka.</td><td>Exporters for each (nginx-prometheus-exporter, postgres_exporter, redis_exporter, kafka_exporter) or the OTel Collector receivers.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>One-page recap for this sheet:</b><br>
+<b>NGINX</b> — reverse proxy in front of Spring Boot: TLS, <code>upstream</code> + <code>proxy_pass</code>, forward headers (<code>X-Forwarded-*</code> + <code>server.forward-headers-strategy</code>), timeouts, <code>client_max_body_size</code>, rate limits, cache public GETs only, <code>nginx -t</code> before reload, 502 = backend unreachable, 504 = backend slow.<br>
+<b>MongoDB</b> — documents modelled by access pattern (embed what you read together, reference what grows), <code>$set</code>/<code>$inc</code> not replace, ESR for compound indexes, <code>explain()</code> for IXSCAN, <code>Decimal128</code> for money, replica set of 3 with <code>w: majority</code>, Spring Data with <code>@Version</code> and index migrations as code.<br>
+<b>Observability</b> — Micrometer + Actuator <code>/prometheus</code>, histograms not averages, low-cardinality labels, Prometheus <code>rate()</code> + <code>histogram_quantile()</code>, tracing with Micrometer Tracing/OTel at 10% sampling, JSON logs with trace ids to Loki, Grafana RED/USE dashboards, alerts on symptoms with <code>for</code> and runbooks.</div>
+<div class="tricky">
+  <div class="q">Q. Users report "the site is slow" but every dashboard is green. What is probably wrong with the dashboards?</div>
+  <details><summary>Reveal hint</summary><div class="hint">They show averages (mean latency), aggregate across all endpoints (one slow path hidden among fast ones), or only server-side time (NGINX ↔ client time excluded, see <code>$request_time</code> vs <code>$upstream_response_time</code>). Fix: p99 per endpoint, edge metrics from NGINX/CDN, and a synthetic check from outside.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 12 ============================= -->
+<h2 id="s12">D12. SRE practice — reliability as an engineering discipline</h2>
+<p><b>Site Reliability Engineering</b> treats operations as a software problem: define how reliable the service must be (SLOs), measure it (SLIs), spend the allowed unreliability (error budget) on change, automate toil away, and learn from every incident without blame. Sections 8–11 gave you the telemetry; this part is what you do with it.</p>
+<table>
+  <thead><tr><th>Term</th><th>Plain meaning</th><th>Example for the shop API</th></tr></thead>
+  <tbody>
+    <tr><td><b>SLI</b> (indicator)</td><td>A measured ratio of good events to all events.</td><td>Requests with status &lt; 500 and latency &lt; 500 ms ÷ all requests.</td></tr>
+    <tr><td><b>SLO</b> (objective)</td><td>The target for the SLI over a window.</td><td>99.9% over 30 days.</td></tr>
+    <tr><td><b>SLA</b> (agreement)</td><td>A contract with consequences, looser than the SLO.</td><td>99.5% or credits — you alert on the SLO so you never breach the SLA.</td></tr>
+    <tr><td><b>Error budget</b></td><td>1 − SLO: the unreliability you may spend.</td><td>0.1% of 30 days ≈ 43 minutes of full outage, or 43 hours at 1% errors.</td></tr>
+    <tr><td><b>Burn rate</b></td><td>How fast you consume the budget relative to "exactly on target".</td><td>Burn rate 14.4 for 1 hour = 2% of the monthly budget gone in an hour → page.</td></tr>
+    <tr><td><b>Toil</b></td><td>Manual, repetitive, automatable operational work with no lasting value.</td><td>Hand-restarting pods every Monday.</td></tr>
+    <tr><td><b>MTTD / MTTR / MTBF</b></td><td>Mean time to detect / restore / between failures.</td><td>Track MTTR per incident; it is the DORA metric you move with runbooks and rollbacks.</td></tr>
+    <tr><td><b>Blameless postmortem</b></td><td>Written analysis of an incident focused on systems and decisions, not people.</td><td>"The alert fired 20 min late because the threshold was tuned for old traffic" — not "Asha missed it".</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># multi-window, multi-burn-rate alerts (Google SRE workbook) — Prometheus rules for a 99.9% / 30d availability SLO</span>
+<span class="cmt"># SLI as recording rules</span>
+- <span class="kw">record</span>: sli:http_requests:error_ratio_rate5m
+  <span class="kw">expr</span>: |
+    sum(rate(http_server_requests_seconds_count{application="shop-api",status=~"5.."}[5m]))
+    / sum(rate(http_server_requests_seconds_count{application="shop-api"}[5m]))
+- <span class="kw">record</span>: sli:http_requests:error_ratio_rate1h
+  <span class="kw">expr</span>: sum(rate(http_server_requests_seconds_count{application="shop-api",status=~"5.."}[1h])) / sum(rate(http_server_requests_seconds_count{application="shop-api"}[1h]))
+- <span class="kw">record</span>: sli:http_requests:error_ratio_rate6h
+  <span class="kw">expr</span>: sum(rate(http_server_requests_seconds_count{application="shop-api",status=~"5.."}[6h])) / sum(rate(http_server_requests_seconds_count{application="shop-api"}[6h]))
+
+<span class="cmt"># page: fast burn (2% of budget in 1h)  → burn rate 14.4 × (1 − 0.999) = 0.0144</span>
+- <span class="kw">alert</span>: ShopApiErrorBudgetFastBurn
+  <span class="kw">expr</span>: sli:http_requests:error_ratio_rate1h &gt; 14.4 * 0.001 and sli:http_requests:error_ratio_rate5m &gt; 14.4 * 0.001
+  <span class="kw">for</span>: 2m
+  <span class="kw">labels</span>: { <span class="kw">severity</span>: page }
+  <span class="kw">annotations</span>: { <span class="kw">summary</span>: <span class="str">"shop-api burning error budget 14x (1h window)"</span>, <span class="kw">runbook</span>: <span class="str">https://wiki/runbooks/shop-api-errors</span> }
+<span class="cmt"># page: slow burn (5% in 6h) → burn rate 6</span>
+- <span class="kw">alert</span>: ShopApiErrorBudgetSlowBurn
+  <span class="kw">expr</span>: sli:http_requests:error_ratio_rate6h &gt; 6 * 0.001 and sli:http_requests:error_ratio_rate1h &gt; 6 * 0.001   <span class="cmt"># (needs a 30m rule too for the short window)</span>
+  <span class="kw">for</span>: 15m
+  <span class="kw">labels</span>: { <span class="kw">severity</span>: page }
+<span class="cmt"># ticket: 3-day burn rate 1 → budget will be exhausted by month end; no page, create a ticket</span>
+
+<span class="cmt"># tools that generate all this from a YAML SLO definition: Sloth (sloth.dev), Pyrra, OpenSLO; Grafana SLO (cloud); Nobl9</span></pre>
+<table>
+  <thead><tr><th>Why burn-rate alerts beat threshold alerts</th></tr></thead>
+  <tbody>
+    <tr><td>A fixed "5xx &gt; 2% for 5 min" pages for a 6-minute blip that costs 0.3% of the budget, and sleeps through a 0.5% error rate that quietly burns the whole month. Burn rate pages in proportion to <i>how much reliability you are losing</i>, with a long window to confirm it is real and a short window to stop paging once it is fixed.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>100% target</td><td>"Zero errors" SLO — every blip is an incident; no budget for deploys.</td><td>Pick the SLO users actually need (99.9% is 43 min/month); spend the rest on shipping.</td></tr>
+    <tr><td>SLO nobody owns</td><td>Written once in a doc.</td><td>Dashboard with remaining budget; reviewed in the weekly ops meeting; budget exhausted → feature freeze until reliability work lands.</td></tr>
+    <tr><td>Alerting on causes</td><td>Pages for CPU 80%, pod restart, disk 70%.</td><td>Page on SLO burn; everything else is a ticket or a dashboard panel.</td></tr>
+    <tr><td>SLI on the server only</td><td>Server says 99.99%; users saw 99% because the CDN/LB dropped requests.</td><td>Measure at the edge (ALB/CDN logs, synthetics) as close to the user as you can.</td></tr>
+    <tr><td>One SLO for everything</td><td>Checkout and the "about us" page share a target.</td><td>SLOs per critical user journey; non-critical paths get looser or no SLO.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. 99.9% monthly availability: how many minutes of full downtime is that, and why does the number change the way you argue about releases?</div>
+  <details><summary>Reveal hint</summary><div class="hint">≈ 43 minutes. If this month's incidents already used 40, the error budget says "no risky deploys until next month" — a data-driven answer to "can we ship Friday?". If you used 5, you have room to run the risky migration. The budget turns reliability debates into arithmetic.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 13 ============================= -->
+<h2 id="s13">D13. Incident response — roles, severity, communication, timeline</h2>
+<table>
+  <thead><tr><th>Role</th><th>Does</th><th>Does NOT</th></tr></thead>
+  <tbody>
+    <tr><td><b>Incident Commander (IC)</b></td><td>Owns the incident: decides priorities, assigns tasks, keeps the timeline, declares resolution. Can be anyone trained; not necessarily the most senior.</td><td>Debug. The IC who starts typing in a terminal has stopped commanding.</td></tr>
+    <tr><td><b>Operations / tech lead(s)</b></td><td>Investigate and fix; report findings to the IC in plain statements ("DB connections saturated since 10:31").</td><td>Talk to stakeholders.</td></tr>
+    <tr><td><b>Communications lead</b></td><td>Status page, customer support, internal updates at a fixed cadence (every 30 min, even if "no change").</td><td>Guess at causes publicly.</td></tr>
+    <tr><td><b>Scribe</b></td><td>Timeline in the incident channel: who did what when, decisions, evidence links. The postmortem's raw material.</td><td>—</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Severity</th><th>Meaning</th><th>Response</th></tr></thead>
+  <tbody>
+    <tr><td><b>SEV1</b></td><td>Core journey down or data at risk for most users (checkout fails, data corruption, security breach).</td><td>Page immediately; IC + comms within 5 min; all hands; status page; exec updates.</td></tr>
+    <tr><td><b>SEV2</b></td><td>Major degradation or a critical feature down for some users; SLO burning fast.</td><td>Page; IC; status page if customer-visible.</td></tr>
+    <tr><td><b>SEV3</b></td><td>Minor degradation, workaround exists, non-critical feature.</td><td>Ticket, business hours.</td></tr>
+    <tr><td><b>SEV4</b></td><td>Cosmetic / internal-only.</td><td>Backlog.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># the incident loop (every 10–15 minutes)</span>
+1. DETECT     alert / customer report / synthetic → acknowledge in &lt; 5 min (MTTD starts here)
+2. DECLARE    open #inc-2026-10-25-checkout, set severity, name the IC, start the timeline, post on status page ("investigating")
+3. STABILISE  stop the bleeding BEFORE finding the cause: roll back the last deploy, flip the flag, scale up, fail over, shed load
+4. DIAGNOSE   dashboards (RED → USE), recent changes (deploys, config, infra, dependencies), logs by traceId, thread dumps if hung
+5. FIX        apply; verify with the SLI, not with "looks fine"; keep the workaround until the fix is proven
+6. COMMUNICATE every 30 min: impact, what we know, what we are doing, next update time
+7. RESOLVE    SLI back in target for N minutes → "monitoring" → "resolved"; thank people; schedule the postmortem within 48 h
+
+<span class="cmt"># first questions the IC asks</span>
+What changed in the last 2 hours? (deploy log, Argo history, Terraform applies, flag flips, cloud events)
+What is the user impact, in numbers? (error ratio, affected journeys, regions)
+Can we roll back / flag off / fail over right now? If yes, why haven't we?
+Who is the single owner of the current action?</pre>
+<table>
+  <thead><tr><th>Communication template (status page / Slack)</th></tr></thead>
+  <tbody>
+    <tr><td><b>10:42 — Investigating.</b> Some customers cannot complete checkout (≈ 30% of attempts failing since 10:31 UTC). We have identified a likely cause and are rolling back. Next update by 11:10.</td></tr>
+    <tr><td><b>11:05 — Identified / Mitigating.</b> The rollback completed at 10:58; error rate is back below 0.1%. We are monitoring and confirming no orders were lost. Next update by 11:35.</td></tr>
+    <tr><td><b>11:30 — Resolved.</b> Checkout has been operating normally since 10:58. Root cause: a database connection-pool change in today's release. A postmortem will be published within 5 business days.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Everyone debugging</td><td>Twelve people in a call, three different fixes applied at once, nobody tracking.</td><td>One IC, explicit task assignment, one change at a time, timeline in the channel.</td></tr>
+    <tr><td>Root cause first</td><td>40 minutes of diagnosis while users fail; "we almost have it".</td><td>Mitigate first (rollback/flag/failover), diagnose with the system healthy.</td></tr>
+    <tr><td>Silence</td><td>No update for an hour because "nothing new".</td><td>Fixed cadence; "no change, still working, next update at X" is an update.</td></tr>
+    <tr><td>Hero on-call</td><td>One engineer awake 6 hours alone.</td><td>Escalate early; hand over at 2 hours; IC enforces breaks.</td></tr>
+    <tr><td>Incident in DMs</td><td>Evidence scattered across private chats.</td><td>One public channel per incident; bot-created from the alert (PagerDuty/Opsgenie/incident.io/Rootly).</td></tr>
+    <tr><td>"Resolved" when the graph dips</td><td>Closed, then it comes back 20 minutes later.</td><td>Resolve when the SLI holds for a defined window and the cause is understood or the mitigation is durable.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The on-call engineer thinks they know the root cause and wants 15 more minutes to fix it properly. A rollback would take 3 minutes. What does the IC decide?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Roll back now. 15 minutes of SEV1 is a third of the monthly error budget; a wrong hunch doubles it. Fix properly afterwards, with the system healthy and the timeline intact. The IC exists precisely to make that call when the engineer is too close to the problem.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 14 ============================= -->
+<h2 id="s14">D14. On-call, runbooks, and postmortems</h2>
+<table>
+  <thead><tr><th>On-call practice</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Rotation of ≥ 5 people, 1 week each, primary + secondary</td><td>Fewer than 5 = burnout; a secondary catches missed pages and escalations.</td></tr>
+    <tr><td>Page only for SLO-impacting, actionable alerts; everything else to a ticket queue</td><td>Pager fatigue is the #1 cause of missed real incidents. Target &lt; 2 pages per shift.</td></tr>
+    <tr><td>Every alert links to a runbook and has an owner</td><td>3 am is not the time to figure out what "KafkaLagGrowing" means.</td></tr>
+    <tr><td>Handover notes and a weekly on-call review</td><td>What paged, was it actionable, what to fix/tune/delete. Alert hygiene is continuous.</td></tr>
+    <tr><td>On-call has authority to roll back, flag off, scale, and page anyone</td><td>Waiting for approval during an outage is the outage.</td></tr>
+    <tr><td>Compensation / time off after night pages</td><td>Sustainable or it collapses.</td></tr>
+    <tr><td>Tooling: PagerDuty / Opsgenie / Grafana OnCall; incident bots (incident.io, Rootly, FireHydrant)</td><td>Escalation policies, schedules, auto-created channels, timelines.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># runbook template — one per alert, kept next to the alert rule in git</span>
+# Alert: ShopApiErrorBudgetFastBurn
+## Meaning
+shop-api is returning 5xx to &gt; 1.4% of requests (14x the SLO burn rate) over the last hour.
+## Impact
+Checkout and order history fail for affected users. SEV2 by default; SEV1 if &gt; 20% of requests.
+## First 5 minutes
+1. Dashboard: https://grafana/d/shop-api  → which endpoints? which pods? started when?
+2. Recent changes: `argocd app history shop-api-prod` · deploy channel · Terraform applies · flag audit log
+3. If a deploy in the last 2 h: ROLL BACK → `git revert` in shop-deploy (or `argocd app rollback`) — do not wait for diagnosis
+## Diagnosis
+- 5xx by endpoint: `sum by (uri) (rate(http_server_requests_seconds_count{status=~"5..",application="shop-api"}[5m]))`
+- Hikari pending &gt; 0 → DB pool: check RDS connections/CPU, long queries (`pg_stat_activity`)
+- Logs: `{app="shop-api"} | json | level="ERROR"` in Loki; pick a traceId → Tempo
+- Thread dump if latency not errors: `kubectl exec … -- jcmd 1 Thread.print`
+## Known causes (update after each incident)
+- 2026-09-14: connection pool exhausted after pool size change → rolled back (INC-231)
+- 2026-07-02: payments-service timeout cascade → circuit breaker added (INC-198)
+## Escalation
+Platform on-call (DB/infra) · payments team if /checkout only · security if auth errors spike
+## Owner: shop-api team · Last reviewed: 2026-10-01</pre>
+<table>
+  <thead><tr><th>Blameless postmortem — sections</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td><b>Summary</b></td><td>Two sentences: what broke, for whom, for how long.</td></tr>
+    <tr><td><b>Impact</b></td><td>Numbers: duration, % of requests/users, orders lost, revenue, SLO budget consumed, SLA breached?</td></tr>
+    <tr><td><b>Timeline</b></td><td>UTC timestamps from the scribe: first symptom, detection, declare, key decisions, mitigation, resolution. Note detection and mitigation gaps explicitly.</td></tr>
+    <tr><td><b>Root cause(s) and contributing factors</b></td><td>Systemic: "the pool-size config had no validation and no staging soak" — not "someone set it wrong". Use "5 whys" but stop at systems, not people.</td></tr>
+    <tr><td><b>What went well / what went badly / where we got lucky</b></td><td>Honest three lists.</td></tr>
+    <tr><td><b>Action items</b></td><td>Each with an owner, a ticket, a due date, and a type: prevent (fix the cause), detect faster (alert/SLI), mitigate faster (runbook/rollback/flag), reduce impact (bulkhead/circuit breaker). Reviewed until closed.</td></tr>
+    <tr><td><b>Lessons</b></td><td>What anyone in the company should learn; shared broadly.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Blame</td><td>"Human error" as the root cause; the engineer is "retrained".</td><td>Humans will always err; ask why the system let one error become an outage (no validation, no canary, no rollback).</td></tr>
+    <tr><td>Postmortem never written / never read</td><td>Doc in a folder; same incident six months later.</td><td>Template, 48-hour deadline, review meeting, action items tracked like features; a searchable incident archive.</td></tr>
+    <tr><td>Action items that are wishes</td><td>"Be more careful", "improve monitoring".</td><td>"Add Hikari pending-connections alert (ticket OPS-412, owner Ravi, due Nov 8)".</td></tr>
+    <tr><td>Runbooks in someone's head</td><td>Only Asha knows how to fail over the DB.</td><td>Runbook per alert, tested in game days, linked from the alert.</td></tr>
+    <tr><td>Alert rules frozen</td><td>Same 60 alerts for two years; 50 are noise.</td><td>Weekly on-call review: tune, demote to ticket, or delete. Measure pages per shift.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A postmortem lists "root cause: engineer deployed on Friday evening". What is wrong with that sentence, and what should it say?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It names a person and a time instead of a system. The deploy exposed that there was no canary analysis to catch the regression, no automatic rollback, and an alert that fired 20 minutes late — any deploy at any time would have failed the same way. Fix those three and Friday evenings become boring.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 15 ============================= -->
+<h2 id="s15">D15. Resilience patterns, chaos engineering, and the SRE quick reference</h2>
+<table>
+  <thead><tr><th>Pattern</th><th>What it does</th><th>In a Spring service</th></tr></thead>
+  <tbody>
+    <tr><td><b>Timeouts</b></td><td>Never wait forever on a dependency.</td><td>Every client: connect 1–2 s, read 3–10 s; DB <code>statement_timeout</code>; Kafka/SQS visibility aligned to processing time.</td></tr>
+    <tr><td><b>Retries with backoff + jitter</b></td><td>Survive transient failures without a thundering herd.</td><td>Resilience4j <code>@Retry</code> (3 attempts, exponential, jitter); only idempotent calls; respect <code>Retry-After</code>.</td></tr>
+    <tr><td><b>Circuit breaker</b></td><td>Stop calling a failing dependency; fail fast; probe to recover.</td><td><code>@CircuitBreaker(name="payments", fallbackMethod=…)</code>; expose state as a metric.</td></tr>
+    <tr><td><b>Bulkhead</b></td><td>Isolate resources per dependency so one slow partner can't take all threads/connections.</td><td>Separate thread pools / semaphores per client; separate Hikari pools for batch vs web if needed.</td></tr>
+    <tr><td><b>Rate limiting / load shedding</b></td><td>Drop excess load early rather than collapsing.</td><td>Bucket4j / gateway limits; return 429/503 with <code>Retry-After</code> when queues grow.</td></tr>
+    <tr><td><b>Graceful degradation</b></td><td>Serve a reduced experience instead of an error.</td><td>Recommendations off (kill switch) when the recsys is down; cached prices when the pricing service times out.</td></tr>
+    <tr><td><b>Idempotency</b></td><td>Safe retries end-to-end.</td><td>Idempotency keys on POST; dedupe table for consumers; upserts.</td></tr>
+    <tr><td><b>Health checks that mean it</b></td><td>Liveness = process alive; readiness = can serve now.</td><td>Readiness fails on pool exhaustion; liveness never checks downstreams.</td></tr>
+    <tr><td><b>Capacity headroom + autoscaling</b></td><td>Absorb spikes; N+1 instances across AZs.</td><td>HPA on RPS/CPU; PDB; <code>maxUnavailable: 0</code>; never run at 90% in steady state.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Chaos engineering — the practice</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td><b>Hypothesis first</b></td><td>"If payments-service returns 500 for 5 minutes, checkout degrades to 'pay later' and the SLO holds." Then test it.</td></tr>
+    <tr><td><b>Start in staging, small blast radius, with an abort button</b></td><td>One pod, one AZ, one dependency; stop condition on SLI breach.</td></tr>
+    <tr><td><b>Game days</b></td><td>Scheduled exercises: kill the primary DB (RDS <code>--force-failover</code>), delete a pod, fill a disk, expire a cert in staging, cut a dependency. Practise the runbooks; time the response.</td></tr>
+    <tr><td><b>Tools</b></td><td><b>Chaos Mesh</b> / <b>LitmusChaos</b> (Kubernetes: pod kill, network delay/loss, CPU/memory stress, DNS chaos) · <b>AWS Fault Injection Service</b> (EC2/ECS/RDS/EKS faults, AZ power interruption) · <b>Toxiproxy</b> (latency/faults between app and DB in tests) · <b>Gremlin</b> (SaaS) · Resilience4j in tests.</td></tr>
+    <tr><td><b>Automate the ones that matter</b></td><td>Weekly pod-kill in staging; monthly AZ failover game day; dependency-timeout tests in CI with Toxiproxy/WireMock delays.</td></tr>
+    <tr><td><b>Learn</b></td><td>Every experiment ends like an incident: timeline, what surprised you, action items.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Chaos Mesh: inject 2 s latency into calls from shop-api to payments for 5 minutes (staging)</span>
+<span class="kw">apiVersion</span>: <span class="typ">chaos-mesh.org/v1alpha1</span>
+<span class="kw">kind</span>: <span class="typ">NetworkChaos</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: payments-latency, <span class="kw">namespace</span>: shop-staging }
+<span class="kw">spec</span>:
+  <span class="kw">action</span>: delay
+  <span class="kw">mode</span>: all
+  <span class="kw">selector</span>: { <span class="kw">namespaces</span>: [shop-staging], <span class="kw">labelSelectors</span>: { app: api } }
+  <span class="kw">target</span>: { <span class="kw">mode</span>: all, <span class="kw">selector</span>: { <span class="kw">namespaces</span>: [shop-staging], <span class="kw">labelSelectors</span>: { app: payments } } }
+  <span class="kw">direction</span>: to
+  <span class="kw">delay</span>: { <span class="kw">latency</span>: <span class="str">"2000ms"</span>, <span class="kw">jitter</span>: <span class="str">"200ms"</span> }
+  <span class="kw">duration</span>: <span class="str">"5m"</span>
+<span class="cmt"># expected: circuit breaker opens within 30 s, checkout falls back, p99 stays &lt; 800 ms, SLO burn rate stays &lt; 1</span>
+
+<span class="cmt"># AWS FIS: AZ failure for the staging ECS service (experiment template, sketch)</span>
+<span class="cmt">#   actions: aws:ecs:stop-task (50% of tasks in ap-south-1a) + aws:network:disrupt-connectivity (subnet in 1a, 10 min)</span>
+<span class="cmt">#   stop condition: CloudWatch alarm on ALB 5xx ratio &gt; 2%</span>
+
+<span class="cmt"># Toxiproxy in an integration test: DB latency</span>
+<span class="typ">Toxiproxy</span> proxy = toxiproxyClient.createProxy(<span class="str">"pg"</span>, <span class="str">"0.0.0.0:8666"</span>, <span class="str">"postgres:5432"</span>);
+proxy.toxics().latency(<span class="str">"slow"</span>, <span class="typ">ToxicDirection</span>.DOWNSTREAM, <span class="num">3000</span>);
+<span class="cmt">// assert: request fails fast with 503 (statement/pool timeout), not a 30 s hang; breaker opens; readiness flips</span></pre>
+<table>
+  <thead><tr><th>SRE health check for a service (score yourself)</th></tr></thead>
+  <tbody>
+    <tr><td>☐ SLOs defined per critical journey, measured at the edge, with an error-budget dashboard</td></tr>
+    <tr><td>☐ Alerts: burn-rate pages, cause-based tickets; every alert has a runbook and an owner; &lt; 2 pages per shift</td></tr>
+    <tr><td>☐ Rollback and kill switches exercised in the last month</td></tr>
+    <tr><td>☐ On-call rotation ≥ 5 people, primary + secondary, weekly review</td></tr>
+    <tr><td>☐ Postmortems within 48 h, blameless, action items tracked to closure</td></tr>
+    <tr><td>☐ Timeouts, retries with jitter, circuit breakers, bulkheads on every dependency</td></tr>
+    <tr><td>☐ Multi-AZ, N+1 capacity, PDBs, graceful shutdown</td></tr>
+    <tr><td>☐ Game day in the last quarter; at least one automated chaos experiment in staging</td></tr>
+    <tr><td>☐ Toil measured and the top item automated each quarter</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Retries everywhere</td><td>Every layer retries 3× → 27 requests per user click during an outage; the dependency never recovers.</td><td>Retry at one layer, with backoff and jitter, behind a circuit breaker, with a budget.</td></tr>
+    <tr><td>Chaos in prod on day one</td><td>Kill the prod DB to "see what happens".</td><td>Staging first; hypothesis; small radius; abort condition; prod only when staging is boring.</td></tr>
+    <tr><td>Chaos as a stunt</td><td>One dramatic game day, no follow-ups.</td><td>Findings become tickets; experiments become scheduled regression tests.</td></tr>
+    <tr><td>Health check hits everything</td><td>Liveness calls the DB; DB blip restarts every pod → self-inflicted outage.</td><td>Liveness = process; readiness = can serve; dependencies as info.</td></tr>
+    <tr><td>Toil accepted as normal</td><td>"Someone restarts the worker every Monday."</td><td>Count it; automate or fix the top toil item every quarter; SRE time should be &lt; 50% toil.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>SRE in seven lines:</b> 1) pick SLOs users care about and measure them at the edge; 2) page on burn rate, ticket the rest, runbook every alert; 3) mitigate first (rollback/flag/failover), diagnose second; 4) one IC, fixed-cadence comms, one public channel; 5) blameless postmortems within 48 h with owned, dated action items; 6) timeouts, retries with jitter, breakers, bulkheads, idempotency on every dependency; 7) break things on purpose in staging until prod failures are rehearsed, not novel.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "What is the difference between DevOps and SRE?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">DevOps is the culture and practice set (shared ownership, automation, CI/CD, fast feedback). SRE is one concrete implementation of it, with specific tools: SLOs and error budgets to decide between features and reliability, blameless postmortems, toil limits, and engineers who write software to run systems. Google's phrase: SRE is "what happens when you ask a software engineer to design an operations team".</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("backend-essentials-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("backend-essentials-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jenkins — Basics to Advanced (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* pipeline / Groovy keywords */
+  pre .typ { color: var(--c-typ); }                    /* types, agents, images */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* annotations, options, flags */
+  pre .fn  { color: var(--c-fn); }                     /* steps like sh, git, echo */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Jenkins — Basics to Advanced<span class="sub">What it is · setup · jobs · Declarative Pipeline · stages &amp; steps · agents · credentials · shared libraries · Docker &amp; K8s · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Click "Reveal hint" on screen. Hints auto-open when printed. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What is Jenkins? (the big idea)</h2>
+<p><b>Jenkins</b> is an automation server. It watches your code, and when something changes it runs a set of steps for you: build, test, package, deploy. This is <b>CI/CD</b>: <i>Continuous Integration</i> (merge and test often) and <i>Continuous Delivery</i> (always ready to ship). Jenkins is open source, runs on Java, and gets most of its power from <b>plugins</b>.</p>
+<table>
+  <thead><tr><th>Word</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Controller</b> (was "master")</td><td>The main Jenkins server: web UI, job config, scheduling. Should not run heavy builds itself.</td></tr>
+    <tr><td><b>Agent</b> (was "slave")</td><td>A machine or container that does the actual work. The controller sends it jobs.</td></tr>
+    <tr><td><b>Node</b></td><td>Any machine Jenkins can run work on (controller or agent).</td></tr>
+    <tr><td><b>Executor</b></td><td>One "slot" on a node. A node with 4 executors can run 4 builds at once.</td></tr>
+    <tr><td><b>Job / Project</b></td><td>A thing Jenkins can run. The modern kind is a <b>Pipeline</b>.</td></tr>
+    <tr><td><b>Build / Run</b></td><td>One execution of a job. Numbered: #1, #2…</td></tr>
+    <tr><td><b>Pipeline</b></td><td>A job defined as code, in a file called <code>Jenkinsfile</code>, kept in your repo.</td></tr>
+    <tr><td><b>Stage</b></td><td>A named block of the pipeline (Build, Test, Deploy). Shows as a column in the UI.</td></tr>
+    <tr><td><b>Step</b></td><td>One action inside a stage: <code>sh</code>, <code>git</code>, <code>junit</code>…</td></tr>
+    <tr><td><b>Workspace</b></td><td>The folder on the agent where the job checks out code and works.</td></tr>
+    <tr><td><b>Artifact</b></td><td>A file a build produces and keeps: a jar, a Docker image tag, a report.</td></tr>
+    <tr><td><b>Plugin</b></td><td>An add-on. Git, Docker, Kubernetes, Slack, credentials — almost everything is a plugin.</td></tr>
+  </tbody>
+</table>
+<h3>A typical flow</h3>
+<table>
+  <thead><tr><th>#</th><th>What happens</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>You push to GitHub / GitLab / Bitbucket. A <b>webhook</b> tells Jenkins.</td></tr>
+    <tr><td>2</td><td>Jenkins reads the <code>Jenkinsfile</code> from the repo and starts a build on a free agent.</td></tr>
+    <tr><td>3</td><td>The agent checks out the code, runs Build → Test → Package stages.</td></tr>
+    <tr><td>4</td><td>Test reports and artifacts are saved; a Docker image is pushed.</td></tr>
+    <tr><td>5</td><td>On the <code>main</code> branch (or after a manual OK) the Deploy stage runs.</td></tr>
+    <tr><td>6</td><td>Slack / email gets a green or red message. The run is kept in history.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Mental model:</b> Jenkins is a very patient robot assistant. You write a checklist (the Jenkinsfile). Every time code changes, it runs the whole checklist the same way, and shouts if any item fails.</div>
+<div class="tips"><b>Jenkins vs GitHub Actions / GitLab CI:</b> those are hosted and YAML-based, easy to start. Jenkins is self-hosted, uses Groovy, has thousands of plugins, and you control everything (and maintain everything). Big companies with special needs often keep Jenkins.</div>
+<div class="tricky">
+  <div class="q">Q. Where should the <code>Jenkinsfile</code> live — in Jenkins, or in the code repo?</div>
+  <details><summary>Reveal hint</summary><div class="hint">In the repo, next to the code. Then it is versioned, reviewed in pull requests, and each branch can have its own pipeline. Pasting scripts into the Jenkins UI is the old way and gets lost or drifts.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Install and first run</h2>
+<table>
+  <thead><tr><th>Way</th><th>Command / step</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><b>Docker</b> (fastest)</td><td><code>docker run -d -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home --name jenkins jenkins/jenkins:lts-jdk21</code></td><td>8080 = web UI. 50000 = inbound agents. The volume keeps your config.</td></tr>
+    <tr><td><b>Linux package</b></td><td>Add the Jenkins apt/yum repo, <code>apt install jenkins</code>, <code>systemctl start jenkins</code></td><td>Needs Java 17 or 21. Config in <code>/var/lib/jenkins</code>.</td></tr>
+    <tr><td><b>WAR file</b></td><td><code>java -jar jenkins.war --httpPort=8080</code></td><td>Any OS. Good for a quick test.</td></tr>
+    <tr><td><b>Kubernetes</b></td><td><code>helm install jenkins jenkins/jenkins -n jenkins</code></td><td>Agents spin up as Pods. See Section 10.</td></tr>
+  </tbody>
+</table>
+<h3>First-run steps</h3>
+<table>
+  <thead><tr><th>#</th><th>Step</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Open <code>http://localhost:8080</code>. It asks for the unlock password: <code>docker logs jenkins</code> or <code>cat /var/jenkins_home/secrets/initialAdminPassword</code>.</td></tr>
+    <tr><td>2</td><td>Choose "Install suggested plugins" (Git, Pipeline, Credentials, Timestamper, etc.).</td></tr>
+    <tr><td>3</td><td>Create the first admin user. Set the Jenkins URL (used in links and webhooks).</td></tr>
+    <tr><td>4</td><td>Manage Jenkins → Plugins: add Docker Pipeline, Kubernetes, Blue Ocean / Pipeline Graph View, Slack.</td></tr>
+    <tr><td>5</td><td>Manage Jenkins → Nodes: set the controller's executors to <b>0</b> and add agents.</td></tr>
+  </tbody>
+</table>
+<h3>Important paths and files</h3>
+<table>
+  <thead><tr><th>Path</th><th>Holds</th></tr></thead>
+  <tbody>
+    <tr><td><code>$JENKINS_HOME</code></td><td>Everything. Back this folder up.</td></tr>
+    <tr><td><code>$JENKINS_HOME/jobs/&lt;name&gt;/</code></td><td><code>config.xml</code> (job definition) + <code>builds/</code> (history, logs).</td></tr>
+    <tr><td><code>$JENKINS_HOME/plugins/</code></td><td>Installed plugins (<code>.jpi</code> files).</td></tr>
+    <tr><td><code>$JENKINS_HOME/secrets/</code></td><td>Master key and encrypted credentials. Guard it.</td></tr>
+    <tr><td><code>$JENKINS_HOME/workspace/</code></td><td>Checked-out code for jobs run on the controller (should be empty if executors = 0).</td></tr>
+    <tr><td><code>jenkins.yaml</code> (JCasC)</td><td>Configuration as Code: whole Jenkins setup in one YAML file.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Builds on controller</td><td>Controller has 2+ executors and runs every build. A bad build can read secrets or crash Jenkins.</td><td>Controller executors = 0. All builds on agents.</td></tr>
+    <tr><td>No backup</td><td>Jenkins home on a plain disk, never copied.</td><td>Back up <code>$JENKINS_HOME</code> (or use JCasC + Jenkinsfiles so it can be rebuilt from git).</td></tr>
+    <tr><td>Plugin sprawl</td><td>Installing 200 plugins "just in case". Upgrades break.</td><td>Only what you use. Pin versions with a <code>plugins.txt</code> in your Jenkins Docker image.</td></tr>
+    <tr><td>Version</td><td>Random weekly release.</td><td>Use <b>LTS</b> (long-term support) for stability.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># A custom controller image with pinned plugins (Dockerfile)</span>
+<span class="kw">FROM</span> <span class="typ">jenkins/jenkins:lts-jdk21</span>
+<span class="kw">COPY</span> plugins.txt /usr/share/jenkins/ref/plugins.txt
+<span class="kw">RUN</span> jenkins-plugin-cli <span class="ann">--plugin-file</span> /usr/share/jenkins/ref/plugins.txt
+<span class="kw">ENV</span> CASC_JENKINS_CONFIG=/var/jenkins_home/casc/jenkins.yaml   <span class="cmt"># load Configuration as Code</span></pre>
+<div class="tricky">
+  <div class="q">Q. Jenkins restarted and all your jobs are gone. Most likely cause?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The container ran without a volume on <code>/var/jenkins_home</code>, so the data lived in the container's own layer and vanished when it was re-created. Always mount a named volume (or a PVC on Kubernetes).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Job types — which one to pick</h2>
+<table>
+  <thead><tr><th>Type</th><th>What it is</th><th>Use it?</th></tr></thead>
+  <tbody>
+    <tr><td><b>Freestyle project</b></td><td>Click-and-fill forms in the UI: SCM, build steps, post-build actions.</td><td>Legacy. Fine for a one-off script. Not in git, hard to review.</td></tr>
+    <tr><td><b>Pipeline</b></td><td>One job defined by a Jenkinsfile (from a repo or pasted).</td><td>Yes, for a single branch.</td></tr>
+    <tr><td><b>Multibranch Pipeline</b></td><td>Scans a repo; makes a sub-job for <i>every</i> branch and pull request that has a Jenkinsfile. Cleans up when branches are deleted.</td><td><b>Yes — the default choice</b> for real projects.</td></tr>
+    <tr><td><b>Organization Folder</b></td><td>Scans a whole GitHub org / Bitbucket project; makes a Multibranch job for every repo with a Jenkinsfile.</td><td>Yes, when you have many repos.</td></tr>
+    <tr><td><b>Folder</b></td><td>Just a container to group jobs, with its own permissions and credentials.</td><td>Yes, for structure.</td></tr>
+    <tr><td><b>Matrix / Multi-config</b></td><td>Old way to run the same job across OS × JDK combos.</td><td>Use Pipeline's <code>matrix</code> block instead.</td></tr>
+  </tbody>
+</table>
+<h3>Ways to start a build (triggers)</h3>
+<table>
+  <thead><tr><th>Trigger</th><th>In Jenkinsfile</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Webhook from Git host</td><td>(set on the job / Multibranch source)</td><td>Best: instant, no polling. Needs Jenkins reachable from the Git host.</td></tr>
+    <tr><td>Poll SCM</td><td><code>triggers { pollSCM('H/5 * * * *') }</code></td><td>Checks every 5 min. Fallback when webhooks are impossible.</td></tr>
+    <tr><td>Schedule (cron)</td><td><code>triggers { cron('H 2 * * *') }</code></td><td>Nightly builds. <code>H</code> = spread the load at a random fixed minute.</td></tr>
+    <tr><td>After another job</td><td><code>triggers { upstream(upstreamProjects: 'lib-build', threshold: hudson.model.Result.SUCCESS) }</code></td><td>Chaining jobs.</td></tr>
+    <tr><td>Manual</td><td>"Build Now" / "Build with Parameters"</td><td>Deploys that need a human.</td></tr>
+    <tr><td>Remote API</td><td><code>curl -X POST -u user:token https://jenkins/job/api/build</code></td><td>From scripts or other tools.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Cron with <code>H</code>:</b> <code>H 2 * * *</code> runs once between 02:00 and 02:59 at a minute chosen from the job name's hash, so 50 nightly jobs do not all start at 02:00 sharp.</div>
+<div class="tricky">
+  <div class="q">Q. A Multibranch Pipeline shows no jobs after a scan. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Branches only appear if they contain a <code>Jenkinsfile</code> at the configured path (default: repo root). Also check the branch discovery filters and that the credential can read the repo.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Declarative Pipeline — the full skeleton</h2>
+<p>There are two Jenkinsfile styles. <b>Declarative</b> has a fixed, easy structure and is what you should use. <b>Scripted</b> is free-form Groovy for odd cases. Below is a complete Declarative file; each block is explained after it.</p>
+<pre><span class="kw">pipeline</span> {
+    <span class="kw">agent</span> { <span class="fn">label</span> <span class="str">'linux'</span> }                      <span class="cmt">// where the whole pipeline runs (can be per stage)</span>
+
+    <span class="kw">options</span> {
+        <span class="fn">timeout</span>(time: <span class="num">30</span>, unit: <span class="str">'MINUTES'</span>)
+        <span class="fn">buildDiscarder</span>(<span class="fn">logRotator</span>(numToKeepStr: <span class="str">'20'</span>))
+        <span class="fn">disableConcurrentBuilds</span>()
+        <span class="fn">timestamps</span>()
+    }
+
+    <span class="kw">environment</span> {                                 <span class="cmt">// env vars for every stage</span>
+        REGISTRY = <span class="str">'ghcr.io/shop'</span>
+        IMAGE    = <span class="str">"${REGISTRY}/api:${env.BUILD_NUMBER}"</span>
+    }
+
+    <span class="kw">parameters</span> {                                  <span class="cmt">// "Build with Parameters"</span>
+        <span class="fn">choice</span>(name: <span class="str">'ENV'</span>, choices: [<span class="str">'dev'</span>, <span class="str">'staging'</span>, <span class="str">'prod'</span>], description: <span class="str">'Target'</span>)
+        <span class="fn">booleanParam</span>(name: <span class="str">'RUN_E2E'</span>, defaultValue: <span class="kw">false</span>)
+    }
+
+    <span class="kw">triggers</span> { <span class="fn">cron</span>(<span class="str">'H 2 * * 1-5'</span>) }
+
+    <span class="kw">stages</span> {
+        <span class="kw">stage</span>(<span class="str">'Checkout'</span>) {
+            <span class="kw">steps</span> { <span class="fn">checkout</span> scm }                   <span class="cmt">// the repo + branch that holds this Jenkinsfile</span>
+        }
+        <span class="kw">stage</span>(<span class="str">'Build'</span>) {
+            <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'./mvnw -B -q package -DskipTests'</span> }
+        }
+        <span class="kw">stage</span>(<span class="str">'Test'</span>) {
+            <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'./mvnw -B test'</span> }
+            <span class="kw">post</span> {
+                <span class="kw">always</span> { <span class="fn">junit</span> <span class="str">'target/surefire-reports/*.xml'</span> }   <span class="cmt">// test report, even on failure</span>
+            }
+        }
+        <span class="kw">stage</span>(<span class="str">'Image'</span>) {
+            <span class="kw">when</span> { <span class="fn">branch</span> <span class="str">'main'</span> }                    <span class="cmt">// only on main</span>
+            <span class="kw">steps</span> {
+                <span class="fn">withCredentials</span>([<span class="fn">usernamePassword</span>(credentialsId: <span class="str">'ghcr'</span>, usernameVariable: <span class="str">'U'</span>, passwordVariable: <span class="str">'P'</span>)]) {
+                    <span class="fn">sh</span> <span class="str">'''
+                        echo "$P" | docker login ghcr.io -u "$U" --password-stdin
+                        docker build -t "$IMAGE" .
+                        docker push "$IMAGE"
+                    '''</span>
+                }
+            }
+        }
+        <span class="kw">stage</span>(<span class="str">'Deploy'</span>) {
+            <span class="kw">when</span> { <span class="fn">allOf</span> { <span class="fn">branch</span> <span class="str">'main'</span>; <span class="fn">expression</span> { params.ENV == <span class="str">'prod'</span> } } }
+            <span class="kw">input</span> { message <span class="str">'Deploy to prod?'</span>; ok <span class="str">'Ship it'</span>; submitter <span class="str">'release-managers'</span> }
+            <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">"kubectl set image deploy/api api=$IMAGE -n shop"</span> }
+        }
+    }
+
+    <span class="kw">post</span> {                                        <span class="cmt">// runs after all stages</span>
+        <span class="kw">success</span> { <span class="fn">slackSend</span> color: <span class="str">'good'</span>,   message: <span class="str">"OK ${env.JOB_NAME} #${env.BUILD_NUMBER}"</span> }
+        <span class="kw">failure</span> { <span class="fn">slackSend</span> color: <span class="str">'danger'</span>, message: <span class="str">"FAILED ${env.JOB_NAME} #${env.BUILD_NUMBER} ${env.BUILD_URL}"</span> }
+        <span class="kw">always</span>  { <span class="fn">cleanWs</span>() }
+    }
+}</pre>
+<table>
+  <thead><tr><th>Block</th><th>Required?</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>pipeline { }</code></td><td>Yes</td><td>The outer wrapper. Only one.</td></tr>
+    <tr><td><code>agent</code></td><td>Yes (top or per stage)</td><td>Where to run: <code>any</code>, <code>none</code>, <code>{ label 'x' }</code>, <code>{ docker { image 'node:20' } }</code>, <code>{ kubernetes { … } }</code>.</td></tr>
+    <tr><td><code>stages</code> → <code>stage</code> → <code>steps</code></td><td>Yes</td><td>The work. At least one stage with steps.</td></tr>
+    <tr><td><code>options</code></td><td>No</td><td>Timeouts, retries, log keeping, concurrency, timestamps, <code>skipDefaultCheckout()</code>.</td></tr>
+    <tr><td><code>environment</code></td><td>No</td><td>Env vars. Can pull secrets: <code>TOKEN = credentials('my-token')</code>.</td></tr>
+    <tr><td><code>parameters</code></td><td>No</td><td>Inputs: <code>string</code>, <code>choice</code>, <code>booleanParam</code>, <code>password</code>, <code>text</code>. Read as <code>params.NAME</code>.</td></tr>
+    <tr><td><code>triggers</code></td><td>No</td><td><code>cron</code>, <code>pollSCM</code>, <code>upstream</code>.</td></tr>
+    <tr><td><code>tools</code></td><td>No</td><td>Auto-install and add to PATH: <code>maven 'M3'</code>, <code>jdk 'jdk21'</code>, <code>nodejs 'node20'</code> (names set in Global Tool Configuration).</td></tr>
+    <tr><td><code>when</code></td><td>No (per stage)</td><td>Skip a stage unless a condition holds.</td></tr>
+    <tr><td><code>input</code></td><td>No (per stage)</td><td>Pause for a human click.</td></tr>
+    <tr><td><code>post</code></td><td>No (pipeline or stage)</td><td><code>always</code>, <code>success</code>, <code>failure</code>, <code>unstable</code>, <code>changed</code>, <code>aborted</code>, <code>cleanup</code>.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Groovy code in steps</td><td>Loops, <code>if</code>, variable assignment directly inside <code>steps { }</code> → "Expected a step" error.</td><td>Wrap it: <code>script { if (x) { … } }</code>. Or move logic into a shared library.</td></tr>
+    <tr><td>Quotes</td><td><code>sh 'echo $BUILD_NUMBER'</code> works (shell expands), but <code>sh 'echo ${params.ENV}'</code> prints nothing — single quotes do not interpolate Groovy.</td><td>Use double quotes for Groovy values: <code>sh "echo ${params.ENV}"</code>. Use single quotes + <code>$VAR</code> for env vars and secrets.</td></tr>
+    <tr><td>No timeout</td><td>A hung test holds an executor forever.</td><td><code>options { timeout(…) }</code> on the pipeline or stage.</td></tr>
+    <tr><td>No log rotation</td><td>Disk fills with 5,000 old builds.</td><td><code>buildDiscarder(logRotator(numToKeepStr: '30', artifactNumToKeepStr: '5'))</code>.</td></tr>
+    <tr><td>Report only on success</td><td><code>junit</code> at the end of steps; a failing test aborts before it runs, so no report.</td><td><code>post { always { junit … } }</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Validate before you push:</b> Manage Jenkins → Pipeline Syntax has a "Declarative Directive Generator" and a "Snippet Generator" that write step code for you. The Jenkins CLI also has <code>declarative-linter</code>, and VS Code has a Jenkinsfile linter extension.</div>
+<div class="tricky">
+  <div class="q">Q. <code>environment { TOKEN = credentials('api-token') }</code> then <code>sh "curl -H 'Auth: $TOKEN' …"</code>. Is the token safe in the log?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Mostly — Jenkins masks the value in the console as <code>****</code>. But because you used <b>double</b> quotes, Groovy pasted the secret into the shell command string, which can leak via <code>set -x</code> or process lists. Use single quotes so the <i>shell</i> reads <code>$TOKEN</code> from the environment.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Steps you will use most</h2>
+<table>
+  <thead><tr><th>Step</th><th>Does</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>sh</code> / <code>bat</code> / <code>powershell</code></td><td>Run a shell command (Linux / Windows cmd / PowerShell).</td><td><code>sh 'npm ci &amp;&amp; npm test'</code></td></tr>
+    <tr><td><code>sh(returnStdout: true)</code></td><td>Capture output.</td><td><code>def v = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()</code></td></tr>
+    <tr><td><code>sh(returnStatus: true)</code></td><td>Get the exit code instead of failing.</td><td><code>if (sh(script: 'test -f x', returnStatus: true) == 0) …</code></td></tr>
+    <tr><td><code>checkout scm</code></td><td>Clone the repo/branch this Jenkinsfile came from.</td><td>First step of most pipelines (automatic unless <code>skipDefaultCheckout()</code>).</td></tr>
+    <tr><td><code>git</code></td><td>Clone some other repo.</td><td><code>git url: 'https://…/infra.git', branch: 'main', credentialsId: 'gh'</code></td></tr>
+    <tr><td><code>echo</code></td><td>Print to the log.</td><td><code>echo "Building ${env.BRANCH_NAME}"</code></td></tr>
+    <tr><td><code>dir('sub') { }</code></td><td>Run steps in a sub-folder.</td><td><code>dir('frontend') { sh 'npm run build' }</code></td></tr>
+    <tr><td><code>withEnv([...]) { }</code></td><td>Temporary env vars.</td><td><code>withEnv(['CI=true']) { sh 'npm test' }</code></td></tr>
+    <tr><td><code>withCredentials([...]) { }</code></td><td>Expose a secret as env vars inside the block only.</td><td>See Section 6.</td></tr>
+    <tr><td><code>junit</code></td><td>Publish test results; marks build UNSTABLE on failures.</td><td><code>junit 'build/test-results/**/*.xml'</code></td></tr>
+    <tr><td><code>archiveArtifacts</code></td><td>Keep files with the build.</td><td><code>archiveArtifacts artifacts: 'target/*.jar', fingerprint: true</code></td></tr>
+    <tr><td><code>stash</code> / <code>unstash</code></td><td>Pass files between stages that run on different agents.</td><td><code>stash name: 'jar', includes: 'target/*.jar'</code> … <code>unstash 'jar'</code></td></tr>
+    <tr><td><code>timeout(…) { }</code></td><td>Fail the block if it takes too long.</td><td><code>timeout(time: 5, unit: 'MINUTES') { sh './slow.sh' }</code></td></tr>
+    <tr><td><code>retry(n) { }</code></td><td>Try again on failure.</td><td><code>retry(3) { sh 'curl -f https://flaky' }</code></td></tr>
+    <tr><td><code>sleep</code></td><td>Wait.</td><td><code>sleep time: 10, unit: 'SECONDS'</code></td></tr>
+    <tr><td><code>input</code></td><td>Wait for a human.</td><td><code>input message: 'Deploy?', ok: 'Yes'</code></td></tr>
+    <tr><td><code>build job:</code></td><td>Trigger another job, optionally wait.</td><td><code>build job: 'deploy', parameters: [string(name: 'ENV', value: 'prod')], wait: true</code></td></tr>
+    <tr><td><code>error</code> / <code>unstable</code></td><td>Fail or mark unstable on purpose.</td><td><code>error 'Coverage too low'</code></td></tr>
+    <tr><td><code>catchError</code></td><td>Keep going but mark the result.</td><td><code>catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh 'lint' }</code></td></tr>
+    <tr><td><code>readFile</code> / <code>writeFile</code></td><td>File I/O on the agent.</td><td><code>def cfg = readFile 'version.txt'</code></td></tr>
+    <tr><td><code>readJSON</code> / <code>readYaml</code></td><td>Parse files (Pipeline Utility Steps plugin).</td><td><code>def pkg = readJSON file: 'package.json'</code></td></tr>
+    <tr><td><code>fileExists</code></td><td>Check a path.</td><td><code>if (fileExists('Dockerfile')) …</code></td></tr>
+    <tr><td><code>cleanWs</code></td><td>Wipe the workspace.</td><td>In <code>post { always { cleanWs() } }</code>.</td></tr>
+  </tbody>
+</table>
+<h3>Built-in environment variables</h3>
+<table>
+  <thead><tr><th>Variable</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td><code>env.BUILD_NUMBER</code> / <code>BUILD_ID</code></td><td>Run number, e.g. <code>42</code>.</td></tr>
+    <tr><td><code>env.JOB_NAME</code></td><td>e.g. <code>shop/api/main</code>.</td></tr>
+    <tr><td><code>env.BUILD_URL</code></td><td>Link to this run.</td></tr>
+    <tr><td><code>env.WORKSPACE</code></td><td>Folder on the agent.</td></tr>
+    <tr><td><code>env.BRANCH_NAME</code></td><td>Branch (Multibranch only). For PRs: <code>PR-12</code>.</td></tr>
+    <tr><td><code>env.CHANGE_ID</code> / <code>CHANGE_TARGET</code></td><td>PR number / target branch (PR builds only).</td></tr>
+    <tr><td><code>env.GIT_COMMIT</code> / <code>GIT_BRANCH</code> / <code>GIT_URL</code></td><td>Set after <code>checkout scm</code>.</td></tr>
+    <tr><td><code>env.NODE_NAME</code></td><td>Which agent is running this.</td></tr>
+    <tr><td><code>currentBuild.result</code></td><td><code>SUCCESS</code>, <code>UNSTABLE</code>, <code>FAILURE</code>, <code>ABORTED</code> (null while still passing).</td></tr>
+    <tr><td><code>currentBuild.displayName</code> / <code>description</code></td><td>Writable: <code>currentBuild.description = "v${version}"</code>.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Multi-line shell</td><td>Many <code>sh</code> steps for one task; each is a new shell, so <code>cd</code> and variables do not carry over.</td><td>One <code>sh '''…'''</code> block, or <code>dir()</code> for folder changes.</td></tr>
+    <tr><td>Shell failures</td><td>Assuming a failing pipe is caught: <code>cmd | tee log</code> returns tee's status (0).</td><td>Start the script with <code>set -euxo pipefail</code> (or <code>set -e</code> at least).</td></tr>
+    <tr><td>Files between agents</td><td>Expecting <code>target/app.jar</code> from stage 1 to exist in stage 2 on a different node.</td><td>Each node has its own workspace. Use <code>stash</code>/<code>unstash</code> or <code>archiveArtifacts</code>.</td></tr>
+    <tr><td>Groovy on the controller</td><td>Parsing a 200 MB file with Groovy <code>readFile</code> + loops. Groovy runs on the controller and is slow and memory-hungry.</td><td>Do heavy work in <code>sh</code> on the agent; use Groovy only for small glue.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Stage "Build" runs <code>sh 'export VERSION=1.2'</code>. Stage "Deploy" runs <code>sh 'echo $VERSION'</code>. What prints?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Nothing. Every <code>sh</code> step is a fresh shell process. Set it in Groovy instead: <code>env.VERSION = '1.2'</code> (visible to later steps) or capture with <code>returnStdout</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Flow control — when, parallel, matrix, script</h2>
+<h3><code>when</code> — run a stage only if…</h3>
+<table>
+  <thead><tr><th>Condition</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>Branch name (glob)</td><td><code>when { branch 'release/*' }</code></td></tr>
+    <tr><td>Pull request build</td><td><code>when { changeRequest() }</code> · <code>changeRequest target: 'main'</code></td></tr>
+    <tr><td>Tag</td><td><code>when { tag 'v*' }</code></td></tr>
+    <tr><td>Env var</td><td><code>when { environment name: 'DEPLOY', value: 'true' }</code></td></tr>
+    <tr><td>Any Groovy test</td><td><code>when { expression { return params.ENV != 'dev' } }</code></td></tr>
+    <tr><td>Combine</td><td><code>when { allOf { branch 'main'; not { changeRequest() } } }</code> · <code>anyOf { … }</code></td></tr>
+    <tr><td>Files changed</td><td><code>when { changeset '**/*.sql' }</code></td></tr>
+    <tr><td>Evaluate before agent</td><td><code>when { beforeAgent true; branch 'main' }</code> — do not grab a node just to skip.</td></tr>
+  </tbody>
+</table>
+<h3><code>parallel</code> — stages at the same time</h3>
+<pre><span class="kw">stage</span>(<span class="str">'Tests'</span>) {
+    <span class="kw">failFast</span> <span class="kw">true</span>                                 <span class="cmt">// stop the others when one fails</span>
+    <span class="kw">parallel</span> {
+        <span class="kw">stage</span>(<span class="str">'Unit'</span>) {
+            <span class="kw">agent</span> { <span class="fn">label</span> <span class="str">'linux'</span> }
+            <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'./mvnw test'</span> }
+        }
+        <span class="kw">stage</span>(<span class="str">'Lint'</span>) {
+            <span class="kw">agent</span> { <span class="kw">docker</span> { <span class="fn">image</span> <span class="str">'node:20-alpine'</span> } }
+            <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'npm ci &amp;&amp; npm run lint'</span> }
+        }
+        <span class="kw">stage</span>(<span class="str">'Security scan'</span>) {
+            <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'trivy fs .'</span> }
+        }
+    }
+}</pre>
+<h3><code>matrix</code> — the same stage across combinations</h3>
+<pre><span class="kw">stage</span>(<span class="str">'Test matrix'</span>) {
+    <span class="kw">matrix</span> {
+        <span class="kw">axes</span> {
+            <span class="kw">axis</span> { <span class="fn">name</span> <span class="str">'JDK'</span>; <span class="fn">values</span> <span class="str">'17'</span>, <span class="str">'21'</span> }
+            <span class="kw">axis</span> { <span class="fn">name</span> <span class="str">'OS'</span>;  <span class="fn">values</span> <span class="str">'linux'</span>, <span class="str">'windows'</span> }
+        }
+        <span class="kw">excludes</span> { <span class="kw">exclude</span> { <span class="kw">axis</span> { <span class="fn">name</span> <span class="str">'OS'</span>; <span class="fn">values</span> <span class="str">'windows'</span> } <span class="kw">axis</span> { <span class="fn">name</span> <span class="str">'JDK'</span>; <span class="fn">values</span> <span class="str">'17'</span> } } }
+        <span class="kw">agent</span> { <span class="fn">label</span> <span class="str">"${OS}"</span> }
+        <span class="kw">stages</span> {
+            <span class="kw">stage</span>(<span class="str">'Test'</span>) { <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">"./mvnw -Djava.version=${JDK} test"</span> } }
+        }
+    }
+}</pre>
+<h3><code>script</code> — escape hatch to Groovy</h3>
+<pre><span class="kw">steps</span> {
+    <span class="kw">script</span> {
+        <span class="kw">def</span> services = [<span class="str">'api'</span>, <span class="str">'web'</span>, <span class="str">'worker'</span>]
+        <span class="kw">def</span> jobs = [:]
+        services.each { svc -&gt;
+            jobs[svc] = { <span class="fn">sh</span> <span class="str">"docker build -t ${svc} ./${svc}"</span> }   <span class="cmt">// closures for dynamic parallel</span>
+        }
+        <span class="fn">parallel</span> jobs
+        <span class="kw">if</span> (currentBuild.result == <span class="str">'UNSTABLE'</span>) { <span class="fn">echo</span> <span class="str">'Tests had failures'</span> }
+    }
+}</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Big script blocks</td><td>A 300-line <code>script { }</code>. You lost every benefit of Declarative.</td><td>Move logic into a <b>shared library</b> (Section 7) and call one step.</td></tr>
+    <tr><td>Parallel on one agent</td><td>Three parallel stages all needing the same single-executor node → they run one by one.</td><td>Give each branch its own <code>agent</code>, or raise executors.</td></tr>
+    <tr><td>Skipped vs failed</td><td>Using <code>when</code> to skip the Deploy stage, then reading "SUCCESS" as "deployed".</td><td>Skipped stages show grey. Add an <code>echo</code> or set <code>currentBuild.description</code> so the result is clear.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Try/catch in Declarative:</b> you cannot write <code>try</code> directly in <code>steps</code>. Use <code>script { try { … } catch (e) { … } }</code>, or better, <code>catchError</code> / <code>warnError</code> steps, or stage-level <code>post { failure { … } }</code>.</div>
+<div class="tricky">
+  <div class="q">Q. <code>failFast true</code> is set and one parallel branch fails. Do the others stop at once?</div>
+  <details><summary>Reveal hint</summary><div class="hint">They are <i>asked</i> to abort. A running <code>sh</code> gets a kill signal; Groovy code stops at the next step. Branches that already finished are untouched. The stage result is FAILURE.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Credentials — secrets done right</h2>
+<p>Jenkins stores secrets encrypted under <b>Manage Jenkins → Credentials</b>. Each has an <b>ID</b> you refer to from the Jenkinsfile. The console log masks their values as <code>****</code>.</p>
+<table>
+  <thead><tr><th>Kind</th><th>Holds</th><th>Binding in <code>withCredentials</code></th></tr></thead>
+  <tbody>
+    <tr><td>Secret text</td><td>One token / API key.</td><td><code>string(credentialsId: 'tok', variable: 'TOKEN')</code></td></tr>
+    <tr><td>Username with password</td><td>Login pair.</td><td><code>usernamePassword(credentialsId: 'reg', usernameVariable: 'U', passwordVariable: 'P')</code></td></tr>
+    <tr><td>SSH username with private key</td><td>Git over SSH, servers.</td><td><code>sshUserPrivateKey(credentialsId: 'deploy', keyFileVariable: 'KEY', usernameVariable: 'U')</code></td></tr>
+    <tr><td>Secret file</td><td>kubeconfig, service-account JSON, keystore.</td><td><code>file(credentialsId: 'kubeconf', variable: 'KUBECONFIG')</code></td></tr>
+    <tr><td>Certificate</td><td>PKCS#12 bundle.</td><td><code>certificate(credentialsId: 'c', keystoreVariable: 'KS', passwordVariable: 'KP')</code></td></tr>
+    <tr><td>Plugin kinds</td><td>AWS keys, Vault, Azure SP, GitHub App…</td><td>Each plugin adds its own binding or <code>withAWS</code>-style wrapper.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// 1) Scoped to a block — best</span>
+<span class="fn">withCredentials</span>([<span class="fn">usernamePassword</span>(credentialsId: <span class="str">'ghcr'</span>, usernameVariable: <span class="str">'U'</span>, passwordVariable: <span class="str">'P'</span>)]) {
+    <span class="fn">sh</span> <span class="str">'echo "$P" | docker login ghcr.io -u "$U" --password-stdin'</span>   <span class="cmt">// single quotes!</span>
+}
+
+<span class="cmt">// 2) In the environment block — whole pipeline or stage</span>
+<span class="kw">environment</span> {
+    AWS = <span class="fn">credentials</span>(<span class="str">'aws-ci'</span>)      <span class="cmt">// username/password kind → AWS_USR and AWS_PSW are created too</span>
+    NPM_TOKEN = <span class="fn">credentials</span>(<span class="str">'npm'</span>)   <span class="cmt">// secret text</span>
+}
+
+<span class="cmt">// 3) SSH key for git or scp</span>
+<span class="fn">sshagent</span>([<span class="str">'deploy-key'</span>]) {
+    <span class="fn">sh</span> <span class="str">'scp target/app.jar deploy@host:/opt/app/'</span>
+}</pre>
+<table>
+  <thead><tr><th>Scope</th><th>Who can use it</th></tr></thead>
+  <tbody>
+    <tr><td><b>System</b></td><td>Only Jenkins itself (agent connections, plugins). Jobs cannot see it.</td></tr>
+    <tr><td><b>Global</b></td><td>Every job.</td></tr>
+    <tr><td><b>Folder</b></td><td>Only jobs inside that folder. Use this to separate teams.</td></tr>
+    <tr><td><b>User</b></td><td>Personal; only in builds that user starts.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Secrets in Jenkinsfile</td><td><code>sh 'docker login -p hunter2'</code> committed to git.</td><td>Credentials store + <code>withCredentials</code>.</td></tr>
+    <tr><td>Groovy interpolation</td><td><code>sh "curl -u $U:$P …"</code> (double quotes) — the secret becomes part of the command text; Jenkins even warns about it.</td><td><code>sh 'curl -u "$U:$P" …'</code> (single quotes) — the shell reads env vars at run time.</td></tr>
+    <tr><td>Printing secrets</td><td><code>echo "token is ${TOKEN}"</code>. Masking only catches exact matches; <code>base64</code> or splitting leaks it.</td><td>Never echo. Never write to a file you archive.</td></tr>
+    <tr><td>Global everything</td><td>All credentials Global; any job can use the prod deploy key.</td><td>Folder-scoped credentials + folder permissions.</td></tr>
+    <tr><td>Long-lived keys</td><td>A 5-year-old AWS access key.</td><td>Short-lived: OIDC / IAM roles, GitHub App tokens, Vault dynamic secrets.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Who can read secrets anyway?</b> Anyone with "Configure" rights on a job can write a pipeline that prints a credential (encoded). Treat job-config rights as secret-read rights, and lock down with folders and RBAC.</div>
+<div class="tricky">
+  <div class="q">Q. <code>environment { DB = credentials('db-login') }</code> for a username/password credential. What variables exist?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Three: <code>DB</code> = <code>user:password</code>, <code>DB_USR</code> = user, <code>DB_PSW</code> = password. For secret text, just <code>DB</code>. For a secret file, <code>DB</code> is a temp file path.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Shared Libraries — reuse pipeline code</h2>
+<p>A <b>shared library</b> is a git repo of Groovy code that every Jenkinsfile can call. It turns a 200-line pipeline into 10 lines, and fixes a bug once for all teams.</p>
+<pre><span class="cmt">// repo layout</span>
+(root)
+├── vars/                          <span class="cmt">// global steps — one file = one step, named after the file</span>
+│   ├── buildDockerImage.groovy    <span class="cmt">// call as:  buildDockerImage(name: 'api')</span>
+│   ├── buildDockerImage.txt       <span class="cmt">// optional help text shown in the UI</span>
+│   └── standardPipeline.groovy    <span class="cmt">// a whole reusable pipeline</span>
+├── src/                           <span class="cmt">// normal Groovy classes, e.g. org/shop/Semver.groovy</span>
+│   └── org/shop/Semver.groovy
+└── resources/                     <span class="cmt">// non-Groovy files, read with libraryResource</span>
+    └── org/shop/sonar.properties</pre>
+<pre><span class="cmt">// vars/buildDockerImage.groovy</span>
+<span class="kw">def</span> <span class="fn">call</span>(Map cfg) {
+    <span class="kw">def</span> tag = <span class="str">"${cfg.registry ?: 'ghcr.io/shop'}/${cfg.name}:${env.BUILD_NUMBER}"</span>
+    <span class="fn">sh</span> <span class="str">"docker build -t ${tag} ${cfg.context ?: '.'}"</span>
+    <span class="fn">sh</span> <span class="str">"docker push ${tag}"</span>
+    <span class="kw">return</span> tag
+}
+
+<span class="cmt">// vars/standardPipeline.groovy — a full pipeline as a step</span>
+<span class="kw">def</span> <span class="fn">call</span>(Map cfg) {
+    <span class="kw">pipeline</span> {
+        <span class="kw">agent</span> { <span class="fn">label</span> <span class="str">'linux'</span> }
+        <span class="kw">stages</span> {
+            <span class="kw">stage</span>(<span class="str">'Build'</span>) { <span class="kw">steps</span> { <span class="fn">sh</span> cfg.buildCmd } }
+            <span class="kw">stage</span>(<span class="str">'Image'</span>) { <span class="kw">steps</span> { <span class="kw">script</span> { <span class="fn">buildDockerImage</span>(name: cfg.name) } } }
+        }
+    }
+}
+
+<span class="cmt">// Jenkinsfile in an app repo — now tiny</span>
+<span class="ann">@Library</span>(<span class="str">'shop-pipeline@v2'</span>) _
+<span class="fn">standardPipeline</span>(name: <span class="str">'api'</span>, buildCmd: <span class="str">'./mvnw -B package'</span>)</pre>
+<table>
+  <thead><tr><th>Setup / use</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Register</td><td>Manage Jenkins → System → Global Trusted Pipeline Libraries: name, default version (branch/tag), git URL, credentials.</td></tr>
+    <tr><td>Load</td><td><code>@Library('name') _</code> (default version) · <code>@Library('name@v2') _</code> (pin) · <code>library 'name'</code> (dynamic, inside script).</td></tr>
+    <tr><td>Implicit load</td><td>Tick "Load implicitly" so every Jenkinsfile gets it without the annotation.</td></tr>
+    <tr><td>Resources</td><td><code>def txt = libraryResource 'org/shop/sonar.properties'</code></td></tr>
+    <tr><td>Classes</td><td><code>import org.shop.Semver</code> then <code>new Semver(v).bump()</code>. Classes must be <code>Serializable</code> if used across steps.</td></tr>
+    <tr><td>Test</td><td>JenkinsPipelineUnit (unit tests for library code) + a "library-test" job that runs on each PR to the library repo.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Version</td><td>Every app on <code>@Library('lib')</code> = <code>main</code>. One bad push breaks 80 pipelines at once.</td><td>Tag releases; pin <code>@Library('lib@v2')</code>; roll forward team by team.</td></tr>
+    <tr><td>Untrusted libraries</td><td>Folder-level libraries from a repo anyone can push to, marked trusted.</td><td>Global libraries run without the sandbox — only from a protected repo with code review. Folder libraries run sandboxed.</td></tr>
+    <tr><td>Steps inside classes</td><td>Calling <code>sh</code> from a class in <code>src/</code> → "No such property: sh".</td><td>Pass the <code>steps</code> (or <code>this</code>) object into the class, or keep step calls in <code>vars/</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. What is the lonely underscore in <code>@Library('lib') _</code>?</div>
+  <details><summary>Reveal hint</summary><div class="hint">An annotation must sit on <i>something</i>. <code>_</code> is a throw-away import statement for the annotation to attach to, when you have nothing else to import. Without it you would need <code>@Library('lib') import org.shop.Foo</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Agents — where builds run</h2>
+<table>
+  <thead><tr><th>Agent type</th><th>How it connects</th><th>Use for</th></tr></thead>
+  <tbody>
+    <tr><td><b>Static (permanent)</b></td><td>A VM or box with the agent JAR, via SSH (controller connects out) or inbound JNLP/WebSocket (agent connects in on 50000 or 443).</td><td>Special hardware, Windows/macOS builds, licensed tools.</td></tr>
+    <tr><td><b>Docker agent</b> (per pipeline/stage)</td><td><code>agent { docker { image 'node:20' } }</code> — Jenkins runs a container on a node that has Docker.</td><td>Clean, pinned tool versions per project. Most common.</td></tr>
+    <tr><td><b>Docker cloud</b></td><td>Jenkins creates a whole agent container on demand from a template.</td><td>Elastic agents on a Docker host.</td></tr>
+    <tr><td><b>Kubernetes cloud</b></td><td>Each build gets a fresh Pod; destroyed afterwards.</td><td>Elastic, isolated, cheap. See Section 10.</td></tr>
+    <tr><td><b>Cloud VMs</b> (EC2, Azure, GCE plugins)</td><td>Spins VMs up and down.</td><td>Heavy builds that need a full VM.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// agent choices</span>
+<span class="kw">agent</span> any                                            <span class="cmt">// any node — avoid in prod, you do not know what tools are there</span>
+<span class="kw">agent</span> none                                           <span class="cmt">// top level: each stage picks its own</span>
+<span class="kw">agent</span> { <span class="fn">label</span> <span class="str">'linux &amp;&amp; docker'</span> }                    <span class="cmt">// label expression: &amp;&amp; || ! ( )</span>
+<span class="kw">agent</span> {
+    <span class="kw">docker</span> {
+        <span class="fn">image</span> <span class="str">'maven:3.9-eclipse-temurin-21'</span>
+        <span class="fn">label</span> <span class="str">'docker'</span>                                  <span class="cmt">// which node runs the container</span>
+        <span class="fn">args</span>  <span class="str">'-v $HOME/.m2:/root/.m2'</span>                   <span class="cmt">// cache dependencies across builds</span>
+        <span class="fn">reuseNode</span> <span class="kw">true</span>                                  <span class="cmt">// same workspace as the outer agent</span>
+    }
+}
+<span class="kw">agent</span> { <span class="kw">dockerfile</span> { <span class="fn">filename</span> <span class="str">'ci.Dockerfile'</span> } }    <span class="cmt">// build the agent image from the repo</span></pre>
+<table>
+  <thead><tr><th>Setting</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Labels</b></td><td>Tags on a node: <code>linux docker jdk21</code>. Jenkinsfiles ask for labels, never host names.</td></tr>
+    <tr><td><b>Executors</b></td><td>Parallel builds per node. Rule of thumb: cores ÷ 2 for heavy builds.</td></tr>
+    <tr><td><b>Usage</b></td><td>"Use as much as possible" vs "Only build jobs with matching labels" (for special nodes).</td></tr>
+    <tr><td><b>Remote root</b></td><td>Agent's work folder, e.g. <code>/home/jenkins</code>. Needs disk space for workspaces.</td></tr>
+    <tr><td><b>Availability</b></td><td>Keep online, or bring online on demand (cloud agents).</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Snowflake agents</td><td>Agents set up by hand; "works on agent-3 only".</td><td>Agents from images (Docker / Packer / Ansible). Any agent with the label must be identical.</td></tr>
+    <tr><td>Tools on the host</td><td>Installing Node 16, 18, 20 side by side on a VM.</td><td>Docker agents: the Jenkinsfile names the image; the host only needs Docker.</td></tr>
+    <tr><td>Agent as root</td><td>Agent process runs as root; a build can wreck the host.</td><td>Run as a <code>jenkins</code> user with just enough rights (Docker group if needed).</td></tr>
+    <tr><td>Workspace bloat</td><td>Never cleaning; disk fills; builds fail with odd errors.</td><td><code>cleanWs()</code> in <code>post</code>, or Workspace Cleanup plugin; monitor disk.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Docker-in-Docker:</b> a Docker-based agent that itself needs to <code>docker build</code> must either mount the host socket (<code>-v /var/run/docker.sock:/var/run/docker.sock</code>, powerful and risky) or use a daemon-less builder like Kaniko or BuildKit rootless.</div>
+<div class="tricky">
+  <div class="q">Q. <code>agent any</code> at the top, plus <code>agent { docker {…} }</code> on one stage. How many executors does that build hold?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Two during that stage: the top-level node stays allocated for the whole run, and the Docker stage grabs another (unless <code>reuseNode true</code>). Use <code>agent none</code> at the top when every stage picks its own agent.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Artifacts, reports, and quality gates</h2>
+<table>
+  <thead><tr><th>Goal</th><th>Step / plugin</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Keep build outputs</td><td><code>archiveArtifacts artifacts: 'target/*.jar', fingerprint: true</code></td><td>Shown on the build page; downloadable. Fingerprint tracks the file across jobs.</td></tr>
+    <tr><td>Test results</td><td><code>junit testResults: '**/TEST-*.xml', allowEmptyResults: false</code></td><td>Failures → UNSTABLE (yellow). Trend graph on the job page.</td></tr>
+    <tr><td>Coverage</td><td><code>recordCoverage tools: [[parser: 'JACOCO']]</code> (Coverage plugin)</td><td>Also Cobertura, lcov. Can fail the build under a threshold.</td></tr>
+    <tr><td>Static analysis</td><td><code>recordIssues tools: [checkStyle(), spotBugs(), pmdParser()]</code> (Warnings NG)</td><td>Quality gates: <code>qualityGates: [[threshold: 1, type: 'NEW', unstable: true]]</code>.</td></tr>
+    <tr><td>HTML reports</td><td><code>publishHTML target: [reportDir: 'coverage', reportFiles: 'index.html', reportName: 'Coverage']</code></td><td>Needs a relaxed Content-Security-Policy to show JS/CSS.</td></tr>
+    <tr><td>Sonar</td><td><code>withSonarQubeEnv('sonar') { sh 'mvn sonar:sonar' }</code> then <code>waitForQualityGate abortPipeline: true</code></td><td>Quality gate from SonarQube decides pass/fail.</td></tr>
+    <tr><td>Hand files to the next job</td><td><code>copyArtifacts projectName: 'build', selector: lastSuccessful()</code></td><td>Copy Artifact plugin.</td></tr>
+    <tr><td>Publish to a repo</td><td><code>sh 'mvn deploy'</code> / <code>nexusArtifactUploader</code> / <code>docker push</code></td><td>Artifactory, Nexus, ECR, GHCR — not Jenkins — is the long-term store.</td></tr>
+  </tbody>
+</table>
+<h3>Build results</h3>
+<table>
+  <thead><tr><th>Result</th><th>Color</th><th>Means</th></tr></thead>
+  <tbody>
+    <tr><td><code>SUCCESS</code></td><td>Blue / green</td><td>All good.</td></tr>
+    <tr><td><code>UNSTABLE</code></td><td>Yellow</td><td>Build finished but tests failed or a quality gate warned.</td></tr>
+    <tr><td><code>FAILURE</code></td><td>Red</td><td>A step exited non-zero or <code>error()</code> was called.</td></tr>
+    <tr><td><code>ABORTED</code></td><td>Grey</td><td>Someone clicked stop, or a timeout fired.</td></tr>
+    <tr><td><code>NOT_BUILT</code></td><td>Grey</td><td>Skipped.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Jenkins as a file store</td><td>Archiving 2 GB of artifacts per build for years.</td><td>Push to an artifact repository; archive only small reports; set <code>artifactNumToKeepStr</code>.</td></tr>
+    <tr><td>Tests hidden in logs</td><td>Only <code>sh 'mvn test'</code>; to find a failing test you grep 10,000 log lines.</td><td>Always <code>junit</code> — Jenkins shows the failing test names, history, and flakiness.</td></tr>
+    <tr><td>Unstable treated as pass</td><td>Deploy stage runs after UNSTABLE.</td><td><code>when { expression { currentBuild.currentResult == 'SUCCESS' } }</code> on Deploy.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>sh 'mvn test'</code> fails on a red test. Does <code>junit</code> in the same <code>steps</code> block still run?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No — the failing <code>sh</code> stops the steps block. Either run Maven with <code>-Dmaven.test.failure.ignore=true</code> and let <code>junit</code> set UNSTABLE, or put <code>junit</code> in <code>post { always { } }</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Jenkins with Docker and Kubernetes</h2>
+<h3>Build and push an image</h3>
+<pre><span class="kw">stage</span>(<span class="str">'Image'</span>) {
+    <span class="kw">steps</span> {
+        <span class="kw">script</span> {
+            <span class="kw">def</span> img = docker.<span class="fn">build</span>(<span class="str">"ghcr.io/shop/api:${env.GIT_COMMIT.take(7)}"</span>, <span class="str">'--pull .'</span>)   <span class="cmt">// Docker Pipeline plugin</span>
+            docker.<span class="fn">withRegistry</span>(<span class="str">'https://ghcr.io'</span>, <span class="str">'ghcr-creds'</span>) {
+                img.<span class="fn">push</span>()
+                img.<span class="fn">push</span>(<span class="str">'latest'</span>)
+            }
+        }
+    }
+}
+<span class="cmt">// or plain shell — same thing, fewer surprises:</span>
+<span class="fn">sh</span> <span class="str">'''
+  docker build --pull -t "$IMAGE" .
+  docker push "$IMAGE"
+'''</span></pre>
+<h3>Kubernetes agents (Kubernetes plugin)</h3>
+<pre><span class="kw">pipeline</span> {
+    <span class="kw">agent</span> {
+        <span class="kw">kubernetes</span> {
+            <span class="fn">yaml</span> <span class="str">'''
+apiVersion: v1
+kind: Pod
+spec:
+  serviceAccountName: jenkins-agent
+  containers:
+  - name: maven
+    image: maven:3.9-eclipse-temurin-21
+    command: ["sleep"]
+    args: ["infinity"]
+    resources: { requests: { cpu: "1", memory: "2Gi" } }
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:debug
+    command: ["sleep"]
+    args: ["infinity"]
+    volumeMounts: [{ name: docker-config, mountPath: /kaniko/.docker }]
+  volumes:
+  - name: docker-config
+    secret: { secretName: regcred, items: [{ key: .dockerconfigjson, path: config.json }] }
+'''</span>
+        }
+    }
+    <span class="kw">stages</span> {
+        <span class="kw">stage</span>(<span class="str">'Build'</span>) {
+            <span class="kw">steps</span> { <span class="fn">container</span>(<span class="str">'maven'</span>) { <span class="fn">sh</span> <span class="str">'mvn -B package'</span> } }
+        }
+        <span class="kw">stage</span>(<span class="str">'Image'</span>) {
+            <span class="kw">steps</span> {
+                <span class="fn">container</span>(<span class="str">'kaniko'</span>) {              <span class="cmt">// builds images with no Docker daemon</span>
+                    <span class="fn">sh</span> <span class="str">'/kaniko/executor --context . --destination ghcr.io/shop/api:$BUILD_NUMBER'</span>
+                }
+            }
+        }
+    }
+}</pre>
+<table>
+  <thead><tr><th>Piece</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td>Pod template</td><td>Inline YAML (above), or templates set in Manage Jenkins → Clouds. A <code>jnlp</code> container is added for you.</td></tr>
+    <tr><td><code>container('name')</code></td><td>Which container in the Pod runs the steps. Default is <code>jnlp</code>.</td></tr>
+    <tr><td><code>sleep infinity</code></td><td>Keeps the side containers alive so Jenkins can <code>exec</code> into them.</td></tr>
+    <tr><td>Kaniko / Buildah / BuildKit</td><td>Build images inside a Pod without Docker-in-Docker.</td></tr>
+    <tr><td><code>podRetention</code></td><td><code>never()</code> default. <code>onFailure()</code> keeps the Pod to debug.</td></tr>
+  </tbody>
+</table>
+<h3>Deploy to Kubernetes</h3>
+<pre><span class="fn">withCredentials</span>([<span class="fn">file</span>(credentialsId: <span class="str">'kubeconfig-prod'</span>, variable: <span class="str">'KUBECONFIG'</span>)]) {
+    <span class="fn">sh</span> <span class="str">'''
+      kubectl set image deployment/api api="$IMAGE" -n shop
+      kubectl rollout status deployment/api -n shop --timeout=120s
+    '''</span>
+}
+<span class="cmt">// or GitOps: Jenkins only bumps the image tag in a config repo; Argo CD does the deploy</span>
+<span class="fn">sh</span> <span class="str">'''
+  git clone git@github.com:shop/k8s-config.git &amp;&amp; cd k8s-config
+  kustomize edit set image api="$IMAGE"
+  git commit -am "api -> $IMAGE" &amp;&amp; git push
+'''</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>docker.sock in K8s</td><td>Mounting the node's Docker socket into agent Pods. Root on the node; and modern nodes have no Docker.</td><td>Kaniko / BuildKit rootless.</td></tr>
+    <tr><td>Deploy with cluster-admin</td><td>A kubeconfig with full rights stored as a Global credential.</td><td>A ServiceAccount limited to one namespace, folder-scoped credential, or let a GitOps tool deploy.</td></tr>
+    <tr><td>Tag by build number only</td><td><code>api:42</code> — no link back to the code.</td><td>Tag with the git SHA (plus build number if you like). Rollback = redeploy an old SHA.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. In a Kubernetes agent, <code>sh 'mvn package'</code> says "mvn: not found" though the Pod has a maven container. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Steps run in the <code>jnlp</code> container by default, which has no Maven. Wrap the step: <code>container('maven') { sh 'mvn package' }</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. Admin — security, config as code, upkeep</h2>
+<table>
+  <thead><tr><th>Area</th><th>Do this</th></tr></thead>
+  <tbody>
+    <tr><td><b>Login</b></td><td>Connect to your company login: LDAP / Active Directory, SAML, or GitHub/GitLab OAuth plugin. No shared admin account.</td></tr>
+    <tr><td><b>Permissions</b></td><td>Matrix Authorization or Role-based Strategy plugin. Give teams rights per <b>folder</b>. Read-only for most.</td></tr>
+    <tr><td><b>CSRF + agent protocols</b></td><td>Keep CSRF protection on. Disable old JNLP protocols; use WebSocket agents.</td></tr>
+    <tr><td><b>Script security</b></td><td>Pipelines run in a Groovy sandbox. Approve scripts in "In-process Script Approval" carefully — approving everything = no sandbox.</td></tr>
+    <tr><td><b>HTTPS</b></td><td>Put Jenkins behind a reverse proxy (nginx, ingress) with TLS. Set the Jenkins URL to the https address.</td></tr>
+    <tr><td><b>Updates</b></td><td>LTS line, monthly. Read the plugin "Security Advisories" feed; Jenkins shows a red warning when a plugin is vulnerable.</td></tr>
+    <tr><td><b>Backup</b></td><td><code>$JENKINS_HOME</code> minus <code>workspace/</code> and big <code>builds/</code> logs. Or rebuild from code (below).</td></tr>
+    <tr><td><b>Monitoring</b></td><td>Prometheus plugin → Grafana: queue length, executor use, build time, disk.</td></tr>
+  </tbody>
+</table>
+<h3>Configuration as Code (JCasC)</h3>
+<pre><span class="cmt"># jenkins.yaml — whole controller setup, in git</span>
+<span class="kw">jenkins</span>:
+  <span class="kw">systemMessage</span>: <span class="str">"Shop CI — managed by JCasC, do not edit in UI"</span>
+  <span class="kw">numExecutors</span>: <span class="num">0</span>
+  <span class="kw">securityRealm</span>:
+    <span class="kw">ldap</span>: { <span class="kw">configurations</span>: [{ <span class="kw">server</span>: <span class="str">ldaps://ldap.corp</span>, <span class="kw">rootDN</span>: <span class="str">dc=corp</span> }] }
+  <span class="kw">authorizationStrategy</span>:
+    <span class="kw">roleBased</span>: { <span class="kw">roles</span>: { <span class="kw">global</span>: [{ <span class="kw">name</span>: admin, <span class="kw">permissions</span>: [Overall/Administer], <span class="kw">entries</span>: [{ <span class="kw">group</span>: ci-admins }] }] } }
+  <span class="kw">clouds</span>:
+  - <span class="kw">kubernetes</span>: { <span class="kw">name</span>: k8s, <span class="kw">namespace</span>: jenkins, <span class="kw">jenkinsUrl</span>: <span class="str">http://jenkins:8080</span> }
+<span class="kw">credentials</span>:
+  <span class="kw">system</span>:
+    <span class="kw">domainCredentials</span>:
+    - <span class="kw">credentials</span>:
+      - <span class="kw">usernamePassword</span>: { <span class="kw">id</span>: ghcr, <span class="kw">username</span>: <span class="str">"${GHCR_USER}"</span>, <span class="kw">password</span>: <span class="str">"${GHCR_TOKEN}"</span> }   <span class="cmt"># from env / Vault</span>
+<span class="kw">unclassified</span>:
+  <span class="kw">location</span>: { <span class="kw">url</span>: <span class="str">https://ci.shop.example.com/</span> }
+  <span class="kw">globalLibraries</span>:
+    <span class="kw">libraries</span>:
+    - { <span class="kw">name</span>: shop-pipeline, <span class="kw">defaultVersion</span>: v2, <span class="kw">retriever</span>: { <span class="kw">modernSCM</span>: { <span class="kw">scm</span>: { <span class="kw">git</span>: { <span class="kw">remote</span>: <span class="str">https://github.com/shop/pipeline-lib</span> } } } } }
+<span class="kw">jobs</span>:
+  - <span class="kw">script</span>: &gt;                                      <span class="cmt"># Job DSL plugin: jobs as code too</span>
+      organizationFolder('shop') {
+        organizations { github { repoOwner('shop'); credentialsId('github-app') } }
+      }</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Click-ops</td><td>Years of UI changes nobody remembers; a rebuild takes a week.</td><td>JCasC + Job DSL + a pinned plugin list in a Docker image. <code>docker run</code> gives a full Jenkins in minutes.</td></tr>
+    <tr><td>Anonymous read</td><td>"Allow anonymous read access" on a Jenkins open to the internet. Logs leak internals.</td><td>Login required; Jenkins on a private network or behind SSO.</td></tr>
+    <tr><td>One giant Jenkins</td><td>A single controller for 2,000 jobs and 50 teams. Every plugin upgrade is a company-wide outage.</td><td>Several small controllers (per org / platform), each from the same image. Or CloudBees CI for managed multi-controller.</td></tr>
+    <tr><td>Approving all scripts</td><td>Blindly clicking "Approve" on every sandbox warning.</td><td>Move such code into a trusted shared library, which runs outside the sandbox on purpose.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Script Console</b> (Manage Jenkins → Script Console) runs Groovy with full rights on the controller — handy for bulk fixes, dangerous in the wrong hands. Admin-only, and log what you run.</div>
+<div class="tricky">
+  <div class="q">Q. Is Jenkins's own password store a good place for all company secrets?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. It is fine for CI credentials, but the master key sits on the same disk and anyone with job-config rights can extract values. For important secrets, use HashiCorp Vault / cloud secret managers via their plugins and short-lived tokens.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 12 ============================= -->
+<h2 id="s12">12. Troubleshooting and quick reference</h2>
+<table>
+  <thead><tr><th>Symptom</th><th>Look at</th><th>Likely cause</th></tr></thead>
+  <tbody>
+    <tr><td>Build stuck "Waiting for next available executor"</td><td>Manage Jenkins → Nodes; the label in <code>agent</code></td><td>No online node has that label, or all executors busy. Typo in label is common.</td></tr>
+    <tr><td>"Expected a step" / "Unknown stage section"</td><td>Line number in the error</td><td>Groovy code outside <code>script { }</code>, or a block in the wrong place (e.g. <code>when</code> inside <code>steps</code>).</td></tr>
+    <tr><td>"Scripts not permitted to use method …"</td><td>In-process Script Approval</td><td>Sandbox blocked a Groovy call. Approve it, or move the code to a trusted library.</td></tr>
+    <tr><td>Secret printed as ****, command fails</td><td>Quotes in <code>sh</code></td><td>Groovy interpolation with special characters. Use single quotes and shell env vars.</td></tr>
+    <tr><td>Webhook does nothing</td><td>GitHub → Settings → Webhooks → Recent Deliveries; Jenkins system log</td><td>Wrong URL (<code>/github-webhook/</code>), Jenkins not reachable, or branch filtered out.</td></tr>
+    <tr><td>"No such DSL method 'xyz'"</td><td>Plugins</td><td>Step comes from a plugin that is not installed (e.g. <code>slackSend</code>, <code>readJSON</code>).</td></tr>
+    <tr><td>Builds slow / controller sluggish</td><td>Manage Jenkins → System Information, thread dump, disk</td><td>Builds on controller, huge logs, too many plugins, low JVM heap (<code>-Xmx</code>).</td></tr>
+    <tr><td>"java.io.NotSerializableException"</td><td>Groovy variables in <code>script</code></td><td>Pipelines save state between steps; non-serializable objects (iterators, matchers) break it. Use <code>@NonCPS</code> on helper methods or keep such objects local.</td></tr>
+    <tr><td>Agent offline</td><td>Node log</td><td>Java version mismatch, network/firewall to 50000, or agent user permissions.</td></tr>
+    <tr><td>Flaky test fails the whole run</td><td>Test history</td><td>Retry only that stage with <code>retry</code>, mark with <code>catchError</code>, or quarantine the test.</td></tr>
+  </tbody>
+</table>
+<h3>Useful commands and URLs</h3>
+<table>
+  <thead><tr><th>Goal</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Replay a pipeline with edits</td><td>Build page → <b>Replay</b> — edit the Jenkinsfile in place and re-run (no commit needed). Great for debugging.</td></tr>
+    <tr><td>Restart from a stage</td><td>Build page → <b>Restart from Stage</b> (Declarative only).</td></tr>
+    <tr><td>See every env var</td><td><code>sh 'env | sort'</code> or build page → Environment Variables.</td></tr>
+    <tr><td>Generate step code</td><td><code>&lt;jenkins&gt;/pipeline-syntax/</code> — Snippet Generator and Directive Generator.</td></tr>
+    <tr><td>Global variable docs</td><td><code>&lt;jenkins&gt;/pipeline-syntax/globals</code> — <code>env</code>, <code>params</code>, <code>currentBuild</code>, <code>scm</code>.</td></tr>
+    <tr><td>Lint a Jenkinsfile</td><td><code>curl -X POST -F "jenkinsfile=&lt;Jenkinsfile" https://jenkins/pipeline-model-converter/validate</code></td></tr>
+    <tr><td>Trigger from a script</td><td><code>curl -X POST -u user:API_TOKEN "https://jenkins/job/shop/job/api/job/main/build"</code></td></tr>
+    <tr><td>Jenkins CLI</td><td><code>java -jar jenkins-cli.jar -s https://jenkins -auth user:token list-jobs</code></td></tr>
+    <tr><td>Safe restart</td><td><code>&lt;jenkins&gt;/safeRestart</code> — waits for running builds to finish.</td></tr>
+    <tr><td>Script Console</td><td><code>&lt;jenkins&gt;/script</code> — Groovy on the controller (admin only).</td></tr>
+    <tr><td>Blue Ocean / Pipeline Graph</td><td>Visual stage view; install "Pipeline: Stage View" or "Pipeline Graph View" plugin.</td></tr>
+  </tbody>
+</table>
+<h3>Minimal Jenkinsfile to copy</h3>
+<pre><span class="kw">pipeline</span> {
+    <span class="kw">agent</span> { <span class="kw">docker</span> { <span class="fn">image</span> <span class="str">'node:20-alpine'</span> } }
+    <span class="kw">options</span> { <span class="fn">timeout</span>(time: <span class="num">15</span>, unit: <span class="str">'MINUTES'</span>); <span class="fn">buildDiscarder</span>(<span class="fn">logRotator</span>(numToKeepStr: <span class="str">'20'</span>)) }
+    <span class="kw">stages</span> {
+        <span class="kw">stage</span>(<span class="str">'Install'</span>) { <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'npm ci'</span> } }
+        <span class="kw">stage</span>(<span class="str">'Test'</span>)    { <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'npm test -- --reporter=junit --outputFile=junit.xml'</span> }
+                           <span class="kw">post</span> { <span class="kw">always</span> { <span class="fn">junit</span> <span class="str">'junit.xml'</span> } } }
+        <span class="kw">stage</span>(<span class="str">'Build'</span>)   { <span class="kw">steps</span> { <span class="fn">sh</span> <span class="str">'npm run build'</span>; <span class="fn">archiveArtifacts</span> <span class="str">'dist/**'</span> } }
+    }
+    <span class="kw">post</span> { <span class="kw">failure</span> { <span class="fn">echo</span> <span class="str">"Failed: ${env.BUILD_URL}"</span> } }
+}</pre>
+<div class="tips"><b>The 6 rules to remember:</b> 1) Jenkinsfile in the repo, Declarative style; 2) controller runs zero builds — agents do the work; 3) secrets only through the credentials store, with single-quoted <code>sh</code>; 4) always <code>timeout</code> and <code>buildDiscarder</code>; 5) reports in <code>post { always }</code>; 6) shared library + JCasC so nothing lives only in the UI.</div>
+<div class="tricky">
+  <div class="q">Q. You need to test a Jenkinsfile change fast without ten commits. What is the quickest loop?</div>
+  <details><summary>Reveal hint</summary><div class="hint"><b>Replay</b>. Open the last build → Replay → edit the Groovy in the browser → Run. When it works, commit that version. Also handy: the Snippet Generator for exact step syntax, and the validate endpoint for syntax errors.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("jenkins-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("jenkins-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

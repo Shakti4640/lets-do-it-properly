@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apache Kafka — Basics to Advanced (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* config keys, Java keywords */
+  pre .typ { color: var(--c-typ); }                    /* types, classes, topics */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers, offsets */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* annotations @KafkaListener, flags */
+  pre .fn  { color: var(--c-fn); }                     /* method and CLI names */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Apache Kafka — Basics to Advanced<span class="sub">What it is · topics &amp; partitions · producers · consumers &amp; groups · delivery guarantees · Spring Kafka · schemas · Streams &amp; Connect · ops · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Click "Reveal hint" on screen. Hints auto-open when printed. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What is Kafka? (the big idea)</h2>
+<p><b>Kafka</b> is a distributed, append-only <b>log</b>. Producers write records to the end of a <b>topic</b>; consumers read from any position they like, at their own pace, and many different consumers can read the same data without affecting each other. Records are kept on disk for a set time (days, weeks, forever), not deleted when read. This makes Kafka a message bus, an event store, and a data pipeline backbone in one.</p>
+<table>
+  <thead><tr><th>Queue (RabbitMQ, SQS) thinking</th><th>Kafka thinking</th></tr></thead>
+  <tbody>
+    <tr><td>A message is consumed and gone.</td><td>A record stays in the log until retention expires. Consumers just move a pointer (<b>offset</b>).</td></tr>
+    <tr><td>The broker pushes to consumers and tracks delivery per message.</td><td>Consumers <b>pull</b> in batches and own their offsets. The broker is dumb and fast.</td></tr>
+    <tr><td>One consumer gets the message.</td><td>Every <b>consumer group</b> gets every record; inside a group, partitions are split among members.</td></tr>
+    <tr><td>Order is per queue, often lost with multiple consumers.</td><td>Order is guaranteed <b>per partition</b>. Same key → same partition → ordered.</td></tr>
+    <tr><td>Replay is hard.</td><td>Reset the offset and re-read a week of events.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Word</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Broker</b></td><td>One Kafka server. A <b>cluster</b> is several brokers.</td></tr>
+    <tr><td><b>Topic</b></td><td>A named stream of records, e.g. <code>orders</code>.</td></tr>
+    <tr><td><b>Partition</b></td><td>A topic is split into N ordered logs. Unit of parallelism and ordering.</td></tr>
+    <tr><td><b>Offset</b></td><td>The position of a record in a partition (0, 1, 2…). Consumers store "I have processed up to offset X".</td></tr>
+    <tr><td><b>Record</b></td><td>Key (optional), value, headers, timestamp. Both key and value are bytes to Kafka.</td></tr>
+    <tr><td><b>Producer</b> / <b>Consumer</b></td><td>Writes records / reads records.</td></tr>
+    <tr><td><b>Consumer group</b></td><td>A set of consumers sharing a <code>group.id</code>; each partition is read by exactly one member.</td></tr>
+    <tr><td><b>Replication factor</b></td><td>How many brokers hold a copy of each partition (3 in production).</td></tr>
+    <tr><td><b>Leader / follower (ISR)</b></td><td>One broker leads each partition; followers copy it. In-Sync Replicas are followers that are caught up.</td></tr>
+    <tr><td><b>KRaft</b></td><td>Kafka's built-in consensus (replaces ZooKeeper since 3.x; ZooKeeper removed in 4.0).</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># local cluster in one container (KRaft, no ZooKeeper)</span>
+<span class="fn">docker</span> run <span class="ann">-d</span> <span class="ann">--name</span> kafka <span class="ann">-p</span> <span class="num">9092</span>:<span class="num">9092</span> <span class="typ">apache/kafka:3.9.0</span>
+<span class="fn">docker</span> exec <span class="ann">-it</span> kafka /opt/kafka/bin/kafka-topics.sh <span class="ann">--bootstrap-server</span> localhost:<span class="num">9092</span> <span class="ann">--create</span> <span class="ann">--topic</span> orders <span class="ann">--partitions</span> <span class="num">6</span> <span class="ann">--replication-factor</span> <span class="num">1</span>
+<span class="fn">docker</span> exec <span class="ann">-it</span> kafka /opt/kafka/bin/kafka-console-producer.sh <span class="ann">--bootstrap-server</span> localhost:<span class="num">9092</span> <span class="ann">--topic</span> orders <span class="ann">--property</span> parse.key=true <span class="ann">--property</span> key.separator=:
+&gt; <span class="str">cust-42:{"orderId":9001,"total":499}</span>
+<span class="fn">docker</span> exec <span class="ann">-it</span> kafka /opt/kafka/bin/kafka-console-consumer.sh <span class="ann">--bootstrap-server</span> localhost:<span class="num">9092</span> <span class="ann">--topic</span> orders <span class="ann">--from-beginning</span> <span class="ann">--property</span> print.key=true</pre>
+<div class="tips"><b>Mental model:</b> a topic is a set of numbered notebooks (partitions). Writers append lines to the end of one notebook, chosen by the key. Each reader group keeps its own bookmark per notebook. Nobody tears pages out; old pages fall off after the retention period.</div>
+<div class="tricky">
+  <div class="q">Q. Two services (billing, analytics) both need every order event. How many copies does the producer send?</div>
+  <details><summary>Reveal hint</summary><div class="hint">One. Each service uses its own <code>group.id</code>, so each group reads the whole topic independently with its own offsets. Adding a third reader later costs the producer nothing.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Topics, partitions, replication, retention</h2>
+<table>
+  <thead><tr><th>Setting</th><th>Meaning</th><th>Guidance</th></tr></thead>
+  <tbody>
+    <tr><td><code>partitions</code></td><td>Parallelism and ordering units. Max useful consumers in a group = partitions.</td><td>Start with 6–12 for a normal topic; more for high throughput. You can add partitions later but <b>not</b> remove them, and adding changes key→partition mapping.</td></tr>
+    <tr><td><code>replication.factor</code></td><td>Copies of each partition.</td><td>3 in production. 1 only in dev.</td></tr>
+    <tr><td><code>min.insync.replicas</code></td><td>How many replicas must ack a write when <code>acks=all</code>.</td><td>2 with RF 3: survives one broker loss without losing acked data.</td></tr>
+    <tr><td><code>retention.ms</code> / <code>retention.bytes</code></td><td>How long / how much to keep per partition.</td><td>Default 7 days. <code>-1</code> = forever (event sourcing). Size caps protect disks.</td></tr>
+    <tr><td><code>cleanup.policy</code></td><td><code>delete</code> (by time/size) or <code>compact</code> (keep latest record per key) or both.</td><td>Compact for "current state" topics (user profile, inventory level). Null value = tombstone = delete key.</td></tr>
+    <tr><td><code>segment.bytes</code> / <code>segment.ms</code></td><td>Log is stored as segment files; only closed segments can be deleted/compacted.</td><td>Smaller segments → retention applies sooner. Default 1 GB.</td></tr>
+    <tr><td><code>max.message.bytes</code></td><td>Largest record.</td><td>Default ~1 MB. Keep records small; put blobs in S3 and send a pointer.</td></tr>
+    <tr><td><code>unclean.leader.election.enable</code></td><td>Allow an out-of-sync replica to become leader.</td><td><code>false</code> — availability vs data loss; choose no loss.</td></tr>
+  </tbody>
+</table>
+<h3>How a record finds its partition</h3>
+<table>
+  <thead><tr><th>Key</th><th>Partition chosen</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td>Key present</td><td><code>murmur2(key) % partitions</code></td><td>All records with the same key land in the same partition → ordered per key (per customer, per order).</td></tr>
+    <tr><td>No key (null)</td><td>Sticky partitioner: fill one batch, then move to another partition.</td><td>Even spread, no ordering across records.</td></tr>
+    <tr><td>Explicit partition</td><td>Whatever you set in the <code>ProducerRecord</code>.</td><td>Rare. Custom <code>Partitioner</code> class for special routing.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># topic admin</span>
+kafka-topics.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--create</span> <span class="ann">--topic</span> orders <span class="ann">--partitions</span> <span class="num">12</span> <span class="ann">--replication-factor</span> <span class="num">3</span> \
+  <span class="ann">--config</span> min.insync.replicas=<span class="num">2</span> <span class="ann">--config</span> retention.ms=<span class="num">604800000</span>
+kafka-topics.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--describe</span> <span class="ann">--topic</span> orders        <span class="cmt"># leaders, replicas, ISR per partition</span>
+kafka-topics.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--alter</span> <span class="ann">--topic</span> orders <span class="ann">--partitions</span> <span class="num">24</span>   <span class="cmt"># grow only</span>
+kafka-configs.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--alter</span> <span class="ann">--entity-type</span> topics <span class="ann">--entity-name</span> orders <span class="ann">--add-config</span> retention.ms=<span class="num">86400000</span>
+<span class="cmt"># compacted "latest state" topic</span>
+kafka-topics.sh … <span class="ann">--create</span> <span class="ann">--topic</span> customer-profile <span class="ann">--config</span> cleanup.policy=compact <span class="ann">--config</span> min.cleanable.dirty.ratio=<span class="num">0.1</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Partition count</td><td>1 partition "to keep order" → one consumer max, throughput capped.</td><td>Key by the entity that needs ordering (customer id); many partitions; order holds per key.</td></tr>
+    <tr><td>Too many partitions</td><td>10,000 partitions per topic "for future scale".</td><td>Each partition costs file handles, memory, and slows leader election. Hundreds per topic, low thousands per broker.</td></tr>
+    <tr><td>Hot keys</td><td>Key = country; 80% of traffic is one country → one partition does all the work.</td><td>Choose a high-cardinality key, or a composite key.</td></tr>
+    <tr><td>Auto-create topics</td><td><code>auto.create.topics.enable=true</code> in prod: typos create topics with default (bad) settings.</td><td>Off. Create topics via IaC / admin client with explicit configs.</td></tr>
+    <tr><td>RF 1 in prod</td><td>Broker dies → data gone, partition offline.</td><td>RF 3, <code>min.insync.replicas=2</code>, <code>acks=all</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Changing partition count breaks key ordering</b> for keys that now hash to a different partition: new records go to the new partition while old ones sit in the old. If per-key order matters, over-provision partitions from the start, or create a new topic and migrate.</div>
+<div class="tricky">
+  <div class="q">Q. A compacted topic has records for key <code>user-7</code> at offsets 10, 55, 200. After compaction, what is left?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Only offset 200 (the latest), and only in already-closed segments — the active segment is never compacted, so the "head" may still hold duplicates. A later record with a null value (tombstone) deletes the key after <code>delete.retention.ms</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Producers — batching, acks, idempotence</h2>
+<pre><span class="cmt">// plain client</span>
+<span class="typ">Properties</span> p = <span class="kw">new</span> <span class="typ">Properties</span>();
+p.put(<span class="str">"bootstrap.servers"</span>, <span class="str">"b1:9092,b2:9092"</span>);
+p.put(<span class="str">"key.serializer"</span>,   <span class="typ">StringSerializer</span>.<span class="kw">class</span>.getName());
+p.put(<span class="str">"value.serializer"</span>, <span class="typ">StringSerializer</span>.<span class="kw">class</span>.getName());
+p.put(<span class="str">"acks"</span>, <span class="str">"all"</span>);
+p.put(<span class="str">"enable.idempotence"</span>, <span class="str">"true"</span>);      <span class="cmt">// default since 3.0: no duplicates on retry, ordered per partition</span>
+p.put(<span class="str">"linger.ms"</span>, <span class="str">"5"</span>);                  <span class="cmt">// wait up to 5 ms to fill a batch</span>
+p.put(<span class="str">"batch.size"</span>, <span class="str">"65536"</span>);
+p.put(<span class="str">"compression.type"</span>, <span class="str">"lz4"</span>);         <span class="cmt">// or zstd; compresses whole batches</span>
+
+<span class="kw">try</span> (<span class="kw">var</span> producer = <span class="kw">new</span> <span class="typ">KafkaProducer</span>&lt;<span class="typ">String</span>, <span class="typ">String</span>&gt;(p)) {
+    <span class="kw">var</span> rec = <span class="kw">new</span> <span class="typ">ProducerRecord</span>&lt;&gt;(<span class="str">"orders"</span>, <span class="str">"cust-42"</span>, json);
+    rec.headers().add(<span class="str">"traceId"</span>, traceId.getBytes());
+    producer.send(rec, (meta, ex) -&gt; {                       <span class="cmt">// async; callback on ack or failure</span>
+        <span class="kw">if</span> (ex != <span class="kw">null</span>) log.error(<span class="str">"send failed"</span>, ex);
+        <span class="kw">else</span> log.debug(<span class="str">"p={} o={}"</span>, meta.partition(), meta.offset());
+    });
+    producer.flush();                                         <span class="cmt">// before exit; close() flushes too</span>
+}</pre>
+<h3>How a send really works</h3>
+<table>
+  <thead><tr><th>#</th><th>Step</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><code>send()</code> serializes key/value, picks the partition, and appends to an in-memory <b>batch</b> for that partition. Returns a Future immediately.</td></tr>
+    <tr><td>2</td><td>A background <b>Sender</b> thread ships batches when <code>batch.size</code> fills or <code>linger.ms</code> passes — one request per broker carrying many batches.</td></tr>
+    <tr><td>3</td><td>The partition leader appends to its log; followers fetch; with <code>acks=all</code> the leader replies once <code>min.insync.replicas</code> have it.</td></tr>
+    <tr><td>4</td><td>On a retriable error (leader moved, timeout) the producer retries; idempotence (producer id + sequence number) lets the broker drop duplicates.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Setting</th><th>Options</th><th>Pick</th></tr></thead>
+  <tbody>
+    <tr><td><code>acks</code></td><td><code>0</code> fire-and-forget · <code>1</code> leader wrote it · <code>all</code> ISR wrote it</td><td><code>all</code> for anything you care about. <code>1</code> can lose acked data on leader failure.</td></tr>
+    <tr><td><code>enable.idempotence</code></td><td>true/false</td><td>true (default). Forces <code>acks=all</code>, <code>retries&gt;0</code>, <code>max.in.flight ≤ 5</code> — and still keeps order.</td></tr>
+    <tr><td><code>retries</code> / <code>delivery.timeout.ms</code></td><td>Retry count / total time budget</td><td>Leave retries at MAX_INT; control with <code>delivery.timeout.ms</code> (default 120 s).</td></tr>
+    <tr><td><code>linger.ms</code> / <code>batch.size</code></td><td>Latency vs throughput</td><td><code>linger.ms=5–20</code> gives big wins in throughput for ~ms latency. <code>batch.size</code> is a cap, not a minimum.</td></tr>
+    <tr><td><code>compression.type</code></td><td>none, gzip, snappy, lz4, zstd</td><td><code>lz4</code> or <code>zstd</code>. Compression happens per batch — bigger batches compress better.</td></tr>
+    <tr><td><code>max.request.size</code></td><td>Per request</td><td>Must match broker <code>max.message.bytes</code>.</td></tr>
+    <tr><td><code>buffer.memory</code> / <code>max.block.ms</code></td><td>Memory for unsent batches / how long <code>send()</code> blocks when full</td><td>If the broker is slow, <code>send()</code> blocks after 60 s → make your threads aware.</td></tr>
+    <tr><td><code>transactional.id</code></td><td>Enables transactions (exactly-once, Section 4)</td><td>Only for consume-transform-produce or multi-topic atomic writes.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Blocking per record</td><td><code>producer.send(rec).get()</code> for every record → throughput of a few hundred/s.</td><td>Async send with callback; <code>flush()</code> at the end of a unit of work. Use <code>.get()</code> only when you need the ack before replying to a caller.</td></tr>
+    <tr><td>Producer per request</td><td>Creating a <code>KafkaProducer</code> per HTTP request.</td><td>One producer per application (it is thread-safe and heavy). Spring's <code>KafkaTemplate</code> does this.</td></tr>
+    <tr><td>Ignoring the callback</td><td><code>send()</code> with no callback; failures vanish.</td><td>Always handle the exception path: log, metric, dead-letter.</td></tr>
+    <tr><td>Big messages</td><td>5 MB PDFs through Kafka.</td><td>Store in S3; send a reference. Keep records &lt; 100 KB.</td></tr>
+    <tr><td>No key when order matters</td><td>Order "created", "paid", "shipped" with null keys → land on different partitions → consumed out of order.</td><td>Key by order id (or customer id).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>acks=all</code>, RF 3, <code>min.insync.replicas=1</code>. Two brokers die. Does the write succeed, and is it safe?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It succeeds — the leader alone satisfies min ISR 1 — but if that last broker dies before the others catch up, the acked data is lost. <code>min.insync.replicas=2</code> would instead reject writes (<code>NotEnoughReplicasException</code>) until a replica returns: unavailable but never lying about durability.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Consumers, groups, offsets, rebalancing</h2>
+<pre><span class="typ">Properties</span> p = <span class="kw">new</span> <span class="typ">Properties</span>();
+p.put(<span class="str">"bootstrap.servers"</span>, <span class="str">"b1:9092"</span>);
+p.put(<span class="str">"group.id"</span>, <span class="str">"billing"</span>);                      <span class="cmt">// the group; all members share partitions</span>
+p.put(<span class="str">"key.deserializer"</span>,   <span class="typ">StringDeserializer</span>.<span class="kw">class</span>.getName());
+p.put(<span class="str">"value.deserializer"</span>, <span class="typ">StringDeserializer</span>.<span class="kw">class</span>.getName());
+p.put(<span class="str">"enable.auto.commit"</span>, <span class="str">"false"</span>);              <span class="cmt">// commit by hand after processing</span>
+p.put(<span class="str">"auto.offset.reset"</span>, <span class="str">"earliest"</span>);           <span class="cmt">// no committed offset yet → start from the beginning</span>
+p.put(<span class="str">"max.poll.records"</span>, <span class="str">"200"</span>);
+
+<span class="kw">try</span> (<span class="kw">var</span> consumer = <span class="kw">new</span> <span class="typ">KafkaConsumer</span>&lt;<span class="typ">String</span>, <span class="typ">String</span>&gt;(p)) {
+    consumer.subscribe(<span class="typ">List</span>.of(<span class="str">"orders"</span>));
+    <span class="kw">while</span> (running) {
+        <span class="typ">ConsumerRecords</span>&lt;<span class="typ">String</span>, <span class="typ">String</span>&gt; batch = consumer.poll(<span class="typ">Duration</span>.ofMillis(<span class="num">500</span>));
+        <span class="kw">for</span> (<span class="kw">var</span> r : batch) handle(r.key(), r.value(), r.partition(), r.offset());
+        consumer.commitSync();                        <span class="cmt">// "I have processed everything poll() gave me"</span>
+    }
+}</pre>
+<table>
+  <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Committed offset</b></td><td>Stored in the internal topic <code>__consumer_offsets</code> per (group, topic, partition). It is the offset of the <i>next</i> record to read. On restart the consumer resumes there.</td></tr>
+    <tr><td><b>Lag</b></td><td>Latest offset in the partition − committed offset. The key health metric: growing lag = consumers can't keep up.</td></tr>
+    <tr><td><b>Rebalance</b></td><td>When a member joins/leaves (deploy, crash, scale), partitions are reassigned. During a rebalance nothing is consumed (eager) or only moved partitions pause (cooperative).</td></tr>
+    <tr><td><b>Group coordinator</b></td><td>A broker that tracks members via heartbeats and runs rebalances.</td></tr>
+    <tr><td><b>Assignor</b></td><td>How partitions are split: <code>RangeAssignor</code> (default, uneven across topics), <code>CooperativeStickyAssignor</code> (minimal movement, incremental). Use cooperative sticky.</td></tr>
+    <tr><td><b>Static membership</b></td><td><code>group.instance.id</code> — a restarting pod keeps its partitions without a rebalance (within <code>session.timeout.ms</code>).</td></tr>
+    <tr><td><b>Idle consumers</b></td><td>More members than partitions → extras sit idle. Parallelism = partitions.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Setting</th><th>Default</th><th>Meaning / guidance</th></tr></thead>
+  <tbody>
+    <tr><td><code>enable.auto.commit</code></td><td>true (every 5 s)</td><td>Auto-commit commits what <code>poll()</code> returned, possibly before you processed it → loss on crash. Prefer manual commit (Spring does this for you).</td></tr>
+    <tr><td><code>auto.offset.reset</code></td><td>latest</td><td>Where a <i>new</i> group starts: <code>earliest</code> (replay everything) or <code>latest</code> (only new). Irrelevant once offsets exist.</td></tr>
+    <tr><td><code>max.poll.records</code></td><td>500</td><td>Records per poll. Smaller = less work per loop = safer against the next setting.</td></tr>
+    <tr><td><code>max.poll.interval.ms</code></td><td>5 min</td><td>If processing a batch takes longer, the consumer is kicked out → rebalance → duplicates. Raise it or process faster.</td></tr>
+    <tr><td><code>session.timeout.ms</code> / <code>heartbeat.interval.ms</code></td><td>45 s / 3 s</td><td>Heartbeats run on a background thread; missing them = dead member.</td></tr>
+    <tr><td><code>fetch.min.bytes</code> / <code>fetch.max.wait.ms</code></td><td>1 / 500</td><td>Batch fetches for throughput.</td></tr>
+    <tr><td><code>isolation.level</code></td><td>read_uncommitted</td><td><code>read_committed</code> to skip records from aborted transactions.</td></tr>
+    <tr><td><code>partition.assignment.strategy</code></td><td>Range + CooperativeSticky</td><td>Set to <code>CooperativeStickyAssignor</code>.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># group admin</span>
+kafka-consumer-groups.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--list</span>
+kafka-consumer-groups.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--describe</span> <span class="ann">--group</span> billing      <span class="cmt"># CURRENT-OFFSET LOG-END-OFFSET LAG per partition + member</span>
+<span class="cmt"># reset offsets (group must be stopped)</span>
+kafka-consumer-groups.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--group</span> billing <span class="ann">--topic</span> orders <span class="ann">--reset-offsets</span> <span class="ann">--to-earliest</span> <span class="ann">--execute</span>
+kafka-consumer-groups.sh … <span class="ann">--reset-offsets</span> <span class="ann">--to-datetime</span> 2026-10-24T00:00:00.000 <span class="ann">--execute</span>
+kafka-consumer-groups.sh … <span class="ann">--reset-offsets</span> <span class="ann">--shift-by</span> -1000 <span class="ann">--execute</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Slow processing in the poll loop</td><td>Calling a 10-second API per record with <code>max.poll.records=500</code> → exceeds <code>max.poll.interval.ms</code> → endless rebalances.</td><td>Fewer records per poll, async processing with care, or raise the interval. Watch for "consumer poll timeout has expired" in logs.</td></tr>
+    <tr><td>Commit before processing</td><td>Auto-commit, or <code>commitAsync()</code> right after <code>poll()</code>.</td><td>Commit after the batch is processed (at-least-once). Make handlers idempotent.</td></tr>
+    <tr><td>One consumer per topic per app</td><td>50 topics → 50 consumer threads idling.</td><td>One consumer can subscribe to many topics; or a regex subscription.</td></tr>
+    <tr><td>Scaling past partitions</td><td>20 pods on a 6-partition topic; 14 do nothing.</td><td>Partitions ≥ expected max consumers; or parallel processing inside a consumer with per-key ordering.</td></tr>
+    <tr><td>Sharing a consumer across threads</td><td><code>KafkaConsumer</code> used from two threads → <code>ConcurrentModificationException</code>.</td><td>One consumer per thread. Spring's <code>concurrency</code> creates N consumers.</td></tr>
+    <tr><td>Resetting a live group</td><td>Reset offsets while consumers run → error / no effect.</td><td>Stop the consumers, reset, start.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Lag monitoring is the one alert you need:</b> export <code>kafka_consumergroup_lag</code> (Burrow, kafka-exporter, or Micrometer <code>kafka.consumer.fetch.manager.records.lag</code>) and alert when it grows for more than a few minutes.</div>
+<div class="tricky">
+  <div class="q">Q. A consumer processes 100 records, crashes before committing, restarts. What happens?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It re-reads from the last committed offset and processes those 100 again — <b>at-least-once</b>. This is the normal Kafka contract; the fix is on your side: idempotent handlers (unique constraint on event id, upsert, dedupe table), not fighting Kafka.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Delivery guarantees — at-most-once, at-least-once, exactly-once</h2>
+<table>
+  <thead><tr><th>Guarantee</th><th>Producer side</th><th>Consumer side</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td><b>At-most-once</b></td><td><code>acks=0</code> or no retries</td><td>Commit before processing (auto-commit)</td><td>Fast; may lose records. Metrics, logs where gaps are OK.</td></tr>
+    <tr><td><b>At-least-once</b> (the default to aim for)</td><td><code>acks=all</code>, idempotent producer, retries</td><td>Process, then commit</td><td>Never loses; may duplicate. Make handlers idempotent.</td></tr>
+    <tr><td><b>Exactly-once</b> (EOS)</td><td>Transactions: <code>transactional.id</code>, <code>initTransactions</code>, <code>beginTransaction</code>, <code>sendOffsetsToTransaction</code>, <code>commitTransaction</code></td><td><code>isolation.level=read_committed</code></td><td>Exactly once <i>within Kafka</i>: consume from A → produce to B + commit offsets atomically. Does <b>not</b> cover side effects (DB writes, emails).</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// consume-transform-produce with exactly-once (plain client; Kafka Streams does this for you)</span>
+producer.initTransactions();
+<span class="kw">while</span> (running) {
+    <span class="kw">var</span> records = consumer.poll(<span class="typ">Duration</span>.ofMillis(<span class="num">200</span>));
+    <span class="kw">if</span> (records.isEmpty()) <span class="kw">continue</span>;
+    producer.beginTransaction();
+    <span class="kw">try</span> {
+        <span class="kw">for</span> (<span class="kw">var</span> r : records) producer.send(<span class="kw">new</span> <span class="typ">ProducerRecord</span>&lt;&gt;(<span class="str">"invoices"</span>, r.key(), toInvoice(r.value())));
+        producer.sendOffsetsToTransaction(currentOffsets(records), consumer.groupMetadata());   <span class="cmt">// offsets ride in the txn</span>
+        producer.commitTransaction();
+    } <span class="kw">catch</span> (<span class="typ">Exception</span> e) {
+        producer.abortTransaction();                   <span class="cmt">// output and offsets both rolled back</span>
+    }
+}</pre>
+<h3>Idempotent consumers — the practical path to "effectively once"</h3>
+<table>
+  <thead><tr><th>Technique</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Natural idempotency</td><td>Upserts (<code>INSERT … ON CONFLICT DO UPDATE</code>), "set status = PAID" instead of "increment".</td></tr>
+    <tr><td>Dedupe key</td><td>Event id (or topic-partition-offset) stored in a <code>processed_events</code> table with a unique constraint; insert it in the same DB transaction as the business change.</td></tr>
+    <tr><td>Transactional outbox</td><td>For the produce side: write the event to an <code>outbox</code> table in the same DB txn as the state change; a relay (Debezium / poller) publishes it. No "DB saved but Kafka failed" gap.</td></tr>
+    <tr><td>Version checks</td><td>Ignore events older than the current entity version.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>"Exactly-once solves duplicates in my DB"</td><td>Turning on Kafka transactions and expecting the Postgres write to be exactly once.</td><td>EOS is Kafka-to-Kafka only. For external systems: idempotent handler + dedupe table, or outbox.</td></tr>
+    <tr><td>Dual write</td><td>Save to DB, then <code>send()</code> to Kafka. Crash in between → DB has it, Kafka does not (or vice versa).</td><td>Transactional outbox / CDC.</td></tr>
+    <tr><td>Non-idempotent side effects</td><td>Consumer sends an email per record; redelivery → duplicate emails.</td><td>Dedupe on event id before the side effect; or make the side effect idempotent (idempotency key to the email API).</td></tr>
+    <tr><td>Transactions for everything</td><td><code>transactional.id</code> on a simple fire-and-forget producer.</td><td>Transactions add latency and complexity. Idempotent producer + at-least-once consumer covers most needs.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. With <code>read_committed</code>, can a consumer see a record from an open (not yet committed) transaction?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. The consumer stops at the Last Stable Offset — it will not read past the first open transaction in the partition. That is also why a stuck producer transaction blocks downstream readers until <code>transaction.timeout.ms</code> (default 60 s) aborts it.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Spring Boot + Spring Kafka</h2>
+<pre><span class="cmt"># pom: org.springframework.kafka:spring-kafka (comes with spring-boot-starter? no — add it; Boot auto-configures it)</span>
+<span class="kw">spring.kafka</span>:
+  <span class="kw">bootstrap-servers</span>: <span class="str">b1:9092,b2:9092</span>
+  <span class="kw">producer</span>:
+    <span class="kw">key-serializer</span>: org.apache.kafka.common.serialization.StringSerializer
+    <span class="kw">value-serializer</span>: org.springframework.kafka.support.serializer.JsonSerializer
+    <span class="kw">acks</span>: all
+    <span class="kw">properties</span>: { <span class="kw">enable.idempotence</span>: <span class="kw">true</span>, <span class="kw">linger.ms</span>: <span class="num">10</span>, <span class="kw">compression.type</span>: lz4 }
+  <span class="kw">consumer</span>:
+    <span class="kw">group-id</span>: billing
+    <span class="kw">auto-offset-reset</span>: earliest
+    <span class="kw">enable-auto-commit</span>: <span class="kw">false</span>                       <span class="cmt"># Spring commits for you after the listener returns</span>
+    <span class="kw">key-deserializer</span>: org.apache.kafka.common.serialization.StringDeserializer
+    <span class="kw">value-deserializer</span>: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+    <span class="kw">properties</span>:
+      <span class="kw">spring.deserializer.value.delegate.class</span>: org.springframework.kafka.support.serializer.JsonDeserializer
+      <span class="kw">spring.json.trusted.packages</span>: <span class="str">com.shop.*</span>
+      <span class="kw">spring.json.value.default.type</span>: <span class="str">com.shop.order.OrderEvent</span>
+      <span class="kw">partition.assignment.strategy</span>: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
+  <span class="kw">listener</span>:
+    <span class="kw">ack-mode</span>: record                               <span class="cmt"># commit after each record (or BATCH, MANUAL)</span>
+    <span class="kw">concurrency</span>: <span class="num">3</span>                                  <span class="cmt"># 3 consumer threads per @KafkaListener (≤ partitions)</span>
+    <span class="kw">observation-enabled</span>: <span class="kw">true</span>                        <span class="cmt"># traces per record with Micrometer</span></pre>
+<pre><span class="cmt">// producing</span>
+<span class="ann">@Service</span>
+<span class="kw">class</span> <span class="typ">OrderEvents</span> {
+    <span class="kw">private final</span> <span class="typ">KafkaTemplate</span>&lt;<span class="typ">String</span>, <span class="typ">OrderEvent</span>&gt; kafka;
+    <span class="fn">OrderEvents</span>(<span class="typ">KafkaTemplate</span>&lt;<span class="typ">String</span>, <span class="typ">OrderEvent</span>&gt; kafka) { <span class="kw">this</span>.kafka = kafka; }
+
+    <span class="kw">void</span> <span class="fn">placed</span>(<span class="typ">Order</span> o) {
+        kafka.send(<span class="str">"orders"</span>, o.customerId(), <span class="typ">OrderEvent</span>.placed(o))          <span class="cmt">// key = customer → ordered per customer</span>
+             .whenComplete((res, ex) -&gt; { <span class="kw">if</span> (ex != <span class="kw">null</span>) log.error(<span class="str">"publish failed {}"</span>, o.id(), ex); });
+    }
+}
+
+<span class="cmt">// consuming</span>
+<span class="ann">@Component</span>
+<span class="kw">class</span> <span class="typ">BillingListener</span> {
+    <span class="ann">@KafkaListener</span>(topics = <span class="str">"orders"</span>, groupId = <span class="str">"billing"</span>)
+    <span class="kw">void</span> <span class="fn">on</span>(<span class="typ">OrderEvent</span> e,
+            <span class="ann">@Header</span>(<span class="typ">KafkaHeaders</span>.RECEIVED_KEY) <span class="typ">String</span> key,
+            <span class="ann">@Header</span>(<span class="typ">KafkaHeaders</span>.OFFSET) <span class="kw">long</span> offset) {
+        billing.handle(e);                 <span class="cmt">// throw → retries/DLT via the error handler; return → offset committed</span>
+    }
+
+    <span class="ann">@KafkaListener</span>(topics = <span class="str">"audit"</span>, batch = <span class="str">"true"</span>)
+    <span class="kw">void</span> <span class="fn">onBatch</span>(<span class="typ">List</span>&lt;<span class="typ">ConsumerRecord</span>&lt;<span class="typ">String</span>, <span class="typ">AuditEvent</span>&gt;&gt; records, <span class="typ">Acknowledgment</span> ack) {   <span class="cmt">// ack-mode: MANUAL</span>
+        repo.saveAll(records.stream().map(<span class="typ">ConsumerRecord</span>::value).toList());
+        ack.acknowledge();
+    }
+}
+
+<span class="cmt">// retries + dead-letter topic: 3 tries with backoff, then publish to orders.DLT and move on</span>
+<span class="ann">@Bean</span>
+<span class="typ">DefaultErrorHandler</span> <span class="fn">errorHandler</span>(<span class="typ">KafkaTemplate</span>&lt;<span class="typ">Object</span>, <span class="typ">Object</span>&gt; template) {
+    <span class="kw">var</span> recoverer = <span class="kw">new</span> <span class="typ">DeadLetterPublishingRecoverer</span>(template);         <span class="cmt">// default: &lt;topic&gt;.DLT, same partition</span>
+    <span class="kw">var</span> handler = <span class="kw">new</span> <span class="typ">DefaultErrorHandler</span>(recoverer, <span class="kw">new</span> <span class="typ">ExponentialBackOffWithMaxRetries</span>(<span class="num">3</span>));
+    handler.addNotRetryableExceptions(<span class="typ">ValidationException</span>.<span class="kw">class</span>);      <span class="cmt">// straight to DLT</span>
+    <span class="kw">return</span> handler;
+}
+
+<span class="cmt">// non-blocking retries on separate topics (orders-retry-1000, orders-retry-2000, orders-dlt)</span>
+<span class="ann">@RetryableTopic</span>(attempts = <span class="str">"4"</span>, backoff = <span class="ann">@Backoff</span>(delay = <span class="num">1000</span>, multiplier = <span class="num">2.0</span>))
+<span class="ann">@KafkaListener</span>(topics = <span class="str">"orders"</span>)
+<span class="kw">void</span> <span class="fn">on</span>(<span class="typ">OrderEvent</span> e) { ... }
+<span class="ann">@DltHandler</span>
+<span class="kw">void</span> <span class="fn">dlt</span>(<span class="typ">OrderEvent</span> e, <span class="ann">@Header</span>(<span class="typ">KafkaHeaders</span>.EXCEPTION_MESSAGE) <span class="typ">String</span> why) { alert(e, why); }
+
+<span class="cmt">// topics as code</span>
+<span class="ann">@Bean</span> <span class="typ">NewTopic</span> <span class="fn">orders</span>() { <span class="kw">return</span> <span class="typ">TopicBuilder</span>.name(<span class="str">"orders"</span>).partitions(<span class="num">12</span>).replicas(<span class="num">3</span>).config(<span class="str">"min.insync.replicas"</span>, <span class="str">"2"</span>).build(); }</pre>
+<table>
+  <thead><tr><th>Piece</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><code>KafkaTemplate</code></td><td>Thread-safe wrapper over one producer. <code>send()</code> returns <code>CompletableFuture&lt;SendResult&gt;</code>.</td></tr>
+    <tr><td><code>@KafkaListener</code></td><td>Creates a container with <code>concurrency</code> consumers. Each consumer = one thread = one or more partitions.</td></tr>
+    <tr><td>Ack modes</td><td><code>RECORD</code> (commit per record), <code>BATCH</code> (after each poll's batch, default), <code>MANUAL</code>/<code>MANUAL_IMMEDIATE</code> (you call <code>ack.acknowledge()</code>).</td></tr>
+    <tr><td><code>ErrorHandlingDeserializer</code></td><td>Wraps the real deserializer so a poison message (bad JSON) goes to the error handler instead of killing the consumer loop forever.</td></tr>
+    <tr><td><code>DefaultErrorHandler</code></td><td>Blocking retries in place (pauses the partition) then recoverer. Fine for short backoffs.</td></tr>
+    <tr><td><code>@RetryableTopic</code></td><td>Non-blocking: failed records go to retry topics with delays; the main partition keeps flowing. Loses strict ordering for retried records.</td></tr>
+    <tr><td>Transactions</td><td><code>spring.kafka.producer.transaction-id-prefix=tx-</code> enables <code>KafkaTransactionManager</code>; <code>@Transactional</code> on a method that sends → atomic. Chain with JPA via <code>ChainedKafkaTransactionManager</code> is deprecated — prefer outbox.</td></tr>
+    <tr><td>Testing</td><td><code>@EmbeddedKafka</code> (fast, in-JVM) or Testcontainers <code>KafkaContainer</code> with <code>@ServiceConnection</code>.</td></tr>
+    <tr><td>Headers</td><td>Spring adds type info headers (<code>__TypeId__</code>) with <code>JsonSerializer</code>; disable (<code>spring.json.add.type.headers=false</code>) when non-Spring consumers read the topic.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Poison pill</td><td>Plain <code>JsonDeserializer</code>; one malformed record → infinite deserialization error loop, partition stuck.</td><td><code>ErrorHandlingDeserializer</code> + DLT.</td></tr>
+    <tr><td>Swallowing exceptions</td><td><code>try { … } catch (Exception e) { log.error(…) }</code> in the listener → offset committed, record silently lost.</td><td>Let it throw; the error handler retries and dead-letters. Log <i>and</i> rethrow if you must log.</td></tr>
+    <tr><td>Concurrency &gt; partitions</td><td><code>concurrency: 10</code> on a 3-partition topic.</td><td>7 threads idle. Match partitions, or raise partitions.</td></tr>
+    <tr><td>Blocking retry with long backoff</td><td><code>DefaultErrorHandler</code> with 5 retries × 1 minute: that partition is frozen for 5 minutes.</td><td><code>@RetryableTopic</code> for long backoffs; blocking only for sub-second retries.</td></tr>
+    <tr><td>Trusting all packages</td><td><code>spring.json.trusted.packages: "*"</code></td><td>Your package only — type headers are attacker-controlled input.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your listener method is <code>@Transactional</code> (JPA) and the DB commit succeeds, but then the offset commit fails. What do you see?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The record is redelivered and your JPA transaction runs again → duplicate DB row unless the handler is idempotent (unique constraint on event id, upsert). Kafka and JPA are two separate transactions; make the handler idempotent rather than trying to glue them.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Serialization and schemas — JSON, Avro, Protobuf, Schema Registry</h2>
+<table>
+  <thead><tr><th>Format</th><th>Pros</th><th>Cons</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>JSON</b></td><td>Human-readable, zero setup, every language.</td><td>Big (field names repeated), no enforced schema, type drift bugs show up at runtime.</td><td>Small teams, low volume, internal topics.</td></tr>
+    <tr><td><b>Avro</b> + Schema Registry</td><td>Compact binary, schema evolution rules enforced, generated Java classes.</td><td>Needs the registry; schema id in each record header.</td><td>The Kafka default in most companies.</td></tr>
+    <tr><td><b>Protobuf</b> + Schema Registry</td><td>Compact, strong typing, shared with gRPC APIs.</td><td>Same registry need; field numbers must be managed.</td><td>Shops already on gRPC/protobuf.</td></tr>
+    <tr><td><b>JSON Schema</b> + registry</td><td>Readable + validated.</td><td>Still big.</td><td>Compromise when JSON must stay.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// Avro schema  src/main/avro/OrderPlaced.avsc</span>
+{ <span class="str">"type"</span>: <span class="str">"record"</span>, <span class="str">"name"</span>: <span class="str">"OrderPlaced"</span>, <span class="str">"namespace"</span>: <span class="str">"com.shop.events"</span>,
+  <span class="str">"fields"</span>: [
+    { <span class="str">"name"</span>: <span class="str">"orderId"</span>,  <span class="str">"type"</span>: <span class="str">"long"</span> },
+    { <span class="str">"name"</span>: <span class="str">"total"</span>,    <span class="str">"type"</span>: { <span class="str">"type"</span>: <span class="str">"bytes"</span>, <span class="str">"logicalType"</span>: <span class="str">"decimal"</span>, <span class="str">"precision"</span>: <span class="num">12</span>, <span class="str">"scale"</span>: <span class="num">2</span> } },
+    { <span class="str">"name"</span>: <span class="str">"coupon"</span>,   <span class="str">"type"</span>: [<span class="str">"null"</span>, <span class="str">"string"</span>], <span class="str">"default"</span>: <span class="kw">null</span> }     <span class="cmt">// optional with default → backward compatible add</span>
+  ] }
+
+<span class="cmt"># Spring config with Confluent serializers</span>
+<span class="kw">spring.kafka.producer.value-serializer</span>: io.confluent.kafka.serializers.KafkaAvroSerializer
+<span class="kw">spring.kafka.properties.schema.registry.url</span>: <span class="str">http://schema-registry:8081</span>
+<span class="kw">spring.kafka.properties.auto.register.schemas</span>: <span class="kw">false</span>     <span class="cmt"># prod: register via CI, not from apps</span>
+<span class="kw">spring.kafka.consumer.properties.specific.avro.reader</span>: <span class="kw">true</span></pre>
+<table>
+  <thead><tr><th>Compatibility mode</th><th>New schema can…</th><th>Who upgrades first</th></tr></thead>
+  <tbody>
+    <tr><td><b>BACKWARD</b> (default)</td><td>Delete fields; add optional fields (with defaults). New readers can read old data.</td><td>Consumers first.</td></tr>
+    <tr><td><b>FORWARD</b></td><td>Add fields; delete optional fields. Old readers can read new data.</td><td>Producers first.</td></tr>
+    <tr><td><b>FULL</b></td><td>Only add/remove optional fields with defaults.</td><td>Any order. Safest.</td></tr>
+    <tr><td><b>NONE</b></td><td>Anything.</td><td>You are on your own.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Renaming a field</td><td>Rename <code>total</code> → <code>amount</code>; every consumer breaks or reads null.</td><td>Add the new field with a default, dual-write, migrate consumers, then remove the old one. Or use Avro aliases.</td></tr>
+    <tr><td>Required new field</td><td>Add <code>currency</code> with no default → old records cannot be read by the new consumer.</td><td>Always a default for new fields.</td></tr>
+    <tr><td>Java class as the contract</td><td>Spring <code>JsonSerializer</code> type headers pointing at <code>com.shop.internal.OrderEntity</code>.</td><td>A dedicated event class/schema, owned like an API. Never the JPA entity.</td></tr>
+    <tr><td>Decimals as double</td><td><code>"total": 499.99</code> as float → rounding bugs in billing.</td><td>Avro decimal logical type, or string in JSON.</td></tr>
+    <tr><td>Apps register schemas</td><td>Any dev build registers a new version in prod.</td><td>Schemas in git; CI registers and checks compatibility; apps use <code>auto.register.schemas=false</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Event design:</b> name events in the past tense (<code>OrderPlaced</code>, not <code>CreateOrder</code>); include an <code>eventId</code> (UUID) for dedupe, <code>occurredAt</code>, and the aggregate id as the key; carry enough state that consumers do not need to call you back (but not the whole entity). Topic naming: <code>&lt;domain&gt;.&lt;entity&gt;.&lt;event-type&gt;</code> or simply <code>orders</code> with an event type field — pick one convention.</div>
+<div class="tricky">
+  <div class="q">Q. A consumer gets <code>SerializationException: Unknown magic byte!</code>. What happened?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The record was not written by a Schema Registry serializer (no 0x00 magic byte + schema id prefix) — probably a JSON producer or the console producer wrote to an Avro topic. Fix the producer; protect the consumer with <code>ErrorHandlingDeserializer</code> so one bad record goes to the DLT.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Kafka Streams and Kafka Connect</h2>
+<h3>Kafka Streams — a Java library for processing topics into topics</h3>
+<pre><span class="typ">StreamsBuilder</span> b = <span class="kw">new</span> <span class="typ">StreamsBuilder</span>();
+<span class="typ">KStream</span>&lt;<span class="typ">String</span>, <span class="typ">OrderEvent</span>&gt; orders = b.stream(<span class="str">"orders"</span>, <span class="typ">Consumed</span>.with(<span class="typ">Serdes</span>.String(), orderSerde));
+
+<span class="cmt">// stateless: filter + map → new topic</span>
+orders.filter((k, o) -&gt; o.total() &gt; <span class="num">1000</span>)
+      .mapValues(<span class="typ">OrderEvent</span>::toBigOrderAlert)
+      .to(<span class="str">"big-orders"</span>);
+
+<span class="cmt">// stateful: revenue per customer per hour (windowed aggregate, state in RocksDB + changelog topic)</span>
+orders.groupByKey()
+      .windowedBy(<span class="typ">TimeWindows</span>.ofSizeWithNoGrace(<span class="typ">Duration</span>.ofHours(<span class="num">1</span>)))
+      .aggregate(() -&gt; <span class="num">0L</span>, (k, o, sum) -&gt; sum + o.total(), <span class="typ">Materialized</span>.with(<span class="typ">Serdes</span>.String(), <span class="typ">Serdes</span>.Long()))
+      .toStream()
+      .to(<span class="str">"revenue-hourly"</span>);
+
+<span class="cmt">// join a stream with a table (compacted topic) — enrich orders with customer tier</span>
+<span class="typ">KTable</span>&lt;<span class="typ">String</span>, <span class="typ">Customer</span>&gt; customers = b.table(<span class="str">"customer-profile"</span>);
+orders.join(customers, (o, c) -&gt; o.withTier(c.tier())).to(<span class="str">"orders-enriched"</span>);
+
+<span class="kw">var</span> streams = <span class="kw">new</span> <span class="typ">KafkaStreams</span>(b.build(), props);   <span class="cmt">// props: application.id, bootstrap.servers, processing.guarantee=exactly_once_v2</span>
+streams.start();</pre>
+<table>
+  <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>KStream</b></td><td>Event stream: every record is a fact ("order placed").</td></tr>
+    <tr><td><b>KTable</b></td><td>Changelog view: latest value per key ("customer 42's current profile"). Built from a compacted topic.</td></tr>
+    <tr><td><b>State store</b></td><td>Local RocksDB per task, backed up to a changelog topic → restored on another instance after failure.</td></tr>
+    <tr><td><b>Task</b></td><td>One per input partition; tasks are spread across instances of the same <code>application.id</code>. Scale = partitions, same as consumers.</td></tr>
+    <tr><td><b>Windows</b></td><td>Tumbling, hopping, sliding, session. Grace period handles late records.</td></tr>
+    <tr><td><b>Repartition</b></td><td>Changing the key (<code>selectKey</code>, <code>groupBy</code>) writes to an internal topic so same keys meet in one task.</td></tr>
+    <tr><td><b>Interactive queries</b></td><td>Read the state store from your service over HTTP (a cache that is always up to date).</td></tr>
+    <tr><td><b>Spring</b></td><td><code>spring-kafka</code> <code>@EnableKafkaStreams</code> + a <code>KStream</code> bean; or Spring Cloud Stream binder for a functional style.</td></tr>
+  </tbody>
+</table>
+<h3>Kafka Connect — move data in and out with no code</h3>
+<table>
+  <thead><tr><th>Piece</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Source connector</b></td><td>External system → Kafka. <b>Debezium</b> (Postgres/MySQL CDC from the WAL), JDBC source, S3, MQTT.</td></tr>
+    <tr><td><b>Sink connector</b></td><td>Kafka → external. JDBC sink, Elasticsearch, S3, BigQuery, Snowflake.</td></tr>
+    <tr><td><b>Worker</b></td><td>A Connect process; a cluster of workers shares connector tasks and stores config/offsets in Kafka topics.</td></tr>
+    <tr><td><b>Converter</b></td><td>Serialization in Connect: <code>JsonConverter</code>, <code>AvroConverter</code> (with registry).</td></tr>
+    <tr><td><b>SMT</b> (Single Message Transform)</td><td>Small stateless tweaks in the pipeline: rename fields, route by field, mask PII, unwrap Debezium envelopes.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Debezium: Postgres table changes → topic "shop.public.orders" (outbox pattern uses the EventRouter SMT)</span>
+<span class="fn">curl</span> <span class="ann">-X</span> POST connect:<span class="num">8083</span>/connectors <span class="ann">-H</span> <span class="str">'Content-Type: application/json'</span> <span class="ann">-d</span> <span class="str">'{
+  "name": "shop-outbox",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "db", "database.port": "5432", "database.user": "cdc", "database.password": "…",
+    "database.dbname": "shop", "topic.prefix": "shop",
+    "plugin.name": "pgoutput", "publication.autocreate.mode": "filtered",
+    "table.include.list": "public.outbox",
+    "transforms": "outbox", "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+    "transforms.outbox.route.by.field": "aggregate_type"
+  }}'</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Hand-written DB → Kafka poller</td><td>A <code>@Scheduled</code> job polling <code>updated_at &gt; last</code> — misses deletes, races, duplicates.</td><td>Debezium CDC (or the outbox table + Debezium EventRouter).</td></tr>
+    <tr><td>Streams app with <code>application.id</code> reused</td><td>Two different apps with the same id → they join one group and steal each other's partitions.</td><td>Unique id per application; changing it = new group = reprocess from <code>auto.offset.reset</code>.</td></tr>
+    <tr><td>Giant windows with no grace/retention thought</td><td>30-day session windows on a hot topic → RocksDB fills the disk.</td><td>Size state deliberately; set retention on windowed stores.</td></tr>
+    <tr><td>Streams for simple consume-and-save</td><td>Pulling in Kafka Streams to write records into Postgres.</td><td>A plain <code>@KafkaListener</code> (or a JDBC sink connector). Streams is for topic-to-topic processing with state/joins/windows.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your Streams app has 3 instances and the input topic has 4 partitions. One instance dies. What happens to its state?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Its tasks are reassigned; the new owner replays the task's changelog topic into a fresh RocksDB store before processing (restore time ∝ state size). Standby replicas (<code>num.standby.replicas=1</code>) keep a warm copy so failover is near-instant.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Operations — cluster, security, monitoring, troubleshooting</h2>
+<table>
+  <thead><tr><th>Area</th><th>What to know</th></tr></thead>
+  <tbody>
+    <tr><td><b>KRaft</b></td><td>Controller quorum (3 or 5 nodes) holds cluster metadata; brokers may double as controllers in small clusters. ZooKeeper is gone in Kafka 4.</td></tr>
+    <tr><td><b>Sizing</b></td><td>Throughput is disk + network bound. Fast disks (or tiered storage to S3), 10 GbE, 6–12 cores, 32–64 GB RAM (most used by page cache, JVM heap 6 GB is plenty).</td></tr>
+    <tr><td><b>Partition reassignment</b></td><td><code>kafka-reassign-partitions.sh</code> or Cruise Control to rebalance load when adding brokers.</td></tr>
+    <tr><td><b>Tiered storage</b> (3.6+)</td><td>Old segments offloaded to object storage; retention becomes cheap.</td></tr>
+    <tr><td><b>Security</b></td><td>TLS for encryption (<code>security.protocol=SSL</code> or <code>SASL_SSL</code>); SASL for auth (<code>SCRAM-SHA-512</code>, <code>OAUTHBEARER</code>, mTLS); <b>ACLs</b> per principal per topic/group (<code>kafka-acls.sh --add --allow-principal User:shop-api --operation Write --topic orders</code>). Default = everything open.</td></tr>
+    <tr><td><b>Quotas</b></td><td>Per-client byte-rate and request quotas so one app cannot starve the cluster.</td></tr>
+    <tr><td><b>Managed options</b></td><td>Confluent Cloud, Amazon MSK (incl. Serverless), Azure Event Hubs (Kafka API), Redpanda (Kafka-compatible, no JVM), Aiven, WarpStream.</td></tr>
+  </tbody>
+</table>
+<h3>Metrics that matter</h3>
+<table>
+  <thead><tr><th>Metric</th><th>Watch for</th></tr></thead>
+  <tbody>
+    <tr><td>Consumer lag (per group/partition)</td><td>Growing = consumers too slow / down. The alert.</td></tr>
+    <tr><td><code>UnderReplicatedPartitions</code></td><td>&gt; 0 for long = a broker is down or too slow; durability at risk.</td></tr>
+    <tr><td><code>OfflinePartitionsCount</code></td><td>&gt; 0 = partitions with no leader; producers/consumers fail.</td></tr>
+    <tr><td><code>ActiveControllerCount</code></td><td>Must be exactly 1 across the cluster.</td></tr>
+    <tr><td>Request latency (produce/fetch p99)</td><td>Disk or network saturation; GC pauses.</td></tr>
+    <tr><td>Rebalance rate / <code>RebalanceLatency</code></td><td>Frequent rebalances = flapping consumers (poll timeouts, crash loops).</td></tr>
+    <tr><td>Producer <code>record-error-rate</code>, <code>buffer-available-bytes</code></td><td>Sends failing or backing up.</td></tr>
+    <tr><td>Disk usage per log dir</td><td>Retention misconfigured → full disk → broker down.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><code>TimeoutException: Topic orders not present in metadata</code></td><td>Topic missing with auto-create off; wrong bootstrap; ACL denies Describe.</td><td>Create topic; check <code>advertised.listeners</code>; grant ACL.</td></tr>
+    <tr><td>Client connects to <code>localhost:9092</code> then fails on <code>kafka:9092</code> / a container hostname</td><td><code>advertised.listeners</code> tells clients a hostname they cannot reach.</td><td>Set listeners for each network (internal/external) — the #1 Docker/K8s gotcha.</td></tr>
+    <tr><td><code>NotEnoughReplicasException</code></td><td>ISR below <code>min.insync.replicas</code>.</td><td>Bring brokers back; check under-replicated partitions.</td></tr>
+    <tr><td><code>RecordTooLargeException</code></td><td>Record &gt; <code>max.request.size</code> / <code>max.message.bytes</code>.</td><td>Shrink records (reference pattern) or raise limits consistently.</td></tr>
+    <tr><td><code>CommitFailedException</code> / "member kicked out"</td><td>Processing exceeded <code>max.poll.interval.ms</code>.</td><td>Smaller batches, faster handler, longer interval.</td></tr>
+    <tr><td>Consumer reads nothing, no error</td><td>Group already past the data (<code>latest</code>) or committed offsets at the end.</td><td>New group id or reset offsets.</td></tr>
+    <tr><td>Duplicates downstream</td><td>At-least-once + non-idempotent handler; rebalances.</td><td>Idempotent handler; cooperative sticky assignor; static membership.</td></tr>
+    <tr><td>Messages out of order</td><td>Null keys, or key changed, or partitions added, or <code>max.in.flight &gt; 1</code> without idempotence.</td><td>Stable key; idempotent producer.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># quick checks</span>
+kafka-broker-api-versions.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span>                       <span class="cmt"># can I even connect?</span>
+kafka-topics.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--describe</span> <span class="ann">--under-replicated-partitions</span>
+kafka-consumer-groups.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--describe</span> <span class="ann">--all-groups</span>
+kafka-get-offsets.sh <span class="ann">--bootstrap-server</span> b:<span class="num">9092</span> <span class="ann">--topic</span> orders                 <span class="cmt"># log-end offsets per partition</span>
+kafka-console-consumer.sh … <span class="ann">--topic</span> orders <span class="ann">--partition</span> <span class="num">3</span> <span class="ann">--offset</span> <span class="num">1200</span> <span class="ann">--max-messages</span> <span class="num">5</span>   <span class="cmt"># peek at specific records</span>
+kafka-dump-log.sh <span class="ann">--files</span> /var/kafka/orders-0/00000000000000000000.log <span class="ann">--print-data-log</span>   <span class="cmt"># raw segment</span>
+<span class="cmt"># GUIs: Kafka UI (provectus), AKHQ, Redpanda Console, Conduktor</span></pre>
+<div class="tricky">
+  <div class="q">Q. Everything works from inside Docker, but the app on your laptop gets "Connection to node 1 (kafka/172.18.0.3:9092) could not be established". Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The broker's <code>advertised.listeners</code> says <code>kafka:9092</code>. Your laptop cannot resolve <code>kafka</code>. Clients connect to bootstrap, then are <i>redirected</i> to advertised addresses. Configure two listeners (<code>INTERNAL://kafka:29092</code>, <code>EXTERNAL://localhost:9092</code>) and map both.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Patterns, Kafka vs the rest, quick reference</h2>
+<table>
+  <thead><tr><th>Pattern</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td><b>Event notification</b></td><td>Small event ("order 9 placed"); consumers fetch details if needed. Loose coupling, more calls.</td></tr>
+    <tr><td><b>Event-carried state transfer</b></td><td>Event carries the data consumers need. No callbacks; bigger events; consumers keep local copies.</td></tr>
+    <tr><td><b>Event sourcing</b></td><td>The log <i>is</i> the source of truth; state is rebuilt by replay. Retention forever + compaction/snapshots.</td></tr>
+    <tr><td><b>CQRS</b></td><td>Writes go to the DB; events build read models (Elasticsearch, Redis, another table) via consumers.</td></tr>
+    <tr><td><b>Transactional outbox</b></td><td>Event row + business row in one DB transaction; Debezium/poller publishes. Fixes dual-write.</td></tr>
+    <tr><td><b>Saga</b></td><td>Multi-service workflow as a chain of events with compensating actions (choreography) or an orchestrator service.</td></tr>
+    <tr><td><b>Dead-letter topic</b></td><td>Records that fail N times go to <code>&lt;topic&gt;.DLT</code> with error headers; a dashboard + replay tool reads it.</td></tr>
+    <tr><td><b>Retry topics</b></td><td>Non-blocking retries with growing delays (<code>@RetryableTopic</code>).</td></tr>
+    <tr><td><b>Claim check</b></td><td>Big payload to S3; event carries the URL.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Need</th><th>Kafka</th><th>RabbitMQ</th><th>SQS / SNS</th><th>Redis Streams</th></tr></thead>
+  <tbody>
+    <tr><td>Replay / retention</td><td>Yes, core feature</td><td>No (streams plugin partially)</td><td>No (14-day max, consumed = gone)</td><td>Yes, in memory</td></tr>
+    <tr><td>Many independent consumers</td><td>Yes (groups)</td><td>Via exchanges/bindings</td><td>SNS fan-out → SQS</td><td>Yes (groups)</td></tr>
+    <tr><td>Ordering</td><td>Per partition/key</td><td>Per queue, single consumer</td><td>FIFO queues (limited TPS)</td><td>Per stream</td></tr>
+    <tr><td>Throughput</td><td>Millions/s</td><td>Tens of thousands/s</td><td>High, pay per request</td><td>High, RAM-bound</td></tr>
+    <tr><td>Routing flexibility</td><td>By key only; logic in consumers</td><td>Rich (topic/header exchanges, TTL, priorities)</td><td>Filter policies</td><td>None</td></tr>
+    <tr><td>Per-message ack / requeue</td><td>No — offsets; DLT by convention</td><td>Yes, built in</td><td>Yes, visibility timeout, DLQ</td><td>Yes (XACK/XPENDING)</td></tr>
+    <tr><td>Ops weight</td><td>Heavy (or managed)</td><td>Medium</td><td>None</td><td>Light if you have Redis</td></tr>
+    <tr><td>Pick when</td><td>Event streams, high volume, many teams, replay, CDC</td><td>Task queues, complex routing, RPC-style, per-message control</td><td>AWS-native simple queues</td><td>Small-scale queues next to a cache</td></tr>
+  </tbody>
+</table>
+<h3>Config cheat list (production defaults to start from)</h3>
+<table>
+  <thead><tr><th>Where</th><th>Settings</th></tr></thead>
+  <tbody>
+    <tr><td>Topic</td><td>RF 3 · <code>min.insync.replicas=2</code> · partitions 6–24 · <code>retention.ms</code> explicit · <code>unclean.leader.election.enable=false</code></td></tr>
+    <tr><td>Producer</td><td><code>acks=all</code> · <code>enable.idempotence=true</code> · <code>linger.ms=5–20</code> · <code>compression.type=lz4|zstd</code> · <code>delivery.timeout.ms=120000</code> · key chosen for ordering</td></tr>
+    <tr><td>Consumer</td><td><code>enable.auto.commit=false</code> · <code>auto.offset.reset=earliest</code> (usually) · <code>max.poll.records</code> sized to processing time · <code>CooperativeStickyAssignor</code> · <code>group.instance.id</code> on K8s StatefulSets · <code>isolation.level=read_committed</code> if producers use txns</td></tr>
+    <tr><td>Spring</td><td><code>ErrorHandlingDeserializer</code> · <code>DefaultErrorHandler</code> + DLT · <code>concurrency ≤ partitions</code> · <code>observation-enabled=true</code> · trusted packages restricted</td></tr>
+    <tr><td>Alerts</td><td>Consumer lag · under-replicated partitions · offline partitions · disk % · rebalance rate</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) ordering is per partition — choose the key on purpose; 2) partitions set your max parallelism and can only grow; 3) <code>acks=all</code> + idempotent producer + <code>min.insync.replicas=2</code>; 4) at-least-once + idempotent consumers beats chasing exactly-once; 5) outbox for DB + Kafka writes; 6) poison pills and retries need <code>ErrorHandlingDeserializer</code> and a DLT; 7) alert on lag, and never let a slow handler exceed <code>max.poll.interval.ms</code>.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Why not just use a database table as a queue instead of Kafka?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">A table queue works for modest volume (with <code>FOR UPDATE SKIP LOCKED</code>) and has transactions with your data. Kafka wins when you need many independent consumers, replay, very high throughput, long retention, and decoupled teams — and it does not bloat your OLTP database with millions of dead rows. Pick by volume and number of consumers, not fashion.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("kafka-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("kafka-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

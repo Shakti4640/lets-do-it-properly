@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible, Artifact Repos &amp; Networking/TLS — Platform Essentials (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* YAML keys, protocol keywords */
+  pre .typ { color: var(--c-typ); }                    /* modules, hosts, types */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers, ports */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* flags */
+  pre .fn  { color: var(--c-fn); }                     /* commands */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Ansible, Artifact Repos &amp; Networking/TLS — Platform Essentials<span class="sub">Part A: Ansible for VM fleets and bootstrap · Part B: Nexus / Artifactory / GitHub Packages / OCI registries · Part C: DNS, HTTP/1.1-2-3, TLS, mTLS, CORS, proxies vs load balancers vs gateways, CDNs (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Three smaller topics, one sheet. Sections 0–3 Ansible · 4–6 artifact management · 7–11 networking and TLS. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">A0. Ansible — what it is and when you still need it</h2>
+<p><b>Ansible</b> configures machines over SSH: install packages, write config files, start services, deploy a jar — on 1 or 1,000 hosts, in the order you say, with no agent on the target. You describe the <b>desired state</b> in YAML <b>playbooks</b>; each <b>module</b> (<code>apt</code>, <code>copy</code>, <code>systemd</code>…) checks the current state and changes only what differs (<b>idempotent</b>).</p>
+<table>
+  <thead><tr><th>Term</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Control node</b></td><td>Where you run <code>ansible-playbook</code> (laptop, CI runner). Needs Python + SSH. Targets need only SSH + Python.</td></tr>
+    <tr><td><b>Inventory</b></td><td>The list of hosts and groups (<code>webservers</code>, <code>db</code>), static INI/YAML or <b>dynamic</b> (AWS EC2 tags, Kubernetes).</td></tr>
+    <tr><td><b>Playbook</b></td><td>A YAML file: which hosts, which tasks (or roles), in order.</td></tr>
+    <tr><td><b>Task</b></td><td>One module call with arguments. Reports <code>ok</code> (nothing to do), <code>changed</code>, or <code>failed</code>.</td></tr>
+    <tr><td><b>Module</b></td><td>The unit of work: <code>apt</code>, <code>copy</code>, <code>template</code>, <code>systemd</code>, <code>user</code>, <code>git</code>, <code>uri</code>, <code>amazon.aws.ec2_instance</code>… thousands.</td></tr>
+    <tr><td><b>Role</b></td><td>A reusable folder of tasks/handlers/templates/defaults (<code>roles/java_app/</code>). Shared via Ansible Galaxy or a private collection.</td></tr>
+    <tr><td><b>Handler</b></td><td>A task that runs only when notified (restart the service <i>once</i> at the end if any config changed).</td></tr>
+    <tr><td><b>Facts</b></td><td>Auto-gathered host info (<code>ansible_facts.os_family</code>, memory, IPs) usable in templates/conditions.</td></tr>
+    <tr><td><b>Vault</b></td><td>Encrypt secrets inside the repo (<code>ansible-vault</code>); key from CI secret or a secrets manager.</td></tr>
+    <tr><td><b>Collection</b></td><td>Namespaced bundle of modules/roles (<code>community.general</code>, <code>amazon.aws</code>, <code>kubernetes.core</code>).</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Use Ansible for</th><th>Prefer something else for</th></tr></thead>
+  <tbody>
+    <tr><td>Configuring VMs you still have: Jenkins agents, bastions, self-hosted runners, legacy app servers, on-prem boxes.</td><td>Creating cloud infrastructure → Terraform (Ansible <i>can</i>, but state handling is weaker).</td></tr>
+    <tr><td>Bootstrapping: users, SSH hardening, monitoring agents, Docker install, kernel params.</td><td>Deploying containerised apps → Kubernetes/ECS + GitOps.</td></tr>
+    <tr><td>Baking machine images (Packer + Ansible provisioner) so servers are immutable.</td><td>Long-running config drift correction on hundreds of mutable servers → bake images instead; or Puppet/Chef if you truly need continuous enforcement.</td></tr>
+    <tr><td>Orchestrated ad-hoc operations: rolling restarts across a fleet, patching, one-off audits.</td><td>Application config → the app's own config system / secrets manager.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># install and first contact</span>
+<span class="fn">pipx</span> install <span class="ann">--include-deps</span> ansible          <span class="cmt"># or pip; ansible-core + collections</span>
+<span class="fn">ansible</span> <span class="ann">--version</span>
+<span class="fn">ansible</span> all <span class="ann">-i</span> inventory.yml <span class="ann">-m</span> ping             <span class="cmt"># "pong" from every host = SSH + Python OK</span>
+<span class="fn">ansible</span> webservers <span class="ann">-i</span> inventory.yml <span class="ann">-m</span> shell <span class="ann">-a</span> <span class="str">"systemctl is-active shop-api"</span>    <span class="cmt"># ad-hoc command across a group</span>
+<span class="fn">ansible</span> webservers <span class="ann">-m</span> apt <span class="ann">-a</span> <span class="str">"name=jq state=present"</span> <span class="ann">--become</span>                <span class="cmt"># ad-hoc module, with sudo</span></pre>
+<div class="tips"><b>Mental model:</b> a very careful sysadmin with a checklist, SSHing into each box in turn. Before each step they look first ("is jq installed?") and only act if needed, then tick the box. Run the checklist twice and the second run changes nothing — that is idempotence, and it is what makes Ansible safe to re-run.</div>
+<div class="tricky">
+  <div class="q">Q. If Terraform can run <code>remote-exec</code> provisioners, why use Ansible at all?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Terraform's job ends when the machine exists; provisioners are one-shot, not idempotent, and fail Terraform on error. Ansible models the <i>inside</i> of the machine as desired state you can re-apply any time. Typical split: Terraform creates the EC2 instance from an AMI that Packer+Ansible baked; Ansible (or cloud-init) does only last-mile config.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">A1. Inventory, playbooks, modules, variables</h2>
+<pre><span class="cmt"># inventory/prod.yml</span>
+<span class="kw">all</span>:
+  <span class="kw">vars</span>:
+    <span class="kw">ansible_user</span>: deploy
+    <span class="kw">ansible_ssh_private_key_file</span>: ~/.ssh/shop-prod
+    <span class="kw">ansible_python_interpreter</span>: /usr/bin/python3
+  <span class="kw">children</span>:
+    <span class="kw">webservers</span>:
+      <span class="kw">hosts</span>:
+        <span class="kw">api-1</span>: { <span class="kw">ansible_host</span>: <span class="str">10.0.1.11</span> }
+        <span class="kw">api-2</span>: { <span class="kw">ansible_host</span>: <span class="str">10.0.1.12</span> }
+      <span class="kw">vars</span>: { <span class="kw">app_port</span>: <span class="num">8080</span>, <span class="kw">java_heap_pct</span>: <span class="num">70</span> }
+    <span class="kw">bastion</span>:
+      <span class="kw">hosts</span>: { <span class="kw">bastion-1</span>: { <span class="kw">ansible_host</span>: <span class="str">3.7.1.5</span> } }
+
+<span class="cmt"># dynamic inventory from AWS tags instead (inventory/aws_ec2.yml)</span>
+<span class="kw">plugin</span>: amazon.aws.aws_ec2
+<span class="kw">regions</span>: [ap-south-1]
+<span class="kw">filters</span>: { <span class="str">tag:Project</span>: shop, <span class="str">instance-state-name</span>: running }
+<span class="kw">keyed_groups</span>: [{ <span class="kw">key</span>: tags.Role, <span class="kw">prefix</span>: role }]      <span class="cmt"># → groups role_webserver, role_bastion</span>
+<span class="kw">compose</span>: { <span class="kw">ansible_host</span>: private_ip_address }
+
+<span class="cmt"># site.yml — a playbook</span>
+- <span class="kw">name</span>: Configure API servers
+  <span class="kw">hosts</span>: webservers
+  <span class="kw">become</span>: <span class="kw">true</span>                                   <span class="cmt"># sudo</span>
+  <span class="kw">serial</span>: <span class="str">"50%"</span>                                   <span class="cmt"># rolling: half the hosts at a time</span>
+  <span class="kw">max_fail_percentage</span>: <span class="num">0</span>                          <span class="cmt"># stop everything on the first failure</span>
+  <span class="kw">vars_files</span>: [vars/common.yml, vars/secrets.yml]  <span class="cmt"># secrets.yml is vault-encrypted</span>
+  <span class="kw">pre_tasks</span>:
+    - <span class="kw">name</span>: Drain from the load balancer
+      <span class="kw">delegate_to</span>: localhost
+      <span class="kw">amazon.aws.elb_target</span>: { <span class="kw">target_group_arn</span>: <span class="str">"{{ tg_arn }}"</span>, <span class="kw">target_id</span>: <span class="str">"{{ ec2_instance_id }}"</span>, <span class="kw">state</span>: absent, <span class="kw">deregister_unused</span>: <span class="kw">true</span> }
+  <span class="kw">roles</span>:
+    - common                                       <span class="cmt"># users, sshd hardening, chrony, node_exporter</span>
+    - java_app                                     <span class="cmt"># the service itself</span>
+  <span class="kw">post_tasks</span>:
+    - <span class="kw">name</span>: Wait for health
+      <span class="kw">ansible.builtin.uri</span>: { <span class="kw">url</span>: <span class="str">"http://localhost:{{ app_port }}/actuator/health"</span>, <span class="kw">status_code</span>: <span class="num">200</span> }
+      <span class="kw">register</span>: health
+      <span class="kw">retries</span>: <span class="num">30</span>
+      <span class="kw">delay</span>: <span class="num">2</span>
+      <span class="kw">until</span>: health.status == <span class="num">200</span>
+    - <span class="kw">name</span>: Re-register in the load balancer
+      <span class="kw">delegate_to</span>: localhost
+      <span class="kw">amazon.aws.elb_target</span>: { <span class="kw">target_group_arn</span>: <span class="str">"{{ tg_arn }}"</span>, <span class="kw">target_id</span>: <span class="str">"{{ ec2_instance_id }}"</span>, <span class="kw">state</span>: present }</pre>
+<table>
+  <thead><tr><th>Module (always use the FQCN)</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>ansible.builtin.apt</code> / <code>dnf</code> / <code>package</code></td><td>Install/remove packages; <code>update_cache</code>, <code>state: present|latest|absent</code>.</td></tr>
+    <tr><td><code>ansible.builtin.copy</code> / <code>template</code></td><td>Put a file / render a Jinja2 template (<code>app.env.j2</code>) with mode/owner; <code>validate</code> option (e.g. <code>nginx -t -c %s</code>).</td></tr>
+    <tr><td><code>ansible.builtin.file</code></td><td>Directories, permissions, symlinks (<code>state: link</code>).</td></tr>
+    <tr><td><code>ansible.builtin.systemd_service</code></td><td><code>enabled</code>, <code>state: started|restarted</code>, <code>daemon_reload: true</code>.</td></tr>
+    <tr><td><code>ansible.builtin.user</code> / <code>group</code> / <code>authorized_key</code></td><td>Accounts and SSH keys.</td></tr>
+    <tr><td><code>ansible.builtin.get_url</code> / <code>unarchive</code></td><td>Download (with <code>checksum: sha256:…</code>) / extract.</td></tr>
+    <tr><td><code>ansible.builtin.lineinfile</code> / <code>blockinfile</code></td><td>Edit one line/block in a file you don't fully own (<code>sshd_config</code>). Prefer <code>template</code> for files you own.</td></tr>
+    <tr><td><code>ansible.builtin.command</code> / <code>shell</code></td><td>Run a command (not idempotent by itself — add <code>creates:</code>/<code>changed_when:</code>). <code>shell</code> gives pipes/redirects.</td></tr>
+    <tr><td><code>ansible.builtin.uri</code></td><td>HTTP calls: health checks, webhooks.</td></tr>
+    <tr><td><code>ansible.builtin.stat</code> / <code>assert</code> / <code>debug</code> / <code>set_fact</code> / <code>wait_for</code></td><td>Inspect, guard, print, compute, wait for a port.</td></tr>
+    <tr><td><code>community.docker.docker_container</code>, <code>kubernetes.core.k8s</code>, <code>amazon.aws.*</code></td><td>Containers, K8s objects, AWS resources when you must.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Variable precedence (low → high, the ones that matter)</th></tr></thead>
+  <tbody>
+    <tr><td>role <code>defaults/main.yml</code> → inventory group_vars (<code>all</code>, then specific groups) → inventory host_vars → play <code>vars</code> / <code>vars_files</code> → role <code>vars/main.yml</code> → <code>set_fact</code>/registered → <code>-e extra_vars</code> (always wins)</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># run it</span>
+<span class="fn">ansible-playbook</span> <span class="ann">-i</span> inventory/prod.yml site.yml <span class="ann">--check</span> <span class="ann">--diff</span>        <span class="cmt"># dry run: what WOULD change, with file diffs</span>
+<span class="fn">ansible-playbook</span> <span class="ann">-i</span> inventory/prod.yml site.yml <span class="ann">--limit</span> api-1         <span class="cmt"># one host first</span>
+<span class="fn">ansible-playbook</span> <span class="ann">-i</span> inventory/prod.yml site.yml <span class="ann">--tags</span> config <span class="ann">-e</span> <span class="str">"app_version=1.4.0"</span> <span class="ann">--ask-vault-pass</span>
+<span class="fn">ansible-playbook</span> … <span class="ann">-vvv</span>                                            <span class="cmt"># see module args and SSH details</span>
+<span class="fn">ansible-inventory</span> <span class="ann">-i</span> inventory/aws_ec2.yml <span class="ann">--graph</span>                  <span class="cmt"># what the dynamic inventory resolved to</span>
+<span class="fn">ansible-lint</span> site.yml  ·  <span class="fn">ansible-playbook</span> <span class="ann">--syntax-check</span> site.yml</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>shell</code> everywhere</td><td><code>shell: apt-get install -y jq</code> — reports <code>changed</code> every run; no idempotence; no dry-run.</td><td>The <code>apt</code> module. Use <code>command</code>/<code>shell</code> only when no module exists, with <code>creates:</code> or <code>changed_when:</code>.</td></tr>
+    <tr><td>Short module names</td><td><code>apt:</code> — ambiguous once collections are involved; linters complain.</td><td>FQCN: <code>ansible.builtin.apt</code>.</td></tr>
+    <tr><td>Everything in one playbook</td><td>600-line <code>site.yml</code>.</td><td>Roles per concern; playbooks compose roles.</td></tr>
+    <tr><td>Secrets in group_vars</td><td>DB password in plain YAML in git.</td><td><code>ansible-vault</code> encrypted files or <code>lookup('amazon.aws.aws_secret', …)</code> at run time.</td></tr>
+    <tr><td>No <code>--check</code> before prod</td><td>Run it and see.</td><td><code>--check --diff --limit one-host</code>, then <code>serial</code> rollout.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A playbook reports <code>changed=12</code> on every run even though nothing is different. What does that tell you?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Twelve tasks are not idempotent — usually <code>command</code>/<code>shell</code> without <code>creates:</code>/<code>changed_when:</code>, or templates with timestamps/random values. It matters: handlers fire needlessly (restarts!), and you can no longer tell real drift from noise. Target <code>changed=0</code> on a second run.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">A2. Roles, templates, handlers — deploying a Java service</h2>
+<pre><span class="cmt"># roles/java_app/</span>
+├── defaults/main.yml      <span class="cmt"># app_name: shop-api, app_user: shop, app_port: 8080, java_heap_pct: 75, app_version: (required)</span>
+├── tasks/main.yml
+├── handlers/main.yml
+├── templates/
+│   ├── shop-api.service.j2
+│   └── app.env.j2
+├── files/                 <span class="cmt"># static files</span>
+├── meta/main.yml          <span class="cmt"># dependencies: [common, java_runtime]</span>
+└── molecule/              <span class="cmt"># role tests (Docker/Podman scenario)</span>
+
+<span class="cmt"># roles/java_app/tasks/main.yml</span>
+- <span class="kw">name</span>: Service user
+  <span class="kw">ansible.builtin.user</span>: { <span class="kw">name</span>: <span class="str">"{{ app_user }}"</span>, <span class="kw">system</span>: <span class="kw">true</span>, <span class="kw">shell</span>: /usr/sbin/nologin, <span class="kw">home</span>: <span class="str">"/opt/{{ app_name }}"</span>, <span class="kw">create_home</span>: <span class="kw">true</span> }
+
+- <span class="kw">name</span>: Release directory
+  <span class="kw">ansible.builtin.file</span>: { <span class="kw">path</span>: <span class="str">"/opt/{{ app_name }}/releases/{{ app_version }}"</span>, <span class="kw">state</span>: directory, <span class="kw">owner</span>: <span class="str">"{{ app_user }}"</span>, <span class="kw">mode</span>: <span class="str">"0750"</span> }
+
+- <span class="kw">name</span>: Download the jar (verified)
+  <span class="kw">ansible.builtin.get_url</span>:
+    <span class="kw">url</span>: <span class="str">"https://nexus.shop.example/repository/maven-releases/com/shop/{{ app_name }}/{{ app_version }}/{{ app_name }}-{{ app_version }}.jar"</span>
+    <span class="kw">dest</span>: <span class="str">"/opt/{{ app_name }}/releases/{{ app_version }}/app.jar"</span>
+    <span class="kw">checksum</span>: <span class="str">"sha256:{{ app_sha256 }}"</span>
+    <span class="kw">url_username</span>: <span class="str">"{{ nexus_user }}"</span>
+    <span class="kw">url_password</span>: <span class="str">"{{ nexus_password }}"</span>
+    <span class="kw">owner</span>: <span class="str">"{{ app_user }}"</span>
+    <span class="kw">mode</span>: <span class="str">"0640"</span>
+  <span class="kw">no_log</span>: <span class="kw">true</span>                                      <span class="cmt"># don't print credentials</span>
+
+- <span class="kw">name</span>: Environment file
+  <span class="kw">ansible.builtin.template</span>: { <span class="kw">src</span>: app.env.j2, <span class="kw">dest</span>: <span class="str">"/etc/{{ app_name }}/app.env"</span>, <span class="kw">owner</span>: root, <span class="kw">group</span>: <span class="str">"{{ app_user }}"</span>, <span class="kw">mode</span>: <span class="str">"0640"</span> }
+  <span class="kw">notify</span>: restart app
+
+- <span class="kw">name</span>: systemd unit
+  <span class="kw">ansible.builtin.template</span>: { <span class="kw">src</span>: shop-api.service.j2, <span class="kw">dest</span>: <span class="str">"/etc/systemd/system/{{ app_name }}.service"</span>, <span class="kw">mode</span>: <span class="str">"0644"</span> }
+  <span class="kw">notify</span>: [reload systemd, restart app]
+
+- <span class="kw">name</span>: Point current at the new release
+  <span class="kw">ansible.builtin.file</span>: { <span class="kw">src</span>: <span class="str">"/opt/{{ app_name }}/releases/{{ app_version }}"</span>, <span class="kw">dest</span>: <span class="str">"/opt/{{ app_name }}/current"</span>, <span class="kw">state</span>: link, <span class="kw">force</span>: <span class="kw">true</span> }
+  <span class="kw">notify</span>: restart app
+
+- <span class="kw">name</span>: Keep the last 3 releases
+  <span class="kw">ansible.builtin.shell</span>: <span class="str">ls -1dt /opt/{{ app_name }}/releases/* | tail -n +4 | xargs -r rm -rf</span>
+  <span class="kw">changed_when</span>: <span class="kw">false</span>
+
+- <span class="kw">name</span>: Enabled and running
+  <span class="kw">ansible.builtin.systemd_service</span>: { <span class="kw">name</span>: <span class="str">"{{ app_name }}"</span>, <span class="kw">enabled</span>: <span class="kw">true</span>, <span class="kw">state</span>: started }
+
+<span class="cmt"># roles/java_app/handlers/main.yml  — run once at the end of the play, only if notified</span>
+- <span class="kw">name</span>: reload systemd
+  <span class="kw">ansible.builtin.systemd_service</span>: { <span class="kw">daemon_reload</span>: <span class="kw">true</span> }
+- <span class="kw">name</span>: restart app
+  <span class="kw">ansible.builtin.systemd_service</span>: { <span class="kw">name</span>: <span class="str">"{{ app_name }}"</span>, <span class="kw">state</span>: restarted }
+
+<span class="cmt"># roles/java_app/templates/app.env.j2</span>
+SPRING_PROFILES_ACTIVE={{ env_name }}
+SERVER_PORT={{ app_port }}
+JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage={{ java_heap_pct }} -XX:+ExitOnOutOfMemoryError -Duser.timezone=UTC
+DB_URL=jdbc:postgresql://{{ db_host }}:5432/{{ db_name }}
+{% if feature_flags is defined %}
+{% for k, v in feature_flags.items() %}
+FEATURE_{{ k | upper }}={{ v | lower }}
+{% endfor %}
+{% endif %}
+<span class="cmt"># {{ ansible_managed }} — edits will be overwritten</span></pre>
+<table>
+  <thead><tr><th>Idea</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Handlers for restarts</td><td>Three changed files → one restart, at the end, only when needed. <code>meta: flush_handlers</code> to force earlier.</td></tr>
+    <tr><td>Release dirs + <code>current</code> symlink</td><td>Rollback = point the link back and restart.</td></tr>
+    <tr><td><code>serial</code> + drain/health/re-register</td><td>Rolling deploy across a fleet with zero downtime.</td></tr>
+    <tr><td><code>get_url checksum</code></td><td>Verify what you download; fail on mismatch.</td></tr>
+    <tr><td><code>no_log: true</code> on secret tasks</td><td>Ansible prints module args in <code>-v</code>; hide them.</td></tr>
+    <tr><td>Molecule tests</td><td>Spin a container, apply the role, run idempotence check (second run → <code>changed=0</code>) and verify tasks. In CI.</td></tr>
+    <tr><td><code>ansible-lint</code></td><td>FQCN, naming, risky <code>shell</code>, missing <code>mode</code>, deprecated syntax.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># vault</span>
+<span class="fn">ansible-vault</span> create vars/secrets.yml                 <span class="cmt"># encrypted file in git</span>
+<span class="fn">ansible-vault</span> encrypt_string <span class="str">'s3cr3t'</span> <span class="ann">--name</span> db_password   <span class="cmt"># inline encrypted value for group_vars</span>
+<span class="fn">ansible-playbook</span> site.yml <span class="ann">--vault-password-file</span> &lt;(echo <span class="str">"$ANSIBLE_VAULT_PASSWORD"</span>)   <span class="cmt"># CI: password from the secret store</span>
+<span class="cmt"># or skip vault: db_password: "{{ lookup('amazon.aws.aws_secret', 'shop/prod/db', region='ap-south-1') | from_json | json_query('password') }}"</span>
+
+<span class="cmt"># Packer + Ansible: bake an AMI so servers are immutable</span>
+<span class="kw">build</span> {
+  <span class="kw">sources</span> = [<span class="str">"source.amazon-ebs.al2023"</span>]
+  <span class="kw">provisioner</span> <span class="str">"ansible"</span> { <span class="kw">playbook_file</span> = <span class="str">"ansible/image.yml"</span>; <span class="kw">extra_arguments</span> = [<span class="str">"-e"</span>, <span class="str">"app_version=${var.app_version}"</span>] }
+}
+<span class="cmt"># then Terraform launches the AMI; cloud-init sets only instance-specific values</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Restart in every task</td><td><code>systemd: state=restarted</code> after each file → three restarts per run.</td><td>Handlers; one restart at the end if anything changed.</td></tr>
+    <tr><td>Mutable snowflakes</td><td>Ansible run monthly against servers people also hand-edit; drift everywhere.</td><td>Bake images (Packer), replace servers; or run Ansible on a schedule with <code>--check</code> alerts on drift.</td></tr>
+    <tr><td>Deploying jars with Ansible when you have Kubernetes</td><td>Two deployment systems.</td><td>Ansible for the hosts, GitOps for the apps. Ansible deploys apps only on plain-VM estates.</td></tr>
+    <tr><td>Running as root user over SSH</td><td><code>ansible_user: root</code>.</td><td>Named user + <code>become</code>; sshd <code>PermitRootLogin no</code>.</td></tr>
+    <tr><td>No tests for roles</td><td>Role breaks on Ubuntu 24 and you find out in prod.</td><td>Molecule with the OS images you run; idempotence check.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your <code>serial: "50%"</code> rolling deploy fails on host 3 of 4. What state is the fleet in, and what does <code>max_fail_percentage: 0</code> do?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Hosts 1–2 (first batch) have the new version and are back in the LB; host 3 failed mid-batch, host 4 may be partially done or untouched; the play stops. With <code>max_fail_percentage: 0</code> the play aborts at the first failure instead of marching on to the next batch — half the fleet still serves the old version, which is exactly what you want. Fix host 3, re-run with <code>--limit</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">A3. Ansible in CI, at scale, and quick reference</h2>
+<table>
+  <thead><tr><th>Practice</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Run from CI, not laptops</td><td>GitHub Actions job with the SSH key / vault password from secrets (or OIDC → SSM Session Manager connection plugin: no open SSH port at all). Plan = <code>--check --diff</code> on PR; apply on merge.</td></tr>
+    <tr><td>Pin collections</td><td><code>requirements.yml</code> with versions; <code>ansible-galaxy collection install -r requirements.yml</code>; lockfile via <code>ansible-galaxy … --requirements-file</code> + committed versions.</td></tr>
+    <tr><td>Speed</td><td><code>ansible.cfg</code>: <code>forks = 50</code>, <code>pipelining = True</code>, <code>strategy = free</code> (hosts don't wait for each other), fact caching (<code>fact_caching = jsonfile</code>), <code>gather_facts: false</code> where not needed.</td></tr>
+    <tr><td>Mitogen / <code>ssh</code> ControlPersist</td><td>Connection reuse; big wins on large inventories.</td></tr>
+    <tr><td>AWX / Ansible Automation Platform / Semaphore</td><td>UI, RBAC, schedules, job history, credentials store — when many people run playbooks.</td></tr>
+    <tr><td>Execution environments</td><td>Containerised Ansible + collections (<code>ansible-builder</code>) so CI and laptops run identical tooling.</td></tr>
+    <tr><td>Check mode in a cron</td><td>Nightly <code>--check</code>; alert if <code>changed &gt; 0</code> → drift detection for VM fleets.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># ansible.cfg (repo root)</span>
+[defaults]
+inventory = inventory/prod.yml
+roles_path = roles
+collections_path = collections
+forks = 50
+host_key_checking = True            <span class="cmt"># keep it on; manage known_hosts (or use SSM)</span>
+retry_files_enabled = False
+stdout_callback = yaml
+gathering = smart
+fact_caching = jsonfile
+fact_caching_connection = .facts
+fact_caching_timeout = 3600
+[ssh_connection]
+pipelining = True
+ssh_args = -o ControlMaster=auto -o ControlPersist=60s
+
+<span class="cmt"># GitHub Actions</span>
+- <span class="kw">uses</span>: aws-actions/configure-aws-credentials@v4
+  <span class="kw">with</span>: { <span class="kw">role-to-assume</span>: <span class="str">arn:aws:iam::…:role/ansible</span>, <span class="kw">aws-region</span>: ap-south-1 }
+- <span class="kw">run</span>: pipx install --include-deps ansible &amp;&amp; ansible-galaxy collection install -r requirements.yml
+- <span class="kw">run</span>: ansible-lint
+- <span class="kw">run</span>: ansible-playbook site.yml --check --diff          <span class="cmt"># PR</span>
+  <span class="kw">env</span>: { <span class="kw">ANSIBLE_VAULT_PASSWORD_FILE</span>: ./vault-pass.sh }   <span class="cmt"># script echoing $VAULT_PASS</span>
+<span class="cmt"># connection via SSM (no SSH keys, no port 22): ansible_connection: community.aws.aws_ssm, ansible_aws_ssm_bucket_name: shop-ssm-transfer</span></pre>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Reachability</td><td><code>ansible all -m ping</code></td></tr>
+    <tr><td>Dry run with diffs</td><td><code>ansible-playbook site.yml --check --diff</code></td></tr>
+    <tr><td>One host / group / tag</td><td><code>--limit api-1</code> · <code>--limit webservers</code> · <code>--tags config</code> · <code>--skip-tags slow</code></td></tr>
+    <tr><td>Start mid-way</td><td><code>--start-at-task "Environment file"</code> · <code>--step</code> (confirm each task)</td></tr>
+    <tr><td>Variables</td><td><code>-e app_version=1.4.0</code> · <code>-e @vars/override.yml</code></td></tr>
+    <tr><td>See a host's facts</td><td><code>ansible api-1 -m setup</code> · <code>-a 'filter=ansible_memtotal_mb'</code></td></tr>
+    <tr><td>Debug a variable</td><td><code>ansible api-1 -m debug -a 'var=hostvars[inventory_hostname]'</code></td></tr>
+    <tr><td>Module docs</td><td><code>ansible-doc ansible.builtin.template</code> · <code>ansible-doc -l | grep aws</code></td></tr>
+    <tr><td>Vault</td><td><code>ansible-vault edit vars/secrets.yml</code> · <code>view</code> · <code>rekey</code></td></tr>
+    <tr><td>Lint / syntax / tests</td><td><code>ansible-lint</code> · <code>ansible-playbook --syntax-check</code> · <code>molecule test</code></td></tr>
+    <tr><td>Install deps</td><td><code>ansible-galaxy collection install -r requirements.yml</code> · <code>ansible-galaxy role install -r requirements.yml</code></td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Ansible in one line:</b> idempotent modules over SSH, roles for structure, handlers for restarts, vault for secrets, <code>--check --diff</code> before every real run, <code>serial</code> for rolling changes — and the moment you have containers, let Ansible manage the hosts and GitOps manage the apps.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Ansible or Terraform?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Different layers. Terraform declares <i>what exists</i> (VPC, instances, databases) and tracks it in state. Ansible declares <i>what is inside a machine</i> (packages, files, services) and needs no state because it inspects the host each run. Most shops use Terraform for infra, Packer+Ansible to bake images, and Ansible ad-hoc for fleet operations — or skip Ansible entirely once everything is a container.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">B4. Artifact repositories — why you run one and what goes in it</h2>
+<p>An <b>artifact repository</b> (Nexus, Artifactory, GitHub Packages, AWS CodeArtifact/ECR, GitLab Package Registry, Harbor) stores the <i>outputs</i> of builds — jars, Docker images, npm packages, Helm charts — and <b>proxies</b> the public repositories your builds pull from. It is the one place between the internet and your pipeline.</p>
+<table>
+  <thead><tr><th>Repository type</th><th>Holds</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><b>Proxy / remote</b></td><td>A cache of an upstream (Maven Central, Docker Hub, npmjs, PyPI). First request fetches and stores; later requests are local.</td><td><code>maven-central-proxy</code>, <code>dockerhub-proxy</code></td></tr>
+    <tr><td><b>Hosted / local — releases</b></td><td>Your own immutable versions. Redeploy of an existing version is <b>rejected</b>.</td><td><code>maven-releases</code> (com.shop:common:1.4.0)</td></tr>
+    <tr><td><b>Hosted / local — snapshots</b></td><td>Your own moving versions; many timestamped uploads per <code>-SNAPSHOT</code>; cleaned by retention.</td><td><code>maven-snapshots</code> (common:1.5.0-SNAPSHOT)</td></tr>
+    <tr><td><b>Group / virtual</b></td><td>One URL that searches several repos in order (releases → snapshots → central proxy).</td><td><code>maven-public</code> — the only URL builds know</td></tr>
+    <tr><td><b>OCI / Docker registry</b></td><td>Images and anything OCI (Helm charts, cosign signatures, SBOM attestations).</td><td>ECR, GHCR, Harbor, Nexus docker-hosted</td></tr>
+    <tr><td><b>Raw / generic</b></td><td>Zips, installers, binaries, Terraform modules.</td><td><code>raw-tools</code></td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Why</th><th>What it gives you</th></tr></thead>
+  <tbody>
+    <tr><td><b>Speed and reliability</b></td><td>Builds don't depend on Maven Central being up or fast; dependencies cached once for the whole company; Docker Hub rate limits disappear.</td></tr>
+    <tr><td><b>Control</b></td><td>Block or quarantine packages (CVE policy, licence policy, typosquats) at the proxy; everything the company uses is in one inventory.</td></tr>
+    <tr><td><b>Sharing</b></td><td>Team A publishes <code>common-money:2.1.0</code>; team B depends on it like any library.</td></tr>
+    <tr><td><b>Immutability</b></td><td>Release repos refuse re-uploads: <code>1.4.0</code> is the same bytes forever.</td></tr>
+    <tr><td><b>Provenance</b></td><td>Build info / metadata, signatures and SBOMs attached to artifacts; who uploaded what, when.</td></tr>
+    <tr><td><b>Air gaps / compliance</b></td><td>Only the proxy talks to the internet; audit of everything that came in.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># the flow</span>
+developer / CI  ──build──▶  jar  ──mvn deploy──▶  Nexus maven-releases (hosted)
+                 ◀──resolve────────────────────  Nexus maven-public (group) ──miss──▶ maven-central-proxy ──▶ Maven Central
+CI  ──docker push──▶  ECR / GHCR / Harbor (OCI)  ◀──pull──  Kubernetes nodes
+Harbor/ECR pull-through cache  ──miss──▶  Docker Hub (no rate limits for you)</pre>
+<div class="tips"><b>Mental model:</b> a warehouse with a receiving dock. Everything from outside comes through the dock (proxy) where it is inspected and shelved; everything you make is shelved with a label that never changes (release) or a "latest draft" label (snapshot). Builds shop only inside the warehouse.</div>
+<div class="tricky">
+  <div class="q">Q. If GitHub Packages / ECR are free with your plan, why would anyone run Nexus or Artifactory?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Proxying and policy. GHCR/ECR store <i>your</i> artifacts; they don't cache Maven Central or Docker Hub for your builds, don't quarantine vulnerable packages at the door, and don't give one virtual URL across formats. Many shops combine: ECR for images, CodeArtifact or Nexus for Maven with Central proxying.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">B5. Maven repositories in practice — snapshots vs releases, proxying, publishing</h2>
+<pre><span class="cmt">&lt;!-- ~/.m2/settings.xml  (or CI's settings file) — ALL resolution via the group repo --&gt;</span>
+<span class="kw">&lt;settings&gt;</span>
+  <span class="kw">&lt;mirrors&gt;&lt;mirror&gt;</span>
+    <span class="kw">&lt;id&gt;</span>shop-nexus<span class="kw">&lt;/id&gt;&lt;mirrorOf&gt;</span>*<span class="kw">&lt;/mirrorOf&gt;</span>                              <span class="cmt">&lt;!-- * = also plugin repos; external:* to keep file:// repos --&gt;</span>
+    <span class="kw">&lt;url&gt;</span>https://nexus.shop.example/repository/maven-public/<span class="kw">&lt;/url&gt;</span>
+  <span class="kw">&lt;/mirror&gt;&lt;/mirrors&gt;</span>
+  <span class="kw">&lt;servers&gt;</span>
+    <span class="kw">&lt;server&gt;&lt;id&gt;</span>shop-nexus<span class="kw">&lt;/id&gt;&lt;username&gt;</span>${env.NEXUS_USER}<span class="kw">&lt;/username&gt;&lt;password&gt;</span>${env.NEXUS_TOKEN}<span class="kw">&lt;/password&gt;&lt;/server&gt;</span>
+    <span class="kw">&lt;server&gt;&lt;id&gt;</span>shop-releases<span class="kw">&lt;/id&gt;&lt;username&gt;</span>${env.NEXUS_USER}<span class="kw">&lt;/username&gt;&lt;password&gt;</span>${env.NEXUS_TOKEN}<span class="kw">&lt;/password&gt;&lt;/server&gt;</span>
+    <span class="kw">&lt;server&gt;&lt;id&gt;</span>shop-snapshots<span class="kw">&lt;/id&gt;&lt;username&gt;</span>${env.NEXUS_USER}<span class="kw">&lt;/username&gt;&lt;password&gt;</span>${env.NEXUS_TOKEN}<span class="kw">&lt;/password&gt;&lt;/server&gt;</span>
+  <span class="kw">&lt;/servers&gt;</span>
+<span class="kw">&lt;/settings&gt;</span>
+
+<span class="cmt">&lt;!-- pom.xml — where `mvn deploy` sends things (ids match &lt;server&gt;) --&gt;</span>
+<span class="kw">&lt;distributionManagement&gt;</span>
+  <span class="kw">&lt;repository&gt;&lt;id&gt;</span>shop-releases<span class="kw">&lt;/id&gt;&lt;url&gt;</span>https://nexus.shop.example/repository/maven-releases/<span class="kw">&lt;/url&gt;&lt;/repository&gt;</span>
+  <span class="kw">&lt;snapshotRepository&gt;&lt;id&gt;</span>shop-snapshots<span class="kw">&lt;/id&gt;&lt;url&gt;</span>https://nexus.shop.example/repository/maven-snapshots/<span class="kw">&lt;/url&gt;&lt;/snapshotRepository&gt;</span>
+<span class="kw">&lt;/distributionManagement&gt;</span>
+<span class="cmt">&lt;!-- Maven picks releases vs snapshots by the version suffix automatically --&gt;</span>
+
+<span class="cmt"># Gradle (settings.gradle.kts)</span>
+<span class="kw">dependencyResolutionManagement</span> {
+    <span class="fn">repositoriesMode</span>.set(<span class="typ">RepositoriesMode</span>.FAIL_ON_PROJECT_REPOS)        <span class="cmt">// modules can't add their own repos</span>
+    <span class="fn">repositories</span> { <span class="fn">maven</span> { url = uri(<span class="str">"https://nexus.shop.example/repository/maven-public/"</span>); credentials(<span class="typ">PasswordCredentials</span>::class) } }
+}
+<span class="cmt"># publish:  ./mvnw -B deploy -DskipTests   ·   ./gradlew publish</span>
+<span class="cmt"># GitHub Packages: url https://maven.pkg.github.com/shop/common, user = github actor, password = GITHUB_TOKEN (packages: write)</span>
+<span class="cmt"># AWS CodeArtifact: aws codeartifact get-authorization-token … → 12-hour token as the password; upstream = Maven Central</span></pre>
+<table>
+  <thead><tr><th>Snapshots vs releases</th><th>Snapshot (<code>1.5.0-SNAPSHOT</code>)</th><th>Release (<code>1.5.0</code>)</th></tr></thead>
+  <tbody>
+    <tr><td>Mutable?</td><td>Yes — each deploy adds <code>1.5.0-20261025.103107-14</code>; <code>maven-metadata.xml</code> points at the latest.</td><td>No — repo policy rejects redeploy ("Repository does not allow updating assets").</td></tr>
+    <tr><td>Consumer behaviour</td><td>Re-checks upstream once a day by default (<code>updatePolicy</code>); <code>mvn -U</code> forces.</td><td>Downloaded once, cached forever.</td></tr>
+    <tr><td>Use</td><td>Sharing work in progress between modules/teams on dev branches.</td><td>Anything another team or environment depends on; anything in a release.</td></tr>
+    <tr><td>Retention</td><td>Cleanup policy: keep last N / last 30 days.</td><td>Keep (or archive very old majors).</td></tr>
+    <tr><td>Enforce</td><td>Enforcer <code>requireReleaseDeps</code> on release builds so no snapshot leaks into a release.</td><td>—</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Repository manager features to turn on</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Group/virtual repo as the single URL</td><td>Builds never hard-code individual repos; you can re-wire upstreams behind it.</td></tr>
+    <tr><td>Release repo: "disable redeploy"</td><td>Immutability.</td></tr>
+    <tr><td>Cleanup policies</td><td>Snapshots &gt; 30 days, images untagged &gt; 7 days, proxy cache unused &gt; 90 days — disks fill fast.</td></tr>
+    <tr><td>Checksum verification + signature checks on proxies</td><td>What arrives is what Central published.</td></tr>
+    <tr><td>Firewall / Xray / policy</td><td>Block downloads of components with critical CVEs or banned licences; quarantine new versions for N days.</td></tr>
+    <tr><td>Per-team write privileges</td><td>Team A can't overwrite team B's artifacts; CI tokens scoped to a repo.</td></tr>
+    <tr><td>Namespace / routing rules</td><td>Your <code>com.shop.*</code> never resolves from the public proxy (dependency confusion defence).</td></tr>
+    <tr><td>Backups + HA</td><td>The repo is on the critical path of every build and deploy.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Direct to Central</td><td>Every CI job downloads from repo1.maven.org; outage or throttling = no builds.</td><td>Mirror <code>*</code> to the group repo; CI never touches the internet.</td></tr>
+    <tr><td>Snapshot in a release</td><td><code>1.4.0</code> depends on <code>common:1.5.0-SNAPSHOT</code>; rebuilding next month gives different bytes.</td><td>Enforcer <code>requireReleaseDeps</code>; release <code>common</code> first.</td></tr>
+    <tr><td>Re-deploying a release "to fix it"</td><td>Repo allows redeploy; two people have different <code>1.4.0</code>s.</td><td>Immutable release repo; cut <code>1.4.1</code>.</td></tr>
+    <tr><td>Repo URLs in every pom</td><td><code>&lt;repositories&gt;</code> blocks pointing at five different servers.</td><td>One mirror in settings; <code>FAIL_ON_PROJECT_REPOS</code> in Gradle.</td></tr>
+    <tr><td>Credentials in pom / build.gradle</td><td>Committed Nexus password.</td><td><code>settings.xml</code> / <code>gradle.properties</code> outside the repo; CI tokens from secrets.</td></tr>
+    <tr><td>No cleanup</td><td>2 TB of snapshots and untagged images.</td><td>Cleanup policies from day one.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A teammate deployed <code>common:1.5.0-SNAPSHOT</code> an hour ago with a fix; your build still uses the old one. Why, and how do you get it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Maven checks a snapshot's <code>maven-metadata.xml</code> at most once per day by default (<code>updatePolicy: daily</code>), so your local <code>~/.m2</code> copy is considered fresh. Run <code>./mvnw -U</code> (force update) or set the proxy's/your settings' snapshot <code>updatePolicy</code> to <code>always</code>/<code>interval:10</code> for the snapshots repo.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">B6. OCI registries — images, charts, signatures; retention and promotion</h2>
+<table>
+  <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>OCI</b></td><td>Open Container Initiative: the standard image format and registry API. Any OCI registry stores images <i>and</i> other artifacts (Helm charts, cosign signatures, SBOMs, WASM, Terraform modules) as "OCI artifacts".</td></tr>
+    <tr><td><b>Manifest / digest / tag</b></td><td>A manifest lists layers + config; its SHA-256 is the <b>digest</b> (immutable identity). A <b>tag</b> is a mutable pointer to a manifest. Multi-arch images use a manifest <i>index</i> pointing at per-platform manifests.</td></tr>
+    <tr><td><b>Immutable tags</b></td><td>Registry setting that refuses re-pushing an existing tag (ECR <code>imageTagMutability=IMMUTABLE</code>, Harbor tag immutability rules).</td></tr>
+    <tr><td><b>Pull-through cache</b></td><td>Registry proxies Docker Hub/GHCR/Quay: ECR pull-through rules, Harbor proxy projects, Nexus docker-proxy. Fixes rate limits and gives you a local copy.</td></tr>
+    <tr><td><b>Referrers</b></td><td>Signatures/attestations attached to a digest (OCI 1.1 referrers API or cosign's tag scheme). Copy images with <code>crane copy</code>/<code>cosign copy</code> to keep them.</td></tr>
+    <tr><td><b>Lifecycle / retention</b></td><td>Rules: expire untagged after 7 days, keep last 50 <code>sha-*</code> tags, keep all <code>v*</code> tags.</td></tr>
+    <tr><td><b>Scanning</b></td><td>ECR basic/enhanced (Inspector), Harbor + Trivy, Artifactory Xray — continuous re-scan of stored images.</td></tr>
+    <tr><td><b>Replication</b></td><td>Cross-region/cross-account (ECR replication rules, Harbor replication) for DR and locality.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># ECR</span>
+<span class="fn">aws</span> ecr create-repository <span class="ann">--repository-name</span> shop/api <span class="ann">--image-tag-mutability</span> IMMUTABLE <span class="ann">--image-scanning-configuration</span> scanOnPush=true <span class="ann">--encryption-configuration</span> encryptionType=KMS
+<span class="fn">aws</span> ecr get-login-password | <span class="fn">docker</span> login <span class="ann">--username</span> AWS <span class="ann">--password-stdin</span> 123456789012.dkr.ecr.ap-south-1.amazonaws.com
+<span class="fn">aws</span> ecr put-lifecycle-policy <span class="ann">--repository-name</span> shop/api <span class="ann">--lifecycle-policy-text</span> file://lifecycle.json
+<span class="cmt"># lifecycle.json: rule 1 expire untagged &gt; 7 days; rule 2 keep only the newest 100 images tagged sha-*; (tags v* untouched)</span>
+<span class="fn">aws</span> ecr create-pull-through-cache-rule <span class="ann">--ecr-repository-prefix</span> dockerhub <span class="ann">--upstream-registry-url</span> registry-1.docker.io <span class="ann">--credential-arn</span> arn:aws:secretsmanager:…:secret:ecr-pullthroughcache/dockerhub
+<span class="cmt"># then FROM 123456789012.dkr.ecr.ap-south-1.amazonaws.com/dockerhub/library/eclipse-temurin:21-jre</span>
+<span class="fn">aws</span> ecr describe-image-scan-findings <span class="ann">--repository-name</span> shop/api <span class="ann">--image-id</span> imageDigest=sha256:…
+
+<span class="cmt"># GHCR: push with GITHUB_TOKEN (packages: write); visibility and retention in package settings; link to the repo via the org.opencontainers.image.source label</span>
+
+<span class="cmt"># tools that work with any registry</span>
+<span class="fn">crane</span> ls ghcr.io/shop/api                            <span class="cmt"># list tags</span>
+<span class="fn">crane</span> digest ghcr.io/shop/api:v1.4.0                 <span class="cmt"># tag → digest</span>
+<span class="fn">crane</span> copy ghcr.io/shop/api@sha256:… 123456789012.dkr.ecr.ap-south-1.amazonaws.com/shop/api:v1.4.0   <span class="cmt"># promote between registries, keeps digest</span>
+<span class="fn">cosign</span> copy <span class="ann">--force</span> SRC DST                             <span class="cmt"># copy WITH signatures/attestations</span>
+<span class="fn">skopeo</span> inspect docker://ghcr.io/shop/api:v1.4.0        <span class="cmt"># manifest without pulling</span>
+<span class="fn">helm</span> push shop-api-1.4.0.tgz oci://ghcr.io/shop/charts  ·  <span class="fn">helm</span> install api oci://ghcr.io/shop/charts/shop-api <span class="ann">--version</span> 1.4.0</pre>
+<table>
+  <thead><tr><th>Tagging scheme that works</th><th>Example</th><th>Mutable?</th></tr></thead>
+  <tbody>
+    <tr><td>Commit tag</td><td><code>sha-3f1a2b0</code></td><td>No (immutable registry)</td></tr>
+    <tr><td>Release tag</td><td><code>v1.4.0</code>, <code>1.4</code>, <code>1</code></td><td><code>v1.4.0</code> no; <code>1.4</code>/<code>1</code> floating by design (consumers choose)</td></tr>
+    <tr><td>Branch tag</td><td><code>main</code>, <code>pr-482</code></td><td>Yes — dev convenience only; never deployed by tag</td></tr>
+    <tr><td>Deploy reference</td><td><code>@sha256:…</code></td><td>Never — what GitOps/ECS task defs should carry</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Mutable release tags</td><td>CI re-pushes <code>v1.4.0</code> after a hotfix; prod and staging run different <code>v1.4.0</code>s.</td><td>Immutable tags; new version for new bytes; deploy by digest.</td></tr>
+    <tr><td>Docker Hub directly from nodes</td><td>100 nodes pulling <code>postgres:16</code> → rate-limited at 3 am.</td><td>Pull-through cache; <code>FROM</code> your registry's proxied path.</td></tr>
+    <tr><td>No lifecycle policy</td><td>Every PR image kept forever; ECR storage bill climbs monthly.</td><td>Expire untagged + old <code>sha-*</code>/<code>pr-*</code>; keep <code>v*</code>.</td></tr>
+    <tr><td>Promotion by rebuild</td><td>Prod registry gets a freshly built image.</td><td><code>crane copy</code>/<code>cosign copy</code> the <i>same digest</i> from the CI registry to the prod registry.</td></tr>
+    <tr><td>Public registry for internal images</td><td>GHCR package left public; internal code and secrets in layers exposed.</td><td>Private by default; check visibility in the package settings.</td></tr>
+    <tr><td>Losing signatures on copy</td><td><code>docker pull</code> + <code>docker push</code> drops referrers; admission policy rejects in prod.</td><td><code>cosign copy</code> / <code>crane copy</code> (with referrers) or re-sign after promotion.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>docker pull shop/api:v1.4.0</code> on two machines gives two different image IDs. How is that possible?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Either the tag was re-pushed between the pulls (mutable tag), or it is a multi-arch image and the machines are different architectures (amd64 vs arm64 manifests under one index). Compare <code>crane digest</code> of the index vs the platform manifests; pin by digest to remove the ambiguity.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">C7. DNS — how a name becomes an address, and why it breaks</h2>
+<table>
+  <thead><tr><th>Piece</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Resolver</b> (stub → recursive)</td><td>Your machine's stub resolver (<code>/etc/resolv.conf</code>, systemd-resolved, the JVM's cache) asks a recursive resolver (your VPC's <code>.2</code> address, 1.1.1.1, CoreDNS in a cluster), which walks root → TLD → authoritative servers and caches the answer.</td></tr>
+    <tr><td><b>Authoritative server</b></td><td>Holds the zone (Route 53 hosted zone, Cloudflare). The source of truth.</td></tr>
+    <tr><td><b>Record types</b></td><td><code>A</code> (IPv4), <code>AAAA</code> (IPv6), <code>CNAME</code> (alias to another name; not allowed at the zone apex), <code>ALIAS</code> (Route 53 apex alias to AWS resources), <code>MX</code>, <code>TXT</code> (verification, SPF/DKIM), <code>SRV</code>, <code>NS</code>, <code>SOA</code>, <code>CAA</code> (which CAs may issue certs).</td></tr>
+    <tr><td><b>TTL</b></td><td>How long resolvers may cache. 300 s is a common default; lower it <i>before</i> a planned change, not during.</td></tr>
+    <tr><td><b>Negative caching</b></td><td>"Does not exist" (NXDOMAIN) is cached too (SOA minimum TTL) — typos haunt you for minutes.</td></tr>
+    <tr><td><b>Split-horizon</b></td><td>Private hosted zone answers <code>db.shop.internal</code> only inside the VPC; public zone answers <code>api.shop.example</code> to the world.</td></tr>
+    <tr><td><b>Search domains</b></td><td><code>resolv.conf search shop.svc.cluster.local svc.cluster.local</code> — <code>api</code> becomes <code>api.shop.svc.cluster.local</code>. <code>ndots:5</code> in K8s means names with &lt; 5 dots try the search list first (extra lookups for external names).</td></tr>
+    <tr><td><b>Routing policies</b> (Route 53)</td><td>Weighted (canary by DNS), latency, failover (health-checked), geolocation. Coarse: TTLs and client caching make DNS a slow switch.</td></tr>
+    <tr><td><b>Java DNS cache</b></td><td>Modern JDKs cache successful lookups ~30 s (<code>networkaddress.cache.ttl</code>); negative 10 s. Old JDKs with a security manager cached forever — check if you see stale IPs after a failover.</td></tr>
+  </tbody>
+</table>
+<pre><span class="fn">dig</span> api.shop.example                          <span class="cmt"># full answer: QUESTION, ANSWER (with TTL), which server answered</span>
+<span class="fn">dig</span> +short api.shop.example A                 <span class="cmt"># just the IPs</span>
+<span class="fn">dig</span> +trace api.shop.example                   <span class="cmt"># walk from the root: shows which NS is authoritative (delegation problems)</span>
+<span class="fn">dig</span> @8.8.8.8 api.shop.example                 <span class="cmt"># ask a specific resolver — compare with your local one (cache/split-horizon)</span>
+<span class="fn">dig</span> @ns-123.awsdns-45.com api.shop.example    <span class="cmt"># ask the authoritative server directly: is the record even published?</span>
+<span class="fn">dig</span> -x 10.0.1.5                               <span class="cmt"># reverse lookup</span>
+<span class="fn">dig</span> api.shop.example CNAME  ·  <span class="fn">dig</span> shop.example MX  ·  <span class="fn">dig</span> shop.example TXT  ·  <span class="fn">dig</span> shop.example CAA
+<span class="fn">resolvectl</span> status  ·  <span class="fn">resolvectl</span> query api.shop.example   <span class="cmt"># systemd-resolved: which upstream, cache</span>
+<span class="fn">nslookup</span> api.shop.example                     <span class="cmt"># Windows/anywhere</span>
+<span class="cmt"># in Kubernetes</span>
+<span class="fn">kubectl</span> run <span class="ann">-it --rm</span> dns <span class="ann">--image</span>=busybox <span class="ann">--</span> nslookup api.shop.svc.cluster.local
+<span class="fn">kubectl</span> logs <span class="ann">-n</span> kube-system <span class="ann">-l</span> k8s-app=kube-dns   <span class="cmt"># CoreDNS errors</span></pre>
+<table>
+  <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>New record "doesn't work" for some people</td><td>TTL/caching; negative cache from an earlier typo.</td><td>Wait the TTL; <code>dig @authoritative</code> to confirm it is published; lower TTL before the next change.</td></tr>
+    <tr><td>Works from the VPC, not from home (or vice versa)</td><td>Private zone / split-horizon; security groups aren't DNS but look like it.</td><td>Compare <code>dig @vpc-resolver</code> vs <code>dig @1.1.1.1</code>.</td></tr>
+    <tr><td>Apex domain can't point at the ALB</td><td>CNAME at apex is invalid.</td><td>Route 53 ALIAS (or Cloudflare CNAME flattening).</td></tr>
+    <tr><td>Slow first request from a pod to an external API</td><td><code>ndots:5</code> → 4 failed search-domain lookups first.</td><td>Use a trailing dot (<code>api.stripe.com.</code>), set <code>dnsConfig.options ndots: 2</code>, or NodeLocal DNSCache.</td></tr>
+    <tr><td>Stale IP after RDS/ALB failover</td><td>Client-side caching (old JVM, connection pool).</td><td>Check <code>networkaddress.cache.ttl</code>; pools recycle connections (<code>maxLifetime</code>).</td></tr>
+    <tr><td>Cert issuance fails</td><td>CAA record forbids the CA; DNS-01 validation TXT not visible.</td><td>Add the CA to CAA; check <code>dig _acme-challenge.… TXT</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You changed an A record with TTL 3600 and most users still hit the old server after 20 minutes. Can you speed it up?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Not for resolvers that already cached it — they will hold the old answer up to the full hour; you cannot push an update. Lesson: drop the TTL to 60 s a day <i>before</i> a planned move, then raise it after. For instant switching use a load balancer or weighted routing behind a stable name.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">C8. HTTP — 1.1 vs 2 vs 3, connections, caching headers, status codes that matter</h2>
+<table>
+  <thead><tr><th></th><th>HTTP/1.1</th><th>HTTP/2</th><th>HTTP/3</th></tr></thead>
+  <tbody>
+    <tr><td>Transport</td><td>TCP, text framing</td><td>TCP, binary frames, one connection per origin</td><td>QUIC (UDP), TLS 1.3 built in</td></tr>
+    <tr><td>Parallelism</td><td>One request at a time per connection (pipelining unused) → browsers open ~6 connections</td><td><b>Multiplexing</b>: many streams on one connection; header compression (HPACK); server push (deprecated)</td><td>Multiplexing without TCP head-of-line blocking; faster handshakes (0-RTT), connection migration (Wi-Fi → mobile)</td></tr>
+    <tr><td>Where you meet it</td><td>Most server-to-server Java clients by default; curl default</td><td>Browsers ↔ ALB/CloudFront/NGINX; gRPC <b>requires</b> h2; Java <code>HttpClient</code> defaults to h2 with fallback</td><td>Browsers ↔ CDNs (CloudFront, Cloudflare); rare server-to-server</td></tr>
+    <tr><td>Behind the ALB</td><td>ALB → target is HTTP/1.1 unless you choose h2/gRPC target groups</td><td>Client-facing h2 is on by default on ALB/NGINX with TLS</td><td>CloudFront supports h3 to clients; origin stays h1/h2</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Connection mechanics (why pools and keep-alive matter)</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td>TCP handshake</td><td>1 RTT before any data. TLS adds 1 RTT (1.3) or 2 (1.2). New connection per request = 2–3 RTTs wasted.</td></tr>
+    <tr><td>Keep-alive</td><td>HTTP/1.1 default: reuse the connection. Idle timeouts on both ends must agree (ALB 60 s; make the server's longer — see the AWS/NGINX sheets).</td></tr>
+    <tr><td>Connection pools</td><td>Java <code>HttpClient</code>, Apache HttpClient, OkHttp, Netty all pool; size them (<code>maxConnections</code>, per-route) and set timeouts (connect, read/response, total).</td></tr>
+    <tr><td>Head-of-line blocking</td><td>h1: a slow response blocks the connection. h2: a lost TCP packet blocks all streams. h3: streams independent.</td></tr>
+    <tr><td>Chunked / streaming</td><td><code>Transfer-Encoding: chunked</code> (h1) or data frames (h2) — bodies without known length; SSE for server push to browsers.</td></tr>
+    <tr><td>Compression</td><td><code>Accept-Encoding: gzip, br</code> → <code>Content-Encoding</code>. Do it at the edge (CDN/NGINX) or in Spring (<code>server.compression.enabled</code>).</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Caching headers</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>Cache-Control: public, max-age=31536000, immutable</code></td><td>Static assets with hashed names: cache forever.</td></tr>
+    <tr><td><code>Cache-Control: private, no-store</code></td><td>Per-user API responses: never cache (CDN or browser).</td></tr>
+    <tr><td><code>Cache-Control: public, max-age=60, stale-while-revalidate=300</code></td><td>Semi-static API (catalog): serve cached up to a minute, refresh in the background.</td></tr>
+    <tr><td><code>ETag</code> / <code>If-None-Match</code> → 304</td><td>Conditional GET: save bandwidth; Spring's <code>ShallowEtagHeaderFilter</code> or hand-set ETags; also optimistic concurrency with <code>If-Match</code> on PUT.</td></tr>
+    <tr><td><code>Vary: Accept-Encoding, Authorization</code></td><td>Tell caches which request headers change the response.</td></tr>
+    <tr><td><code>Last-Modified</code> / <code>If-Modified-Since</code></td><td>Time-based conditional.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Status codes a backend dev must get right</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>200 / 201 / 202 / 204</b></td><td>OK / created (with <code>Location</code>) / accepted for async processing / no content.</td></tr>
+    <tr><td><b>301 / 302 / 307 / 308</b></td><td>Permanent / temporary; 307/308 keep the method (POST stays POST). Use 308 for permanent API moves.</td></tr>
+    <tr><td><b>304</b></td><td>Not modified (conditional GET).</td></tr>
+    <tr><td><b>400 / 401 / 403 / 404 / 405</b></td><td>Bad input / not authenticated (send <code>WWW-Authenticate</code>) / authenticated but forbidden / missing / wrong method.</td></tr>
+    <tr><td><b>409 / 412 / 422</b></td><td>Conflict (duplicate, version mismatch) / precondition failed (<code>If-Match</code>) / semantically invalid.</td></tr>
+    <tr><td><b>429</b></td><td>Rate limited — with <code>Retry-After</code>.</td></tr>
+    <tr><td><b>500 / 502 / 503 / 504</b></td><td>Your bug / proxy got a bad response / overloaded or draining (<code>Retry-After</code>) / upstream timeout. Clients retry 502/503/504 with backoff, never 500 blindly, never non-idempotent POSTs without an idempotency key.</td></tr>
+  </tbody>
+</table>
+<pre><span class="fn">curl</span> <span class="ann">-sv</span> <span class="ann">--http2</span> https://api.shop.example/health <span class="ann">-o</span> /dev/null        <span class="cmt"># see ALPN negotiation (h2), TLS version, headers</span>
+<span class="fn">curl</span> <span class="ann">-sw</span> <span class="str">'dns %{time_namelookup}  connect %{time_connect}  tls %{time_appconnect}  ttfb %{time_starttransfer}  total %{time_total}\n'</span> <span class="ann">-o</span> /dev/null https://api.shop.example/
+<span class="fn">curl</span> <span class="ann">-I</span> https://api.shop.example/products/1   <span class="cmt"># headers only: Cache-Control, ETag, Content-Encoding</span>
+<span class="fn">curl</span> <span class="ann">-H</span> <span class="str">'If-None-Match: "abc"'</span> <span class="ann">-i</span> https://api.shop.example/products/1   <span class="cmt"># 304?</span>
+<span class="cmt"># Java 11+ client: HttpClient.newBuilder().version(HTTP_2).connectTimeout(Duration.ofSeconds(2)).build(); per-request .timeout(Duration.ofSeconds(5))</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>New client per call</td><td><code>HttpClient.newHttpClient()</code> inside a service method → new pool, new TLS handshake each time.</td><td>One client bean per downstream; pooled; timeouts set.</td></tr>
+    <tr><td>No timeouts</td><td>Default infinite read timeout → threads pile up when a partner hangs.</td><td>Connect 1–2 s, read 3–10 s, plus a circuit breaker.</td></tr>
+    <tr><td>200 for errors</td><td><code>{"status":"error"}</code> with HTTP 200; retries and caches misbehave.</td><td>Correct status codes; <code>ProblemDetail</code> bodies.</td></tr>
+    <tr><td>Caching per-user data publicly</td><td>CDN caches <code>/me</code>; users see each other's data.</td><td><code>Cache-Control: private, no-store</code>; <code>Vary: Authorization</code>.</td></tr>
+    <tr><td>gRPC through an h1-only hop</td><td>gRPC fails behind a proxy that downgrades to HTTP/1.1.</td><td>End-to-end h2 (ALB gRPC target group, NGINX <code>grpc_pass</code>).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your API shows p99 of 20 ms in the server logs but clients measure 300 ms. The client is in another region. What dominates?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Round trips: DNS (if uncached) + TCP handshake + TLS handshake before the first byte, each ~80–100 ms across continents. Fixes: keep-alive/connection reuse (one handshake per many requests), HTTP/2, TLS 1.3 (1 RTT), a CDN/edge in the client's region, or regional deployment. <code>curl -w</code> timings show exactly where the 280 ms goes.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">C9. TLS — the handshake, certificates, chains, mTLS</h2>
+<table>
+  <thead><tr><th>Concept</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>TLS</b></td><td>Encrypts and authenticates a TCP connection. HTTPS = HTTP over TLS. "SSL" is the old name.</td></tr>
+    <tr><td><b>Certificate</b></td><td>A signed statement: "this public key belongs to <code>api.shop.example</code>", issued by a <b>CA</b>, valid for a period, with SANs (subject alternative names) listing the hostnames.</td></tr>
+    <tr><td><b>Chain</b></td><td>Leaf cert → intermediate CA(s) → root CA. The server must send leaf + intermediates; the client has roots in its trust store.</td></tr>
+    <tr><td><b>Trust store</b></td><td>The roots a client trusts: OS store, browser store, the JVM's <code>cacerts</code> (<code>$JAVA_HOME/lib/security/cacerts</code>).</td></tr>
+    <tr><td><b>Handshake (TLS 1.3)</b></td><td>ClientHello (versions, ciphers, SNI, ALPN, key share) → ServerHello + cert + Finished → client verifies chain, hostname, validity, revocation → Finished. 1 RTT. TLS 1.2 takes 2.</td></tr>
+    <tr><td><b>SNI</b></td><td>Client names the host in ClientHello so one IP can serve many certs (ALB, NGINX, CDNs rely on it).</td></tr>
+    <tr><td><b>ALPN</b></td><td>Client and server agree on the application protocol (h2, http/1.1) during the handshake.</td></tr>
+    <tr><td><b>Revocation</b></td><td>CRL / OCSP (+ stapling) — in practice short-lived certs (90 days, soon 47) are the real answer.</td></tr>
+    <tr><td><b>mTLS</b></td><td>Both sides present certificates. Service-to-service identity (service meshes do it automatically with SPIFFE identities); client certs for partner APIs.</td></tr>
+    <tr><td><b>Termination vs passthrough vs re-encryption</b></td><td>LB decrypts and sends plain HTTP inward (common) · LB forwards encrypted bytes (NLB, mTLS to the app) · LB decrypts then re-encrypts to the target (compliance).</td></tr>
+    <tr><td><b>HSTS</b></td><td><code>Strict-Transport-Security</code> header: browsers refuse plain HTTP for the domain afterwards.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># inspect what a server presents</span>
+<span class="fn">openssl</span> s_client <span class="ann">-connect</span> api.shop.example:443 <span class="ann">-servername</span> api.shop.example <span class="ann">-showcerts</span> &lt;/dev/null 2&gt;/dev/null \
+  | <span class="fn">openssl</span> x509 <span class="ann">-noout</span> <span class="ann">-subject</span> <span class="ann">-issuer</span> <span class="ann">-dates</span> <span class="ann">-ext</span> subjectAltName        <span class="cmt"># leaf: who, issued by, valid until, SANs</span>
+<span class="fn">openssl</span> s_client <span class="ann">-connect</span> api.shop.example:443 <span class="ann">-servername</span> api.shop.example <span class="ann">-tls1_3</span> <span class="ann">-alpn</span> h2 &lt;/dev/null | <span class="fn">grep</span> <span class="ann">-E</span> <span class="str">"Protocol|Cipher|ALPN|Verify return"</span>
+<span class="fn">curl</span> <span class="ann">-vI</span> https://api.shop.example 2&gt;&amp;1 | <span class="fn">grep</span> <span class="ann">-E</span> <span class="str">"SSL connection|subject|issuer|expire"</span>
+<span class="cmt"># verify a chain file locally</span>
+<span class="fn">openssl</span> verify <span class="ann">-CAfile</span> chain.pem leaf.pem
+<span class="cmt"># expiry monitoring one-liner</span>
+echo | <span class="fn">openssl</span> s_client <span class="ann">-connect</span> api.shop.example:443 <span class="ann">-servername</span> api.shop.example 2&gt;/dev/null | <span class="fn">openssl</span> x509 <span class="ann">-noout</span> <span class="ann">-enddate</span>
+
+<span class="cmt"># Java trust: add a private CA to a truststore (don't edit the JDK's cacerts in the image; mount your own)</span>
+<span class="fn">keytool</span> <span class="ann">-importcert</span> <span class="ann">-alias</span> shop-ca <span class="ann">-file</span> shop-ca.pem <span class="ann">-keystore</span> truststore.p12 <span class="ann">-storetype</span> PKCS12 <span class="ann">-storepass</span> changeit <span class="ann">-noprompt</span>
+java <span class="ann">-Djavax.net.ssl.trustStore</span>=/etc/shop/truststore.p12 <span class="ann">-Djavax.net.ssl.trustStorePassword</span>=changeit <span class="ann">-jar</span> app.jar
+<span class="cmt"># Spring Boot 3.1+ SSL bundles: PEM in, no keytool</span>
+<span class="kw">spring.ssl.bundle.pem.partner</span>:
+  <span class="kw">truststore.certificate</span>: file:/etc/shop/partner-ca.pem
+  <span class="kw">keystore</span>: { <span class="kw">certificate</span>: file:/etc/shop/client.crt, <span class="kw">private-key</span>: file:/etc/shop/client.key }   <span class="cmt"># mTLS client cert</span>
+<span class="cmt"># RestClient.builder().apply(sslBundles.getBundle("partner")…)  /  server.ssl.bundle=… for the server side</span>
+
+<span class="cmt"># Java debugging</span>
+java <span class="ann">-Djavax.net.debug</span>=ssl:handshake <span class="ann">-jar</span> app.jar       <span class="cmt"># verbose handshake log (dev only)</span>
+<span class="cmt"># "PKIX path building failed: unable to find valid certification path" → the CA is not in the truststore (private CA / missing intermediate)</span>
+<span class="cmt"># "No subject alternative names matching IP address" → connecting by IP, cert has hostnames; use the hostname</span>
+<span class="cmt"># "Received fatal alert: handshake_failure" → no common cipher/protocol (TLS 1.0/1.1 disabled), or client cert required and missing</span></pre>
+<table>
+  <thead><tr><th>Where certs come from</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>ACM</b> (AWS) / cloud-managed</td><td>Free public certs on ALB/CloudFront/API Gateway; auto-renew; private key never leaves AWS. ACM Private CA for internal certs.</td></tr>
+    <tr><td><b>Let's Encrypt</b> via cert-manager / certbot</td><td>Free 90-day certs; ACME HTTP-01 or DNS-01 challenge; auto-renew.</td></tr>
+    <tr><td><b>Internal CA</b> (Vault PKI, step-ca, ACM PCA, cert-manager CA issuer)</td><td>Service-to-service certs, mTLS, short-lived (hours–days).</td></tr>
+    <tr><td><b>Service mesh</b> (Istio/Linkerd)</td><td>Issues and rotates workload certs automatically; mTLS everywhere with zero app changes.</td></tr>
+    <tr><td><b>Commercial CA</b></td><td>EV/OV certs for compliance or when required by partners.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Disabling verification</td><td><code>-k</code>, trust-all <code>X509TrustManager</code>, <code>verify=false</code> "to get past the error".</td><td>Add the correct CA to the trust store; fix the hostname/SAN; TLS without verification is just encryption to an unknown party.</td></tr>
+    <tr><td>Missing intermediate</td><td>Server sends only the leaf; browsers (which cache intermediates) work, Java fails.</td><td>Serve the full chain (fullchain.pem); test with <code>openssl verify</code> and <code>curl</code> from a clean machine.</td></tr>
+    <tr><td>Expired cert outage</td><td>Manual renewal forgotten; everything down on a Saturday.</td><td>ACM/cert-manager auto-renew + an expiry alarm (&lt; 14 days) as the safety net.</td></tr>
+    <tr><td>Certs and keys in the image</td><td>Keystore + password in the Docker image.</td><td>ACM on the LB; or mount from a secret at runtime; or mesh-issued certs.</td></tr>
+    <tr><td>Old protocols/ciphers</td><td>TLS 1.0/1.1, RC4, 3DES enabled "for old clients".</td><td>TLS 1.2 + 1.3 only; ALB security policy <code>ELBSecurityPolicy-TLS13-1-2-2021-06</code>; test with <code>testssl.sh</code> / SSL Labs.</td></tr>
+    <tr><td>Connecting by IP</td><td>Hostname verification fails.</td><td>Use DNS names; certs are for names.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your Spring app calls a partner API fine from your laptop but gets <code>PKIX path building failed</code> in the container. Same code. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Different trust stores. Your laptop's JDK (or OS) trusts the partner's CA (often a corporate proxy's CA injected by IT); the container's minimal JRE has only public roots. Either the partner uses a private/intermediate CA you must add via an SSL bundle, or a corporate TLS-inspecting proxy sits between your laptop and the internet and the container bypasses it. <code>openssl s_client -showcerts</code> from both places shows the difference.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">C10. CORS, cookies and the browser security model</h2>
+<p><b>CORS</b> (Cross-Origin Resource Sharing) is a <i>browser</i> rule: JavaScript on <code>https://shop.example</code> may read a response from <code>https://api.shop.example</code> only if the API says so in response headers. It protects users from malicious sites using their logged-in browser; it does <b>not</b> protect your API from <code>curl</code> or servers.</p>
+<table>
+  <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Origin</b></td><td>scheme + host + port. <code>https://shop.example</code> ≠ <code>https://api.shop.example</code> ≠ <code>http://shop.example</code> ≠ <code>https://shop.example:8443</code>.</td></tr>
+    <tr><td><b>Simple request</b></td><td>GET/HEAD/POST with simple headers and content types (<code>application/x-www-form-urlencoded</code>, <code>multipart/form-data</code>, <code>text/plain</code>). Sent directly; the browser blocks <i>reading</i> the response if CORS headers are missing (the request still happened!).</td></tr>
+    <tr><td><b>Preflight</b></td><td>For anything else (JSON body, <code>Authorization</code> header, PUT/DELETE) the browser first sends <code>OPTIONS</code> with <code>Access-Control-Request-Method/Headers</code>; the server must answer with the allow headers; cached for <code>Access-Control-Max-Age</code>.</td></tr>
+    <tr><td><b>Response headers</b></td><td><code>Access-Control-Allow-Origin</code> (exact origin or <code>*</code>), <code>-Allow-Methods</code>, <code>-Allow-Headers</code>, <code>-Expose-Headers</code> (which response headers JS may read), <code>-Allow-Credentials: true</code> (cookies/auth allowed — then <code>*</code> is forbidden), <code>-Max-Age</code>.</td></tr>
+    <tr><td><b>Cookies</b></td><td><code>Set-Cookie: session=…; HttpOnly; Secure; SameSite=Lax|Strict|None; Path=/; Domain=.shop.example</code>. <code>SameSite=None</code> requires <code>Secure</code> and is the only way cookies ride cross-site requests.</td></tr>
+    <tr><td><b>CSRF</b></td><td>A malicious site makes the browser send a state-changing request <i>with the user's cookies</i>. Defences: <code>SameSite</code> cookies, CSRF tokens (Spring Security default for session apps), or bearer tokens in headers (not sent automatically) — which is why stateless token APIs disable CSRF.</td></tr>
+    <tr><td><b>CSP, X-Frame-Options, Referrer-Policy</b></td><td>Other browser headers: restrict script sources, block framing (clickjacking), limit referrer leakage. Set at the edge (NGINX/CloudFront) or Spring Security headers config.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// Spring: CORS belongs in Spring Security's chain (so preflights aren't rejected as unauthenticated)</span>
+<span class="ann">@Bean</span>
+<span class="typ">CorsConfigurationSource</span> <span class="fn">cors</span>() {
+    <span class="kw">var</span> c = <span class="kw">new</span> <span class="typ">CorsConfiguration</span>();
+    c.setAllowedOrigins(<span class="typ">List</span>.of(<span class="str">"https://shop.example"</span>, <span class="str">"https://admin.shop.example"</span>));   <span class="cmt">// exact origins; setAllowedOriginPatterns for *.preview.shop.example</span>
+    c.setAllowedMethods(<span class="typ">List</span>.of(<span class="str">"GET"</span>, <span class="str">"POST"</span>, <span class="str">"PUT"</span>, <span class="str">"DELETE"</span>, <span class="str">"OPTIONS"</span>));
+    c.setAllowedHeaders(<span class="typ">List</span>.of(<span class="str">"Authorization"</span>, <span class="str">"Content-Type"</span>, <span class="str">"X-Request-Id"</span>));
+    c.setExposedHeaders(<span class="typ">List</span>.of(<span class="str">"Location"</span>, <span class="str">"X-Request-Id"</span>));
+    c.setAllowCredentials(<span class="kw">true</span>);                                 <span class="cmt">// only if you use cookies; then no "*"</span>
+    c.setMaxAge(<span class="num">3600L</span>);
+    <span class="kw">var</span> src = <span class="kw">new</span> <span class="typ">UrlBasedCorsConfigurationSource</span>();
+    src.registerCorsConfiguration(<span class="str">"/api/**"</span>, c);
+    <span class="kw">return</span> src;
+}
+<span class="cmt">// http.cors(Customizer.withDefaults())  picks up the bean; preflight OPTIONS passes before auth</span>
+
+<span class="cmt"># test a preflight by hand</span>
+<span class="fn">curl</span> <span class="ann">-i</span> <span class="ann">-X</span> OPTIONS https://api.shop.example/api/orders \
+  <span class="ann">-H</span> <span class="str">"Origin: https://shop.example"</span> <span class="ann">-H</span> <span class="str">"Access-Control-Request-Method: POST"</span> <span class="ann">-H</span> <span class="str">"Access-Control-Request-Headers: authorization,content-type"</span>
+<span class="cmt"># expect 200/204 with Access-Control-Allow-Origin: https://shop.example and the method/headers echoed</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>Access-Control-Allow-Origin: *</code> + credentials</td><td>Browsers reject it; or you reflect any <code>Origin</code> back with credentials = any site can act as the user.</td><td>Allow-list exact origins; <code>*</code> only for truly public, cookie-less APIs.</td></tr>
+    <tr><td>CORS as security</td><td>"Only our frontend can call the API because of CORS."</td><td>CORS controls browsers only. Authenticate and authorize every request.</td></tr>
+    <tr><td>CORS fixed at the wrong layer</td><td>Headers added in Spring but NGINX/API Gateway strips or duplicates them (two <code>Allow-Origin</code> values → blocked).</td><td>One place owns CORS (usually the API or the gateway), not both.</td></tr>
+    <tr><td>Preflight blocked by auth</td><td><code>OPTIONS</code> returns 401 because the filter chain demands a token; browser reports a "CORS error".</td><td>Register CORS in the security chain so preflights are answered before authentication.</td></tr>
+    <tr><td>Disabling CSRF on a cookie-session app</td><td>Copy-pasted <code>csrf.disable()</code> from a token-API example.</td><td>Keep CSRF for cookie sessions; disable only for stateless bearer-token APIs.</td></tr>
+    <tr><td>Cookies without flags</td><td>Session cookie readable by JS, sent over HTTP, cross-site.</td><td><code>HttpOnly; Secure; SameSite=Lax</code> (or Strict).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The browser console says "blocked by CORS policy" — but your server logs show the POST executed and the order was created. How?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It was a "simple" request (e.g. form-encoded POST without custom headers), so no preflight: the browser sent it, the server processed it, and only the <i>response</i> was hidden from JavaScript. CORS never promised to stop the request. That is why state-changing endpoints need CSRF protection or bearer tokens, not CORS.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">C11. Reverse proxy vs load balancer vs API gateway vs CDN vs service mesh — and quick reference</h2>
+<table>
+  <thead><tr><th>Component</th><th>Layer</th><th>Main job</th><th>Also does</th><th>Examples</th></tr></thead>
+  <tbody>
+    <tr><td><b>Load balancer</b></td><td>L4 (TCP) or L7 (HTTP)</td><td>Spread traffic across N identical instances; health checks; failover.</td><td>TLS termination (L7), sticky sessions, basic routing.</td><td>ALB/NLB, HAProxy, NGINX, cloud LBs, kube-proxy/Service</td></tr>
+    <tr><td><b>Reverse proxy</b></td><td>L7</td><td>Sit in front of servers: route by host/path, terminate TLS, compress, cache, buffer slow clients, rewrite.</td><td>Load balancing (upstreams), rate limiting, auth offload.</td><td>NGINX, Envoy, Traefik, Caddy, HAProxy</td></tr>
+    <tr><td><b>API gateway</b></td><td>L7, API-aware</td><td>Single entry for many APIs: authn (JWT/OAuth/API keys), per-client rate limits/quotas, request validation, versioning, developer portal, analytics.</td><td>Routing, transformation, caching.</td><td>Kong, Apigee, AWS API Gateway, Spring Cloud Gateway, Tyk, Gravitee</td></tr>
+    <tr><td><b>Ingress controller / Gateway API</b></td><td>L7 in Kubernetes</td><td>Reverse proxy configured by K8s objects.</td><td>TLS via cert-manager, canary weights.</td><td>Ingress-NGINX, Envoy Gateway, Traefik, Istio Gateway</td></tr>
+    <tr><td><b>CDN</b></td><td>L7 at the edge</td><td>Cache static (and cacheable dynamic) content close to users; absorb traffic/DDoS; TLS at the edge; HTTP/3.</td><td>WAF, edge functions, image optimisation.</td><td>CloudFront, Cloudflare, Fastly, Akamai</td></tr>
+    <tr><td><b>Service mesh</b></td><td>L7 sidecars / eBPF between services</td><td>mTLS, retries/timeouts, traffic splitting, telemetry for east-west traffic with no app changes.</td><td>Authorization policies, circuit breaking.</td><td>Istio, Linkerd, Cilium, Consul</td></tr>
+    <tr><td><b>WAF</b></td><td>L7 filter</td><td>Block known attack patterns (SQLi, XSS), bots, geo, rate-based rules.</td><td>—</td><td>AWS WAF, Cloudflare WAF, ModSecurity</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># a typical production path for a Spring API</span>
+user → DNS (Route 53) → CDN/WAF (CloudFront: TLS 1.3/h3, cache static, block bots)
+     → L7 load balancer / reverse proxy (ALB or NGINX: TLS termination, host/path routing, health checks)
+     → [optional API gateway: JWT validation, per-client rate limits, API keys]
+     → Kubernetes Ingress / Service or ECS target group
+     → Spring Boot pod/task (plain HTTP 8080, or mTLS via mesh)
+     → east-west calls through the mesh (mTLS, retries) → other services / DB over TLS
+
+<span class="cmt"># rule of thumb: LB = "which copy"; reverse proxy = "which service + HTTP plumbing"; gateway = "which client may do what"; CDN = "serve it from near the user"; mesh = "secure and observe service-to-service"</span></pre>
+<table>
+  <thead><tr><th>Decision</th><th>Guidance</th></tr></thead>
+  <tbody>
+    <tr><td>ALB alone or ALB + gateway?</td><td>ALB for routing and TLS; add a gateway when you need per-client quotas, API keys, a developer portal, or centralised auth for many services. Spring Cloud Gateway if the team is Java-first and the gateway is "just another service".</td></tr>
+    <tr><td>CDN in front of an API?</td><td>Yes for public read-heavy GETs with proper <code>Cache-Control</code>, for TLS/h3 at the edge, and for DDoS absorption. Pass-through (no cache) for authenticated endpoints still gains edge TLS and WAF.</td></tr>
+    <tr><td>Service mesh?</td><td>When you have many services and need mTLS/authz/telemetry uniformly. Not for three services — use a library (Resilience4j) and TLS to the DB.</td></tr>
+    <tr><td>Where does TLS end?</td><td>At the edge (CDN/ALB) by default; plain HTTP inside a private network is common and acceptable; mTLS inside when compliance or zero-trust requires it (mesh makes it cheap).</td></tr>
+    <tr><td>Where do rate limits live?</td><td>Edge (WAF rate rules) for abuse; gateway for per-client business limits; app (Bucket4j/Redis) for fine-grained rules.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Resolve a name / check TTL / authoritative</td><td><code>dig +short host</code> · <code>dig host</code> · <code>dig @ns host</code> · <code>dig +trace host</code></td></tr>
+    <tr><td>Where does time go in a request</td><td><code>curl -sw 'dns %{time_namelookup} connect %{time_connect} tls %{time_appconnect} ttfb %{time_starttransfer}\n' -o /dev/null URL</code></td></tr>
+    <tr><td>Is the port open / what blocks it</td><td><code>nc -zv host 443</code> · <code>tcpdump -i any port 443</code> · <code>mtr host</code></td></tr>
+    <tr><td>Cert details / expiry / chain</td><td><code>openssl s_client -connect h:443 -servername h -showcerts</code> · <code>… | openssl x509 -noout -dates -ext subjectAltName</code> · <code>openssl verify -CAfile chain.pem leaf.pem</code></td></tr>
+    <tr><td>Protocol negotiated</td><td><code>curl -sv --http2 URL -o /dev/null 2&gt;&amp;1 | grep -E "ALPN|SSL connection"</code></td></tr>
+    <tr><td>Headers only / conditional / preflight</td><td><code>curl -I URL</code> · <code>curl -H 'If-None-Match: "x"' -i URL</code> · <code>curl -i -X OPTIONS -H 'Origin: …' -H 'Access-Control-Request-Method: POST' URL</code></td></tr>
+    <tr><td>TLS config grade</td><td><code>testssl.sh host</code> · SSL Labs (public hosts)</td></tr>
+    <tr><td>Java trust store</td><td><code>keytool -list -keystore truststore.p12</code> · <code>-Djavax.net.debug=ssl:handshake</code></td></tr>
+    <tr><td>HTTP/3 check</td><td><code>curl --http3 -I URL</code> (curl built with HTTP/3)</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember (this sheet):</b> 1) Ansible = idempotent modules over SSH, roles + handlers, <code>--check --diff</code> first, bake images where you can; 2) one artifact repo URL for all builds, immutable releases, snapshots cleaned, proxies with policy; 3) images by digest, immutable tags, pull-through cache, lifecycle rules, copy with signatures; 4) DNS is cached — lower TTL before changes, <code>dig @authoritative</code> to see truth, watch <code>ndots</code> in K8s; 5) reuse connections, set timeouts, use correct status codes and <code>Cache-Control</code>; 6) never disable TLS verification — fix the chain/trust store; auto-renew with an expiry alarm; 7) CORS protects browsers not APIs — authenticate everything, exact origins, CSRF for cookie sessions.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Reverse proxy, load balancer, API gateway — aren't they the same box?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Often literally the same software (NGINX/Envoy can be all three), but the <i>roles</i> differ: a load balancer answers "which of N identical copies", a reverse proxy answers "which service and how to shape the HTTP" (TLS, compression, caching, rewrites), and an API gateway answers "which client may do what, how often" (auth, quotas, keys, portal). Name the role you need; then pick the box.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("platform-essentials-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("platform-essentials-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

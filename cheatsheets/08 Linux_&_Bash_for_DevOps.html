@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux &amp; Bash for DevOps (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* shell keywords */
+  pre .typ { color: var(--c-typ); }                    /* paths, files */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers, PIDs */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* flags like -r, --follow */
+  pre .fn  { color: var(--c-fn); }                     /* commands like grep, systemctl */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Linux &amp; Bash for DevOps<span class="sub">How Linux is put together · files &amp; permissions · processes &amp; signals · systemd &amp; journald · networking tools · disk, memory, CPU triage · the JVM on Linux · text tools · safe Bash scripting · SSH · incident runbook (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Assumes you can cd / ls / cat / mkdir. Written for someone who gets paged about a Java service on a Linux box or in a container. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. How Linux is put together (the picture behind every command)</h2>
+<table>
+  <thead><tr><th>Layer</th><th>What it is</th><th>You touch it via</th></tr></thead>
+  <tbody>
+    <tr><td><b>Kernel</b></td><td>Owns CPU, memory, disks, network. Everything else asks it through <b>system calls</b> (<code>open</code>, <code>read</code>, <code>fork</code>, <code>execve</code>, <code>socket</code>…).</td><td><code>/proc</code>, <code>/sys</code>, <code>sysctl</code>, <code>dmesg</code>, <code>strace</code></td></tr>
+    <tr><td><b>Processes</b></td><td>Running programs. Each has a PID, a parent, a user, open file descriptors, environment, and limits. PID 1 is <code>systemd</code> (or your app, in a container).</td><td><code>ps</code>, <code>top</code>, <code>kill</code>, <code>/proc/&lt;pid&gt;</code></td></tr>
+    <tr><td><b>Files</b></td><td>"Everything is a file": disks, devices (<code>/dev</code>), sockets, pipes, kernel state (<code>/proc</code>, <code>/sys</code>). A file is an <b>inode</b> (metadata + data blocks); names are just links to inodes.</td><td><code>ls -li</code>, <code>stat</code>, <code>lsof</code></td></tr>
+    <tr><td><b>Users &amp; permissions</b></td><td>Every process runs as a UID/GID; every file has owner, group, mode bits. <code>root</code> (UID 0) bypasses checks. Capabilities split root's powers.</td><td><code>id</code>, <code>chmod</code>, <code>chown</code>, <code>sudo</code></td></tr>
+    <tr><td><b>Shell</b></td><td>A program (<code>bash</code>, <code>sh</code>, <code>zsh</code>) that reads your commands, expands them, and asks the kernel to run programs. Scripts are just saved commands.</td><td>Your terminal</td></tr>
+    <tr><td><b>Init / services</b></td><td><code>systemd</code> starts and supervises services, mounts, timers; <code>journald</code> collects their logs.</td><td><code>systemctl</code>, <code>journalctl</code></td></tr>
+    <tr><td><b>Containers</b></td><td>Normal processes isolated with namespaces (what they see) and limited with cgroups (what they may use). Same kernel as the host.</td><td><code>docker</code>, <code>crictl</code>, <code>nsenter</code></td></tr>
+  </tbody>
+</table>
+<h3>The directories that matter</h3>
+<table>
+  <thead><tr><th>Path</th><th>Holds</th></tr></thead>
+  <tbody>
+    <tr><td><code>/etc</code></td><td>System config: <code>/etc/hosts</code>, <code>/etc/resolv.conf</code>, <code>/etc/ssh/</code>, <code>/etc/systemd/system/</code>, <code>/etc/security/limits.conf</code></td></tr>
+    <tr><td><code>/var/log</code></td><td>Logs: <code>syslog</code>/<code>messages</code>, <code>auth.log</code>, <code>nginx/</code>, app logs (if not journald)</td></tr>
+    <tr><td><code>/var/lib</code></td><td>Service state: <code>docker/</code>, <code>postgresql/</code>, <code>apt/</code></td></tr>
+    <tr><td><code>/opt</code>, <code>/usr/local</code></td><td>Manually installed software (your app often lives in <code>/opt/shop/</code>)</td></tr>
+    <tr><td><code>/tmp</code>, <code>/var/tmp</code></td><td>Scratch (cleared on boot / kept). Java heap dumps often land here.</td></tr>
+    <tr><td><code>/proc</code></td><td>Live kernel + process info: <code>/proc/cpuinfo</code>, <code>/proc/meminfo</code>, <code>/proc/&lt;pid&gt;/{status,limits,fd,environ,cmdline}</code></td></tr>
+    <tr><td><code>/sys/fs/cgroup</code></td><td>cgroup limits — what a container is actually allowed (<code>memory.max</code>, <code>cpu.max</code>)</td></tr>
+    <tr><td><code>/dev</code></td><td>Devices: <code>/dev/null</code>, <code>/dev/sda</code>, <code>/dev/shm</code> (RAM disk)</td></tr>
+    <tr><td><code>/home/&lt;user&gt;</code>, <code>~</code></td><td>Home; <code>~/.ssh/</code>, <code>~/.bashrc</code></td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># orient yourself on an unknown box in 60 seconds</span>
+<span class="fn">hostnamectl</span>  ;  <span class="fn">uname</span> <span class="ann">-r</span>  ;  <span class="fn">cat</span> /etc/os-release           <span class="cmt"># what is this machine</span>
+<span class="fn">uptime</span>  ;  <span class="fn">who</span>  ;  <span class="fn">last</span> <span class="ann">-n</span> 5                              <span class="cmt"># load, who is here, recent logins</span>
+<span class="fn">df</span> <span class="ann">-h</span>  ;  <span class="fn">free</span> <span class="ann">-h</span>  ;  <span class="fn">nproc</span>                                <span class="cmt"># disk, memory, cores</span>
+<span class="fn">systemctl</span> <span class="ann">--failed</span>  ;  <span class="fn">systemctl</span> list-units <span class="ann">--type</span>=service <span class="ann">--state</span>=running
+<span class="fn">ss</span> <span class="ann">-tulpn</span>                                                <span class="cmt"># who is listening on which port</span>
+<span class="fn">ps</span> <span class="ann">aux</span> <span class="ann">--sort</span>=-%mem | <span class="fn">head</span>                                 <span class="cmt"># biggest processes</span>
+<span class="fn">journalctl</span> <span class="ann">-p</span> err <span class="ann">-b</span>                                      <span class="cmt"># errors since boot</span></pre>
+<div class="tips"><b>Mental model:</b> the kernel is the landlord; processes are tenants who must ask for everything (memory, files, network) through a fixed set of doors (system calls). The shell is your phone to the landlord. <code>/proc</code> is the landlord's live ledger — you can read a tenant's limits, open files, and environment there without disturbing them.</div>
+<div class="tricky">
+  <div class="q">Q. A container shows 64 GB RAM in <code>free -h</code> but was started with <code>--memory 512m</code>. Which is right?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Both, in a way. <code>free</code> reads <code>/proc/meminfo</code>, which shows the <i>host</i>. The container's real limit is in its cgroup: <code>cat /sys/fs/cgroup/memory.max</code>. Modern JVMs (and <code>docker stats</code>) read the cgroup; old tools and old Java 8 builds did not — and got OOM-killed.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Files, permissions, ownership, links, finding things</h2>
+<pre><span class="fn">ls</span> <span class="ann">-la</span>
+-rwxr-x---  1 shop  shop   4096 Oct 25 10:31 deploy.sh
+<span class="cmt"># │└┬┘└┬┘└┬┘ │  │     │        └ size</span>
+<span class="cmt"># │ │  │  │  │  owner group</span>
+<span class="cmt"># │ │  │  └ others: ---  (no access)</span>
+<span class="cmt"># │ │  └ group:  r-x  (read, execute)</span>
+<span class="cmt"># │ └ owner:    rwx</span>
+<span class="cmt"># └ type: - file, d dir, l symlink, s socket, c/b device</span></pre>
+<table>
+  <thead><tr><th>Command</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>chmod 750 deploy.sh</code> · <code>chmod u+x,go-w file</code></td><td>Mode bits: r=4 w=2 x=1 per owner/group/others. <code>x</code> on a directory = may enter it.</td></tr>
+    <tr><td><code>chmod 600 ~/.ssh/id_ed25519</code> · <code>chmod 700 ~/.ssh</code></td><td>SSH refuses keys that others can read.</td></tr>
+    <tr><td><code>chown shop:shop -R /opt/shop</code></td><td>Owner and group, recursive.</td></tr>
+    <tr><td><code>chmod g+s dir</code> · <code>chmod +t /tmp</code> · <code>chmod u+s bin</code></td><td>setgid dir (new files inherit group) · sticky (only owner deletes) · setuid (run as owner — dangerous).</td></tr>
+    <tr><td><code>umask 022</code></td><td>Default permissions for new files (666 − 022 = 644).</td></tr>
+    <tr><td><code>getfacl</code> / <code>setfacl -m u:ci:rx /opt/shop</code></td><td>Extra per-user permissions beyond owner/group/other.</td></tr>
+    <tr><td><code>ln -s /opt/shop/releases/1.4.0 /opt/shop/current</code></td><td>Symlink: a name pointing to a path. Swap it atomically with <code>ln -sfn new current</code> for zero-downtime releases.</td></tr>
+    <tr><td><code>ln file hardlink</code></td><td>Second name for the same inode; deleting one leaves the data. Same filesystem only.</td></tr>
+    <tr><td><code>stat file</code> · <code>file x</code> · <code>du -sh dir</code> · <code>du -xh --max-depth=1 / | sort -h</code></td><td>Metadata · type sniff · size · where did the disk go.</td></tr>
+    <tr><td><code>lsof +D /var/log</code> · <code>lsof -p &lt;pid&gt;</code> · <code>lsof -i :8080</code></td><td>Open files in a dir · by a process · who holds a port.</td></tr>
+    <tr><td><code>find / -xdev -size +500M -type f 2&gt;/dev/null</code></td><td>Big files on this filesystem.</td></tr>
+    <tr><td><code>find /var/log -name "*.log" -mtime +14 -delete</code></td><td>Delete logs older than 14 days (dry-run first without <code>-delete</code>).</td></tr>
+    <tr><td><code>find . -name "*.java" -newer pom.xml</code> · <code>-exec grep -l TODO {} +</code></td><td>Changed since · run a command on results.</td></tr>
+    <tr><td><code>rsync -avz --delete ./build/ host:/opt/shop/</code></td><td>Incremental copy; <code>--dry-run</code> first; trailing slash matters.</td></tr>
+    <tr><td><code>tar czf logs.tgz /var/log/shop</code> · <code>tar xzf x.tgz -C /dest</code> · <code>tar tzf x.tgz</code></td><td>Create · extract · list.</td></tr>
+    <tr><td><code>mount</code> · <code>findmnt</code> · <code>lsblk</code> · <code>blkid</code></td><td>What is mounted where; block devices.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>chmod 777</code></td><td>"Permission denied, so 777 everything."</td><td>Find the actual user/group needed; <code>750</code>/<code>640</code>; ACL for one extra user.</td></tr>
+    <tr><td>Running the app as root</td><td><code>java -jar</code> as root because port 80 needs it.</td><td>Dedicated user (<code>useradd -r -s /usr/sbin/nologin shop</code>); listen on 8080 behind NGINX, or <code>setcap cap_net_bind_service=+ep</code> on the java binary (rare), or <code>AmbientCapabilities</code> in the systemd unit.</td></tr>
+    <tr><td>Deleting a log that is open</td><td><code>rm app.log</code> while the JVM has it open → disk space not freed (<code>df</code> stays full, <code>du</code> looks fine).</td><td><code>truncate -s 0 app.log</code> (or <code>: &gt; app.log</code>); find the holder with <code>lsof +L1</code>.</td></tr>
+    <tr><td><code>find</code> with <code>-delete</code> first</td><td>Pattern wrong, wrong files gone.</td><td>Run without <code>-delete</code>, read the list, then add it. <code>-print -delete</code> logs what it removed.</td></tr>
+    <tr><td>Hardcoded release path</td><td>Service points at <code>/opt/shop/releases/1.4.0</code>; every deploy edits the unit file.</td><td>Point the unit at <code>/opt/shop/current</code>; flip the symlink; <code>systemctl restart</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>df -h</code> says <code>/var</code> is 100% full, but <code>du -sh /var</code> says 20 GB of 100 GB. Where is the space?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Deleted-but-open files. A process still holds a file descriptor to a log that was <code>rm</code>'d; the blocks stay allocated until it closes. <code>lsof +L1</code> (or <code>lsof | grep deleted</code>) shows them; truncate via <code>/proc/&lt;pid&gt;/fd/&lt;n&gt;</code> or restart the process.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Processes, signals, resource limits</h2>
+<table>
+  <thead><tr><th>Command</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>ps aux</code> · <code>ps -ef --forest</code> · <code>ps -o pid,ppid,user,%cpu,%mem,rss,etime,cmd -p &lt;pid&gt;</code></td><td>All processes · tree · chosen columns for one.</td></tr>
+    <tr><td><code>pgrep -af java</code> · <code>pidof java</code></td><td>Find PIDs by name (with command line).</td></tr>
+    <tr><td><code>top</code> · <code>htop</code> · <code>top -H -p &lt;pid&gt;</code></td><td>Live view · nicer · <b>threads</b> of one process (match to <code>jstack</code> by converting TID to hex).</td></tr>
+    <tr><td><code>kill -TERM &lt;pid&gt;</code> (= <code>kill &lt;pid&gt;</code>) · <code>kill -KILL</code> (<code>-9</code>) · <code>kill -HUP</code> · <code>pkill -f "shop-api.jar"</code></td><td>Ask to stop · force (no cleanup) · reload config (by convention) · by pattern.</td></tr>
+    <tr><td><code>nohup cmd &amp;</code> · <code>setsid cmd</code> · <code>disown</code></td><td>Keep running after logout (prefer systemd or tmux).</td></tr>
+    <tr><td><code>jobs</code> · <code>fg</code> · <code>bg</code> · <code>Ctrl-Z</code></td><td>Shell job control.</td></tr>
+    <tr><td><code>nice -n 10 cmd</code> · <code>renice -n 5 -p &lt;pid&gt;</code> · <code>ionice</code></td><td>CPU / IO priority.</td></tr>
+    <tr><td><code>timeout 30s cmd</code></td><td>Kill after 30 s.</td></tr>
+    <tr><td><code>strace -f -p &lt;pid&gt; -e trace=network</code> · <code>strace -c cmd</code></td><td>Watch system calls live · count them. Slow; use briefly.</td></tr>
+    <tr><td><code>ltrace</code>, <code>perf top</code>, <code>bpftrace</code></td><td>Library calls, CPU hot spots, kernel tracing (advanced).</td></tr>
+    <tr><td><code>cat /proc/&lt;pid&gt;/status</code> · <code>/limits</code> · <code>ls /proc/&lt;pid&gt;/fd | wc -l</code> · <code>tr '\0' '\n' &lt; /proc/&lt;pid&gt;/environ</code></td><td>Memory (VmRSS), threads · ulimits in effect · open FD count · environment of a running process.</td></tr>
+    <tr><td><code>ulimit -n</code> · <code>ulimit -u</code> · <code>ulimit -c unlimited</code></td><td>Open files · processes/threads · core dumps (per shell). Persistent: <code>/etc/security/limits.conf</code> or <code>LimitNOFILE=</code> in the unit.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Signal</th><th>Number</th><th>Meaning</th><th>Default</th><th>Java</th></tr></thead>
+  <tbody>
+    <tr><td><code>SIGTERM</code></td><td>15</td><td>Please shut down.</td><td>Exit</td><td>Runs shutdown hooks (Spring graceful shutdown). What <code>kill</code>, <code>systemctl stop</code>, <code>docker stop</code>, Kubernetes send first.</td></tr>
+    <tr><td><code>SIGKILL</code></td><td>9</td><td>Die now.</td><td>Killed, uncatchable</td><td>No hooks, no flush. Sent by the OOM killer and after the grace period.</td></tr>
+    <tr><td><code>SIGINT</code></td><td>2</td><td>Ctrl-C.</td><td>Exit</td><td>Like TERM.</td></tr>
+    <tr><td><code>SIGHUP</code></td><td>1</td><td>Terminal closed / "reload".</td><td>Exit</td><td>Rarely handled by Java apps; NGINX reloads on it.</td></tr>
+    <tr><td><code>SIGQUIT</code></td><td>3</td><td>Quit with core.</td><td>Core dump</td><td><b>JVM prints a thread dump to stdout</b> and keeps running — <code>kill -3 &lt;pid&gt;</code> is the classic "what is it doing" tool.</td></tr>
+    <tr><td><code>SIGSEGV</code>, <code>SIGBUS</code></td><td>11, 7</td><td>Memory fault.</td><td>Core dump</td><td>JVM crash → <code>hs_err_pid*.log</code>.</td></tr>
+    <tr><td><code>SIGSTOP</code> / <code>SIGCONT</code></td><td>19 / 18</td><td>Pause / resume.</td><td>—</td><td>Debugging only.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># exit codes (what $? and CI read)</span>
+0 ok · 1 generic error · 2 misuse · 126 not executable · 127 command not found · 128+N killed by signal N
+<span class="cmt">#   137 = 128+9  → SIGKILL (OOM killer or kill -9)   ·   143 = 128+15 → SIGTERM   ·   130 → Ctrl-C</span>
+
+<span class="cmt"># was it the OOM killer?</span>
+<span class="fn">dmesg</span> <span class="ann">-T</span> | <span class="fn">grep</span> <span class="ann">-i</span> <span class="str">"killed process"</span>
+<span class="fn">journalctl</span> <span class="ann">-k</span> | <span class="fn">grep</span> <span class="ann">-i</span> oom
+<span class="cmt"># "Out of memory: Killed process 4321 (java) total-vm:…, anon-rss:…"</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>kill -9</code> first</td><td>Habitually <code>kill -9</code>; the app never flushes, DB connections leak, files corrupt.</td><td><code>kill</code> (TERM), wait for the grace period, then <code>-9</code>. Systemd and Kubernetes do exactly this.</td></tr>
+    <tr><td><code>nohup java -jar &amp;</code> in prod</td><td>Dies on reboot, no restart, logs in <code>nohup.out</code>, no limits.</td><td>A systemd unit (Section 3) or a container.</td></tr>
+    <tr><td>"Too many open files"</td><td>Default <code>ulimit -n 1024</code> for a server handling thousands of sockets.</td><td><code>LimitNOFILE=65536</code> in the unit; check with <code>cat /proc/&lt;pid&gt;/limits</code>.</td></tr>
+    <tr><td>"unable to create native thread"</td><td>Thread limit (<code>ulimit -u</code>, <code>pids.max</code> in cgroup) or memory for stacks.</td><td>Raise <code>LimitNPROC</code> / <code>TasksMax</code> / Pod <code>pids-limit</code>; fix the thread leak; virtual threads.</td></tr>
+    <tr><td>Reading <code>top</code> %CPU wrong</td><td>"400% CPU — impossible!"</td><td><code>top</code> shows per-core: 400% = 4 cores busy. Press <code>1</code> for per-core view, <code>Shift-P</code>/<code>M</code> to sort.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The service exited with code 137 but <code>dmesg</code> shows no OOM message. What else sends it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Something sent SIGKILL: systemd after <code>TimeoutStopSec</code> expired, Docker/Kubernetes after the termination grace period, or a human <code>kill -9</code>. In Kubernetes, check <code>kubectl describe pod</code> → <code>Reason: OOMKilled</code> vs <code>Error</code>. If the app ignores SIGTERM or takes too long to stop, you get 137 without OOM.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. systemd and journald — running a Java service properly</h2>
+<pre><span class="cmt"># /etc/systemd/system/shop-api.service</span>
+<span class="kw">[Unit]</span>
+<span class="kw">Description</span>=Shop API
+<span class="kw">After</span>=network-online.target postgresql.service
+<span class="kw">Wants</span>=network-online.target
+
+<span class="kw">[Service]</span>
+<span class="kw">Type</span>=simple                                   <span class="cmt"># exec = start when the binary is exec'd; notify = app tells systemd it is ready</span>
+<span class="kw">User</span>=shop
+<span class="kw">Group</span>=shop
+<span class="kw">WorkingDirectory</span>=/opt/shop/current
+<span class="kw">EnvironmentFile</span>=/etc/shop/api.env             <span class="cmt"># KEY=value lines; chmod 640 root:shop</span>
+<span class="kw">Environment</span>=JAVA_TOOL_OPTIONS=<span class="str">"-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"</span>
+<span class="kw">ExecStart</span>=/usr/bin/java -jar /opt/shop/current/shop-api.jar
+<span class="kw">ExecReload</span>=/bin/kill -HUP $MAINPID
+<span class="kw">Restart</span>=on-failure                            <span class="cmt"># or always</span>
+<span class="kw">RestartSec</span>=5
+<span class="kw">StartLimitIntervalSec</span>=300
+<span class="kw">StartLimitBurst</span>=5                             <span class="cmt"># give up after 5 crashes in 5 min (so you notice)</span>
+<span class="kw">TimeoutStopSec</span>=30                            <span class="cmt"># SIGTERM, wait 30 s, then SIGKILL — match Spring's graceful timeout</span>
+<span class="kw">KillSignal</span>=SIGTERM
+<span class="kw">SuccessExitStatus</span>=143                         <span class="cmt"># JVM exits 143 on SIGTERM; treat as clean</span>
+<span class="kw">LimitNOFILE</span>=65536
+<span class="kw">TasksMax</span>=4096
+<span class="kw">MemoryMax</span>=2G                                  <span class="cmt"># cgroup limit — the JVM sees it via MaxRAMPercentage</span>
+<span class="kw">CPUQuota</span>=200%
+<span class="cmt"># hardening</span>
+<span class="kw">NoNewPrivileges</span>=yes
+<span class="kw">ProtectSystem</span>=strict
+<span class="kw">ReadWritePaths</span>=/opt/shop/current/logs /tmp
+<span class="kw">PrivateTmp</span>=yes
+<span class="kw">ProtectHome</span>=yes
+
+<span class="kw">[Install]</span>
+<span class="kw">WantedBy</span>=multi-user.target</pre>
+<table>
+  <thead><tr><th>Command</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>sudo systemctl daemon-reload</code></td><td>Re-read unit files after editing. Forgetting this is the #1 "my change did nothing".</td></tr>
+    <tr><td><code>systemctl enable --now shop-api</code></td><td>Start on boot <i>and</i> start now. <code>disable</code> / <code>stop</code> / <code>restart</code> / <code>reload</code>.</td></tr>
+    <tr><td><code>systemctl status shop-api</code></td><td>State, PID, memory, last log lines. Exit codes and signal shown on failure.</td></tr>
+    <tr><td><code>systemctl cat shop-api</code> · <code>systemctl show shop-api -p MemoryMax,LimitNOFILE</code></td><td>Effective unit (with drop-ins) · one property.</td></tr>
+    <tr><td><code>systemctl edit shop-api</code></td><td>Create a drop-in override in <code>/etc/systemd/system/shop-api.service.d/</code> without touching the vendor file.</td></tr>
+    <tr><td><code>systemctl list-units --failed</code> · <code>systemctl reset-failed</code></td><td>What died · clear the counter after fixing.</td></tr>
+    <tr><td><code>systemctl list-timers</code></td><td>Scheduled jobs (systemd timers replace cron for services).</td></tr>
+    <tr><td><code>systemd-analyze blame</code> · <code>systemd-analyze verify unit.service</code></td><td>Boot time per unit · lint a unit file.</td></tr>
+    <tr><td><code>systemd-run --scope -p MemoryMax=1G cmd</code></td><td>Run a one-off under a cgroup limit.</td></tr>
+  </tbody>
+</table>
+<h3>journald — the logs</h3>
+<pre><span class="fn">journalctl</span> <span class="ann">-u</span> shop-api <span class="ann">-f</span>                       <span class="cmt"># follow one service</span>
+<span class="fn">journalctl</span> <span class="ann">-u</span> shop-api <span class="ann">--since</span> <span class="str">"1 hour ago"</span> <span class="ann">-p</span> warning   <span class="cmt"># time window + priority (emerg…debug)</span>
+<span class="fn">journalctl</span> <span class="ann">-u</span> shop-api <span class="ann">-b</span> <span class="ann">-1</span>                    <span class="cmt"># previous boot (why did it die before the reboot)</span>
+<span class="fn">journalctl</span> <span class="ann">-u</span> shop-api <span class="ann">-o</span> json <span class="ann">-n</span> 100            <span class="cmt"># structured; -o cat for raw lines; -o short-iso for timestamps</span>
+<span class="fn">journalctl</span> <span class="ann">-u</span> shop-api <span class="ann">-g</span> <span class="str">"OutOfMemory|Exception"</span>  <span class="cmt"># grep (regex)</span>
+<span class="fn">journalctl</span> <span class="ann">_PID</span>=4321  ·  <span class="fn">journalctl</span> <span class="ann">-k</span>           <span class="cmt"># by PID · kernel messages (OOM killer lives here)</span>
+<span class="fn">journalctl</span> <span class="ann">--disk-usage</span>  ·  <span class="fn">journalctl</span> <span class="ann">--vacuum-size</span>=2G   <span class="cmt"># size; trim. Persistent: /etc/systemd/journald.conf SystemMaxUse=</span></pre>
+<table>
+  <thead><tr><th>Timer instead of cron</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><code>shop-cleanup.timer</code>: <code>[Timer] OnCalendar=*-*-* 02:30:00  Persistent=true</code> + <code>shop-cleanup.service</code> (<code>Type=oneshot</code>)</td><td>Logs in journald, runs missed jobs after downtime, dependencies, resource limits, <code>systemctl list-timers</code> shows next run. Cron (<code>crontab -e</code>, <code>/etc/cron.d/</code>) still fine for simple user jobs.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Edit, forget reload</td><td>Changed <code>ExecStart</code>, restarted, old command still runs.</td><td><code>daemon-reload</code> after every unit edit.</td></tr>
+    <tr><td>Logs to files <i>and</i> journald</td><td>App writes <code>/opt/shop/logs/app.log</code> with no rotation; disk fills; journald also has a copy.</td><td>Log to stdout → journald (or ship to Loki). If files are required, <code>logrotate</code> config in <code>/etc/logrotate.d/</code> with <code>copytruncate</code>.</td></tr>
+    <tr><td>Restart loops</td><td><code>Restart=always</code> with no limit: crash every 2 s forever, alerts flood.</td><td><code>StartLimitBurst</code> + an alert on <code>failed</code> state.</td></tr>
+    <tr><td>JVM flags in <code>ExecStart</code> only</td><td>Flags also needed by <code>jcmd</code>/scripts get out of sync.</td><td><code>JAVA_TOOL_OPTIONS</code> in <code>EnvironmentFile</code>: picked up by every JVM launch.</td></tr>
+    <tr><td>Stopping takes 90 s</td><td>Default <code>TimeoutStopSec=90</code>; deploys crawl.</td><td>Set it to match the app's graceful shutdown (20–30 s).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>systemctl status</code> shows <code>Main PID exited, code=exited, status=143</code> in red. Is that a failure?</div>
+  <details><summary>Reveal hint</summary><div class="hint">143 = 128 + 15: the JVM exited because it received SIGTERM — a normal stop. Add <code>SuccessExitStatus=143</code> so systemd (and your <code>Restart=on-failure</code>) treat it as success instead of restarting a service you just stopped.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Networking — is it up, is it reachable, who is talking</h2>
+<table>
+  <thead><tr><th>Question</th><th>Command</th><th>Read</th></tr></thead>
+  <tbody>
+    <tr><td>What is listening?</td><td><code>ss -tulpn</code> (TCP/UDP, listening, numeric, process)</td><td><code>0.0.0.0:8080</code> = all interfaces; <code>127.0.0.1:8080</code> = local only (NGINX/containers can't reach it).</td></tr>
+    <tr><td>Connections to my app</td><td><code>ss -tanp state established '( sport = :8080 )'</code> · <code>ss -s</code></td><td>Who is connected; summary counts (TIME-WAIT pile-ups).</td></tr>
+    <tr><td>Can I reach host:port?</td><td><code>nc -zv db 5432</code> · <code>curl -v telnet://db:5432</code> · <code>timeout 3 bash -c '&lt;/dev/tcp/db/5432'</code></td><td>Connection refused = nothing listening; timeout = firewall/route/SG.</td></tr>
+    <tr><td>HTTP check</td><td><code>curl -sS -o /dev/null -w "%{http_code} %{time_total}s\n" https://api/health</code> · <code>curl -I</code> · <code>curl -k</code> · <code>curl --resolve api.shop.example:443:10.0.1.5</code></td><td>Status + timing · headers only · ignore TLS · test a box before DNS points at it.</td></tr>
+    <tr><td>DNS</td><td><code>dig +short api.shop.example</code> · <code>dig @8.8.8.8 api.shop.example A</code> · <code>dig -x 10.0.1.5</code> · <code>resolvectl status</code> · <code>cat /etc/resolv.conf</code></td><td>What it resolves to · via a specific server · reverse · which resolver the box uses.</td></tr>
+    <tr><td>Interfaces, routes</td><td><code>ip addr</code> · <code>ip route</code> · <code>ip -s link</code></td><td>IPs · default gateway · errors/drops.</td></tr>
+    <tr><td>Path to a host</td><td><code>mtr -rw host</code> · <code>traceroute host</code></td><td>Where latency/loss starts.</td></tr>
+    <tr><td>Firewall</td><td><code>sudo nft list ruleset</code> · <code>sudo iptables -L -n -v</code> · <code>sudo ufw status</code></td><td>Local rules. Cloud: security groups / NSGs are outside the box.</td></tr>
+    <tr><td>Packets</td><td><code>sudo tcpdump -i any -nn port 5432 -c 50</code> · <code>-w cap.pcap</code> (open in Wireshark)</td><td>Is traffic arriving at all? SYN with no SYN-ACK = blocked.</td></tr>
+    <tr><td>TLS</td><td><code>openssl s_client -connect api:443 -servername api | openssl x509 -noout -dates -subject</code></td><td>Cert expiry and name; <code>-showcerts</code> for the chain.</td></tr>
+    <tr><td>Bandwidth / throughput</td><td><code>iftop</code> · <code>nload</code> · <code>iperf3 -c host</code></td><td>Who uses the link; raw capacity.</td></tr>
+    <tr><td>Hosts override</td><td><code>/etc/hosts</code></td><td>Quick local pin; remember to remove it.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># the four outcomes of a connection attempt and what they mean</span>
+<span class="fn">curl</span> <span class="ann">-v</span> http://db:5432
+<span class="cmt">#  Could not resolve host             → DNS: wrong name, resolver, search domain, /etc/hosts</span>
+<span class="cmt">#  Connection refused                 → reached the host; nothing listens on that port (wrong port, app down, bound to 127.0.0.1)</span>
+<span class="cmt">#  Connection timed out               → packets dropped: firewall / security group / wrong route / host down</span>
+<span class="cmt">#  Connected, then 5xx / hang         → network fine; it is the application</span>
+
+<span class="cmt"># TIME-WAIT storms and ephemeral ports (many short connections)</span>
+<span class="fn">ss</span> <span class="ann">-s</span>  ;  <span class="fn">sysctl</span> net.ipv4.ip_local_port_range net.ipv4.tcp_tw_reuse
+<span class="cmt"># fix in the app: connection pooling / HTTP keep-alive, not sysctl</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>netstat</code>, <code>ifconfig</code>, <code>route</code></td><td>Old <code>net-tools</code>, often not installed.</td><td><code>ss</code>, <code>ip addr</code>, <code>ip route</code> (iproute2).</td></tr>
+    <tr><td>Ping as the test</td><td>"Ping works, so the DB is reachable."</td><td>ICMP ≠ TCP port. Use <code>nc -zv</code> / <code>curl</code> on the actual port.</td></tr>
+    <tr><td>App bound to localhost</td><td>Spring on <code>127.0.0.1:8080</code> inside a container; nothing can reach it.</td><td>Bind <code>0.0.0.0</code> (<code>server.address</code>); firewall at the edge.</td></tr>
+    <tr><td>Guessing at firewalls</td><td>Opening ports at random.</td><td><code>tcpdump</code> on the receiver: if SYNs never arrive, it is upstream (SG/NACL/route); if they arrive and no SYN-ACK, it is local.</td></tr>
+    <tr><td>Ignoring DNS TTL / caching</td><td>JVM caches DNS forever (old defaults) → stale IP after failover.</td><td>Modern JDK defaults are fine (30 s with security manager gone); check <code>networkaddress.cache.ttl</code> if you see it.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>curl localhost:8080/health</code> on the host works; from another host <code>curl host:8080</code> times out. <code>ss -tulpn</code> shows <code>0.0.0.0:8080</code>. What is it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The app is fine and listening on all interfaces, so it is a network-level block: host firewall (<code>nft</code>/<code>ufw</code>), cloud security group, or a NACL/route. Prove it with <code>tcpdump port 8080</code> on the server while curling: no SYN arriving = blocked before the box.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Disk, memory, CPU — reading the numbers</h2>
+<h3>Disk</h3>
+<pre><span class="fn">df</span> <span class="ann">-h</span>                                   <span class="cmt"># space per filesystem (watch Use% and the mount point)</span>
+<span class="fn">df</span> <span class="ann">-i</span>                                   <span class="cmt"># inodes — "No space left" with free GB = out of inodes (millions of tiny files)</span>
+<span class="fn">du</span> <span class="ann">-xh</span> <span class="ann">--max-depth</span>=1 /var | <span class="fn">sort</span> <span class="ann">-h</span> | <span class="fn">tail</span>   <span class="cmt"># drill down one level at a time; -x stays on this filesystem</span>
+<span class="fn">ncdu</span> /var                               <span class="cmt"># interactive, if installed</span>
+<span class="fn">iostat</span> <span class="ann">-xz</span> 1                            <span class="cmt"># per-device: %util near 100 and high await = disk is the bottleneck</span>
+<span class="fn">iotop</span> <span class="ann">-o</span>                                <span class="cmt"># which process is doing the IO</span>
+<span class="fn">lsof</span> <span class="ann">+L1</span>                                <span class="cmt"># deleted but open files holding space</span></pre>
+<h3>Memory</h3>
+<pre><span class="fn">free</span> <span class="ann">-h</span>
+               total   used   free   shared  buff/cache  available
+Mem:            15Gi  6.2Gi  1.1Gi    120Mi       8.1Gi      8.9Gi
+<span class="cmt"># "free" being small is NORMAL — Linux uses spare RAM as file cache (buff/cache) and gives it back.</span>
+<span class="cmt"># Look at "available". Swap in use + rising "si/so" in vmstat = real pressure.</span>
+<span class="fn">vmstat</span> 1 5                               <span class="cmt"># r (runnable), b (blocked), si/so (swap in/out), wa (IO wait %), st (steal)</span>
+<span class="fn">cat</span> /proc/meminfo | <span class="fn">egrep</span> <span class="str">"MemAvailable|Swap|Dirty"</span>
+<span class="fn">ps</span> <span class="ann">-o</span> pid,rss,vsz,cmd <span class="ann">-p</span> &lt;pid&gt;             <span class="cmt"># RSS = real resident memory (what the OOM killer counts); VSZ = reserved address space (ignore for Java)</span>
+<span class="fn">smem</span> <span class="ann">-r</span> | <span class="fn">head</span>                           <span class="cmt"># proportional set size when many processes share libs</span>
+<span class="fn">cat</span> /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory.current   <span class="cmt"># container limit vs usage (cgroup v2)</span>
+<span class="fn">sysctl</span> vm.swappiness vm.overcommit_memory</pre>
+<h3>CPU and load</h3>
+<pre><span class="fn">uptime</span>
+ 10:31:07 up 42 days,  load average: 6.10, 4.20, 2.05
+<span class="cmt"># load = runnable + uninterruptible (IO-waiting) tasks, averaged over 1/5/15 min. Compare with nproc:</span>
+<span class="cmt">#   load 6 on 8 cores = fine; load 6 on 2 cores = saturated. Rising 1-min vs 15-min = getting worse.</span>
+<span class="fn">top</span>  → press <span class="num">1</span> (per core), <span class="kw">P</span> (sort CPU), <span class="kw">M</span> (sort mem), <span class="kw">H</span> (threads), <span class="kw">c</span> (full cmd)
+<span class="cmt">#   %us user, %sy kernel, %wa IO wait (disk!), %st steal (noisy VM neighbour / throttled), %id idle</span>
+<span class="fn">mpstat</span> <span class="ann">-P</span> ALL 1                          <span class="cmt"># per-core breakdown</span>
+<span class="fn">pidstat</span> <span class="ann">-t</span> <span class="ann">-p</span> &lt;pid&gt; 1                    <span class="cmt"># per-thread CPU of one process → match TID to a Java thread via jstack (nid=0x…)</span>
+<span class="fn">cat</span> /sys/fs/cgroup/cpu.max  ;  <span class="fn">cat</span> /sys/fs/cgroup/cpu.stat | <span class="fn">grep</span> throttled   <span class="cmt"># container CPU limit and throttling</span></pre>
+<table>
+  <thead><tr><th>Symptom</th><th>Numbers</th><th>Likely</th></tr></thead>
+  <tbody>
+    <tr><td>Slow, high load, low %us</td><td><code>%wa</code> high, <code>iostat %util</code> ~100, <code>b</code> column &gt; 0</td><td>Disk-bound: logging too much, DB on slow disk, swap thrashing.</td></tr>
+    <tr><td>High load, high %us</td><td><code>%us</code> 90+, one PID dominant</td><td>CPU-bound app: GC storm, busy loop, regex, JSON. Thread dump it.</td></tr>
+    <tr><td>High <code>%sy</code></td><td>Kernel time dominant</td><td>Too many syscalls/context switches: tiny IO, thread thrash, lots of small sockets.</td></tr>
+    <tr><td><code>%st</code> &gt; 5</td><td>Steal time</td><td>Hypervisor took CPU away (burstable instance out of credits, oversubscribed host, cgroup CPU throttling).</td></tr>
+    <tr><td>Memory "full"</td><td><code>available</code> low, swap growing, <code>si/so</code> non-zero</td><td>Real pressure; JVM heap too big for the box or a leak outside the heap.</td></tr>
+    <tr><td>Disk full but <code>du</code> disagrees</td><td><code>df</code> ≠ <code>du</code></td><td>Deleted open files, or a mount hiding files under it.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Panicking at <code>free</code></td><td>"Only 1 GB free, add RAM!"</td><td>Read <code>available</code>; cache is reclaimable.</td></tr>
+    <tr><td>Load average alone</td><td>Alert on load &gt; 2 everywhere.</td><td>Normalize by cores; look at what the load <i>is</i> (CPU vs IO wait).</td></tr>
+    <tr><td>Swap off = good</td><td>No swap, so the OOM killer fires at the first spike.</td><td>Small swap + low swappiness buys time for alerts; or correctly size the JVM.</td></tr>
+    <tr><td>Clearing caches</td><td><code>echo 3 &gt; /proc/sys/vm/drop_caches</code> as a "fix".</td><td>It only slows everything until the cache refills. Fix the actual consumer.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A 4-core container has <code>cpu.max = 200000 100000</code> (2 CPUs). The JVM reports <code>availableProcessors() = 2</code>, yet <code>top</code> inside shows 400% possible. Which does the app get?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It may <i>run</i> on all 4 cores briefly, but the cgroup throttles it to 2 CPU-seconds per second; <code>cpu.stat</code> shows <code>nr_throttled</code> climbing. Threads pause mid-request — p99 latency spikes with "idle" CPU. Set requests, consider no CPU limit in Kubernetes, and size thread pools from <code>availableProcessors()</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. The JVM on Linux — what to run when a Java service misbehaves</h2>
+<table>
+  <thead><tr><th>Tool (in the JDK)</th><th>Does</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td><code>jps</code></td><td>List JVMs with PIDs.</td><td><code>jps -lv</code></td></tr>
+    <tr><td><code>jcmd</code></td><td>Swiss-army knife: talk to a running JVM.</td><td><code>jcmd &lt;pid&gt; help</code> · <code>VM.flags</code> · <code>VM.system_properties</code> · <code>Thread.print</code> · <code>GC.heap_info</code> · <code>GC.class_histogram</code> · <code>GC.heap_dump /tmp/h.hprof</code> · <code>VM.native_memory summary</code> (needs <code>-XX:NativeMemoryTracking=summary</code>)</td></tr>
+    <tr><td><code>jstack</code> / <code>kill -3</code></td><td>Thread dump: what every thread is doing. Take 3 dumps 10 s apart to see what is <i>stuck</i>.</td><td><code>jstack -l &lt;pid&gt; &gt; td-$(date +%s).txt</code></td></tr>
+    <tr><td><code>jmap</code></td><td>Heap histogram / dump (prefer <code>jcmd</code>).</td><td><code>jmap -histo:live &lt;pid&gt; | head -30</code></td></tr>
+    <tr><td><code>jstat</code></td><td>GC stats over time.</td><td><code>jstat -gcutil &lt;pid&gt; 1000</code> — watch O (old gen %) and FGC (full GC count) climb</td></tr>
+    <tr><td><code>jfr</code> (Java Flight Recorder)</td><td>Low-overhead profiler built into the JVM. The right tool for "why is it slow in prod".</td><td><code>jcmd &lt;pid&gt; JFR.start duration=60s filename=/tmp/rec.jfr</code> → open in JDK Mission Control; or <code>-XX:StartFlightRecording</code> always-on ring buffer</td></tr>
+    <tr><td><code>jinfo</code></td><td>Read/set some flags live.</td><td><code>jinfo -flag +HeapDumpOnOutOfMemoryError &lt;pid&gt;</code></td></tr>
+    <tr><td><code>async-profiler</code> (external)</td><td>CPU/alloc/lock flame graphs including native frames.</td><td><code>./asprof -d 30 -f /tmp/flame.html &lt;pid&gt;</code></td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># flags every service should run with</span>
+JAVA_TOOL_OPTIONS=<span class="str">"\
+ -XX:MaxRAMPercentage=75 \                      # size heap from the cgroup limit, not the host
+ -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/var/dumps/ \
+ -XX:+ExitOnOutOfMemoryError \                   # die so the supervisor restarts a clean process
+ -Xlog:gc*:file=/var/log/shop/gc.log:time,uptime:filecount=5,filesize=20m \
+ -XX:StartFlightRecording=disk=true,maxage=2h,maxsize=200m,dumponexit=true,filename=/var/dumps/ \
+ -Djava.security.egd=file:/dev/./urandom \
+ -Duser.timezone=UTC -Dfile.encoding=UTF-8"</span>
+
+<span class="cmt"># CPU at 100%: which Java thread?</span>
+<span class="fn">top</span> <span class="ann">-H</span> <span class="ann">-p</span> &lt;pid&gt;                                  <span class="cmt"># note the hot TID, e.g. 4421</span>
+<span class="fn">printf</span> <span class="str">'%x\n'</span> 4421                              <span class="cmt"># → 1145</span>
+<span class="fn">jstack</span> &lt;pid&gt; | <span class="fn">grep</span> <span class="ann">-A</span> 20 <span class="str">'nid=0x1145'</span>            <span class="cmt"># the stack of that thread</span>
+
+<span class="cmt"># memory: heap vs everything else</span>
+<span class="fn">jcmd</span> &lt;pid&gt; GC.heap_info                          <span class="cmt"># heap used / committed / max</span>
+<span class="fn">ps</span> <span class="ann">-o</span> rss= <span class="ann">-p</span> &lt;pid&gt;                               <span class="cmt"># RSS = heap + metaspace + threads stacks + direct buffers + JIT + native libs</span>
+<span class="cmt"># RSS ≫ max heap? → off-heap: Netty direct buffers, metaspace, thread stacks (threads × 1 MB), glibc arenas (set MALLOC_ARENA_MAX=2)</span>
+
+<span class="cmt"># GC log reading (G1): look for "Pause Full" (bad), pause times, and heap after GC trending up (leak)</span>
+<span class="fn">grep</span> <span class="str">"Pause Full"</span> /var/log/shop/gc.log | <span class="fn">wc</span> <span class="ann">-l</span>
+<span class="cmt"># paste into gceasy.io or use JDK Mission Control</span>
+
+<span class="cmt"># crash? read the first 50 lines</span>
+<span class="fn">head</span> <span class="ann">-50</span> hs_err_pid*.log                           <span class="cmt"># "Native memory allocation failed" (ulimit/cgroup) vs "SIGSEGV in libxyz" (native lib)</span></pre>
+<table>
+  <thead><tr><th>Symptom</th><th>First commands</th><th>Usual cause</th></tr></thead>
+  <tbody>
+    <tr><td>Hangs / all requests slow</td><td>3× <code>jstack</code>; look for many threads <code>BLOCKED</code> on the same lock, or <code>WAITING</code> on a pool (Hikari <code>getConnection</code>)</td><td>Lock contention, exhausted DB pool, deadlock (jstack prints "Found one Java-level deadlock").</td></tr>
+    <tr><td>Memory grows until OOM</td><td><code>jstat -gcutil</code> (old gen never drops after Full GC) → <code>GC.heap_dump</code> → Eclipse MAT "Leak suspects"</td><td>Unbounded cache/map, listener never removed, ThreadLocal in a pool.</td></tr>
+    <tr><td>OOMKilled by Linux but heap was fine</td><td><code>ps rss</code> vs <code>GC.heap_info</code>; <code>VM.native_memory</code></td><td>Heap limit too close to the container limit; direct buffers; too many threads.</td></tr>
+    <tr><td>CPU 100%</td><td><code>top -H</code> → <code>jstack nid</code>; <code>jfr</code> 60 s</td><td>GC thrash (check gc.log first), regex, infinite loop, JSON on huge payload.</td></tr>
+    <tr><td>Slow start</td><td><code>-Xlog:class+load</code> count, <code>-verbose:gc</code>, Spring <code>--debug</code> startup report</td><td>Classpath scanning, too many beans, slow DNS, entropy (<code>/dev/random</code>).</td></tr>
+    <tr><td>Periodic 1–2 s stalls</td><td>gc.log pauses; <code>vmstat</code> <code>si/so</code>; <code>cpu.stat</code> throttling</td><td>Full GC, swapping, CPU throttling, or safepoint pauses (<code>-Xlog:safepoint</code>).</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>-Xmx</code> = container limit</td><td><code>--memory 2g</code> and <code>-Xmx2g</code> → OOMKilled, no Java OOM.</td><td><code>MaxRAMPercentage=75</code> (or <code>-Xmx</code> at ~70% of the limit) and leave room for off-heap.</td></tr>
+    <tr><td>Heap dump nowhere</td><td>OOM happens, nothing to analyze.</td><td><code>HeapDumpOnOutOfMemoryError</code> to a persistent volume; alert on file creation.</td></tr>
+    <tr><td>One thread dump</td><td>A single <code>jstack</code> shows threads "RUNNABLE in socketRead" — meaningless alone.</td><td>Three dumps, 10 s apart; threads in the same place all three times are stuck.</td></tr>
+    <tr><td>Restart as the fix</td><td>Restart on every OOM, never capture evidence.</td><td>Capture dump/JFR first (or automatically), then restart.</td></tr>
+    <tr><td>JDK tools missing in prod image</td><td>JRE-only image, no <code>jcmd</code>.</td><td>Keep a debug image / ephemeral debug container with the JDK, or <code>jattach</code>; or JRE with <code>jcmd</code> added via <code>jlink</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>jcmd</code> says "Unable to open socket file: target process not responding or HotSpot VM not loaded" — but the JVM is running. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Attach uses a Unix socket in <code>/tmp/.java_pid&lt;pid&gt;</code> and requires the same user and the same mount namespace. You are a different user (use <code>sudo -u shop jcmd</code>), in a different container (<code>kubectl exec</code> into the right one or use <code>nsenter -t &lt;pid&gt; -m -p</code>), or <code>/tmp</code> is <code>PrivateTmp</code> in the systemd unit.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Text tools — grep, sed, awk, jq, and the pipeline habit</h2>
+<pre><span class="cmt"># grep</span>
+<span class="fn">grep</span> <span class="ann">-rn</span> <span class="str">"OutOfMemory"</span> /var/log/shop/             <span class="cmt"># recursive with line numbers</span>
+<span class="fn">grep</span> <span class="ann">-E</span> <span class="str">"ERROR|WARN"</span> app.log | <span class="fn">grep</span> <span class="ann">-v</span> <span class="str">"HealthCheck"</span>  <span class="cmt"># regex, exclude</span>
+<span class="fn">grep</span> <span class="ann">-c</span> <span class="str">" 500 "</span> access.log                          <span class="cmt"># count</span>
+<span class="fn">grep</span> <span class="ann">-B2</span> <span class="ann">-A10</span> <span class="str">"Exception"</span> app.log                 <span class="cmt"># context before/after (stack traces)</span>
+<span class="fn">grep</span> <span class="ann">-oE</span> <span class="str">"traceId=[a-f0-9]+"</span> app.log | <span class="fn">sort</span> | <span class="fn">uniq</span> <span class="ann">-c</span> | <span class="fn">sort</span> <span class="ann">-rn</span> | <span class="fn">head</span>   <span class="cmt"># only the match; top values</span>
+<span class="fn">zgrep</span> <span class="str">"orderId=9001"</span> app.log.*.gz                   <span class="cmt"># inside rotated gzip logs</span>
+<span class="fn">rg</span> <span class="str">"TODO"</span> <span class="ann">-t</span> java                                   <span class="cmt"># ripgrep: faster, respects .gitignore</span>
+
+<span class="cmt"># awk — columns and sums</span>
+<span class="fn">awk</span> <span class="str">'{print $1}'</span> access.log | <span class="fn">sort</span> | <span class="fn">uniq</span> <span class="ann">-c</span> | <span class="fn">sort</span> <span class="ann">-rn</span> | <span class="fn">head</span>          <span class="cmt"># top client IPs</span>
+<span class="fn">awk</span> <span class="str">'$9 &gt;= 500 {c++} END {print c}'</span> access.log                   <span class="cmt"># count 5xx (status in column 9)</span>
+<span class="fn">awk</span> <span class="str">'{sum+=$NF; n++} END {print sum/n " avg"}'</span> times.log         <span class="cmt"># average of the last column</span>
+<span class="fn">awk</span> <span class="ann">-F:</span> <span class="str">'$3 &gt;= 1000 {print $1}'</span> /etc/passwd                      <span class="cmt"># custom separator</span>
+<span class="fn">ps</span> aux | <span class="fn">awk</span> <span class="str">'$6 &gt; 500000 {print $2, $6/1024 " MB", $11}'</span>        <span class="cmt"># processes over 500 MB RSS</span>
+
+<span class="cmt"># sed — edit streams/files</span>
+<span class="fn">sed</span> <span class="ann">-n</span> <span class="str">'100,120p'</span> app.log                                      <span class="cmt"># print lines 100–120</span>
+<span class="fn">sed</span> <span class="ann">-i.bak</span> <span class="str">'s/server.port=8080/server.port=9090/'</span> application.properties   <span class="cmt"># in-place with backup</span>
+<span class="fn">sed</span> <span class="ann">-E</span> <span class="str">'s/password=[^ ]+/password=***/g'</span> app.log                <span class="cmt"># redact</span>
+<span class="fn">sed</span> <span class="str">'/^#/d; /^$/d'</span> nginx.conf                                   <span class="cmt"># drop comments and blank lines</span>
+
+<span class="cmt"># jq — JSON</span>
+<span class="fn">curl</span> <span class="ann">-s</span> localhost:8080/actuator/health | <span class="fn">jq</span> <span class="str">'.status, .components.db.status'</span>
+<span class="fn">kubectl</span> get pods <span class="ann">-o</span> json | <span class="fn">jq</span> <span class="ann">-r</span> <span class="str">'.items[] | select(.status.phase != "Running") | .metadata.name'</span>
+<span class="fn">jq</span> <span class="ann">-r</span> <span class="str">'.[] | [.id, .total] | @tsv'</span> orders.json                    <span class="cmt"># to TSV</span>
+<span class="fn">jq</span> <span class="str">'.items | length'</span>  ·  <span class="fn">jq</span> <span class="ann">-c</span> <span class="str">'.'</span> (compact)  ·  <span class="fn">jq</span> <span class="str">'.a.b // "default"'</span>
+<span class="fn">journalctl</span> <span class="ann">-u</span> shop-api <span class="ann">-o</span> json | <span class="fn">jq</span> <span class="ann">-r</span> <span class="str">'select(.PRIORITY &lt;= "3") | .MESSAGE'</span>   <span class="cmt"># yq for YAML; xmllint --xpath for XML</span>
+
+<span class="cmt"># the rest of the toolbox</span>
+<span class="fn">sort</span> <span class="ann">-t,</span> <span class="ann">-k3</span> <span class="ann">-n</span> file.csv  ·  <span class="fn">sort</span> <span class="ann">-u</span>  ·  <span class="fn">uniq</span> <span class="ann">-c</span>  ·  <span class="fn">cut</span> <span class="ann">-d,</span> <span class="ann">-f1,3</span>  ·  <span class="fn">tr</span> <span class="str">'a-z'</span> <span class="str">'A-Z'</span>  ·  <span class="fn">wc</span> <span class="ann">-l</span>
+<span class="fn">head</span> <span class="ann">-n</span> 20  ·  <span class="fn">tail</span> <span class="ann">-F</span> app.log (follows across rotation)  ·  <span class="fn">less</span> <span class="ann">+F</span> app.log (Ctrl-C to stop following, / to search, &amp; to filter)
+<span class="fn">tee</span> out.log  ·  <span class="fn">xargs</span> <span class="ann">-n1</span> <span class="ann">-P4</span> cmd  ·  <span class="fn">paste</span>  ·  <span class="fn">column</span> <span class="ann">-t</span>  ·  <span class="fn">diff</span> <span class="ann">-u</span> a b  ·  <span class="fn">comm</span> <span class="ann">-23</span> a b  ·  <span class="fn">watch</span> <span class="ann">-n2</span> <span class="str">'ss -s'</span>
+<span class="fn">date</span> <span class="ann">-u</span> <span class="ann">+%FT%TZ</span>  ·  <span class="fn">date</span> <span class="ann">-d</span> @1729850000  ·  <span class="fn">base64</span> <span class="ann">-d</span>  ·  <span class="fn">sha256sum</span>  ·  <span class="fn">openssl</span> rand <span class="ann">-hex</span> 32</pre>
+<table>
+  <thead><tr><th>Redirection</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>cmd &gt; out.txt</code> · <code>&gt;&gt;</code></td><td>stdout to file (overwrite) · append.</td></tr>
+    <tr><td><code>cmd 2&gt; err.txt</code> · <code>cmd &gt; all.txt 2&gt;&amp;1</code> · <code>cmd &amp;&gt; all.txt</code></td><td>stderr only · both (order matters: redirect stdout first) · both (bash shorthand).</td></tr>
+    <tr><td><code>cmd 2&gt;/dev/null</code></td><td>Discard errors (e.g. <code>find</code> permission noise).</td></tr>
+    <tr><td><code>cmd1 | cmd2</code> · <code>cmd1 |&amp; cmd2</code></td><td>Pipe stdout · pipe both.</td></tr>
+    <tr><td><code>cmd &lt; in.txt</code> · <code>cmd &lt;&lt;EOF … EOF</code> · <code>cmd &lt;&lt;&lt; "string"</code></td><td>stdin from file · heredoc · herestring.</td></tr>
+    <tr><td><code>cmd1 &amp;&amp; cmd2</code> · <code>cmd1 || cmd2</code> · <code>cmd1 ; cmd2</code></td><td>Run 2 if 1 succeeded · if 1 failed · regardless.</td></tr>
+    <tr><td><code>$(cmd)</code> · <code>&lt;(cmd)</code></td><td>Command substitution · process substitution (<code>diff &lt;(sort a) &lt;(sort b)</code>).</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>cat file | grep x</code></td><td>Useless <code>cat</code>.</td><td><code>grep x file</code>. (Harmless, but it marks you.)</td></tr>
+    <tr><td>Parsing <code>ls</code></td><td><code>for f in $(ls)</code> — breaks on spaces.</td><td><code>for f in *</code>; or <code>find … -print0 | xargs -0</code>.</td></tr>
+    <tr><td><code>grep</code> on huge logs repeatedly</td><td>Six greps over a 10 GB file.</td><td>One pass with <code>awk</code>, or ship logs to Loki/ELK and query there.</td></tr>
+    <tr><td><code>sed -i</code> on a config in prod without backup</td><td>Typo, service down, no original.</td><td><code>-i.bak</code>, or edit via config management / git.</td></tr>
+    <tr><td><code>tail -f</code> on rotating logs</td><td>Output stops after rotation.</td><td><code>tail -F</code> (capital F follows the name).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>grep -c ERROR app.log</code> says 0 but you can see ERROR lines in the file. What gives?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Usually the lines contain ANSI color codes (<code>\e[31mERROR\e[0m</code>) or the file has Windows line endings/UTF-16. Check with <code>cat -A | head</code> or <code>file app.log</code>; strip colours (<code>sed 's/\x1b\[[0-9;]*m//g'</code>) or disable colour output in the logger when not on a TTY.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Bash scripting that does not break production</h2>
+<pre><span class="cmt">#!/usr/bin/env bash</span>
+<span class="cmt"># deploy.sh — deploy a release of shop-api. Usage: deploy.sh &lt;version&gt; [--dry-run]</span>
+<span class="kw">set</span> <span class="ann">-Eeuo</span> pipefail                                 <span class="cmt"># -e exit on error, -u unset var = error, -o pipefail, -E traps in functions</span>
+IFS=$<span class="str">'\n\t'</span>                                        <span class="cmt"># word-split only on newlines/tabs, not spaces</span>
+
+<span class="kw">readonly</span> SCRIPT_DIR=<span class="str">"$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"</span>
+<span class="kw">readonly</span> APP_DIR=<span class="str">"${APP_DIR:-/opt/shop}"</span>              <span class="cmt"># default if unset</span>
+<span class="kw">readonly</span> LOG=<span class="str">"/var/log/shop/deploy.log"</span>
+
+<span class="fn">log</span>()  { <span class="fn">printf</span> <span class="str">'%s [%s] %s\n'</span> <span class="str">"$(date -u +%FT%TZ)"</span> <span class="str">"$1"</span> <span class="str">"${*:2}"</span> | <span class="fn">tee</span> <span class="ann">-a</span> <span class="str">"$LOG"</span> &gt;&amp;2; }
+<span class="fn">die</span>()  { <span class="fn">log</span> ERROR <span class="str">"$@"</span>; <span class="kw">exit</span> 1; }
+<span class="fn">need</span>() { <span class="fn">command</span> <span class="ann">-v</span> <span class="str">"$1"</span> &gt;/dev/null 2&gt;&amp;1 || <span class="fn">die</span> <span class="str">"missing command: $1"</span>; }
+
+<span class="fn">cleanup</span>() { <span class="kw">local</span> rc=$?; <span class="fn">rm</span> <span class="ann">-rf</span> <span class="str">"${TMP:-}"</span>; [[ $rc -ne 0 ]] &amp;&amp; <span class="fn">log</span> ERROR <span class="str">"failed with exit $rc at line ${BASH_LINENO[0]}"</span>; <span class="kw">exit</span> $rc; }
+<span class="kw">trap</span> cleanup EXIT                                  <span class="cmt"># always runs: success, error, Ctrl-C</span>
+
+<span class="fn">usage</span>() { <span class="fn">sed</span> <span class="ann">-n</span> <span class="str">'2,3p'</span> <span class="str">"$0"</span>; <span class="kw">exit</span> 2; }
+
+<span class="cmt"># ---- args ----</span>
+[[ $# -ge 1 ]] || <span class="fn">usage</span>
+VERSION=<span class="str">"$1"</span>; <span class="kw">shift</span>
+DRY_RUN=<span class="kw">false</span>
+<span class="kw">while</span> [[ $# -gt 0 ]]; <span class="kw">do</span>
+  <span class="kw">case</span> <span class="str">"$1"</span> <span class="kw">in</span>
+    --dry-run) DRY_RUN=<span class="kw">true</span> ;;
+    -h|--help) <span class="fn">usage</span> ;;
+    *) <span class="fn">die</span> <span class="str">"unknown option: $1"</span> ;;
+  <span class="kw">esac</span>; <span class="kw">shift</span>
+<span class="kw">done</span>
+[[ <span class="str">"$VERSION"</span> =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || <span class="fn">die</span> <span class="str">"bad version: $VERSION"</span>
+
+<span class="fn">need</span> curl; <span class="fn">need</span> systemctl; <span class="fn">need</span> sha256sum
+<span class="kw">if</span> [[ $EUID -ne 0 ]]; <span class="kw">then</span> <span class="fn">die</span> <span class="str">"run as root (sudo)"</span>; <span class="kw">fi</span>
+
+<span class="cmt"># ---- do the work ----</span>
+TMP=<span class="str">"$(mktemp -d)"</span>
+<span class="kw">readonly</span> JAR_URL=<span class="str">"https://artifacts.shop.example/shop-api/${VERSION}/shop-api.jar"</span>
+<span class="fn">log</span> INFO <span class="str">"downloading $JAR_URL"</span>
+<span class="fn">curl</span> <span class="ann">-fsSL</span> <span class="ann">--retry</span> 3 <span class="ann">-o</span> <span class="str">"$TMP/shop-api.jar"</span> <span class="str">"$JAR_URL"</span>
+<span class="fn">curl</span> <span class="ann">-fsSL</span> <span class="ann">-o</span> <span class="str">"$TMP/shop-api.jar.sha256"</span> <span class="str">"$JAR_URL.sha256"</span>
+(<span class="kw">cd</span> <span class="str">"$TMP"</span> &amp;&amp; <span class="fn">sha256sum</span> <span class="ann">-c</span> <span class="ann">--quiet</span> shop-api.jar.sha256) || <span class="fn">die</span> <span class="str">"checksum mismatch"</span>
+
+<span class="kw">readonly</span> RELEASE=<span class="str">"$APP_DIR/releases/$VERSION"</span>
+<span class="kw">if</span> <span class="str">"$DRY_RUN"</span>; <span class="kw">then</span> <span class="fn">log</span> INFO <span class="str">"dry run: would install to $RELEASE and restart"</span>; <span class="kw">exit</span> 0; <span class="kw">fi</span>
+
+<span class="fn">install</span> <span class="ann">-d</span> <span class="ann">-o</span> shop <span class="ann">-g</span> shop <span class="str">"$RELEASE"</span>
+<span class="fn">install</span> <span class="ann">-o</span> shop <span class="ann">-g</span> shop <span class="ann">-m</span> 0644 <span class="str">"$TMP/shop-api.jar"</span> <span class="str">"$RELEASE/shop-api.jar"</span>
+<span class="fn">ln</span> <span class="ann">-sfn</span> <span class="str">"$RELEASE"</span> <span class="str">"$APP_DIR/current"</span>                   <span class="cmt"># atomic switch</span>
+<span class="fn">systemctl</span> restart shop-api
+
+<span class="kw">for</span> i <span class="kw">in</span> {1..30}; <span class="kw">do</span>                                  <span class="cmt"># wait for health, max 30 s</span>
+  <span class="kw">if</span> <span class="fn">curl</span> <span class="ann">-fsS</span> localhost:8080/actuator/health | <span class="fn">grep</span> <span class="ann">-q</span> <span class="str">'"UP"'</span>; <span class="kw">then</span> <span class="fn">log</span> INFO <span class="str">"deployed $VERSION"</span>; <span class="kw">exit</span> 0; <span class="kw">fi</span>
+  <span class="fn">sleep</span> 1
+<span class="kw">done</span>
+<span class="fn">log</span> ERROR <span class="str">"health check failed, rolling back"</span>
+PREV=<span class="str">"$(ls -1dt "$APP_DIR"/releases/* | sed -n 2p)"</span>
+<span class="fn">ln</span> <span class="ann">-sfn</span> <span class="str">"$PREV"</span> <span class="str">"$APP_DIR/current"</span> &amp;&amp; <span class="fn">systemctl</span> restart shop-api
+<span class="fn">die</span> <span class="str">"rolled back to $(basename "$PREV")"</span></pre>
+<table>
+  <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><code>set -Eeuo pipefail</code> at the top</td><td>Without it, a failed <code>cd</code> or <code>curl</code> is ignored and the script happily deletes the wrong directory. <code>pipefail</code> makes <code>cmd | tee</code> fail when <code>cmd</code> fails.</td></tr>
+    <tr><td>Quote every variable: <code>"$var"</code>, <code>"$@"</code></td><td>Spaces and globs in values otherwise split or expand. <code>rm -rf "$DIR/"*</code> vs <code>rm -rf $DIR/*</code> with empty <code>DIR</code> = <code>rm -rf /*</code>.</td></tr>
+    <tr><td><code>[[ ]]</code> not <code>[ ]</code>; <code>$(…)</code> not backticks; <code>local</code> in functions</td><td>Safer parsing, nesting, no global leaks.</td></tr>
+    <tr><td><code>trap cleanup EXIT</code></td><td>Temp files removed and errors logged even on Ctrl-C or <code>set -e</code> exit.</td></tr>
+    <tr><td>Idempotent steps</td><td><code>install -d</code>, <code>ln -sfn</code>, <code>mkdir -p</code>: running twice is safe.</td></tr>
+    <tr><td><code>--dry-run</code> and <code>--help</code></td><td>Operators can see what will happen before it happens.</td></tr>
+    <tr><td>Check tools and privileges first</td><td>Fail in the first second, not after half the work.</td></tr>
+    <tr><td>Log to stderr with timestamps; data to stdout</td><td>Scripts compose: <code>./list.sh | jq</code> still works.</td></tr>
+    <tr><td>Verify downloads (checksum/signature)</td><td>A proxy or mirror can hand you anything.</td></tr>
+    <tr><td><code>shellcheck deploy.sh</code> in CI</td><td>Catches 90% of quoting and logic bugs. <code>shfmt</code> for formatting.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># idioms</span>
+<span class="str">"${VAR:-default}"</span>  <span class="str">"${VAR:?must be set}"</span>  <span class="str">"${VAR:+set}"</span>  <span class="str">"${#VAR}"</span>  <span class="str">"${VAR%.jar}"</span> (strip suffix)  <span class="str">"${VAR##*/}"</span> (basename)  <span class="str">"${VAR,,}"</span> (lowercase)
+<span class="kw">if</span> [[ -f file &amp;&amp; -r file ]]; … [[ -d dir ]] … [[ -z "$s" ]] (empty) … [[ -n "$s" ]] … [[ "$a" == "$b" ]] … (( n &gt; 5 ))
+<span class="kw">while</span> IFS= <span class="fn">read</span> <span class="ann">-r</span> line; <span class="kw">do</span> …; <span class="kw">done</span> &lt; file            <span class="cmt"># read lines safely</span>
+<span class="fn">mapfile</span> <span class="ann">-t</span> arr &lt; &lt;(cmd)  ;  <span class="kw">for</span> x <span class="kw">in</span> <span class="str">"${arr[@]}"</span>; …   <span class="cmt"># arrays</span>
+<span class="kw">declare</span> <span class="ann">-A</span> map=([a]=1 [b]=2) ; <span class="str">"${map[a]}"</span>          <span class="cmt"># associative array</span>
+out=<span class="str">"$(cmd 2&gt;&amp;1)"</span> || { <span class="kw">echo</span> <span class="str">"$out"</span>; <span class="kw">exit</span> 1; }         <span class="cmt"># capture and check</span>
+<span class="kw">if</span> ! cmd; <span class="kw">then</span> …                                  <span class="cmt"># test a command directly, don't compare $?</span>
+<span class="fn">retry</span>() { <span class="kw">local</span> n=0; <span class="kw">until</span> <span class="str">"$@"</span>; <span class="kw">do</span> ((n++&gt;=5)) &amp;&amp; <span class="kw">return</span> 1; <span class="fn">sleep</span> $((2**n)); <span class="kw">done</span>; }   <span class="cmt"># retry with backoff</span>
+<span class="fn">flock</span> <span class="ann">-n</span> /tmp/deploy.lock ./deploy.sh 1.4.0          <span class="cmt"># one instance at a time</span>
+<span class="fn">bash</span> <span class="ann">-x</span> script.sh  ·  <span class="kw">set</span> <span class="ann">-x</span> / <span class="kw">set</span> <span class="ann">+x</span> around a block   <span class="cmt"># trace execution</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td><code>cd</code> without checking</td><td><code>cd $DIR; rm -rf *</code> — <code>cd</code> fails, you wipe the current directory.</td><td><code>set -e</code> + <code>cd "$DIR" || exit 1</code>; or operate on full paths.</td></tr>
+    <tr><td><code>curl … | bash</code></td><td>Running an unverified remote script as root.</td><td>Download, inspect, checksum, then run.</td></tr>
+    <tr><td><code>#!/bin/sh</code> with bash features</td><td>Arrays and <code>[[ ]]</code> fail on Debian's <code>dash</code>.</td><td><code>#!/usr/bin/env bash</code> if you use bash features; POSIX sh only if you truly need portability.</td></tr>
+    <tr><td>Secrets on the command line</td><td><code>mysql -ppassword</code> — visible in <code>ps</code> and shell history.</td><td>Env var, config file with 600 perms, or <code>read -s</code>.</td></tr>
+    <tr><td>Long scripts</td><td>800-line Bash orchestration with retries and JSON parsing.</td><td>Past ~100 lines, use Python or a real tool (Ansible, a Spring Boot CLI). Bash glues; it does not architect.</td></tr>
+    <tr><td>Ignoring shellcheck warnings</td><td>"SC2086 is noise."</td><td>It is the quoting bug that bites at 3 am. Fix or explicitly <code># shellcheck disable=SC2086</code> with a reason.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. With <code>set -e</code>, does <code>grep foo file | wc -l</code> stop the script when <code>grep</code> finds nothing?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Only with <code>pipefail</code> — and then yes, because <code>grep</code> returns 1 on no match, which is "failure". That is usually not what you mean. Write <code>count=$(grep -c foo file || true)</code> to allow zero matches explicitly.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Users, sudo, SSH, packages, and the box in a container world</h2>
+<table>
+  <thead><tr><th>Task</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Service user</td><td><code>sudo useradd -r -m -d /opt/shop -s /usr/sbin/nologin shop</code> (system account, no login shell)</td></tr>
+    <tr><td>Who am I / groups</td><td><code>id</code> · <code>groups</code> · <code>sudo -l</code> (what may I run)</td></tr>
+    <tr><td>Grant limited sudo</td><td><code>/etc/sudoers.d/deploy</code>: <code>deploy ALL=(root) NOPASSWD: /bin/systemctl restart shop-api, /bin/journalctl -u shop-api*</code> — edit with <code>visudo -f</code></td></tr>
+    <tr><td>Run as another user</td><td><code>sudo -u shop jcmd 4321 Thread.print</code> · <code>sudo -i</code> (root login shell)</td></tr>
+    <tr><td>SSH keys</td><td><code>ssh-keygen -t ed25519 -C "asha@laptop"</code> · <code>ssh-copy-id user@host</code> · keys in <code>~/.ssh/authorized_keys</code> (600), dir 700</td></tr>
+    <tr><td>SSH config</td><td><code>~/.ssh/config</code>: <code>Host prod-api  HostName 10.0.1.5  User deploy  IdentityFile ~/.ssh/shop  ProxyJump bastion</code> → <code>ssh prod-api</code></td></tr>
+    <tr><td>Tunnels</td><td><code>ssh -L 5432:db.internal:5432 bastion</code> (local port → remote) · <code>ssh -R</code> (reverse) · <code>ssh -D 1080</code> (SOCKS) · <code>-N</code> no shell</td></tr>
+    <tr><td>Copy</td><td><code>scp file host:/path</code> · <code>rsync -avz -e ssh ./ host:/opt/shop/</code></td></tr>
+    <tr><td>Agent</td><td><code>eval "$(ssh-agent)"; ssh-add ~/.ssh/shop</code> · <code>ForwardAgent</code> only to hosts you trust</td></tr>
+    <tr><td>Harden sshd</td><td><code>/etc/ssh/sshd_config</code>: <code>PasswordAuthentication no</code>, <code>PermitRootLogin no</code>, <code>AllowUsers deploy ops</code>; then <code>sshd -t &amp;&amp; systemctl reload sshd</code></td></tr>
+    <tr><td>Persistent sessions</td><td><code>tmux new -s ops</code> · detach <code>Ctrl-b d</code> · <code>tmux attach -t ops</code> — survives disconnects (vs <code>nohup</code>)</td></tr>
+    <tr><td>Packages (Debian/Ubuntu)</td><td><code>apt update &amp;&amp; apt install -y jq</code> · <code>apt list --upgradable</code> · <code>dpkg -l | grep openjdk</code> · <code>apt-cache policy pkg</code></td></tr>
+    <tr><td>Packages (RHEL/Fedora/Amazon)</td><td><code>dnf install jq</code> · <code>dnf check-update</code> · <code>rpm -qa | grep java</code></td></tr>
+    <tr><td>Alpine (containers)</td><td><code>apk add --no-cache curl</code> · musl libc (some Java native libs differ)</td></tr>
+    <tr><td>Which Java</td><td><code>update-alternatives --config java</code> · <code>readlink -f $(which java)</code> · <code>java -XshowSettings:properties -version 2&gt;&amp;1 | grep java.home</code></td></tr>
+    <tr><td>Time</td><td><code>timedatectl</code> · <code>chronyc tracking</code> — clock drift breaks TLS, JWTs, Kafka, and logs</td></tr>
+    <tr><td>Kernel params</td><td><code>sysctl -w net.core.somaxconn=4096</code> · persist in <code>/etc/sysctl.d/90-shop.conf</code> · <code>sysctl -p</code></td></tr>
+  </tbody>
+</table>
+<h3>Inside containers and pods</h3>
+<pre><span class="fn">docker</span> exec <span class="ann">-it</span> api sh  ·  <span class="fn">kubectl</span> exec <span class="ann">-it</span> api-7d9f <span class="ann">--</span> sh         <span class="cmt"># a shell inside (if the image has one)</span>
+<span class="fn">kubectl</span> debug <span class="ann">-it</span> api-7d9f <span class="ann">--image</span>=nicolaka/netshoot <span class="ann">--target</span>=api     <span class="cmt"># tools container sharing the pod's namespaces (distroless images)</span>
+<span class="fn">docker</span> top api  ·  <span class="fn">docker</span> stats  ·  <span class="fn">docker</span> inspect <span class="ann">-f</span> <span class="str">'{{.State.OOMKilled}}'</span> api
+<span class="cmt"># from the HOST, enter a container's namespaces with host tools</span>
+PID=$(<span class="fn">docker</span> inspect <span class="ann">-f</span> <span class="str">'{{.State.Pid}}'</span> api)
+<span class="fn">sudo</span> nsenter <span class="ann">-t</span> <span class="str">"$PID"</span> <span class="ann">-n</span> ss <span class="ann">-tulpn</span>                              <span class="cmt"># its network namespace, your ss</span>
+<span class="fn">sudo</span> nsenter <span class="ann">-t</span> <span class="str">"$PID"</span> <span class="ann">-m</span> <span class="ann">-p</span> jcmd 1 Thread.print                 <span class="cmt"># its mount+pid namespaces</span>
+<span class="cmt"># what the container is allowed</span>
+<span class="fn">cat</span> /sys/fs/cgroup/memory.max /sys/fs/cgroup/cpu.max /sys/fs/cgroup/pids.max   <span class="cmt"># inside the container</span>
+<span class="fn">cat</span> /proc/1/status | <span class="fn">grep</span> <span class="ann">-i</span> cap  ;  <span class="fn">capsh</span> <span class="ann">--decode</span>=&lt;hex&gt;          <span class="cmt"># capabilities</span>
+<span class="cmt"># PID 1 duties: your java process must reap zombies and forward signals — use exec form in Dockerfile, or tini</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Shared root password</td><td>Everyone SSHes as root with the same key.</td><td>Personal keys, named users, <code>sudo</code> with audit trail (<code>journalctl _COMM=sudo</code>).</td></tr>
+    <tr><td><code>sudo</code> for everything</td><td><code>deploy ALL=(ALL) NOPASSWD: ALL</code>.</td><td>List the exact commands.</td></tr>
+    <tr><td>Password SSH on the internet</td><td>Bots brute-force all day (<code>journalctl -u ssh | grep Failed</code>).</td><td>Keys only; bastion/VPN; fail2ban.</td></tr>
+    <tr><td>Hand-installed boxes</td><td>"Server #3 has Java 17, the others 21."</td><td>Image-based (Packer/AMI, containers) or config management (Ansible); servers are rebuilt, not repaired.</td></tr>
+    <tr><td>Clock not synced</td><td>JWT "token not yet valid"; TLS failures; Kafka timestamps off.</td><td>chrony/systemd-timesyncd; alert on drift.</td></tr>
+    <tr><td>Shell form <code>CMD java -jar app.jar</code></td><td><code>sh</code> is PID 1; SIGTERM never reaches Java; 10-second kill every deploy.</td><td>Exec form <code>CMD ["java","-jar","app.jar"]</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>ssh -L 5432:db.internal:5432 bastion</code> then <code>psql -h localhost</code>. Where does the TCP connection to the DB actually originate?</div>
+  <details><summary>Reveal hint</summary><div class="hint">From the <b>bastion</b>. Your client connects to your own localhost:5432; SSH carries the bytes to the bastion, which opens the connection to <code>db.internal:5432</code>. So the DB's firewall must allow the bastion, not your laptop, and <code>db.internal</code> must resolve on the bastion.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Incident runbook and quick reference</h2>
+<table>
+  <thead><tr><th>Step</th><th>Commands</th><th>Looking for</th></tr></thead>
+  <tbody>
+    <tr><td><b>1. Is the box alive and sane?</b></td><td><code>uptime; df -h; free -h; systemctl --failed; dmesg -T | tail -30</code></td><td>Reboot? Disk full? OOM killer? Failed units?</td></tr>
+    <tr><td><b>2. Is the service running?</b></td><td><code>systemctl status shop-api; journalctl -u shop-api -n 200 --no-pager</code> (K8s: <code>kubectl get pods; describe; logs --previous</code>)</td><td>Exit codes (137/143), stack traces at the end of the log, restart loop.</td></tr>
+    <tr><td><b>3. Is it listening and reachable?</b></td><td><code>ss -tulpn | grep 8080; curl -sS -m 3 localhost:8080/actuator/health</code></td><td>Bound to 0.0.0.0? Health UP? Which component is DOWN?</td></tr>
+    <tr><td><b>4. Is it the dependencies?</b></td><td><code>nc -zv db 5432; nc -zv redis 6379; dig +short db; curl -sS -m 3 https://pay.example/health</code></td><td>Refused vs timeout vs DNS.</td></tr>
+    <tr><td><b>5. Is it resources?</b></td><td><code>top -H -p $(pidof java); vmstat 1 5; iostat -xz 1 3; cat /sys/fs/cgroup/cpu.stat</code></td><td>CPU-bound thread, IO wait, swap, throttling.</td></tr>
+    <tr><td><b>6. What is the JVM doing?</b></td><td><code>jcmd $(pidof java) Thread.print &gt; /tmp/td1.txt</code> ×3; <code>jstat -gcutil $(pidof java) 1000 10</code>; <code>jcmd … GC.heap_info</code></td><td>Blocked threads, pool exhaustion, Full GC storm, heap near max.</td></tr>
+    <tr><td><b>7. What changed?</b></td><td><code>journalctl --since "2 hours ago" | grep -iE "deploy|restart|apt|systemd\[1\]: (Start|Stopp)"</code>; <code>ls -lt /opt/shop/releases | head</code>; <code>last -n 10</code>; git log of infra repo</td><td>Deploy, config change, package update, someone logged in.</td></tr>
+    <tr><td><b>8. Capture, then fix</b></td><td>Heap dump / JFR / thread dumps to <code>/var/dumps</code>; copy off the box</td><td>Evidence survives the restart. Then restart / roll back the symlink / scale.</td></tr>
+    <tr><td><b>9. Write it down</b></td><td>Timeline, cause, fix, follow-ups</td><td>The postmortem is the actual deliverable.</td></tr>
+  </tbody>
+</table>
+<h3>One-liners worth keeping</h3>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Top 10 biggest dirs here</td><td><code>du -xh --max-depth=1 . 2&gt;/dev/null | sort -h | tail</code></td></tr>
+    <tr><td>Who holds a port</td><td><code>ss -tulpn 'sport = :8080'</code> or <code>lsof -i :8080</code></td></tr>
+    <tr><td>Follow a service's logs with errors highlighted</td><td><code>journalctl -fu shop-api | grep --color -E "ERROR|WARN|$"</code></td></tr>
+    <tr><td>Count HTTP statuses in an access log</td><td><code>awk '{print $9}' access.log | sort | uniq -c | sort -rn</code></td></tr>
+    <tr><td>Requests per minute</td><td><code>awk '{print substr($4,2,17)}' access.log | uniq -c</code></td></tr>
+    <tr><td>Thread dump to file</td><td><code>jcmd $(pidof java) Thread.print &gt; td-$(date +%s).txt</code></td></tr>
+    <tr><td>Heap dump</td><td><code>jcmd $(pidof java) GC.heap_dump /var/dumps/h-$(date +%s).hprof</code></td></tr>
+    <tr><td>Was java OOM-killed</td><td><code>dmesg -T | grep -iE "killed process|out of memory"</code></td></tr>
+    <tr><td>Open file count of a process</td><td><code>ls /proc/$(pidof java)/fd | wc -l</code> vs <code>grep "open files" /proc/$(pidof java)/limits</code></td></tr>
+    <tr><td>Env of a running process</td><td><code>sudo tr '\0' '\n' &lt; /proc/$(pidof java)/environ | grep -i spring</code></td></tr>
+    <tr><td>Cert expiry</td><td><code>echo | openssl s_client -connect host:443 -servername host 2&gt;/dev/null | openssl x509 -noout -enddate</code></td></tr>
+    <tr><td>Watch connections</td><td><code>watch -n1 'ss -s | head -5'</code></td></tr>
+    <tr><td>Free space by deleting rotated logs</td><td><code>find /var/log -name "*.gz" -mtime +7 -print -delete</code></td></tr>
+    <tr><td>Safe truncate a huge live log</td><td><code>truncate -s 0 /var/log/shop/app.log</code></td></tr>
+    <tr><td>Run command on many hosts</td><td><code>for h in api-{1..5}; do ssh "$h" 'systemctl is-active shop-api'; done</code> (or Ansible ad-hoc: <code>ansible api -m shell -a 'systemctl is-active shop-api'</code>)</td></tr>
+    <tr><td>Diff config across hosts</td><td><code>diff &lt;(ssh api-1 cat /etc/shop/api.env) &lt;(ssh api-2 cat /etc/shop/api.env)</code></td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) read <code>available</code> not <code>free</code>, load per core, <code>%wa</code> and <code>%st</code>; 2) <code>ss</code>, <code>curl -v</code>, <code>dig</code>, <code>tcpdump</code> tell you DNS vs refused vs blocked; 3) services run as their own user under systemd with limits, graceful stop, and journald; 4) SIGTERM first, SIGKILL later; 137 = killed, 143 = clean stop; 5) three thread dumps, a heap dump, and a JFR before any restart; 6) <code>set -Eeuo pipefail</code>, quote everything, <code>trap</code> cleanup, shellcheck; 7) in containers, limits live in <code>/sys/fs/cgroup</code> and the JVM must respect them.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Production API is slow. You have SSH. First three commands?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Something like: <code>uptime &amp;&amp; free -h &amp;&amp; df -h</code> (is the box itself in trouble), <code>top -H -p $(pidof java)</code> or <code>vmstat 1</code> (CPU vs IO vs memory), then <code>jcmd $(pidof java) Thread.print</code> (what the app is stuck on). The point is the order: machine → process → application, each step narrowing the cause before you touch anything.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("linux-bash-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("linux-bash-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

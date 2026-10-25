@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Release Engineering &amp; GitOps (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* YAML keys, SQL keywords */
+  pre .typ { color: var(--c-typ); }                    /* kinds, image names */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers, percentages */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* flags, annotations */
+  pre .fn  { color: var(--c-fn); }                     /* commands */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Release Engineering &amp; GitOps<span class="sub">Deploy vs release · rolling, blue/green, canary, dark launch · feature flags · expand-contract DB migrations · rollback plans · GitOps with Argo CD · Argo Rollouts &amp; Flagger · release checklist (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">How code gets from "merged" to "serving users" safely, with Kubernetes as the main example and ECS notes where they differ. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. Deploy ≠ release — the vocabulary that makes everything else make sense</h2>
+<table>
+  <thead><tr><th>Word</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Build</b></td><td>Turn a commit into an immutable artifact (image by digest). Happens once.</td></tr>
+    <tr><td><b>Deploy</b></td><td>Put the artifact onto infrastructure so it <i>can</i> serve. A technical act.</td></tr>
+    <tr><td><b>Release</b></td><td>Expose the new behaviour to users. A business act. With flags, release ≠ deploy.</td></tr>
+    <tr><td><b>Promote</b></td><td>Move the <i>same</i> artifact to the next environment (dev → staging → prod). Never rebuild.</td></tr>
+    <tr><td><b>Rollout</b></td><td>The process of shifting traffic from old to new (rolling, blue/green, canary).</td></tr>
+    <tr><td><b>Rollback</b> vs <b>roll forward</b></td><td>Return to the previous artifact vs ship a fix on top. Rollback must be a button, not a project.</td></tr>
+    <tr><td><b>Environment</b></td><td>A complete, isolated copy of the system (its own DB, queues, config). Ephemeral preview environments per PR are the modern dev tier.</td></tr>
+    <tr><td><b>Progressive delivery</b></td><td>Rolling out to a growing slice of users while measuring, with automatic abort.</td></tr>
+    <tr><td><b>GitOps</b></td><td>The desired state of each environment lives in git; an agent in the cluster makes reality match. Deploy = merge.</td></tr>
+    <tr><td><b>Change failure rate / MTTR / lead time / deploy frequency</b></td><td>The four DORA metrics. Elite: multiple deploys a day, &lt; 1 hour to restore, &lt; 5% changes fail.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># the pipeline shape every section below plugs into</span>
+commit → CI: build + test → image ghcr.io/shop/api@sha256:… → (scan, sign) → write digest to the GitOps repo (dev)
+      → Argo CD syncs dev → smoke tests → PR promotes digest to staging → e2e → PR promotes digest to prod
+      → Argo Rollouts canary 5% → 25% → 50% → 100% with metric analysis; abort = automatic rollback
+      → feature flag turned on for 1% of users → 100%     ← the *release*</pre>
+<div class="tips"><b>Mental model:</b> deploying is putting the new car in the garage; releasing is handing the keys to drivers. Progressive delivery hands keys to a few drivers first and watches the dashboard. Feature flags are a switch on the dashboard that works even after everyone has the keys.</div>
+<div class="tricky">
+  <div class="q">Q. Why should the production artifact never be rebuilt from the same commit for production?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Two builds are not guaranteed identical: a snapshot dependency moved, a base image tag changed, a plugin version drifted. Only the exact bytes that passed staging have been tested. Promote the digest; tags are labels, digests are facts.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Deployment strategies — rolling, recreate, blue/green, canary, shadow</h2>
+<table>
+  <thead><tr><th>Strategy</th><th>How</th><th>Downtime</th><th>Rollback</th><th>Cost</th><th>Watch out</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Recreate</b></td><td>Stop all old, start all new.</td><td>Yes</td><td>Redeploy old</td><td>1×</td><td>—</td><td>Dev; apps that cannot run two versions (exclusive locks, schema break).</td></tr>
+    <tr><td><b>Rolling</b> (K8s default, ECS default)</td><td>Replace pods in batches (<code>maxSurge</code>/<code>maxUnavailable</code>).</td><td>No, if readiness probes are honest</td><td>Roll back = another rolling update (minutes)</td><td>~1.25×</td><td>Both versions serve at once for minutes → API/DB compatibility required.</td><td>Default for stateless services.</td></tr>
+    <tr><td><b>Blue/green</b></td><td>Full new stack (green) beside old (blue); switch traffic at the LB/Service in one step.</td><td>No</td><td>Instant: switch back</td><td>2× during the switch</td><td>Double capacity; DB shared — schema still must be compatible; long-lived connections (WebSockets) don't move.</td><td>Big releases, regulated environments, when instant rollback matters.</td></tr>
+    <tr><td><b>Canary</b></td><td>Route a small % (or a header/cohort) to new; grow in steps while comparing metrics; abort on regression.</td><td>No</td><td>Automatic on bad metrics</td><td>~1.1×</td><td>Needs traffic shaping (mesh/ingress/ALB weights) and good metrics; sticky users; small canary = noisy stats.</td><td>High-traffic services; the gold standard.</td></tr>
+    <tr><td><b>A/B</b></td><td>Like canary but by user segment, for product experiments, not safety.</td><td>No</td><td>Flag off</td><td>1×</td><td>Needs analytics.</td><td>Product decisions.</td></tr>
+    <tr><td><b>Shadow / dark traffic</b></td><td>Copy real requests to the new version; discard its responses.</td><td>No</td><td>Not user-facing</td><td>2× compute</td><td>Side effects must be disabled (payments!); read-only paths.</td><td>Rewrites, performance validation.</td></tr>
+    <tr><td><b>Dark launch</b></td><td>Deploy with the feature <i>off</i> behind a flag; turn on for staff → 1% → all.</td><td>No</td><td>Flag off (seconds)</td><td>1×</td><td>Flag debt.</td><td>Any user-visible feature.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Kubernetes rolling update knobs (Deployment)</span>
+<span class="kw">spec</span>:
+  <span class="kw">replicas</span>: <span class="num">6</span>
+  <span class="kw">strategy</span>:
+    <span class="kw">type</span>: RollingUpdate
+    <span class="kw">rollingUpdate</span>: { <span class="kw">maxSurge</span>: <span class="num">25%</span>, <span class="kw">maxUnavailable</span>: <span class="num">0</span> }      <span class="cmt"># never below 6 ready; up to 8 during rollout</span>
+  <span class="kw">minReadySeconds</span>: <span class="num">15</span>                                      <span class="cmt"># a pod must stay Ready 15 s before counting (catches crash-after-start)</span>
+  <span class="kw">progressDeadlineSeconds</span>: <span class="num">600</span>                             <span class="cmt"># mark the rollout failed after 10 min (alert on it)</span>
+  <span class="kw">template.spec</span>:
+    <span class="kw">terminationGracePeriodSeconds</span>: <span class="num">40</span>                      <span class="cmt"># ≥ Spring graceful timeout + preStop</span>
+    <span class="kw">containers</span>:
+    - <span class="kw">lifecycle</span>: { <span class="kw">preStop</span>: { <span class="kw">exec</span>: { <span class="kw">command</span>: [sh, -c, <span class="str">"sleep 8"</span>] } } }   <span class="cmt"># let endpoints/ingress drain before SIGTERM</span>
+      <span class="kw">readinessProbe</span>: { <span class="kw">httpGet</span>: { <span class="kw">path</span>: /actuator/health/readiness, <span class="kw">port</span>: <span class="num">8080</span> } }
+
+<span class="fn">kubectl</span> rollout status deploy/api  ·  <span class="fn">kubectl</span> rollout history deploy/api  ·  <span class="fn">kubectl</span> rollout undo deploy/api <span class="ann">--to-revision</span>=3
+
+<span class="cmt"># ECS equivalents: deployment configuration minimumHealthyPercent=100 maximumPercent=200 (rolling);</span>
+<span class="cmt">#   blue/green via CodeDeploy (two target groups, listener switch, bake time, auto-rollback on alarms) — or ECS native blue/green (2025+)</span>
+<span class="cmt"># Blue/green on K8s by hand: two Deployments (api-blue, api-green) + one Service; switch spec.selector.version; keep blue scaled for N minutes</span></pre>
+<table>
+  <thead><tr><th>Zero-downtime checklist (any strategy)</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Readiness probe reflects "can serve" (DB pool up, caches warm)</td><td>Traffic only to pods that will answer.</td></tr>
+    <tr><td>Graceful shutdown: stop accepting, finish in-flight, then exit (<code>server.shutdown=graceful</code>)</td><td>No dropped requests when the old pod dies.</td></tr>
+    <tr><td><code>preStop</code> sleep + <code>terminationGracePeriodSeconds</code> &gt; app timeout</td><td>Endpoint removal propagates before SIGTERM arrives.</td></tr>
+    <tr><td><code>maxUnavailable: 0</code> and a PodDisruptionBudget</td><td>Capacity never dips during rollout or node drains.</td></tr>
+    <tr><td>N and N+1 compatible: API (additive), events (schema evolution), DB (expand/contract)</td><td>Both versions run together for minutes (rolling) or days (canary).</td></tr>
+    <tr><td>Idempotent consumers, retries with backoff on clients</td><td>A request hitting a dying pod is retried, not lost.</td></tr>
+    <tr><td>Health checks don't depend on downstreams</td><td>A DB blip must not fail the whole rollout.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Rolling with incompatible change</td><td>v2 writes a new column v1 doesn't know; v1 pods read NULLs and crash mid-rollout.</td><td>Expand/contract (Section 3): v2 must work with v1's schema and vice versa.</td></tr>
+    <tr><td>Blue/green with migrations</td><td>Green runs a destructive migration; switching back to blue breaks.</td><td>Migrations are forward-compatible and separate from the switch.</td></tr>
+    <tr><td>Canary by pod count only</td><td>1 canary pod of 10 = ~10% traffic, but no metric check — it's just a slow rolling update.</td><td>Canary = traffic shaping <b>+ analysis + automatic abort</b>.</td></tr>
+    <tr><td>Deploy Friday 6 pm</td><td>Nobody around when the canary fails at 7.</td><td>Deploy when people are watching; automation makes any time fine, but humans still own the pager.</td></tr>
+    <tr><td>Big-bang releases</td><td>Three weeks of changes in one deploy; which one broke it?</td><td>Small, frequent deploys; one change per deploy is the easiest rollback decision ever.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A rolling update of a 6-replica Deployment with <code>maxSurge: 1, maxUnavailable: 1</code>. How many pods serve traffic at the lowest point?</div>
+  <details><summary>Reveal hint</summary><div class="hint">5. <code>maxUnavailable: 1</code> allows one fewer than desired. At peak you have 7 (6 + surge 1). For latency-sensitive services set <code>maxUnavailable: 0</code> so capacity never dips; you pay with a slightly slower rollout.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Feature flags — decoupling release from deploy</h2>
+<table>
+  <thead><tr><th>Flag type</th><th>Lifetime</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><b>Release toggle</b></td><td>Days–weeks; deleted after full rollout</td><td><code>checkout.new-coupon-engine</code> — ship dark, enable gradually.</td></tr>
+    <tr><td><b>Ops / kill switch</b></td><td>Permanent</td><td><code>recommendations.enabled</code> — turn off a non-critical dependency when it misbehaves.</td></tr>
+    <tr><td><b>Experiment</b></td><td>Weeks</td><td>A/B of two checkout layouts; needs analytics on the variant.</td></tr>
+    <tr><td><b>Permission / entitlement</b></td><td>Permanent</td><td>Beta features for certain tenants/plans.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// OpenFeature (vendor-neutral API) + a provider (LaunchDarkly, Unleash, Flagsmith, flagd, Split, ConfigCat…)</span>
+<span class="cmt">// pom: dev.openfeature:sdk + a provider; Spring: dev.openfeature.contrib:spring-boot-starter</span>
+<span class="ann">@Service</span>
+<span class="kw">class</span> <span class="typ">CheckoutService</span> {
+    <span class="kw">private final</span> <span class="typ">Client</span> flags;        <span class="cmt">// OpenFeatureAPI.getInstance().getClient()</span>
+
+    <span class="typ">Total</span> <span class="fn">total</span>(<span class="typ">Cart</span> cart, <span class="typ">User</span> user) {
+        <span class="kw">var</span> ctx = <span class="kw">new</span> <span class="typ">ImmutableContext</span>(user.id(), <span class="typ">Map</span>.of(<span class="str">"tenant"</span>, <span class="kw">new</span> <span class="typ">Value</span>(user.tenant()), <span class="str">"plan"</span>, <span class="kw">new</span> <span class="typ">Value</span>(user.plan())));
+        <span class="kw">if</span> (flags.getBooleanValue(<span class="str">"checkout.new-coupon-engine"</span>, <span class="kw">false</span>, ctx)) {   <span class="cmt">// default = OFF when the flag service is unreachable</span>
+            <span class="kw">return</span> newEngine.total(cart);
+        }
+        <span class="kw">return</span> legacyEngine.total(cart);
+    }
+}
+<span class="cmt">// targeting rules live in the flag service: 100% of tenant=internal → 5% of users (sticky by user id) → 50% → 100%</span>
+<span class="cmt">// kill switch: same API, defaultValue = true (ON when unreachable) for "is this dependency enabled"</span></pre>
+<table>
+  <thead><tr><th>Where flags can live</th><th>Pros</th><th>Cons</th></tr></thead>
+  <tbody>
+    <tr><td>Config / env var (<code>@ConfigurationProperties</code> + <code>@RefreshScope</code>, Spring Cloud Config)</td><td>Zero new infra.</td><td>Change = redeploy or config push; no targeting, no audit UI.</td></tr>
+    <tr><td>Database table + cache</td><td>Simple, in your control.</td><td>You build the UI, audit, targeting yourself.</td></tr>
+    <tr><td>Flag service (LaunchDarkly, Unleash, Flagsmith, flagd + OpenFeature)</td><td>Targeting, gradual rollout, audit, kill switches in seconds, SDKs with local cache.</td><td>Another dependency (must fail safe), cost.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Flag debt</td><td>140 flags, nobody knows which are on; two interact and nobody tested that combination.</td><td>Expiry date and owner on every release flag; a CI check fails when an expired flag still exists; delete the old code path after 100%.</td></tr>
+    <tr><td>Flag as a config system</td><td>Timeouts and URLs as "flags".</td><td>Flags are booleans/variants for behaviour; config stays config.</td></tr>
+    <tr><td>Default = ON</td><td>Flag service down → new, untested path for everyone.</td><td>Release flags default OFF; kill switches default ON (fail open to the known-good behaviour).</td></tr>
+    <tr><td>Evaluated once at start</td><td>Flag read into a static at boot; "turning it off" needs a restart.</td><td>Evaluate per request through the SDK's local cache (ms, no network per call).</td></tr>
+    <tr><td>Flags without observability</td><td>Error rate doubled; which flag flipped?</td><td>Flag changes as events/annotations in Grafana; variant as a low-cardinality metric tag.</td></tr>
+    <tr><td>Flag checks everywhere</td><td><code>if (flag)</code> in 30 places for one feature.</td><td>One decision point (strategy pattern / a bean chosen at the boundary).</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Flags + canary are complementary:</b> canary tests the <i>deploy</i> (new binary, same behaviour); flags test the <i>feature</i> (same binary, new behaviour). Use both: ship dark via canary, then release via flag.</div>
+<div class="tricky">
+  <div class="q">Q. You roll a feature to 5% of users by flag. A user complains the page changes between refreshes. What is missing?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Stickiness. Percentage rollouts must hash a stable key (user id, not request id or random) so the same user always lands in the same bucket. Every flag SDK does this if you pass a stable targeting key.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Database changes without downtime — expand / migrate / contract</h2>
+<p>During any rollout two app versions run at once, and a rollback may put the <i>old</i> version on the <i>new</i> schema. So every schema change must be split so that each step is compatible with both the version before it and after it.</p>
+<table>
+  <thead><tr><th>Phase</th><th>Schema</th><th>App release</th><th>Rollback-safe?</th></tr></thead>
+  <tbody>
+    <tr><td><b>1. Expand</b></td><td>Add the new column/table/index (nullable, no default that rewrites the table, index <code>CONCURRENTLY</code>). Old column stays.</td><td>v1 still running; ignores the new column.</td><td>Yes — nothing depends on it yet.</td></tr>
+    <tr><td><b>2. Dual-write</b></td><td>—</td><td>v2 writes <b>both</b> old and new columns; reads old (or new with fallback).</td><td>Yes — v1 keeps working on the old column; v2 → v1 rollback loses nothing.</td></tr>
+    <tr><td><b>3. Backfill</b></td><td>Batched job copies old → new for existing rows (10k rows per txn, sleep between).</td><td>v2.</td><td>Yes.</td></tr>
+    <tr><td><b>4. Switch reads</b></td><td>Add <code>NOT NULL</code> / constraints now that data is complete (<code>NOT VALID</code> → <code>VALIDATE</code>).</td><td>v3 reads new, still writes both.</td><td>Yes — v2 reads old which is still written.</td></tr>
+    <tr><td><b>5. Contract</b></td><td>Drop the old column (after v3 has been stable for a release cycle).</td><td>v4 stops writing old.</td><td>Only to v3; that is fine — v2 is long gone.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">-- example: split customers.full_name into first_name + last_name (Flyway, one migration per deploy)</span>
+<span class="cmt">-- V21__expand_names.sql   (ships with v2 = dual-write)</span>
+<span class="kw">ALTER TABLE</span> customers <span class="kw">ADD COLUMN</span> first_name text, <span class="kw">ADD COLUMN</span> last_name text;      <span class="cmt">-- nullable, instant</span>
+
+<span class="cmt">-- backfill job (NOT a Flyway migration; a batched script or a Spring @Scheduled one-off)</span>
+<span class="kw">UPDATE</span> customers <span class="kw">SET</span> first_name = split_part(full_name,<span class="str">' '</span>,<span class="num">1</span>), last_name = substr(full_name, length(split_part(full_name,<span class="str">' '</span>,<span class="num">1</span>))+<span class="num">2</span>)
+<span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="kw">SELECT</span> id <span class="kw">FROM</span> customers <span class="kw">WHERE</span> first_name <span class="kw">IS NULL LIMIT</span> <span class="num">10000</span>);   <span class="cmt">-- loop until 0 rows</span>
+
+<span class="cmt">-- V22__names_not_null.sql   (ships with v3 = read new)</span>
+<span class="kw">ALTER TABLE</span> customers <span class="kw">ADD CONSTRAINT</span> first_name_nn <span class="kw">CHECK</span> (first_name <span class="kw">IS NOT NULL</span>) <span class="kw">NOT VALID</span>;
+<span class="kw">ALTER TABLE</span> customers <span class="kw">VALIDATE CONSTRAINT</span> first_name_nn;                           <span class="cmt">-- weak lock, scans once</span>
+
+<span class="cmt">-- V23__contract_names.sql   (ships with v4, one release later)</span>
+<span class="kw">ALTER TABLE</span> customers <span class="kw">DROP COLUMN</span> full_name;</pre>
+<table>
+  <thead><tr><th>Change</th><th>Safe form</th></tr></thead>
+  <tbody>
+    <tr><td>Add column</td><td>Nullable, or constant default (PG 11+). Never a volatile default (<code>now()</code>) — full rewrite.</td></tr>
+    <tr><td>Rename column</td><td>Never rename in place. Add new → dual-write → backfill → switch → drop old.</td></tr>
+    <tr><td>Change type</td><td>Same as rename (new column), or <code>ALTER … TYPE</code> only for binary-compatible changes (<code>varchar(50)</code> → <code>text</code>).</td></tr>
+    <tr><td>Add index</td><td><code>CREATE INDEX CONCURRENTLY</code>, outside a transaction (Flyway: <code>executeInTransaction=false</code>).</td></tr>
+    <tr><td>Add NOT NULL / FK / CHECK</td><td><code>NOT VALID</code> then <code>VALIDATE</code>; FK columns indexed first.</td></tr>
+    <tr><td>Drop column/table</td><td>Only after no deployed version references it (contract phase); keep a backup/snapshot.</td></tr>
+    <tr><td>Large data fix</td><td>Batched job outside the migration tool; idempotent; resumable; throttled.</td></tr>
+    <tr><td>Where migrations run</td><td>At app start (Flyway in Boot — fine with <code>maxUnavailable: 0</code>, since v1 pods keep serving while v2's first pod migrates), or as a pre-deploy Job/init container (clearer, one runner). Set <code>lock_timeout</code>.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Schema and code in one step</td><td>Rename column + deploy code that uses the new name. Old pods crash during rollout; rollback impossible.</td><td>Expand/contract across ≥ 2 releases.</td></tr>
+    <tr><td>"Down" migrations as the rollback plan</td><td>Flyway undo that drops the column — with the data in it.</td><td>Forward-only migrations; rollback = redeploy the previous app version, which works because the schema is compatible.</td></tr>
+    <tr><td>Hibernate <code>ddl-auto=update</code></td><td>Schema changes you did not review, in prod, at pod start, by N pods at once.</td><td>Flyway/Liquibase with reviewed SQL; <code>ddl-auto=validate</code>.</td></tr>
+    <tr><td>Migration holds a lock at peak</td><td><code>ALTER TABLE</code> waits behind a long transaction; every query queues; outage.</td><td><code>SET lock_timeout='5s'</code> in the migration; retry; run in a quiet window.</td></tr>
+    <tr><td>Contracting too early</td><td>Dropped the old column the same day; a hotfix rollback to v2 needs it.</td><td>Contract one full release cycle later, after the new path is proven.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Same rules for APIs and events:</b> additive changes only (new optional fields, new endpoints); never rename or change type in place; deprecate with a sunset date; version only when you must. Schema Registry compatibility modes (Kafka sheet) are expand/contract for messages.</div>
+<div class="tricky">
+  <div class="q">Q. Flyway runs at pod start. Two v2 pods start at the same time during a rolling update. Do they both run the migration?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. Flyway takes a lock on its history table; the second pod waits, then sees the migration already applied. Keep migrations fast (seconds), set <code>lock_timeout</code>, and give the pod a startup probe long enough — or run migrations as a separate Job before the rollout to remove the question entirely.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Rollback — make it a button, know when it won't work</h2>
+<table>
+  <thead><tr><th>Layer</th><th>How to roll back</th><th>Time</th></tr></thead>
+  <tbody>
+    <tr><td>Feature behaviour</td><td>Flag off.</td><td>Seconds.</td></tr>
+    <tr><td>Application (K8s)</td><td><code>kubectl rollout undo</code> · Argo CD: sync to previous commit / <code>argocd app rollback</code> · Argo Rollouts: <code>kubectl argo rollouts undo</code> or automatic abort.</td><td>1–3 min (pods restart).</td></tr>
+    <tr><td>Application (ECS)</td><td>Update service to the previous task definition revision · CodeDeploy auto-rollback on alarm · deployment circuit breaker.</td><td>2–5 min.</td></tr>
+    <tr><td>Infrastructure</td><td><code>git revert</code> the Terraform change → plan → apply.</td><td>Minutes–hours; some resources cannot be "un-replaced".</td></tr>
+    <tr><td>Config</td><td>Revert the ConfigMap/SSM value in git → sync; restart pods if env-based.</td><td>Minutes.</td></tr>
+    <tr><td>Database</td><td><b>Usually you don't.</b> Schema is forward-compatible (Section 3). Data corruption → PITR restore to a side instance and repair, not a blind restore.</td><td>Hours.</td></tr>
+    <tr><td>Messages / events</td><td>Consumers tolerate both schema versions; bad messages → DLQ → fix consumer → redrive.</td><td>Minutes.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># GitOps rollback = git revert (auditable, same path as a deploy)</span>
+<span class="fn">git</span> revert <span class="ann">--no-edit</span> HEAD          <span class="cmt"># in the config repo: puts the previous image digest back</span>
+<span class="fn">git</span> push                           <span class="cmt"># Argo CD syncs within ~3 min (or webhook → seconds)</span>
+<span class="fn">argocd</span> app history shop-api  ·  <span class="fn">argocd</span> app rollback shop-api 41     <span class="cmt"># emergency: roll back in the cluster first (turns off auto-sync!), then fix git</span>
+
+<span class="cmt"># Kubernetes without GitOps</span>
+<span class="fn">kubectl</span> rollout history deploy/api  ·  <span class="fn">kubectl</span> rollout undo deploy/api <span class="ann">--to-revision</span>=7
+<span class="cmt"># ECS</span>
+<span class="fn">aws</span> ecs update-service <span class="ann">--cluster</span> shop <span class="ann">--service</span> api <span class="ann">--task-definition</span> shop-api:41</pre>
+<table>
+  <thead><tr><th>Before every prod deploy, know</th><th>Example answer</th></tr></thead>
+  <tbody>
+    <tr><td>What is the previous known-good artifact?</td><td><code>ghcr.io/shop/api@sha256:9f3a…</code> (task def 41 / git commit c0ffee)</td></tr>
+    <tr><td>Is the schema compatible with it?</td><td>Yes — V22 is expand-only.</td></tr>
+    <tr><td>Which flag(s) gate the new behaviour?</td><td><code>checkout.new-coupon-engine</code> (currently 0%)</td></tr>
+    <tr><td>What signals say "roll back"?</td><td>5xx ratio &gt; 2% or p99 &gt; 1 s on the canary for 5 min; DLQ &gt; 0</td></tr>
+    <tr><td>Who decides, and how long do we wait?</td><td>On-call engineer; automatic abort by Rollouts; human decision within 15 min</td></tr>
+    <tr><td>What data could the new version have written that the old cannot read?</td><td>None (dual-write); or: new events have an optional field old consumers ignore</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>"We'll just fix forward"</td><td>Debugging in prod for 40 minutes while users see errors.</td><td>Roll back first (minutes), debug after. Fix-forward only when rollback is impossible or the fix is trivially obvious.</td></tr>
+    <tr><td>Rollback untested</td><td>First rollback ever is during the incident; the old task definition references a deleted image tag.</td><td>Images by digest, retention ≥ 90 days; practise rollback in staging every release.</td></tr>
+    <tr><td>Rolling back the DB</td><td>Restoring last night's snapshot over prod loses today's orders.</td><td>Forward-compatible schema; PITR to a <i>side</i> instance; targeted repair.</td></tr>
+    <tr><td>Manual cluster rollback under GitOps</td><td><code>kubectl rollout undo</code> while Argo auto-sync is on → Argo puts the bad version back in 3 minutes.</td><td>Revert in git (or <code>argocd app rollback</code>, which pauses auto-sync — then fix git).</td></tr>
+    <tr><td>One deploy, five changes</td><td>Can't roll back one without the others.</td><td>Small deploys; flags for independent features.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You roll back the app to v1 after v2 ran its expand migration. v2 wrote some rows with the new column filled and the old column… what? Is v1 OK?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Only if v2 <b>dual-wrote</b> (old column kept up to date). That is exactly why dual-write comes before switching reads: it is what makes rollback safe. If v2 had stopped writing the old column, v1 would now see stale data for those rows.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. GitOps with Argo CD — what it is and how it is wired</h2>
+<p><b>GitOps</b>: a git repo holds the complete desired state of a cluster (manifests, Helm values, Kustomize overlays). A controller inside the cluster (Argo CD or Flux) continuously compares live state with git and <b>pulls</b> changes in. CI never needs cluster credentials; every change is a commit; drift is detected and (optionally) reverted.</p>
+<table>
+  <thead><tr><th>Argo CD object / concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Application</b></td><td>"Deploy <i>this path</i> of <i>this repo</i> at <i>this revision</i> into <i>this cluster/namespace</i>". The unit of sync.</td></tr>
+    <tr><td><b>Project (AppProject)</b></td><td>Guardrails: which repos, clusters, namespaces, and resource kinds a team's Applications may use. RBAC boundary.</td></tr>
+    <tr><td><b>Sync</b></td><td>Apply git → cluster. Manual or automated. <code>prune</code> deletes resources removed from git; <code>selfHeal</code> reverts manual cluster edits.</td></tr>
+    <tr><td><b>Health</b></td><td>Argo knows how to judge Deployments, StatefulSets, Ingress, Rollouts…: Healthy / Progressing / Degraded / Missing.</td></tr>
+    <tr><td><b>Sync waves &amp; hooks</b></td><td><code>argocd.argoproj.io/sync-wave: "-1"</code> orders resources (CRDs, namespaces, DB migration Job first); <code>hook: PreSync/PostSync</code> for one-off Jobs.</td></tr>
+    <tr><td><b>App of Apps</b> / <b>ApplicationSet</b></td><td>One Application that creates others (bootstrap); ApplicationSet generates Applications from a list/git directories/clusters (one per service × env).</td></tr>
+    <tr><td><b>Image Updater</b></td><td>Watches the registry and commits new tags/digests to git by rule — or let CI commit the digest (simpler, explicit).</td></tr>
+    <tr><td><b>Notifications</b></td><td>Slack/Teams/GitHub status on sync/health events.</td></tr>
+    <tr><td><b>Flux</b></td><td>The other GitOps controller: Kustomization/HelmRelease CRDs, image automation, more "building blocks", no UI by default. Same model.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># repo layout: app code and deploy config are SEPARATE repos (so a config change doesn't rebuild the app, and CI needs no cluster creds)</span>
+shop-api/              <span class="cmt"># code; CI builds image, then opens/commits a change to…</span>
+shop-deploy/           <span class="cmt"># GitOps repo</span>
+├── apps/
+│   └── shop-api/
+│       ├── base/              deployment.yaml  service.yaml  kustomization.yaml
+│       └── overlays/
+│           ├── dev/           kustomization.yaml  (images: newTag/digest, replicas 1)
+│           ├── staging/
+│           └── prod/          kustomization.yaml  (replicas 6, resources, PDB, HPA)
+└── argocd/
+    ├── projects/shop.yaml
+    └── applicationsets/shop-api.yaml
+
+<span class="cmt"># argocd/applicationsets/shop-api.yaml — one Application per environment</span>
+<span class="kw">apiVersion</span>: <span class="typ">argoproj.io/v1alpha1</span>
+<span class="kw">kind</span>: <span class="typ">ApplicationSet</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: shop-api, <span class="kw">namespace</span>: argocd }
+<span class="kw">spec</span>:
+  <span class="kw">generators</span>:
+  - <span class="kw">list</span>:
+      <span class="kw">elements</span>:
+      - { <span class="kw">env</span>: dev,     <span class="kw">cluster</span>: <span class="str">https://kubernetes.default.svc</span>, <span class="kw">autoSync</span>: <span class="str">"true"</span> }
+      - { <span class="kw">env</span>: staging, <span class="kw">cluster</span>: <span class="str">https://staging-eks.example</span>,   <span class="kw">autoSync</span>: <span class="str">"true"</span> }
+      - { <span class="kw">env</span>: prod,    <span class="kw">cluster</span>: <span class="str">https://prod-eks.example</span>,      <span class="kw">autoSync</span>: <span class="str">"true"</span> }
+  <span class="kw">template</span>:
+    <span class="kw">metadata</span>: { <span class="kw">name</span>: <span class="str">'shop-api-{{env}}'</span> }
+    <span class="kw">spec</span>:
+      <span class="kw">project</span>: shop
+      <span class="kw">source</span>: { <span class="kw">repoURL</span>: <span class="str">https://github.com/shop/shop-deploy</span>, <span class="kw">targetRevision</span>: main, <span class="kw">path</span>: <span class="str">'apps/shop-api/overlays/{{env}}'</span> }
+      <span class="kw">destination</span>: { <span class="kw">server</span>: <span class="str">'{{cluster}}'</span>, <span class="kw">namespace</span>: shop }
+      <span class="kw">syncPolicy</span>:
+        <span class="kw">automated</span>: { <span class="kw">prune</span>: <span class="kw">true</span>, <span class="kw">selfHeal</span>: <span class="kw">true</span> }
+        <span class="kw">syncOptions</span>: [CreateNamespace=true, ServerSideApply=true]
+        <span class="kw">retry</span>: { <span class="kw">limit</span>: <span class="num">3</span>, <span class="kw">backoff</span>: { <span class="kw">duration</span>: 10s, <span class="kw">factor</span>: <span class="num">2</span> } }
+
+<span class="cmt"># CI's last step (GitHub Actions): promote the digest to dev by commit; staging/prod by PR</span>
+- <span class="kw">run</span>: |
+    git clone https://x-access-token:${{ secrets.DEPLOY_REPO_TOKEN }}@github.com/shop/shop-deploy
+    cd shop-deploy/apps/shop-api/overlays/dev
+    kustomize edit set image ghcr.io/shop/api=ghcr.io/shop/api@${{ needs.image.outputs.digest }}
+    git commit -am <span class="str">"shop-api dev → ${{ github.sha }}"</span> &amp;&amp; git push
+<span class="cmt"># prod: same edit on overlays/prod via a PR that requires approval → merge = deploy</span>
+
+<span class="cmt"># CLI</span>
+<span class="fn">argocd</span> app list  ·  <span class="fn">argocd</span> app get shop-api-prod  ·  <span class="fn">argocd</span> app diff shop-api-prod   <span class="cmt"># what would change</span>
+<span class="fn">argocd</span> app sync shop-api-prod  ·  <span class="fn">argocd</span> app history shop-api-prod  ·  <span class="fn">argocd</span> app rollback shop-api-prod 41
+<span class="fn">argocd</span> app set shop-api-prod <span class="ann">--sync-policy</span> none        <span class="cmt"># pause automation during an incident</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>CI applies with kubectl</td><td>CI holds cluster-admin kubeconfigs for every cluster; drift undetected.</td><td>CI commits to the deploy repo; Argo pulls. CI has no cluster access.</td></tr>
+    <tr><td>Manifests in the app repo</td><td>Config change → full CI rebuild; prod config in a repo every developer can push to.</td><td>Separate deploy repo with CODEOWNERS and required reviews on <code>overlays/prod</code>.</td></tr>
+    <tr><td><code>latest</code> tag in git</td><td>Git says <code>latest</code>; the cluster runs whatever that was when the pod started. GitOps without the "Ops".</td><td>Digest (or immutable tag) in git; every commit = a specific binary.</td></tr>
+    <tr><td>selfHeal off + hotfix by hand</td><td><code>kubectl edit</code> in prod; git is a lie.</td><td><code>selfHeal: true</code>; hotfix via git (or <code>argocd app rollback</code> which pauses sync).</td></tr>
+    <tr><td>One giant Application</td><td>Whole cluster in one app: one broken manifest blocks every service's sync.</td><td>One Application per service per env (ApplicationSet); platform add-ons in their own apps/project.</td></tr>
+    <tr><td>Secrets in the deploy repo</td><td>Plain-text Secret manifests committed.</td><td>Sealed Secrets, SOPS + age/KMS (Argo plugins), or External Secrets Operator pulling from Secrets Manager/Vault.</td></tr>
+    <tr><td>Helm values edited in the UI</td><td>Parameter overrides in Argo UI; lost on recreate.</td><td>Everything in git; UI read-only for most people.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Argo CD shows the app <b>Synced</b> but <b>Degraded</b>. What does that combination mean?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Git and cluster match (synced) but the resources are not healthy — pods crash-looping, Deployment not progressing, Ingress without an address. GitOps did its job; the application is broken. Check <code>kubectl describe</code>/logs — and fix via a new commit (or revert).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Progressive delivery — Argo Rollouts and Flagger</h2>
+<table>
+  <thead><tr><th></th><th>Argo Rollouts</th><th>Flagger</th></tr></thead>
+  <tbody>
+    <tr><td>Model</td><td>Replaces <code>Deployment</code> with a <code>Rollout</code> CRD that has a canary/blue-green <code>strategy</code>. Owns ReplicaSets itself.</td><td>Keeps your <code>Deployment</code>; a <code>Canary</code> CRD wraps it and creates <code>-primary</code>/<code>-canary</code> Deployments and Services.</td></tr>
+    <tr><td>Traffic shaping</td><td>Ingress-NGINX, ALB, Istio, Linkerd, SMI, Gateway API, Traefik, Apache APISIX… or pod-count-only.</td><td>Istio, Linkerd, App Mesh, NGINX, Gateway API, Traefik, Skipper…</td></tr>
+    <tr><td>Analysis</td><td><code>AnalysisTemplate</code> with Prometheus/Datadog/New Relic/CloudWatch/Kayenta/Web/Job providers; runs at steps or in the background.</td><td>Built-in metric checks (request-success-rate, request-duration) + custom <code>MetricTemplate</code>s; webhooks for load tests / manual gates.</td></tr>
+    <tr><td>UI / CLI</td><td>Dashboard + <code>kubectl argo rollouts</code> plugin; Argo CD shows steps.</td><td>No UI; Grafana dashboards; events/alerts.</td></tr>
+    <tr><td>Pick</td><td>Already on Argo CD; want explicit steps, pauses, manual promotion, blue/green too.</td><td>Already on Flux or a mesh; want "set it and forget it" canaries.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Argo Rollouts canary with ALB (or ingress-nginx) weights and Prometheus analysis</span>
+<span class="kw">apiVersion</span>: <span class="typ">argoproj.io/v1alpha1</span>
+<span class="kw">kind</span>: <span class="typ">Rollout</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api, <span class="kw">namespace</span>: shop }
+<span class="kw">spec</span>:
+  <span class="kw">replicas</span>: <span class="num">6</span>
+  <span class="kw">selector</span>: { <span class="kw">matchLabels</span>: { app: api } }
+  <span class="kw">template</span>: { <span class="cmt"># … exactly like a Deployment's pod template …</span> }
+  <span class="kw">strategy</span>:
+    <span class="kw">canary</span>:
+      <span class="kw">canaryService</span>: api-canary                 <span class="cmt"># Rollouts manages the selectors of these two Services</span>
+      <span class="kw">stableService</span>: api-stable
+      <span class="kw">trafficRouting</span>:
+        <span class="kw">alb</span>: { <span class="kw">ingress</span>: api, <span class="kw">servicePort</span>: <span class="num">80</span> }     <span class="cmt"># or nginx: { stableIngress: api }</span>
+      <span class="kw">maxSurge</span>: <span class="str">"25%"</span>
+      <span class="kw">maxUnavailable</span>: <span class="num">0</span>
+      <span class="kw">analysis</span>:                                  <span class="cmt"># background analysis from step 1 onward</span>
+        <span class="kw">templates</span>: [{ <span class="kw">templateName</span>: api-success-rate }]
+        <span class="kw">startingStep</span>: <span class="num">1</span>
+        <span class="kw">args</span>: [{ <span class="kw">name</span>: service, <span class="kw">value</span>: api-canary }]
+      <span class="kw">steps</span>:
+      - <span class="kw">setWeight</span>: <span class="num">5</span>
+      - <span class="kw">pause</span>: { <span class="kw">duration</span>: 5m }
+      - <span class="kw">setWeight</span>: <span class="num">25</span>
+      - <span class="kw">pause</span>: { <span class="kw">duration</span>: 10m }
+      - <span class="kw">setWeight</span>: <span class="num">50</span>
+      - <span class="kw">pause</span>: {}                                <span class="cmt"># indefinite: a human promotes (kubectl argo rollouts promote api)</span>
+      - <span class="kw">setWeight</span>: <span class="num">100</span>
+  <span class="kw">rollbackWindow</span>: { <span class="kw">revisions</span>: <span class="num">3</span> }                 <span class="cmt"># instant rollback to recent revisions (keeps their ReplicaSets warm)</span>
+---
+<span class="kw">apiVersion</span>: <span class="typ">argoproj.io/v1alpha1</span>
+<span class="kw">kind</span>: <span class="typ">AnalysisTemplate</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api-success-rate, <span class="kw">namespace</span>: shop }
+<span class="kw">spec</span>:
+  <span class="kw">args</span>: [{ <span class="kw">name</span>: service }]
+  <span class="kw">metrics</span>:
+  - <span class="kw">name</span>: success-rate
+    <span class="kw">interval</span>: 1m
+    <span class="kw">count</span>: <span class="num">10</span>
+    <span class="kw">successCondition</span>: <span class="str">result[0] &gt;= 0.99</span>
+    <span class="kw">failureLimit</span>: <span class="num">2</span>                               <span class="cmt"># two bad samples → abort → automatic rollback to stable</span>
+    <span class="kw">provider</span>:
+      <span class="kw">prometheus</span>:
+        <span class="kw">address</span>: <span class="str">http://prometheus.monitoring:9090</span>
+        <span class="kw">query</span>: |
+          sum(rate(http_server_requests_seconds_count{service="{{args.service}}",status!~"5.."}[2m]))
+          / sum(rate(http_server_requests_seconds_count{service="{{args.service}}"}[2m]))
+  - <span class="kw">name</span>: p99-latency
+    <span class="kw">interval</span>: 1m
+    <span class="kw">successCondition</span>: <span class="str">result[0] &lt; 0.8</span>
+    <span class="kw">provider</span>:
+      <span class="kw">prometheus</span>:
+        <span class="kw">address</span>: <span class="str">http://prometheus.monitoring:9090</span>
+        <span class="kw">query</span>: histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket{service="{{args.service}}"}[2m])))
+
+<span class="cmt"># operate</span>
+<span class="fn">kubectl</span> argo rollouts get rollout api <span class="ann">--watch</span>      <span class="cmt"># steps, weights, analysis status</span>
+<span class="fn">kubectl</span> argo rollouts promote api                   <span class="cmt"># continue past a pause</span>
+<span class="fn">kubectl</span> argo rollouts abort api                     <span class="cmt"># back to stable, rollout marked Degraded</span>
+<span class="fn">kubectl</span> argo rollouts undo api                      <span class="cmt"># previous revision</span>
+<span class="fn">kubectl</span> argo rollouts dashboard                     <span class="cmt"># local UI</span></pre>
+<pre><span class="cmt"># Flagger equivalent (keeps your Deployment "api")</span>
+<span class="kw">apiVersion</span>: <span class="typ">flagger.app/v1beta1</span>
+<span class="kw">kind</span>: <span class="typ">Canary</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api, <span class="kw">namespace</span>: shop }
+<span class="kw">spec</span>:
+  <span class="kw">targetRef</span>: { <span class="kw">apiVersion</span>: apps/v1, <span class="kw">kind</span>: Deployment, <span class="kw">name</span>: api }
+  <span class="kw">provider</span>: nginx
+  <span class="kw">ingressRef</span>: { <span class="kw">apiVersion</span>: networking.k8s.io/v1, <span class="kw">kind</span>: Ingress, <span class="kw">name</span>: api }
+  <span class="kw">service</span>: { <span class="kw">port</span>: <span class="num">80</span>, <span class="kw">targetPort</span>: <span class="num">8080</span> }
+  <span class="kw">analysis</span>:
+    <span class="kw">interval</span>: 1m
+    <span class="kw">threshold</span>: <span class="num">3</span>                                  <span class="cmt"># failed checks before rollback</span>
+    <span class="kw">maxWeight</span>: <span class="num">50</span>
+    <span class="kw">stepWeight</span>: <span class="num">10</span>                                <span class="cmt"># 10 → 20 → … → 50, then promote</span>
+    <span class="kw">metrics</span>:
+    - { <span class="kw">name</span>: request-success-rate, <span class="kw">thresholdRange</span>: { <span class="kw">min</span>: <span class="num">99</span> }, <span class="kw">interval</span>: 1m }
+    - { <span class="kw">name</span>: request-duration,     <span class="kw">thresholdRange</span>: { <span class="kw">max</span>: <span class="num">800</span> }, <span class="kw">interval</span>: 1m }
+    <span class="kw">webhooks</span>:
+    - { <span class="kw">name</span>: load-test, <span class="kw">type</span>: rollout, <span class="kw">url</span>: <span class="str">http://flagger-loadtester/</span>, <span class="kw">metadata</span>: { <span class="kw">cmd</span>: <span class="str">"hey -z 1m -q 10 -c 2 http://api-canary.shop/"</span> } }   <span class="cmt"># generate traffic in staging</span></pre>
+<table>
+  <thead><tr><th>Design the canary</th><th>Guidance</th></tr></thead>
+  <tbody>
+    <tr><td>Metrics</td><td>Success rate and p99 latency at minimum; add business metrics (checkout conversion) for the long steps. Compare canary vs <i>stable at the same time</i>, not vs yesterday.</td></tr>
+    <tr><td>Step sizes</td><td>Small first step (1–5%) long enough to collect statistically meaningful samples (traffic × time ≥ a few thousand requests); then bigger steps.</td></tr>
+    <tr><td>Duration</td><td>Long enough for slow failures (memory leaks, cache warm-up): 30–60 min total for important services; minutes for low-risk.</td></tr>
+    <tr><td>Stickiness</td><td>Weight-based routing sends a user to different versions across requests. If that breaks UX, route by header/cookie (Rollouts <code>setHeaderRoute</code>, Istio) or use flags for the user-facing part.</td></tr>
+    <tr><td>Background jobs / consumers</td><td>Kafka/SQS consumers can't be weighted by HTTP. Canary by partition share or by one replica + metric analysis; or by flag.</td></tr>
+    <tr><td>Alerts during rollout</td><td>Annotate Grafana with rollout events; alert on <code>rollout_phase="Degraded"</code> / Flagger <code>canary_status</code>.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Canary without traffic routing</td><td>1 of 10 pods is "canary" with a shared Service: 10% traffic by luck, no control, no header routing.</td><td>Ingress/ALB/mesh weights so the % is exact and adjustable.</td></tr>
+    <tr><td>Analysis on absolute thresholds only</td><td>"p99 &lt; 800 ms" passes while stable runs at 200 ms — a 4× regression went unnoticed.</td><td>Compare canary to stable (Kayenta-style or two queries), plus absolute guards.</td></tr>
+    <tr><td>Too little traffic</td><td>5% canary on a 10 rps service = 0.5 rps; one error = 100% failure.</td><td>Longer steps, larger first weight, or synthetic load (Flagger webhook / k6) in low-traffic envs.</td></tr>
+    <tr><td>Canary pods ≠ stable pods</td><td>Canary gets different config/resources; metrics don't compare.</td><td>Only the image differs.</td></tr>
+    <tr><td>Rollout CRD without Argo CD health</td><td>Argo CD says Healthy while the Rollout is paused forever.</td><td>Argo CD understands <code>Rollout</code> health; set <code>progressDeadlineAbort</code> and alert on paused/degraded.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The canary analysis fails and Rollouts aborts. What is now running, and what is the Rollout's status?</div>
+  <details><summary>Reveal hint</summary><div class="hint">100% of traffic is back on the stable ReplicaSet (scaled to full); the canary ReplicaSet is scaled to 0. The Rollout is <b>Degraded</b> with the new pod template still as "desired" — it will not retry until you push a new revision or <code>retry</code>. Argo CD shows it Degraded, which is your signal.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Environments, promotion, and preview environments</h2>
+<table>
+  <thead><tr><th>Environment</th><th>Purpose</th><th>Data</th><th>Promotion rule</th></tr></thead>
+  <tbody>
+    <tr><td><b>Preview / ephemeral</b> (per PR)</td><td>Reviewers click a URL; e2e runs against it.</td><td>Seeded, throwaway (Testcontainers-style DB or a schema per PR).</td><td>Created on PR open, destroyed on close (ApplicationSet pull-request generator, or a CI job).</td></tr>
+    <tr><td><b>Dev</b></td><td>Latest <code>main</code>, always.</td><td>Synthetic.</td><td>Auto on merge.</td></tr>
+    <tr><td><b>Staging</b></td><td>Prod-like config and size; release candidates; e2e, performance, migration rehearsal.</td><td>Anonymised prod subset or realistic synthetic.</td><td>Auto after dev smoke tests pass, or on tag.</td></tr>
+    <tr><td><b>Prod</b></td><td>Users.</td><td>Real.</td><td>Approved PR to the prod overlay (or tag) → canary → flags.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># promotion = change ONE line in the next overlay (same digest)</span>
+<span class="cmt"># apps/shop-api/overlays/prod/kustomization.yaml</span>
+<span class="kw">images</span>:
+- <span class="kw">name</span>: ghcr.io/shop/api
+  <span class="kw">digest</span>: sha256:9f3a…                              <span class="cmt"># ← the PR changes this; reviewers see exactly what moves to prod</span>
+
+<span class="cmt"># automated promotion PR after staging passes (GitHub Actions)</span>
+- <span class="kw">run</span>: |
+    cd shop-deploy
+    git switch -c promote/api-${SHORT_SHA}
+    (cd apps/shop-api/overlays/prod &amp;&amp; kustomize edit set image ghcr.io/shop/api=ghcr.io/shop/api@${DIGEST})
+    git commit -am <span class="str">"promote shop-api ${SHORT_SHA} to prod"</span> &amp;&amp; git push -u origin HEAD
+    gh pr create --fill --label deploy:prod --reviewer shop/release-managers
+
+<span class="cmt"># preview environments with Argo CD's pull-request generator</span>
+<span class="kw">generators</span>:
+- <span class="kw">pullRequest</span>:
+    <span class="kw">github</span>: { <span class="kw">owner</span>: shop, <span class="kw">repo</span>: shop-api, <span class="kw">labels</span>: [preview] }
+    <span class="kw">requeueAfterSeconds</span>: <span class="num">60</span>
+<span class="kw">template</span>:
+  <span class="kw">metadata</span>: { <span class="kw">name</span>: <span class="str">'api-pr-{{number}}'</span> }
+  <span class="kw">spec</span>:
+    <span class="kw">source</span>: { <span class="kw">repoURL</span>: <span class="str">https://github.com/shop/shop-api</span>, <span class="kw">targetRevision</span>: <span class="str">'{{head_sha}}'</span>, <span class="kw">path</span>: deploy/preview,
+              <span class="kw">kustomize</span>: { <span class="kw">images</span>: [<span class="str">'ghcr.io/shop/api:pr-{{number}}-{{head_short_sha}}'</span>] } }
+    <span class="kw">destination</span>: { <span class="kw">server</span>: <span class="str">https://kubernetes.default.svc</span>, <span class="kw">namespace</span>: <span class="str">'preview-pr-{{number}}'</span> }
+    <span class="kw">syncPolicy</span>: { <span class="kw">automated</span>: { <span class="kw">prune</span>: <span class="kw">true</span> }, <span class="kw">syncOptions</span>: [CreateNamespace=true] }
+<span class="cmt"># URL: api-pr-482.preview.shop.example via wildcard DNS + ingress; namespace deleted when the PR closes</span></pre>
+<table>
+  <thead><tr><th>Versioning the release</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Artifact identity</td><td>Image digest; tags <code>sha-&lt;short&gt;</code>, <code>v1.4.0</code> (from the git tag), never <code>latest</code> in deploy repos.</td></tr>
+    <tr><td>Version visible at runtime</td><td><code>/actuator/info</code> with git commit + build time (<code>build-info</code> + git plugin); a <code>version</code> label on pods; log it at startup.</td></tr>
+    <tr><td>Release notes</td><td>Generated from Conventional Commits between tags (release-please / semantic-release / <code>gh release create --generate-notes</code>).</td></tr>
+    <tr><td>Changelog of deploys</td><td>The deploy repo's history <i>is</i> the audit log: who promoted what, when, approved by whom.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Staging unlike prod</td><td>Single replica, no TLS, different DB engine version; passes everything, prod breaks.</td><td>Same manifests via overlays; differences limited to size, hostnames, secrets. Same DB engine version.</td></tr>
+    <tr><td>Shared dev environment</td><td>Ten developers deploying to one "dev"; nobody knows what is running.</td><td>Preview env per PR; dev tracks <code>main</code> only.</td></tr>
+    <tr><td>Promotion by rebuild</td><td>"Release" pipeline rebuilds from the tag.</td><td>Promote the digest that passed staging.</td></tr>
+    <tr><td>Manual promotion steps in a wiki</td><td>"Edit the yaml, bump the tag, apply."</td><td>A bot opens the promotion PR; a human approves; Argo deploys.</td></tr>
+    <tr><td>Prod config drift</td><td>Prod overlay edited by hand in the cluster.</td><td>selfHeal + required reviews on <code>overlays/prod</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. With GitOps, where is the record of "who deployed v1.4.0 to prod and when"?</div>
+  <details><summary>Reveal hint</summary><div class="hint">In the deploy repo: the merge commit of the promotion PR (author = bot, approver = reviewer, time = merge time) plus Argo CD's sync history with the commit SHA. No separate deployment database needed — and it survives cluster rebuilds.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Release checklist, metrics, and quick reference</h2>
+<table>
+  <thead><tr><th>Before</th><th>During</th><th>After</th></tr></thead>
+  <tbody>
+    <tr><td>Artifact digest known; passed staging e2e; scanned and signed.</td><td>Watch the canary dashboard (success rate, p99, saturation, business metric).</td><td>Confirm 100% for ≥ 30 min; flag rollout plan written.</td></tr>
+    <tr><td>Schema change is expand-only; backfill done; compatible with the previous version.</td><td>Argo CD Healthy; Rollout progressing; no PDB violations; no new DLQ messages.</td><td>Delete the old flag path after full release; schedule the contract migration.</td></tr>
+    <tr><td>Flags default off; kill switches identified.</td><td>Logs filtered to the canary pods (<code>version</code> label).</td><td>Update runbook/dashboards if new endpoints or metrics appeared.</td></tr>
+    <tr><td>Rollback command written in the PR description; previous digest noted.</td><td>Abort criteria agreed (automated + human).</td><td>Release notes published; deploy annotated in Grafana.</td></tr>
+    <tr><td>On-call aware; not during a known traffic peak unless deliberate.</td><td>Someone is watching, even if automation decides.</td><td>Retro if anything surprised you — even if it succeeded.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>DORA metric</th><th>Measure it from</th><th>Move it with</th></tr></thead>
+  <tbody>
+    <tr><td><b>Deployment frequency</b></td><td>Merges to the prod overlay / Argo sync events.</td><td>Smaller PRs, trunk-based, automation.</td></tr>
+    <tr><td><b>Lead time for changes</b></td><td>Commit time → prod sync time.</td><td>Fast CI, auto-promotion to staging, no manual queues.</td></tr>
+    <tr><td><b>Change failure rate</b></td><td>Rollouts aborted / rollbacks / incidents per deploy.</td><td>Canary analysis, flags, better tests, expand/contract.</td></tr>
+    <tr><td><b>Time to restore (MTTR)</b></td><td>Alert → healthy.</td><td>Rollback as a button; flags; runbooks; good alerts.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>See rollout state</td><td><code>kubectl argo rollouts get rollout api -w</code> · <code>kubectl rollout status deploy/api</code></td></tr>
+    <tr><td>Promote / abort / undo</td><td><code>kubectl argo rollouts promote|abort|undo api</code></td></tr>
+    <tr><td>What Argo would change</td><td><code>argocd app diff shop-api-prod</code></td></tr>
+    <tr><td>Force sync / pause automation</td><td><code>argocd app sync shop-api-prod</code> · <code>argocd app set shop-api-prod --sync-policy none</code></td></tr>
+    <tr><td>Roll back (GitOps)</td><td><code>git revert HEAD &amp;&amp; git push</code> in the deploy repo</td></tr>
+    <tr><td>Roll back (emergency)</td><td><code>argocd app rollback shop-api-prod &lt;id&gt;</code> then fix git</td></tr>
+    <tr><td>Roll back (ECS)</td><td><code>aws ecs update-service --task-definition shop-api:&lt;prev&gt;</code></td></tr>
+    <tr><td>Which version is live</td><td><code>curl -s https://api/actuator/info | jq .git.commit.id</code> · <code>kubectl get pods -L version</code></td></tr>
+    <tr><td>Flag state</td><td>Flag service UI/API; <code>curl http://flagd:8013/…</code> for flagd</td></tr>
+    <tr><td>Deploy annotations in Grafana</td><td>Argo CD notifications → Grafana annotations API</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) build once, promote the digest, never rebuild; 2) deploy ≠ release — flags release, default OFF, delete after 100%; 3) every rollout runs two versions at once → expand/contract for DB, additive for APIs/events; 4) rollback is a button (git revert / rollout undo / previous task def), practised, with the previous digest written down before you start; 5) GitOps: CI commits, Argo pulls, selfHeal on, no cluster creds in CI; 6) canary = traffic weights + metric analysis vs stable + automatic abort, not "one new pod"; 7) small deploys, often, with someone watching — and measure the four DORA numbers.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Blue/green or canary?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Canary when you have enough traffic and metrics to judge a small slice — it limits blast radius and automates the decision. Blue/green when you need an all-or-nothing switch with instant rollback (regulated releases, protocol changes, low traffic where a 5% canary is statistically meaningless). Both need a compatible database and both become safer with feature flags on top.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("release-gitops-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("release-gitops-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

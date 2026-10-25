@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Boot — Basics to Advanced (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* Java keywords, YAML keys */
+  pre .typ { color: var(--c-typ); }                    /* types, classes */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* annotations @RestController */
+  pre .fn  { color: var(--c-fn); }                     /* method names */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Spring Boot — Basics to Advanced<span class="sub">What it is · setup · beans &amp; DI · config · REST · JPA · security · testing · actuator · advanced · packaging · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Click "Reveal hint" on screen. Hints auto-open when printed. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What is Spring Boot? (the big idea)</h2>
+<p><b>Spring</b> is a big Java framework: it creates your objects, wires them together (dependency injection), and gives you tools for web, data, security, and more. <b>Spring Boot</b> sits on top and removes the setup pain: it guesses sensible defaults, pulls in matching libraries, and packs everything into one runnable jar with a web server inside.</p>
+<table>
+  <thead><tr><th>Pain in plain Spring</th><th>What Boot does</th></tr></thead>
+  <tbody>
+    <tr><td>Hundreds of lines of XML or <code>@Configuration</code> to set up a web app.</td><td><b>Auto-configuration</b>: if a library is on the classpath, Boot configures it for you (a DataSource if a JDBC driver exists, Jackson if it is a web app…).</td></tr>
+    <tr><td>Picking 30 compatible library versions.</td><td><b>Starters</b>: one dependency like <code>spring-boot-starter-web</code> brings a tested set.</td></tr>
+    <tr><td>Deploy a WAR into a separate Tomcat.</td><td><b>Embedded server</b>: Tomcat (or Jetty / Undertow / Netty) runs inside your jar. <code>java -jar app.jar</code>.</td></tr>
+    <tr><td>Where are settings? How do I see health?</td><td><code>application.yml</code> with profiles; <b>Actuator</b> for health, metrics, env.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Word</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Bean</b></td><td>An object that Spring creates and manages for you.</td></tr>
+    <tr><td><b>ApplicationContext</b> (the container)</td><td>The box that holds all beans and hands them out.</td></tr>
+    <tr><td><b>Dependency Injection (DI)</b></td><td>You do not <code>new</code> your collaborators; Spring passes them in (usually via the constructor).</td></tr>
+    <tr><td><b>Inversion of Control (IoC)</b></td><td>The framework calls your code and builds your objects, not the other way round. DI is how IoC is done.</td></tr>
+    <tr><td><b>Auto-configuration</b></td><td>Boot's "if X is present and you did not define Y, create Y" rules.</td></tr>
+    <tr><td><b>Starter</b></td><td>A dependency bundle: <code>spring-boot-starter-&lt;thing&gt;</code>.</td></tr>
+    <tr><td><b>Profile</b></td><td>A named set of config: <code>dev</code>, <code>test</code>, <code>prod</code>.</td></tr>
+  </tbody>
+</table>
+<pre><span class="ann">@SpringBootApplication</span>          <span class="cmt">// = @Configuration + @EnableAutoConfiguration + @ComponentScan</span>
+<span class="kw">public class</span> <span class="typ">ShopApplication</span> {
+    <span class="kw">public static void</span> <span class="fn">main</span>(<span class="typ">String</span>[] args) {
+        <span class="typ">SpringApplication</span>.<span class="fn">run</span>(<span class="typ">ShopApplication</span>.<span class="kw">class</span>, args);   <span class="cmt">// builds the context, starts Tomcat on 8080</span>
+    }
+}</pre>
+<div class="tips"><b>Mental model:</b> you write small classes and mark them. At start-up Spring scans your package, builds one object for each marked class, works out who needs whom, and connects them. Then the web server starts and sends requests to your controllers.</div>
+<div class="tips"><b>Versions (2026):</b> Spring Boot 3.x needs Java 17+ and uses Jakarta EE packages (<code>jakarta.persistence</code>, not <code>javax.persistence</code>). Boot 4 / Spring Framework 7 continue that line. If you see <code>javax.*</code> in a tutorial, it is Boot 2 era.</div>
+<div class="tricky">
+  <div class="q">Q. What does <code>@SpringBootApplication</code> scan, and what does it miss?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It scans the package of the class it sits on <b>and all sub-packages</b>. A <code>@Service</code> in a sibling or parent package is never found. Keep the main class at the top of your package tree (e.g. <code>com.shop</code>), or add <code>scanBasePackages</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Project setup — starters, layout, config file</h2>
+<table>
+  <thead><tr><th>Starter</th><th>Brings</th></tr></thead>
+  <tbody>
+    <tr><td><code>spring-boot-starter-web</code></td><td>Spring MVC, embedded Tomcat, Jackson JSON.</td></tr>
+    <tr><td><code>spring-boot-starter-webflux</code></td><td>Reactive web (Netty, Mono/Flux). Pick web <i>or</i> webflux, not both.</td></tr>
+    <tr><td><code>spring-boot-starter-data-jpa</code></td><td>Hibernate, Spring Data repositories, transactions. Add a JDBC driver.</td></tr>
+    <tr><td><code>spring-boot-starter-data-jdbc</code></td><td>Simpler SQL mapping without Hibernate.</td></tr>
+    <tr><td><code>spring-boot-starter-validation</code></td><td>Bean Validation (<code>@NotNull</code>, <code>@Size</code>…).</td></tr>
+    <tr><td><code>spring-boot-starter-security</code></td><td>Spring Security (everything locked by default).</td></tr>
+    <tr><td><code>spring-boot-starter-oauth2-resource-server</code></td><td>Validate JWTs from an identity provider.</td></tr>
+    <tr><td><code>spring-boot-starter-actuator</code></td><td>Health, metrics, info endpoints.</td></tr>
+    <tr><td><code>spring-boot-starter-cache</code></td><td><code>@Cacheable</code> and friends.</td></tr>
+    <tr><td><code>spring-boot-starter-data-redis</code> / <code>spring-kafka</code> / <code>spring-boot-starter-amqp</code></td><td>Redis / Kafka / RabbitMQ.</td></tr>
+    <tr><td><code>spring-boot-starter-test</code></td><td>JUnit 5, Mockito, AssertJ, MockMvc, Testcontainers support.</td></tr>
+    <tr><td><code>spring-boot-devtools</code></td><td>Auto-restart on code change, dev-only.</td></tr>
+  </tbody>
+</table>
+<h3>Recommended package layout (by feature, not by layer)</h3>
+<pre>com.shop
+├── <span class="typ">ShopApplication</span>.java
+├── order/                     <span class="cmt">// one package per business area</span>
+│   ├── <span class="typ">OrderController</span>.java
+│   ├── <span class="typ">OrderService</span>.java
+│   ├── <span class="typ">OrderRepository</span>.java
+│   ├── <span class="typ">Order</span>.java            <span class="cmt">// entity</span>
+│   └── <span class="typ">OrderDto</span>.java         <span class="cmt">// what the API shows (a record)</span>
+├── customer/
+└── common/                    <span class="cmt">// shared config, error handling</span>
+src/main/resources/
+├── application.yml
+├── application-dev.yml
+└── db/migration/V1__init.sql  <span class="cmt">// Flyway</span></pre>
+<h3><code>application.yml</code> — the usual first lines</h3>
+<pre><span class="kw">spring</span>:
+  <span class="kw">application</span>: { <span class="kw">name</span>: shop-api }
+  <span class="kw">datasource</span>:
+    <span class="kw">url</span>: <span class="str">jdbc:postgresql://localhost:5432/shop</span>
+    <span class="kw">username</span>: shop
+    <span class="kw">password</span>: <span class="str">${DB_PASSWORD}</span>              <span class="cmt"># from an env var, never in the file</span>
+  <span class="kw">jpa</span>:
+    <span class="kw">open-in-view</span>: <span class="kw">false</span>                      <span class="cmt"># see Section 5</span>
+    <span class="kw">hibernate</span>: { <span class="kw">ddl-auto</span>: validate }         <span class="cmt"># Flyway owns the schema; Hibernate only checks</span>
+  <span class="kw">jackson</span>: { <span class="kw">default-property-inclusion</span>: non_null }
+<span class="kw">server</span>:
+  <span class="kw">port</span>: <span class="num">8080</span>
+  <span class="kw">shutdown</span>: graceful
+<span class="kw">management</span>:
+  <span class="kw">endpoints</span>: { <span class="kw">web</span>: { <span class="kw">exposure</span>: { <span class="kw">include</span>: health,info,metrics,prometheus } } }
+<span class="kw">logging</span>:
+  <span class="kw">level</span>: { <span class="str">com.shop</span>: DEBUG, <span class="str">org.hibernate.SQL</span>: DEBUG }</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Versions</td><td>Hand-picking versions for every Spring library.</td><td>Inherit <code>spring-boot-starter-parent</code> (Maven) or the Boot Gradle plugin; let the BOM manage versions. Only pin what Boot does not manage.</td></tr>
+    <tr><td>Schema</td><td><code>ddl-auto: update</code> in production. Hibernate silently alters tables.</td><td>Flyway or Liquibase migrations; <code>ddl-auto: validate</code>.</td></tr>
+    <tr><td>Secrets</td><td>Passwords in <code>application.yml</code> committed to git.</td><td><code>${ENV_VAR}</code> placeholders, or a vault / cloud secrets backend.</td></tr>
+    <tr><td>Layout</td><td><code>controllers/</code>, <code>services/</code>, <code>repositories/</code> with 80 classes each.</td><td>Package by feature; package-private where possible so features cannot reach into each other.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Start fast:</b> <a href="https://start.spring.io">start.spring.io</a> (or the IDE wizard) generates a project with chosen starters. Run with <code>./mvnw spring-boot:run</code> or <code>./gradlew bootRun</code>.</div>
+<div class="tricky">
+  <div class="q">Q. Both <code>application.properties</code> and <code>application.yml</code> exist. Which wins?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Both are loaded; <code>.properties</code> values override <code>.yml</code> for the same key. Confusing — keep only one format. YAML is the common choice.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Beans and Dependency Injection</h2>
+<table>
+  <thead><tr><th>Annotation</th><th>Marks</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><code>@Component</code></td><td>Any class Spring should create.</td><td>The generic one.</td></tr>
+    <tr><td><code>@Service</code></td><td>Business logic class.</td><td>Same as <code>@Component</code>, clearer intent.</td></tr>
+    <tr><td><code>@Repository</code></td><td>Data access class.</td><td>Also translates DB exceptions to Spring's <code>DataAccessException</code>.</td></tr>
+    <tr><td><code>@Controller</code> / <code>@RestController</code></td><td>Web layer.</td><td><code>@RestController</code> = <code>@Controller</code> + <code>@ResponseBody</code> (returns JSON, not a view).</td></tr>
+    <tr><td><code>@Configuration</code> + <code>@Bean</code></td><td>A class with factory methods; each <code>@Bean</code> method's return value becomes a bean.</td><td>For objects you do not own (library classes).</td></tr>
+    <tr><td><code>@Autowired</code></td><td>Inject here.</td><td>Optional on a single constructor — Spring injects it anyway.</td></tr>
+    <tr><td><code>@Qualifier("name")</code> / <code>@Primary</code></td><td>Pick one when several beans share a type.</td><td>Or inject <code>List&lt;PaymentProvider&gt;</code> / <code>Map&lt;String, PaymentProvider&gt;</code> to get all.</td></tr>
+    <tr><td><code>@Scope</code></td><td><code>singleton</code> (default, one per context), <code>prototype</code> (new each time), <code>request</code>, <code>session</code>.</td><td>Almost always singleton.</td></tr>
+    <tr><td><code>@Lazy</code></td><td>Create on first use.</td><td>Also breaks some circular dependencies.</td></tr>
+    <tr><td><code>@PostConstruct</code> / <code>@PreDestroy</code></td><td>Run after injection / before shutdown.</td><td>Init logic that needs injected fields.</td></tr>
+    <tr><td><code>@ConditionalOnProperty</code>, <code>@ConditionalOnMissingBean</code>, <code>@Profile</code></td><td>Create this bean only if…</td><td>How auto-configuration itself works.</td></tr>
+  </tbody>
+</table>
+<pre><span class="ann">@Service</span>
+<span class="kw">public class</span> <span class="typ">OrderService</span> {
+    <span class="kw">private final</span> <span class="typ">OrderRepository</span> orders;         <span class="cmt">// final: set once, never null</span>
+    <span class="kw">private final</span> <span class="typ">PaymentClient</span> payments;
+
+    <span class="kw">public</span> <span class="fn">OrderService</span>(<span class="typ">OrderRepository</span> orders, <span class="typ">PaymentClient</span> payments) {   <span class="cmt">// constructor injection</span>
+        <span class="kw">this</span>.orders = orders;
+        <span class="kw">this</span>.payments = payments;
+    }
+}
+
+<span class="ann">@Configuration</span>
+<span class="kw">class</span> <span class="typ">ClientConfig</span> {
+    <span class="ann">@Bean</span>
+    <span class="typ">RestClient</span> <span class="fn">paymentRestClient</span>(<span class="typ">RestClient</span>.<span class="typ">Builder</span> builder,
+                                <span class="ann">@Value</span>(<span class="str">"${payments.url}"</span>) <span class="typ">String</span> url) {
+        <span class="kw">return</span> builder.baseUrl(url).build();        <span class="cmt">// a bean from a library class</span>
+    }
+}</pre>
+<h3>How the container starts (what happens in <code>SpringApplication.run</code>)</h3>
+<table>
+  <thead><tr><th>#</th><th>Step</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Read <code>application.yml</code>, env vars, args → the <code>Environment</code>. Decide active profiles.</td></tr>
+    <tr><td>2</td><td>Scan packages for <code>@Component</code> classes; read <code>@Bean</code> methods; load auto-configuration classes from <code>META-INF/spring/…AutoConfiguration.imports</code>. Result: <b>bean definitions</b> (recipes, no objects yet).</td></tr>
+    <tr><td>3</td><td>Evaluate conditions (<code>@ConditionalOn…</code>). Drop definitions whose conditions fail.</td></tr>
+    <tr><td>4</td><td>Create singletons: build the dependency graph, instantiate in order, inject, run <code>@PostConstruct</code>, wrap with proxies where needed (<code>@Transactional</code>, <code>@Cacheable</code>, <code>@Async</code>).</td></tr>
+    <tr><td>5</td><td>Start the embedded server; publish <code>ApplicationReadyEvent</code>; run <code>CommandLineRunner</code> / <code>ApplicationRunner</code> beans.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Injection style</td><td><code>@Autowired private OrderRepository orders;</code> (field injection): hidden dependencies, hard to test, can be null in a unit test.</td><td>Constructor injection with <code>final</code> fields. Lombok <code>@RequiredArgsConstructor</code> if you like.</td></tr>
+    <tr><td>Circular beans</td><td>A needs B, B needs A → start-up fails ("The dependencies of some of the beans form a cycle").</td><td>A design smell. Extract the shared part into C, or use events. <code>@Lazy</code> on one side is the band-aid.</td></tr>
+    <tr><td>Doing <code>new</code></td><td><code>new OrderService(new OrderRepository())</code> inside a controller.</td><td>Let Spring create and inject. <code>new</code> is fine for plain value objects (DTOs, records).</td></tr>
+    <tr><td>State in singletons</td><td>A <code>@Service</code> with a mutable field like <code>currentUser</code>.</td><td>Singletons are shared by all threads. Keep them stateless; pass data as parameters.</td></tr>
+    <tr><td>Self-invocation</td><td>Calling <code>this.save()</code> (a <code>@Transactional</code> method) from another method in the same class — the annotation is ignored.</td><td>Proxies only see calls from <i>outside</i>. Move the method to another bean, or inject self via <code>ObjectProvider</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Why proxies matter:</b> <code>@Transactional</code>, <code>@Cacheable</code>, <code>@Async</code>, <code>@PreAuthorize</code>, <code>@Retryable</code> all work by wrapping your bean in a generated subclass that runs extra code before and after the real method. That is why the method must be public (or at least non-private, non-final) and must be called through the injected reference.</div>
+<div class="tricky">
+  <div class="q">Q. Two beans implement <code>PaymentProvider</code>. You inject <code>PaymentProvider p</code>. What happens?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Start-up fails: "expected single matching bean but found 2". Fix with <code>@Primary</code> on one, <code>@Qualifier("stripe")</code> at the injection point, or inject a <code>List&lt;PaymentProvider&gt;</code>. If the parameter name matches a bean name, Spring also uses that as a tie-breaker.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Configuration and profiles</h2>
+<h3>Where settings come from (later wins)</h3>
+<table>
+  <thead><tr><th>Priority</th><th>Source</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>1 (lowest)</td><td>Defaults inside Boot / <code>SpringApplication.setDefaultProperties</code></td><td>server.port = 8080</td></tr>
+    <tr><td>2</td><td><code>application.yml</code> inside the jar</td><td>your committed defaults</td></tr>
+    <tr><td>3</td><td><code>application-{profile}.yml</code> inside the jar</td><td><code>application-prod.yml</code></td></tr>
+    <tr><td>4</td><td><code>application.yml</code> next to the jar or in <code>./config/</code></td><td>ops overrides on the box</td></tr>
+    <tr><td>5</td><td>OS environment variables</td><td><code>SPRING_DATASOURCE_URL</code>, <code>SERVER_PORT</code></td></tr>
+    <tr><td>6</td><td>Java system properties</td><td><code>-Dserver.port=9090</code></td></tr>
+    <tr><td>7 (highest)</td><td>Command-line args</td><td><code>--server.port=9090</code></td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Relaxed binding:</b> <code>spring.datasource.url</code> = <code>SPRING_DATASOURCE_URL</code> = <code>spring.dataSource.URL</code>. Env vars use upper case and underscores; Boot maps them. Lists: <code>MY_LIST_0</code>, <code>MY_LIST_1</code>.</div>
+<h3>Reading settings in code</h3>
+<pre><span class="cmt">// 1) One value — fine for a single field</span>
+<span class="ann">@Value</span>(<span class="str">"${payments.timeout-ms:3000}"</span>) <span class="kw">int</span> timeoutMs;   <span class="cmt">// :3000 = default</span>
+
+<span class="cmt">// 2) A group — preferred: typed, validated, IDE-completable</span>
+<span class="ann">@ConfigurationProperties</span>(prefix = <span class="str">"payments"</span>)
+<span class="ann">@Validated</span>
+<span class="kw">public record</span> <span class="typ">PaymentsProps</span>(
+        <span class="ann">@NotBlank</span> <span class="typ">String</span> url,
+        <span class="ann">@Min</span>(<span class="num">100</span>) <span class="kw">int</span> timeoutMs,
+        <span class="typ">List</span>&lt;<span class="typ">String</span>&gt; allowedCurrencies) {}
+
+<span class="ann">@SpringBootApplication</span>
+<span class="ann">@ConfigurationPropertiesScan</span>          <span class="cmt">// finds all @ConfigurationProperties records</span>
+<span class="kw">public class</span> <span class="typ">ShopApplication</span> { ... }</pre>
+<pre><span class="cmt"># application.yml</span>
+<span class="kw">payments</span>:
+  <span class="kw">url</span>: <span class="str">https://pay.example.com</span>
+  <span class="kw">timeout-ms</span>: <span class="num">2000</span>
+  <span class="kw">allowed-currencies</span>: [INR, USD]
+---
+<span class="kw">spring</span>:
+  <span class="kw">config</span>: { <span class="kw">activate</span>: { <span class="kw">on-profile</span>: prod } }   <span class="cmt"># this block only when prod is active</span>
+<span class="kw">payments</span>:
+  <span class="kw">timeout-ms</span>: <span class="num">800</span></pre>
+<h3>Profiles</h3>
+<table>
+  <thead><tr><th>Task</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Activate</td><td><code>SPRING_PROFILES_ACTIVE=prod</code> · <code>--spring.profiles.active=prod,eu</code> · <code>spring.profiles.active</code> in yml (only for defaults)</td></tr>
+    <tr><td>Profile file</td><td><code>application-prod.yml</code> is loaded when <code>prod</code> is active and overrides <code>application.yml</code>.</td></tr>
+    <tr><td>Profile bean</td><td><code>@Profile("!prod") @Bean FakeMailer mailer()</code> — only when prod is <b>not</b> active.</td></tr>
+    <tr><td>Groups</td><td><code>spring.profiles.group.prod: [prod-db, prod-mq]</code> — one name turns several on.</td></tr>
+    <tr><td>Check at runtime</td><td>Inject <code>Environment</code> → <code>env.getActiveProfiles()</code>; Actuator <code>/env</code>.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Scattered <code>@Value</code></td><td>Twenty <code>@Value</code> fields across classes; typos fail only at runtime.</td><td>One <code>@ConfigurationProperties</code> record per feature, validated at start-up.</td></tr>
+    <tr><td>Profile explosion</td><td><code>application-dev-john-laptop.yml</code>.</td><td>Few profiles (<code>local</code>, <code>test</code>, <code>prod</code>); personal tweaks via env vars or an ignored <code>config/application.yml</code>.</td></tr>
+    <tr><td>Default profile</td><td>Assuming prod settings load when no profile is set.</td><td>No profile = <code>default</code>. Make <code>application.yml</code> safe (no real DB), and <b>require</b> a profile in prod via the deploy script.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>@Value("${x}")</code> and the key is missing. What happens?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Start-up fails: "Could not resolve placeholder 'x'". Add a default (<code>${x:fallback}</code>) or define the key. Note that <code>@Value</code> also runs SpEL: <code>#{systemProperties['user.home']}</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. REST APIs — controllers, validation, errors</h2>
+<pre><span class="ann">@RestController</span>
+<span class="ann">@RequestMapping</span>(<span class="str">"/api/orders"</span>)
+<span class="kw">public class</span> <span class="typ">OrderController</span> {
+    <span class="kw">private final</span> <span class="typ">OrderService</span> service;
+    <span class="kw">public</span> <span class="fn">OrderController</span>(<span class="typ">OrderService</span> service) { <span class="kw">this</span>.service = service; }
+
+    <span class="ann">@GetMapping</span>(<span class="str">"/{id}"</span>)
+    <span class="kw">public</span> <span class="typ">OrderDto</span> <span class="fn">get</span>(<span class="ann">@PathVariable</span> <span class="kw">long</span> id) {
+        <span class="kw">return</span> service.find(id);                     <span class="cmt">// 200 + JSON; throws NotFound → 404 (see handler)</span>
+    }
+
+    <span class="ann">@GetMapping</span>
+    <span class="kw">public</span> <span class="typ">Page</span>&lt;<span class="typ">OrderDto</span>&gt; <span class="fn">list</span>(<span class="ann">@RequestParam</span>(defaultValue = <span class="str">"NEW"</span>) <span class="typ">String</span> status,
+                               <span class="ann">@PageableDefault</span>(size = <span class="num">20</span>) <span class="typ">Pageable</span> page) {
+        <span class="kw">return</span> service.list(status, page);           <span class="cmt">// ?status=PAID&amp;page=1&amp;size=50&amp;sort=createdAt,desc</span>
+    }
+
+    <span class="ann">@PostMapping</span>
+    <span class="ann">@ResponseStatus</span>(<span class="typ">HttpStatus</span>.CREATED)
+    <span class="kw">public</span> <span class="typ">OrderDto</span> <span class="fn">create</span>(<span class="ann">@Valid</span> <span class="ann">@RequestBody</span> <span class="typ">CreateOrderRequest</span> req) {
+        <span class="kw">return</span> service.create(req);                  <span class="cmt">// 201</span>
+    }
+
+    <span class="ann">@PutMapping</span>(<span class="str">"/{id}/cancel"</span>)
+    <span class="kw">public</span> <span class="typ">ResponseEntity</span>&lt;<span class="typ">Void</span>&gt; <span class="fn">cancel</span>(<span class="ann">@PathVariable</span> <span class="kw">long</span> id) {
+        service.cancel(id);
+        <span class="kw">return</span> <span class="typ">ResponseEntity</span>.noContent().build();   <span class="cmt">// 204, full control of status/headers</span>
+    }
+}
+
+<span class="kw">public record</span> <span class="typ">CreateOrderRequest</span>(
+        <span class="ann">@NotNull</span> <span class="typ">Long</span> customerId,
+        <span class="ann">@NotEmpty</span> <span class="typ">List</span>&lt;<span class="ann">@Valid</span> <span class="typ">LineItem</span>&gt; items,     <span class="cmt">// @Valid cascades into the list</span>
+        <span class="ann">@Size</span>(max = <span class="num">200</span>) <span class="typ">String</span> note) {}</pre>
+<table>
+  <thead><tr><th>Annotation</th><th>Reads from</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>@PathVariable</code></td><td>URL path segment</td><td><code>/orders/{id}</code></td></tr>
+    <tr><td><code>@RequestParam</code></td><td>Query string / form field</td><td><code>?status=NEW</code>; <code>required=false</code> or <code>Optional&lt;T&gt;</code></td></tr>
+    <tr><td><code>@RequestBody</code></td><td>JSON body → object (Jackson)</td><td>POST / PUT payloads</td></tr>
+    <tr><td><code>@RequestHeader</code></td><td>HTTP header</td><td><code>@RequestHeader("X-Request-Id")</code></td></tr>
+    <tr><td><code>@CookieValue</code></td><td>Cookie</td><td>—</td></tr>
+    <tr><td><code>@ModelAttribute</code> (or none)</td><td>Many query params → one object</td><td>Search filters</td></tr>
+    <tr><td><code>@AuthenticationPrincipal</code></td><td>Logged-in user</td><td>With Spring Security</td></tr>
+  </tbody>
+</table>
+<h3>One place for errors</h3>
+<pre><span class="ann">@RestControllerAdvice</span>
+<span class="kw">class</span> <span class="typ">ApiExceptionHandler</span> {
+
+    <span class="ann">@ExceptionHandler</span>(<span class="typ">OrderNotFoundException</span>.<span class="kw">class</span>)
+    <span class="typ">ProblemDetail</span> <span class="fn">notFound</span>(<span class="typ">OrderNotFoundException</span> e) {
+        <span class="kw">var</span> pd = <span class="typ">ProblemDetail</span>.forStatusAndDetail(<span class="typ">HttpStatus</span>.NOT_FOUND, e.getMessage());
+        pd.setProperty(<span class="str">"orderId"</span>, e.getId());
+        <span class="kw">return</span> pd;                                   <span class="cmt">// RFC 9457 JSON: {type,title,status,detail,instance,orderId}</span>
+    }
+
+    <span class="ann">@ExceptionHandler</span>(<span class="typ">MethodArgumentNotValidException</span>.<span class="kw">class</span>)
+    <span class="typ">ProblemDetail</span> <span class="fn">invalid</span>(<span class="typ">MethodArgumentNotValidException</span> e) {
+        <span class="kw">var</span> pd = <span class="typ">ProblemDetail</span>.forStatus(<span class="typ">HttpStatus</span>.BAD_REQUEST);
+        pd.setProperty(<span class="str">"errors"</span>, e.getFieldErrors().stream()
+            .map(f -&gt; f.getField() + <span class="str">": "</span> + f.getDefaultMessage()).toList());
+        <span class="kw">return</span> pd;
+    }
+}
+<span class="cmt">// or simply: spring.mvc.problemdetails.enabled=true for the built-in ones</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Entities in the API</td><td>Returning the JPA entity from a controller: lazy-loading errors, leaks DB fields, infinite JSON loops on bidirectional relations.</td><td>Return DTOs (records). Map in the service or with MapStruct.</td></tr>
+    <tr><td>Status codes</td><td>200 for everything, errors inside the body.</td><td>201 create, 204 no content, 400 bad input, 404 missing, 409 conflict, 422 semantic error, 500 unexpected.</td></tr>
+    <tr><td>Validation</td><td>Manual <code>if (req.getName() == null)</code> chains.</td><td><code>@Valid</code> + Bean Validation; custom <code>@Constraint</code> for business rules.</td></tr>
+    <tr><td>Try/catch in controllers</td><td>Every method wraps calls in try/catch and builds error JSON.</td><td>Throw; one <code>@RestControllerAdvice</code> translates.</td></tr>
+    <tr><td>Logic in controllers</td><td>Controller talks to repositories and does calculations.</td><td>Controller = HTTP in/out only. Service holds rules and transactions.</td></tr>
+    <tr><td>Blocking the thread</td><td>Calling 3 slow services in sequence inside a request.</td><td>Virtual threads (<code>spring.threads.virtual.enabled=true</code>, Java 21+) or parallel calls; WebFlux only if the whole stack is reactive.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>JSON shaping with Jackson:</b> <code>@JsonProperty("order_id")</code>, <code>@JsonIgnore</code>, <code>@JsonInclude(NON_NULL)</code>, <code>@JsonFormat(pattern="yyyy-MM-dd")</code>. Global: <code>spring.jackson.property-naming-strategy=SNAKE_CASE</code>. Records work out of the box.</div>
+<div class="tricky">
+  <div class="q">Q. <code>@Valid</code> on the <code>@RequestBody</code> but the nested <code>items</code> are never checked. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Validation does not cascade by default. Put <code>@Valid</code> on the nested field or on the generic type: <code>List&lt;@Valid LineItem&gt;</code>. Also make sure <code>spring-boot-starter-validation</code> is on the classpath — without it all constraints are silently ignored.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Data access — Spring Data JPA and transactions</h2>
+<pre><span class="ann">@Entity</span>
+<span class="ann">@Table</span>(name = <span class="str">"orders"</span>)
+<span class="kw">public class</span> <span class="typ">Order</span> {
+    <span class="ann">@Id</span> <span class="ann">@GeneratedValue</span>(strategy = <span class="typ">GenerationType</span>.IDENTITY)
+    <span class="kw">private</span> <span class="typ">Long</span> id;
+
+    <span class="ann">@Column</span>(nullable = <span class="kw">false</span>, length = <span class="num">20</span>)
+    <span class="ann">@Enumerated</span>(<span class="typ">EnumType</span>.STRING)                       <span class="cmt">// never ORDINAL — reordering the enum corrupts data</span>
+    <span class="kw">private</span> <span class="typ">OrderStatus</span> status;
+
+    <span class="ann">@ManyToOne</span>(fetch = <span class="typ">FetchType</span>.LAZY)                 <span class="cmt">// LAZY by hand: @ManyToOne is EAGER by default</span>
+    <span class="ann">@JoinColumn</span>(name = <span class="str">"customer_id"</span>)
+    <span class="kw">private</span> <span class="typ">Customer</span> customer;
+
+    <span class="ann">@OneToMany</span>(mappedBy = <span class="str">"order"</span>, cascade = <span class="typ">CascadeType</span>.ALL, orphanRemoval = <span class="kw">true</span>)
+    <span class="kw">private</span> <span class="typ">List</span>&lt;<span class="typ">OrderLine</span>&gt; lines = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+
+    <span class="ann">@Version</span> <span class="kw">private</span> <span class="typ">Long</span> version;                      <span class="cmt">// optimistic locking</span>
+    <span class="ann">@CreationTimestamp</span> <span class="kw">private</span> <span class="typ">Instant</span> createdAt;
+    <span class="kw">protected</span> <span class="fn">Order</span>() {}                               <span class="cmt">// JPA needs a no-arg constructor</span>
+}
+
+<span class="kw">public interface</span> <span class="typ">OrderRepository</span> <span class="kw">extends</span> <span class="typ">JpaRepository</span>&lt;<span class="typ">Order</span>, <span class="typ">Long</span>&gt; {
+    <span class="typ">List</span>&lt;<span class="typ">Order</span>&gt; <span class="fn">findByStatusAndCustomerId</span>(<span class="typ">OrderStatus</span> status, <span class="typ">Long</span> customerId);   <span class="cmt">// derived query</span>
+    <span class="typ">Page</span>&lt;<span class="typ">Order</span>&gt; <span class="fn">findByStatus</span>(<span class="typ">OrderStatus</span> status, <span class="typ">Pageable</span> p);
+
+    <span class="ann">@Query</span>(<span class="str">"select o from Order o join fetch o.lines where o.id = :id"</span>)    <span class="cmt">// JPQL, avoids N+1</span>
+    <span class="typ">Optional</span>&lt;<span class="typ">Order</span>&gt; <span class="fn">findWithLines</span>(<span class="typ">Long</span> id);
+
+    <span class="ann">@Query</span>(value = <span class="str">"select * from orders where created_at &gt; now() - interval '1 day'"</span>, nativeQuery = <span class="kw">true</span>)
+    <span class="typ">List</span>&lt;<span class="typ">Order</span>&gt; <span class="fn">recent</span>();
+
+    <span class="ann">@Modifying</span> <span class="ann">@Query</span>(<span class="str">"update Order o set o.status = 'EXPIRED' where o.status = 'NEW' and o.createdAt &lt; :t"</span>)
+    <span class="kw">int</span> <span class="fn">expireOlderThan</span>(<span class="typ">Instant</span> t);                      <span class="cmt">// bulk update, no entity loading</span>
+
+    <span class="typ">List</span>&lt;<span class="typ">OrderSummary</span>&gt; <span class="fn">findSummaryByStatus</span>(<span class="typ">OrderStatus</span> s);   <span class="cmt">// interface/record projection → only needed columns</span>
+}</pre>
+<table>
+  <thead><tr><th>Repository base</th><th>Gives</th></tr></thead>
+  <tbody>
+    <tr><td><code>CrudRepository</code></td><td><code>save</code>, <code>findById</code>, <code>findAll</code>, <code>delete</code>, <code>count</code>.</td></tr>
+    <tr><td><code>PagingAndSortingRepository</code></td><td>+ <code>findAll(Pageable)</code>, <code>findAll(Sort)</code>.</td></tr>
+    <tr><td><code>JpaRepository</code></td><td>+ <code>flush</code>, <code>saveAll</code>, <code>getReferenceById</code>, batch deletes. The usual choice.</td></tr>
+    <tr><td><code>JpaSpecificationExecutor</code></td><td>Dynamic where-clauses with <code>Specification</code>.</td></tr>
+  </tbody>
+</table>
+<h3><code>@Transactional</code> — the rules that bite</h3>
+<pre><span class="ann">@Service</span>
+<span class="ann">@Transactional</span>(readOnly = <span class="kw">true</span>)                         <span class="cmt">// class default: read-only (lets Hibernate skip dirty checks)</span>
+<span class="kw">public class</span> <span class="typ">OrderService</span> {
+
+    <span class="ann">@Transactional</span>                                      <span class="cmt">// write method overrides to read-write</span>
+    <span class="kw">public</span> <span class="typ">OrderDto</span> <span class="fn">create</span>(<span class="typ">CreateOrderRequest</span> req) {
+        <span class="typ">Order</span> o = <span class="kw">new</span> <span class="typ">Order</span>(...);
+        orders.save(o);                                 <span class="cmt">// INSERT runs at commit (flush), not here</span>
+        stock.reserve(req.items());                     <span class="cmt">// same transaction: if this throws, the INSERT rolls back</span>
+        <span class="kw">return</span> <span class="typ">OrderDto</span>.from(o);
+    }
+}</pre>
+<table>
+  <thead><tr><th>Setting</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>propagation = REQUIRED</code> (default)</td><td>Join the caller's transaction if one exists, else start one.</td></tr>
+    <tr><td><code>REQUIRES_NEW</code></td><td>Always a new transaction; the outer one is suspended. For audit logs that must survive a rollback.</td></tr>
+    <tr><td><code>MANDATORY</code> / <code>NEVER</code> / <code>SUPPORTS</code> / <code>NOT_SUPPORTED</code></td><td>Must have one / must not / join if present / run without.</td></tr>
+    <tr><td><code>isolation</code></td><td>DB isolation level (DEFAULT = the DB's; usually READ_COMMITTED).</td></tr>
+    <tr><td><code>readOnly = true</code></td><td>Hint: no flush, may route to a replica, Hibernate skips snapshots.</td></tr>
+    <tr><td><code>rollbackFor = Exception.class</code></td><td>By default only <b>unchecked</b> exceptions roll back. Checked ones commit!</td></tr>
+    <tr><td><code>timeout</code></td><td>Seconds before the transaction is aborted.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>N+1 queries</td><td>Load 100 orders, then <code>order.getCustomer().getName()</code> in a loop → 101 queries.</td><td><code>join fetch</code>, <code>@EntityGraph(attributePaths = "customer")</code>, or a DTO projection. Turn on <code>spring.jpa.show-sql</code> or <code>hibernate.generate_statistics</code> in dev to see it.</td></tr>
+    <tr><td>Open Session in View</td><td>Leaving <code>spring.jpa.open-in-view=true</code> (the default!) so lazy loads "work" in controllers — at the cost of a DB connection held for the whole request.</td><td>Set it <code>false</code>. Load what you need inside the service transaction; return DTOs.</td></tr>
+    <tr><td>LazyInitializationException</td><td>Touching a lazy field outside a transaction.</td><td>Fetch it in the query, or map to a DTO inside the <code>@Transactional</code> method.</td></tr>
+    <tr><td>Checked exception rollback</td><td><code>throws IOException</code> from a transactional method and expecting rollback.</td><td><code>@Transactional(rollbackFor = Exception.class)</code>, or wrap in a RuntimeException.</td></tr>
+    <tr><td>Catching inside</td><td>Catch an exception inside the transactional method after a failed SQL, then continue — commit fails with "Transaction silently rolled back because it has been marked as rollback-only".</td><td>Let it propagate, or use <code>REQUIRES_NEW</code> for the risky part.</td></tr>
+    <tr><td>equals/hashCode</td><td>Lombok <code>@Data</code> on entities: hashCode uses the id, which is null before save → broken Sets; toString recurses through relations.</td><td>No <code>@Data</code> on entities. Equality by id with a null-safe rule, or a natural business key.</td></tr>
+    <tr><td>save() everywhere</td><td>Calling <code>repo.save(entity)</code> after every setter.</td><td>A managed entity is <b>dirty-checked</b>: changes inside the transaction are flushed at commit automatically. <code>save</code> is for new objects.</td></tr>
+    <tr><td>Bulk inserts</td><td>10,000 <code>save()</code> calls, one INSERT each.</td><td><code>spring.jpa.properties.hibernate.jdbc.batch_size=50</code> + <code>order_inserts=true</code>; use <code>SEQUENCE</code> ids (IDENTITY disables batching). Or plain JDBC for ETL.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Alternatives to JPA:</b> <b>Spring Data JDBC</b> (aggregates, no lazy loading, no dirty checking — simpler), <b>JdbcClient</b> / <code>JdbcTemplate</code> (you write SQL), <b>jOOQ</b> (type-safe SQL). JPA shines for rich domain models; for reporting and batch, plain SQL usually wins.</div>
+<div class="tricky">
+  <div class="q">Q. A <code>@Transactional</code> method is <code>private</code>. Does the transaction start?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. The proxy can only intercept calls that come from outside the bean to a non-private method. Private methods (and self-calls through <code>this</code>) bypass the proxy entirely. Make it public and call it from another bean.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Security — filter chain, JWT, method rules</h2>
+<p>Spring Security is a chain of servlet <b>filters</b> that runs before your controller. Each filter does one job: read a token, check a session, enforce CSRF, decide authorization. Adding the starter locks every URL and generates a random password until you configure it.</p>
+<pre><span class="ann">@Configuration</span>
+<span class="ann">@EnableMethodSecurity</span>                                   <span class="cmt">// turns on @PreAuthorize</span>
+<span class="kw">class</span> <span class="typ">SecurityConfig</span> {
+
+    <span class="ann">@Bean</span>
+    <span class="typ">SecurityFilterChain</span> <span class="fn">api</span>(<span class="typ">HttpSecurity</span> http) <span class="kw">throws</span> <span class="typ">Exception</span> {
+        <span class="kw">return</span> http
+            .csrf(csrf -&gt; csrf.disable())                   <span class="cmt">// stateless token API: no cookies → no CSRF risk</span>
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(<span class="typ">SessionCreationPolicy</span>.STATELESS))
+            .authorizeHttpRequests(auth -&gt; auth
+                .requestMatchers(<span class="str">"/actuator/health"</span>, <span class="str">"/api/public/**"</span>).permitAll()
+                .requestMatchers(<span class="typ">HttpMethod</span>.DELETE, <span class="str">"/api/**"</span>).hasRole(<span class="str">"ADMIN"</span>)
+                .anyRequest().authenticated())
+            .oauth2ResourceServer(o -&gt; o.jwt(<span class="typ">Customizer</span>.withDefaults()))   <span class="cmt">// validate Bearer JWTs</span>
+            .build();
+    }
+
+    <span class="ann">@Bean</span>
+    <span class="typ">PasswordEncoder</span> <span class="fn">encoder</span>() { <span class="kw">return</span> <span class="typ">PasswordEncoderFactories</span>.createDelegatingPasswordEncoder(); } <span class="cmt">// bcrypt by default</span>
+}</pre>
+<pre><span class="cmt"># application.yml — where to fetch the signing keys</span>
+<span class="kw">spring.security.oauth2.resourceserver.jwt</span>:
+  <span class="kw">issuer-uri</span>: <span class="str">https://auth.example.com/realms/shop</span>    <span class="cmt"># Keycloak / Auth0 / Cognito / Entra</span></pre>
+<pre><span class="ann">@PreAuthorize</span>(<span class="str">"hasRole('ADMIN') or #customerId == authentication.name"</span>)
+<span class="kw">public</span> <span class="typ">List</span>&lt;<span class="typ">OrderDto</span>&gt; <span class="fn">ordersOf</span>(<span class="typ">String</span> customerId) { ... }
+
+<span class="ann">@GetMapping</span>(<span class="str">"/me"</span>)
+<span class="typ">String</span> <span class="fn">me</span>(<span class="ann">@AuthenticationPrincipal</span> <span class="typ">Jwt</span> jwt) { <span class="kw">return</span> jwt.getSubject(); }</pre>
+<table>
+  <thead><tr><th>Piece</th><th>Job</th></tr></thead>
+  <tbody>
+    <tr><td><b>Authentication</b></td><td>Who are you? Result lives in <code>SecurityContextHolder</code> for the request.</td></tr>
+    <tr><td><b>Authorization</b></td><td>May you do this? URL rules (<code>authorizeHttpRequests</code>) and method rules (<code>@PreAuthorize</code>).</td></tr>
+    <tr><td><b>UserDetailsService</b></td><td>Loads users for form/basic login. Not needed for JWT resource servers.</td></tr>
+    <tr><td><b>Roles vs authorities</b></td><td><code>hasRole("ADMIN")</code> checks authority <code>ROLE_ADMIN</code>. <code>hasAuthority("orders:write")</code> checks the exact string. JWT scopes become <code>SCOPE_xxx</code> by default.</td></tr>
+    <tr><td><b>CORS</b></td><td>Browser cross-origin rule. Configure a <code>CorsConfigurationSource</code> bean and <code>http.cors(...)</code>; <code>@CrossOrigin</code> on controllers for quick cases.</td></tr>
+    <tr><td><b>CSRF</b></td><td>Needed for cookie/session apps with forms. Not for stateless bearer-token APIs.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Rolling your own JWT</td><td>Hand-written filter that parses tokens with a shared secret pasted in yml.</td><td><code>oauth2ResourceServer().jwt()</code> with an issuer; keys are fetched and rotated automatically.</td></tr>
+    <tr><td>Passwords</td><td>Storing plain or MD5 passwords.</td><td><code>PasswordEncoder</code> (bcrypt / argon2); <code>{bcrypt}</code> prefix via the delegating encoder.</td></tr>
+    <tr><td><code>permitAll</code> order</td><td><code>anyRequest().authenticated()</code> first, then <code>permitAll</code> rules → they never match.</td><td>Rules are checked top to bottom; most specific first, <code>anyRequest</code> last.</td></tr>
+    <tr><td>Disabling for tests</td><td>Turning security off globally so tests pass.</td><td><code>@WithMockUser</code> / <code>jwt()</code> request post-processors in <code>spring-security-test</code>.</td></tr>
+    <tr><td>Actuator wide open</td><td><code>/actuator/**</code> permitAll with <code>env</code> and <code>heapdump</code> exposed.</td><td>Only <code>health</code> public; the rest behind auth or a separate management port.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The JWT has <code>"roles": ["admin"]</code> but <code>hasRole("ADMIN")</code> fails. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Spring reads the <code>scope</code> claim and prefixes with <code>SCOPE_</code>; it does not know your <code>roles</code> claim. Add a <code>JwtAuthenticationConverter</code> with a <code>JwtGrantedAuthoritiesConverter</code> that reads <code>roles</code> and prefixes <code>ROLE_</code> (upper-cased).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Testing — slices, MockMvc, Testcontainers</h2>
+<table>
+  <thead><tr><th>Annotation</th><th>Loads</th><th>Use for</th></tr></thead>
+  <tbody>
+    <tr><td><i>none</i> (plain JUnit + Mockito)</td><td>Nothing from Spring.</td><td>Services and domain logic. Fastest. Most of your tests.</td></tr>
+    <tr><td><code>@WebMvcTest(OrderController.class)</code></td><td>Only MVC: that controller, Jackson, validation, advice, security filters. Services must be mocked.</td><td>HTTP mapping, status codes, JSON shape, validation errors.</td></tr>
+    <tr><td><code>@DataJpaTest</code></td><td>JPA, repositories, an embedded or Testcontainers DB. Each test rolls back.</td><td>Queries, mappings, constraints.</td></tr>
+    <tr><td><code>@JsonTest</code> / <code>@RestClientTest</code> / <code>@DataRedisTest</code></td><td>Other slices.</td><td>Serialization; outbound HTTP clients; Redis repos.</td></tr>
+    <tr><td><code>@SpringBootTest</code></td><td>The whole context.</td><td>A few end-to-end flows. Slow — keep count low.</td></tr>
+    <tr><td><code>@SpringBootTest(webEnvironment = RANDOM_PORT)</code></td><td>Whole context + real server.</td><td>Test with <code>TestRestTemplate</code> / <code>RestClient</code> over real HTTP.</td></tr>
+  </tbody>
+</table>
+<pre><span class="ann">@WebMvcTest</span>(<span class="typ">OrderController</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="typ">OrderControllerTest</span> {
+    <span class="ann">@Autowired</span> <span class="typ">MockMvc</span> mvc;
+    <span class="ann">@MockitoBean</span> <span class="typ">OrderService</span> service;              <span class="cmt">// Boot 3.4+; older: @MockBean</span>
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">returns404WhenMissing</span>() <span class="kw">throws</span> <span class="typ">Exception</span> {
+        when(service.find(<span class="num">42L</span>)).thenThrow(<span class="kw">new</span> <span class="typ">OrderNotFoundException</span>(<span class="num">42L</span>));
+        mvc.perform(get(<span class="str">"/api/orders/42"</span>).with(jwt()))
+           .andExpect(status().isNotFound())
+           .andExpect(jsonPath(<span class="str">"$.detail"</span>).value(containsString(<span class="str">"42"</span>)));
+    }
+}
+
+<span class="ann">@DataJpaTest</span>
+<span class="ann">@Testcontainers</span>
+<span class="ann">@AutoConfigureTestDatabase</span>(replace = <span class="typ">Replace</span>.NONE)   <span class="cmt">// do NOT swap in H2</span>
+<span class="kw">class</span> <span class="typ">OrderRepositoryTest</span> {
+    <span class="ann">@Container</span> <span class="ann">@ServiceConnection</span>                      <span class="cmt">// Boot wires the datasource URL for you</span>
+    <span class="kw">static</span> <span class="typ">PostgreSQLContainer</span>&lt;?&gt; pg = <span class="kw">new</span> <span class="typ">PostgreSQLContainer</span>&lt;&gt;(<span class="str">"postgres:16"</span>);
+
+    <span class="ann">@Autowired</span> <span class="typ">OrderRepository</span> repo;
+
+    <span class="ann">@Test</span>
+    <span class="kw">void</span> <span class="fn">findsByStatus</span>() {
+        repo.save(<span class="kw">new</span> <span class="typ">Order</span>(<span class="typ">OrderStatus</span>.NEW));
+        assertThat(repo.findByStatus(<span class="typ">OrderStatus</span>.NEW, <span class="typ">Pageable</span>.unpaged())).hasSize(<span class="num">1</span>);
+    }
+}</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>H2 in tests, Postgres in prod</td><td>Tests pass on H2; prod fails on a Postgres-only function or type.</td><td>Testcontainers with the real DB image. <code>@ServiceConnection</code> makes it one line.</td></tr>
+    <tr><td>Everything <code>@SpringBootTest</code></td><td>400 tests each booting the full context: 20-minute test suite.</td><td>Unit tests for logic; slices for edges; a handful of full-context tests. Reuse contexts (same config = cached).</td></tr>
+    <tr><td>Context cache misses</td><td>Different <code>@MockBean</code> sets per test class → a new context each time.</td><td>Group tests by identical configuration; share a base test class.</td></tr>
+    <tr><td>Testing private methods</td><td>Reflection to reach private logic.</td><td>Test through the public API; if it is hard, the class is doing too much.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Local dev with containers:</b> add <code>spring-boot-testcontainers</code> and a <code>TestShopApplication</code> in <code>src/test</code> that starts Postgres/Redis/Kafka containers with <code>@ServiceConnection</code>; run it from the IDE and your app has real dependencies with zero install. <code>spring-boot-docker-compose</code> does the same from a <code>compose.yaml</code>.</div>
+<div class="tricky">
+  <div class="q">Q. Your <code>@WebMvcTest</code> fails with "No qualifying bean of type OrderService". Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">A slice test loads only the web layer. Any service the controller needs must be provided as a mock (<code>@MockitoBean</code>) or the test will not start. That is the point: the slice forces you to isolate.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Actuator, metrics, logging</h2>
+<table>
+  <thead><tr><th>Endpoint</th><th>Shows</th><th>Default exposure (web)</th></tr></thead>
+  <tbody>
+    <tr><td><code>/actuator/health</code></td><td>UP / DOWN plus component checks (db, redis, diskSpace). <code>/health/liveness</code> and <code>/health/readiness</code> for Kubernetes probes.</td><td>Yes</td></tr>
+    <tr><td><code>/actuator/info</code></td><td>Build version, git commit (with the build-info / git plugins).</td><td>No</td></tr>
+    <tr><td><code>/actuator/metrics</code></td><td>Micrometer meters: JVM, HTTP, DB pool, your own.</td><td>No</td></tr>
+    <tr><td><code>/actuator/prometheus</code></td><td>Same, in Prometheus text format (needs <code>micrometer-registry-prometheus</code>).</td><td>No</td></tr>
+    <tr><td><code>/actuator/env</code>, <code>/configprops</code>, <code>/beans</code>, <code>/conditions</code></td><td>Resolved config, bound properties, every bean, why auto-config did or did not apply.</td><td>No — sensitive</td></tr>
+    <tr><td><code>/actuator/loggers</code></td><td>Read and <b>change</b> log levels at runtime (POST).</td><td>No</td></tr>
+    <tr><td><code>/actuator/threaddump</code>, <code>/heapdump</code></td><td>Diagnostics.</td><td>No — very sensitive</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">management</span>:
+  <span class="kw">endpoints.web.exposure.include</span>: health,info,metrics,prometheus
+  <span class="kw">endpoint.health</span>: { <span class="kw">show-details</span>: when_authorized, <span class="kw">probes.enabled</span>: <span class="kw">true</span> }
+  <span class="kw">server.port</span>: <span class="num">9090</span>                            <span class="cmt"># separate port: never reachable through the public ingress</span>
+  <span class="kw">tracing.sampling.probability</span>: <span class="num">0.1</span>            <span class="cmt"># 10% of requests traced (Micrometer Tracing + OTel)</span>
+  <span class="kw">metrics.tags.application</span>: <span class="str">${spring.application.name}</span></pre>
+<pre><span class="cmt">// custom metrics with Micrometer (vendor-neutral; exported to Prometheus, Datadog, OTLP…)</span>
+<span class="ann">@Service</span>
+<span class="kw">class</span> <span class="typ">CheckoutService</span> {
+    <span class="kw">private final</span> <span class="typ">Counter</span> checkouts;
+    <span class="kw">private final</span> <span class="typ">Timer</span> paymentTimer;
+    <span class="fn">CheckoutService</span>(<span class="typ">MeterRegistry</span> reg) {
+        checkouts    = reg.counter(<span class="str">"shop.checkouts"</span>, <span class="str">"channel"</span>, <span class="str">"web"</span>);
+        paymentTimer = reg.timer(<span class="str">"shop.payment.latency"</span>);
+    }
+    <span class="ann">@Observed</span>(name = <span class="str">"checkout"</span>)                     <span class="cmt">// one annotation → timer + span</span>
+    <span class="kw">void</span> <span class="fn">checkout</span>(<span class="typ">Cart</span> c) {
+        checkouts.increment();
+        paymentTimer.record(() -&gt; payments.charge(c));
+    }
+}
+
+<span class="cmt">// custom health check</span>
+<span class="ann">@Component</span>
+<span class="kw">class</span> <span class="typ">PaymentHealth</span> <span class="kw">implements</span> <span class="typ">HealthIndicator</span> {
+    <span class="kw">public</span> <span class="typ">Health</span> <span class="fn">health</span>() {
+        <span class="kw">return</span> payments.ping() ? <span class="typ">Health</span>.up().build() : <span class="typ">Health</span>.down().withDetail(<span class="str">"reason"</span>, <span class="str">"no ping"</span>).build();
+    }
+}</pre>
+<h3>Logging</h3>
+<table>
+  <thead><tr><th>Task</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Default stack</td><td>SLF4J API + Logback. Use <code>private static final Logger log = LoggerFactory.getLogger(X.class)</code> or Lombok <code>@Slf4j</code>.</td></tr>
+    <tr><td>Levels</td><td><code>logging.level.com.shop=DEBUG</code>, <code>logging.level.root=INFO</code>; change live via <code>/actuator/loggers</code>.</td></tr>
+    <tr><td>Structured JSON logs</td><td><code>logging.structured.format.console=ecs</code> (or <code>logstash</code>, <code>gelf</code>) — Boot 3.4+. Needed for Loki / ELK / Datadog.</td></tr>
+    <tr><td>Correlation</td><td>With Micrometer Tracing, <code>traceId</code> and <code>spanId</code> land in the MDC and in every log line automatically.</td></tr>
+    <tr><td>Files</td><td><code>logging.file.name=/var/log/shop.log</code>; rolling via <code>logging.logback.rollingpolicy.*</code>. In containers, log to stdout and let the platform collect.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Logging cost</td><td><code>log.debug("Order " + order)</code> — the string is built even when DEBUG is off.</td><td><code>log.debug("Order {}", order)</code> — placeholders are only formatted if the level is on.</td></tr>
+    <tr><td>Health = everything</td><td>Health check calls every downstream; one slow partner makes Kubernetes restart <i>you</i>.</td><td>Liveness = process alive only. Readiness = can serve (DB pool). Downstream status as info, not DOWN.</td></tr>
+    <tr><td>Metrics with unbounded tags</td><td><code>reg.counter("req", "userId", id)</code> → one series per user → memory blow-up.</td><td>Tags only for low-cardinality values (status, method, region).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>/actuator/health</code> returns <code>{"status":"UP"}</code> and nothing else, even though the DB is down. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Two things: component details are hidden unless <code>show-details</code> is set, and the DB check may not be part of the overall status if you grouped it away. Also note "UP" is cached briefly. Check <code>/actuator/health/db</code> directly.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Advanced — async, scheduling, events, caching, HTTP clients, resilience</h2>
+<table>
+  <thead><tr><th>Feature</th><th>Turn on</th><th>Use</th><th>Trap</th></tr></thead>
+  <tbody>
+    <tr><td><b>@Async</b></td><td><code>@EnableAsync</code> + an <code>Executor</code> bean</td><td><code>@Async public CompletableFuture&lt;Report&gt; build()</code> — runs on another thread.</td><td>Self-call ignores it; exceptions in <code>void</code> methods vanish (add <code>AsyncUncaughtExceptionHandler</code>).</td></tr>
+    <tr><td><b>@Scheduled</b></td><td><code>@EnableScheduling</code></td><td><code>@Scheduled(cron = "0 0 2 * * *")</code>, <code>fixedDelay</code>, <code>fixedRate</code>.</td><td>Single thread by default → one slow job delays all. Set <code>spring.task.scheduling.pool.size</code>. In a cluster every instance runs it: use ShedLock.</td></tr>
+    <tr><td><b>Events</b></td><td>built in</td><td><code>publisher.publishEvent(new OrderPlaced(id))</code> → <code>@EventListener void on(OrderPlaced e)</code>. Decouples features inside one app.</td><td>Sync by default (same thread, same transaction). <code>@TransactionalEventListener</code> runs after commit; add <code>@Async</code> to go off-thread.</td></tr>
+    <tr><td><b>Caching</b></td><td><code>@EnableCaching</code> + a provider (Caffeine local, Redis shared)</td><td><code>@Cacheable("products")</code>, <code>@CacheEvict</code>, <code>@CachePut</code>, <code>@Caching</code>.</td><td>Default simple map has no TTL/limit. Key is all params by default; set <code>key = "#id"</code>. Cached value must be serializable for Redis.</td></tr>
+    <tr><td><b>RestClient</b> (sync, Boot 3.2+)</td><td>built in</td><td><code>restClient.get().uri("/x/{id}", id).retrieve().body(Dto.class)</code>. Replaces <code>RestTemplate</code>.</td><td>Set connect/read timeouts on the <code>ClientHttpRequestFactory</code>; default can be infinite.</td></tr>
+    <tr><td><b>WebClient</b> (reactive)</td><td><code>webflux</code> starter</td><td>Non-blocking calls, streaming.</td><td>Calling <code>.block()</code> inside a reactive pipeline deadlocks.</td></tr>
+    <tr><td><b>HTTP Interface clients</b></td><td><code>HttpServiceProxyFactory</code></td><td>Declare an interface with <code>@GetExchange</code>; Spring implements it (like Feign).</td><td>—</td></tr>
+    <tr><td><b>Resilience4j</b></td><td><code>resilience4j-spring-boot3</code></td><td><code>@CircuitBreaker(name="pay", fallbackMethod="fallback")</code>, <code>@Retry</code>, <code>@RateLimiter</code>, <code>@TimeLimiter</code>, <code>@Bulkhead</code>.</td><td>Fallback must have the same signature plus a Throwable param. Order of annotations matters.</td></tr>
+    <tr><td><b>Virtual threads</b> (Java 21+)</td><td><code>spring.threads.virtual.enabled=true</code></td><td>Tomcat, <code>@Async</code>, <code>@Scheduled</code>, Kafka listeners run on virtual threads → thousands of blocking requests cheaply.</td><td>Pinning on <code>synchronized</code> blocks with I/O inside (fixed in Java 24). Pools like HikariCP still limit DB concurrency.</td></tr>
+    <tr><td><b>Spring Modulith</b></td><td><code>spring-modulith</code></td><td>Verifies package boundaries; event publication log; docs.</td><td>—</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// caching with Caffeine (local) — add com.github.ben-manes.caffeine:caffeine</span>
+<span class="kw">spring.cache</span>:
+  <span class="kw">type</span>: caffeine
+  <span class="kw">cache-names</span>: products, customers
+  <span class="kw">caffeine.spec</span>: <span class="str">maximumSize=10000,expireAfterWrite=10m</span>
+
+<span class="ann">@Cacheable</span>(value = <span class="str">"products"</span>, key = <span class="str">"#id"</span>, unless = <span class="str">"#result == null"</span>)
+<span class="kw">public</span> <span class="typ">Product</span> <span class="fn">find</span>(<span class="kw">long</span> id) { <span class="kw">return</span> repo.findById(id).orElse(<span class="kw">null</span>); }
+
+<span class="ann">@CacheEvict</span>(value = <span class="str">"products"</span>, key = <span class="str">"#p.id"</span>)
+<span class="kw">public void</span> <span class="fn">update</span>(<span class="typ">Product</span> p) { repo.save(p); }
+
+<span class="cmt">// outbound HTTP with timeouts</span>
+<span class="ann">@Bean</span> <span class="typ">RestClient</span> <span class="fn">payClient</span>(<span class="typ">RestClient</span>.<span class="typ">Builder</span> b) {
+    <span class="kw">var</span> f = <span class="kw">new</span> <span class="typ">JdkClientHttpRequestFactory</span>();
+    f.setReadTimeout(<span class="typ">Duration</span>.ofSeconds(<span class="num">3</span>));
+    <span class="kw">return</span> b.baseUrl(<span class="str">"https://pay.example.com"</span>).requestFactory(f)
+            .defaultStatusHandler(<span class="typ">HttpStatusCode</span>::is5xxServerError, (req, res) -&gt; { <span class="kw">throw new</span> <span class="typ">PaymentDownException</span>(); })
+            .build();
+}</pre>
+<div class="tips"><b>Transactional outbox:</b> to publish a Kafka/Rabbit message reliably when a DB row is saved, write the event into an <code>outbox</code> table in the same transaction, and let a poller (or Debezium) publish it. Spring Modulith's event publication registry does this for internal events.</div>
+<div class="tricky">
+  <div class="q">Q. <code>@EventListener</code> on <code>OrderPlaced</code> sends an email, but the order insert later rolls back. Was the email sent?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Yes — plain <code>@EventListener</code> runs immediately, inside the publishing transaction, before commit. Use <code>@TransactionalEventListener(phase = AFTER_COMMIT)</code> so side effects happen only when the data is really saved.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Packaging and running — jar, Docker, native, shutdown</h2>
+<table>
+  <thead><tr><th>Task</th><th>Command / setting</th></tr></thead>
+  <tbody>
+    <tr><td>Build the fat jar</td><td><code>./mvnw -DskipTests package</code> → <code>target/shop-1.0.jar</code> (classes + all libs + launcher). <code>./gradlew bootJar</code>.</td></tr>
+    <tr><td>Run</td><td><code>java -jar target/shop-1.0.jar --spring.profiles.active=prod</code></td></tr>
+    <tr><td>Build info in <code>/actuator/info</code></td><td>Maven: <code>spring-boot-maven-plugin</code> goal <code>build-info</code>; Gradle: <code>springBoot { buildInfo() }</code>.</td></tr>
+    <tr><td>Layered jar for Docker caching</td><td>On by default. <code>java -Djarmode=tools -jar app.jar extract --layers --destination out</code></td></tr>
+    <tr><td>Image without a Dockerfile</td><td><code>./mvnw spring-boot:build-image</code> (Cloud Native Buildpacks) → <code>docker.io/library/shop:1.0</code></td></tr>
+    <tr><td>Native executable (GraalVM)</td><td><code>./mvnw -Pnative native:compile</code> — ~50 ms start, low memory; slower build, reflection needs hints.</td></tr>
+    <tr><td>CDS / AOT for faster JVM start</td><td><code>-XX:+AutoCreateSharedArchive -XX:SharedArchiveFile=app.jsa</code>; Boot 3.3+ docs cover a training run.</td></tr>
+    <tr><td>Graceful shutdown</td><td><code>server.shutdown=graceful</code> + <code>spring.lifecycle.timeout-per-shutdown-phase=30s</code>. On SIGTERM: stop taking requests, finish in-flight ones, then exit.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Dockerfile — multi-stage with layered jar</span>
+<span class="kw">FROM</span> <span class="typ">eclipse-temurin:21-jdk-alpine</span> <span class="kw">AS</span> build
+<span class="kw">WORKDIR</span> /app
+<span class="kw">COPY</span> .mvn .mvn
+<span class="kw">COPY</span> mvnw pom.xml ./
+<span class="kw">RUN</span> ./mvnw <span class="ann">-q</span> dependency:go-offline
+<span class="kw">COPY</span> src src
+<span class="kw">RUN</span> ./mvnw <span class="ann">-q</span> <span class="ann">-DskipTests</span> package <span class="ann">&amp;&amp;</span> java <span class="ann">-Djarmode=tools</span> <span class="ann">-jar</span> target/*.jar extract <span class="ann">--layers</span> <span class="ann">--destination</span> out
+
+<span class="kw">FROM</span> <span class="typ">eclipse-temurin:21-jre-alpine</span>
+<span class="kw">WORKDIR</span> /app
+<span class="kw">COPY</span> <span class="ann">--from=build</span> /app/out/dependencies/ ./          <span class="cmt"># changes rarely → cached</span>
+<span class="kw">COPY</span> <span class="ann">--from=build</span> /app/out/spring-boot-loader/ ./
+<span class="kw">COPY</span> <span class="ann">--from=build</span> /app/out/snapshot-dependencies/ ./
+<span class="kw">COPY</span> <span class="ann">--from=build</span> /app/out/application/ ./            <span class="cmt"># your code → only this layer changes per build</span>
+<span class="kw">USER</span> <span class="num">1001</span>
+<span class="kw">EXPOSE</span> <span class="num">8080</span>
+<span class="kw">ENTRYPOINT</span> [<span class="str">"java"</span>, <span class="str">"-XX:MaxRAMPercentage=75"</span>, <span class="str">"org.springframework.boot.loader.launch.JarLauncher"</span>]</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>JVM memory in containers</td><td><code>-Xmx4g</code> hard-coded; Pod limit is 2 Gi → OOMKilled.</td><td><code>-XX:MaxRAMPercentage=75</code>; the JVM reads the cgroup limit. Set Pod memory limit and leave headroom for off-heap.</td></tr>
+    <tr><td>Shutdown</td><td>SIGTERM kills mid-request; clients see connection resets during every deploy.</td><td><code>server.shutdown=graceful</code>; K8s <code>terminationGracePeriodSeconds</code> ≥ the Spring timeout; readiness probe flips first.</td></tr>
+    <tr><td>Fat jar every layer</td><td><code>COPY target/app.jar</code> — any code change re-uploads 80 MB of libraries.</td><td>Layered extraction (above) or buildpacks.</td></tr>
+    <tr><td>DevTools in prod</td><td><code>spring-boot-devtools</code> on the prod classpath.</td><td>Mark it <code>optional</code> / <code>developmentOnly</code>; it is auto-disabled in a jar but should not ship.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Kubernetes sends SIGTERM but the readiness probe still says ready for a few seconds. What happens to requests?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Some still arrive while the app is shutting down. Boot flips <code>/health/readiness</code> to <code>OUT_OF_SERVICE</code> on shutdown, but kube-proxy needs a moment to notice. Add a <code>preStop</code> sleep of 5–10 s in the Pod spec so traffic drains before the JVM gets SIGTERM.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. Troubleshooting and annotation quick reference</h2>
+<table>
+  <thead><tr><th>Error / symptom</th><th>Meaning</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>"Consider defining a bean of type X"</td><td>Nothing creates X.</td><td>Missing <code>@Service</code>/<code>@Bean</code>, class outside the scanned package, or a condition failed (check <code>/actuator/conditions</code>).</td></tr>
+    <tr><td>"expected single matching bean but found 2"</td><td>Ambiguous injection.</td><td><code>@Primary</code>, <code>@Qualifier</code>, or inject a List.</td></tr>
+    <tr><td>"The dependencies of some of the beans form a cycle"</td><td>A ↔ B.</td><td>Refactor; <code>@Lazy</code> as last resort.</td></tr>
+    <tr><td>"Port 8080 was already in use"</td><td>Another process owns it.</td><td><code>server.port=0</code> (random) in tests; kill the old process.</td></tr>
+    <tr><td>Whitelabel Error Page / 404 for a mapped URL</td><td>Controller not scanned, wrong <code>@RequestMapping</code>, or <code>context-path</code> set.</td><td>Check <code>/actuator/mappings</code>.</td></tr>
+    <tr><td>"Failed to configure a DataSource: 'url' attribute is not specified"</td><td>JPA starter present, no DB config.</td><td>Add <code>spring.datasource.url</code>, or exclude <code>DataSourceAutoConfiguration</code>.</td></tr>
+    <tr><td>LazyInitializationException</td><td>Lazy field touched outside a transaction.</td><td>Fetch in query / map to DTO inside the service.</td></tr>
+    <tr><td>"Transaction silently rolled back because it has been marked as rollback-only"</td><td>Inner failure caught, outer tried to commit.</td><td>Don't swallow exceptions inside a shared transaction.</td></tr>
+    <tr><td>HikariPool "Connection is not available, request timed out"</td><td>Pool exhausted.</td><td>Long transactions, open-in-view, leaked connections. Pool size ≈ cores×2 + disks; shorten transactions.</td></tr>
+    <tr><td>403 on every POST</td><td>CSRF on for a token API.</td><td>Disable CSRF for stateless APIs, or send the token.</td></tr>
+    <tr><td>Slow start-up</td><td>Big classpath, many beans.</td><td><code>--debug</code> start-up report, Actuator <code>startup</code> endpoint, lazy init (<code>spring.main.lazy-initialization=true</code> in dev only).</td></tr>
+  </tbody>
+</table>
+<h3>Annotations at a glance</h3>
+<table>
+  <thead><tr><th>Area</th><th>Annotations</th></tr></thead>
+  <tbody>
+    <tr><td>Beans</td><td><code>@Component @Service @Repository @Controller @RestController @Configuration @Bean @Autowired @Qualifier @Primary @Scope @Lazy @PostConstruct @PreDestroy @Profile @ConditionalOn…</code></td></tr>
+    <tr><td>Config</td><td><code>@Value @ConfigurationProperties @ConfigurationPropertiesScan @EnableConfigurationProperties @PropertySource</code></td></tr>
+    <tr><td>Web</td><td><code>@RequestMapping @GetMapping @PostMapping @PutMapping @PatchMapping @DeleteMapping @PathVariable @RequestParam @RequestBody @RequestHeader @ResponseStatus @RestControllerAdvice @ExceptionHandler @CrossOrigin @Valid @Validated</code></td></tr>
+    <tr><td>Data</td><td><code>@Entity @Table @Id @GeneratedValue @Column @ManyToOne @OneToMany @JoinColumn @Enumerated @Version @Query @Modifying @EntityGraph @Transactional</code></td></tr>
+    <tr><td>Security</td><td><code>@EnableMethodSecurity @PreAuthorize @PostAuthorize @Secured @AuthenticationPrincipal @WithMockUser</code></td></tr>
+    <tr><td>Testing</td><td><code>@SpringBootTest @WebMvcTest @DataJpaTest @JsonTest @MockitoBean @Testcontainers @Container @ServiceConnection @DynamicPropertySource @ActiveProfiles @Sql</code></td></tr>
+    <tr><td>Extras</td><td><code>@EnableAsync @Async @EnableScheduling @Scheduled @EventListener @TransactionalEventListener @EnableCaching @Cacheable @CacheEvict @CachePut @Observed @Retryable @CircuitBreaker</code></td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 6 rules to remember:</b> 1) constructor injection, stateless singletons; 2) controllers thin, services own <code>@Transactional</code>; 3) DTOs out, never entities; 4) <code>open-in-view=false</code>, fetch what you need, watch for N+1; 5) config via <code>@ConfigurationProperties</code> + env vars, Flyway for schema; 6) slice tests + Testcontainers, few full-context tests.</div>
+<div class="tricky">
+  <div class="q">Q. Fastest way to find out why an auto-configuration did not apply?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Start with <code>--debug</code> (or <code>debug=true</code>) and read the <b>CONDITIONS EVALUATION REPORT</b>: positive and negative matches with the exact condition that failed. Same data live at <code>/actuator/conditions</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("springboot-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("springboot-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

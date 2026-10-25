@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS for a Java Backend (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* Java keywords, JSON/YAML keys */
+  pre .typ { color: var(--c-typ); }                    /* types, services, ARNs */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* annotations, CLI flags */
+  pre .fn  { color: var(--c-fn); }                     /* method names, CLI commands */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>AWS for a Java Backend<span class="sub">How AWS is organised · IAM · VPC · compute choices (EC2 / ECS / EKS / Lambda) · RDS · S3 · ALB &amp; Route 53 · SQS/SNS/EventBridge · config &amp; secrets · CloudWatch · SDK v2 patterns · cost · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">The services a Spring Boot team actually touches, with the Java SDK v2 code to use them. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. How AWS is organised (accounts, regions, the shared-responsibility line)</h2>
+<table>
+  <thead><tr><th>Term</th><th>Plain meaning</th><th>Why you care</th></tr></thead>
+  <tbody>
+    <tr><td><b>Account</b></td><td>The billing and security boundary. Everything lives in one.</td><td>One account per environment (dev / staging / prod) is the strongest isolation you can buy for free.</td></tr>
+    <tr><td><b>Organization</b></td><td>A tree of accounts with shared billing and guardrails (SCPs).</td><td>Platform team owns it; you get an account and an SSO login.</td></tr>
+    <tr><td><b>Region</b></td><td>A geographic cluster (<code>ap-south-1</code> Mumbai, <code>eu-west-1</code> Ireland…). Most resources are regional.</td><td>Data stays where you put it; latency; some services only in some regions.</td></tr>
+    <tr><td><b>Availability Zone (AZ)</b></td><td>One or more data centres inside a region, isolated power/network. <code>ap-south-1a/b/c</code>.</td><td>Run in ≥ 2 AZs or one data-centre failure is your outage.</td></tr>
+    <tr><td><b>Global services</b></td><td>IAM, Route 53, CloudFront, Organizations.</td><td>IAM changes apply everywhere.</td></tr>
+    <tr><td><b>ARN</b></td><td>Amazon Resource Name: <code>arn:aws:s3:::shop-uploads</code>, <code>arn:aws:sqs:ap-south-1:123456789012:orders</code>.</td><td>How IAM policies name things.</td></tr>
+    <tr><td><b>Managed vs self-run</b></td><td>RDS runs Postgres for you; EC2 gives you a VM to run it yourself.</td><td>Default to managed; your team's time is the expensive part.</td></tr>
+    <tr><td><b>Shared responsibility</b></td><td>AWS secures the cloud (hardware, hypervisor, managed service internals); you secure what you put <i>in</i> it (IAM, security groups, data, patches on EC2).</td><td>An open S3 bucket is your fault, not AWS's.</td></tr>
+  </tbody>
+</table>
+<h3>The services a Java backend team actually meets</h3>
+<table>
+  <thead><tr><th>Need</th><th>Service</th><th>Managed alternative you might see</th></tr></thead>
+  <tbody>
+    <tr><td>Run the app</td><td><b>ECS Fargate</b> (containers, no servers) · <b>EKS</b> (Kubernetes) · <b>EC2</b> (VMs) · <b>Lambda</b> (functions) · <b>App Runner</b> / <b>Elastic Beanstalk</b> (PaaS-ish)</td><td>—</td></tr>
+    <tr><td>Relational DB</td><td><b>RDS</b> (Postgres/MySQL) · <b>Aurora</b> (AWS's own engine, Postgres/MySQL compatible)</td><td>DynamoDB (key-value), DocumentDB (Mongo-compatible), ElastiCache (Redis)</td></tr>
+    <tr><td>Files / objects</td><td><b>S3</b></td><td>EFS (shared filesystem), EBS (disk for EC2)</td></tr>
+    <tr><td>Traffic in</td><td><b>ALB</b> (HTTP) · <b>NLB</b> (TCP) · <b>API Gateway</b> · <b>CloudFront</b> (CDN) · <b>Route 53</b> (DNS)</td><td>—</td></tr>
+    <tr><td>Messaging</td><td><b>SQS</b> (queues) · <b>SNS</b> (fan-out) · <b>EventBridge</b> (event bus) · <b>MSK</b> (Kafka) · <b>Kinesis</b></td><td>—</td></tr>
+    <tr><td>Config &amp; secrets</td><td><b>SSM Parameter Store</b> · <b>Secrets Manager</b> · <b>KMS</b> (keys)</td><td>—</td></tr>
+    <tr><td>Identity</td><td><b>IAM</b> · <b>IAM Identity Center</b> (SSO) · <b>Cognito</b> (end-user auth)</td><td>—</td></tr>
+    <tr><td>Observability</td><td><b>CloudWatch</b> (metrics, logs, alarms) · <b>X-Ray</b> (traces) · <b>CloudTrail</b> (API audit)</td><td>Managed Prometheus/Grafana (AMP/AMG)</td></tr>
+    <tr><td>Registry / CI</td><td><b>ECR</b> (images) · <b>CodeArtifact</b> (Maven) · <b>CodeBuild/CodePipeline</b></td><td>GitHub Actions + ECR is more common</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># CLI setup with SSO (never long-lived access keys on laptops)</span>
+<span class="fn">aws</span> configure sso                                   <span class="cmt"># creates a profile; opens the browser</span>
+<span class="fn">aws</span> sso login <span class="ann">--profile</span> shop-dev
+<span class="kw">export</span> AWS_PROFILE=shop-dev
+<span class="fn">aws</span> sts get-caller-identity                         <span class="cmt"># who am I, which account</span>
+<span class="fn">aws</span> s3 ls  ·  <span class="fn">aws</span> ecs list-clusters  ·  <span class="fn">aws</span> rds describe-db-instances <span class="ann">--query</span> <span class="str">'DBInstances[].Endpoint.Address'</span>
+<span class="fn">aws</span> logs tail /ecs/shop-api <span class="ann">--follow</span> <span class="ann">--since</span> 10m   <span class="cmt"># app logs from the terminal</span></pre>
+<div class="tips"><b>Mental model:</b> an AWS account is an empty building you rent. IAM is the badge system, the VPC is the floor plan and the walls, security groups are the door locks, and every service is a department you can hire by the hour. The bill is the only thing that is truly unlimited.</div>
+<div class="tricky">
+  <div class="q">Q. Your staging and prod run in one account, separated by naming. Someone's staging script runs <code>aws s3 rm --recursive</code> on the wrong bucket. What stopped it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Nothing — the credentials were valid for both. Separate accounts turn "please be careful" into "not possible": the staging role cannot even see prod buckets. That is why the account is the primary isolation unit.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. IAM — who may do what</h2>
+<table>
+  <thead><tr><th>Piece</th><th>Meaning</th><th>Java backend use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Principal</b></td><td>Who is acting: a user, a role, a service.</td><td>Your app runs as a <b>role</b>, never a user.</td></tr>
+    <tr><td><b>User</b> + access keys</td><td>A person or legacy script with permanent credentials.</td><td>Avoid. Humans use SSO; apps use roles; CI uses OIDC.</td></tr>
+    <tr><td><b>Role</b></td><td>An identity with no password that something <i>assumes</i> to get temporary credentials (hours).</td><td>ECS task role, EC2 instance profile, Lambda execution role, GitHub Actions OIDC role.</td></tr>
+    <tr><td><b>Policy</b></td><td>JSON document: Effect / Action / Resource / Condition. Attached to identities (identity-based) or to resources like buckets (resource-based).</td><td>What your app's role may call.</td></tr>
+    <tr><td><b>Trust policy</b></td><td>On a role: <i>who</i> may assume it.</td><td><code>ecs-tasks.amazonaws.com</code> for task roles; GitHub's OIDC provider for CI.</td></tr>
+    <tr><td><b>Managed vs inline</b></td><td>AWS-managed (<code>AmazonS3ReadOnlyAccess</code> — broad), customer-managed (reusable), inline (one role).</td><td>Customer-managed, scoped to specific ARNs.</td></tr>
+    <tr><td><b>Permission boundary</b> / <b>SCP</b></td><td>Caps on what a role or whole account can ever do.</td><td>Platform team guardrails; explains "AccessDenied" despite your policy.</td></tr>
+    <tr><td><b>Evaluation</b></td><td>Explicit <b>Deny</b> wins → else any <b>Allow</b> → else implicit deny. Resource policies and identity policies are combined for same-account access.</td><td>Debug with the IAM Policy Simulator and CloudTrail.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// least-privilege policy for the shop-api task role</span>
+{
+  <span class="str">"Version"</span>: <span class="str">"2012-10-17"</span>,
+  <span class="str">"Statement"</span>: [
+    { <span class="str">"Sid"</span>: <span class="str">"OrdersQueue"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="str">"Action"</span>: [<span class="str">"sqs:SendMessage"</span>, <span class="str">"sqs:ReceiveMessage"</span>, <span class="str">"sqs:DeleteMessage"</span>, <span class="str">"sqs:GetQueueAttributes"</span>, <span class="str">"sqs:ChangeMessageVisibility"</span>],
+      <span class="str">"Resource"</span>: <span class="str">"arn:aws:sqs:ap-south-1:123456789012:shop-prod-orders"</span> },
+    { <span class="str">"Sid"</span>: <span class="str">"Uploads"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="str">"Action"</span>: [<span class="str">"s3:GetObject"</span>, <span class="str">"s3:PutObject"</span>],
+      <span class="str">"Resource"</span>: <span class="str">"arn:aws:s3:::shop-prod-uploads/*"</span>,            <span class="cmt">// objects: bucket-arn/*</span>
+      <span class="str">"Condition"</span>: { <span class="str">"StringEquals"</span>: { <span class="str">"s3:x-amz-server-side-encryption"</span>: <span class="str">"aws:kms"</span> } } },
+    { <span class="str">"Sid"</span>: <span class="str">"ListUploads"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>, <span class="str">"Action"</span>: <span class="str">"s3:ListBucket"</span>,
+      <span class="str">"Resource"</span>: <span class="str">"arn:aws:s3:::shop-prod-uploads"</span> },                <span class="cmt">// ListBucket is on the BUCKET arn, not /*</span>
+    { <span class="str">"Sid"</span>: <span class="str">"ReadConfig"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="str">"Action"</span>: [<span class="str">"ssm:GetParameter"</span>, <span class="str">"ssm:GetParametersByPath"</span>, <span class="str">"secretsmanager:GetSecretValue"</span>, <span class="str">"kms:Decrypt"</span>],
+      <span class="str">"Resource"</span>: [<span class="str">"arn:aws:ssm:ap-south-1:123456789012:parameter/shop/prod/*"</span>,
+                   <span class="str">"arn:aws:secretsmanager:ap-south-1:123456789012:secret:shop/prod/*"</span>,
+                   <span class="str">"arn:aws:kms:ap-south-1:123456789012:key/1234abcd-…"</span>] }
+  ]
+}</pre>
+<pre><span class="cmt"># debugging access</span>
+<span class="fn">aws</span> sts get-caller-identity                                        <span class="cmt"># which role am I actually using</span>
+<span class="fn">aws</span> iam simulate-principal-policy <span class="ann">--policy-source-arn</span> arn:aws:iam::…:role/shop-api-task <span class="ann">--action-names</span> s3:GetObject <span class="ann">--resource-arns</span> arn:aws:s3:::shop-prod-uploads/x
+<span class="fn">aws</span> cloudtrail lookup-events <span class="ann">--lookup-attributes</span> AttributeKey=EventName,AttributeValue=GetObject <span class="ann">--max-results</span> 5   <span class="cmt"># who called what; AccessDenied shows the missing action</span>
+<span class="cmt"># IAM Access Analyzer → "generate policy from CloudTrail" writes a least-privilege policy from what the app actually called</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Access keys in the app</td><td><code>AWS_ACCESS_KEY_ID</code> in <code>application.yml</code> or env vars on the server.</td><td>A role (task role / instance profile / IRSA). The SDK finds it automatically. No keys exist to leak.</td></tr>
+    <tr><td><code>"Action": "s3:*"</code>, <code>"Resource": "*"</code></td><td>"We'll tighten it later."</td><td>Named actions on named ARNs. Access Analyzer / CloudTrail tell you exactly what is used.</td></tr>
+    <tr><td>One role for every service</td><td>Payments can read the uploads bucket and the orders queue.</td><td>One role per service; blast radius of a compromised container = that service's needs.</td></tr>
+    <tr><td>Bucket/object ARN mix-up</td><td><code>s3:ListBucket</code> on <code>bucket/*</code> → AccessDenied, hours lost.</td><td>Bucket-level actions (<code>ListBucket</code>, <code>GetBucketLocation</code>) on the bucket ARN; object actions on <code>bucket/*</code>.</td></tr>
+    <tr><td>Root account use</td><td>Daily work as the root user.</td><td>Root locked with MFA, used only for billing/account tasks. Everyone else via SSO roles.</td></tr>
+    <tr><td>Trusting "AdministratorAccess" in CI</td><td>Deploy role can do anything.</td><td>Scoped deploy role; separate read-only plan role; OIDC trust limited to one repo and environment.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your policy allows <code>s3:GetObject</code> on the bucket, but the app still gets AccessDenied reading an object encrypted with a KMS key. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Reading an SSE-KMS object also needs <code>kms:Decrypt</code> on that key — both in your identity policy <i>and</i> allowed by the key's own policy. Two policies, two places; CloudTrail shows the <code>Decrypt</code> denial.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. VPC — the network your services live in</h2>
+<table>
+  <thead><tr><th>Piece</th><th>Meaning</th><th>Typical setup</th></tr></thead>
+  <tbody>
+    <tr><td><b>VPC</b></td><td>Your private network, a CIDR like <code>10.0.0.0/16</code>.</td><td>One per environment/account.</td></tr>
+    <tr><td><b>Subnet</b></td><td>A slice of the VPC in one AZ. <b>Public</b> if its route table sends <code>0.0.0.0/0</code> to an Internet Gateway; otherwise <b>private</b>.</td><td>Per AZ: one public (ALB, NAT), one private-app (ECS tasks), one private-data (RDS, Redis). 3 AZs × 3 = 9 subnets.</td></tr>
+    <tr><td><b>Internet Gateway (IGW)</b></td><td>Lets public subnets talk to the internet both ways.</td><td>One per VPC.</td></tr>
+    <tr><td><b>NAT Gateway</b></td><td>Lets private subnets reach <i>out</i> (pull images, call Stripe) without being reachable from outside.</td><td>One per AZ for HA; costs ~$32/month each + per-GB — a classic surprise bill.</td></tr>
+    <tr><td><b>Route table</b></td><td>Where traffic for each destination goes.</td><td>Public: <code>0.0.0.0/0 → igw</code>. Private: <code>0.0.0.0/0 → nat</code>.</td></tr>
+    <tr><td><b>Security Group (SG)</b></td><td>Stateful firewall on a resource (ENI). Allow rules only; return traffic auto-allowed. Can reference other SGs.</td><td>ALB SG: 443 from <code>0.0.0.0/0</code>. App SG: 8080 from <i>ALB SG</i>. DB SG: 5432 from <i>App SG</i>. That chain is the whole security model.</td></tr>
+    <tr><td><b>Network ACL</b></td><td>Stateless allow/deny per subnet. Default allows all.</td><td>Leave default unless you need subnet-level deny.</td></tr>
+    <tr><td><b>VPC Endpoint</b></td><td>Private path to AWS services (S3, ECR, SSM, Secrets Manager, SQS…) without NAT/internet.</td><td>Gateway endpoints (S3, DynamoDB) are free; interface endpoints cost per hour but cut NAT data charges and improve security.</td></tr>
+    <tr><td><b>ENI</b></td><td>A virtual network card. Every Fargate task, RDS instance, Lambda-in-VPC gets one.</td><td>Subnet IP exhaustion (<code>/24</code> = 251 usable) bites with many tasks.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># request path:  user → Route 53 → ALB (public subnets, SG 443) → target group → Fargate task ENI (private subnet, SG 8080 from ALB-SG)</span>
+<span class="cmt">#                task → RDS (private-data subnet, SG 5432 from app-SG)   ·   task → internet (Stripe) via NAT   ·   task → S3 via gateway endpoint (free, private)</span>
+
+<span class="cmt"># debugging connectivity</span>
+<span class="fn">aws</span> ec2 describe-security-groups <span class="ann">--group-ids</span> sg-0abc <span class="ann">--query</span> <span class="str">'SecurityGroups[].IpPermissions'</span>
+<span class="fn">aws</span> ec2 describe-route-tables <span class="ann">--filters</span> Name=association.subnet-id,Values=subnet-0abc
+<span class="cmt"># VPC Reachability Analyzer (console): source ENI → destination ENI:port, explains exactly which SG/NACL/route blocks</span>
+<span class="cmt"># VPC Flow Logs → CloudWatch Logs: REJECT lines show blocked traffic</span>
+<span class="fn">aws</span> ecs execute-command <span class="ann">--cluster</span> shop <span class="ann">--task</span> &lt;id&gt; <span class="ann">--container</span> api <span class="ann">--interactive</span> <span class="ann">--command</span> <span class="str">"/bin/sh"</span>   <span class="cmt"># shell into a Fargate task (ECS Exec)</span>
+<span class="cmt"># then: nc -zv shop-db.xxxx.ap-south-1.rds.amazonaws.com 5432</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Public database</td><td>RDS with <code>publicly_accessible = true</code> and SG <code>5432 from 0.0.0.0/0</code> "so the team can connect".</td><td>Private subnet, SG from the app SG only; humans via SSM Session Manager port-forward or a bastion.</td></tr>
+    <tr><td>SG rules by IP</td><td>App SG allows DB from <code>10.0.2.0/24</code>; tasks move subnets, rules rot.</td><td>Reference SGs: "allow from sg-app". Survives IP changes.</td></tr>
+    <tr><td>Everything in public subnets</td><td>Tasks with public IPs "so they can pull images".</td><td>Private subnets + NAT (or VPC endpoints for ECR/S3/logs).</td></tr>
+    <tr><td>Single NAT</td><td>One NAT gateway in AZ-a; AZ-a fails → every private subnet loses internet.</td><td>One per AZ, or accept the risk consciously for dev.</td></tr>
+    <tr><td>NAT bill shock</td><td>Tasks pull 5 GB images and stream to S3 through NAT: $0.045/GB adds up.</td><td>Gateway endpoint for S3, interface endpoints for ECR/CloudWatch; keep images small.</td></tr>
+    <tr><td>Tiny subnets</td><td><code>/27</code> subnets; scaling to 40 tasks fails with "no IPs".</td><td><code>/24</code> or larger for app subnets; plan the CIDR once.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Security groups are "stateful". What does that save you from writing?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Return traffic. If you allow inbound 8080 from the ALB, the responses go back out without any outbound rule. NACLs are stateless — there you would have to allow the ephemeral port range (1024–65535) both ways, which is why people leave NACLs at default.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Compute — EC2 vs ECS Fargate vs EKS vs Lambda for a Spring Boot service</h2>
+<table>
+  <thead><tr><th></th><th>EC2</th><th>ECS on Fargate</th><th>EKS</th><th>Lambda</th></tr></thead>
+  <tbody>
+    <tr><td><b>What you manage</b></td><td>The VM: OS patches, Java install, process supervision, scaling groups.</td><td>A task definition (image, CPU/memory, env, roles). No servers.</td><td>Kubernetes objects; AWS runs the control plane; you (or Fargate/Karpenter) run nodes.</td><td>A function + handler; AWS runs everything.</td></tr>
+    <tr><td><b>Unit</b></td><td>Instance (AMI)</td><td>Task (container)</td><td>Pod</td><td>Invocation</td></tr>
+    <tr><td><b>Scaling</b></td><td>Auto Scaling Group on CPU/ALB requests; minutes.</td><td>Service auto scaling on CPU/memory/ALB requests/SQS depth; ~1 min.</td><td>HPA + Cluster Autoscaler/Karpenter.</td><td>Automatic per request; cold starts (JVM 2–10 s; SnapStart helps).</td></tr>
+    <tr><td><b>Fits</b></td><td>Legacy, licensed software, special hardware, lift-and-shift.</td><td><b>Default for a handful of Spring services.</b></td><td>Many teams, many services, need the K8s ecosystem (Helm, operators, mesh), multi-cloud habits.</td><td>Event handlers (S3 upload → thumbnail), cron, glue, spiky low-volume APIs. Long-running Spring apps are a poor fit.</td></tr>
+    <tr><td><b>Ops weight</b></td><td>High</td><td>Low</td><td>Medium–high</td><td>Very low</td></tr>
+    <tr><td><b>Cost shape</b></td><td>Per instance-hour (cheap with Savings Plans; wasted when idle).</td><td>Per vCPU/GB-second of tasks; Fargate ≈ 20% more than equivalent EC2 but no idle nodes.</td><td>Control plane ~$73/month + nodes.</td><td>Per request + GB-second; free at low volume, expensive at constant high load.</td></tr>
+    <tr><td><b>Java notes</b></td><td>Full control of JVM flags, systemd.</td><td><code>-XX:MaxRAMPercentage</code>; task size in 0.25 vCPU steps; 90 s health grace for JVM start.</td><td>Same as the K8s sheet.</td><td>Spring Cloud Function / Quarkus / GraalVM native for cold start; keep heap small; avoid Spring Boot full context unless SnapStart.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># ECS Fargate essentials (Terraform shape in the Terraform sheet; here the operational commands)</span>
+<span class="fn">aws</span> ecs describe-services <span class="ann">--cluster</span> shop <span class="ann">--services</span> api <span class="ann">--query</span> <span class="str">'services[0].{running:runningCount,desired:desiredCount,events:events[0:3]}'</span>
+<span class="fn">aws</span> ecs list-tasks <span class="ann">--cluster</span> shop <span class="ann">--service-name</span> api
+<span class="fn">aws</span> ecs describe-tasks <span class="ann">--cluster</span> shop <span class="ann">--tasks</span> &lt;arn&gt; <span class="ann">--query</span> <span class="str">'tasks[0].{status:lastStatus,stopped:stoppedReason,containers:containers[].{name:name,exit:exitCode,reason:reason}}'</span>
+<span class="fn">aws</span> ecs update-service <span class="ann">--cluster</span> shop <span class="ann">--service</span> api <span class="ann">--force-new-deployment</span>              <span class="cmt"># restart all tasks (new image with same tag, config change)</span>
+<span class="fn">aws</span> ecs update-service <span class="ann">--cluster</span> shop <span class="ann">--service</span> api <span class="ann">--task-definition</span> shop-api:42       <span class="cmt"># deploy a new revision</span>
+<span class="fn">aws</span> ecs register-task-definition <span class="ann">--cli-input-json</span> file://taskdef.json                     <span class="cmt"># CI: new revision with the new image digest</span>
+<span class="fn">aws</span> logs tail /ecs/shop-api <span class="ann">--follow</span> <span class="ann">--filter-pattern</span> <span class="str">"ERROR"</span>
+
+<span class="cmt"># stopped task reasons you will see</span>
+<span class="cmt">#  "Essential container in task exited"           → app crashed; look at the container exitCode + logs</span>
+<span class="cmt">#  "Task failed ELB health checks"                 → health path wrong, app slow to start (raise grace period), SG blocks ALB→task</span>
+<span class="cmt">#  "OutOfMemoryError: Container killed due to memory usage" → task memory too small for heap + off-heap</span>
+<span class="cmt">#  "CannotPullContainerError"                      → no route to ECR (NAT/endpoint), wrong image tag, execution role lacks ecr:*</span>
+<span class="cmt">#  "ResourceInitializationError: unable to pull secrets" → execution role lacks secretsmanager/ssm/kms permissions</span></pre>
+<pre><span class="cmt">// Lambda handler in Java (plain, no Spring) — keep cold start small</span>
+<span class="kw">public class</span> <span class="typ">ThumbnailHandler</span> <span class="kw">implements</span> <span class="typ">RequestHandler</span>&lt;<span class="typ">S3Event</span>, <span class="typ">Void</span>&gt; {
+    <span class="kw">private static final</span> <span class="typ">S3Client</span> s3 = <span class="typ">S3Client</span>.create();      <span class="cmt">// static: reused across warm invocations</span>
+    <span class="kw">public</span> <span class="typ">Void</span> <span class="fn">handleRequest</span>(<span class="typ">S3Event</span> event, <span class="typ">Context</span> ctx) {
+        <span class="kw">for</span> (<span class="kw">var</span> rec : event.getRecords()) {
+            <span class="typ">String</span> key = rec.getS3().getObject().getUrlDecodedKey();
+            <span class="cmt">// read, resize, write back — idempotent: same key → same output</span>
+        }
+        <span class="kw">return null</span>;
+    }
+}
+<span class="cmt">// Spring on Lambda: spring-cloud-function-adapter-aws + SnapStart (Java 17/21 runtimes) brings cold starts to ~1 s</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>EKS for three services</td><td>A Kubernetes cluster for a team of four.</td><td>ECS Fargate. Move to EKS when you need what K8s gives (many teams, operators, portability).</td></tr>
+    <tr><td>Spring Boot monolith on Lambda</td><td>8-second cold starts, 15-minute max runtime, connection pools re-created per instance.</td><td>Lambda for event glue; long-running HTTP services on Fargate. If Lambda, SnapStart + RDS Proxy.</td></tr>
+    <tr><td>Task memory = heap</td><td>Task 1 GB, <code>-Xmx1g</code> → OOM-killed with heap half empty.</td><td><code>-XX:MaxRAMPercentage=75</code>; task memory ≥ heap + ~300 MB off-heap.</td></tr>
+    <tr><td><code>:latest</code> in the task definition</td><td>Every <code>force-new-deployment</code> may pull a different image; rollbacks impossible.</td><td>Image by digest or immutable tag; one task definition revision per release.</td></tr>
+    <tr><td>Patching EC2 by hand</td><td>SSH + <code>apt upgrade</code> on 12 boxes.</td><td>Immutable AMIs (Packer) + ASG instance refresh, or SSM Patch Manager; better, containers.</td></tr>
+    <tr><td>No ECS Exec / SSM</td><td>Opening SSH ports to debug.</td><td><code>aws ecs execute-command</code> / <code>aws ssm start-session</code> — audited, no inbound ports.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. ECS keeps restarting your task every ~2 minutes with "Task failed ELB health checks", but <code>curl localhost:8080/actuator/health</code> works inside the container. What is wrong?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Either the ALB cannot reach the task (task SG must allow 8080 <i>from the ALB's SG</i>), the target-group health path/port differs from what the app serves, or the JVM takes longer than <code>healthCheckGracePeriodSeconds</code> to come up. Check the target group's "unhealthy reason" first — it names the cause.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. RDS and Aurora — Postgres without the 3 am pager</h2>
+<table>
+  <thead><tr><th>Feature</th><th>RDS PostgreSQL</th><th>Aurora PostgreSQL</th></tr></thead>
+  <tbody>
+    <tr><td>What it is</td><td>Real PostgreSQL on a managed EC2 + EBS.</td><td>AWS's storage engine with a Postgres-compatible front end; storage replicated 6× across 3 AZs.</td></tr>
+    <tr><td>HA</td><td><b>Multi-AZ</b>: synchronous standby, automatic failover (~60–120 s), standby not readable (Multi-AZ <i>cluster</i> variant has 2 readable standbys).</td><td>Writer + up to 15 readers sharing storage; failover ~30 s; readers get the same data with ms lag.</td></tr>
+    <tr><td>Read scaling</td><td>Read replicas (async, their own storage).</td><td>Reader endpoint load-balances readers.</td></tr>
+    <tr><td>Storage</td><td>Provision gp3/io2; autoscaling up to a max.</td><td>Grows automatically in 10 GB steps.</td></tr>
+    <tr><td>Cost</td><td>Cheaper for small/steady loads.</td><td>Higher base; I/O-Optimized tier for heavy I/O; Serverless v2 scales ACUs for spiky loads.</td></tr>
+    <tr><td>Pick</td><td>Default for most services.</td><td>Need fast failover, many readers, or very high write throughput.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Setting / feature</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>Parameter group</b></td><td>Your <code>postgresql.conf</code>: <code>shared_preload_libraries=pg_stat_statements</code>, <code>log_min_duration_statement</code>, <code>idle_in_transaction_session_timeout</code>. Some need a reboot.</td></tr>
+    <tr><td><b>Automated backups + PITR</b></td><td>Retention 7–35 days; restore to any second. Snapshots for long-term.</td></tr>
+    <tr><td><b>Deletion protection</b> + <b>final snapshot</b></td><td>On, always, in prod.</td></tr>
+    <tr><td><b>Managed master password</b></td><td>Secrets Manager holds and rotates it; Terraform never sees it.</td></tr>
+    <tr><td><b>IAM database authentication</b></td><td>Connect with a 15-minute IAM token instead of a password (JDBC with the <code>aws-advanced-jdbc-wrapper</code>).</td></tr>
+    <tr><td><b>RDS Proxy</b></td><td>Connection pooler in front of RDS: survives failover faster, essential for Lambda, shares pools across many app instances.</td></tr>
+    <tr><td><b>Performance Insights</b> + <b>Enhanced Monitoring</b></td><td>Top SQL by load, waits, OS metrics. Turn on; it is your <code>pg_stat_statements</code> UI.</td></tr>
+    <tr><td><b>Blue/green deployments</b></td><td>Major version upgrades and parameter changes with a switchover of ~1 min.</td></tr>
+    <tr><td><b>Maintenance window</b></td><td>Minor upgrades/patches happen here; set it to your quietest hour.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Spring Boot connecting with the AWS JDBC wrapper (fast failover, optional IAM auth, Secrets Manager)</span>
+<span class="cmt"># dependency: software.amazon.jdbc:aws-advanced-jdbc-wrapper</span>
+<span class="kw">spring.datasource</span>:
+  <span class="kw">url</span>: <span class="str">jdbc:aws-wrapper:postgresql://shop-prod.cluster-xxxx.ap-south-1.rds.amazonaws.com:5432/shop</span>
+  <span class="kw">driver-class-name</span>: software.amazon.jdbc.Driver
+  <span class="kw">username</span>: app
+  <span class="kw">hikari.data-source-properties</span>:
+    <span class="kw">wrapperPlugins</span>: failover,efm2,iam                 <span class="cmt"># failover detection, enhanced monitoring, IAM auth (no password)</span>
+    <span class="kw">socketTimeout</span>: <span class="num">30</span>
+<span class="cmt"># or secretsManager plugin: secretsManagerSecretId=shop/prod/db  → username/password fetched and refreshed</span>
+
+<span class="cmt"># ops</span>
+<span class="fn">aws</span> rds describe-db-instances <span class="ann">--db-instance-identifier</span> shop-prod <span class="ann">--query</span> <span class="str">'DBInstances[0].{status:DBInstanceStatus,class:DBInstanceClass,az:MultiAZ,endpoint:Endpoint.Address}'</span>
+<span class="fn">aws</span> rds describe-events <span class="ann">--source-identifier</span> shop-prod <span class="ann">--source-type</span> db-instance <span class="ann">--duration</span> 1440   <span class="cmt"># failovers, reboots, backups in the last day</span>
+<span class="fn">aws</span> rds reboot-db-instance <span class="ann">--db-instance-identifier</span> shop-prod <span class="ann">--force-failover</span>              <span class="cmt"># test your app's failover handling in staging</span>
+<span class="fn">aws</span> rds restore-db-instance-to-point-in-time <span class="ann">--source-db-instance-identifier</span> shop-prod <span class="ann">--target-db-instance-identifier</span> shop-restore <span class="ann">--restore-time</span> 2026-10-25T02:10:00Z
+<span class="cmt"># connect from a laptop without a public DB: SSM port forward through a bastion / ECS task</span>
+<span class="fn">aws</span> ssm start-session <span class="ann">--target</span> i-0bastion <span class="ann">--document-name</span> AWS-StartPortForwardingSessionToRemoteHost <span class="ann">--parameters</span> <span class="str">'{"host":["shop-prod.xxxx.rds.amazonaws.com"],"portNumber":["5432"],"localPortNumber":["5432"]}'</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Single-AZ prod</td><td>Saving 50% until the AZ hiccups and the DB is gone for an hour.</td><td>Multi-AZ in prod; Single-AZ for dev/test.</td></tr>
+    <tr><td>Pool per task × many tasks</td><td>20 tasks × Hikari 20 = 400 connections on a <code>db.t4g.medium</code> (max ~400) → "too many connections".</td><td>Small pools (5–10) per task; RDS Proxy when task count is large or spiky.</td></tr>
+    <tr><td>App can't survive failover</td><td>Connections hang for minutes after a failover because DNS/TCP didn't notice.</td><td>AWS JDBC wrapper failover plugin, <code>socketTimeout</code>, Hikari <code>maxLifetime</code> &lt; DNS TTL; test with <code>--force-failover</code>.</td></tr>
+    <tr><td>Password in config</td><td>DB password in <code>application.yml</code> / task env var.</td><td>Managed master password in Secrets Manager → injected via ECS <code>secrets</code> or fetched by the JDBC wrapper; or IAM auth.</td></tr>
+    <tr><td>Burstable instances in prod</td><td><code>db.t4g</code> runs out of CPU credits during a sale → everything crawls.</td><td><code>t4g</code> for dev; <code>m6g/r6g</code> (or Aurora Serverless v2) for prod.</td></tr>
+    <tr><td>Storage full</td><td>Fixed 100 GB, no alarm; Postgres goes read-only.</td><td>Storage autoscaling + a <code>FreeStorageSpace</code> alarm.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. After an RDS Multi-AZ failover your Spring app logs errors for 3 more minutes although RDS says failover finished in 60 s. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The endpoint's DNS now points at the new primary, but your existing pooled connections still point at the dead host and only die when TCP gives up (or Hikari recycles them). Fix: the AWS JDBC wrapper's failover plugin (detects and reconnects in seconds), short <code>socketTimeout</code>, and Hikari <code>maxLifetime</code> around 5–10 min; the JVM must not cache DNS forever.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. S3 — objects, presigned URLs, lifecycle, security</h2>
+<table>
+  <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Bucket</b> / <b>key</b></td><td>Globally unique bucket name; keys are strings like <code>uploads/2026/10/25/9001.pdf</code> — "folders" are just prefixes.</td></tr>
+    <tr><td><b>Consistency</b></td><td>Strong read-after-write for all operations since 2020. No eventual-consistency dance any more.</td></tr>
+    <tr><td><b>Storage classes</b></td><td><code>STANDARD</code> → <code>STANDARD_IA</code> (infrequent) → <code>GLACIER_IR</code> / <code>GLACIER</code> / <code>DEEP_ARCHIVE</code> (cheap, slow). <code>INTELLIGENT_TIERING</code> moves objects for you.</td></tr>
+    <tr><td><b>Lifecycle rules</b></td><td>"After 30 days move to IA, after 365 to Glacier, after 7 years delete"; also "abort incomplete multipart uploads after 7 days" (saves money).</td></tr>
+    <tr><td><b>Versioning</b></td><td>Keeps old versions; protects from overwrite/delete. Pair with lifecycle to expire old versions.</td></tr>
+    <tr><td><b>Encryption</b></td><td>SSE-S3 (default, free) or SSE-KMS (your key, audit, cross-account control). Enforce with a bucket policy.</td></tr>
+    <tr><td><b>Block Public Access</b></td><td>Account- and bucket-level switch. On, everywhere, unless you knowingly host a public website (then CloudFront + OAC instead).</td></tr>
+    <tr><td><b>Presigned URL</b></td><td>A time-limited URL that carries your permission: clients upload/download directly to S3 without going through your JVM.</td></tr>
+    <tr><td><b>Multipart upload</b></td><td>Required &gt; 5 GB, recommended &gt; 100 MB; the SDK's Transfer Manager does it.</td></tr>
+    <tr><td><b>Event notifications</b></td><td>Object created → SQS / SNS / Lambda / EventBridge. Thumbnailing, virus scan, ingestion.</td></tr>
+    <tr><td><b>Access points, Object Lock, Replication</b></td><td>Per-app access policies; WORM compliance; cross-region copies.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// SDK v2: upload, download, presign (dependencies: software.amazon.awssdk:s3, :url-connection-client or :apache-client)</span>
+<span class="ann">@Configuration</span>
+<span class="kw">class</span> <span class="typ">AwsConfig</span> {
+    <span class="ann">@Bean</span> <span class="typ">S3Client</span> <span class="fn">s3</span>() { <span class="kw">return</span> <span class="typ">S3Client</span>.builder().region(<span class="typ">Region</span>.AP_SOUTH_1).build(); }           <span class="cmt">// one client per app; thread-safe; credentials from the chain</span>
+    <span class="ann">@Bean</span> <span class="typ">S3Presigner</span> <span class="fn">presigner</span>() { <span class="kw">return</span> <span class="typ">S3Presigner</span>.builder().region(<span class="typ">Region</span>.AP_SOUTH_1).build(); }
+}
+
+<span class="ann">@Service</span>
+<span class="kw">class</span> <span class="typ">UploadService</span> {
+    <span class="kw">private final</span> <span class="typ">S3Client</span> s3; <span class="kw">private final</span> <span class="typ">S3Presigner</span> presigner;
+    <span class="kw">private static final</span> <span class="typ">String</span> BUCKET = <span class="str">"shop-prod-uploads"</span>;
+
+    <span class="kw">void</span> <span class="fn">put</span>(<span class="typ">String</span> key, <span class="typ">Path</span> file) {
+        s3.putObject(<span class="typ">PutObjectRequest</span>.builder().bucket(BUCKET).key(key)
+                .contentType(<span class="str">"application/pdf"</span>).serverSideEncryption(<span class="typ">ServerSideEncryption</span>.AWS_KMS).build(), file);
+    }
+    <span class="typ">byte</span>[] <span class="fn">get</span>(<span class="typ">String</span> key) {
+        <span class="kw">return</span> s3.getObjectAsBytes(b -&gt; b.bucket(BUCKET).key(key)).asByteArray();   <span class="cmt">// small files; stream large ones with getObject(...) → ResponseInputStream</span>
+    }
+    <span class="cmt">// browser uploads straight to S3: the JVM only mints the URL</span>
+    <span class="typ">URL</span> <span class="fn">presignUpload</span>(<span class="typ">String</span> key, <span class="typ">String</span> contentType) {
+        <span class="kw">var</span> put = <span class="typ">PutObjectRequest</span>.builder().bucket(BUCKET).key(key).contentType(contentType).build();
+        <span class="kw">return</span> presigner.presignPutObject(p -&gt; p.signatureDuration(<span class="typ">Duration</span>.ofMinutes(<span class="num">10</span>)).putObjectRequest(put)).url();
+    }
+    <span class="typ">URL</span> <span class="fn">presignDownload</span>(<span class="typ">String</span> key) {
+        <span class="kw">return</span> presigner.presignGetObject(p -&gt; p.signatureDuration(<span class="typ">Duration</span>.ofMinutes(<span class="num">5</span>))
+                .getObjectRequest(g -&gt; g.bucket(BUCKET).key(key)
+                    .responseContentDisposition(<span class="str">"attachment; filename=\"invoice-9001.pdf\""</span>))).url();
+    }
+    <span class="typ">List</span>&lt;<span class="typ">String</span>&gt; <span class="fn">listPrefix</span>(<span class="typ">String</span> prefix) {
+        <span class="kw">return</span> s3.listObjectsV2Paginator(b -&gt; b.bucket(BUCKET).prefix(prefix)).contents().stream().map(<span class="typ">S3Object</span>::key).toList();   <span class="cmt">// paginator handles 1000-key pages</span>
+    }
+}
+<span class="cmt">// big files: S3TransferManager (software.amazon.awssdk:s3-transfer-manager + aws-crt) does multipart + parallel automatically</span></pre>
+<pre><span class="cmt"># bucket policy: deny unencrypted uploads and non-TLS access</span>
+{ <span class="str">"Statement"</span>: [
+  { <span class="str">"Effect"</span>: <span class="str">"Deny"</span>, <span class="str">"Principal"</span>: <span class="str">"*"</span>, <span class="str">"Action"</span>: <span class="str">"s3:*"</span>, <span class="str">"Resource"</span>: [<span class="str">"arn:aws:s3:::shop-prod-uploads"</span>, <span class="str">"arn:aws:s3:::shop-prod-uploads/*"</span>],
+    <span class="str">"Condition"</span>: { <span class="str">"Bool"</span>: { <span class="str">"aws:SecureTransport"</span>: <span class="str">"false"</span> } } },
+  { <span class="str">"Effect"</span>: <span class="str">"Deny"</span>, <span class="str">"Principal"</span>: <span class="str">"*"</span>, <span class="str">"Action"</span>: <span class="str">"s3:PutObject"</span>, <span class="str">"Resource"</span>: <span class="str">"arn:aws:s3:::shop-prod-uploads/*"</span>,
+    <span class="str">"Condition"</span>: { <span class="str">"StringNotEquals"</span>: { <span class="str">"s3:x-amz-server-side-encryption"</span>: <span class="str">"aws:kms"</span> } } } ] }
+<span class="cmt"># CLI</span>
+<span class="fn">aws</span> s3 ls s3://shop-prod-uploads/uploads/2026/10/ <span class="ann">--human-readable</span> <span class="ann">--summarize</span>
+<span class="fn">aws</span> s3 cp report.pdf s3://shop-prod-uploads/reports/ <span class="ann">--sse</span> aws:kms
+<span class="fn">aws</span> s3 sync ./dist s3://shop-web <span class="ann">--delete</span>                       <span class="cmt"># static site deploy</span>
+<span class="fn">aws</span> s3api head-object <span class="ann">--bucket</span> shop-prod-uploads <span class="ann">--key</span> uploads/x.pdf   <span class="cmt"># metadata, storage class, encryption</span>
+<span class="fn">aws</span> s3 presign s3://shop-prod-uploads/uploads/x.pdf <span class="ann">--expires-in</span> 300</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Uploads through the JVM</td><td>Browser → Spring → S3: every byte through your pods, Tomcat threads held, 10 MB request limits.</td><td>Presigned PUT (or POST policy) → browser uploads to S3 directly; notify via S3 event or a confirm call.</td></tr>
+    <tr><td>Public bucket for private data</td><td>"Block Public Access" off because one page needed a public image.</td><td>Keep it on; serve via CloudFront with Origin Access Control, or presigned GET.</td></tr>
+    <tr><td>Hot-spot keys</td><td>Not an issue any more (S3 scales per prefix automatically) — but millions of objects under one prefix still make listing slow.</td><td>Date/tenant prefixes for listability; never list to "find" an object, store the key in the DB.</td></tr>
+    <tr><td>No lifecycle</td><td>7 years of logs in STANDARD.</td><td>Lifecycle to IA/Glacier/expire; abort incomplete multipart; expire old versions.</td></tr>
+    <tr><td>Client per request</td><td><code>S3Client.create()</code> inside a controller method.</td><td>One <code>@Bean</code> client; it holds the HTTP connection pool.</td></tr>
+    <tr><td>Presign with long expiry</td><td>7-day download links in emails for private invoices.</td><td>Minutes; regenerate on click. Presigned URLs are bearer tokens.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A presigned PUT URL works from <code>curl</code> but the browser gets a CORS error. What is missing?</div>
+  <details><summary>Reveal hint</summary><div class="hint">A CORS configuration on the <i>bucket</i> allowing your origin, the <code>PUT</code> method, and the headers you sign (<code>Content-Type</code>, <code>x-amz-server-side-encryption</code>). Also the browser must send exactly the headers that were signed — a different <code>Content-Type</code> gives <code>SignatureDoesNotMatch</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Traffic in — ALB, Route 53, ACM, CloudFront, API Gateway</h2>
+<table>
+  <thead><tr><th>Service</th><th>Does</th><th>Use for a Spring API</th></tr></thead>
+  <tbody>
+    <tr><td><b>ALB</b> (Application Load Balancer)</td><td>Layer 7 HTTP/HTTPS: host/path routing, TLS termination, health checks, WebSockets, gRPC, sticky sessions, WAF attach.</td><td>The front door: <code>api.shop.example</code> → target group (Fargate tasks on 8080). Listener rules route <code>/api/orders/*</code> and <code>/api/payments/*</code> to different services.</td></tr>
+    <tr><td><b>NLB</b></td><td>Layer 4 TCP/UDP, static IPs, millions of RPS, preserves source IP.</td><td>Non-HTTP protocols, PrivateLink, when clients need fixed IPs to allow-list.</td></tr>
+    <tr><td><b>Target group</b></td><td>Set of targets (IP / instance / Lambda) with a health check.</td><td>Health path <code>/actuator/health/readiness</code>, interval 15 s, healthy 2, unhealthy 3, deregistration delay 20 s.</td></tr>
+    <tr><td><b>Route 53</b></td><td>DNS: hosted zones, records, health checks, routing policies (weighted, latency, failover, geolocation).</td><td><code>api.shop.example A ALIAS → alb-xxx.elb.amazonaws.com</code>. Alias records are free and resolve to the ALB's changing IPs.</td></tr>
+    <tr><td><b>ACM</b></td><td>Free public TLS certificates, auto-renewed, attached to ALB/CloudFront/API Gateway.</td><td>DNS validation via a Route 53 CNAME; never copy a private key anywhere.</td></tr>
+    <tr><td><b>CloudFront</b></td><td>CDN + TLS at the edge + caching + WAF; origins = S3, ALB, anything.</td><td>Static frontend from S3 (with OAC), optionally in front of the ALB for caching GETs and DDoS absorption.</td></tr>
+    <tr><td><b>API Gateway</b></td><td>Managed API front: auth (Cognito/JWT/IAM), throttling, keys, usage plans, request validation. HTTP API (cheap, simple) vs REST API (features).</td><td>Lambda back ends; public APIs needing per-client throttling/keys. For a Fargate Spring API an ALB is usually enough.</td></tr>
+    <tr><td><b>WAF</b></td><td>Web firewall rules (managed rule sets, rate limits, geo blocks) on ALB/CloudFront/API Gateway.</td><td>Rate-based rule + AWS managed common rules on the public ALB.</td></tr>
+    <tr><td><b>Global Accelerator</b></td><td>Anycast static IPs routing to the nearest healthy region.</td><td>Multi-region active/active.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># the X-Forwarded headers the ALB adds — make Spring trust them</span>
+<span class="kw">server.forward-headers-strategy</span>: framework      <span class="cmt"># request.getScheme()/getRemoteAddr() reflect the client, not the ALB</span>
+<span class="cmt"># X-Forwarded-For: client-ip, X-Forwarded-Proto: https, X-Forwarded-Port: 443   ·   ALB request id: X-Amzn-Trace-Id (put it in your logs)</span>
+
+<span class="cmt"># ALB listener rules (concept)</span>
+<span class="cmt">#   :443  default → 404 fixed response</span>
+<span class="cmt">#   host = api.shop.example AND path = /api/orders/*   → tg-orders</span>
+<span class="cmt">#   host = api.shop.example AND path = /api/payments/* → tg-payments</span>
+<span class="cmt">#   :80  → redirect 301 to https</span>
+
+<span class="cmt"># ops</span>
+<span class="fn">aws</span> elbv2 describe-target-health <span class="ann">--target-group-arn</span> arn:…:targetgroup/tg-orders/abc   <span class="cmt"># healthy/unhealthy + Reason (Target.ResponseCodeMismatch, Target.Timeout, Target.FailedHealthChecks)</span>
+<span class="fn">aws</span> route53 list-resource-record-sets <span class="ann">--hosted-zone-id</span> Z123 <span class="ann">--query</span> <span class="str">"ResourceRecordSets[?Name=='api.shop.example.']"</span>
+<span class="fn">aws</span> acm list-certificates <span class="ann">--query</span> <span class="str">'CertificateSummaryList[].{d:DomainName,s:Status,exp:NotAfter}'</span>
+<span class="fn">dig</span> +short api.shop.example   ·   <span class="fn">curl</span> <span class="ann">-sSI</span> https://api.shop.example/actuator/health <span class="ann">-H</span> <span class="str">"Host: api.shop.example"</span>
+<span class="cmt"># ALB access logs → S3 (enable!): elb_status_code vs target_status_code tells you ALB-side vs app-side 5xx; target_processing_time = your latency</span></pre>
+<table>
+  <thead><tr><th>ALB metric (CloudWatch)</th><th>Meaning / alert</th></tr></thead>
+  <tbody>
+    <tr><td><code>HTTPCode_Target_5XX_Count</code> vs <code>HTTPCode_ELB_5XX_Count</code></td><td>App errors vs ALB errors (502 = bad gateway/target closed, 503 = no healthy targets, 504 = target timeout). Alert on both ratios.</td></tr>
+    <tr><td><code>TargetResponseTime</code> p99</td><td>Your latency as the ALB sees it.</td></tr>
+    <tr><td><code>UnHealthyHostCount</code></td><td>&gt; 0 for minutes = deploy or health problem.</td></tr>
+    <tr><td><code>RequestCount</code>, <code>ActiveConnectionCount</code></td><td>Traffic; scale on <code>RequestCountPerTarget</code>.</td></tr>
+    <tr><td><code>RejectedConnectionCount</code></td><td>ALB out of capacity (rare; pre-warm for huge events).</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Idle timeout mismatch</td><td>ALB idle timeout 60 s, Tomcat keep-alive 20 s → random 502s.</td><td>App keep-alive/idle timeout <b>longer</b> than the ALB's (Tomcat <code>server.tomcat.keep-alive-timeout</code> ≥ 65 s), or disable keep-alive to the ALB.</td></tr>
+    <tr><td>Health check hits the DB</td><td><code>/actuator/health</code> with DB check; DB hiccup → all targets unhealthy → total outage instead of degraded.</td><td>Liveness-style readiness for the ALB; dependency status as info.</td></tr>
+    <tr><td>Deploy drops requests</td><td>Tasks killed while the ALB still routes to them.</td><td>Deregistration delay ≥ request time, Spring graceful shutdown, ECS min healthy 100%.</td></tr>
+    <tr><td>Sticky sessions</td><td>ALB stickiness so Tomcat sessions work.</td><td>Stateless JWT or Spring Session in ElastiCache; any task can serve any request.</td></tr>
+    <tr><td>CNAME at the zone apex</td><td><code>shop.example CNAME alb…</code> — invalid DNS.</td><td>Route 53 ALIAS record (works at the apex, free).</td></tr>
+    <tr><td>Cert in the container</td><td>Keystore + password in the image; renewals by hand.</td><td>ACM cert on the ALB; plain HTTP ALB → task inside the VPC (or TLS to target if required).</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. CloudWatch shows <code>HTTPCode_ELB_5XX</code> 502s but zero <code>HTTPCode_Target_5XX</code> and the app logs nothing. Where is the problem?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Between the ALB and the target, not in the app code: the target closed the connection (keep-alive timeout shorter than the ALB's), the task was being killed mid-request (deregistration/graceful shutdown), or a response header exceeded limits. The ALB access log's <code>target_status_code</code> is "-" in these cases.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Messaging — SQS, SNS, EventBridge (and when MSK)</h2>
+<table>
+  <thead><tr><th>Service</th><th>Model</th><th>Guarantees</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><b>SQS Standard</b></td><td>Queue; consumers poll; message hidden for a <b>visibility timeout</b> after receive; deleted on ack.</td><td>At-least-once, best-effort order, unlimited throughput.</td><td>Background jobs, decoupling services, buffering bursts.</td></tr>
+    <tr><td><b>SQS FIFO</b></td><td>Same, with <code>MessageGroupId</code> ordering and 5-minute dedup by <code>MessageDeduplicationId</code>.</td><td>Exactly-once within the dedup window, ordered per group; 300 msg/s (3,000 batched; higher with high-throughput mode).</td><td>Per-customer ordering, no duplicates.</td></tr>
+    <tr><td><b>SNS</b></td><td>Topic; pushes to subscribers (SQS, Lambda, HTTPS, email, SMS). Fan-out.</td><td>At-least-once; filter policies per subscription.</td><td>One event → many consumers (each with its own SQS queue).</td></tr>
+    <tr><td><b>EventBridge</b></td><td>Event bus with content-based rules → targets (SQS, Lambda, Step Functions, API destinations); schemas; archive &amp; replay; scheduler.</td><td>At-least-once.</td><td>AWS service events (S3, ECS task state), cross-account/app events, cron.</td></tr>
+    <tr><td><b>MSK</b> (Kafka) / <b>Kinesis</b></td><td>Streams with retention and consumer groups / shards.</td><td>Ordered per partition/shard; replay.</td><td>High-volume event streaming, analytics, CDC. See the Kafka sheet.</td></tr>
+    <tr><td><b>Step Functions</b></td><td>State machine orchestration.</td><td>Durable, visual workflows.</td><td>Sagas, long-running multi-step processes.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// Spring Cloud AWS 3.x (io.awspring.cloud:spring-cloud-aws-starter-sqs) — the idiomatic way</span>
+<span class="kw">spring.cloud.aws</span>:
+  <span class="kw">region.static</span>: ap-south-1
+  <span class="kw">sqs.listener</span>: { <span class="kw">max-concurrent-messages</span>: <span class="num">10</span>, <span class="kw">max-messages-per-poll</span>: <span class="num">10</span>, <span class="kw">poll-timeout</span>: 20s }   <span class="cmt"># long polling: 20 s</span>
+
+<span class="ann">@Component</span>
+<span class="kw">class</span> <span class="typ">OrderEventsListener</span> {
+    <span class="ann">@SqsListener</span>(value = <span class="str">"shop-prod-orders"</span>, acknowledgementMode = <span class="typ">AcknowledgementMode</span>.ON_SUCCESS)   <span class="cmt">// delete only if the method returns normally</span>
+    <span class="kw">void</span> <span class="fn">on</span>(<span class="typ">OrderPlaced</span> event, <span class="ann">@Header</span>(<span class="str">"ApproximateReceiveCount"</span>) <span class="kw">int</span> attempt) {
+        billing.handle(event);                 <span class="cmt">// throw → message becomes visible again after the visibility timeout → retried → DLQ after maxReceiveCount</span>
+    }
+}
+
+<span class="ann">@Service</span>
+<span class="kw">class</span> <span class="typ">OrderPublisher</span> {
+    <span class="kw">private final</span> <span class="typ">SqsTemplate</span> sqs;
+    <span class="kw">void</span> <span class="fn">placed</span>(<span class="typ">Order</span> o) {
+        sqs.send(to -&gt; to.queue(<span class="str">"shop-prod-orders"</span>).payload(<span class="typ">OrderPlaced</span>.from(o))
+                       .header(<span class="str">"eventId"</span>, o.eventId().toString()));              <span class="cmt">// consumers dedupe on this</span>
+        <span class="cmt">// FIFO: .messageGroupId(o.customerId()).messageDeduplicationId(o.eventId().toString())</span>
+    }
+}
+
+<span class="cmt">// plain SDK v2 (no Spring Cloud AWS)</span>
+<span class="typ">SqsClient</span> sqs = <span class="typ">SqsClient</span>.create();
+<span class="kw">var</span> msgs = sqs.receiveMessage(r -&gt; r.queueUrl(url).maxNumberOfMessages(<span class="num">10</span>).waitTimeSeconds(<span class="num">20</span>)).messages();   <span class="cmt">// long poll</span>
+<span class="kw">for</span> (<span class="kw">var</span> m : msgs) { handle(m.body()); sqs.deleteMessage(d -&gt; d.queueUrl(url).receiptHandle(m.receiptHandle())); }</pre>
+<table>
+  <thead><tr><th>SQS setting</th><th>Guidance</th></tr></thead>
+  <tbody>
+    <tr><td><b>Visibility timeout</b></td><td>≥ 6× your max processing time (AWS's rule of thumb); extend with <code>ChangeMessageVisibility</code> for long jobs. Too short = duplicate processing.</td></tr>
+    <tr><td><b>Redrive policy → DLQ</b></td><td><code>maxReceiveCount</code> 3–5; alarm on DLQ depth; a redrive button exists to move messages back.</td></tr>
+    <tr><td><b>Long polling</b></td><td><code>ReceiveMessageWaitTimeSeconds=20</code> — fewer empty receives, lower cost.</td></tr>
+    <tr><td><b>Retention</b></td><td>Default 4 days, max 14. DLQ: 14 days.</td></tr>
+    <tr><td><b>Message size</b></td><td>256 KB max; bigger → S3 + pointer (extended client library).</td></tr>
+    <tr><td><b>Batching</b></td><td>Send/receive/delete in batches of 10 — cost and throughput.</td></tr>
+    <tr><td><b>Encryption</b></td><td>SSE-SQS (free) or SSE-KMS.</td></tr>
+    <tr><td><b>Scaling consumers</b></td><td>ECS service autoscaling on <code>ApproximateNumberOfMessagesVisible</code> (target tracking on backlog per task).</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Non-idempotent consumers</td><td>Standard queue delivers twice → two invoices.</td><td>Dedupe on an event id (DB unique constraint) — at-least-once is the contract.</td></tr>
+    <tr><td>No DLQ</td><td>A poison message retried forever, blocking FIFO groups.</td><td>Redrive policy + DLQ alarm + a replay runbook.</td></tr>
+    <tr><td>Short polling in a loop</td><td>Empty receives every 100 ms: cost and throttling.</td><td>Long polling (20 s).</td></tr>
+    <tr><td>Deleting before processing</td><td>Receive → delete → process → crash = lost message.</td><td>Process, then delete (<code>ON_SUCCESS</code>).</td></tr>
+    <tr><td>Direct SNS → HTTPS to your API</td><td>Spiky retries, your API must be up to receive.</td><td>SNS → SQS → your consumer; the queue absorbs bursts and outages.</td></tr>
+    <tr><td>SQS as Kafka</td><td>Replaying last week's events from SQS.</td><td>SQS is a work queue; for retention/replay use EventBridge archive, Kinesis, or MSK.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. With a FIFO queue, one message for group <code>cust-42</code> keeps failing. What happens to the other messages for <code>cust-42</code> and for other customers?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Other groups flow normally. <code>cust-42</code>'s later messages are blocked behind the failing one until it succeeds or moves to the DLQ after <code>maxReceiveCount</code> — so a DLQ is not optional for FIFO. Head-of-line blocking per group is the price of ordering.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Configuration and secrets — SSM Parameter Store, Secrets Manager, KMS</h2>
+<table>
+  <thead><tr><th></th><th>SSM Parameter Store</th><th>Secrets Manager</th></tr></thead>
+  <tbody>
+    <tr><td>Holds</td><td>Config values, feature flags, non-secret and <code>SecureString</code> secrets. Hierarchical names: <code>/shop/prod/orders/db-host</code>.</td><td>Secrets only, as JSON blobs; <b>rotation</b> built in (RDS, custom Lambda).</td></tr>
+    <tr><td>Cost</td><td>Standard tier free (10k params, 4 KB); advanced tier paid.</td><td>$0.40/secret/month + per 10k API calls.</td></tr>
+    <tr><td>Versioning</td><td>Yes (labels).</td><td>Yes (staging labels AWSCURRENT/AWSPREVIOUS).</td></tr>
+    <tr><td>Cross-account</td><td>Advanced tier only.</td><td>Yes (resource policy).</td></tr>
+    <tr><td>Use</td><td>Everything that is config; cheap secrets that don't rotate.</td><td>DB credentials, API keys that rotate, anything needing cross-account.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Spring Cloud AWS: import config straight into the Environment (no code)</span>
+<span class="kw">spring.config.import</span>:
+  - <span class="str">aws-parameterstore:/shop/${ENV}/common/;/shop/${ENV}/orders/</span>     <span class="cmt"># each parameter becomes a property: /shop/prod/orders/feature.x → feature.x</span>
+  - <span class="str">aws-secretsmanager:shop/${ENV}/db</span>                                <span class="cmt"># JSON secret {"username":"app","password":"…"} → properties username/password (prefix with ?prefix=db.)</span>
+<span class="kw">spring.datasource.password</span>: <span class="str">${db.password}</span>
+
+<span class="cmt"># ECS task definition: inject at container start (no SDK call in the app)</span>
+<span class="str">"secrets"</span>: [
+  { <span class="str">"name"</span>: <span class="str">"DB_PASSWORD"</span>, <span class="str">"valueFrom"</span>: <span class="str">"arn:aws:secretsmanager:ap-south-1:123456789012:secret:shop/prod/db:password::"</span> },   <span class="cmt"># one JSON key</span>
+  { <span class="str">"name"</span>: <span class="str">"STRIPE_KEY"</span>,  <span class="str">"valueFrom"</span>: <span class="str">"arn:aws:ssm:ap-south-1:123456789012:parameter/shop/prod/stripe-key"</span> } ]
+<span class="cmt"># execution role needs secretsmanager:GetSecretValue / ssm:GetParameters / kms:Decrypt</span>
+
+<span class="cmt"># CLI</span>
+<span class="fn">aws</span> ssm put-parameter <span class="ann">--name</span> /shop/prod/orders/feature.coupons <span class="ann">--value</span> true <span class="ann">--type</span> String <span class="ann">--overwrite</span>
+<span class="fn">aws</span> ssm get-parameters-by-path <span class="ann">--path</span> /shop/prod/orders/ <span class="ann">--recursive</span> <span class="ann">--with-decryption</span>
+<span class="fn">aws</span> secretsmanager get-secret-value <span class="ann">--secret-id</span> shop/prod/db <span class="ann">--query</span> SecretString <span class="ann">--output</span> text | jq .
+<span class="fn">aws</span> secretsmanager rotate-secret <span class="ann">--secret-id</span> shop/prod/db                              <span class="cmt"># trigger rotation</span></pre>
+<table>
+  <thead><tr><th>KMS</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Customer managed key (CMK)</b></td><td>Your key with your policy and audit trail; $1/month + per request. Use for S3, RDS, SQS, Secrets Manager, EBS encryption.</td></tr>
+    <tr><td><b>AWS managed key</b> (<code>aws/s3</code>…)</td><td>Free, less control; fine for low-sensitivity.</td></tr>
+    <tr><td><b>Key policy</b></td><td>Who may use/administer the key — <i>also</i> needed besides IAM. Cross-account access is granted here.</td></tr>
+    <tr><td><b>Envelope encryption</b></td><td>KMS encrypts a data key; the data key encrypts your data. The SDK's Encryption SDK / S3 client does this for you.</td></tr>
+    <tr><td><b>Rotation</b></td><td>Automatic yearly rotation of key material; old data still decrypts.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Secrets in env vars in the task definition</td><td><code>"environment": [{"name":"DB_PASSWORD","value":"hunter2"}]</code> — visible in the console, Terraform state, CloudTrail.</td><td><code>secrets</code> block with a Secrets Manager/SSM ARN.</td></tr>
+    <tr><td>Fetching secrets per request</td><td><code>GetSecretValue</code> in a hot path: latency + throttling + cost.</td><td>Load at start-up (Spring config import) or cache (the Secrets Manager caching library); refresh on rotation.</td></tr>
+    <tr><td>Rotation breaks the app</td><td>Password rotated; pooled connections fail with auth errors forever.</td><td>Rotation with the two-user strategy, or the JDBC wrapper's Secrets Manager plugin (re-fetches on auth failure), or restart tasks after rotation.</td></tr>
+    <tr><td>Flat parameter names</td><td><code>db_host_prod_orders</code> — cannot grant by path.</td><td><code>/shop/prod/orders/db-host</code>; IAM grants <code>/shop/prod/orders/*</code>.</td></tr>
+    <tr><td>One KMS key for everything</td><td>Any principal with decrypt on "the key" reads all data.</td><td>Key per data class/service where the audit or isolation matters.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your task has <code>secretsmanager:GetSecretValue</code> on the secret but fails at start with "AccessDeniedException … kms:Decrypt". The secret uses the default <code>aws/secretsmanager</code> key. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The default key works within the same account without extra KMS grants, so this means the secret is in <i>another</i> account or uses a <i>customer-managed</i> key. Cross-account secrets require a CMK whose key policy grants your role <code>kms:Decrypt</code>, plus a resource policy on the secret. Check which key the secret actually uses.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Observability on AWS — CloudWatch, X-Ray, CloudTrail</h2>
+<table>
+  <thead><tr><th>Piece</th><th>Does</th><th>For a Spring app</th></tr></thead>
+  <tbody>
+    <tr><td><b>CloudWatch Logs</b></td><td>Log groups → streams; retention per group; Logs Insights query language; metric filters; subscription filters to Lambda/Kinesis/OpenSearch.</td><td>ECS <code>awslogs</code> driver sends stdout → <code>/ecs/shop-api</code>. Log JSON; set retention (default is <i>never expire</i> = bill).</td></tr>
+    <tr><td><b>CloudWatch Metrics</b></td><td>Namespaces, dimensions, 1-min (or 1-s high-res) datapoints; AWS services publish for free; custom via <code>PutMetricData</code> or <b>EMF</b> (metrics embedded in logs).</td><td>ECS CPU/memory, ALB latency/5xx, RDS connections/CPU/storage, SQS depth. App metrics via Micrometer's CloudWatch registry (<code>micrometer-registry-cloudwatch2</code>) — or keep Prometheus/Grafana (AMP/AMG).</td></tr>
+    <tr><td><b>Alarms</b></td><td>Threshold / anomaly detection on a metric or metric math; actions → SNS (email, PagerDuty, Slack via Chatbot), autoscaling, EC2 actions. Composite alarms combine.</td><td>The alert list below.</td></tr>
+    <tr><td><b>Dashboards</b></td><td>Widgets over metrics and Logs Insights.</td><td>One per service: RED + dependencies.</td></tr>
+    <tr><td><b>X-Ray</b></td><td>Distributed tracing; service map; ADOT (AWS Distro for OpenTelemetry) collector sidecar.</td><td>Export OTel traces from Micrometer Tracing to the ADOT sidecar → X-Ray. Or Tempo/Jaeger if you already run them.</td></tr>
+    <tr><td><b>Container Insights</b></td><td>Per-task/per-service CPU, memory, network for ECS/EKS.</td><td>Turn on at the cluster.</td></tr>
+    <tr><td><b>CloudTrail</b></td><td>Every API call: who, what, when, from where. Management events on by default (90 days); send to S3 for retention.</td><td>"Who changed the security group?" / "who read the secret?" — and AccessDenied debugging.</td></tr>
+    <tr><td><b>Synthetics (canaries)</b></td><td>Scheduled scripts hitting your endpoints from outside.</td><td>Availability as users see it.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Logs Insights — queries you will reuse (JSON logs from Spring)</span>
+fields @timestamp, @message
+| filter level = <span class="str">"ERROR"</span>
+| sort @timestamp desc | limit 50
+
+fields @timestamp, traceId, message
+| filter traceId = <span class="str">"4bf92f3577b34da6a3ce929d0e0e4736"</span>            <span class="cmt"># one request across all tasks</span>
+
+stats count(*) as errors by bin(5m), logger                       <span class="cmt"># errors per logger per 5 min</span>
+| filter level = <span class="str">"ERROR"</span>
+
+filter @message like /OutOfMemoryError|Connection is not available/ | stats count() by bin(1h)
+
+<span class="cmt"># metric filter: count ERROR lines into a metric → alarm (cheaper than parsing with Insights)</span>
+<span class="fn">aws</span> logs put-metric-filter <span class="ann">--log-group-name</span> /ecs/shop-api <span class="ann">--filter-name</span> errors <span class="ann">--filter-pattern</span> <span class="str">'{ $.level = "ERROR" }'</span> \
+  <span class="ann">--metric-transformations</span> metricName=ErrorCount,metricNamespace=Shop/API,metricValue=1,defaultValue=0
+
+<span class="cmt"># CLI</span>
+<span class="fn">aws</span> logs tail /ecs/shop-api <span class="ann">--since</span> 1h <span class="ann">--filter-pattern</span> <span class="str">'"ERROR"'</span> <span class="ann">--format</span> short
+<span class="fn">aws</span> logs put-retention-policy <span class="ann">--log-group-name</span> /ecs/shop-api <span class="ann">--retention-in-days</span> 30
+<span class="fn">aws</span> cloudwatch get-metric-statistics <span class="ann">--namespace</span> AWS/ApplicationELB <span class="ann">--metric-name</span> TargetResponseTime <span class="ann">--dimensions</span> Name=LoadBalancer,Value=app/shop/abc <span class="ann">--statistics</span> p99 <span class="ann">--period</span> 300 <span class="ann">--start-time</span> … <span class="ann">--end-time</span> …
+<span class="fn">aws</span> cloudtrail lookup-events <span class="ann">--lookup-attributes</span> AttributeKey=ResourceName,AttributeValue=sg-0abc</pre>
+<table>
+  <thead><tr><th>Alarm (start here)</th><th>Metric</th><th>Threshold idea</th></tr></thead>
+  <tbody>
+    <tr><td>API error ratio</td><td>metric math: <code>Target_5XX / RequestCount</code> (ALB)</td><td>&gt; 2% for 5 min → page</td></tr>
+    <tr><td>Latency</td><td>ALB <code>TargetResponseTime</code> p99</td><td>&gt; 1 s for 10 min → ticket</td></tr>
+    <tr><td>No healthy targets</td><td>ALB <code>HealthyHostCount</code></td><td>&lt; 1 → page</td></tr>
+    <tr><td>Task churn</td><td>ECS <code>RunningTaskCount</code> vs desired; deployment failure events</td><td>below desired for 10 min</td></tr>
+    <tr><td>Memory/CPU</td><td>ECS service <code>MemoryUtilization</code>, <code>CPUUtilization</code></td><td>&gt; 85% sustained → scale or resize</td></tr>
+    <tr><td>DB</td><td>RDS <code>DatabaseConnections</code>, <code>CPUUtilization</code>, <code>FreeStorageSpace</code>, <code>FreeableMemory</code>, <code>ReadLatency</code>/<code>WriteLatency</code>, <code>ReplicaLag</code></td><td>connections &gt; 80% of max; storage &lt; 15%</td></tr>
+    <tr><td>Queues</td><td>SQS <code>ApproximateAgeOfOldestMessage</code> (better than depth), DLQ <code>ApproximateNumberOfMessagesVisible</code></td><td>age &gt; 10 min; DLQ &gt; 0</td></tr>
+    <tr><td>App errors</td><td>metric filter <code>ErrorCount</code></td><td>&gt; N per 5 min</td></tr>
+    <tr><td>Cost</td><td>Billing alarm / Budgets</td><td>forecast &gt; budget</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Infinite log retention</td><td>Default "Never expire" on 40 log groups → logs are 30% of the bill.</td><td>Retention 14–30 days in CloudWatch; archive to S3 (cheap) if needed.</td></tr>
+    <tr><td>Plain-text logs</td><td>Insights can only <code>like /…/</code>.</td><td>JSON logs (Boot <code>logging.structured.format.console=ecs</code>) → fields, stats, filters.</td></tr>
+    <tr><td>High-cardinality custom metrics</td><td><code>PutMetricData</code> with a <code>userId</code> dimension → $0.30 per metric per month × users.</td><td>Low-cardinality dimensions; IDs in logs/traces.</td></tr>
+    <tr><td>Alarms on everything</td><td>60 alarms, all paging.</td><td>Page on symptoms (error ratio, latency, no healthy hosts, DLQ); dashboards for causes.</td></tr>
+    <tr><td>No CloudTrail to S3</td><td>Incident 4 months ago; 90-day history gone.</td><td>Organization trail to a locked S3 bucket.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. SQS queue depth looks fine (~50 messages) but customers say orders take an hour. Which metric would have shown it?</div>
+  <details><summary>Reveal hint</summary><div class="hint"><code>ApproximateAgeOfOldestMessage</code>. Depth stays small if producers are slow too; age tells you how long work is waiting. Alert on age, scale consumers on backlog-per-task.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. AWS SDK for Java v2 — patterns that avoid pain</h2>
+<pre><span class="cmt">&lt;!-- pom: import the BOM once, then modules without versions --&gt;</span>
+<span class="kw">&lt;dependencyManagement&gt;&lt;dependencies&gt;&lt;dependency&gt;</span>
+  <span class="kw">&lt;groupId&gt;</span>software.amazon.awssdk<span class="kw">&lt;/groupId&gt;&lt;artifactId&gt;</span>bom<span class="kw">&lt;/artifactId&gt;&lt;version&gt;</span>2.29.x<span class="kw">&lt;/version&gt;&lt;type&gt;</span>pom<span class="kw">&lt;/type&gt;&lt;scope&gt;</span>import<span class="kw">&lt;/scope&gt;</span>
+<span class="kw">&lt;/dependency&gt;&lt;/dependencies&gt;&lt;/dependencyManagement&gt;</span>
+<span class="kw">&lt;dependency&gt;&lt;groupId&gt;</span>software.amazon.awssdk<span class="kw">&lt;/groupId&gt;&lt;artifactId&gt;</span>s3<span class="kw">&lt;/artifactId&gt;&lt;/dependency&gt;</span>
+<span class="kw">&lt;dependency&gt;&lt;groupId&gt;</span>software.amazon.awssdk<span class="kw">&lt;/groupId&gt;&lt;artifactId&gt;</span>sqs<span class="kw">&lt;/artifactId&gt;&lt;/dependency&gt;</span>
+<span class="kw">&lt;dependency&gt;&lt;groupId&gt;</span>software.amazon.awssdk<span class="kw">&lt;/groupId&gt;&lt;artifactId&gt;</span>apache-client<span class="kw">&lt;/artifactId&gt;&lt;/dependency&gt;</span>     <span class="cmt">&lt;!-- sync HTTP; url-connection-client is lighter; netty-nio-client for async --&gt;</span>
+<span class="cmt">&lt;!-- or Spring Cloud AWS: io.awspring.cloud:spring-cloud-aws-dependencies BOM + starters (s3, sqs, parameter-store, secrets-manager) — autoconfigures clients, region, credentials --&gt;</span></pre>
+<pre><span class="cmt">// one client per service, built once, thread-safe, closed on shutdown</span>
+<span class="ann">@Bean</span>(destroyMethod = <span class="str">"close"</span>)
+<span class="typ">SqsClient</span> <span class="fn">sqs</span>() {
+    <span class="kw">return</span> <span class="typ">SqsClient</span>.builder()
+        .region(<span class="typ">Region</span>.AP_SOUTH_1)                                   <span class="cmt">// or let it come from AWS_REGION / the task metadata</span>
+        .credentialsProvider(<span class="typ">DefaultCredentialsProvider</span>.create())   <span class="cmt">// the default anyway — shown for clarity</span>
+        .overrideConfiguration(c -&gt; c
+            .apiCallTimeout(<span class="typ">Duration</span>.ofSeconds(<span class="num">10</span>))                   <span class="cmt">// whole call incl. retries</span>
+            .apiCallAttemptTimeout(<span class="typ">Duration</span>.ofSeconds(<span class="num">3</span>))             <span class="cmt">// per attempt</span>
+            .retryStrategy(<span class="typ">RetryMode</span>.ADAPTIVE))                       <span class="cmt">// backoff + throttling-aware (default is STANDARD, 3 attempts)</span>
+        .httpClientBuilder(<span class="typ">ApacheHttpClient</span>.builder().maxConnections(<span class="num">100</span>).connectionTimeout(<span class="typ">Duration</span>.ofSeconds(<span class="num">2</span>)))
+        .build();
+}</pre>
+<table>
+  <thead><tr><th>Default credentials provider chain (in order)</th><th>Where it applies</th></tr></thead>
+  <tbody>
+    <tr><td>1. Java system properties <code>aws.accessKeyId</code>/<code>aws.secretAccessKey</code></td><td>Rare; tests.</td></tr>
+    <tr><td>2. Env vars <code>AWS_ACCESS_KEY_ID</code>/<code>AWS_SECRET_ACCESS_KEY</code>/<code>AWS_SESSION_TOKEN</code></td><td>CI after OIDC exchange; LocalStack.</td></tr>
+    <tr><td>3. Web identity token (<code>AWS_WEB_IDENTITY_TOKEN_FILE</code> + <code>AWS_ROLE_ARN</code>)</td><td><b>EKS IRSA / Pod Identity</b>.</td></tr>
+    <tr><td>4. Shared files <code>~/.aws/credentials</code> + <code>~/.aws/config</code> (profiles, SSO)</td><td>Laptops.</td></tr>
+    <tr><td>5. Container credentials (<code>AWS_CONTAINER_CREDENTIALS_RELATIVE_URI</code>)</td><td><b>ECS task role</b>.</td></tr>
+    <tr><td>6. EC2 instance metadata (IMDSv2)</td><td><b>EC2 instance profile</b>.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Pattern</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Exceptions</td><td><code>AwsServiceException</code> (4xx/5xx from AWS: check <code>statusCode()</code>, <code>awsErrorDetails().errorCode()</code> e.g. <code>NoSuchKey</code>, <code>ThrottlingException</code>) vs <code>SdkClientException</code> (network, timeouts). Service-specific: <code>NoSuchKeyException</code>, <code>QueueDoesNotExistException</code>.</td></tr>
+    <tr><td>Retries</td><td>SDK retries throttling/5xx with exponential backoff. Make your calls idempotent; don't add your own blind retry on top of the SDK's (<code>ADAPTIVE</code> handles rate limits).</td></tr>
+    <tr><td>Pagination</td><td>Always use <code>*Paginator</code> (<code>listObjectsV2Paginator</code>, <code>queryPaginator</code>) — never hand-roll <code>nextToken</code> loops.</td></tr>
+    <tr><td>Async</td><td><code>S3AsyncClient</code> with Netty or the CRT client; <code>CompletableFuture</code> results; use with WebFlux or for fan-out, not by default.</td></tr>
+    <tr><td>Waiters</td><td><code>s3.waiter().waitUntilBucketExists(...)</code>, ECS/RDS waiters for provisioning scripts.</td></tr>
+    <tr><td>Local development</td><td><b>LocalStack</b> via Testcontainers (<code>LocalStackContainer</code>) for S3/SQS/SSM/Secrets Manager; <code>endpointOverride(URI)</code> on the client; Spring Cloud AWS <code>spring.cloud.aws.endpoint</code>.</td></tr>
+    <tr><td>Testing</td><td>Interface-based services around the SDK client so unit tests mock <i>your</i> port; integration tests against LocalStack; a few real-AWS smoke tests in a dev account.</td></tr>
+    <tr><td>Region/credentials in containers</td><td>Set nothing: ECS/EKS/EC2 provide both. Set <code>AWS_REGION</code> only if a client has no region source.</td></tr>
+    <tr><td>Observability</td><td>SDK metrics publisher (<code>CloudWatchMetricPublisher</code>) or Micrometer; log <code>x-amz-request-id</code> on failures for AWS support.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>SDK v1 in new code</td><td><code>com.amazonaws:aws-java-sdk-s3</code> (v1, end of support Dec 2025).</td><td><code>software.amazon.awssdk:*</code> (v2): modular, non-blocking option, builders, Java 8+ time types.</td></tr>
+    <tr><td>Client per call</td><td><code>S3Client.create()</code> in a loop: new connection pool, credential lookups, slow and leaky.</td><td>Singleton beans; close on shutdown.</td></tr>
+    <tr><td>Static credentials in code</td><td><code>StaticCredentialsProvider.create(AwsBasicCredentials.create("AKIA…","…"))</code>.</td><td>Default chain; roles everywhere.</td></tr>
+    <tr><td>No timeouts</td><td>A stuck S3 call holds a Tomcat thread forever.</td><td><code>apiCallTimeout</code> / <code>apiCallAttemptTimeout</code> on every client.</td></tr>
+    <tr><td>Catching <code>Exception</code> around SDK calls</td><td>Throttling retried like a bug; <code>NoSuchKey</code> logged as an error.</td><td>Catch the specific exception types; map 404s to domain results.</td></tr>
+    <tr><td>Mocking the SDK client in unit tests</td><td>Tests coupled to builder APIs; brittle.</td><td>Your own <code>FileStore</code> interface; mock that; LocalStack for the adapter.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your Spring app works on ECS but on your laptop throws "Unable to load credentials from any of the providers in the chain". What do you do?</div>
+  <details><summary>Reveal hint</summary><div class="hint">On ECS the task role is found via the container credentials endpoint; on your laptop nothing in the chain is set. Run <code>aws sso login --profile shop-dev</code> and export <code>AWS_PROFILE=shop-dev</code> (the SDK reads <code>~/.aws/config</code>), or point the client at LocalStack. Never fix it by pasting access keys.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. Cost basics and quick reference</h2>
+<table>
+  <thead><tr><th>Where the money goes (a typical Spring service stack)</th><th>Levers</th></tr></thead>
+  <tbody>
+    <tr><td><b>Compute</b> (Fargate vCPU/GB-hours, EC2 hours)</td><td>Right-size tasks (Container Insights), scale to 1 at night in dev, Fargate Spot for workers, <b>Compute Savings Plans</b> (1–3 yr, ~30–50% off), Graviton (arm64) ~20% cheaper — Java runs fine on it.</td></tr>
+    <tr><td><b>RDS</b> (instance hours, storage, I/O, backups)</td><td>Reserved Instances for prod, stop dev instances, gp3 storage, right-size from Performance Insights.</td></tr>
+    <tr><td><b>NAT Gateway</b> ($/hour + $/GB)</td><td>VPC endpoints for S3/ECR/CloudWatch/SQS; one NAT in dev.</td></tr>
+    <tr><td><b>Data transfer</b> (cross-AZ $0.01/GB each way, internet egress $0.09/GB)</td><td>Keep chatty services in one AZ where acceptable; CloudFront in front of egress-heavy endpoints; compress.</td></tr>
+    <tr><td><b>CloudWatch</b> (ingested GB, custom metrics, alarms, Insights scans)</td><td>Retention, log levels, fewer custom metrics, EMF instead of PutMetricData.</td></tr>
+    <tr><td><b>Storage</b> (S3, EBS, snapshots)</td><td>Lifecycle rules, delete unattached volumes and old snapshots, Intelligent-Tiering.</td></tr>
+    <tr><td><b>ALB</b> (hours + LCUs)</td><td>One ALB with many listener rules instead of one per service.</td></tr>
+    <tr><td><b>Secrets Manager / KMS</b></td><td>SSM for non-rotating config; fewer keys.</td></tr>
+  </tbody>
+</table>
+<pre><span class="fn">aws</span> ce get-cost-and-usage <span class="ann">--time-period</span> Start=2026-10-01,End=2026-10-25 <span class="ann">--granularity</span> MONTHLY <span class="ann">--metrics</span> UnblendedCost <span class="ann">--group-by</span> Type=DIMENSION,Key=SERVICE
+<span class="cmt"># Cost Explorer (console) grouped by service, then by tag (Project/Env) — tag everything via Terraform default_tags</span>
+<span class="cmt"># AWS Budgets: monthly budget + 80%/100% forecast alerts → SNS → Slack</span>
+<span class="cmt"># Compute Optimizer / Trusted Advisor: right-sizing recommendations for free</span>
+<span class="cmt"># Cost anomaly detection: ML alert when a service's spend jumps</span></pre>
+<table>
+  <thead><tr><th>Goal</th><th>Command / place</th></tr></thead>
+  <tbody>
+    <tr><td>Who am I</td><td><code>aws sts get-caller-identity</code></td></tr>
+    <tr><td>App logs</td><td><code>aws logs tail /ecs/shop-api --follow</code></td></tr>
+    <tr><td>Why did the task die</td><td><code>aws ecs describe-tasks … --query 'tasks[].stoppedReason'</code> · ECS console → service → Events</td></tr>
+    <tr><td>Redeploy</td><td><code>aws ecs update-service --force-new-deployment</code></td></tr>
+    <tr><td>Shell into a task</td><td><code>aws ecs execute-command … --interactive --command /bin/sh</code></td></tr>
+    <tr><td>Target health</td><td><code>aws elbv2 describe-target-health --target-group-arn …</code></td></tr>
+    <tr><td>DB status / events</td><td><code>aws rds describe-db-instances</code> · <code>aws rds describe-events --duration 1440</code></td></tr>
+    <tr><td>Queue depth / age</td><td><code>aws sqs get-queue-attributes --queue-url … --attribute-names ApproximateNumberOfMessagesVisible ApproximateAgeOfOldestMessage</code></td></tr>
+    <tr><td>Read config / secret</td><td><code>aws ssm get-parameter --name … --with-decryption</code> · <code>aws secretsmanager get-secret-value --secret-id …</code></td></tr>
+    <tr><td>Who did that</td><td><code>aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=…</code></td></tr>
+    <tr><td>Is it an AWS outage</td><td>health.aws.amazon.com (Health Dashboard) · <code>aws health describe-events</code></td></tr>
+    <tr><td>Why AccessDenied</td><td>CloudTrail event → <code>errorMessage</code>; IAM Policy Simulator; check SCP/permission boundary; KMS key policy</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Well-Architected in one row each</th><th>For your service</th></tr></thead>
+  <tbody>
+    <tr><td><b>Security</b></td><td>Roles not keys · least privilege · private subnets · encryption at rest and in transit · CloudTrail · Block Public Access.</td></tr>
+    <tr><td><b>Reliability</b></td><td>≥ 2 AZs · Multi-AZ RDS · health checks + graceful shutdown · DLQs · backups tested · alarms on symptoms.</td></tr>
+    <tr><td><b>Performance</b></td><td>Right-sized tasks · connection pools sized to the DB · caching (ElastiCache/CloudFront) · Graviton.</td></tr>
+    <tr><td><b>Cost</b></td><td>Tags · budgets · Savings Plans for the steady base · scale dev down · lifecycle rules · VPC endpoints.</td></tr>
+    <tr><td><b>Operational excellence</b></td><td>Everything in Terraform · runbooks · ECS Exec/SSM instead of SSH · game days (force a failover).</td></tr>
+    <tr><td><b>Sustainability</b></td><td>Graviton, right-sizing, scale-to-zero in non-prod.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) account per environment, roles not keys, least-privilege per service; 2) private subnets + SG chaining (ALB → app → DB), VPC endpoints to cut NAT; 3) Fargate for Spring services unless you truly need EKS or Lambda; 4) Multi-AZ RDS, small Hikari pools, AWS JDBC wrapper for failover, managed master password; 5) presigned URLs and Block Public Access for S3, lifecycle rules always; 6) SQS consumers idempotent with a DLQ and long polling; alert on message age; 7) SDK v2 singleton clients with timeouts, default credential chain, LocalStack for local dev.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Your AWS bill doubled this month and traffic didn't. First three places you look?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Cost Explorer grouped by service for the delta; then the usual culprits: NAT Gateway data processing (a new task pulling or streaming through NAT), CloudWatch Logs ingestion (a debug log level left on), and data transfer / a forgotten large RDS or EC2 instance in a dev account. Cost anomaly detection would have told you on day two.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("aws-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("aws-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

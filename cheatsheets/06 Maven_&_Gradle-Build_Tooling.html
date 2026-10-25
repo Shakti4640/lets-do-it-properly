@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maven &amp; Gradle — Build Tooling (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* XML tags, Gradle DSL keywords */
+  pre .typ { color: var(--c-typ); }                    /* artifact names, types */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* versions, numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* flags like -DskipTests */
+  pre .fn  { color: var(--c-fn); }                     /* commands like mvn, gradle */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Maven &amp; Gradle — Build Tooling<span class="sub">What a build tool does · Maven lifecycle, POM, scopes, BOMs · Gradle tasks, Kotlin DSL, version catalogs · dependency conflicts · multi-module · plugins · tests · packaging · CI speed · traps (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Click "Reveal hint" on screen. Hints auto-open when printed. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What a build tool does — and Maven vs Gradle in one table</h2>
+<p>A <b>build tool</b> turns source code into something you can run or ship, the same way every time, on every machine. It (1) downloads the libraries you depend on, (2) compiles, (3) runs tests, (4) packages a jar or image, (5) publishes it. Both Maven and Gradle use the same <b>repository</b> model (Maven Central, your company Nexus/Artifactory) and the same <b>coordinates</b>: <code>groupId:artifactId:version</code>.</p>
+<table>
+  <thead><tr><th>Aspect</th><th>Maven</th><th>Gradle</th></tr></thead>
+  <tbody>
+    <tr><td>Config file</td><td><code>pom.xml</code> (XML, declarative)</td><td><code>build.gradle.kts</code> (Kotlin DSL) or <code>build.gradle</code> (Groovy) — code</td></tr>
+    <tr><td>Model</td><td>Fixed <b>lifecycle</b> of phases; plugins bind goals to phases</td><td>Graph of <b>tasks</b> with inputs/outputs; plugins add tasks</td></tr>
+    <tr><td>Speed</td><td>Rebuilds a module fully each time (no incremental compile by default)</td><td>Incremental, build cache, daemon, configuration cache, parallel — much faster on big repos</td></tr>
+    <tr><td>Learning curve</td><td>Low; "convention over configuration"; everyone's POM looks the same</td><td>Higher; flexible; easy to write slow or weird builds</td></tr>
+    <tr><td>Multi-module</td><td>Parent POM + <code>&lt;modules&gt;</code>; reactor builds in dependency order</td><td><code>settings.gradle.kts</code> includes; project dependencies; composite builds</td></tr>
+    <tr><td>Dependency conflicts</td><td><b>Nearest wins</b> (closest in the tree, then first declared)</td><td><b>Highest version wins</b> (plus rich version constraints)</td></tr>
+    <tr><td>Wrapper</td><td><code>mvnw</code> / <code>mvnw.cmd</code> (Maven Wrapper, built in since 3.7)</td><td><code>gradlew</code> / <code>gradlew.bat</code></td></tr>
+    <tr><td>Typical in</td><td>Spring Boot services, enterprise Java, libraries</td><td>Android (mandatory), Kotlin, large monorepos, Spring projects that need speed</td></tr>
+    <tr><td>Spring Boot support</td><td><code>spring-boot-starter-parent</code> + <code>spring-boot-maven-plugin</code></td><td><code>org.springframework.boot</code> plugin + <code>io.spring.dependency-management</code> (or Gradle platforms)</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Word</th><th>Plain meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Artifact</b></td><td>A built file: jar, war, pom, sources jar, javadoc jar.</td></tr>
+    <tr><td><b>GAV coordinates</b></td><td><code>org.postgresql:postgresql:42.7.4</code> — group, artifact, version. Plus optional <i>classifier</i> (<code>sources</code>) and <i>type</i> (<code>pom</code>).</td></tr>
+    <tr><td><b>Repository</b></td><td>Where artifacts live: Maven Central, Google, JitPack; your <b>local</b> cache <code>~/.m2/repository</code> / <code>~/.gradle/caches</code>; company proxy (Nexus/Artifactory) in front of all of them.</td></tr>
+    <tr><td><b>Transitive dependency</b></td><td>A dependency of your dependency. 20 direct deps often pull 300 transitive ones.</td></tr>
+    <tr><td><b>SNAPSHOT</b></td><td><code>1.5.0-SNAPSHOT</code>: a moving version re-downloaded daily. Dev only. Releases are immutable.</td></tr>
+    <tr><td><b>BOM</b> (Bill of Materials)</td><td>A POM that only lists versions for a family of libraries, so you declare them without versions.</td></tr>
+    <tr><td><b>Wrapper</b></td><td>A tiny script committed to the repo that downloads the exact build-tool version — everyone and CI use the same one.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># always use the wrapper, never a globally installed mvn/gradle</span>
+./mvnw <span class="ann">-v</span>          ·   ./gradlew <span class="ann">--version</span>
+./mvnw <span class="kw">wrapper:wrapper</span> <span class="ann">-Dmaven</span>=3.9.9          <span class="cmt"># add / upgrade the Maven wrapper</span>
+./gradlew <span class="kw">wrapper</span> <span class="ann">--gradle-version</span> 8.11 <span class="ann">--distribution-type</span> bin   <span class="cmt"># upgrade the Gradle wrapper</span></pre>
+<div class="tips"><b>Mental model:</b> Maven is a <i>train on fixed tracks</i> — the stations (phases) are always the same; you choose which plugins get on at each station. Gradle is a <i>road network</i> — tasks are towns, dependencies are roads, and Gradle drives only the roads needed for your destination, skipping towns it has visited with the same inputs.</div>
+<div class="tricky">
+  <div class="q">Q. Your laptop has Maven 3.6 installed; the repo has <code>mvnw</code> for 3.9. Which should CI use?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The wrapper, always. It pins the version in <code>.mvn/wrapper/maven-wrapper.properties</code> so the build is reproducible; a global install varies per machine. Same for <code>gradlew</code> — and commit the wrapper jar/script.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Maven — the POM and the lifecycle</h2>
+<pre><span class="kw">&lt;project</span> xmlns=<span class="str">"http://maven.apache.org/POM/4.0.0"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;modelVersion&gt;</span>4.0.0<span class="kw">&lt;/modelVersion&gt;</span>
+  <span class="kw">&lt;parent&gt;</span>                                              <span class="cmt">&lt;!-- inherit versions, plugin config, defaults --&gt;</span>
+    <span class="kw">&lt;groupId&gt;</span>org.springframework.boot<span class="kw">&lt;/groupId&gt;</span>
+    <span class="kw">&lt;artifactId&gt;</span>spring-boot-starter-parent<span class="kw">&lt;/artifactId&gt;</span>
+    <span class="kw">&lt;version&gt;</span><span class="num">3.4.1</span><span class="kw">&lt;/version&gt;</span>
+  <span class="kw">&lt;/parent&gt;</span>
+  <span class="kw">&lt;groupId&gt;</span>com.shop<span class="kw">&lt;/groupId&gt;</span>
+  <span class="kw">&lt;artifactId&gt;</span>shop-api<span class="kw">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;version&gt;</span><span class="num">1.4.0-SNAPSHOT</span><span class="kw">&lt;/version&gt;</span>
+  <span class="kw">&lt;packaging&gt;</span>jar<span class="kw">&lt;/packaging&gt;</span>                               <span class="cmt">&lt;!-- jar | war | pom (aggregator/parent) --&gt;</span>
+
+  <span class="kw">&lt;properties&gt;</span>
+    <span class="kw">&lt;java.version&gt;</span><span class="num">21</span><span class="kw">&lt;/java.version&gt;</span>
+    <span class="kw">&lt;project.build.sourceEncoding&gt;</span>UTF-8<span class="kw">&lt;/project.build.sourceEncoding&gt;</span>
+    <span class="kw">&lt;testcontainers.version&gt;</span><span class="num">1.20.4</span><span class="kw">&lt;/testcontainers.version&gt;</span>
+  <span class="kw">&lt;/properties&gt;</span>
+
+  <span class="kw">&lt;dependencyManagement&gt;</span>                                  <span class="cmt">&lt;!-- versions only; nothing is added to the classpath here --&gt;</span>
+    <span class="kw">&lt;dependencies&gt;</span>
+      <span class="kw">&lt;dependency&gt;</span>
+        <span class="kw">&lt;groupId&gt;</span>org.testcontainers<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>testcontainers-bom<span class="kw">&lt;/artifactId&gt;</span>
+        <span class="kw">&lt;version&gt;</span>${testcontainers.version}<span class="kw">&lt;/version&gt;</span><span class="kw">&lt;type&gt;</span>pom<span class="kw">&lt;/type&gt;</span><span class="kw">&lt;scope&gt;</span>import<span class="kw">&lt;/scope&gt;</span>   <span class="cmt">&lt;!-- import a BOM --&gt;</span>
+      <span class="kw">&lt;/dependency&gt;</span>
+    <span class="kw">&lt;/dependencies&gt;</span>
+  <span class="kw">&lt;/dependencyManagement&gt;</span>
+
+  <span class="kw">&lt;dependencies&gt;</span>
+    <span class="kw">&lt;dependency&gt;</span><span class="kw">&lt;groupId&gt;</span>org.springframework.boot<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>spring-boot-starter-web<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;/dependency&gt;</span>   <span class="cmt">&lt;!-- version from parent --&gt;</span>
+    <span class="kw">&lt;dependency&gt;</span><span class="kw">&lt;groupId&gt;</span>org.postgresql<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>postgresql<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;scope&gt;</span>runtime<span class="kw">&lt;/scope&gt;</span><span class="kw">&lt;/dependency&gt;</span>
+    <span class="kw">&lt;dependency&gt;</span><span class="kw">&lt;groupId&gt;</span>org.projectlombok<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>lombok<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;optional&gt;</span>true<span class="kw">&lt;/optional&gt;</span><span class="kw">&lt;/dependency&gt;</span>
+    <span class="kw">&lt;dependency&gt;</span><span class="kw">&lt;groupId&gt;</span>org.testcontainers<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>postgresql<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;scope&gt;</span>test<span class="kw">&lt;/scope&gt;</span><span class="kw">&lt;/dependency&gt;</span>
+  <span class="kw">&lt;/dependencies&gt;</span>
+
+  <span class="kw">&lt;build&gt;</span>
+    <span class="kw">&lt;plugins&gt;</span>
+      <span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>org.springframework.boot<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>spring-boot-maven-plugin<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;/plugin&gt;</span>
+    <span class="kw">&lt;/plugins&gt;</span>
+  <span class="kw">&lt;/build&gt;</span>
+<span class="kw">&lt;/project&gt;</span></pre>
+<h3>The default lifecycle — each phase runs all the ones before it</h3>
+<table>
+  <thead><tr><th>Phase</th><th>Default plugin goal</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>validate</code></td><td>—</td><td>POM is valid.</td></tr>
+    <tr><td><code>compile</code></td><td><code>compiler:compile</code></td><td><code>src/main/java</code> → <code>target/classes</code>. Resources copied in <code>process-resources</code> just before.</td></tr>
+    <tr><td><code>test</code></td><td><code>surefire:test</code></td><td>Compile and run <b>unit</b> tests (<code>*Test</code>, <code>Test*</code>, <code>*Tests</code>).</td></tr>
+    <tr><td><code>package</code></td><td><code>jar:jar</code> (+ <code>spring-boot:repackage</code>)</td><td>Build <code>target/shop-api-1.4.0.jar</code>.</td></tr>
+    <tr><td><code>verify</code></td><td><code>failsafe:integration-test</code> + <code>verify</code></td><td>Run <b>integration</b> tests (<code>*IT</code>), checks (JaCoCo thresholds, OWASP).</td></tr>
+    <tr><td><code>install</code></td><td><code>install:install</code></td><td>Copy the artifact into <code>~/.m2</code> so other local projects can use it.</td></tr>
+    <tr><td><code>deploy</code></td><td><code>deploy:deploy</code></td><td>Upload to the remote repository (Nexus/Artifactory/GitHub Packages).</td></tr>
+    <tr><td><code>clean</code> (separate lifecycle)</td><td><code>clean:clean</code></td><td>Delete <code>target/</code>.</td></tr>
+    <tr><td><code>site</code> (separate)</td><td>—</td><td>Project reports. Rarely used today.</td></tr>
+  </tbody>
+</table>
+<pre>./mvnw <span class="kw">clean verify</span>                              <span class="cmt"># the CI command: clean, compile, unit tests, package, integration tests, checks</span>
+./mvnw <span class="kw">package</span> <span class="ann">-DskipTests</span>                       <span class="cmt"># compile tests but do not run them (-Dmaven.test.skip=true skips compiling too)</span>
+./mvnw <span class="kw">test</span> <span class="ann">-Dtest</span>=OrderServiceTest#createsOrder  <span class="cmt"># one test method</span>
+./mvnw <span class="kw">spring-boot:run</span>                           <span class="cmt"># run a plugin goal directly: plugin:goal</span>
+./mvnw <span class="kw">verify</span> <span class="ann">-pl</span> services/orders <span class="ann">-am</span>             <span class="cmt"># one module (-pl) and what it depends on (-am)</span>
+./mvnw <span class="kw">verify</span> <span class="ann">-T</span> 1C                              <span class="cmt"># parallel: 1 thread per core (modules in parallel)</span>
+./mvnw <span class="kw">verify</span> <span class="ann">-o</span>                                 <span class="cmt"># offline</span>
+./mvnw <span class="kw">verify</span> <span class="ann">-P</span> ci <span class="ann">-Denv</span>=staging               <span class="cmt"># activate a profile; set a property</span>
+./mvnw <span class="kw">help:effective-pom</span>                        <span class="cmt"># the POM after all inheritance and defaults — read this when confused</span>
+./mvnw <span class="kw">dependency:tree</span> <span class="ann">-Dincludes</span>=com.fasterxml.jackson.core   <span class="cmt"># who brings Jackson in</span>
+./mvnw <span class="kw">versions:display-dependency-updates</span>       <span class="cmt"># what is outdated</span>
+./mvnw <span class="ann">-B</span> <span class="ann">-ntp</span> <span class="ann">-q</span> <span class="kw">verify</span>                          <span class="cmt"># CI flags: batch mode, no transfer progress, quiet</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Phase vs goal</td><td>Thinking <code>mvn test</code> runs "just the tests".</td><td>It runs every phase up to <code>test</code> (compile too). <code>plugin:goal</code> runs one goal only.</td></tr>
+    <tr><td><code>install</code> in CI</td><td><code>mvn clean install</code> as the CI command.</td><td><code>mvn verify</code>. <code>install</code> pollutes the runner's <code>~/.m2</code> and is slower. Use <code>install</code> only for local cross-project work.</td></tr>
+    <tr><td>Versions everywhere</td><td>Every dependency has its own <code>&lt;version&gt;</code>; two modules disagree.</td><td>Versions in <code>&lt;dependencyManagement&gt;</code> of the parent (or BOMs); children declare without versions.</td></tr>
+    <tr><td><code>-Dmaven.test.skip=true</code> by habit</td><td>Tests never compile; broken test code ships unnoticed for weeks.</td><td><code>-DskipTests</code> when you must skip; CI never skips.</td></tr>
+    <tr><td>Unit and integration tests mixed</td><td>Testcontainers tests named <code>*Test</code> run on every <code>mvn test</code>, 10 minutes each time.</td><td><code>*IT</code> via Failsafe in <code>verify</code>; fast unit tests in <code>test</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>dependencyManagement</code> lists <code>guava 33.0</code>, but Guava is not on the classpath. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint"><code>dependencyManagement</code> only <i>manages versions</i>; it adds nothing. A module must still declare <code>&lt;dependency&gt;</code> (without version) in <code>&lt;dependencies&gt;</code> to actually get it.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Dependencies — scopes, BOMs, conflicts, exclusions</h2>
+<table>
+  <thead><tr><th>Maven scope</th><th>Gradle configuration</th><th>On compile classpath</th><th>On runtime classpath</th><th>Packaged in jar/war</th><th>Passed to consumers</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><code>compile</code> (default)</td><td><code>implementation</code> / <code>api</code></td><td>✔</td><td>✔</td><td>✔</td><td>✔ (Maven) / <code>api</code> only (Gradle)</td><td>Normal libraries.</td></tr>
+    <tr><td><code>runtime</code></td><td><code>runtimeOnly</code></td><td>✘</td><td>✔</td><td>✔</td><td>✔</td><td>JDBC drivers, logging backends — code never references them.</td></tr>
+    <tr><td><code>provided</code></td><td><code>compileOnly</code></td><td>✔</td><td>✘</td><td>✘</td><td>✘</td><td>Servlet API in a WAR, Lombok, annotation processors' APIs.</td></tr>
+    <tr><td><code>test</code></td><td><code>testImplementation</code> / <code>testRuntimeOnly</code></td><td>tests only</td><td>tests only</td><td>✘</td><td>✘</td><td>JUnit, Mockito, Testcontainers.</td></tr>
+    <tr><td><code>import</code> (type pom)</td><td><code>implementation(platform(…))</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td>Import a BOM's versions.</td></tr>
+    <tr><td><code>system</code></td><td>—</td><td colspan="4">Local jar by path. Deprecated; publish it to a repo instead.</td><td></td></tr>
+    <tr><td><code>&lt;optional&gt;true</code></td><td><code>compileOnly</code> + feature variants</td><td colspan="4">Not passed to consumers.</td><td></td></tr>
+  </tbody>
+</table>
+<h3>How conflicts are resolved (the one thing that differs most)</h3>
+<table>
+  <thead><tr><th>Tool</th><th>Rule</th><th>Example: A→X 1.0 (depth 1), B→C→X 2.0 (depth 2)</th><th>Override</th></tr></thead>
+  <tbody>
+    <tr><td><b>Maven</b></td><td><b>Nearest wins</b>; tie → first declared in the POM.</td><td>X <b>1.0</b> wins (closer) — even though 2.0 is newer. Silent downgrade!</td><td>Declare X 2.0 directly, or in <code>dependencyManagement</code> (which wins over everything transitive).</td></tr>
+    <tr><td><b>Gradle</b></td><td><b>Highest version wins</b>.</td><td>X <b>2.0</b> wins.</td><td><code>strictly("1.0")</code>, <code>force</code>, <code>resolutionStrategy</code>, dependency locking.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Maven: see the tree and the losers</span>
+./mvnw <span class="kw">dependency:tree</span> <span class="ann">-Dverbose</span> <span class="ann">-Dincludes</span>=org.slf4j      <span class="cmt"># "(omitted for conflict with 2.0.16)"</span>
+./mvnw <span class="kw">dependency:analyze</span>                                  <span class="cmt"># used-but-undeclared / declared-but-unused</span>
+<span class="cmt"># Maven: exclude a transitive dependency</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="kw">&lt;groupId&gt;</span>org.springframework.boot<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>spring-boot-starter-web<span class="kw">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;exclusions&gt;&lt;exclusion&gt;</span>
+    <span class="kw">&lt;groupId&gt;</span>org.springframework.boot<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>spring-boot-starter-tomcat<span class="kw">&lt;/artifactId&gt;</span>   <span class="cmt">&lt;!-- then add starter-undertow --&gt;</span>
+  <span class="kw">&lt;/exclusion&gt;&lt;/exclusions&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+<span class="cmt"># Maven: fail the build on duplicate classes / version clashes</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>maven-enforcer-plugin<span class="kw">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;executions&gt;&lt;execution&gt;&lt;goals&gt;&lt;goal&gt;</span>enforce<span class="kw">&lt;/goal&gt;&lt;/goals&gt;</span>
+    <span class="kw">&lt;configuration&gt;&lt;rules&gt;</span>
+      <span class="kw">&lt;dependencyConvergence/&gt;</span>                                 <span class="cmt">&lt;!-- all paths must agree on a version --&gt;</span>
+      <span class="kw">&lt;banDuplicatePomDependencyVersions/&gt;</span>
+      <span class="kw">&lt;requireMavenVersion&gt;&lt;version&gt;</span>[3.9,)<span class="kw">&lt;/version&gt;&lt;/requireMavenVersion&gt;</span>
+      <span class="kw">&lt;requireJavaVersion&gt;&lt;version&gt;</span>[21,)<span class="kw">&lt;/version&gt;&lt;/requireJavaVersion&gt;</span>
+    <span class="kw">&lt;/rules&gt;&lt;/configuration&gt;</span>
+  <span class="kw">&lt;/execution&gt;&lt;/executions&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span></pre>
+<pre><span class="cmt">// Gradle (Kotlin DSL)</span>
+<span class="kw">dependencies</span> {
+    <span class="fn">implementation</span>(<span class="fn">platform</span>(<span class="str">"org.springframework.boot:spring-boot-dependencies:3.4.1"</span>))   <span class="cmt">// BOM</span>
+    <span class="fn">implementation</span>(<span class="str">"org.springframework.boot:spring-boot-starter-web"</span>) {
+        <span class="fn">exclude</span>(group = <span class="str">"org.springframework.boot"</span>, module = <span class="str">"spring-boot-starter-tomcat"</span>)
+    }
+    <span class="fn">implementation</span>(<span class="str">"com.google.guava:guava"</span>) { <span class="fn">version</span> { <span class="fn">strictly</span>(<span class="str">"33.3.1-jre"</span>) } }     <span class="cmt">// pin hard</span>
+    <span class="fn">constraints</span> { <span class="fn">implementation</span>(<span class="str">"org.yaml:snakeyaml:2.3"</span>) { because(<span class="str">"CVE-2022-1471"</span>) } }   <span class="cmt">// bump a transitive</span>
+}
+<span class="kw">configurations</span>.all { <span class="fn">resolutionStrategy</span> { failOnVersionConflict() } }   <span class="cmt">// strict mode</span>
+<span class="cmt">// ./gradlew dependencies --configuration runtimeClasspath   ·   ./gradlew dependencyInsight --dependency slf4j-api</span>
+<span class="cmt">// ./gradlew dependencies --write-locks  → gradle.lockfile (reproducible resolution)</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Version ranges</td><td><code>[1.0,2.0)</code> or <code>1.+</code> — the build changes without a commit.</td><td>Exact versions (or BOM-managed); upgrade via Dependabot/Renovate PRs.</td></tr>
+    <tr><td>Silent downgrade (Maven)</td><td>A transitive brings an old Jackson that wins by "nearest"; NoSuchMethodError in prod.</td><td>Enforcer <code>dependencyConvergence</code>; manage the version explicitly.</td></tr>
+    <tr><td><code>compile</code> for everything</td><td>JDBC driver and Logback on the compile classpath.</td><td><code>runtime</code>/<code>runtimeOnly</code>: code can't accidentally depend on them.</td></tr>
+    <tr><td>Gradle <code>api</code> everywhere</td><td>Every dependency leaks to consumers; any change recompiles the world.</td><td><code>implementation</code> by default; <code>api</code> only for types in your public signatures.</td></tr>
+    <tr><td>Snapshots in releases</td><td>A release jar depends on <code>lib-1.2-SNAPSHOT</code>.</td><td>Enforcer <code>requireReleaseDeps</code>; snapshots only on dev branches.</td></tr>
+    <tr><td>Fat jar conflicts</td><td>Two jars provide the same class; which one loads depends on the order.</td><td><code>dependency:analyze</code> / <code>duplicate-finder-maven-plugin</code>; exclude one.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Spring Boot's BOM does most of the work:</b> with the starter parent (Maven) or the dependency-management plugin / <code>platform()</code> (Gradle), ~1,000 library versions are already chosen to work together. Override one with a property like <code>&lt;jackson-bom.version&gt;</code> rather than hard-coding versions.</div>
+<div class="tricky">
+  <div class="q">Q. Maven and Gradle resolve the same POM differently. Which resolution is "right"?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Neither — they are different policies. Maven's nearest-wins can downgrade; Gradle's highest-wins can upgrade past what a library was tested with. Both are fine as long as you make the choice explicit (dependencyManagement / constraints) and fail the build on hidden conflicts.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Gradle — tasks, the Kotlin DSL, version catalogs</h2>
+<pre><span class="cmt">// settings.gradle.kts</span>
+<span class="fn">rootProject</span>.name = <span class="str">"shop"</span>
+<span class="fn">include</span>(<span class="str">"services:orders"</span>, <span class="str">"services:payments"</span>, <span class="str">"libs:common"</span>)
+<span class="kw">dependencyResolutionManagement</span> {
+    <span class="fn">repositories</span> { mavenCentral() }                            <span class="cmt">// repos in one place</span>
+}
+<span class="kw">plugins</span> { id(<span class="str">"org.gradle.toolchains.foojay-resolver-convention"</span>) version <span class="str">"0.9.0"</span> }   <span class="cmt">// auto-download JDKs</span>
+
+<span class="cmt">// build.gradle.kts (a service module)</span>
+<span class="kw">plugins</span> {
+    java
+    alias(libs.plugins.spring.boot)                             <span class="cmt">// from the version catalog</span>
+    alias(libs.plugins.spring.dependency.management)
+}
+<span class="kw">group</span> = <span class="str">"com.shop"</span>
+<span class="kw">version</span> = <span class="str">"1.4.0"</span>
+<span class="kw">java</span> { toolchain { languageVersion = <span class="typ">JavaLanguageVersion</span>.of(<span class="num">21</span>) } }   <span class="cmt">// build with JDK 21 regardless of the JDK running Gradle</span>
+
+<span class="kw">dependencies</span> {
+    <span class="fn">implementation</span>(project(<span class="str">":libs:common"</span>))
+    <span class="fn">implementation</span>(libs.spring.boot.starter.web)
+    <span class="fn">runtimeOnly</span>(libs.postgresql)
+    <span class="fn">compileOnly</span>(libs.lombok);  <span class="fn">annotationProcessor</span>(libs.lombok)
+    <span class="fn">testImplementation</span>(libs.spring.boot.starter.test)
+    <span class="fn">testImplementation</span>(libs.bundles.testcontainers)              <span class="cmt">// a bundle = several libs</span>
+}
+
+<span class="kw">tasks</span>.withType&lt;<span class="typ">Test</span>&gt;().configureEach {
+    useJUnitPlatform()
+    maxParallelForks = (<span class="typ">Runtime</span>.getRuntime().availableProcessors() / <span class="num">2</span>).coerceAtLeast(<span class="num">1</span>)
+    testLogging { events(<span class="str">"failed"</span>); exceptionFormat = <span class="typ">TestExceptionFormat</span>.FULL }
+}
+<span class="kw">tasks</span>.named&lt;<span class="typ">Jar</span>&gt;(<span class="str">"jar"</span>) { enabled = <span class="kw">false</span> }                     <span class="cmt">// only the boot jar</span>
+
+<span class="cmt">// a custom task with declared inputs/outputs (so it is cacheable and skippable)</span>
+<span class="kw">val</span> generateBuildInfo <span class="kw">by</span> tasks.registering {
+    <span class="kw">val</span> out = layout.buildDirectory.file(<span class="str">"generated/build-info.properties"</span>)
+    inputs.property(<span class="str">"version"</span>, version)
+    outputs.file(out)
+    doLast { out.get().asFile.writeText(<span class="str">"version=$version\n"</span>) }
+}
+<span class="kw">tasks</span>.processResources { from(generateBuildInfo) }</pre>
+<pre><span class="cmt"># gradle/libs.versions.toml — the version catalog: one place for every version</span>
+[versions]
+spring-boot = <span class="str">"3.4.1"</span>
+testcontainers = <span class="str">"1.20.4"</span>
+[libraries]
+spring-boot-starter-web  = { module = <span class="str">"org.springframework.boot:spring-boot-starter-web"</span> }    <span class="cmt"># version from the BOM</span>
+spring-boot-starter-test = { module = <span class="str">"org.springframework.boot:spring-boot-starter-test"</span> }
+postgresql = { module = <span class="str">"org.postgresql:postgresql"</span>, version = <span class="str">"42.7.4"</span> }
+lombok     = { module = <span class="str">"org.projectlombok:lombok"</span>, version = <span class="str">"1.18.36"</span> }
+tc-postgres = { module = <span class="str">"org.testcontainers:postgresql"</span>, version.ref = <span class="str">"testcontainers"</span> }
+tc-junit    = { module = <span class="str">"org.testcontainers:junit-jupiter"</span>, version.ref = <span class="str">"testcontainers"</span> }
+[bundles]
+testcontainers = [<span class="str">"tc-postgres"</span>, <span class="str">"tc-junit"</span>]
+[plugins]
+spring-boot = { id = <span class="str">"org.springframework.boot"</span>, version.ref = <span class="str">"spring-boot"</span> }
+spring-dependency-management = { id = <span class="str">"io.spring.dependency-management"</span>, version = <span class="str">"1.1.7"</span> }</pre>
+<table>
+  <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Task</b></td><td>A unit of work with inputs and outputs. <code>compileJava</code>, <code>test</code>, <code>bootJar</code>, <code>build</code> (= <code>assemble</code> + <code>check</code>).</td></tr>
+    <tr><td><b>Up-to-date check</b></td><td>If inputs and outputs are unchanged since last run, the task is skipped (<code>UP-TO-DATE</code>). This is where Gradle's speed comes from.</td></tr>
+    <tr><td><b>Build cache</b></td><td>Outputs keyed by input hashes, reused across branches, clones, and machines (remote cache). <code>FROM-CACHE</code>.</td></tr>
+    <tr><td><b>Configuration cache</b></td><td>Caches the result of evaluating build scripts. Big win on large builds (<code>org.gradle.configuration-cache=true</code>).</td></tr>
+    <tr><td><b>Daemon</b></td><td>A warm JVM that stays alive between builds. Always on locally; <code>--no-daemon</code> in some CI setups.</td></tr>
+    <tr><td><b>Configuration phase vs execution phase</b></td><td>All build scripts are evaluated first (fast, no work), then only the needed tasks run. Doing work at configuration time (<code>exec</code> in a script body) slows every build.</td></tr>
+    <tr><td><b>Lazy API</b></td><td><code>tasks.register</code> / <code>Provider</code>s — tasks are created only if needed. Avoid eager <code>tasks.create</code> / <code>.get()</code>.</td></tr>
+    <tr><td><b>Convention plugin</b></td><td>Your shared build logic in <code>buildSrc/</code> or an included <code>build-logic</code> project (<code>id("shop.java-conventions")</code>), applied by every module.</td></tr>
+    <tr><td><b>Toolchains</b></td><td>Pick the JDK for compiling/testing independent of the one running Gradle.</td></tr>
+  </tbody>
+</table>
+<pre>./gradlew <span class="kw">build</span>                                   <span class="cmt"># compile + test + jar + checks</span>
+./gradlew <span class="kw">test</span> <span class="ann">--tests</span> <span class="str">"com.shop.order.*"</span>          <span class="cmt"># filter tests</span>
+./gradlew <span class="kw">:services:orders:bootRun</span>                <span class="cmt"># a task in one module</span>
+./gradlew <span class="kw">build</span> <span class="ann">-x</span> test                           <span class="cmt"># exclude a task</span>
+./gradlew <span class="kw">tasks</span> <span class="ann">--all</span>  ·  ./gradlew <span class="kw">projects</span>        <span class="cmt"># what exists</span>
+./gradlew <span class="kw">build</span> <span class="ann">--scan</span>                            <span class="cmt"># build scan: timeline, cache hits, slow tasks (develocity)</span>
+./gradlew <span class="kw">build</span> <span class="ann">--build-cache</span> <span class="ann">--parallel</span> <span class="ann">--configuration-cache</span>   <span class="cmt"># or put them in gradle.properties</span>
+./gradlew <span class="kw">dependencyUpdates</span>                       <span class="cmt"># (ben-manes versions plugin)</span>
+./gradlew <span class="kw">help</span> <span class="ann">--task</span> bootJar                     <span class="cmt"># task docs</span>
+./gradlew <span class="ann">--stop</span>                                  <span class="cmt"># kill daemons</span></pre>
+<pre><span class="cmt"># gradle.properties (committed)</span>
+org.gradle.parallel=true
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+org.gradle.jvmargs=-Xmx2g -XX:+UseParallelGC
+org.gradle.daemon=true</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Groovy DSL for new projects</td><td><code>build.gradle</code> with dynamic typing: no IDE completion, typos found at runtime.</td><td>Kotlin DSL (<code>.kts</code>): typed, completable, the default since Gradle 8.</td></tr>
+    <tr><td>Versions in every build file</td><td>12 modules each pinning Jackson differently.</td><td>Version catalog (<code>libs.versions.toml</code>) + BOM platform.</td></tr>
+    <tr><td>Copy-pasted build logic</td><td>60 identical lines in each module's build file.</td><td>Convention plugins in <code>build-logic/</code>; modules apply one line.</td></tr>
+    <tr><td>Work at configuration time</td><td><code>val sha = "git rev-parse HEAD".runCommand()</code> in the script body → runs on every invocation, even <code>gradlew help</code>.</td><td>Inside a task's <code>doLast</code> or a <code>Provider</code>; or a plugin like <code>gradle-git-properties</code>.</td></tr>
+    <tr><td><code>allprojects { }</code> cross-config</td><td>Root build file configuring children — breaks configuration cache and isolation.</td><td>Convention plugins.</td></tr>
+    <tr><td>Tasks without inputs/outputs</td><td>Custom task always re-runs and can't be cached.</td><td>Declare <code>inputs</code>/<code>outputs</code>; annotate task classes with <code>@Input</code>/<code>@OutputFile</code>, <code>@CacheableTask</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. <code>./gradlew test</code> says "UP-TO-DATE" and runs no tests even though you changed a resource file. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">If the resource is not under a declared input (e.g. it is read from an absolute path or an undeclared directory), Gradle cannot know it matters. Put it under <code>src/test/resources</code>, or declare it as a task input. <code>--rerun-tasks</code> forces one run; fix the inputs for real.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Multi-module projects</h2>
+<pre><span class="cmt"># layout shared by both tools</span>
+shop/
+├── pom.xml | settings.gradle.kts + build.gradle.kts     <span class="cmt"># root: modules list, shared versions, shared plugin config</span>
+├── libs/common/                                        <span class="cmt"># plain jar: DTOs, utils</span>
+├── services/orders/                                    <span class="cmt"># Spring Boot app, depends on libs/common</span>
+└── services/payments/</pre>
+<pre><span class="cmt">&lt;!-- root pom.xml: packaging pom, lists modules, manages versions/plugins --&gt;</span>
+<span class="kw">&lt;packaging&gt;</span>pom<span class="kw">&lt;/packaging&gt;</span>
+<span class="kw">&lt;modules&gt;</span>
+  <span class="kw">&lt;module&gt;</span>libs/common<span class="kw">&lt;/module&gt;</span>
+  <span class="kw">&lt;module&gt;</span>services/orders<span class="kw">&lt;/module&gt;</span>
+  <span class="kw">&lt;module&gt;</span>services/payments<span class="kw">&lt;/module&gt;</span>
+<span class="kw">&lt;/modules&gt;</span>
+<span class="kw">&lt;dependencyManagement&gt;&lt;dependencies&gt;</span>
+  <span class="kw">&lt;dependency&gt;</span><span class="kw">&lt;groupId&gt;</span>com.shop<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>common<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;version&gt;</span>${project.version}<span class="kw">&lt;/version&gt;</span><span class="kw">&lt;/dependency&gt;</span>
+<span class="kw">&lt;/dependencies&gt;&lt;/dependencyManagement&gt;</span>
+<span class="kw">&lt;build&gt;&lt;pluginManagement&gt;</span> … shared plugin versions and config … <span class="kw">&lt;/pluginManagement&gt;&lt;/build&gt;</span>
+
+<span class="cmt">&lt;!-- services/orders/pom.xml --&gt;</span>
+<span class="kw">&lt;parent&gt;</span><span class="kw">&lt;groupId&gt;</span>com.shop<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>shop-parent<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;version&gt;</span>${revision}<span class="kw">&lt;/version&gt;</span><span class="kw">&lt;relativePath&gt;</span>../../pom.xml<span class="kw">&lt;/relativePath&gt;</span><span class="kw">&lt;/parent&gt;</span>
+<span class="kw">&lt;artifactId&gt;</span>orders<span class="kw">&lt;/artifactId&gt;</span>
+<span class="kw">&lt;dependencies&gt;</span>
+  <span class="kw">&lt;dependency&gt;</span><span class="kw">&lt;groupId&gt;</span>com.shop<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>common<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;/dependency&gt;</span>   <span class="cmt">&lt;!-- version managed by the parent --&gt;</span>
+<span class="kw">&lt;/dependencies&gt;</span>
+
+<span class="cmt">&lt;!-- CI-friendly versions: one place --&gt;</span>
+<span class="kw">&lt;version&gt;</span>${revision}<span class="kw">&lt;/version&gt;</span>  … <span class="kw">&lt;properties&gt;&lt;revision&gt;</span>1.4.0-SNAPSHOT<span class="kw">&lt;/revision&gt;&lt;/properties&gt;</span>
+<span class="cmt">./mvnw -Drevision=1.4.0 verify   (needs flatten-maven-plugin to publish resolved POMs)</span></pre>
+<table>
+  <thead><tr><th>Maven</th><th>Gradle</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Reactor</b> builds modules in dependency order</td><td>Task graph across projects</td><td>Both figure out that <code>common</code> must build before <code>orders</code>.</td></tr>
+    <tr><td><code>-pl services/orders -am</code></td><td><code>:services:orders:build</code> (deps built automatically)</td><td>Build one module and what it needs.</td></tr>
+    <tr><td><code>-pl services/orders -amd</code></td><td>—</td><td>Build a module and everything that depends on it (impact).</td></tr>
+    <tr><td><code>-rf :orders</code></td><td><code>--continue</code></td><td>Resume from a failed module / keep going after failures.</td></tr>
+    <tr><td>Parent POM (<code>&lt;parent&gt;</code>) vs aggregator (<code>&lt;modules&gt;</code>)</td><td>Convention plugins vs <code>settings.gradle.kts</code> includes</td><td>Inheritance of config vs "which modules exist" — often the same root POM does both.</td></tr>
+    <tr><td><code>${project.version}</code> for sibling deps</td><td><code>project(":libs:common")</code></td><td>Depend on a sibling at the same version.</td></tr>
+    <tr><td>BOM module (<code>packaging pom</code>) published for consumers</td><td><code>java-platform</code> plugin</td><td>Let other repos import your versions.</td></tr>
+    <tr><td>—</td><td><b>Composite build</b> (<code>includeBuild("../common-lib")</code>)</td><td>Develop a library and its consumer together without publishing.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Cycles</td><td><code>orders</code> depends on <code>payments</code> which depends on <code>orders</code> → "The projects in the reactor contain a cyclic reference".</td><td>Extract the shared part into <code>common</code>; dependencies flow one way.</td></tr>
+    <tr><td>Everything in <code>common</code></td><td>One giant shared module every service depends on; any change rebuilds all.</td><td>Small focused libs (<code>common-money</code>, <code>common-events</code>); services depend only on what they use.</td></tr>
+    <tr><td>Hard-coded sibling versions</td><td><code>&lt;version&gt;1.3.0&lt;/version&gt;</code> on a sibling dep, forgotten at release.</td><td><code>${project.version}</code> / <code>project(":x")</code>.</td></tr>
+    <tr><td>Spring Boot parent in every module</td><td>Each module declares <code>spring-boot-starter-parent</code>; plain libs get repackaged as boot jars.</td><td>Root inherits the parent (or imports the BOM); only app modules apply the Boot plugin.</td></tr>
+    <tr><td>Building everything on every PR</td><td>40-module monorepo, 25-minute CI for a one-line change.</td><td>Gradle build cache + <code>-amd</code>-style affected-module detection; Maven: <code>gitflow-incremental-builder</code> or <code>-pl $(changed) -amd</code>.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. You run <code>./mvnw -pl services/orders verify</code> (no <code>-am</code>) after changing <code>libs/common</code>. Which <code>common</code> does <code>orders</code> compile against?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Whatever <code>common</code> jar is in <code>~/.m2</code> (from the last <code>install</code>) — possibly days old. Without <code>-am</code>, Maven does not rebuild siblings. Use <code>-am</code>, or <code>install</code> the lib first. Gradle avoids this: <code>project(":libs:common")</code> always builds the current source.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Plugins you will actually use</h2>
+<table>
+  <thead><tr><th>Need</th><th>Maven plugin</th><th>Gradle plugin / task</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>Compile with the right Java</td><td><code>maven-compiler-plugin</code> (<code>&lt;release&gt;21&lt;/release&gt;</code>)</td><td><code>java { toolchain }</code></td><td>Use <code>release</code>, not <code>source</code>/<code>target</code> — it checks API usage too.</td></tr>
+    <tr><td>Unit tests</td><td><code>maven-surefire-plugin</code></td><td><code>test</code> task (<code>useJUnitPlatform()</code>)</td><td>JUnit 5 needs Surefire 3.x.</td></tr>
+    <tr><td>Integration tests</td><td><code>maven-failsafe-plugin</code> (<code>*IT</code>, phases <code>integration-test</code>/<code>verify</code>)</td><td>A second <code>Test</code> task + source set (<code>integrationTest</code>), or JVM Test Suite plugin</td><td>Failsafe does not fail the build until <code>verify</code>, so <code>post-integration-test</code> can tear down.</td></tr>
+    <tr><td>Coverage</td><td><code>jacoco-maven-plugin</code> (<code>prepare-agent</code>, <code>report</code>, <code>check</code> with minimum)</td><td><code>jacoco</code> plugin, <code>jacocoTestReport</code>, <code>jacocoTestCoverageVerification</code></td><td>Gate on new code in SonarQube rather than a blunt global %.</td></tr>
+    <tr><td>Formatting</td><td><code>spotless-maven-plugin</code> (google-java-format / palantir)</td><td><code>com.diffplug.spotless</code></td><td><code>spotless:check</code> in CI, <code>spotless:apply</code> locally / pre-commit.</td></tr>
+    <tr><td>Static analysis</td><td><code>maven-checkstyle-plugin</code>, <code>spotbugs-maven-plugin</code>, <code>maven-pmd-plugin</code>, Error Prone via compiler args</td><td>same names</td><td>SonarQube (<code>sonar-maven-plugin</code> / <code>org.sonarqube</code>) aggregates them.</td></tr>
+    <tr><td>Dependency vulnerabilities</td><td><code>dependency-check-maven</code> (OWASP)</td><td><code>org.owasp.dependencycheck</code></td><td>Or Snyk / Trivy / Dependabot / Renovate at the repo level.</td></tr>
+    <tr><td>Executable jar</td><td><code>spring-boot-maven-plugin</code> (<code>repackage</code>) · non-Spring: <code>maven-shade-plugin</code> / <code>maven-assembly-plugin</code></td><td><code>bootJar</code> · <code>com.gradleup.shadow</code></td><td>Shade merges jars (watch <code>META-INF/services</code> — use transformers).</td></tr>
+    <tr><td>Container image</td><td><code>spring-boot:build-image</code> (buildpacks) · <code>jib-maven-plugin</code> (no Docker daemon, reproducible layers)</td><td><code>bootBuildImage</code> · <code>com.google.cloud.tools.jib</code></td><td>Jib is ideal in CI: no Docker needed, pushes directly.</td></tr>
+    <tr><td>Version bumps</td><td><code>versions-maven-plugin</code> (<code>display-dependency-updates</code>, <code>set</code>)</td><td><code>com.github.ben-manes.versions</code></td><td>Dependabot/Renovate automate the PRs.</td></tr>
+    <tr><td>Build info / git info</td><td><code>spring-boot:build-info</code>, <code>git-commit-id-maven-plugin</code></td><td><code>springBoot { buildInfo() }</code>, <code>com.gorylenko.gradle-git-properties</code></td><td>Shows in <code>/actuator/info</code>.</td></tr>
+    <tr><td>Rules / sanity</td><td><code>maven-enforcer-plugin</code></td><td><code>resolutionStrategy</code>, custom checks</td><td>Java version, Maven version, convergence, banned deps.</td></tr>
+    <tr><td>Publish</td><td><code>maven-deploy-plugin</code> + <code>&lt;distributionManagement&gt;</code>; Central: <code>central-publishing-maven-plugin</code></td><td><code>maven-publish</code> + <code>publishing { repositories }</code></td><td>Sources + javadoc jars + signing for public libs.</td></tr>
+    <tr><td>Code generation</td><td><code>openapi-generator-maven-plugin</code>, <code>protobuf-maven-plugin</code>, <code>jooq-codegen-maven</code>, <code>mapstruct</code> (annotation processor)</td><td>same families</td><td>Generated sources into <code>target/generated-sources</code> / <code>build/generated</code>, never committed.</td></tr>
+    <tr><td>Flyway from the build</td><td><code>flyway-maven-plugin</code></td><td><code>org.flywaydb.flyway</code></td><td>Handy locally; in prod let the app or a job migrate.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">&lt;!-- Failsafe + Surefire split; JaCoCo gate --&gt;</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;artifactId&gt;</span>maven-failsafe-plugin<span class="kw">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;executions&gt;&lt;execution&gt;&lt;goals&gt;&lt;goal&gt;</span>integration-test<span class="kw">&lt;/goal&gt;&lt;goal&gt;</span>verify<span class="kw">&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;&lt;/executions&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>org.jacoco<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>jacoco-maven-plugin<span class="kw">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;executions&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;goals&gt;&lt;goal&gt;</span>prepare-agent<span class="kw">&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;id&gt;</span>report<span class="kw">&lt;/id&gt;&lt;phase&gt;</span>verify<span class="kw">&lt;/phase&gt;&lt;goals&gt;&lt;goal&gt;</span>report<span class="kw">&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;</span>
+    <span class="kw">&lt;execution&gt;&lt;id&gt;</span>check<span class="kw">&lt;/id&gt;&lt;goals&gt;&lt;goal&gt;</span>check<span class="kw">&lt;/goal&gt;&lt;/goals&gt;</span>
+      <span class="kw">&lt;configuration&gt;&lt;rules&gt;&lt;rule&gt;&lt;limits&gt;&lt;limit&gt;</span>
+        <span class="kw">&lt;counter&gt;</span>LINE<span class="kw">&lt;/counter&gt;&lt;value&gt;</span>COVEREDRATIO<span class="kw">&lt;/value&gt;&lt;minimum&gt;</span>0.70<span class="kw">&lt;/minimum&gt;</span>
+      <span class="kw">&lt;/limit&gt;&lt;/limits&gt;&lt;/rule&gt;&lt;/rules&gt;&lt;/configuration&gt;</span>
+    <span class="kw">&lt;/execution&gt;</span>
+  <span class="kw">&lt;/executions&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span>
+
+<span class="cmt">&lt;!-- Jib: image without Docker --&gt;</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>com.google.cloud.tools<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>jib-maven-plugin<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;version&gt;</span>3.4.4<span class="kw">&lt;/version&gt;</span>
+  <span class="kw">&lt;configuration&gt;</span>
+    <span class="kw">&lt;from&gt;&lt;image&gt;</span>eclipse-temurin:21-jre-alpine<span class="kw">&lt;/image&gt;&lt;/from&gt;</span>
+    <span class="kw">&lt;to&gt;&lt;image&gt;</span>ghcr.io/shop/orders:${project.version}<span class="kw">&lt;/image&gt;&lt;/to&gt;</span>
+    <span class="kw">&lt;container&gt;&lt;user&gt;</span>1001<span class="kw">&lt;/user&gt;&lt;ports&gt;&lt;port&gt;</span>8080<span class="kw">&lt;/port&gt;&lt;/ports&gt;&lt;/container&gt;</span>
+  <span class="kw">&lt;/configuration&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span>
+<span class="cmt">./mvnw -DskipTests jib:build        # builds and pushes; jib:dockerBuild to the local daemon</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Plugin without version</td><td><code>&lt;plugin&gt;&lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;&lt;/plugin&gt;</code> — Maven warns and picks a default that changes with Maven versions.</td><td>Version in <code>&lt;pluginManagement&gt;</code> (the Boot parent manages the common ones).</td></tr>
+    <tr><td>Coverage theatre</td><td>80% line coverage gate hit with assert-free tests.</td><td>Gate on <i>new</i> code; review tests; mutation testing (PIT) if you care.</td></tr>
+    <tr><td>Shade for Spring Boot</td><td>Shading a Boot app → broken <code>spring.factories</code>/<code>AutoConfiguration.imports</code>.</td><td><code>spring-boot-maven-plugin</code> repackage; Shade only for non-Boot CLIs.</td></tr>
+    <tr><td>Docker-in-CI for images</td><td>Docker socket in every CI job just to build an image.</td><td>Jib or buildpacks — no daemon, reproducible, cached layers.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Surefire runs your <code>*Test</code> classes but ignores <code>OrderRepositoryIT</code>. Where does it run?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Nowhere, unless Failsafe is configured. Surefire's default pattern excludes <code>*IT</code>; Failsafe's includes it, but Failsafe is not bound by default — add the plugin with <code>integration-test</code> and <code>verify</code> goals. That gap is why "all tests pass" sometimes means half the tests never ran.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Profiles, properties, settings, repositories, credentials</h2>
+<pre><span class="cmt">&lt;!-- Maven profiles: switch config by flag, environment, OS, file presence --&gt;</span>
+<span class="kw">&lt;profiles&gt;</span>
+  <span class="kw">&lt;profile&gt;</span>
+    <span class="kw">&lt;id&gt;</span>ci<span class="kw">&lt;/id&gt;</span>
+    <span class="kw">&lt;activation&gt;&lt;property&gt;&lt;name&gt;</span>env.CI<span class="kw">&lt;/name&gt;&lt;/property&gt;&lt;/activation&gt;</span>     <span class="cmt">&lt;!-- auto-on when $CI is set --&gt;</span>
+    <span class="kw">&lt;properties&gt;&lt;skipITs&gt;</span>false<span class="kw">&lt;/skipITs&gt;&lt;/properties&gt;</span>
+  <span class="kw">&lt;/profile&gt;</span>
+  <span class="kw">&lt;profile&gt;</span>
+    <span class="kw">&lt;id&gt;</span>native<span class="kw">&lt;/id&gt;</span>                                                      <span class="cmt">&lt;!-- ./mvnw -Pnative native:compile --&gt;</span>
+    <span class="kw">&lt;build&gt;&lt;plugins&gt;&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>org.graalvm.buildtools<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>native-maven-plugin<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;/plugin&gt;&lt;/plugins&gt;&lt;/build&gt;</span>
+  <span class="kw">&lt;/profile&gt;</span>
+<span class="kw">&lt;/profiles&gt;</span>
+<span class="cmt">./mvnw help:active-profiles      # which are on</span></pre>
+<table>
+  <thead><tr><th>Where settings live</th><th>Maven</th><th>Gradle</th></tr></thead>
+  <tbody>
+    <tr><td>Project build</td><td><code>pom.xml</code></td><td><code>build.gradle.kts</code>, <code>settings.gradle.kts</code>, <code>gradle.properties</code>, <code>gradle/libs.versions.toml</code></td></tr>
+    <tr><td>Per-user, not committed (credentials, mirrors, proxies)</td><td><code>~/.m2/settings.xml</code></td><td><code>~/.gradle/gradle.properties</code>, <code>~/.gradle/init.d/*.gradle.kts</code></td></tr>
+    <tr><td>Per-project but local</td><td><code>.mvn/maven.config</code> (default CLI args), <code>.mvn/jvm.config</code> (JVM flags for Maven itself)</td><td><code>gradle.properties</code> (committed) overridden by user/CLI</td></tr>
+    <tr><td>Property precedence</td><td>CLI <code>-D</code> &gt; <code>settings.xml</code> &gt; POM <code>&lt;properties&gt;</code></td><td>CLI <code>-P</code> &gt; env <code>ORG_GRADLE_PROJECT_x</code> &gt; user <code>gradle.properties</code> &gt; project <code>gradle.properties</code></td></tr>
+    <tr><td>Local cache</td><td><code>~/.m2/repository</code></td><td><code>~/.gradle/caches</code> (+ <code>~/.gradle/wrapper</code>)</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">&lt;!-- ~/.m2/settings.xml: company proxy repo + credentials, never in the POM --&gt;</span>
+<span class="kw">&lt;settings&gt;</span>
+  <span class="kw">&lt;mirrors&gt;&lt;mirror&gt;</span>
+    <span class="kw">&lt;id&gt;</span>nexus<span class="kw">&lt;/id&gt;&lt;mirrorOf&gt;</span>*<span class="kw">&lt;/mirrorOf&gt;</span>                                  <span class="cmt">&lt;!-- everything goes through Nexus (caches Central) --&gt;</span>
+    <span class="kw">&lt;url&gt;</span>https://nexus.shop.example/repository/maven-public/<span class="kw">&lt;/url&gt;</span>
+  <span class="kw">&lt;/mirror&gt;&lt;/mirrors&gt;</span>
+  <span class="kw">&lt;servers&gt;&lt;server&gt;</span>
+    <span class="kw">&lt;id&gt;</span>nexus<span class="kw">&lt;/id&gt;</span><span class="kw">&lt;username&gt;</span>${env.NEXUS_USER}<span class="kw">&lt;/username&gt;</span><span class="kw">&lt;password&gt;</span>${env.NEXUS_TOKEN}<span class="kw">&lt;/password&gt;</span>   <span class="cmt">&lt;!-- from CI secrets --&gt;</span>
+  <span class="kw">&lt;/server&gt;&lt;/servers&gt;</span>
+<span class="kw">&lt;/settings&gt;</span>
+<span class="cmt">./mvnw -s ci-settings.xml deploy        # CI passes its own settings file</span>
+<span class="cmt">mvn --encrypt-master-password / --encrypt-password   # for laptops (settings-security.xml)</span>
+
+<span class="cmt">&lt;!-- pom.xml: where to deploy (ids match settings.xml &lt;server&gt;) --&gt;</span>
+<span class="kw">&lt;distributionManagement&gt;</span>
+  <span class="kw">&lt;repository&gt;&lt;id&gt;</span>nexus<span class="kw">&lt;/id&gt;&lt;url&gt;</span>https://nexus…/maven-releases/<span class="kw">&lt;/url&gt;&lt;/repository&gt;</span>
+  <span class="kw">&lt;snapshotRepository&gt;&lt;id&gt;</span>nexus<span class="kw">&lt;/id&gt;&lt;url&gt;</span>https://nexus…/maven-snapshots/<span class="kw">&lt;/url&gt;&lt;/snapshotRepository&gt;</span>
+<span class="kw">&lt;/distributionManagement&gt;</span></pre>
+<pre><span class="cmt">// Gradle equivalents</span>
+<span class="cmt">// settings.gradle.kts</span>
+<span class="kw">dependencyResolutionManagement</span> {
+    <span class="fn">repositories</span> {
+        <span class="fn">maven</span> {
+            url = uri(<span class="str">"https://nexus.shop.example/repository/maven-public/"</span>)
+            <span class="fn">credentials</span>(<span class="typ">PasswordCredentials</span>::class)       <span class="cmt">// reads nexusUsername / nexusPassword properties (name = repo name "nexus")</span>
+        }
+    }
+}
+<span class="cmt">// ~/.gradle/gradle.properties  (or env ORG_GRADLE_PROJECT_nexusUsername / ORG_GRADLE_PROJECT_nexusPassword in CI)</span>
+nexusUsername=ci-bot
+nexusPassword=…
+<span class="cmt">// build.gradle.kts — publishing</span>
+<span class="kw">plugins</span> { `maven-publish` }
+<span class="kw">publishing</span> {
+    <span class="fn">publications</span> { create&lt;<span class="typ">MavenPublication</span>&gt;(<span class="str">"lib"</span>) { from(components[<span class="str">"java"</span>]) } }
+    <span class="fn">repositories</span> { <span class="fn">maven</span> { name = <span class="str">"nexus"</span>; url = uri(<span class="kw">if</span> (version.toString().endsWith(<span class="str">"SNAPSHOT"</span>)) snapshotsUrl <span class="kw">else</span> releasesUrl); credentials(<span class="typ">PasswordCredentials</span>::class) } }
+}
+<span class="cmt">// ./gradlew publish   ·   ./gradlew publishToMavenLocal</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Credentials in the POM / build file</td><td><code>&lt;password&gt;hunter2&lt;/password&gt;</code> committed.</td><td><code>settings.xml</code> / <code>gradle.properties</code> outside the repo, fed from CI secrets or env vars.</td></tr>
+    <tr><td>Repos in every POM</td><td><code>&lt;repositories&gt;</code> blocks in each project pointing at random URLs.</td><td>One mirror in <code>settings.xml</code> (Maven) / <code>dependencyResolutionManagement</code> (Gradle) pointing at the company proxy.</td></tr>
+    <tr><td>Profiles as environments</td><td><code>-Pprod</code> bakes prod DB URLs into the jar.</td><td>Build one artifact; environment config at runtime (Spring profiles, env vars). Build profiles only for <i>how</i> to build (native, CI, release).</td></tr>
+    <tr><td>Snapshots to the release repo</td><td>Release repo accepts <code>-SNAPSHOT</code>; or redeploying the same release version.</td><td>Separate hosted repos; release repo set to "disable redeploy".</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The build works on your machine but CI says "Could not find artifact com.shop:common:1.3.0". Most likely cause?</div>
+  <details><summary>Reveal hint</summary><div class="hint">It only exists in <i>your</i> <code>~/.m2</code> (you ran <code>install</code> once). CI has a clean cache and the artifact was never deployed to Nexus. Deploy it, or build it in the same reactor (<code>-am</code>), or use a composite/project dependency.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Fast, reproducible builds in CI</h2>
+<table>
+  <thead><tr><th>Technique</th><th>Maven</th><th>Gradle</th></tr></thead>
+  <tbody>
+    <tr><td><b>Cache the dependency store</b></td><td>Cache <code>~/.m2/repository</code> keyed on a hash of all <code>pom.xml</code>; exclude your own <code>com/shop</code> group so stale snapshots don't leak.</td><td>Cache <code>~/.gradle/caches</code> + <code>~/.gradle/wrapper</code>; or the official <code>gradle/actions/setup-gradle</code> which does it right.</td></tr>
+    <tr><td><b>Build cache</b></td><td>Maven Build Cache Extension (<code>.mvn/extensions.xml</code>, <code>maven-build-cache-extension</code>) — skips unchanged modules.</td><td>Local + <b>remote</b> build cache (Develocity, or a simple HTTP node); PRs reuse main's outputs.</td></tr>
+    <tr><td><b>Parallel</b></td><td><code>-T 1C</code> (modules in parallel); Surefire <code>&lt;parallel&gt;</code>/<code>forkCount</code> for tests.</td><td><code>org.gradle.parallel=true</code>; <code>maxParallelForks</code> in <code>Test</code>.</td></tr>
+    <tr><td><b>Only what changed</b></td><td><code>-pl &lt;changed modules&gt; -amd</code> computed from <code>git diff</code>; or <code>gitflow-incremental-builder</code>.</td><td>Task graph + cache does this naturally; path filters in CI for whole-repo skips.</td></tr>
+    <tr><td><b>Quiet, non-interactive logs</b></td><td><code>-B -ntp</code> (<code>--batch-mode --no-transfer-progress</code>); <code>-q</code> for errors only.</td><td><code>--console=plain</code>; <code>-q</code>.</td></tr>
+    <tr><td><b>Fail fast</b></td><td>Default stops at the first failed module (<code>-ff</code>); <code>-fae</code> to finish all and report.</td><td><code>--continue</code> to run all; default fails fast.</td></tr>
+    <tr><td><b>Test sharding</b></td><td>Split test classes across jobs with Surefire <code>-Dtest=</code> lists or <code>groups</code>; JUnit tags.</td><td>Multiple <code>Test</code> tasks by tag; Develocity Test Distribution.</td></tr>
+    <tr><td><b>Test reports for the CI UI</b></td><td><code>target/surefire-reports/*.xml</code>, <code>target/failsafe-reports/*.xml</code></td><td><code>build/test-results/test/*.xml</code></td></tr>
+    <tr><td><b>Reproducible jars</b></td><td><code>&lt;project.build.outputTimestamp&gt;2026-01-01T00:00:00Z&lt;/project.build.outputTimestamp&gt;</code> → identical bytes for identical sources.</td><td><code>tasks.withType&lt;AbstractArchiveTask&gt; { isPreserveFileTimestamps = false; isReproducibleFileOrder = true }</code></td></tr>
+    <tr><td><b>Pinned toolchain</b></td><td>Wrapper + <code>maven-enforcer</code> Java version + <code>&lt;release&gt;</code>.</td><td>Wrapper + <code>java.toolchain</code> + foojay resolver.</td></tr>
+    <tr><td><b>Lock resolution</b></td><td>Exact versions + enforcer convergence (no native lockfile).</td><td><code>dependencyLocking { lockAllConfigurations() }</code> → <code>gradle.lockfile</code> committed.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># GitHub Actions snippets</span>
+- <span class="kw">uses</span>: actions/setup-java@v4
+  <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="num">21</span>, <span class="kw">cache</span>: maven }        <span class="cmt"># caches ~/.m2 keyed on pom.xml hashes</span>
+- <span class="kw">run</span>: ./mvnw -B -ntp verify
+
+- <span class="kw">uses</span>: gradle/actions/setup-gradle@v4                                 <span class="cmt"># caches, build scans, dependency graph</span>
+- <span class="kw">run</span>: ./gradlew build --scan
+
+<span class="cmt"># Dockerfile: dependency layer cached separately from source</span>
+<span class="kw">COPY</span> pom.xml .mvn/ ./
+<span class="kw">RUN</span> ./mvnw -B -ntp dependency:go-offline     <span class="cmt"># Gradle: COPY build files + gradle/ then ./gradlew dependencies --no-daemon</span>
+<span class="kw">COPY</span> src ./src
+<span class="kw">RUN</span> ./mvnw -B -ntp -o -DskipTests package</pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>No cache</td><td>Every CI run downloads 400 MB of jars.</td><td>Cache the store keyed on build-file hashes; proxy repo close to the runners.</td></tr>
+    <tr><td><code>mvn clean</code> everywhere</td><td><code>clean</code> on every local build throws away incremental state.</td><td><code>clean</code> in CI (fresh checkout makes it moot) or when things look stale; not by habit locally.</td></tr>
+    <tr><td>Gradle daemon in ephemeral CI</td><td>Daemon starts, build runs, daemon idles until the container dies.</td><td>Fine in practice (setup-gradle handles it); in custom runners use <code>--no-daemon</code> or <code>org.gradle.daemon=false</code>.</td></tr>
+    <tr><td>Tests only on <code>main</code></td><td>Unit tests skipped on PRs "to save time".</td><td>Fast unit tests on every PR; slow ITs maybe nightly or on label — but never skip the fast ones.</td></tr>
+    <tr><td>Build depends on the network at package time</td><td>Plugin fetches a schema from the internet during <code>package</code>.</td><td>Vendor the file; builds should pass offline (<code>-o</code>) after dependencies are cached.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Time your build:</b> Maven — <code>./mvnw verify -Dmaven.profile=true</code> isn't built in; use the <code>maven-profiler</code> extension or just <code>time</code> per module (<code>-T 1C</code> output shows per-module time). Gradle — <code>--scan</code> or <code>--profile</code> (HTML report in <code>build/reports/profile</code>). Fix the top three slow tasks; it is usually tests and a code generator.</div>
+<div class="tricky">
+  <div class="q">Q. Gradle's remote build cache gives a <code>FROM-CACHE</code> hit for <code>test</code> on a PR. Were the tests run?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Not on this run — the task's inputs (classes, resources, test classpath, JVM args) were identical to a previous run whose outputs were cached, so the result (test report XML) is replayed. That is correct <i>if</i> inputs are fully declared. Tests that read the clock, network, or undeclared files must be marked non-cacheable.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Troubleshooting and quick reference</h2>
+<table>
+  <thead><tr><th>Error / symptom</th><th>Meaning</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td><code>NoSuchMethodError</code> / <code>NoClassDefFoundError</code> at runtime</td><td>Two versions of a library; the wrong one won.</td><td><code>dependency:tree -Dverbose</code> / <code>dependencyInsight</code>; manage the version; enforcer convergence.</td></tr>
+    <tr><td><code>Could not resolve dependencies … Could not find artifact</code></td><td>Not in any configured repo (or only in your <code>~/.m2</code>).</td><td>Check <code>effective-pom</code>/<code>settings.xml</code> mirrors; deploy the artifact; <code>-U</code> to force snapshot update.</td></tr>
+    <tr><td><code>401 Unauthorized</code> on deploy</td><td>Server id mismatch or wrong credentials.</td><td><code>&lt;server&gt;&lt;id&gt;</code> must equal <code>&lt;repository&gt;&lt;id&gt;</code>; check the CI secret.</td></tr>
+    <tr><td><code>invalid target release: 21</code> / <code>class file has wrong version 65.0</code></td><td>Compiling/running with an older JDK than configured.</td><td><code>JAVA_HOME</code>, toolchain, <code>setup-java</code> version.</td></tr>
+    <tr><td>Tests pass locally, fail in CI</td><td>Order-dependent tests, time zone, locale, parallelism, missing Docker for Testcontainers.</td><td><code>-Duser.timezone=UTC</code>; JUnit random order to expose it; check Docker availability.</td></tr>
+    <tr><td><code>Non-resolvable parent POM</code></td><td><code>relativePath</code> wrong or parent not installed/deployed.</td><td>Fix <code>relativePath</code>; build from the root.</td></tr>
+    <tr><td><code>Plugin … or one of its dependencies could not be resolved</code></td><td>Plugin repo missing / proxy blocks.</td><td><code>&lt;pluginRepositories&gt;</code> or mirror <code>*</code>; check Nexus proxies plugin groups.</td></tr>
+    <tr><td>Gradle: <code>Could not resolve all files for configuration</code></td><td>Repo not declared or wrong coordinates.</td><td><code>dependencies --configuration …</code>; check <code>settings.gradle.kts</code> repos.</td></tr>
+    <tr><td>Gradle: <code>Configuration cache problems found</code></td><td>Build script reads project state at execution time.</td><td>Follow the report link; use <code>Provider</code>s; or disable the cache for that task.</td></tr>
+    <tr><td>Gradle very slow on first build</td><td>Daemon cold, dependencies downloading, no build cache.</td><td>Normal once; afterwards expect seconds. Use <code>--scan</code>.</td></tr>
+    <tr><td>Lombok "cannot find symbol getX()"</td><td>Annotation processing not running (Gradle needs <code>annotationProcessor</code>; Maven needs matching compiler plugin config).</td><td>Add <code>annotationProcessor("org.projectlombok:lombok")</code>; check <code>&lt;annotationProcessorPaths&gt;</code> when mixing MapStruct + Lombok (binding).</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Goal</th><th>Maven</th><th>Gradle</th></tr></thead>
+  <tbody>
+    <tr><td>Full CI build</td><td><code>./mvnw -B -ntp clean verify</code></td><td><code>./gradlew build</code></td></tr>
+    <tr><td>Skip tests</td><td><code>-DskipTests</code></td><td><code>-x test</code></td></tr>
+    <tr><td>One test</td><td><code>-Dtest=Cls#method</code></td><td><code>--tests "pkg.Cls.method"</code></td></tr>
+    <tr><td>Run the app</td><td><code>./mvnw spring-boot:run</code></td><td><code>./gradlew bootRun</code></td></tr>
+    <tr><td>Dependency tree</td><td><code>dependency:tree</code></td><td><code>dependencies</code> / <code>dependencyInsight --dependency x</code></td></tr>
+    <tr><td>Effective config</td><td><code>help:effective-pom</code></td><td><code>properties</code>, <code>tasks --all</code>, <code>--scan</code></td></tr>
+    <tr><td>Outdated deps</td><td><code>versions:display-dependency-updates</code></td><td><code>dependencyUpdates</code></td></tr>
+    <tr><td>Build image</td><td><code>spring-boot:build-image</code> / <code>jib:build</code></td><td><code>bootBuildImage</code> / <code>jib</code></td></tr>
+    <tr><td>Publish</td><td><code>deploy</code></td><td><code>publish</code></td></tr>
+    <tr><td>Set version</td><td><code>versions:set -DnewVersion=1.5.0</code></td><td><code>-Pversion=1.5.0</code> or a release plugin</td></tr>
+    <tr><td>Debug the build tool</td><td><code>-X</code> (debug), <code>-e</code> (stack traces)</td><td><code>--info</code>, <code>--debug</code>, <code>--stacktrace</code></td></tr>
+    <tr><td>Offline</td><td><code>-o</code></td><td><code>--offline</code></td></tr>
+    <tr><td>Wrapper upgrade</td><td><code>wrapper:wrapper -Dmaven=3.9.9</code></td><td><code>wrapper --gradle-version 8.11</code></td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) wrapper always, never a global install; 2) versions in one place (parent <code>dependencyManagement</code> + BOMs / version catalog + platform), exact, no ranges; 3) <code>verify</code> not <code>install</code> in CI; unit tests in <code>test</code>, ITs in <code>verify</code>; 4) right scopes (<code>runtime</code>/<code>compileOnly</code>/<code>test</code>; Gradle <code>implementation</code> over <code>api</code>); 5) fail on conflicts (enforcer / <code>failOnVersionConflict</code>), know nearest-wins vs highest-wins; 6) credentials and repos outside the build file; one artifact for all environments; 7) cache dependencies and build outputs, build only what changed, make jars reproducible.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Why do you add <code>-SNAPSHOT</code> during development and remove it at release?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">A SNAPSHOT version is mutable: the repo keeps re-publishing under the same name and consumers re-check for newer uploads, so teams can share work in progress. A release version must be immutable — same coordinates, same bytes, forever — so repos reject redeploys. The suffix tells both tools and humans which rules apply.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("maven-gradle-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("maven-gradle-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>

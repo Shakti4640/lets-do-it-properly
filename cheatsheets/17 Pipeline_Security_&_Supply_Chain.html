@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline Security &amp; Supply Chain (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* YAML keys, HCL blocks */
+  pre .typ { color: var(--c-typ); }                    /* tools, image names */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* flags */
+  pre .fn  { color: var(--c-fn); }                     /* commands */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Pipeline Security &amp; Supply Chain<span class="sub">Threat model · SAST · dependency scanning (SCA) · container &amp; IaC scanning · secret scanning · SBOM · signing with Sigstore/cosign · provenance &amp; SLSA · admission policies · secrets managers (Vault, AWS) · least-privilege CI identities · DevSecOps rollout (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Securing the path from source to running container for a Java service. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. The threat model — where a pipeline gets attacked</h2>
+<p>Your pipeline turns source into a running container. Every hop is a place an attacker can insert code, steal a secret, or swap an artifact. The point of "supply chain security" is to make each hop <b>verifiable</b>: who made this, from what, and did anyone tamper with it.</p>
+<table>
+  <thead><tr><th>Hop</th><th>Attack</th><th>Real example</th><th>Defence (section)</th></tr></thead>
+  <tbody>
+    <tr><td>Developer → source</td><td>Compromised laptop or account pushes malicious code; leaked token.</td><td>Stolen GitHub PATs; typosquatted commit author.</td><td>MFA + SSO, signed commits, branch protection, reviews (§1)</td></tr>
+    <tr><td>Source → dependencies</td><td>Malicious or vulnerable library pulled from Maven Central/npm; typosquatting; dependency confusion (internal name published publicly).</td><td>Log4Shell (vulnerable), <code>event-stream</code> (malicious maintainer), xz backdoor.</td><td>SCA, lockfiles/verification, private proxy with allow-lists, Renovate (§3)</td></tr>
+    <tr><td>Build</td><td>Compromised CI action/plugin; script injection via PR title; build on a poisoned runner.</td><td>tj-actions/changed-files (2025), Codecov uploader (2021), SolarWinds (build system).</td><td>Pinned actions, ephemeral runners, hermetic builds, provenance (§6, §8)</td></tr>
+    <tr><td>Artifact → registry</td><td>Push a different image under the same tag; registry credentials leaked.</td><td>Tag mutation; public ECR with push rights.</td><td>Digests, immutable tags, signing (§6), scoped registry creds (§8)</td></tr>
+    <tr><td>Registry → cluster</td><td>Cluster pulls an unsigned/unscanned image; someone <code>kubectl apply</code>s anything.</td><td>Cryptominers in open clusters.</td><td>Admission policy: require signature + scan + non-root (§7)</td></tr>
+    <tr><td>Running service</td><td>Secrets in env/logs; over-privileged cloud role; no runtime detection.</td><td>Capital One (over-broad IAM role via SSRF).</td><td>Secrets managers, least privilege, runtime scanning (§8, §9)</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Scan type</th><th>Looks at</th><th>Finds</th><th>Tools</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td><b>SAST</b> (static app security testing)</td><td>Your source code</td><td>Injection, path traversal, weak crypto, deserialization, hard-coded creds in code</td><td>CodeQL, Semgrep, SonarQube, SpotBugs + find-sec-bugs</td><td>Every PR</td></tr>
+    <tr><td><b>SCA</b> (software composition analysis)</td><td>Dependencies (pom/gradle lockfile, jars)</td><td>Known CVEs, bad licences, malicious packages</td><td>OWASP Dependency-Check, Trivy, Grype, Snyk, Dependabot/Renovate alerts, GitHub Advanced Security</td><td>Every PR + nightly (new CVEs appear without code changes)</td></tr>
+    <tr><td><b>Secret scanning</b></td><td>Repo history, PRs, logs</td><td>Tokens, keys, passwords</td><td>gitleaks, trufflehog, GitHub push protection</td><td>Pre-commit + push + PR + periodic history scan</td></tr>
+    <tr><td><b>Container scanning</b></td><td>Image layers: OS packages + app deps</td><td>CVEs in base image and bundled libs; misconfig (root user)</td><td>Trivy, Grype, Docker Scout, ECR scanning</td><td>After build, before push/deploy; nightly on running images</td></tr>
+    <tr><td><b>IaC scanning</b></td><td>Terraform, K8s manifests, Dockerfiles, Helm</td><td>Public S3, 0.0.0.0/0 security groups, privileged pods, no encryption</td><td>Checkov, tfsec/Trivy config, kube-linter, Kyverno CLI, Polaris</td><td>Every PR on infra repos</td></tr>
+    <tr><td><b>DAST</b> (dynamic)</td><td>The running app</td><td>Auth bypass, injection reachable over HTTP</td><td>OWASP ZAP, Burp</td><td>Against staging / preview env, nightly</td></tr>
+    <tr><td><b>Runtime</b></td><td>Live containers/hosts</td><td>Suspicious syscalls, shells in containers, crypto miners</td><td>Falco, GuardDuty, Datadog CSM</td><td>Always on</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>Mental model:</b> a chain of custody, like evidence in court. At every hand-off someone signs for the package and records what they received. If any signature is missing or doesn't match, the evidence is thrown out — the cluster refuses to run it.</div>
+<div class="tricky">
+  <div class="q">Q. Your code has zero vulnerabilities according to SonarQube. Are you safe from Log4Shell-style problems?</div>
+  <details><summary>Reveal hint</summary><div class="hint">No — SAST reads <i>your</i> code; Log4Shell lived in a dependency. That is SCA's job (and container scanning for the jar inside the image). You need both, plus a way to upgrade fast (Renovate/Dependabot) when the next one lands.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Protect the source — identities, branches, commits</h2>
+<table>
+  <thead><tr><th>Control</th><th>Setting</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Human identity</td><td>SSO + MFA (hardware keys for admins); no shared accounts; off-boarding removes access same day.</td><td>Most breaches start with a credential.</td></tr>
+    <tr><td>Tokens</td><td>Fine-grained PATs with expiry; GitHub Apps for bots; no classic PATs with <code>repo</code> scope lying in CI.</td><td>Scope + expiry limit damage.</td></tr>
+    <tr><td>Branch protection / rulesets</td><td>PR required, ≥ 1 review from CODEOWNERS, required status checks, no force-push, no deletion, linear history, require signed commits, dismiss stale approvals, require re-approval after new pushes.</td><td>No single person can ship unreviewed code to <code>main</code>.</td></tr>
+    <tr><td>Signed commits</td><td>SSH or GPG signing (<code>commit.gpgsign=true</code>); "Verified" badge; ruleset requires it.</td><td>Proves the commit author is who it says.</td></tr>
+    <tr><td>CODEOWNERS</td><td><code>.github/workflows/ @shop/platform</code>, <code>infra/ @shop/platform</code>, <code>src/**/security/ @shop/appsec</code></td><td>Changes to the pipeline and security code need the right eyes.</td></tr>
+    <tr><td>Workflow protection</td><td>Workflow files owned by platform; forks cannot run with secrets; required workflows at org level.</td><td>The pipeline is code; protect it like prod.</td></tr>
+    <tr><td>Audit</td><td>Org audit log → SIEM; alerts on branch-protection changes, new deploy keys, secret creation.</td><td>Detect tampering with the controls themselves.</td></tr>
+    <tr><td>Dependency review</td><td>GitHub "dependency review" check on PRs: blocks new deps with known CVEs or forbidden licences.</td><td>Catch it at the PR, not in prod.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># sign commits with your SSH key (Git 2.34+)</span>
+<span class="fn">git</span> config <span class="ann">--global</span> gpg.format ssh
+<span class="fn">git</span> config <span class="ann">--global</span> user.signingkey ~/.ssh/id_ed25519.pub
+<span class="fn">git</span> config <span class="ann">--global</span> commit.gpgsign true
+<span class="fn">git</span> config <span class="ann">--global</span> tag.gpgsign true
+<span class="cmt"># add the public key to GitHub as a *Signing key*; verify with:  git log --show-signature -1</span>
+
+<span class="cmt"># pre-commit secret scanning (.pre-commit-config.yaml)</span>
+<span class="kw">repos</span>:
+- <span class="kw">repo</span>: <span class="str">https://github.com/gitleaks/gitleaks</span>
+  <span class="kw">rev</span>: v8.21.2
+  <span class="kw">hooks</span>: [{ <span class="kw">id</span>: gitleaks }]
+<span class="cmt"># CI: gitleaks/gitleaks-action — scans the whole history on schedule, the diff on PRs</span>
+<span class="cmt"># GitHub: Settings → Code security → Secret scanning + Push protection (blocks the push itself)</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Admin bypass</td><td>"Allow administrators to bypass" ticked; admins push to main directly.</td><td>Rules apply to everyone; break-glass is a documented, audited exception.</td></tr>
+    <tr><td>Bot with a human's PAT</td><td>Renovate/CI runs with Asha's token; Asha leaves; everything breaks (or keeps working with a dead person's identity).</td><td>GitHub App installation tokens (short-lived, scoped per repo).</td></tr>
+    <tr><td>Secret committed, then "deleted"</td><td>Removed in the next commit; still in history and every fork.</td><td>Rotate immediately; then purge history (<code>git filter-repo</code>) — rotation is the real fix.</td></tr>
+    <tr><td>Reviews as theatre</td><td>Required review satisfied by the author's second account or a rubber stamp.</td><td>CODEOWNERS from another team for sensitive paths; dismiss stale approvals; require fresh approval after pushes.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Push protection blocked a developer's push because of an "AWS key" that is actually a test fixture. What should happen?</div>
+  <details><summary>Reveal hint</summary><div class="hint">They request a bypass with a reason (logged, reviewable), or better, replace the fixture with an obviously fake pattern (<code>AKIAEXAMPLEEXAMPLE</code>) / a generated value. Never disable push protection repo-wide for one false positive — tune with an allow-list (<code>.gitleaksignore</code>, GitHub patterns).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. SAST — finding bugs in your own Java code</h2>
+<table>
+  <thead><tr><th>Tool</th><th>What it is</th><th>Strength</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><b>CodeQL</b> (GitHub)</td><td>Semantic analysis: builds a database of the code, runs queries for taint flows.</td><td>Deep data-flow (source → sink) with few false positives; free for public repos, Advanced Security for private.</td><td>Needs a build for Java (autobuild or your Maven command).</td></tr>
+    <tr><td><b>Semgrep</b></td><td>Pattern rules that look like code; fast; huge community rule set; Pro adds cross-file taint.</td><td>Easy custom rules ("never call <code>Runtime.exec</code>", "every controller must have <code>@PreAuthorize</code>").</td><td>Runs in seconds; great as a PR check.</td></tr>
+    <tr><td><b>SonarQube / SonarCloud</b></td><td>Quality + security: bugs, smells, coverage, duplication, security hotspots; quality gates.</td><td>Team-wide dashboard; "new code" gates.</td><td>Security rules decent, not as deep as CodeQL.</td></tr>
+    <tr><td><b>SpotBugs + find-sec-bugs</b></td><td>Bytecode analysis; the classic.</td><td>Free, runs in Maven/Gradle.</td><td>Noisy; configure exclusions.</td></tr>
+    <tr><td><b>Error Prone</b></td><td>Compile-time checks (Google).</td><td>Catches real bugs as compiler errors.</td><td>More correctness than security.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># .github/workflows/codeql.yml</span>
+<span class="kw">on</span>: { <span class="kw">pull_request</span>:, <span class="kw">push</span>: { <span class="kw">branches</span>: [main] }, <span class="kw">schedule</span>: [{ <span class="kw">cron</span>: <span class="str">'0 3 * * 1'</span> }] }
+<span class="kw">permissions</span>: { <span class="kw">contents</span>: read, <span class="kw">security-events</span>: write }
+<span class="kw">jobs</span>:
+  <span class="kw">analyze</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: actions/setup-java@v4
+        <span class="kw">with</span>: { <span class="kw">distribution</span>: temurin, <span class="kw">java-version</span>: <span class="num">21</span>, <span class="kw">cache</span>: maven }
+      - <span class="kw">uses</span>: github/codeql-action/init@v3
+        <span class="kw">with</span>: { <span class="kw">languages</span>: java-kotlin, <span class="kw">queries</span>: security-extended }
+      - <span class="kw">run</span>: ./mvnw -B -ntp -DskipTests package           <span class="cmt"># CodeQL traces the compiler</span>
+      - <span class="kw">uses</span>: github/codeql-action/analyze@v3            <span class="cmt"># results → Security tab + PR annotations</span>
+
+<span class="cmt"># Semgrep as a fast PR check</span>
+      - <span class="kw">uses</span>: semgrep/semgrep-action@v1
+        <span class="kw">with</span>: { <span class="kw">config</span>: <span class="str">"p/java p/owasp-top-ten p/spring"</span> }
+
+<span class="cmt"># a custom Semgrep rule: every REST controller method needs an authorization annotation</span>
+<span class="kw">rules</span>:
+- <span class="kw">id</span>: controller-without-preauthorize
+  <span class="kw">languages</span>: [java]
+  <span class="kw">severity</span>: ERROR
+  <span class="kw">message</span>: <span class="str">"Controller method lacks @PreAuthorize"</span>
+  <span class="kw">patterns</span>:
+    - <span class="kw">pattern-inside</span>: |
+        @RestController
+        class $C { ... }
+    - <span class="kw">pattern</span>: |
+        @$MAPPING(...)
+        public $RET $M(...) { ... }
+    - <span class="kw">metavariable-regex</span>: { <span class="kw">metavariable</span>: $MAPPING, <span class="kw">regex</span>: <span class="str">(GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping|RequestMapping)</span> }
+    - <span class="kw">pattern-not</span>: |
+        @PreAuthorize(...)
+        public $RET $M(...) { ... }</pre>
+<table>
+  <thead><tr><th>Java/Spring findings you will actually see</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>SQL injection via string concatenation (<code>"… WHERE id = " + id</code>, native queries with <code>:#{…}</code> misuse)</td><td>Bind parameters, JPA/JdbcClient, allow-list for dynamic ORDER BY.</td></tr>
+    <tr><td>Path traversal (<code>new File(baseDir, userInput)</code>)</td><td>Normalize and check <code>startsWith(baseDir)</code>; no user input in paths.</td></tr>
+    <tr><td>SSRF (<code>restClient.get().uri(userUrl)</code>)</td><td>Allow-list hosts; block private IP ranges; never follow redirects blindly.</td></tr>
+    <tr><td>Insecure deserialization (<code>ObjectInputStream</code> on untrusted data; Jackson default typing)</td><td>Never deserialize Java objects from clients; Jackson without <code>enableDefaultTyping</code>; <code>spring.json.trusted.packages</code> restricted.</td></tr>
+    <tr><td>Weak crypto (<code>MD5</code>, <code>SHA1</code>, <code>DES</code>, ECB, static IV, <code>new Random()</code> for tokens)</td><td>SHA-256+, AES-GCM, <code>SecureRandom</code>, bcrypt/argon2 for passwords.</td></tr>
+    <tr><td>XXE in XML parsers</td><td>Disable DTDs/external entities (<code>XMLInputFactory.SUPPORT_DTD=false</code>).</td></tr>
+    <tr><td>Missing authorization / CSRF disabled on a session app / CORS <code>*</code> with credentials</td><td>Method security; CSRF only off for stateless token APIs; explicit origins.</td></tr>
+    <tr><td>Logging secrets / PII</td><td>Mask; structured logging with field allow-lists.</td></tr>
+    <tr><td>Hard-coded credentials</td><td>Secrets manager (§8).</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Fail the build on 400 legacy findings</td><td>Team disables the scanner in a week.</td><td>Gate on <b>new</b> findings in the PR diff (Sonar "new code", CodeQL PR annotations); burn down the backlog separately.</td></tr>
+    <tr><td>Scanner as the only control</td><td>"SAST passed" → no review of auth logic.</td><td>SAST finds patterns; humans review authorization and business logic. Both.</td></tr>
+    <tr><td>Suppressions without reason</td><td><code>@SuppressWarnings("security")</code> everywhere.</td><td>Suppress with a justification comment and an owner; review suppressions quarterly.</td></tr>
+    <tr><td>Nightly only</td><td>Findings arrive a day after merge.</td><td>Fast tools (Semgrep) on PR; deep tools (CodeQL) on PR for changed files + nightly full.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. CodeQL flags <code>jdbcTemplate.query("SELECT … ORDER BY " + sortColumn, …)</code>. You can't bind a column name as a parameter. What now?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Allow-list it: map the user's sort key to a fixed set of column names (<code>Map.of("name","customer_name",…)</code>) and throw on anything else. Then the string is built from constants, the taint flow ends, and the finding goes away for the right reason.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Dependencies — SCA, lockfiles, verification, automated updates</h2>
+<table>
+  <thead><tr><th>Tool</th><th>How it works</th><th>Fit</th></tr></thead>
+  <tbody>
+    <tr><td><b>Dependabot alerts / security updates</b></td><td>GitHub matches your dependency graph against the Advisory Database; opens PRs to bump.</td><td>Free, zero setup. Noisy without grouping.</td></tr>
+    <tr><td><b>Renovate</b></td><td>Configurable update bot: grouping, schedules, auto-merge for patches, lockfile maintenance, Docker/Actions/Terraform too.</td><td>The usual choice for teams with many repos.</td></tr>
+    <tr><td><b>OWASP Dependency-Check</b></td><td>Maven/Gradle plugin; matches jars to CVEs via NVD (needs an NVD API key; slow first run); fails build on CVSS threshold.</td><td>Free, in-build; false positives from CPE matching.</td></tr>
+    <tr><td><b>Trivy fs / Grype</b></td><td>Scan the repo or the built jar/image; fast, multiple DBs; SBOM output.</td><td>One tool for repo + image; great in CI.</td></tr>
+    <tr><td><b>Snyk / Mend / Sonatype Lifecycle</b></td><td>Commercial SCA with reachability analysis, licence policy, dashboards.</td><td>Enterprises; reachability cuts noise.</td></tr>
+    <tr><td><b>GitHub dependency review action</b></td><td>Blocks PRs that add vulnerable or badly licensed deps.</td><td>Cheap gate on the diff.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># renovate.json — sane defaults for a Java repo</span>
+{
+  <span class="str">"$schema"</span>: <span class="str">"https://docs.renovatebot.com/renovate-schema.json"</span>,
+  <span class="str">"extends"</span>: [<span class="str">"config:recommended"</span>, <span class="str">":semanticCommits"</span>, <span class="str">"helpers:pinGitHubActionDigests"</span>],
+  <span class="str">"schedule"</span>: [<span class="str">"after 10pm every weekday"</span>, <span class="str">"every weekend"</span>],
+  <span class="str">"vulnerabilityAlerts"</span>: { <span class="str">"enabled"</span>: <span class="kw">true</span>, <span class="str">"labels"</span>: [<span class="str">"security"</span>], <span class="str">"schedule"</span>: [<span class="str">"at any time"</span>] },   <span class="cmt">// security fixes ignore the schedule</span>
+  <span class="str">"packageRules"</span>: [
+    { <span class="str">"matchManagers"</span>: [<span class="str">"maven"</span>], <span class="str">"matchUpdateTypes"</span>: [<span class="str">"patch"</span>], <span class="str">"automerge"</span>: <span class="kw">true</span> },            <span class="cmt">// patches auto-merge when CI is green</span>
+    { <span class="str">"groupName"</span>: <span class="str">"spring"</span>, <span class="str">"matchPackagePatterns"</span>: [<span class="str">"^org.springframework"</span>, <span class="str">"^io.micrometer"</span>] },
+    { <span class="str">"groupName"</span>: <span class="str">"testcontainers"</span>, <span class="str">"matchPackagePatterns"</span>: [<span class="str">"^org.testcontainers"</span>] },
+    { <span class="str">"matchManagers"</span>: [<span class="str">"dockerfile"</span>], <span class="str">"pinDigests"</span>: <span class="kw">true</span> }                                        <span class="cmt">// FROM image@sha256:…</span>
+  ]
+}
+
+<span class="cmt"># in-build SCA (Maven)</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>org.owasp<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>dependency-check-maven<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;version&gt;</span>11.x<span class="kw">&lt;/version&gt;</span>
+  <span class="kw">&lt;configuration&gt;</span>
+    <span class="kw">&lt;failBuildOnCVSS&gt;</span>7<span class="kw">&lt;/failBuildOnCVSS&gt;</span>
+    <span class="kw">&lt;nvdApiKey&gt;</span>${env.NVD_API_KEY}<span class="kw">&lt;/nvdApiKey&gt;</span>
+    <span class="kw">&lt;suppressionFile&gt;</span>owasp-suppressions.xml<span class="kw">&lt;/suppressionFile&gt;</span>     <span class="cmt">&lt;!-- each entry: CVE, reason, expiry --&gt;</span>
+  <span class="kw">&lt;/configuration&gt;</span>
+  <span class="kw">&lt;executions&gt;&lt;execution&gt;&lt;goals&gt;&lt;goal&gt;</span>check<span class="kw">&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;&lt;/executions&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span>
+<span class="cmt"># or simply in CI:  trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 .</span>
+
+<span class="cmt"># Gradle dependency verification: checksums + signatures of every artifact, fail on mismatch</span>
+./gradlew <span class="ann">--write-verification-metadata</span> sha256,pgp help      <span class="cmt"># → gradle/verification-metadata.xml, commit it</span>
+<span class="cmt"># Maven: the central repo serves SHA-1/SHA-256 and .asc; maven-enforcer + pgpverify-maven-plugin can enforce; a proxy repo (Nexus/Artifactory) can quarantine new artifacts (Firewall)</span></pre>
+<table>
+  <thead><tr><th>Attack</th><th>What it is</th><th>Defence</th></tr></thead>
+  <tbody>
+    <tr><td><b>Known vulnerable version</b></td><td>Log4j 2.14, Spring4Shell, snakeyaml &lt; 2.0.</td><td>SCA on PR + nightly; Renovate security PRs; BOM bumps; override transitives via <code>dependencyManagement</code>/constraints.</td></tr>
+    <tr><td><b>Typosquatting</b></td><td><code>com.fasterxml.jackson.core:jackson-databind</code> vs a look-alike group.</td><td>Private proxy repo with an allow-list / quarantine; review new dependencies as a PR concern.</td></tr>
+    <tr><td><b>Dependency confusion</b></td><td>Your internal <code>com.shop:common</code> also exists (maliciously) on Central; resolver picks the public one.</td><td>Route <i>all</i> resolution through your proxy; reserve/claim your group on Central; namespace rules in the repo manager.</td></tr>
+    <tr><td><b>Malicious maintainer / hijacked account</b></td><td>A legit library ships a backdoor in a new version.</td><td>Don't auto-merge minors/majors; pin and verify checksums/signatures; delay adoption of brand-new versions (Renovate <code>minimumReleaseAge</code>); SBOM to find it later.</td></tr>
+    <tr><td><b>Build plugin compromise</b></td><td>Maven/Gradle plugins run arbitrary code at build time.</td><td>Pin plugin versions; proxy; verification metadata.</td></tr>
+    <tr><td><b>Licence risk</b></td><td>GPL in a proprietary product.</td><td>Licence policy in SCA / dependency review; <code>license-maven-plugin</code> report.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Alert fatigue</td><td>300 open Dependabot alerts; nobody looks.</td><td>Prioritise: exploitable + reachable + high severity first; group updates; auto-merge patches; SLA by severity (critical: 48 h).</td></tr>
+    <tr><td>Suppress forever</td><td>"False positive" suppression with no expiry.</td><td>Suppressions carry reason + date + owner; re-check quarterly.</td></tr>
+    <tr><td>Scanning once</td><td>SCA only when the pom changes.</td><td>Nightly: new CVEs apply to unchanged code.</td></tr>
+    <tr><td>Resolving from the internet in CI</td><td>Every build pulls from Central directly; no control, no cache, no quarantine.</td><td>Proxy repo (Nexus/Artifactory/CodeArtifact) with policies; CI uses only it.</td></tr>
+    <tr><td>Floating image bases</td><td><code>FROM eclipse-temurin:21-jre</code> rebuilt nightly picks up whatever is there.</td><td>Pin by digest; Renovate updates the digest with a PR that runs tests and scans.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Trivy reports a CRITICAL CVE in a transitive dependency you never heard of. The library's maintainers have not released a fix. Options?</div>
+  <details><summary>Reveal hint</summary><div class="hint">(1) Check reachability — do you call the vulnerable path? (2) Override the transitive to a fixed version if one exists elsewhere in the tree. (3) Exclude the dependency if unused. (4) Mitigate (WAF rule, config flag like <code>log4j2.formatMsgNoLookups</code>). (5) Suppress with expiry and a ticket. Document the decision; don't just silence it.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Container and IaC scanning — the image and the infra that runs it</h2>
+<pre><span class="cmt"># Trivy — one tool, many targets</span>
+<span class="fn">trivy</span> image <span class="ann">--severity</span> HIGH,CRITICAL <span class="ann">--ignore-unfixed</span> <span class="ann">--exit-code</span> 1 ghcr.io/shop/api@sha256:…   <span class="cmt"># OS pkgs + jars inside; fail on fixable HIGH+</span>
+<span class="fn">trivy</span> image <span class="ann">--format</span> cyclonedx <span class="ann">--output</span> sbom.cdx.json ghcr.io/shop/api@sha256:…           <span class="cmt"># SBOM (Section 5)</span>
+<span class="fn">trivy</span> config <span class="ann">--severity</span> HIGH,CRITICAL infra/            <span class="cmt"># Terraform, K8s YAML, Dockerfile, Helm misconfig</span>
+<span class="fn">trivy</span> fs <span class="ann">--scanners</span> vuln,secret,misconfig .               <span class="cmt"># the repo</span>
+<span class="fn">trivy</span> k8s <span class="ann">--report</span> summary cluster                       <span class="cmt"># live cluster (RBAC, running images)</span>
+<span class="cmt"># .trivyignore: CVE-2024-XXXX  # reason, expires 2026-12-31</span>
+
+<span class="cmt"># in GitHub Actions, after build-push-action, scan the pushed digest (not a tag), upload SARIF to the Security tab</span>
+- <span class="kw">uses</span>: aquasecurity/trivy-action@0.29.0
+  <span class="kw">with</span>:
+    <span class="kw">image-ref</span>: <span class="str">${{ env.IMAGE }}@${{ steps.push.outputs.digest }}</span>
+    <span class="kw">severity</span>: <span class="str">CRITICAL,HIGH</span>
+    <span class="kw">ignore-unfixed</span>: <span class="kw">true</span>
+    <span class="kw">exit-code</span>: <span class="str">'1'</span>
+    <span class="kw">format</span>: sarif
+    <span class="kw">output</span>: trivy.sarif
+- <span class="kw">uses</span>: github/codeql-action/upload-sarif@v3
+  <span class="kw">if</span>: always()
+  <span class="kw">with</span>: { <span class="kw">sarif_file</span>: trivy.sarif }
+
+<span class="cmt"># Checkov for Terraform/K8s (policy IDs you can skip with a reason)</span>
+<span class="fn">checkov</span> <span class="ann">-d</span> infra/ <span class="ann">--framework</span> terraform,kubernetes,dockerfile <span class="ann">--soft-fail-on</span> LOW <span class="ann">--skip-check</span> CKV_AWS_144   <span class="cmt"># "S3 cross-region replication" not required here</span>
+<span class="cmt"># kube-linter / Polaris / Kyverno CLI for manifests; hadolint for Dockerfiles</span></pre>
+<table>
+  <thead><tr><th>Make the image small and boring (fewer CVEs to begin with)</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Minimal base</td><td><code>eclipse-temurin:21-jre-alpine</code>, <code>gcr.io/distroless/java21</code>, Chainguard <code>cgr.dev/chainguard/jre</code> (near-zero CVEs, daily rebuilds), or <code>jlink</code> a custom runtime. Not <code>ubuntu</code> + full JDK.</td></tr>
+    <tr><td>Multi-stage</td><td>Build tools never reach the final image (Docker sheet).</td></tr>
+    <tr><td>Non-root</td><td><code>USER 1001</code>; read-only root FS; drop capabilities (K8s securityContext).</td></tr>
+    <tr><td>No package manager / shell in prod</td><td>Distroless; debug with <code>kubectl debug</code> ephemeral containers.</td></tr>
+    <tr><td>Rebuild regularly</td><td>Weekly rebuild from a fresh base even without code changes picks up OS patches; Renovate bumps base digests.</td></tr>
+    <tr><td>Pin everything</td><td><code>FROM image@sha256:…</code>; no <code>apt-get install</code> without versions; no <code>curl | sh</code>.</td></tr>
+    <tr><td>Labels</td><td>OCI labels: <code>org.opencontainers.image.source</code>, <code>.revision</code>, <code>.version</code> — scanners and humans can trace the image back.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>IaC findings you will see</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>S3 bucket without Block Public Access / encryption / versioning</td><td>Enable all three; bucket policy denies non-TLS.</td></tr>
+    <tr><td>Security group <code>0.0.0.0/0</code> on 22/3389/5432</td><td>SG-to-SG references; SSM Session Manager instead of SSH.</td></tr>
+    <tr><td>RDS publicly accessible / no encryption / no deletion protection</td><td>Private subnets; KMS; protection on.</td></tr>
+    <tr><td>IAM <code>"Action": "*"</code> / <code>"Resource": "*"</code></td><td>Scoped policies (AWS sheet).</td></tr>
+    <tr><td>K8s: privileged, runAsRoot, hostPath, no resource limits, <code>latest</code> tag, no readOnlyRootFilesystem</td><td>Pod Security Standards <code>restricted</code>; limits; digests.</td></tr>
+    <tr><td>Dockerfile: no USER, <code>ADD</code> from URL, secrets in ENV</td><td><code>USER</code>, <code>COPY</code>, build secrets.</td></tr>
+    <tr><td>Logging/monitoring off (CloudTrail, VPC Flow Logs, ALB access logs)</td><td>Turn on; it's cheap compared to not knowing.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Scan the tag, deploy the digest</td><td>Scanned <code>:1.4.0</code>, then someone re-pushed the tag.</td><td>Scan and sign the <b>digest</b>; deploy the digest; immutable tags in the registry.</td></tr>
+    <tr><td>Fail on unfixable</td><td>Build red for a kernel CVE in the base with no patch anywhere.</td><td><code>--ignore-unfixed</code> for gating; track unfixed separately; switch base if it stays unfixed.</td></tr>
+    <tr><td>Scan only at build</td><td>Image built in January is fine; new CVE in March; still running.</td><td>Continuous scanning of the registry (ECR enhanced scanning, Harbor, Trivy Operator) + weekly rebuilds.</td></tr>
+    <tr><td>Fat JDK image in prod</td><td>400 MB, 200 CVEs, a shell for attackers.</td><td>JRE/distroless, ~80 MB, single-digit CVEs.</td></tr>
+    <tr><td>IaC scan only in CI</td><td>Someone applies from a laptop.</td><td>CI is the only path to apply (Terraform sheet); scan there.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Your distroless image has no shell, so Trivy "can't find the OS" and reports zero OS CVEs. Is it clean?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Trivy does understand distroless (it reads the dpkg status files Google keeps), so zero may be real. But check the <i>language</i> findings: the jars in <code>/app</code> are scanned regardless of the OS. If both are empty and the image clearly has a JRE, verify with <code>trivy image --list-all-pkgs</code> that detection worked rather than celebrating a false zero.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. SBOM — knowing what is inside</h2>
+<p>An <b>SBOM</b> (Software Bill of Materials) is a machine-readable list of every component in an artifact: name, version, supplier, hashes, licence, and how they relate. When the next Log4Shell lands you query SBOMs instead of grepping 200 repos. Formats: <b>CycloneDX</b> (OWASP, security-oriented) and <b>SPDX</b> (Linux Foundation, licence-oriented). Both JSON.</p>
+<pre><span class="cmt"># generate at build (exact, from the resolved dependency tree)</span>
+<span class="cmt"># Maven</span>
+<span class="kw">&lt;plugin&gt;</span><span class="kw">&lt;groupId&gt;</span>org.cyclonedx<span class="kw">&lt;/groupId&gt;</span><span class="kw">&lt;artifactId&gt;</span>cyclonedx-maven-plugin<span class="kw">&lt;/artifactId&gt;</span><span class="kw">&lt;version&gt;</span>2.9.x<span class="kw">&lt;/version&gt;</span>
+  <span class="kw">&lt;executions&gt;&lt;execution&gt;&lt;phase&gt;</span>package<span class="kw">&lt;/phase&gt;&lt;goals&gt;&lt;goal&gt;</span>makeAggregateBom<span class="kw">&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;&lt;/executions&gt;</span>
+<span class="kw">&lt;/plugin&gt;</span>                                                      <span class="cmt">&lt;!-- → target/bom.json --&gt;</span>
+<span class="cmt"># Gradle: org.cyclonedx.bom plugin → build/reports/bom.json   ·   Spring Boot 3.3+: spring-boot-starter-actuator exposes /actuator/sbom when the plugin runs</span>
+
+<span class="cmt"># generate from the image (OS packages + jars)</span>
+<span class="fn">syft</span> ghcr.io/shop/api@sha256:… <span class="ann">-o</span> cyclonedx-json &gt; image.cdx.json
+<span class="fn">trivy</span> image <span class="ann">--format</span> spdx-json <span class="ann">--output</span> image.spdx.json ghcr.io/shop/api@sha256:…
+
+<span class="cmt"># attach to the image as an attestation (travels with the artifact, verifiable)</span>
+<span class="fn">cosign</span> attest <span class="ann">--yes</span> <span class="ann">--type</span> cyclonedx <span class="ann">--predicate</span> image.cdx.json ghcr.io/shop/api@sha256:…
+<span class="fn">cosign</span> verify-attestation <span class="ann">--type</span> cyclonedx <span class="ann">--certificate-identity-regexp</span> <span class="str">'https://github.com/shop/.*'</span> <span class="ann">--certificate-oidc-issuer</span> https://token.actions.githubusercontent.com ghcr.io/shop/api@sha256:… | jq <span class="str">'.payload'</span> <span class="ann">-r</span> | base64 <span class="ann">-d</span> | jq
+
+<span class="cmt"># GitHub-native: actions/attest-sbom + "dependency submission" so Dependabot sees the real resolved tree</span>
+- <span class="kw">uses</span>: advanced-security/maven-dependency-submission-action@v4
+
+<span class="cmt"># query later: scan an SBOM instead of the image (fast, no registry access)</span>
+<span class="fn">grype</span> sbom:image.cdx.json  ·  <span class="fn">trivy</span> sbom image.cdx.json
+<span class="cmt"># central store: Dependency-Track (OWASP) — upload every build's BOM; it alerts when a new CVE matches any project</span></pre>
+<table>
+  <thead><tr><th>SBOM use</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td>Incident response ("who uses log4j &lt; 2.17?")</td><td>Query Dependency-Track / your SBOM store across all services in seconds.</td></tr>
+    <tr><td>Licence compliance</td><td>SPDX licence fields; policy in Dependency-Track or FOSSA.</td></tr>
+    <tr><td>Customer / regulator requirement</td><td>US EO 14028, EU CRA: ship the SBOM with the product.</td></tr>
+    <tr><td>Verification</td><td>Compare build-time SBOM with image SBOM: unexpected extras = tampering or a sloppy Dockerfile.</td></tr>
+    <tr><td>VEX</td><td>Vulnerability Exploitability eXchange: a signed statement "CVE-X does not affect us because …" that scanners honour — the structured version of a suppression.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>SBOM as a file in a bucket</td><td>Generated once, never looked at, not linked to the image.</td><td>Attested to the image digest + uploaded to a store that re-scans continuously.</td></tr>
+    <tr><td>Image-only SBOM</td><td>Shaded/fat jars hide inner dependencies from image scanners.</td><td>Build-time SBOM from Maven/Gradle (knows the true tree) + image SBOM for OS packages.</td></tr>
+    <tr><td>Unsigned SBOM</td><td>Anyone can replace it.</td><td>cosign attestation; verify at admission.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Why does an image scanner sometimes miss a vulnerable library that the Maven SBOM lists?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Shading/relocation (<code>maven-shade-plugin</code> renames packages into your jar), Spring Boot nested jars inside <code>BOOT-INF/lib</code> (most scanners handle these, older ones didn't), or a library with no <code>pom.properties</code> inside. The build tool knows exactly what it resolved; the image scanner is guessing from file names. Keep both SBOMs.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. Signing and provenance — Sigstore, cosign, SLSA</h2>
+<table>
+  <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><b>Signature</b></td><td>Proof that a specific digest was approved by a specific identity. Stored in the registry next to the image (OCI referrers / <code>sha256-….sig</code> tag).</td></tr>
+    <tr><td><b>Attestation</b></td><td>A signed statement <i>about</i> an artifact: "this SBOM describes it", "it was built by workflow X from commit Y" (provenance), "we reviewed CVE Z" (VEX). In-toto format.</td></tr>
+    <tr><td><b>Provenance</b></td><td>The attestation that says who/what/how built the artifact: builder id, source repo + commit, build parameters, materials. SLSA defines its format.</td></tr>
+    <tr><td><b>Sigstore</b></td><td>Open-source signing infrastructure: <b>cosign</b> (CLI), <b>Fulcio</b> (issues short-lived certs tied to an OIDC identity — your GitHub workflow), <b>Rekor</b> (public transparency log). "Keyless": no private keys to manage.</td></tr>
+    <tr><td><b>SLSA</b> (Supply-chain Levels for Software Artifacts)</td><td>A ladder of build-integrity guarantees. <b>L1</b>: provenance exists. <b>L2</b>: provenance signed by a hosted build platform. <b>L3</b>: build runs on hardened, isolated infrastructure; provenance unforgeable by the project's own maintainers. (L4 was in v0.1; v1.0 stops at 3.)</td></tr>
+    <tr><td><b>Policy</b></td><td>The rule the cluster enforces: "only run images signed by <code>github.com/shop/*</code> workflows on <code>main</code> with SLSA L3 provenance and a scan attestation newer than 7 days".</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># keyless signing in GitHub Actions (identity = the workflow's OIDC token)</span>
+<span class="kw">permissions</span>: { <span class="kw">id-token</span>: write, <span class="kw">packages</span>: write, <span class="kw">contents</span>: read, <span class="kw">attestations</span>: write }
+<span class="kw">steps</span>:
+  - <span class="kw">uses</span>: sigstore/cosign-installer@v3
+  - <span class="kw">run</span>: cosign sign <span class="ann">--yes</span> <span class="str">"${IMAGE}@${DIGEST}"</span>                     <span class="cmt"># cert from Fulcio, entry in Rekor; nothing to store</span>
+
+  <span class="cmt"># SLSA L3 provenance — the official generator runs in an isolated reusable workflow</span>
+  <span class="kw">provenance</span>:
+    <span class="kw">needs</span>: build
+    <span class="kw">permissions</span>: { <span class="kw">actions</span>: read, <span class="kw">id-token</span>: write, <span class="kw">packages</span>: write }
+    <span class="kw">uses</span>: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.0.0
+    <span class="kw">with</span>: { <span class="kw">image</span>: <span class="str">${{ needs.build.outputs.image }}</span>, <span class="kw">digest</span>: <span class="str">${{ needs.build.outputs.digest }}</span>, <span class="kw">registry-username</span>: <span class="str">${{ github.actor }}</span> }
+    <span class="kw">secrets</span>: { <span class="kw">registry-password</span>: <span class="str">${{ secrets.GITHUB_TOKEN }}</span> }
+
+  <span class="cmt"># or GitHub's native attestations (simpler; L2-ish, L3 with hardened runners)</span>
+  - <span class="kw">uses</span>: actions/attest-build-provenance@v2
+    <span class="kw">with</span>: { <span class="kw">subject-name</span>: <span class="str">${{ env.IMAGE }}</span>, <span class="kw">subject-digest</span>: <span class="str">${{ steps.push.outputs.digest }}</span>, <span class="kw">push-to-registry</span>: <span class="kw">true</span> }
+
+<span class="cmt"># verify (what the cluster policy and your deploy script do)</span>
+<span class="fn">cosign</span> verify <span class="ann">--certificate-identity-regexp</span> <span class="str">'^https://github.com/shop/shop-api/.github/workflows/ci.yml@refs/heads/main$'</span> \
+              <span class="ann">--certificate-oidc-issuer</span> https://token.actions.githubusercontent.com \
+              ghcr.io/shop/api@sha256:…
+<span class="fn">cosign</span> verify-attestation <span class="ann">--type</span> slsaprovenance <span class="ann">--certificate-identity-regexp</span> <span class="str">'https://github.com/slsa-framework/.*'</span> <span class="ann">--certificate-oidc-issuer</span> https://token.actions.githubusercontent.com ghcr.io/shop/api@sha256:…
+<span class="fn">gh</span> attestation verify oci://ghcr.io/shop/api@sha256:… <span class="ann">--owner</span> shop        <span class="cmt"># GitHub-native</span>
+<span class="fn">cosign</span> tree ghcr.io/shop/api@sha256:…                                      <span class="cmt"># what is attached: sig, sbom, provenance</span>
+
+<span class="cmt"># key-based alternative (air-gapped / no OIDC): cosign generate-key-pair; private key in KMS: cosign sign --key awskms:///alias/cosign …</span>
+<span class="cmt"># sign jars too: Maven Central requires GPG (.asc); Sigstore's maven plugin (sigstore-maven-plugin) adds keyless signatures</span></pre>
+<table>
+  <thead><tr><th>Why each piece matters</th><th>Without it</th></tr></thead>
+  <tbody>
+    <tr><td>Signature by the <i>workflow identity</i> (not a shared key)</td><td>A stolen key signs anything forever; an OIDC cert is minutes-lived and names the exact repo/workflow/branch.</td></tr>
+    <tr><td>Transparency log (Rekor)</td><td>You can't prove when something was signed or detect a signature made with a compromised identity later.</td></tr>
+    <tr><td>Provenance from an isolated builder (SLSA L3)</td><td>A malicious PR to the workflow file could make the build lie about itself. L3 generators run in a separate, trusted workflow the project can't alter.</td></tr>
+    <tr><td>Verification at admission (Section 7)</td><td>Signing with no one checking is theatre.</td></tr>
+    <tr><td>Digest everywhere</td><td>Signatures bind to digests; a tag can be moved to an unsigned image.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Long-lived signing key in CI secrets</td><td>One leak → attacker signs "trusted" images.</td><td>Keyless (OIDC) signing; or KMS-held key with audit and rotation.</td></tr>
+    <tr><td>Verify with <code>--certificate-identity-regexp '.*'</code></td><td>Any GitHub workflow in the world passes.</td><td>Pin the exact repo/workflow/ref.</td></tr>
+    <tr><td>Signing but not verifying</td><td>Badge in the README, nothing enforced.</td><td>Admission policy that rejects unsigned/unknown-signer images.</td></tr>
+    <tr><td>Provenance from the build job itself</td><td>The job that can be influenced by the PR also writes the "trusted" statement.</td><td>SLSA generator in a separate reusable workflow; GitHub attestations with hardened runners.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. "Keyless" signing — if there is no key, what is the signature made with?</div>
+  <details><summary>Reveal hint</summary><div class="hint">There <i>is</i> a key — an ephemeral one generated for that signing operation. Fulcio binds its public half to your OIDC identity in a short-lived certificate (minutes), the signature + cert are logged in Rekor, and the private key is thrown away. Verification checks the cert's identity and the log entry's timestamp, so nothing long-lived exists to steal.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Enforce at the cluster — admission policies (Kyverno, Gatekeeper, PSA)</h2>
+<table>
+  <thead><tr><th>Tool</th><th>What it is</th><th>Fit</th></tr></thead>
+  <tbody>
+    <tr><td><b>Pod Security Admission</b> (built in)</td><td>Namespace labels enforce <code>privileged</code> / <code>baseline</code> / <code>restricted</code> standards.</td><td>Free first step: no root, no hostPath, no privilege escalation.</td></tr>
+    <tr><td><b>Kyverno</b></td><td>Policies as YAML; validate, mutate (add defaults), generate (create resources), verify image signatures natively.</td><td>Most teams' choice; readable; <code>kyverno apply</code> in CI.</td></tr>
+    <tr><td><b>OPA Gatekeeper</b></td><td>Policies in Rego (a logic language); ConstraintTemplates.</td><td>Powerful; same Rego reused for Terraform (Conftest).</td></tr>
+    <tr><td><b>Validating Admission Policy</b> (K8s 1.30+ GA)</td><td>CEL expressions built into the API server; no webhook.</td><td>Simple rules with zero extra components.</td></tr>
+    <tr><td><b>Sigstore policy-controller</b></td><td>Admission controller focused on signature/attestation verification.</td><td>When you only need image verification.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Kyverno: only signed images from our workflows, with recent provenance and SBOM</span>
+<span class="kw">apiVersion</span>: <span class="typ">kyverno.io/v1</span>
+<span class="kw">kind</span>: <span class="typ">ClusterPolicy</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: verify-shop-images }
+<span class="kw">spec</span>:
+  <span class="kw">validationFailureAction</span>: Enforce              <span class="cmt"># start with Audit, switch to Enforce after a week of clean reports</span>
+  <span class="kw">webhookTimeoutSeconds</span>: <span class="num">30</span>
+  <span class="kw">rules</span>:
+  - <span class="kw">name</span>: signed-by-ci
+    <span class="kw">match</span>: { <span class="kw">any</span>: [{ <span class="kw">resources</span>: { <span class="kw">kinds</span>: [Pod], <span class="kw">namespaces</span>: [shop, shop-staging] } }] }
+    <span class="kw">verifyImages</span>:
+    - <span class="kw">imageReferences</span>: [<span class="str">"ghcr.io/shop/*"</span>]
+      <span class="kw">mutateDigest</span>: <span class="kw">true</span>                          <span class="cmt"># rewrite tag → digest in the pod spec</span>
+      <span class="kw">required</span>: <span class="kw">true</span>
+      <span class="kw">attestors</span>:
+      - <span class="kw">entries</span>:
+        - <span class="kw">keyless</span>:
+            <span class="kw">subjectRegExp</span>: <span class="str">"^https://github.com/shop/.+/.github/workflows/ci.yml@refs/(heads/main|tags/v.+)$"</span>
+            <span class="kw">issuer</span>: <span class="str">https://token.actions.githubusercontent.com</span>
+            <span class="kw">rekor</span>: { <span class="kw">url</span>: <span class="str">https://rekor.sigstore.dev</span> }
+      <span class="kw">attestations</span>:
+      - <span class="kw">type</span>: <span class="str">https://slsa.dev/provenance/v1</span>
+        <span class="kw">attestors</span>: [{ <span class="kw">entries</span>: [{ <span class="kw">keyless</span>: { <span class="kw">subjectRegExp</span>: <span class="str">"^https://github.com/slsa-framework/slsa-github-generator/.+"</span>, <span class="kw">issuer</span>: <span class="str">https://token.actions.githubusercontent.com</span> } }] }]
+        <span class="kw">conditions</span>:
+        - <span class="kw">all</span>:
+          - { <span class="kw">key</span>: <span class="str">"{{ buildDefinition.externalParameters.workflow.repository }}"</span>, <span class="kw">operator</span>: Equals, <span class="kw">value</span>: <span class="str">"https://github.com/shop/shop-api"</span> }
+      - <span class="kw">type</span>: <span class="str">https://cyclonedx.org/bom</span>
+        <span class="kw">attestors</span>: [{ <span class="kw">entries</span>: [{ <span class="kw">keyless</span>: { <span class="kw">subjectRegExp</span>: <span class="str">"^https://github.com/shop/.+"</span>, <span class="kw">issuer</span>: <span class="str">https://token.actions.githubusercontent.com</span> } }] }]
+---
+<span class="cmt"># baseline hygiene policies (one ClusterPolicy each, from the Kyverno policy library)</span>
+<span class="cmt">#   require-labels (app, version, team) · disallow-latest-tag · require-requests-limits · require-run-as-nonroot</span>
+<span class="cmt">#   disallow-privileged-containers · restrict-image-registries (ghcr.io/shop, 123456789012.dkr.ecr…) · require-ro-rootfs · add-default-securitycontext (mutate)</span>
+
+<span class="cmt"># PSA on the namespace (free)</span>
+<span class="fn">kubectl</span> label ns shop pod-security.kubernetes.io/enforce=restricted pod-security.kubernetes.io/warn=restricted
+
+<span class="cmt"># test policies in CI before they hit the cluster</span>
+<span class="fn">kyverno</span> apply policies/ <span class="ann">--resource</span> deploy/ <span class="ann">--detailed-results</span>
+<span class="fn">kyverno</span> test tests/                                   <span class="cmt"># declarative policy tests</span>
+<span class="fn">kubectl</span> get policyreport <span class="ann">-A</span>                           <span class="cmt"># what Audit mode found in the live cluster</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Enforce on day one</td><td>Policy blocks kube-system add-ons and every existing deploy; rollback of the policy under pressure.</td><td><code>Audit</code> first; read PolicyReports; exclude system namespaces; then <code>Enforce</code> per namespace.</td></tr>
+    <tr><td>Webhook with no failure policy thought</td><td>Kyverno down → <code>failurePolicy: Fail</code> → no pod can start anywhere, including Kyverno.</td><td>HA Kyverno (3 replicas, PDB), exclude its own namespace, <code>Ignore</code> for low-risk policies, <code>Fail</code> for image verification in prod.</td></tr>
+    <tr><td>Policy only on Deployments</td><td>Someone creates a bare Pod or a Job.</td><td>Match <code>Pod</code> (Kyverno auto-generates rules for controllers) so every path is covered.</td></tr>
+    <tr><td>Signature check without identity pinning</td><td>Any Sigstore-signed image passes.</td><td><code>subjectRegExp</code> + <code>issuer</code> pinned to your org's workflows.</td></tr>
+    <tr><td>Policies not in git</td><td>Applied by hand; nobody knows what is enforced.</td><td>Policies in the GitOps repo (sync wave before apps); <code>kyverno test</code> in CI.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The Kyverno policy passes in staging but every prod pod is rejected with "no matching signatures". Images are identical digests. Why?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Usually the prod cluster cannot reach the registry's signature artifacts or Rekor (egress blocked, private registry without referrers API), or the prod images were promoted by <i>copying</i> (<code>docker pull/push</code>) which drops the attached signatures — use <code>crane copy</code>/<code>cosign copy</code> or re-sign after promotion. Check Kyverno's logs for the exact fetch error.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. Secrets — managers, injection, rotation; least-privilege identities</h2>
+<table>
+  <thead><tr><th>Where secrets may live</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Source code, Dockerfile <code>ENV</code>, image layers, Terraform state in git, Jenkinsfile, plain K8s Secret manifests in git</td><td><b>Never.</b> All are readable by anyone with repo/registry access, forever.</td></tr>
+    <tr><td>CI secret store (GitHub/GitLab)</td><td>OK for CI-only credentials; prefer OIDC so most of them disappear.</td></tr>
+    <tr><td>Kubernetes <code>Secret</code> objects</td><td>Base64, not encrypted by default (enable etcd encryption / KMS provider); fine as the <i>delivery</i> mechanism if filled by an operator from a real manager.</td></tr>
+    <tr><td><b>Secrets manager</b> (AWS Secrets Manager / SSM, HashiCorp Vault, Azure Key Vault, GCP Secret Manager, 1Password/Doppler)</td><td>The source of truth: access control, audit, versioning, rotation.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># Kubernetes: External Secrets Operator pulls from AWS Secrets Manager into a K8s Secret (GitOps-friendly: the manifest has no secret values)</span>
+<span class="kw">apiVersion</span>: <span class="typ">external-secrets.io/v1beta1</span>
+<span class="kw">kind</span>: <span class="typ">ExternalSecret</span>
+<span class="kw">metadata</span>: { <span class="kw">name</span>: api-db, <span class="kw">namespace</span>: shop }
+<span class="kw">spec</span>:
+  <span class="kw">refreshInterval</span>: 1h
+  <span class="kw">secretStoreRef</span>: { <span class="kw">name</span>: aws-secrets, <span class="kw">kind</span>: ClusterSecretStore }    <span class="cmt"># authenticates with IRSA (pod → IAM role), no AWS keys</span>
+  <span class="kw">target</span>: { <span class="kw">name</span>: api-db, <span class="kw">creationPolicy</span>: Owner }
+  <span class="kw">data</span>:
+  - { <span class="kw">secretKey</span>: DB_PASSWORD, <span class="kw">remoteRef</span>: { <span class="kw">key</span>: shop/prod/db, <span class="kw">property</span>: password } }
+<span class="cmt"># pod: envFrom secretRef api-db, or mount as files (preferred: not visible in `describe`)</span>
+<span class="cmt"># alternatives: Secrets Store CSI Driver (mount directly, no K8s Secret), Vault Agent Injector sidecar, Sealed Secrets / SOPS (encrypted values IN git)</span>
+
+<span class="cmt"># Vault with Spring (spring-cloud-starter-vault-config): Kubernetes auth → short-lived token → KV + dynamic DB creds</span>
+<span class="kw">spring.cloud.vault</span>:
+  <span class="kw">uri</span>: <span class="str">https://vault.internal:8200</span>
+  <span class="kw">authentication</span>: KUBERNETES
+  <span class="kw">kubernetes</span>: { <span class="kw">role</span>: shop-api, <span class="kw">service-account-token-file</span>: /var/run/secrets/kubernetes.io/serviceaccount/token }
+  <span class="kw">kv</span>: { <span class="kw">enabled</span>: <span class="kw">true</span>, <span class="kw">backend</span>: secret, <span class="kw">default-context</span>: shop/prod }
+  <span class="kw">database</span>: { <span class="kw">enabled</span>: <span class="kw">true</span>, <span class="kw">role</span>: shop-api, <span class="kw">backend</span>: database }   <span class="cmt"># Vault creates a Postgres user per pod with a TTL and revokes it — rotation for free</span>
+<span class="kw">spring.config.import</span>: vault://
+
+<span class="cmt"># AWS without K8s (ECS): task definition `secrets` from Secrets Manager/SSM (AWS sheet) — resolved by ECS, never in the task def</span></pre>
+<table>
+  <thead><tr><th>Least-privilege identity for each actor</th><th>How</th></tr></thead>
+  <tbody>
+    <tr><td><b>CI build job</b></td><td>No cloud creds at all for build/test. <code>GITHUB_TOKEN</code> with <code>contents: read</code>; <code>packages: write</code> only in the push job.</td></tr>
+    <tr><td><b>CI deploy job</b></td><td>OIDC → cloud role scoped to <i>one</i> repo + environment (trust policy <code>sub</code> condition), allowed only the deploy actions (ECS UpdateService on one service; or none — GitOps commit only).</td></tr>
+    <tr><td><b>Terraform</b></td><td>Two roles: plan (read + state), apply (write) behind an approval gate; permission boundary so it cannot escalate IAM.</td></tr>
+    <tr><td><b>The running service</b></td><td>Task role / IRSA / Pod Identity with exactly its queues, buckets, secrets. One role per service. Generate from CloudTrail with Access Analyzer.</td></tr>
+    <tr><td><b>Argo CD</b></td><td>Projects restrict repos/clusters/namespaces per team; Argo's own SA is cluster-admin — protect the Argo namespace accordingly.</td></tr>
+    <tr><td><b>Humans</b></td><td>SSO roles: read-only by default; break-glass admin with MFA, time-boxed, alerting on use.</td></tr>
+    <tr><td><b>Registry</b></td><td>CI can push to its own repo path; clusters pull-only (ECR pull-through, GHCR package permissions).</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Rotation</th><th>Approach</th></tr></thead>
+  <tbody>
+    <tr><td>DB passwords</td><td>Secrets Manager rotation Lambda (RDS managed), or Vault dynamic credentials; app re-reads on auth failure (AWS JDBC wrapper) or restarts.</td></tr>
+    <tr><td>API keys to third parties</td><td>Two keys (current/next) in the manager; rotate on a schedule; app loads at start + refresh interval.</td></tr>
+    <tr><td>TLS certs</td><td>ACM / cert-manager auto-renew.</td></tr>
+    <tr><td>Cloud credentials</td><td>Don't have any — roles and OIDC.</td></tr>
+    <tr><td>Leaked anything</td><td>Rotate first (minutes), investigate second, purge history third.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Secrets in env vars</td><td>Visible in <code>kubectl describe</code>, <code>/proc/&lt;pid&gt;/environ</code>, crash dumps, child processes.</td><td>Mounted files (CSI/ESO) or fetched by the app from the manager; env only when the framework forces it.</td></tr>
+    <tr><td>One secret for all envs</td><td>Same API key in dev and prod; a dev leak is a prod leak.</td><td>Per-environment secrets, per-environment accounts.</td></tr>
+    <tr><td>App fetches secrets per request</td><td>Latency, throttling, cost.</td><td>Load at start + cached refresh; the SDKs have caching libraries.</td></tr>
+    <tr><td>Who can read the secret?</td><td>Everyone with <code>get secrets</code> in the namespace, every CI job with the token.</td><td>RBAC: only the service's SA; audit reads (CloudTrail <code>GetSecretValue</code>).</td></tr>
+    <tr><td>Sealed Secrets key loss</td><td>Cluster rebuilt; sealing key gone; every encrypted secret in git is unreadable.</td><td>Back up the sealing key — or use ESO/CSI where the manager is the source of truth.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. With GitOps everything is in git. How do secrets get into the cluster without being in git?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Git holds a <i>reference</i> (an <code>ExternalSecret</code> saying "key shop/prod/db in AWS"), and an operator in the cluster, authenticated by its own cloud identity, fetches the value and creates the K8s Secret. Alternatively git holds <i>encrypted</i> values (Sealed Secrets/SOPS) that only the cluster can decrypt. Either way the plain value never touches the repo.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Putting it together — the secure pipeline, rollout order, quick reference</h2>
+<pre><span class="cmt"># the hardened pipeline (GitHub Actions shape; GitLab equivalents in the CI sheet)</span>
+PR opened
+ ├─ gitleaks (diff)                        secrets
+ ├─ Semgrep (fast) + CodeQL (changed files) SAST
+ ├─ dependency review / Trivy fs           SCA + licence
+ ├─ Checkov / trivy config                 IaC + Dockerfile
+ ├─ unit + integration tests
+ └─ hadolint, actionlint, zizmor           pipeline lint
+merge to main (signed commits, 1+ CODEOWNER review, required checks)
+ ├─ build on ephemeral runner, pinned actions (SHA), permissions: contents read
+ ├─ Maven CycloneDX SBOM                   build-time SBOM
+ ├─ build image by digest (pinned base), push to registry with immutable tags
+ ├─ Trivy image scan (fail HIGH+ fixable) → SARIF
+ ├─ cosign sign (keyless)  +  attest SBOM  +  SLSA provenance (separate generator workflow)
+ ├─ upload SBOM to Dependency-Track
+ └─ commit digest to the GitOps repo (dev)
+Argo CD sync
+ ├─ Kyverno: signature + provenance + SBOM attestations verified; PSA restricted; no latest; limits set
+ ├─ External Secrets Operator fills secrets from AWS SM via IRSA
+ └─ Rollouts canary with analysis
+nightly
+ ├─ CodeQL full · Trivy on all running images · Dependency-Track re-evaluation · gitleaks full history
+ └─ Renovate PRs (security any time; patches auto-merge)
+runtime
+ └─ Falco/GuardDuty · CloudTrail → SIEM · audit log alerts on protection changes</pre>
+<table>
+  <thead><tr><th>Rollout order (each step pays for itself before the next)</th><th>Effort</th></tr></thead>
+  <tbody>
+    <tr><td>1. Branch protection + required reviews + MFA/SSO; push protection for secrets</td><td>Hours</td></tr>
+    <tr><td>2. Dependabot/Renovate with grouping; Trivy image scan in the pipeline (<code>--ignore-unfixed</code>, HIGH+)</td><td>A day</td></tr>
+    <tr><td>3. Pin actions to SHAs, <code>permissions: read</code>, ephemeral runners, OIDC instead of cloud keys</td><td>A day</td></tr>
+    <tr><td>4. Semgrep on PRs; CodeQL weekly → PR</td><td>A day; tuning over weeks</td></tr>
+    <tr><td>5. Secrets manager + ESO/task secrets; delete env-var secrets</td><td>Days</td></tr>
+    <tr><td>6. Digests everywhere; cosign keyless signing; SBOM generation</td><td>A day</td></tr>
+    <tr><td>7. Kyverno in Audit → Enforce; PSA restricted</td><td>Weeks (fixing what Audit finds)</td></tr>
+    <tr><td>8. SLSA L3 provenance; Dependency-Track; VEX; runtime detection</td><td>Ongoing</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Goal</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Scan repo</td><td><code>trivy fs --scanners vuln,secret,misconfig .</code> · <code>gitleaks detect --source .</code> · <code>semgrep --config p/java .</code></td></tr>
+    <tr><td>Scan image</td><td><code>trivy image --severity HIGH,CRITICAL --ignore-unfixed IMAGE@DIGEST</code> · <code>grype IMAGE@DIGEST</code></td></tr>
+    <tr><td>Scan IaC</td><td><code>checkov -d infra/</code> · <code>trivy config infra/</code> · <code>hadolint Dockerfile</code> · <code>kube-linter lint deploy/</code></td></tr>
+    <tr><td>SBOM</td><td><code>./mvnw cyclonedx:makeAggregateBom</code> · <code>syft IMAGE -o cyclonedx-json</code></td></tr>
+    <tr><td>Sign / attest / verify</td><td><code>cosign sign --yes IMAGE@DIGEST</code> · <code>cosign attest --type cyclonedx --predicate bom.json IMAGE@DIGEST</code> · <code>cosign verify --certificate-identity-regexp … --certificate-oidc-issuer … IMAGE@DIGEST</code> · <code>cosign tree IMAGE@DIGEST</code></td></tr>
+    <tr><td>Verify GitHub attestation</td><td><code>gh attestation verify oci://IMAGE@DIGEST --owner shop</code></td></tr>
+    <tr><td>Test policies</td><td><code>kyverno apply policies/ --resource deploy/</code> · <code>kyverno test tests/</code> · <code>kubectl get policyreport -A</code></td></tr>
+    <tr><td>Lint pipelines</td><td><code>actionlint</code> · <code>zizmor .github/workflows</code> · <code>glab ci lint</code></td></tr>
+    <tr><td>Who read a secret</td><td><code>aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=GetSecretValue</code></td></tr>
+    <tr><td>Copy image with signatures</td><td><code>cosign copy SRC DST</code> / <code>crane copy</code> (keeps referrers)</td></tr>
+  </tbody>
+</table>
+<div class="tips"><b>The 7 rules to remember:</b> 1) protect the source: SSO/MFA, signed commits, branch rules, CODEOWNERS on pipeline and infra; 2) scan on every PR (fast) and every night (deep): SAST, SCA, secrets, IaC, image; gate on <i>new</i> findings; 3) pin everything — actions by SHA, images by digest, dependencies by exact version with verification; 4) build once on ephemeral runners with read-only tokens; OIDC instead of stored cloud keys; 5) sign keyless, attest SBOM and provenance, and <i>verify at admission</i>; 6) secrets live in a manager, reach pods via ESO/CSI/task secrets as files, one role per service, rotation planned; 7) roll out in Audit mode first, then Enforce — security that blocks the team gets switched off.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "What does 'supply chain security' actually prevent that regular security scanning doesn't?"</div>
+  <details><summary>Reveal hint</summary><div class="hint">Scanning asks "does this artifact contain known-bad things?". Supply chain security asks "is this artifact the one we think it is, built the way we think, from the source we think?" — it defends against tampering and substitution (compromised actions, swapped tags, poisoned builders, malicious dependency releases) that a scanner would happily pass because the malicious code is not a known CVE. You need both.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("pipeline-security-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("pipeline-security-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>
