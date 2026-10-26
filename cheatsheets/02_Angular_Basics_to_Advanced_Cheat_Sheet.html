@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Angular — Basics to Advanced (Cheat Sheet)</title>
+<style>
+  /* ---------- Theme variables (light = the A3 printable look) ---------- */
+  html[data-theme="light"] {
+    --page-bg: #e9eef3; --sheet: #ffffff; --ink: #111; --muted: #555;
+    --h2-bg: #f2f2f2; --h2-border: #111; --h1-border: #111;
+    --border: #333; --th-bg: #eaeaea; --inline-bg: #f6f6f6; --inline-border: #e2e2e2;
+    --tips-bg: #fffdf4; --tips-border: #888; --tips-ink: #6a4a00;
+    --tricky-bg: #fafaff; --tricky-border: #333;
+    --cw-head-bg: #fbe8e8; --cw-head-ink: #7a0000; --cw-cell: #fff6f6;
+    --cr-head-bg: #e5f7e8; --cr-head-ink: #0b5d16; --cr-cell: #f4fbf5;
+    --link: #005a9e;
+    --code-bg: #f6f8fa; --code-ink: #24292e; --code-border: #d0d7de;
+    --c-kw: #cf222e; --c-typ: #953800; --c-str: #0a3069; --c-num: #0550ae; --c-cmt: #6e7781; --c-ann: #116329; --c-fn: #8250df;
+    --shadow: rgba(20,40,70,0.15);
+  }
+  html[data-theme="dark"] {
+    --page-bg: #0e131a; --sheet: #161d27; --ink: #e6edf3; --muted: #9aa7b8;
+    --h2-bg: #202a3a; --h2-border: #5a9bff; --h1-border: #5a9bff;
+    --border: #2b3648; --th-bg: #232e40; --inline-bg: #202a3a; --inline-border: #2b3648;
+    --tips-bg: #2a2410; --tips-border: #6a5a1e; --tips-ink: #e8d48a;
+    --tricky-bg: #18202e; --tricky-border: #2b3648;
+    --cw-head-bg: #3a1f22; --cw-head-ink: #ff9b9b; --cw-cell: #2a1618;
+    --cr-head-bg: #16301f; --cr-head-ink: #86e0a0; --cr-cell: #13251a;
+    --link: #6cb0ff;
+    --code-bg: #0d1117; --code-ink: #e6edf3; --code-border: #30363d;
+    --c-kw: #ff7b72; --c-typ: #ffa657; --c-str: #a5d6ff; --c-num: #79c0ff; --c-cmt: #8b949e; --c-ann: #d2a8ff; --c-fn: #d2a8ff;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  @page { size: A3; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-bg); color: var(--ink);
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 11.5pt; line-height: 1.4;
+    transition: background 0.25s, color 0.25s;
+    padding: 22px 10px 70px;
+  }
+  .wrap {
+    max-width: 1650px; margin: 0 auto; background: var(--sheet);
+    padding: 22px 26px 40px; border-radius: 8px;
+    box-shadow: 0 10px 40px var(--shadow);
+  }
+
+  h1 {
+    font-size: 26pt; margin: 4px 0 6px; letter-spacing: 0.3px;
+    border-bottom: 3px solid var(--h1-border); padding-bottom: 6px;
+  }
+  h1 .sub { font-size: 12pt; font-weight: normal; color: var(--muted); margin-left: 10px; }
+  h2 {
+    font-size: 16pt; margin: 26px 0 6px; padding: 6px 12px;
+    background: var(--h2-bg); border-left: 6px solid var(--h2-border);
+    border-radius: 3px; scroll-margin-top: 76px; page-break-after: avoid;
+  }
+  h2.flash { animation: flash 1s ease; }
+  @keyframes flash { 0%,100% { background: var(--h2-bg); } 35% { background: #ffe9a8; color:#111; } }
+  h3 { font-size: 12.5pt; margin: 14px 0 4px; color: var(--ink); page-break-after: avoid; }
+  p, li { margin: 4px 0; }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.5pt;
+    background: var(--inline-bg); border: 1px solid var(--inline-border);
+    border-radius: 3px; padding: 1px 5px; color: var(--ink);
+  }
+  pre {
+    font-family: "Consolas", "Courier New", monospace; font-size: 10.25pt;
+    line-height: 1.5; background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-border); border-radius: 5px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap;
+    page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  pre .kw  { color: var(--c-kw); font-weight: 600; }   /* TypeScript keywords, template control flow */
+  pre .typ { color: var(--c-typ); }                    /* types, classes, components */
+  pre .str { color: var(--c-str); }                    /* strings */
+  pre .num { color: var(--c-num); }                    /* numbers */
+  pre .cmt { color: var(--c-cmt); font-style: italic; }/* comments */
+  pre .ann { color: var(--c-ann); font-weight: 600; }  /* decorators @Component, CLI flags */
+  pre .fn  { color: var(--c-fn); }                     /* functions, methods, ng commands */
+
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; page-break-inside: avoid; }
+  th, td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; text-align: left; }
+  th { background: var(--th-bg); font-weight: 600; }
+  table.compare th:nth-child(1) { width: 22%; }
+  table.compare th:nth-child(2) { width: 39%; background: var(--cw-head-bg); color: var(--cw-head-ink); }
+  table.compare th:nth-child(3) { width: 39%; background: var(--cr-head-bg); color: var(--cr-head-ink); }
+  table.compare td:nth-child(2) { background: var(--cw-cell); }
+  table.compare td:nth-child(3) { background: var(--cr-cell); }
+
+  .tips { border: 1px dashed var(--tips-border); background: var(--tips-bg); color: var(--tips-ink); padding: 8px 12px; margin: 6px 0 10px; border-radius: 4px; page-break-inside: avoid; }
+  .tips b { color: var(--tips-ink); }
+  .tricky { border: 1px solid var(--tricky-border); background: var(--tricky-bg); padding: 10px 12px; margin: 10px 0 16px; border-radius: 4px; page-break-inside: avoid; }
+  .tricky .q { font-weight: 600; margin-bottom: 4px; }
+  details > summary { cursor: pointer; color: var(--link); font-weight: 600; margin-top: 4px; }
+  details[open] > summary { color: var(--ink); }
+  details .hint { margin-top: 4px; padding: 6px 8px; background: var(--inline-bg); border-left: 4px solid var(--link); border-radius: 3px; }
+
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5pt; font-weight: 600; margin-right: 4px; color: #fff; }
+  .pill.bad { background: #a40000; } .pill.good { background: #116611; } .pill.tip { background: #b08100; }
+  .legend { font-size: 10pt; margin: 6px 0 10px; } .small { font-size: 9.5pt; color: var(--muted); }
+  .back-top { display: inline-block; margin-top: 8px; font-size: 9.5pt; color: var(--link); text-decoration: none; }
+  .back-top:hover { text-decoration: underline; }
+
+  .toc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px 14px; font-size: 10.5pt; margin: 10px 0 4px; }
+  .toc a { color: var(--link); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-box { border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin: 8px 0 4px; }
+  .toc-box h3 { margin: 0 0 6px; }
+
+  /* ---------- Fixed controls ---------- */
+  .ctrl-btn {
+    position: fixed; top: 14px; z-index: 60; width: 44px; height: 44px; border-radius: 10px;
+    background: var(--sheet); color: var(--ink); border: 1px solid var(--border);
+    box-shadow: 0 4px 14px var(--shadow); cursor: pointer; font-size: 19px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #hamburger { left: 14px; } #themeToggle { right: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.25s; z-index: 55; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .menu { position: fixed; top: 0; left: 0; height: 100%; width: 300px; max-width: 82vw; background: var(--sheet); border-right: 1px solid var(--border); box-shadow: 6px 0 30px var(--shadow); z-index: 58; transform: translateX(-105%); transition: transform 0.28s ease; padding: 70px 12px 20px; overflow-y: auto; }
+  .menu.open { transform: translateX(0); }
+  .menu h3 { margin: 0 0 10px 4px; font-size: 11pt; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .menu a { display: block; text-decoration: none; color: var(--ink); padding: 7px 10px; border-radius: 7px; font-size: 10.5pt; margin-bottom: 3px; background: var(--inline-bg); }
+  .menu a:hover { background: var(--h2-bg); }
+
+  @media print {
+    body { background: #fff; padding: 0; } .wrap { box-shadow: none; }
+    .ctrl-btn, .overlay, .menu, .noprint { display: none !important; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style: none; color: #111; }
+    details > summary::-webkit-details-marker { display: none; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary::after { content: " (hint revealed for print)"; font-weight: normal; color: #555; font-size: 9.5pt; }
+  }
+</style>
+</head>
+<body>
+
+<button id="hamburger" class="ctrl-btn noprint" aria-label="Open menu">☰</button>
+<button id="themeToggle" class="ctrl-btn noprint" aria-label="Toggle light or dark">🌙</button>
+<div class="overlay noprint" id="overlay"></div>
+<nav class="menu noprint" id="menu"><h3>Jump to section</h3><div id="menuLinks"></div></nav>
+
+<div class="wrap" id="top">
+
+<h1>Angular — Basics to Advanced<span class="sub">What Angular is · CLI &amp; project layout · components &amp; templates · signals &amp; change detection · services &amp; DI · routing · HttpClient &amp; RxJS with a Spring Boot API · forms · state &amp; performance · testing · build &amp; deploy · legacy AngularJS decoder (A3 print ready)</span></h1>
+
+<div class="legend">
+  <span class="pill bad">Wrong / Not Allowed</span>
+  <span class="pill good">Best Practice / Right</span>
+  <span class="pill tip">Tip / Trick</span>
+  <span class="small">Modern Angular (v17–20: standalone components, signals, <code>@if</code>/<code>@for</code>) written for a Java backend developer. Section 11 decodes old AngularJS 1.x code. Use ← → keys to move between sections.</span>
+</div>
+
+<div class="toc-box">
+  <h3>Contents</h3>
+  <div class="toc" id="toc"></div>
+</div>
+
+<!-- ============================= 0 ============================= -->
+<h2 id="s0">0. What Angular is (and the mental model for a Java developer)</h2>
+<p><b>Angular</b> is a complete framework for building browser apps in <b>TypeScript</b>: components (UI pieces), a router, an HTTP client, forms, dependency injection, a test setup and a CLI, all designed together. If Spring Boot is your backend, Angular is its closest front-end cousin: opinionated, typed, DI-based, and batteries included.</p>
+<table>
+  <thead><tr><th>Angular</th><th>Closest Spring / Java idea</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><b>Component</b></td><td>A controller + its view template, in one class</td><td>A TypeScript class with a <code>@Component</code> decorator, an HTML template, and styles. The whole UI is a tree of components.</td></tr>
+    <tr><td><b>Service</b></td><td><code>@Service</code> bean</td><td>Plain class with <code>@Injectable</code>; holds logic and HTTP calls; usually a singleton.</td></tr>
+    <tr><td><b>Dependency injection</b></td><td>Spring's container</td><td><code>inject(OrderService)</code> or constructor injection; hierarchical injectors (root → route → component).</td></tr>
+    <tr><td><b>Decorator</b> (<code>@Component</code>, <code>@Injectable</code>, <code>@Input</code>)</td><td>Annotation</td><td>Metadata read by the compiler.</td></tr>
+    <tr><td><b>Template</b></td><td>Thymeleaf/JSP, but reactive</td><td>HTML plus bindings; re-renders when data changes.</td></tr>
+    <tr><td><b>Signal</b></td><td>An observable value / <code>AtomicReference</code> with listeners</td><td>The modern reactivity primitive: <code>count()</code> reads, <code>count.set(1)</code> writes, templates update automatically.</td></tr>
+    <tr><td><b>Observable (RxJS)</b></td><td>Reactor <code>Flux</code>/<code>Mono</code></td><td>Async streams; HttpClient returns Observables. Convert to signals with <code>toSignal</code>.</td></tr>
+    <tr><td><b>Router</b></td><td>Spring MVC request mapping, client-side</td><td>URL → component; lazy loads code per route.</td></tr>
+    <tr><td><b>Angular CLI</b> (<code>ng</code>)</td><td>Maven/Gradle + Spring Initializr</td><td>Scaffolds, builds, tests, serves.</td></tr>
+    <tr><td><b>Zone / change detection</b></td><td>—</td><td>How Angular knows to re-render. Signals make it precise; zoneless is the direction.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Name</th><th>What it is</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td><b>AngularJS</b> (1.x, 2010)</td><td>JavaScript, <code>$scope</code>, controllers, two-way binding, <code>ng-repeat</code>.</td><td>End of life Jan 2022. Still in legacy apps — see Section 11.</td></tr>
+    <tr><td><b>Angular</b> (2+, 2016 →)</td><td>Complete rewrite in TypeScript; components; semantic versions every 6 months (v20 in 2025, v21 late 2025…).</td><td>The current framework. "Angular" never means 1.x any more.</td></tr>
+    <tr><td><b>Modern Angular</b> (v17+)</td><td>Standalone components (no NgModules), signals, <code>@if/@for</code> control flow, functional guards/interceptors, esbuild/Vite builder, SSR built in.</td><td>What new code should look like; this sheet.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt"># get started (Node 20+/22 LTS)</span>
+<span class="fn">npm</span> install <span class="ann">-g</span> @angular/cli
+<span class="fn">ng</span> new shop-web <span class="ann">--style</span>=scss <span class="ann">--routing</span> <span class="ann">--ssr</span>=false      <span class="cmt"># standalone by default; asks about SSR and styles</span>
+<span class="kw">cd</span> shop-web <span class="ann">&amp;&amp;</span> <span class="fn">ng</span> serve <span class="ann">--open</span>                              <span class="cmt"># dev server on http://localhost:4200 with live reload</span>
+<span class="fn">ng</span> generate component orders/order-list                     <span class="cmt"># or: ng g c orders/order-list</span>
+<span class="fn">ng</span> generate service orders/order                            <span class="cmt"># ng g s</span>
+<span class="fn">ng</span> build                                                    <span class="cmt"># production bundle → dist/shop-web/browser</span>
+<span class="fn">ng</span> test  ·  <span class="fn">ng</span> lint  ·  <span class="fn">ng</span> update  ·  <span class="fn">ng</span> version</pre>
+<div class="tips"><b>Mental model:</b> an Angular app is a tree of components, like a Swing/JavaFX component tree but declared in HTML. Each component owns a small piece of state; the template is a function of that state; when a signal changes, only the parts of the page that read it are updated. Services are the shared beans the components talk to, and the router swaps which subtree is on screen.</div>
+<div class="tricky">
+  <div class="q">Q. Is Angular a library like React, or something else?</div>
+  <details><summary>Reveal hint</summary><div class="hint">A framework. React gives you components and leaves routing, HTTP, forms, DI and testing to third-party choices. Angular ships one answer to each, which is why Angular code bases from different companies look alike — the same reason Spring Boot projects do.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 1 ============================= -->
+<h2 id="s1">1. Project layout, CLI, and the bootstrap</h2>
+<pre>shop-web/
+├── angular.json              <span class="cmt"># CLI config: builders, budgets, assets, environments (file replacements)</span>
+├── package.json              <span class="cmt"># dependencies and npm scripts (like pom.xml)</span>
+├── tsconfig.json             <span class="cmt"># TypeScript strictness (keep strict: true)</span>
+├── src/
+│   ├── main.ts               <span class="cmt"># bootstrapApplication(AppComponent, appConfig)</span>
+│   ├── index.html            <span class="cmt"># the single page; &lt;app-root&gt;&lt;/app-root&gt;</span>
+│   ├── styles.scss           <span class="cmt"># global styles</span>
+│   ├── environments/         <span class="cmt"># environment.ts, environment.development.ts (API base URL…)</span>
+│   └── app/
+│       ├── app.config.ts     <span class="cmt"># providers: router, HttpClient, interceptors</span>
+│       ├── app.routes.ts     <span class="cmt"># the route table</span>
+│       ├── app.component.ts  <span class="cmt"># root component: layout + &lt;router-outlet&gt;</span>
+│       ├── core/             <span class="cmt"># singletons: auth, http interceptors, error handler</span>
+│       ├── shared/           <span class="cmt"># reusable UI: buttons, pipes, directives</span>
+│       └── orders/           <span class="cmt"># a feature: components, service, models, routes (lazy loaded)</span>
+│           ├── orders.routes.ts
+│           ├── order-list/order-list.component.ts|html|scss|spec.ts
+│           └── order.service.ts
+└── dist/                     <span class="cmt"># build output (gitignored)</span></pre>
+<pre><span class="cmt">// src/main.ts</span>
+<span class="fn">bootstrapApplication</span>(<span class="typ">AppComponent</span>, appConfig).catch(err =&gt; console.error(err));
+
+<span class="cmt">// src/app/app.config.ts — the "application context" providers</span>
+<span class="kw">export const</span> appConfig: <span class="typ">ApplicationConfig</span> = {
+  providers: [
+    <span class="fn">provideRouter</span>(routes, <span class="fn">withComponentInputBinding</span>()),     <span class="cmt">// route params → component inputs</span>
+    <span class="fn">provideHttpClient</span>(<span class="fn">withInterceptors</span>([authInterceptor, errorInterceptor])),
+    <span class="fn">provideZonelessChangeDetection</span>(),                       <span class="cmt">// v20+: signals drive rendering, no zone.js</span>
+  ],
+};
+
+<span class="cmt">// src/app/app.component.ts — root layout</span>
+<span class="ann">@Component</span>({
+  selector: <span class="str">'app-root'</span>,
+  imports: [<span class="typ">RouterOutlet</span>, <span class="typ">RouterLink</span>],                     <span class="cmt">// standalone: declare what the template uses</span>
+  template: <span class="str">`
+    &lt;nav&gt;&lt;a routerLink="/orders"&gt;Orders&lt;/a&gt; &lt;a routerLink="/customers"&gt;Customers&lt;/a&gt;&lt;/nav&gt;
+    &lt;main&gt;&lt;router-outlet /&gt;&lt;/main&gt;
+  `</span>,
+})
+<span class="kw">export class</span> <span class="typ">AppComponent</span> {}</pre>
+<table>
+  <thead><tr><th>CLI command</th><th>Does</th></tr></thead>
+  <tbody>
+    <tr><td><code>ng serve</code> · <code>--port 4300</code> · <code>--proxy-config proxy.conf.json</code></td><td>Dev server; proxy <code>/api</code> to <code>localhost:8080</code> so no CORS in dev (Section 6).</td></tr>
+    <tr><td><code>ng g c feature/name</code> · <code>ng g s</code> · <code>ng g pipe</code> · <code>ng g directive</code> · <code>ng g guard</code> · <code>ng g interceptor</code></td><td>Generators with spec files; <code>--dry-run</code> to preview.</td></tr>
+    <tr><td><code>ng build</code> · <code>--configuration development</code></td><td>Production build by default: AOT compile, tree-shake, minify, hashed file names, budgets enforced.</td></tr>
+    <tr><td><code>ng test</code> · <code>ng test --watch=false --browsers=ChromeHeadless</code></td><td>Unit tests (Karma/Jasmine historically; Vitest/Jest now — Section 9).</td></tr>
+    <tr><td><code>ng update @angular/core@20 @angular/cli@20</code></td><td>Upgrades with automatic code migrations (schematics). Do it every 6 months; skipping majors hurts.</td></tr>
+    <tr><td><code>ng g @angular/core:standalone</code> · <code>:control-flow</code> · <code>:signals</code></td><td>Migrations from NgModules / <code>*ngIf</code> / decorators to the modern style.</td></tr>
+    <tr><td><code>ng add @angular/material</code> · <code>ng add @angular/ssr</code></td><td>Install + configure a library.</td></tr>
+    <tr><td><code>npx ng lint</code> (angular-eslint) · <code>npx prettier --write .</code></td><td>Lint and format; wire into CI.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>NgModules for new code</td><td><code>@NgModule</code> with declarations/imports/exports for every feature — 2016-era boilerplate.</td><td>Standalone components (default since v17); modules only when a library forces them.</td></tr>
+    <tr><td>Folder by type</td><td><code>components/</code>, <code>services/</code>, <code>models/</code> with 80 files each.</td><td>Folder by feature (<code>orders/</code>, <code>customers/</code>), each with its own routes — lazy-loadable and ownable.</td></tr>
+    <tr><td>Loose TypeScript</td><td><code>"strict": false</code>, <code>any</code> everywhere.</td><td><code>strict: true</code>, <code>strictTemplates: true</code>. The compiler is your first test suite.</td></tr>
+    <tr><td>Global <code>ng</code> drift</td><td>Everyone's global CLI differs.</td><td>Use the project-local one: <code>npx ng …</code> or npm scripts; versions pinned in <code>package-lock.json</code> (commit it; CI uses <code>npm ci</code>).</td></tr>
+    <tr><td>Skipping updates</td><td>Stuck on v12; the jump to v20 is a rewrite.</td><td><code>ng update</code> one major at a time, on schedule.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. Where is the equivalent of Spring's component scan — how does Angular find a component?</div>
+  <details><summary>Reveal hint</summary><div class="hint">There is none. Angular is compiled: a component is reachable only if something imports it (a route's <code>loadComponent</code>, another component's <code>imports: [...]</code>). Unreferenced code is tree-shaken out of the bundle. Forgetting to add a child component to <code>imports</code> gives the classic "<code>'app-x' is not a known element</code>" error.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 2 ============================= -->
+<h2 id="s2">2. Components and templates (bindings, control flow, inputs/outputs, lifecycle)</h2>
+<p>A component = a TypeScript class (state + behaviour) + an HTML template (view) + optional styles, glued by <code>@Component</code>. Think of it as a small, self-contained view-model with its own render tree. Data flows <strong>down</strong> through inputs and <strong>up</strong> through outputs (events).</p>
+<pre><span class="cmt">// orders/order-card/order-card.component.ts</span>
+<span class="ann">@Component</span>({
+  selector: <span class="str">'app-order-card'</span>,
+  imports: [<span class="typ">CurrencyPipe</span>, <span class="typ">DatePipe</span>],
+  changeDetection: <span class="typ">ChangeDetectionStrategy</span>.OnPush,          <span class="cmt">// always, for every component (Section 3)</span>
+  template: <span class="str">`
+    &lt;article [class.urgent]="order().priority === 'HIGH'"&gt;        &lt;!-- property binding: [prop]="expr" --&gt;
+      &lt;h3&gt;#{{ order().id }} · {{ order().total | currency:'INR' }}&lt;/h3&gt;   &lt;!-- interpolation + pipe --&gt;
+      &lt;p&gt;{{ order().createdAt | date:'dd MMM yyyy, HH:mm' }}&lt;/p&gt;
+
+      @if (order().status === 'SHIPPED') {                          &lt;!-- built-in control flow (v17+) --&gt;
+        &lt;span class="tag"&gt;Shipped&lt;/span&gt;
+      } @else if (order().status === 'CANCELLED') {
+        &lt;span class="tag muted"&gt;Cancelled&lt;/span&gt;
+      } @else {
+        &lt;button (click)="ship.emit(order().id)" [disabled]="busy()"&gt;Ship&lt;/button&gt;  &lt;!-- event binding: (event)="handler" --&gt;
+      }
+
+      @for (line of order().lines; track line.sku) {                &lt;!-- track is REQUIRED: stable key, like React key --&gt;
+        &lt;li&gt;{{ $index + 1 }}. {{ line.sku }} × {{ line.qty }}&lt;/li&gt;
+      } @empty {
+        &lt;li&gt;No lines&lt;/li&gt;
+      }
+
+      @switch (order().channel) {
+        @case ('WEB')    { &lt;i class="ic-web"&gt;&lt;/i&gt; }
+        @case ('MOBILE') { &lt;i class="ic-phone"&gt;&lt;/i&gt; }
+        @default         { &lt;i class="ic-store"&gt;&lt;/i&gt; }
+      }
+      &lt;ng-content /&gt;                                                &lt;!-- slot: parent projects extra markup here --&gt;
+    &lt;/article&gt;
+  `</span>,
+})
+<span class="kw">export class</span> <span class="typ">OrderCardComponent</span> {
+  <span class="cmt">// signal inputs (v17.1+): read as order(); required = compile error if parent forgets it</span>
+  order = <span class="fn">input</span>.required&lt;<span class="typ">Order</span>&gt;();
+  busy  = <span class="fn">input</span>(<span class="kw">false</span>);
+  <span class="cmt">// transform: accept "true"/"" from the template, store a boolean</span>
+  compact = <span class="fn">input</span>(<span class="kw">false</span>, { transform: booleanAttribute });
+  <span class="cmt">// output: parent listens with (ship)="onShip($event)"</span>
+  ship = <span class="fn">output</span>&lt;<span class="kw">number</span>&gt;();
+  <span class="cmt">// model(): two-way binding with [(selected)]="sel" in the parent</span>
+  selected = <span class="fn">model</span>(<span class="kw">false</span>);
+  <span class="cmt">// derived state: recomputed only when order() changes</span>
+  lineCount = <span class="fn">computed</span>(() =&gt; <span class="kw">this</span>.order().lines.length);
+}
+
+<span class="cmt">// Parent template</span>
+<span class="str">&lt;app-order-card [order]="o" [busy]="shipping()" (ship)="ship($event)" [(selected)]="picked" compact&gt;
+  &lt;small&gt;projected note&lt;/small&gt;
+&lt;/app-order-card&gt;</span></pre>
+<table>
+  <thead><tr><th>Binding syntax</th><th>Meaning</th><th>Java-side analogy</th></tr></thead>
+  <tbody>
+    <tr><td><code>{{ expr }}</code></td><td>Interpolation: text output, HTML-escaped (safe by default).</td><td>Thymeleaf <code>th:text</code></td></tr>
+    <tr><td><code>[prop]="expr"</code> · <code>[attr.aria-label]</code> · <code>[class.x]</code> · <code>[style.width.px]</code></td><td>One-way, parent → DOM property / attribute / class / style.</td><td>setter call</td></tr>
+    <tr><td><code>(event)="handler($event)"</code></td><td>DOM or component event → method. <code>(keyup.enter)</code>, <code>(click)</code>.</td><td>listener</td></tr>
+    <tr><td><code>[(value)]="x"</code></td><td>Two-way = <code>[value]</code> + <code>(valueChange)</code>. Needs <code>model()</code> or an <code>xChange</code> output.</td><td>bound property</td></tr>
+    <tr><td><code>#ref</code> · <code>viewChild('ref')</code></td><td>Template reference variable; the class reads it with <code>viewChild()</code> (signal query).</td><td>field injection of a child</td></tr>
+    <tr><td><code>@if / @for / @switch / @defer / @let</code></td><td>Built-in control flow (v17+). <code>@let total = a + b;</code> declares a template variable (v18.1+).</td><td>JSP/Thymeleaf tags</td></tr>
+    <tr><td><code>*ngIf / *ngFor / ngSwitch</code></td><td>Legacy structural directives (need <code>CommonModule</code> import). Migrate with <code>ng g @angular/core:control-flow</code>.</td><td>—</td></tr>
+    <tr><td><code>| pipe:arg</code></td><td>Pure transform in the template: <code>date</code>, <code>currency</code>, <code>json</code>, <code>async</code>, custom.</td><td>formatter</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Lifecycle (in order)</th><th>When</th><th>Use for</th></tr></thead>
+  <tbody>
+    <tr><td><code>constructor</code></td><td>Class created; inputs <strong>not</strong> set yet.</td><td><code>inject()</code> dependencies only. No HTTP, no DOM.</td></tr>
+    <tr><td><code>ngOnInit</code></td><td>Once, after the first input binding.</td><td>Kick off loading (or use <code>effect</code>/<code>resource</code> on an input signal instead).</td></tr>
+    <tr><td><code>ngOnChanges(changes)</code></td><td>Every time a decorator <code>@Input</code> changes.</td><td>Legacy; with signal inputs use <code>computed()</code> instead.</td></tr>
+    <tr><td><code>afterNextRender / afterEveryRender</code></td><td>After DOM is painted (browser only; skipped on the server).</td><td>Measure elements, start charts, third-party DOM libs. Replaces most <code>ngAfterViewInit</code>.</td></tr>
+    <tr><td><code>ngOnDestroy</code> · <code>DestroyRef</code></td><td>Component removed.</td><td>Unsubscribe, clear timers. Prefer <code>takeUntilDestroyed()</code> so you never write this.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Loop keys</td><td><code>@for (o of orders; track $index)</code> — items re-render on reorder, lost focus/animations.</td><td><code>track o.id</code>. Use <code>$index</code> only for truly static lists.</td></tr>
+    <tr><td>Logic in templates</td><td><code>{{ orders.filter(o =&gt; o.open).length }}</code> — runs on every check.</td><td><code>openCount = computed(() =&gt; …)</code> in the class; template reads <code>{{ openCount() }}</code>.</td></tr>
+    <tr><td>Calling a method in a binding</td><td><code>[total]="calcTotal()"</code> — recomputed every change detection.</td><td>A <code>computed()</code> signal or a pure pipe (memoised per input).</td></tr>
+    <tr><td>Mutating an input</td><td>Child does <code>this.order().lines.push(x)</code> — parent state changed by surprise.</td><td>Inputs are read-only. Emit an output; the owner updates its own signal.</td></tr>
+    <tr><td>innerHTML with user data</td><td><code>[innerHTML]="comment"</code> trusting the string.</td><td>Angular sanitises by default; never call <code>bypassSecurityTrustHtml</code> on user input. Prefer <code>{{ }}</code>.</td></tr>
+    <tr><td>Giant component</td><td>1,500-line "page" component with HTTP, forms, and state.</td><td>Smart (container) component talks to services; dumb (presentational) components take inputs, emit outputs.</td></tr>
+    <tr><td>Decorator <code>@Input()</code> + <code>ngOnChanges</code></td><td>Imperative plumbing to react to input changes.</td><td><code>input()</code> signals + <code>computed()</code>/<code>effect()</code>; types flow, no <code>!</code> or <code>undefined</code> checks.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><strong>Component style scoping.</strong> Styles in a component's <code>styles</code>/<code>styleUrl</code> are scoped to that component by default (<code>ViewEncapsulation.Emulated</code>: Angular adds <code>_ngcontent-xyz</code> attributes). Global styles live in <code>styles.scss</code>. <code>:host</code> targets the component's own element; <code>::ng-deep</code> leaks into children — avoid it, use CSS variables or <code>@Input</code>-driven classes instead.</div>
+<div class="tricky">
+  <div class="q">Q. A child component shows stale data after the parent updates an array with <code>this.orders.push(o)</code>. Nothing re-renders. Why, and what is the fix?</div>
+  <details><summary>Reveal hint</summary><div class="hint">With <code>OnPush</code> (and in zoneless apps), Angular re-checks a component when an input <em>reference</em> changes or a signal it read changes. <code>push</code> mutates the same array, so the reference is identical and nothing fires. Fix: keep the list in a signal and update immutably — <code>this.orders.update(list =&gt; [...list, o])</code>. The same rule as <code>equals()</code> on an unchanged object: same identity, no change detected.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 3 ============================= -->
+<h2 id="s3">3. Signals and change detection (signal / computed / effect, OnPush, zoneless)</h2>
+<p>A <strong>signal</strong> is a box holding a value that records who reads it. When the value changes, only the readers (templates, <code>computed</code>s, <code>effect</code>s) are told. This replaces the old model where zone.js guessed "something may have changed" after every click, timer, or HTTP response and re-checked the <em>whole</em> component tree.</p>
+<pre><span class="kw">import</span> { signal, computed, effect, untracked, linkedSignal } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="cmt">// writable signal</span>
+<span class="kw">const</span> cart = <span class="fn">signal</span>&lt;<span class="typ">Line</span>[]&gt;([]);
+cart.<span class="fn">set</span>([{ sku: <span class="str">'A1'</span>, qty: <span class="num">2</span>, price: <span class="num">99</span> }]);          <span class="cmt">// replace</span>
+cart.<span class="fn">update</span>(l =&gt; [...l, { sku: <span class="str">'B2'</span>, qty: <span class="num">1</span>, price: <span class="num">49</span> }]); <span class="cmt">// derive from old — always a NEW array/object</span>
+
+<span class="cmt">// computed: lazy, memoised, read-only; re-evaluates only if a dependency changed</span>
+<span class="kw">const</span> total = <span class="fn">computed</span>(() =&gt; cart().reduce((s, l) =&gt; s + l.qty * l.price, <span class="num">0</span>));
+<span class="kw">const</span> isEmpty = <span class="fn">computed</span>(() =&gt; cart().length === <span class="num">0</span>);
+
+<span class="cmt">// effect: side effects (logging, localStorage, sync to a non-Angular lib). NOT for setting other signals.</span>
+<span class="fn">effect</span>(() =&gt; {
+  localStorage.setItem(<span class="str">'cart'</span>, JSON.stringify(cart()));
+  <span class="kw">const</span> user = <span class="fn">untracked</span>(() =&gt; auth.user());             <span class="cmt">// read without subscribing</span>
+});
+
+<span class="cmt">// linkedSignal (v19+): writable state that resets when a source changes (e.g. selected item resets when list reloads)</span>
+<span class="kw">const</span> selected = <span class="fn">linkedSignal</span>(() =&gt; cart()[<span class="num">0</span>]?.sku ?? <span class="kw">null</span>);
+
+<span class="cmt">// custom equality: avoid notifying when the new value is "the same"</span>
+<span class="kw">const</span> filter = <span class="fn">signal</span>({ q: <span class="str">''</span>, page: <span class="num">1</span> }, { equal: (a, b) =&gt; a.q === b.q &amp;&amp; a.page === b.page });
+
+<span class="cmt">// RxJS bridge (Section 6): Observable → signal, signal → Observable</span>
+<span class="kw">const</span> orders = <span class="fn">toSignal</span>(http.get&lt;<span class="typ">Order</span>[]&gt;(<span class="str">'/api/orders'</span>), { initialValue: [] });
+<span class="kw">const</span> filter$ = <span class="fn">toObservable</span>(filter);</pre>
+<table>
+  <thead><tr><th>Mode</th><th>How Angular decides to re-render</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td><code>Default</code> + zone.js</td><td>zone.js patches every async API; after any event/timer/XHR it checks <strong>every</strong> component top-down. Simple, wasteful.</td><td>Legacy default; still works.</td></tr>
+    <tr><td><code>OnPush</code> + zone.js</td><td>Component is checked only when: an <code>@Input</code> reference changes, an event fires inside it, <code>async</code> pipe emits, a signal it reads changes, or you call <code>markForCheck()</code>.</td><td>Set it on every component.</td></tr>
+    <tr><td><code>provideZonelessChangeDetection()</code></td><td>No zone.js. Rendering is scheduled only by signal changes, template events, <code>async</code> pipe, <code>markForCheck</code>. Smaller bundle, no "magic" timing.</td><td>Stable in v20.2+. Target this for new apps.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Setting signals in <code>effect</code></td><td><code>effect(() =&gt; total.set(sum(cart())))</code> — loops, ordering bugs; Angular throws unless <code>allowSignalWrites</code> (removed in v19).</td><td>Derived state is a <code>computed()</code>. Effects are for the outside world only.</td></tr>
+    <tr><td>Mutating inside a signal</td><td><code>cart().push(x)</code> — readers never notified.</td><td><code>cart.update(l =&gt; [...l, x])</code>. Treat signal values as immutable (like Java records).</td></tr>
+    <tr><td>Reading signals outside a reactive context</td><td>Caching <code>const t = total()</code> in a constructor and expecting it to update.</td><td>Read inside the template, a <code>computed</code>, or an <code>effect</code>; that is where tracking happens.</td></tr>
+    <tr><td>Mixing <code>setTimeout</code>/promises with Default CD</td><td>Works by accident thanks to zone.js; breaks when you go zoneless.</td><td>Put results into a signal; the template reads the signal.</td></tr>
+    <tr><td><code>ChangeDetectorRef.detectChanges()</code> everywhere</td><td>Band-aid that hides a data-flow bug; <code>ExpressionChangedAfterItHasBeenChecked</code> errors.</td><td>Model state as signals; if you must, <code>markForCheck()</code> once.</td></tr>
+    <tr><td>Giant <code>computed</code> doing I/O</td><td><code>computed(() =&gt; http.get(...))</code> — computeds must be pure and synchronous.</td><td>Use <code>resource()</code>/<code>httpResource()</code> (v19/20) for async derived data, or <code>toSignal</code> on an Observable.</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// httpResource (v20, experimental → stable track): a signal that reloads when its request signal changes</span>
+<span class="kw">readonly</span> customerId = <span class="fn">input</span>.required&lt;<span class="kw">number</span>&gt;();
+<span class="kw">readonly</span> orders = <span class="fn">httpResource</span>&lt;<span class="typ">Order</span>[]&gt;(() =&gt; <span class="str">`/api/customers/${</span><span class="kw">this</span>.customerId()<span class="str">}/orders`</span>);
+<span class="cmt">// template: @if (orders.isLoading()) { … } @else if (orders.error()) { … } @else { @for (o of orders.value() ?? []; track o.id) { … } }</span></pre>
+<div class="tips"><strong>Mental model for a Java dev.</strong> <code>signal</code> ≈ an observable property with identity-based change detection; <code>computed</code> ≈ a memoised getter whose cache invalidates automatically; <code>effect</code> ≈ a listener that re-runs when any property it touched changes. The scheduler batches: ten <code>set()</code> calls in one tick cause one render.</div>
+<div class="tricky">
+  <div class="q">Q. Your <code>computed()</code> never updates even though the signal it reads clearly changes. The computed reads the signal inside an <code>if</code> that was false on first run. What happened?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Nothing wrong — dependencies are tracked <em>dynamically</em> per run. If the first run never executed the branch that reads <code>x()</code>, <code>x</code> is not a dependency yet. Once another tracked signal flips the <code>if</code> to true and the computed re-runs, it will pick up <code>x</code>. If you need it tracked always, read it before the branch. (Also check you did not wrap the read in <code>untracked()</code>.)</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 4 ============================= -->
+<h2 id="s4">4. Services and dependency injection (inject(), providedIn, tokens, scopes)</h2>
+<p>Angular has a real DI container, hierarchical like Spring's parent/child contexts. A <strong>service</strong> is just a class with <code>@Injectable</code>. <code>providedIn: 'root'</code> = one singleton for the app (like a Spring <code>@Service</code>). Providing in a component's <code>providers</code> array or a route = a new instance per component / per route subtree (like a request/prototype scope).</p>
+<pre><span class="cmt">// orders/order.service.ts — the "@Service" layer</span>
+<span class="ann">@Injectable</span>({ providedIn: <span class="str">'root'</span> })                       <span class="cmt">// singleton, tree-shakable (dropped if nobody injects it)</span>
+<span class="kw">export class</span> <span class="typ">OrderService</span> {
+  <span class="kw">private readonly</span> http = <span class="fn">inject</span>(<span class="typ">HttpClient</span>);          <span class="cmt">// inject() instead of constructor params (v14+)</span>
+  <span class="kw">private readonly</span> api  = <span class="fn">inject</span>(API_BASE_URL);        <span class="cmt">// injection token for a plain value</span>
+
+  <span class="cmt">// state owned by the service, exposed read-only</span>
+  <span class="kw">private readonly</span> _orders = <span class="fn">signal</span>&lt;<span class="typ">Order</span>[]&gt;([]);
+  <span class="kw">readonly</span> orders = <span class="kw">this</span>._orders.<span class="fn">asReadonly</span>();
+  <span class="kw">readonly</span> openCount = <span class="fn">computed</span>(() =&gt; <span class="kw">this</span>._orders().filter(o =&gt; o.status === <span class="str">'OPEN'</span>).length);
+
+  <span class="fn">load</span>(): <span class="typ">Observable</span>&lt;<span class="typ">Order</span>[]&gt; {
+    <span class="kw">return</span> <span class="kw">this</span>.http.get&lt;<span class="typ">Order</span>[]&gt;(<span class="str">`${</span><span class="kw">this</span>.api<span class="str">}/orders`</span>).pipe(tap(o =&gt; <span class="kw">this</span>._orders.set(o)));
+  }
+}
+
+<span class="cmt">// core/tokens.ts — InjectionToken: typed key for non-class values (like @Value / @Qualifier)</span>
+<span class="kw">export const</span> API_BASE_URL = <span class="kw">new</span> <span class="typ">InjectionToken</span>&lt;<span class="kw">string</span>&gt;(<span class="str">'API_BASE_URL'</span>, {
+  providedIn: <span class="str">'root'</span>,
+  factory: () =&gt; environment.apiBaseUrl,                 <span class="cmt">// default value; override in app.config or tests</span>
+});
+
+<span class="cmt">// app.config.ts — the provider recipes (like @Bean methods)</span>
+providers: [
+  { provide: API_BASE_URL, useValue: <span class="str">'/api'</span> },                          <span class="cmt">// useValue</span>
+  { provide: <span class="typ">Logger</span>, useClass: environment.production ? <span class="typ">RemoteLogger</span> : <span class="typ">ConsoleLogger</span> }, <span class="cmt">// useClass (interface → impl)</span>
+  { provide: <span class="typ">Clock</span>, useFactory: () =&gt; <span class="kw">new</span> <span class="typ">SystemClock</span>(<span class="fn">inject</span>(<span class="typ">LOCALE_ID</span>)) },   <span class="cmt">// useFactory with deps</span>
+  { provide: <span class="typ">LegacyOrderApi</span>, useExisting: <span class="typ">OrderService</span> },                <span class="cmt">// alias</span>
+  { provide: <span class="typ">ErrorHandler</span>, useClass: <span class="typ">GlobalErrorHandler</span> },             <span class="cmt">// replace a framework service</span>
+  <span class="fn">provideAppInitializer</span>(() =&gt; <span class="fn">inject</span>(<span class="typ">ConfigService</span>).load()),           <span class="cmt">// run before first render (v19; was APP_INITIALIZER)</span>
+]
+
+<span class="cmt">// Component-scoped instance: each OrderWizard gets its own WizardState (prototype scope)</span>
+<span class="ann">@Component</span>({ selector: <span class="str">'app-order-wizard'</span>, providers: [<span class="typ">WizardState</span>], template: <span class="str">'…'</span> })
+<span class="kw">export class</span> <span class="typ">OrderWizardComponent</span> {
+  <span class="kw">readonly</span> state = <span class="fn">inject</span>(<span class="typ">WizardState</span>);
+  <span class="kw">private readonly</span> parentForm = <span class="fn">inject</span>(<span class="typ">FormGroupDirective</span>, { optional: <span class="kw">true</span>, skipSelf: <span class="kw">true</span> }); <span class="cmt">// lookup flags</span>
+}</pre>
+<table>
+  <thead><tr><th>Where you provide</th><th>Lifetime / visibility</th><th>Spring analogy</th></tr></thead>
+  <tbody>
+    <tr><td><code>@Injectable({ providedIn: 'root' })</code></td><td>One instance for the whole app; created on first injection; tree-shaken if unused.</td><td><code>@Service</code> singleton, lazy</td></tr>
+    <tr><td><code>app.config.ts providers: [...]</code></td><td>Also root, but always included; use for tokens, framework overrides.</td><td><code>@Configuration</code> + <code>@Bean</code></td></tr>
+    <tr><td>Route <code>providers: [...]</code></td><td>One instance per route subtree; destroyed when you navigate away from it.</td><td>child application context</td></tr>
+    <tr><td>Component <code>providers: [...]</code></td><td>One instance per component instance (and its children).</td><td>prototype scope</td></tr>
+    <tr><td><code>viewProviders</code></td><td>Visible to the component's own template but not to projected content.</td><td>—</td></tr>
+    <tr><td><code>inject(X, { optional, self, skipSelf, host })</code></td><td>Lookup flags: allow null, only this injector, start at the parent, stop at the host component.</td><td><code>@Autowired(required=false)</code></td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Constructor injection soup</td><td><code>constructor(private a: A, private b: B, private c: C, …)</code> + <code>super(a, b)</code> chains.</td><td><code>private readonly a = inject(A);</code> fields. Works in functions too (guards, interceptors, factories).</td></tr>
+    <tr><td><code>inject()</code> at the wrong time</td><td>Calling <code>inject()</code> inside a click handler or <code>setTimeout</code> → <code>NG0203: inject() must be called from an injection context</code>.</td><td>Call it in field initialisers, constructors, or wrap with <code>runInInjectionContext(injector, () =&gt; …)</code>.</td></tr>
+    <tr><td>Service in <code>imports</code></td><td><code>imports: [OrderService]</code> — services are not components.</td><td><code>imports</code> is for components/directives/pipes. Services are injected.</td></tr>
+    <tr><td>Interface as token</td><td><code>inject(OrderApi)</code> where <code>OrderApi</code> is a TS interface — erased at runtime, no token exists.</td><td>Use an abstract class or an <code>InjectionToken&lt;OrderApi&gt;</code>.</td></tr>
+    <tr><td>Multiple singletons by accident</td><td>Providing the same service in <code>'root'</code> and in a lazy route → two instances with separate state.</td><td>Provide once. If a feature needs private state, make it an explicit route-level provider and know that it is scoped.</td></tr>
+    <tr><td>Components holding shared state</td><td>Sibling components pass data through the parent five levels up and down.</td><td>Shared state lives in a service with signals; components inject it (Section 8).</td></tr>
+  </tbody>
+</table>
+<div class="tips"><strong>Injector hierarchy.</strong> <em>Element injector</em> (component → parent component → …) is searched first, then the <em>environment injector</em> (route → lazy route parent → root → platform). A <code>NullInjectorError: No provider for X</code> means nothing on that path provides X — usually a missing <code>provideHttpClient()</code> / <code>provideRouter()</code> in <code>app.config.ts</code>, or a token with no default.</div>
+<div class="tricky">
+  <div class="q">Q. <code>CartService</code> is <code>providedIn: 'root'</code>, yet the header shows 0 items while the cart page shows 3. Two instances exist. How?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Someone also listed <code>CartService</code> in a component's or lazy route's <code>providers</code> array (or in a leftover <code>@NgModule</code> that a lazy route imports). That creates a second, child-scoped instance for that subtree. Search for <code>providers: [</code> mentioning the service and remove it; the root singleton is enough. Confirm in Angular DevTools → Injector tree.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 5 ============================= -->
+<h2 id="s5">5. Routing (lazy loading, functional guards and resolvers, route params as inputs)</h2>
+<p>The router maps the URL to a component tree. It is a client-side <code>DispatcherServlet</code>: the browser never reloads; the router swaps what sits inside <code>&lt;router-outlet&gt;</code>. Lazy routes download their feature's code only when first visited.</p>
+<pre><span class="cmt">// app.routes.ts</span>
+<span class="kw">export const</span> routes: <span class="typ">Routes</span> = [
+  { path: <span class="str">''</span>, redirectTo: <span class="str">'orders'</span>, pathMatch: <span class="str">'full'</span> },
+  { path: <span class="str">'login'</span>, loadComponent: () =&gt; <span class="kw">import</span>(<span class="str">'./auth/login.component'</span>).then(m =&gt; m.<span class="typ">LoginComponent</span>) },
+  {
+    path: <span class="str">'orders'</span>,
+    canMatch: [authGuard],                                   <span class="cmt">// guard the whole feature; falls through to the next route if false</span>
+    loadChildren: () =&gt; <span class="kw">import</span>(<span class="str">'./orders/orders.routes'</span>),  <span class="cmt">// lazy: separate JS chunk, loaded on first visit</span>
+    providers: [<span class="typ">OrdersStore</span>],                                <span class="cmt">// route-scoped service (Section 4)</span>
+  },
+  { path: <span class="str">'**'</span>, component: <span class="typ">NotFoundComponent</span> },             <span class="cmt">// wildcard LAST</span>
+];
+
+<span class="cmt">// orders/orders.routes.ts — the feature's own table (default export so loadChildren needs no .then)</span>
+<span class="kw">export default</span> [
+  { path: <span class="str">''</span>, component: <span class="typ">OrderListComponent</span>, title: <span class="str">'Orders'</span> },
+  {
+    path: <span class="str">':id'</span>,
+    component: <span class="typ">OrderDetailComponent</span>,
+    title: (r) =&gt; <span class="str">`Order #${</span>r.params[<span class="str">'id'</span>]<span class="str">}`</span>,
+    resolve: { order: orderResolver },                       <span class="cmt">// data ready before the component shows</span>
+    canDeactivate: [unsavedChangesGuard],
+  },
+] <span class="kw">satisfies</span> <span class="typ">Routes</span>;
+
+<span class="cmt">// core/auth.guard.ts — functional guard (class guards are deprecated)</span>
+<span class="kw">export const</span> authGuard: <span class="typ">CanMatchFn</span> = () =&gt; {
+  <span class="kw">const</span> auth = <span class="fn">inject</span>(<span class="typ">AuthService</span>), router = <span class="fn">inject</span>(<span class="typ">Router</span>);
+  <span class="kw">return</span> auth.isLoggedIn() ? <span class="kw">true</span> : router.<span class="fn">createUrlTree</span>([<span class="str">'/login'</span>], { queryParams: { next: location.pathname } });
+};
+
+<span class="cmt">// orders/order.resolver.ts</span>
+<span class="kw">export const</span> orderResolver: <span class="typ">ResolveFn</span>&lt;<span class="typ">Order</span>&gt; = (route) =&gt;
+  <span class="fn">inject</span>(<span class="typ">OrderService</span>).get(<span class="typ">Number</span>(route.paramMap.get(<span class="str">'id'</span>)));
+
+<span class="cmt">// OrderDetailComponent — withComponentInputBinding() turns params/query/data/resolve into inputs</span>
+<span class="kw">export class</span> <span class="typ">OrderDetailComponent</span> {
+  id    = <span class="fn">input</span>.required&lt;<span class="kw">string</span>&gt;();          <span class="cmt">// from :id  (always a string in the URL!)</span>
+  order = <span class="fn">input</span>.required&lt;<span class="typ">Order</span>&gt;();           <span class="cmt">// from resolve key "order"</span>
+  tab   = <span class="fn">input</span>&lt;<span class="kw">string</span>&gt;(<span class="str">'summary'</span>);          <span class="cmt">// from ?tab=</span>
+  <span class="kw">private readonly</span> router = <span class="fn">inject</span>(<span class="typ">Router</span>);
+  <span class="fn">goBack</span>() { <span class="kw">this</span>.router.<span class="fn">navigate</span>([<span class="str">'/orders'</span>], { queryParams: { page: <span class="num">2</span> }, queryParamsHandling: <span class="str">'merge'</span> }); }
+}</pre>
+<table>
+  <thead><tr><th>Piece</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td><code>routerLink="/orders"</code> · <code>[routerLink]="['/orders', o.id]"</code> · <code>routerLinkActive="active"</code></td><td>Links without page reload; active-class for nav highlighting.</td></tr>
+    <tr><td><code>canMatch</code> / <code>canActivate</code> / <code>canActivateChild</code> / <code>canDeactivate</code></td><td>Guards. <code>canMatch</code> runs before lazy code downloads (best for auth/role); <code>canDeactivate</code> for "unsaved changes?".</td></tr>
+    <tr><td><code>resolve</code></td><td>Fetch before navigation completes. Good for small, must-have data; for big pages prefer showing a skeleton and loading in the component.</td></tr>
+    <tr><td><code>withComponentInputBinding()</code></td><td>Route params, query params, static <code>data</code>, and resolved values bind to same-named inputs. No more <code>ActivatedRoute</code> subscriptions.</td></tr>
+    <tr><td><code>withPreloading(PreloadAllModules)</code> · custom strategy</td><td>Download lazy chunks in idle time after first paint.</td></tr>
+    <tr><td><code>withViewTransitions()</code> · <code>withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })</code></td><td>Page transition animation; restore scroll on back.</td></tr>
+    <tr><td>Named outlets · <code>outlet: 'aside'</code></td><td>Side panels / dialogs driven by the URL.</td></tr>
+    <tr><td><code>Router.events</code> · <code>NavigationStart/End/Error</code></td><td>Global spinner, analytics; also where <code>NavigationError</code> from a failed lazy chunk (new deploy!) can trigger a reload.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Reading params</td><td><code>this.route.snapshot.params['id']</code> in <code>ngOnInit</code> — stale when navigating <code>/orders/1 → /orders/2</code> (component is reused).</td><td><code>id = input.required&lt;string&gt;()</code> with <code>withComponentInputBinding</code>, or <code>route.paramMap</code> (Observable). React with <code>computed</code>/<code>httpResource</code>.</td></tr>
+    <tr><td>Everything eager</td><td>One 4 MB main bundle; every feature imported into the root routes.</td><td><code>loadChildren</code>/<code>loadComponent</code> per feature. Check with <code>ng build --stats-json</code> + bundle analyzer.</td></tr>
+    <tr><td>Guards for security</td><td>"The route is guarded, so admin data is safe."</td><td>Guards are UX only. The Spring Boot API must enforce auth on every endpoint; the browser is the attacker's machine.</td></tr>
+    <tr><td>Wildcard first</td><td><code>{ path: '**' }</code> at the top — every URL is a 404.</td><td>Routes match in order; wildcard last.</td></tr>
+    <tr><td>Route param types</td><td><code>id: number</code> input that is really the string <code>"42"</code>; <code>===</code> comparisons fail.</td><td>Params are strings. Convert with <code>numberAttribute</code> transform or <code>Number()</code>.</td></tr>
+    <tr><td>Deep link 404 in production</td><td>Refreshing <code>/orders/42</code> returns 404 from NGINX/Spring — no such file.</td><td>Serve <code>index.html</code> for unknown paths (<code>try_files $uri /index.html</code>) — Section 10.</td></tr>
+    <tr><td>Hash routing to dodge that</td><td><code>useHash: true</code> → URLs like <code>/#/orders</code>.</td><td>Fix the server fallback instead; hash URLs break SSR, analytics, and sharing.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. After a production deploy, users who kept the old tab open get <code>ChunkLoadError</code> when they click a lazy route. Why, and how do you handle it?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The old <code>index.html</code> references chunk <code>orders-ABC123.js</code>; the new deploy replaced it with <code>orders-DEF456.js</code>, so the request 404s. Handle it: listen for <code>NavigationError</code> (or a global error handler matching <code>ChunkLoadError</code>) and <code>location.reload()</code> once; and on the server keep the previous build's hashed files around for a short overlap, or serve old assets from a versioned path. Hashed names are correct — this is normal cache-busting behaviour.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 6 ============================= -->
+<h2 id="s6">6. HttpClient and RxJS — talking to a Spring Boot API (interceptors, JWT, CORS, proxy)</h2>
+<p><code>HttpClient</code> returns <strong>Observables</strong> (RxJS): a lazy stream that does nothing until subscribed and can emit many times. For a single HTTP call it emits once and completes. You rarely subscribe by hand — hand the stream to the <code>async</code> pipe, <code>toSignal</code>, or <code>httpResource</code>, and let Angular manage the subscription.</p>
+<pre><span class="cmt">// orders/order.service.ts</span>
+<span class="ann">@Injectable</span>({ providedIn: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="typ">OrderService</span> {
+  <span class="kw">private readonly</span> http = <span class="fn">inject</span>(<span class="typ">HttpClient</span>);
+  <span class="kw">private readonly</span> base = <span class="str">'/api/orders'</span>;                   <span class="cmt">// relative: same origin in prod, proxied in dev</span>
+
+  <span class="fn">list</span>(page = <span class="num">0</span>, size = <span class="num">20</span>) {
+    <span class="kw">return</span> <span class="kw">this</span>.http.get&lt;<span class="typ">Page</span>&lt;<span class="typ">Order</span>&gt;&gt;(<span class="kw">this</span>.base, { params: { page, size, sort: <span class="str">'createdAt,desc'</span> } }); <span class="cmt">// Spring Pageable</span>
+  }
+  <span class="fn">create</span>(cmd: <span class="typ">CreateOrder</span>) { <span class="kw">return</span> <span class="kw">this</span>.http.post&lt;<span class="typ">Order</span>&gt;(<span class="kw">this</span>.base, cmd); }        <span class="cmt">// JSON body + header set for you</span>
+  <span class="fn">ship</span>(id: <span class="kw">number</span>)       { <span class="kw">return</span> <span class="kw">this</span>.http.patch&lt;<span class="typ">Order</span>&gt;(<span class="str">`${</span><span class="kw">this</span>.base<span class="str">}/${</span>id<span class="str">}/ship`</span>, {}); }
+  <span class="fn">download</span>(id: <span class="kw">number</span>)   { <span class="kw">return</span> <span class="kw">this</span>.http.get(<span class="str">`${</span><span class="kw">this</span>.base<span class="str">}/${</span>id<span class="str">}/invoice`</span>, { responseType: <span class="str">'blob'</span> }); }
+  <span class="fn">upload</span>(file: <span class="typ">File</span>) {
+    <span class="kw">const</span> fd = <span class="kw">new</span> <span class="typ">FormData</span>(); fd.append(<span class="str">'file'</span>, file);     <span class="cmt">// → @RequestParam MultipartFile file</span>
+    <span class="kw">return</span> <span class="kw">this</span>.http.post(<span class="str">'/api/files'</span>, fd, { reportProgress: <span class="kw">true</span>, observe: <span class="str">'events'</span> });
+  }
+}
+
+<span class="cmt">// core/auth.interceptor.ts — functional interceptor (like a servlet Filter, but outgoing)</span>
+<span class="kw">export const</span> authInterceptor: <span class="typ">HttpInterceptorFn</span> = (req, next) =&gt; {
+  <span class="kw">const</span> token = <span class="fn">inject</span>(<span class="typ">AuthService</span>).token();
+  <span class="kw">const</span> authed = token &amp;&amp; req.url.startsWith(<span class="str">'/api'</span>)
+    ? req.<span class="fn">clone</span>({ setHeaders: { Authorization: <span class="str">`Bearer ${</span>token<span class="str">}`</span> } })   <span class="cmt">// requests are immutable → clone</span>
+    : req;
+  <span class="kw">return</span> <span class="fn">next</span>(authed);
+};
+
+<span class="cmt">// core/error.interceptor.ts — map Spring's ProblemDetail / 401 / 5xx in one place</span>
+<span class="kw">export const</span> errorInterceptor: <span class="typ">HttpInterceptorFn</span> = (req, next) =&gt; {
+  <span class="kw">const</span> router = <span class="fn">inject</span>(<span class="typ">Router</span>), toast = <span class="fn">inject</span>(<span class="typ">ToastService</span>);
+  <span class="kw">return</span> <span class="fn">next</span>(req).pipe(
+    <span class="fn">retry</span>({ count: <span class="num">2</span>, delay: <span class="num">300</span>, resetOnSuccess: <span class="kw">true</span> }),               <span class="cmt">// only safe for GET — check req.method!</span>
+    <span class="fn">catchError</span>((e: <span class="typ">HttpErrorResponse</span>) =&gt; {
+      <span class="kw">if</span> (e.status === <span class="num">401</span>) router.navigateByUrl(<span class="str">'/login'</span>);
+      <span class="kw">else if</span> (e.status === <span class="num">0</span>) toast.error(<span class="str">'Network / CORS error'</span>);      <span class="cmt">// status 0 = browser blocked it</span>
+      <span class="kw">else</span> toast.error(e.error?.detail ?? <span class="str">`HTTP ${</span>e.status<span class="str">}`</span>);          <span class="cmt">// ProblemDetail.detail from Spring 6</span>
+      <span class="kw">return</span> <span class="fn">throwError</span>(() =&gt; e);
+    }),
+  );
+};
+
+<span class="cmt">// Consuming in a component — three good patterns, zero manual subscribe()</span>
+orders = <span class="fn">toSignal</span>(<span class="kw">this</span>.svc.list(), { initialValue: <span class="kw">null</span> });                 <span class="cmt">// 1) once → signal</span>
+page   = <span class="fn">signal</span>(<span class="num">0</span>);
+pageRs = <span class="fn">httpResource</span>&lt;<span class="typ">Page</span>&lt;<span class="typ">Order</span>&gt;&gt;(() =&gt; ({ url: <span class="str">'/api/orders'</span>, params: { page: <span class="kw">this</span>.page() } })); <span class="cmt">// 2) reload when page() changes</span>
+search$ = <span class="kw">this</span>.query.valueChanges.pipe(                                      <span class="cmt">// 3) typeahead: the RxJS classic</span>
+  <span class="fn">debounceTime</span>(<span class="num">300</span>), <span class="fn">distinctUntilChanged</span>(),
+  <span class="fn">switchMap</span>(q =&gt; <span class="kw">this</span>.svc.search(q)),                                       <span class="cmt">// cancel the previous request</span>
+  <span class="fn">takeUntilDestroyed</span>(),                                                     <span class="cmt">// auto-unsubscribe</span>
+);  <span class="cmt">// template: @for (o of (search$ | async) ?? []; track o.id)</span></pre>
+<table>
+  <thead><tr><th>RxJS operator</th><th>Use it when</th></tr></thead>
+  <tbody>
+    <tr><td><code>map</code> · <code>filter</code> · <code>tap</code></td><td>Transform / drop / side-effect (log) each value. Same as Java Streams.</td></tr>
+    <tr><td><code>switchMap</code></td><td>New outer value → cancel previous inner request (search, route param → load). Default choice for GET.</td></tr>
+    <tr><td><code>concatMap</code> · <code>exhaustMap</code> · <code>mergeMap</code></td><td>Queue in order (saves) · ignore clicks while one is running (submit button) · run all in parallel.</td></tr>
+    <tr><td><code>forkJoin([a$, b$])</code> · <code>combineLatest</code></td><td>Wait for all once (like <code>CompletableFuture.allOf</code>) · recompute when any stream changes.</td></tr>
+    <tr><td><code>debounceTime</code> · <code>distinctUntilChanged</code> · <code>throttleTime</code></td><td>Typeahead, resize, scroll.</td></tr>
+    <tr><td><code>catchError</code> · <code>retry</code> · <code>timeout</code> · <code>finalize</code></td><td>Error handling; <code>finalize</code> = <code>finally</code> (hide spinner).</td></tr>
+    <tr><td><code>shareReplay(1)</code> · <code>share()</code></td><td>Cache the last value for many subscribers (config, current user). Beware memory: use <code>{ bufferSize: 1, refCount: true }</code>.</td></tr>
+    <tr><td><code>takeUntilDestroyed(destroyRef?)</code> · <code>take(1)</code> · <code>first()</code></td><td>End subscriptions. The first is the modern way to avoid leaks.</td></tr>
+    <tr><td><code>firstValueFrom(obs$)</code> / <code>lastValueFrom</code></td><td>Bridge to <code>async/await</code> when you really want a Promise (guards, init code).</td></tr>
+  </tbody>
+</table>
+<pre><span class="cmt">// proxy.conf.json — dev only: ng serve forwards /api → Spring on 8080, so the browser sees ONE origin (no CORS)</span>
+{ <span class="str">"/api"</span>: { <span class="str">"target"</span>: <span class="str">"http://localhost:8080"</span>, <span class="str">"secure"</span>: <span class="kw">false</span>, <span class="str">"changeOrigin"</span>: <span class="kw">true</span>, <span class="str">"logLevel"</span>: <span class="str">"debug"</span> } }
+<span class="cmt">// angular.json → "serve": { "options": { "proxyConfig": "proxy.conf.json" } }</span>
+
+<span class="cmt">// If the API is on another origin in prod (api.shop.com vs app.shop.com), Spring must allow it:</span>
+<span class="ann">@Bean</span> <span class="typ">CorsConfigurationSource</span> cors() {
+  <span class="kw">var</span> c = <span class="kw">new</span> <span class="typ">CorsConfiguration</span>();
+  c.setAllowedOrigins(<span class="typ">List</span>.of(<span class="str">"https://app.shop.com"</span>));   <span class="cmt">// never "*" together with allowCredentials(true)</span>
+  c.setAllowedMethods(<span class="typ">List</span>.of(<span class="str">"GET"</span>,<span class="str">"POST"</span>,<span class="str">"PUT"</span>,<span class="str">"PATCH"</span>,<span class="str">"DELETE"</span>));
+  c.setAllowedHeaders(<span class="typ">List</span>.of(<span class="str">"Authorization"</span>,<span class="str">"Content-Type"</span>));
+  c.setAllowCredentials(<span class="kw">true</span>); c.setMaxAge(<span class="num">3600L</span>);
+  <span class="kw">var</span> src = <span class="kw">new</span> <span class="typ">UrlBasedCorsConfigurationSource</span>(); src.registerCorsConfiguration(<span class="str">"/api/**"</span>, c); <span class="kw">return</span> src;
+}  <span class="cmt">// and http.cors(Customizer.withDefaults()) in the SecurityFilterChain, BEFORE auth, so OPTIONS preflight passes</span></pre>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Manual subscribe</td><td><code>this.svc.list().subscribe(o =&gt; this.orders = o)</code> in <code>ngOnInit</code>, never unsubscribed.</td><td><code>toSignal</code> / <code>httpResource</code> / <code>async</code> pipe. If you must subscribe: <code>takeUntilDestroyed()</code>.</td></tr>
+    <tr><td>Nested subscribes</td><td><code>a$.subscribe(a =&gt; b$(a).subscribe(b =&gt; …))</code> — callback hell, leaks, races.</td><td><code>a$.pipe(switchMap(a =&gt; b$(a)))</code>.</td></tr>
+    <tr><td>Token storage</td><td>JWT in <code>localStorage</code>, read by any XSS payload.</td><td>HttpOnly, Secure, SameSite cookie set by Spring (with CSRF token for state-changing calls), or in-memory access token + refresh cookie. Never log the token.</td></tr>
+    <tr><td>Hard-coded <code>http://localhost:8080</code></td><td>Baked into the bundle; breaks in every other environment and triggers CORS.</td><td>Relative <code>/api</code> + dev proxy + prod reverse proxy; or <code>environment.apiBaseUrl</code> via file replacement.</td></tr>
+    <tr><td>Retrying non-idempotent calls</td><td><code>retry(3)</code> on a POST that creates an order → three orders.</td><td>Retry only GET/HEAD (or with an idempotency key the Spring side honours).</td></tr>
+    <tr><td>Reading error body wrong</td><td><code>e.message</code> — a generic browser string.</td><td><code>e.error</code> is the parsed JSON body (Spring <code>ProblemDetail</code>: <code>title</code>, <code>detail</code>, <code>status</code>); <code>e.status</code> is the HTTP code.</td></tr>
+    <tr><td>Blocking CORS on preflight</td><td>Security chain requires auth on <code>OPTIONS</code> → preflight 401 → browser says "CORS error".</td><td>Enable <code>http.cors()</code>; permit <code>OPTIONS</code>; return exact origins. In dev, use the proxy and avoid CORS entirely.</td></tr>
+    <tr><td>Dates</td><td>Comparing <code>order.createdAt &gt; new Date()</code> when <code>createdAt</code> is the string <code>"2026-10-25T10:00:00Z"</code> from Jackson.</td><td>JSON has no Date. Keep ISO strings in models, parse at the edge (<code>new Date(s)</code>, Luxon/date-fns), or map in the service.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><strong>Observable vs Promise vs signal.</strong> Promise: one value, eager, cannot cancel. Observable: many values, lazy, cancellable, composable with operators. Signal: current value + change notifications, synchronous, no time dimension. Rule of thumb: Observables for <em>events over time</em> (HTTP, websockets, user input); signals for <em>state</em>. Bridge with <code>toSignal</code>/<code>toObservable</code>.</div>
+<div class="tricky">
+  <div class="q">Q. A GET with <code>Authorization: Bearer …</code> works in Postman but the browser shows "blocked by CORS policy: Response to preflight request doesn't pass access control check". Postman ignores CORS — so what exactly is failing, and where is the fix?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The custom <code>Authorization</code> header makes the request "non-simple", so the browser first sends <code>OPTIONS /api/orders</code> with <code>Access-Control-Request-Headers: authorization</code>. Spring Security answers 401/403 to that OPTIONS (no token on a preflight), so the browser never sends the real GET. Fix on the <strong>server</strong>: enable <code>http.cors(...)</code> with a <code>CorsConfigurationSource</code> that lists the Angular origin and the <code>Authorization</code> header; Spring's <code>CorsFilter</code> then runs before authentication and answers the preflight with 200. Nothing in Angular can fix CORS — it is a browser-enforced server policy.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 7 ============================= -->
+<h2 id="s7">7. Forms (typed reactive forms, validation, server errors)</h2>
+<p>Two systems: <strong>template-driven</strong> (<code>[(ngModel)]</code>, logic in HTML — fine for a login box) and <strong>reactive</strong> (the form model lives in the class as <code>FormGroup</code>/<code>FormControl</code> — testable, typed, composable). Use reactive for anything with more than two fields. Since v14 reactive forms are strictly typed: <code>form.value.email</code> is <code>string | undefined</code>, not <code>any</code>.</p>
+<pre><span class="cmt">// customers/customer-form.component.ts</span>
+<span class="ann">@Component</span>({ selector: <span class="str">'app-customer-form'</span>, imports: [<span class="typ">ReactiveFormsModule</span>], templateUrl: <span class="str">'./customer-form.component.html'</span> })
+<span class="kw">export class</span> <span class="typ">CustomerFormComponent</span> {
+  <span class="kw">private readonly</span> fb  = <span class="fn">inject</span>(<span class="typ">NonNullableFormBuilder</span>);     <span class="cmt">// reset() goes back to initial values, not null</span>
+  <span class="kw">private readonly</span> svc = <span class="fn">inject</span>(<span class="typ">CustomerService</span>);
+  saving = <span class="fn">signal</span>(<span class="kw">false</span>);
+
+  form = <span class="kw">this</span>.fb.group({
+    name:  [<span class="str">''</span>, [<span class="typ">Validators</span>.required, <span class="typ">Validators</span>.maxLength(<span class="num">80</span>)]],
+    email: [<span class="str">''</span>, { validators: [<span class="typ">Validators</span>.required, <span class="typ">Validators</span>.email], asyncValidators: [uniqueEmail()], updateOn: <span class="str">'blur'</span> }],
+    gstin: [<span class="str">''</span>, <span class="typ">Validators</span>.pattern(<span class="str">/^[0-9]{2}[A-Z0-9]{13}$/</span>)],
+    address: <span class="kw">this</span>.fb.group({ line1: [<span class="str">''</span>, <span class="typ">Validators</span>.required], pin: [<span class="str">''</span>, <span class="typ">Validators</span>.pattern(<span class="str">/^\d{6}$/</span>)] }),
+    phones: <span class="kw">this</span>.fb.array([<span class="kw">this</span>.fb.control(<span class="str">''</span>)]),            <span class="cmt">// dynamic list of controls</span>
+  }, { validators: [atLeastOneContact] });                      <span class="cmt">// cross-field validator on the group</span>
+
+  <span class="kw">get</span> phones() { <span class="kw">return</span> <span class="kw">this</span>.form.controls.phones; }
+  <span class="fn">addPhone</span>()  { <span class="kw">this</span>.phones.push(<span class="kw">this</span>.fb.control(<span class="str">''</span>)); }
+
+  <span class="fn">submit</span>() {
+    <span class="kw">if</span> (<span class="kw">this</span>.form.invalid) { <span class="kw">this</span>.form.markAllAsTouched(); <span class="kw">return</span>; }   <span class="cmt">// show all errors</span>
+    <span class="kw">this</span>.saving.set(<span class="kw">true</span>);
+    <span class="kw">this</span>.svc.create(<span class="kw">this</span>.form.getRawValue())                   <span class="cmt">// getRawValue(): includes disabled controls, fully typed</span>
+      .pipe(<span class="fn">finalize</span>(() =&gt; <span class="kw">this</span>.saving.set(<span class="kw">false</span>)))
+      .subscribe({
+        next: () =&gt; <span class="kw">this</span>.form.reset(),
+        error: (e: <span class="typ">HttpErrorResponse</span>) =&gt; <span class="kw">this</span>.<span class="fn">applyServerErrors</span>(e),
+      });
+  }
+
+  <span class="cmt">// Map Spring's MethodArgumentNotValidException → { errors: [{ field: "email", message: "must be unique" }] }</span>
+  <span class="kw">private</span> <span class="fn">applyServerErrors</span>(e: <span class="typ">HttpErrorResponse</span>) {
+    <span class="kw">if</span> (e.status !== <span class="num">400</span>) <span class="kw">return</span>;
+    <span class="kw">for</span> (<span class="kw">const</span> err <span class="kw">of</span> e.error?.errors ?? []) {
+      <span class="kw">this</span>.form.get(err.field)?.setErrors({ server: err.message });  <span class="cmt">// field path like "address.pin" works with get()</span>
+    }
+  }
+}
+
+<span class="cmt">// Custom validators: sync (pure function) and async (returns Observable)</span>
+<span class="kw">export const</span> atLeastOneContact: <span class="typ">ValidatorFn</span> = (g) =&gt;
+  g.get(<span class="str">'email'</span>)?.value || g.get(<span class="str">'phones'</span>)?.value?.some((p: <span class="kw">string</span>) =&gt; p) ? <span class="kw">null</span> : { contactRequired: <span class="kw">true</span> };
+
+<span class="kw">export function</span> <span class="fn">uniqueEmail</span>(): <span class="typ">AsyncValidatorFn</span> {
+  <span class="kw">const</span> svc = <span class="fn">inject</span>(<span class="typ">CustomerService</span>);                        <span class="cmt">// factory called in injection context (field init)</span>
+  <span class="kw">return</span> (c) =&gt; svc.emailExists(c.value).pipe(map(exists =&gt; exists ? { taken: <span class="kw">true</span> } : <span class="kw">null</span>), <span class="fn">catchError</span>(() =&gt; of(<span class="kw">null</span>)));
+}</pre>
+<pre><span class="cmt">&lt;!-- customer-form.component.html --&gt;</span>
+&lt;<span class="kw">form</span> [formGroup]=<span class="str">"form"</span> (ngSubmit)=<span class="str">"submit()"</span> novalidate&gt;
+  &lt;<span class="kw">label</span>&gt;Email
+    &lt;<span class="kw">input</span> formControlName=<span class="str">"email"</span> type=<span class="str">"email"</span> autocomplete=<span class="str">"email"</span>
+           [attr.aria-invalid]=<span class="str">"form.controls.email.invalid &amp;&amp; form.controls.email.touched"</span>&gt;
+  &lt;/<span class="kw">label</span>&gt;
+  @let email = form.controls.email;                            <span class="cmt">&lt;!-- @let keeps the template short (v18.1+) --&gt;</span>
+  @if (email.touched &amp;&amp; email.errors; as errs) {
+    &lt;<span class="kw">small</span> class=<span class="str">"err"</span>&gt;
+      @if (errs['required']) { Email is required. }
+      @if (errs['email'])    { Not a valid email. }
+      @if (errs['taken'])    { Already registered. }
+      @if (errs['server'])   { {{ errs['server'] }} }
+    &lt;/<span class="kw">small</span>&gt;
+  }
+  @if (email.pending) { &lt;<span class="kw">small</span>&gt;Checking…&lt;/<span class="kw">small</span>&gt; }
+
+  &lt;<span class="kw">div</span> formGroupName=<span class="str">"address"</span>&gt;&lt;<span class="kw">input</span> formControlName=<span class="str">"line1"</span>&gt;&lt;<span class="kw">input</span> formControlName=<span class="str">"pin"</span>&gt;&lt;/<span class="kw">div</span>&gt;
+
+  &lt;<span class="kw">div</span> formArrayName=<span class="str">"phones"</span>&gt;
+    @for (p of phones.controls; track p; let i = $index) { &lt;<span class="kw">input</span> [formControlName]=<span class="str">"i"</span> type=<span class="str">"tel"</span>&gt; }
+    &lt;<span class="kw">button</span> type=<span class="str">"button"</span> (click)=<span class="str">"addPhone()"</span>&gt;+ phone&lt;/<span class="kw">button</span>&gt;
+  &lt;/<span class="kw">div</span>&gt;
+
+  &lt;<span class="kw">button</span> type=<span class="str">"submit"</span> [disabled]=<span class="str">"saving() || form.pending"</span>&gt;Save&lt;/<span class="kw">button</span>&gt;   <span class="cmt">&lt;!-- NOT [disabled]="form.invalid": users can't see why --&gt;</span>
+&lt;/<span class="kw">form</span>&gt;</pre>
+<table>
+  <thead><tr><th>Control state</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>valid</code> / <code>invalid</code> / <code>pending</code></td><td>Validation result; <code>pending</code> while an async validator runs.</td></tr>
+    <tr><td><code>touched</code> / <code>untouched</code></td><td>User focused and left the field (blur). Show errors only when touched.</td></tr>
+    <tr><td><code>dirty</code> / <code>pristine</code></td><td>Value changed by the user. Use for "unsaved changes?" guards.</td></tr>
+    <tr><td><code>disabled</code></td><td>Excluded from <code>.value</code> and validation; included in <code>getRawValue()</code>.</td></tr>
+    <tr><td><code>valueChanges</code> / <code>statusChanges</code></td><td>Observables; bridge with <code>toSignal(form.valueChanges, { initialValue: form.value })</code> for a live preview.</td></tr>
+    <tr><td><code>setValue</code> / <code>patchValue</code></td><td>Whole shape required / partial update. Load an edit form with <code>patchValue(customer)</code>.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Disabling submit on invalid</td><td><code>[disabled]="form.invalid"</code> — user clicks a dead button with no clue why.</td><td>Allow submit; on invalid, <code>markAllAsTouched()</code> and focus the first error.</td></tr>
+    <tr><td>Errors shown immediately</td><td>Red "required" everywhere on an empty new form.</td><td>Show errors when <code>touched</code> (or after first submit attempt).</td></tr>
+    <tr><td>Untyped <code>FormBuilder</code> / <code>any</code></td><td><code>form.value.emial</code> compiles fine.</td><td><code>NonNullableFormBuilder</code>; let TypeScript infer the shape; <code>FormGroup&lt;{…}&gt;</code> for shared types.</td></tr>
+    <tr><td>Trusting client validation</td><td>Spring endpoint has no <code>@Valid</code>.</td><td>Same rules on the server (<code>@Valid</code> + Bean Validation). Client validation is UX; server validation is correctness.</td></tr>
+    <tr><td>Async validator on every keystroke</td><td>One HTTP call per character.</td><td><code>updateOn: 'blur'</code> on that control, or debounce inside the validator.</td></tr>
+    <tr><td>Mixing <code>ngModel</code> with reactive</td><td><code>[(ngModel)]</code> inside a <code>[formGroup]</code> → warnings and two sources of truth.</td><td>Pick one per form.</td></tr>
+    <tr><td>Big forms as one component</td><td>600-line template.</td><td>Child components with <code>ControlValueAccessor</code> (custom form control) or pass a sub-<code>FormGroup</code> as input.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><strong>Experimental Signal Forms (v21 preview).</strong> Angular is building a signal-first forms API (<code>form(model, schema)</code> with <code>required()</code>, <code>validate()</code> rules and <code>[field]</code> bindings). Keep an eye on it, but ship with typed reactive forms today — they are stable and will stay supported.</div>
+<div class="tricky">
+  <div class="q">Q. <code>form.value</code> is missing the <code>status</code> field in the payload you send to Spring, so the server rejects it. The control exists in the group. What happened?</div>
+  <details><summary>Reveal hint</summary><div class="hint">The control is <code>disabled</code> (perhaps via <code>status.disable()</code> for non-admins). Disabled controls are excluded from <code>value</code> and from validation. Use <code>form.getRawValue()</code> when the server needs all fields, or re-enable before submit. Also remember a disabled control is skipped by validators, so a required-but-disabled field never blocks submit.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 8 ============================= -->
+<h2 id="s8">8. State management and performance (signal stores, NgRx SignalStore, @defer, bundles)</h2>
+<p>Most apps do not need a global state library. Server data belongs to the server; the client keeps a small cache plus UI state. Start with a <strong>signal-based service</strong> per feature. Reach for NgRx SignalStore when many features share state and you want a fixed shape (state / computed / methods) with devtools. Classic NgRx Store (actions/reducers/effects) is for very large teams that want Redux discipline.</p>
+<pre><span class="cmt">// orders/orders.store.ts — a plain signal store (no library)</span>
+<span class="ann">@Injectable</span>({ providedIn: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="typ">OrdersStore</span> {
+  <span class="kw">private readonly</span> api = <span class="fn">inject</span>(<span class="typ">OrderService</span>);
+  <span class="cmt">// private writable state</span>
+  <span class="kw">private readonly</span> state = <span class="fn">signal</span>&lt;{ items: <span class="typ">Order</span>[]; status: <span class="str">'idle'</span>|<span class="str">'loading'</span>|<span class="str">'error'</span>; filter: <span class="kw">string</span> }&gt;({ items: [], status: <span class="str">'idle'</span>, filter: <span class="str">''</span> });
+  <span class="cmt">// public read-only selectors</span>
+  <span class="kw">readonly</span> items   = <span class="fn">computed</span>(() =&gt; <span class="kw">this</span>.state().items);
+  <span class="kw">readonly</span> loading = <span class="fn">computed</span>(() =&gt; <span class="kw">this</span>.state().status === <span class="str">'loading'</span>);
+  <span class="kw">readonly</span> visible = <span class="fn">computed</span>(() =&gt; { <span class="kw">const</span> f = <span class="kw">this</span>.state().filter.toLowerCase(); <span class="kw">return</span> <span class="kw">this</span>.items().filter(o =&gt; o.customer.toLowerCase().includes(f)); });
+  <span class="cmt">// commands</span>
+  <span class="fn">setFilter</span>(filter: <span class="kw">string</span>) { <span class="kw">this</span>.state.update(s =&gt; ({ ...s, filter })); }
+  <span class="fn">load</span>() {
+    <span class="kw">this</span>.state.update(s =&gt; ({ ...s, status: <span class="str">'loading'</span> }));
+    <span class="kw">this</span>.api.list().subscribe({
+      next:  items =&gt; <span class="kw">this</span>.state.update(s =&gt; ({ ...s, items, status: <span class="str">'idle'</span> })),
+      error: ()    =&gt; <span class="kw">this</span>.state.update(s =&gt; ({ ...s, status: <span class="str">'error'</span> })),
+    });
+  }
+  <span class="fn">ship</span>(id: <span class="kw">number</span>) {   <span class="cmt">// optimistic update + rollback</span>
+    <span class="kw">const</span> before = <span class="kw">this</span>.state();
+    <span class="kw">this</span>.state.update(s =&gt; ({ ...s, items: s.items.map(o =&gt; o.id === id ? { ...o, status: <span class="str">'SHIPPED'</span> } : o) }));
+    <span class="kw">this</span>.api.ship(id).subscribe({ error: () =&gt; <span class="kw">this</span>.state.set(before) });
+  }
+}
+
+<span class="cmt">// Same thing with @ngrx/signals SignalStore — fixed shape, less boilerplate, devtools, rxMethod for streams</span>
+<span class="kw">export const</span> <span class="typ">OrdersStore</span> = <span class="fn">signalStore</span>(
+  { providedIn: <span class="str">'root'</span> },
+  <span class="fn">withState</span>({ items: [] <span class="kw">as</span> <span class="typ">Order</span>[], status: <span class="str">'idle'</span> <span class="kw">as</span> <span class="typ">Status</span>, filter: <span class="str">''</span> }),
+  <span class="fn">withComputed</span>(({ items, filter }) =&gt; ({
+    visible: <span class="fn">computed</span>(() =&gt; items().filter(o =&gt; o.customer.toLowerCase().includes(filter().toLowerCase()))),
+  })),
+  <span class="fn">withMethods</span>((store, api = <span class="fn">inject</span>(<span class="typ">OrderService</span>)) =&gt; ({
+    setFilter(filter: <span class="kw">string</span>) { <span class="fn">patchState</span>(store, { filter }); },
+    load: <span class="fn">rxMethod</span>&lt;<span class="kw">void</span>&gt;(<span class="fn">pipe</span>(
+      <span class="fn">tap</span>(() =&gt; <span class="fn">patchState</span>(store, { status: <span class="str">'loading'</span> })),
+      <span class="fn">switchMap</span>(() =&gt; api.list().pipe(<span class="fn">tapResponse</span>({
+        next:  items =&gt; <span class="fn">patchState</span>(store, { items, status: <span class="str">'idle'</span> }),
+        error: ()    =&gt; <span class="fn">patchState</span>(store, { status: <span class="str">'error'</span> }),
+      }))),
+    )),
+  })),
+  <span class="fn">withHooks</span>({ onInit(store) { store.load(); } }),
+);</pre>
+<pre><span class="cmt">&lt;!-- @defer: lazy-load a heavy component's code AND delay rendering until a trigger --&gt;</span>
+@defer (on viewport; prefetch on idle) {
+  &lt;app-sales-chart [data]="chartData()" /&gt;          <span class="cmt">&lt;!-- chart library chunk downloads only when scrolled into view --&gt;</span>
+} @placeholder (minimum 300ms) {
+  &lt;div class="skeleton"&gt;&lt;/div&gt;
+} @loading { &lt;spinner /&gt; } @error { &lt;p&gt;Chart failed to load.&lt;/p&gt; }
+<span class="cmt">&lt;!-- triggers: on idle (default) | viewport | interaction | hover | immediate | timer(2s) | when expr --&gt;</span></pre>
+<table>
+  <thead><tr><th>Performance lever</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><code>OnPush</code> everywhere / zoneless</td><td>Stops wasted re-checks (Section 3). Biggest runtime win.</td></tr>
+    <tr><td>Lazy routes + <code>@defer</code></td><td>Smaller initial bundle → faster first paint. Target initial JS &lt; 500 kB (budgets in <code>angular.json</code>).</td></tr>
+    <tr><td><code>track</code> keys in <code>@for</code></td><td>Reuses DOM rows on reorder/update instead of recreating.</td></tr>
+    <tr><td><code>@angular/cdk/scrolling</code> virtual scroll</td><td>Render only visible rows of a 10k-row list.</td></tr>
+    <tr><td><code>NgOptimizedImage</code> (<code>ngSrc</code>)</td><td>Lazy loading, srcset, priority hints for images.</td></tr>
+    <tr><td>Pure pipes / <code>computed</code> instead of methods</td><td>Memoised; recompute only when inputs change.</td></tr>
+    <tr><td>SSR + hydration (<code>ng add @angular/ssr</code>, <code>provideClientHydration()</code>)</td><td>HTML from the server for first paint and SEO; incremental hydration with <code>@defer (hydrate on …)</code> (v19+).</td></tr>
+    <tr><td>Bundle analysis</td><td><code>ng build --stats-json</code> → <code>npx esbuild-visualizer</code> / source-map-explorer. Find the 1 MB moment.js you did not mean to ship.</td></tr>
+    <tr><td>Web Workers</td><td><code>ng g web-worker</code> for CPU-heavy parsing/sorting off the main thread.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Redux for a 5-page app</td><td>Actions, reducers, effects, selectors for a form and a list.</td><td>A signal service. Add SignalStore when sharing grows; add classic Store only with a clear reason.</td></tr>
+    <tr><td>Copying server data into state everywhere</td><td>Three components each hold their own copy of the orders list → drift.</td><td>One owner (store/service); components read via computed selectors.</td></tr>
+    <tr><td>Public writable signals</td><td><code>readonly items = signal([])</code> — anyone can <code>set()</code> from anywhere.</td><td>Private writable + public <code>asReadonly()</code>/<code>computed</code>; change through methods.</td></tr>
+    <tr><td>Importing a whole library</td><td><code>import * as _ from 'lodash'</code>; full Angular Material in the root.</td><td>Import what you use (<code>lodash-es/debounce</code>); Material components per standalone component.</td></tr>
+    <tr><td>Ignoring the budget warning</td><td>"initial exceeded maximum budget" scrolls by in CI for a year.</td><td>Make budgets fail the build; investigate each jump.</td></tr>
+    <tr><td>Deep-copying state on every read</td><td><code>JSON.parse(JSON.stringify(...))</code> in a <code>computed</code>.</td><td>Immutable updates with spread; derive, don't copy.</td></tr>
+  </tbody>
+</table>
+<div class="tips"><strong>Where does state live? (decision ladder)</strong> URL (filters, page, selected id — shareable, survives refresh) → component signal (local UI: open/closed) → feature store service (list cache, selection shared by siblings) → root store (current user, feature flags, cart). Push state as low as possible; promote only when two unrelated components need it.</div>
+<div class="tricky">
+  <div class="q">Q. Lighthouse says the initial bundle is 2.1 MB although every feature is lazy loaded. The route table looks right. What is the usual culprit?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Something eager imports a heavy module: a shared component used in the root layout that pulls in Angular Material + a chart lib; a barrel file (<code>index.ts</code>) that re-exports everything so one import drags the whole feature; or <code>app.config.ts</code> providers importing feature code. Run <code>ng build --stats-json</code> and open the visualiser — the chunk graph shows exactly which import path put the library into <code>main.js</code>. Fix: move it behind a lazy route or <code>@defer</code>, and avoid barrel files across feature boundaries.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 9 ============================= -->
+<h2 id="s9">9. Testing (Vitest / Jest unit tests, TestBed, HttpTestingController, Playwright e2e)</h2>
+<p>Same pyramid as the backend: many fast unit tests (pure functions, services with a fake HTTP layer, components with <code>TestBed</code>), a few integration tests, a handful of end-to-end flows in a real browser. Angular 20 makes <strong>Vitest</strong> the default runner (<code>@angular/build:unit-test</code>); Karma is deprecated. Jest is also fine. The test API (<code>describe/it/expect</code>) is the same.</p>
+<pre><span class="cmt">// order.service.spec.ts — service test with a fake backend (like MockMvc + @MockBean, inverted)</span>
+<span class="fn">describe</span>(<span class="str">'OrderService'</span>, () =&gt; {
+  <span class="kw">let</span> svc: <span class="typ">OrderService</span>; <span class="kw">let</span> http: <span class="typ">HttpTestingController</span>;
+
+  <span class="fn">beforeEach</span>(() =&gt; {
+    <span class="typ">TestBed</span>.configureTestingModule({ providers: [<span class="fn">provideHttpClient</span>(), <span class="fn">provideHttpClientTesting</span>()] });
+    svc  = <span class="typ">TestBed</span>.inject(<span class="typ">OrderService</span>);
+    http = <span class="typ">TestBed</span>.inject(<span class="typ">HttpTestingController</span>);
+  });
+  <span class="fn">afterEach</span>(() =&gt; http.<span class="fn">verify</span>());                             <span class="cmt">// fail if a request was made that no test expected</span>
+
+  <span class="fn">it</span>(<span class="str">'lists orders with paging params'</span>, () =&gt; {
+    <span class="kw">let</span> result: <span class="typ">Page</span>&lt;<span class="typ">Order</span>&gt; | <span class="kw">undefined</span>;
+    svc.list(<span class="num">1</span>, <span class="num">10</span>).subscribe(r =&gt; result = r);
+    <span class="kw">const</span> req = http.<span class="fn">expectOne</span>(r =&gt; r.url === <span class="str">'/api/orders'</span> &amp;&amp; r.params.get(<span class="str">'page'</span>) === <span class="str">'1'</span>);
+    <span class="fn">expect</span>(req.request.method).toBe(<span class="str">'GET'</span>);
+    req.<span class="fn">flush</span>({ content: [{ id: <span class="num">1</span> }], totalElements: <span class="num">1</span> });   <span class="cmt">// respond</span>
+    <span class="fn">expect</span>(result?.content.length).toBe(<span class="num">1</span>);
+  });
+
+  <span class="fn">it</span>(<span class="str">'maps 404 to an error'</span>, () =&gt; {
+    <span class="kw">let</span> err: <span class="typ">HttpErrorResponse</span> | <span class="kw">undefined</span>;
+    svc.get(<span class="num">9</span>).subscribe({ error: e =&gt; err = e });
+    http.expectOne(<span class="str">'/api/orders/9'</span>).flush({ detail: <span class="str">'not found'</span> }, { status: <span class="num">404</span>, statusText: <span class="str">'Not Found'</span> });
+    <span class="fn">expect</span>(err?.status).toBe(<span class="num">404</span>);
+  });
+});
+
+<span class="cmt">// order-card.component.spec.ts — component test: inputs in, DOM + outputs out</span>
+<span class="fn">describe</span>(<span class="str">'OrderCardComponent'</span>, () =&gt; {
+  <span class="kw">let</span> fixture: <span class="typ">ComponentFixture</span>&lt;<span class="typ">OrderCardComponent</span>&gt;;
+
+  <span class="fn">beforeEach</span>(<span class="kw">async</span> () =&gt; {
+    <span class="kw">await</span> <span class="typ">TestBed</span>.configureTestingModule({
+      imports: [<span class="typ">OrderCardComponent</span>],                                 <span class="cmt">// standalone: import it</span>
+      providers: [<span class="fn">provideZonelessChangeDetection</span>(), { provide: <span class="typ">OrderService</span>, useValue: { ship: vi.fn(() =&gt; of(<span class="kw">void</span> <span class="num">0</span>)) } }],
+    }).compileComponents();
+    fixture = <span class="typ">TestBed</span>.createComponent(<span class="typ">OrderCardComponent</span>);
+    fixture.componentRef.<span class="fn">setInput</span>(<span class="str">'order'</span>, { id: <span class="num">7</span>, status: <span class="str">'OPEN'</span>, total: <span class="num">250</span>, lines: [] }); <span class="cmt">// signal inputs need setInput</span>
+    <span class="kw">await</span> fixture.<span class="fn">whenStable</span>();                                     <span class="cmt">// zoneless: let the scheduler render</span>
+  });
+
+  <span class="fn">it</span>(<span class="str">'renders the id and emits ship on click'</span>, <span class="kw">async</span> () =&gt; {
+    <span class="kw">const</span> el: <span class="typ">HTMLElement</span> = fixture.nativeElement;
+    <span class="fn">expect</span>(el.querySelector(<span class="str">'h3'</span>)?.textContent).toContain(<span class="str">'#7'</span>);
+    <span class="kw">const</span> emitted: <span class="kw">number</span>[] = [];
+    fixture.componentInstance.ship.subscribe(id =&gt; emitted.push(id));
+    el.querySelector&lt;<span class="typ">HTMLButtonElement</span>&gt;(<span class="str">'button'</span>)!.click();
+    <span class="kw">await</span> fixture.whenStable();
+    <span class="fn">expect</span>(emitted).toEqual([<span class="num">7</span>]);
+  });
+});
+
+<span class="cmt">// Pure logic needs no TestBed at all</span>
+<span class="fn">it</span>(<span class="str">'computes total'</span>, () =&gt; <span class="fn">expect</span>(<span class="fn">lineTotal</span>({ qty: <span class="num">2</span>, price: <span class="num">99</span> })).toBe(<span class="num">198</span>));</pre>
+<pre><span class="cmt">// e2e/orders.spec.ts — Playwright against ng serve (or the built app behind NGINX) + a stubbed or real Spring API</span>
+<span class="kw">import</span> { test, expect } <span class="kw">from</span> <span class="str">'@playwright/test'</span>;
+<span class="fn">test</span>(<span class="str">'user ships an order'</span>, <span class="kw">async</span> ({ page }) =&gt; {
+  <span class="kw">await</span> page.route(<span class="str">'**/api/orders*'</span>, r =&gt; r.fulfill({ json: { content: [{ id: <span class="num">7</span>, status: <span class="str">'OPEN'</span>, total: <span class="num">250</span>, lines: [] }] } })); <span class="cmt">// stub API</span>
+  <span class="kw">await</span> page.goto(<span class="str">'/orders'</span>);
+  <span class="kw">await</span> page.getByRole(<span class="str">'button'</span>, { name: <span class="str">'Ship'</span> }).click();
+  <span class="kw">await</span> <span class="fn">expect</span>(page.getByText(<span class="str">'Shipped'</span>)).toBeVisible();
+});
+<span class="cmt">// package.json: "test": "ng test --watch=false", "e2e": "playwright test"   → both run in CI (Section 10)</span></pre>
+<table>
+  <thead><tr><th>Tool</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td><code>TestBed</code></td><td>Builds a mini DI context for a test (like <code>@SpringBootTest</code> with a tiny config). <code>TestBed.inject(X)</code>, <code>createComponent</code>, <code>overrideProvider</code>.</td></tr>
+    <tr><td><code>ComponentFixture</code></td><td>Handle to the component: <code>componentInstance</code>, <code>nativeElement</code>, <code>debugElement.query(By.css(...))</code>, <code>setInput</code>, <code>whenStable()</code>, <code>detectChanges()</code>.</td></tr>
+    <tr><td><code>provideHttpClientTesting</code> + <code>HttpTestingController</code></td><td>Intercepts all HTTP; you assert requests and flush responses. No network.</td></tr>
+    <tr><td><code>provideRouter([])</code> + <code>RouterTestingHarness</code></td><td>Navigate to a route in a test and get the activated component.</td></tr>
+    <tr><td><code>vi.fn()</code> / <code>jest.fn()</code> · <code>useValue</code> fakes</td><td>Stub collaborators (like Mockito). Prefer small hand-written fakes for services with state.</td></tr>
+    <tr><td><code>fakeAsync</code> / <code>tick()</code> · <code>vi.useFakeTimers()</code></td><td>Control time for debounce/timers. <code>fakeAsync</code> depends on zone.js — in zoneless tests use the runner's fake timers.</td></tr>
+    <tr><td>Component harnesses (<code>@angular/cdk/testing</code>)</td><td>Stable test API for Material components (<code>MatButtonHarness</code>) instead of CSS selectors.</td></tr>
+    <tr><td>Playwright / Cypress</td><td>Real-browser e2e; <code>page.route()</code> to stub the API, or hit a Testcontainers-backed Spring instance for full-stack tests.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Testing implementation</td><td><code>expect(component.items.length).toBe(3)</code> only.</td><td>Assert what the user sees: rendered rows, button state, emitted outputs. Internals change; behaviour is the contract.</td></tr>
+    <tr><td>Real HTTP in unit tests</td><td>Tests hit <code>localhost:8080</code>; CI fails when the backend is down.</td><td><code>HttpTestingController</code>; e2e is the place for real calls.</td></tr>
+    <tr><td>Forgetting <code>whenStable</code>/<code>detectChanges</code></td><td>Assert right after <code>setInput</code>; DOM still old.</td><td><code>await fixture.whenStable()</code> (zoneless) or <code>fixture.detectChanges()</code> (zone) before asserting.</td></tr>
+    <tr><td>Giant <code>beforeEach</code> with 15 mocks</td><td>Component under test depends on everything.</td><td>Smell: split the component; dumb components need no providers at all.</td></tr>
+    <tr><td>Brittle selectors in e2e</td><td><code>page.locator('div &gt; div:nth-child(3) &gt; button')</code>.</td><td><code>getByRole</code>, <code>getByLabel</code>, <code>getByTestId</code>. Accessible markup makes tests stable.</td></tr>
+    <tr><td>Skipping tests to go green</td><td><code>xit(...)</code> piles up.</td><td>Fix or delete. Coverage threshold in CI (e.g. 80% lines) stops the slide.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. A test fails with "Expected one matching request for criteria 'Match URL: /api/orders', found none" — but the service clearly calls <code>http.get</code>. What is the most common reason?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Nobody subscribed. <code>HttpClient</code> Observables are lazy: <code>svc.list()</code> only builds the request; it is sent when something subscribes (or when <code>toSignal</code>/<code>httpResource</code>/<code>async</code> pipe does it for you). In the test, call <code>.subscribe()</code> on the result (or trigger the component path that does), then <code>expectOne</code>. Second suspect: params/base URL differ from your matcher — use a predicate matcher on <code>r.url</code> and check <code>r.params</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 10 ============================= -->
+<h2 id="s10">10. Build and deploy (environments, budgets, NGINX / Spring static, Docker, CI)</h2>
+<p><code>ng build</code> produces plain static files (<code>index.html</code>, hashed <code>.js</code>/<code>.css</code>, assets) in <code>dist/&lt;app&gt;/browser/</code>. Anything that serves files can host them: NGINX, S3 + CloudFront, or Spring Boot itself from <code>src/main/resources/static</code>. The two rules that matter: <strong>serve <code>index.html</code> for unknown paths</strong> (client-side routing) and <strong>never cache <code>index.html</code></strong> while caching hashed files forever.</p>
+<pre><span class="cmt">// angular.json (excerpt) — production is the default configuration</span>
+<span class="str">"configurations"</span>: {
+  <span class="str">"production"</span>: {
+    <span class="str">"budgets"</span>: [
+      { <span class="str">"type"</span>: <span class="str">"initial"</span>, <span class="str">"maximumWarning"</span>: <span class="str">"500kB"</span>, <span class="str">"maximumError"</span>: <span class="str">"1MB"</span> },
+      { <span class="str">"type"</span>: <span class="str">"anyComponentStyle"</span>, <span class="str">"maximumWarning"</span>: <span class="str">"4kB"</span>, <span class="str">"maximumError"</span>: <span class="str">"8kB"</span> }
+    ],
+    <span class="str">"outputHashing"</span>: <span class="str">"all"</span>,
+    <span class="str">"fileReplacements"</span>: [{ <span class="str">"replace"</span>: <span class="str">"src/environments/environment.ts"</span>, <span class="str">"with"</span>: <span class="str">"src/environments/environment.prod.ts"</span> }]
+  },
+  <span class="str">"development"</span>: { <span class="str">"optimization"</span>: <span class="kw">false</span>, <span class="str">"sourceMap"</span>: <span class="kw">true</span>, <span class="str">"extractLicenses"</span>: <span class="kw">false</span> }
+}
+
+<span class="cmt">// Runtime config instead of build-time: ONE image for all environments (12-factor)</span>
+<span class="cmt">// public/config.json is replaced per environment; loaded before bootstrap via provideAppInitializer (Section 4)</span>
+<span class="kw">export const</span> appConfig: <span class="typ">ApplicationConfig</span> = { providers: [
+  <span class="fn">provideAppInitializer</span>(<span class="kw">async</span> () =&gt; { <span class="kw">const</span> cfg = <span class="fn">inject</span>(<span class="typ">ConfigService</span>); cfg.set(<span class="kw">await</span> (<span class="kw">await</span> fetch(<span class="str">'/config.json'</span>)).json()); }),
+]};</pre>
+<pre><span class="cmt"># nginx.conf — serve the SPA, proxy the API to Spring, cache correctly</span>
+server {
+  listen 80;
+  root /usr/share/nginx/html;
+
+  location /api/ {
+    proxy_pass http://backend:8080;                <span class="cmt"># same origin for the browser → no CORS, cookies just work</span>
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+  location ~* \.(js|css|woff2|png|svg)$ {
+    add_header Cache-Control "public, max-age=31536000, immutable";   <span class="cmt"># hashed names → cache forever</span>
+    try_files $uri =404;
+  }
+  location / {
+    add_header Cache-Control "no-store";           <span class="cmt"># index.html must always be fresh</span>
+    try_files $uri $uri/ /index.html;              <span class="cmt"># deep links /orders/42 → index.html → Angular router</span>
+  }
+  gzip on; gzip_types text/css application/javascript application/json image/svg+xml;
+}</pre>
+<pre><span class="cmt"># Dockerfile — multi-stage: build with Node, ship only static files on NGINX (~25 MB image)</span>
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci                                      <span class="cmt"># reproducible: exact lockfile versions</span>
+COPY . .
+RUN npx ng build --configuration production
+
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist/shop-web/browser /usr/share/nginx/html
+EXPOSE 80</pre>
+<pre><span class="cmt"># .github/workflows/ci.yml — the frontend job (same shape as the Maven job)</span>
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx ng lint
+      - run: npx ng test --watch=false --code-coverage
+      - run: npx ng build                       <span class="cmt"># budgets fail the build here, not in prod</span>
+      - run: npx playwright install --with-deps chromium &amp;&amp; npx playwright test
+      - run: docker build -t registry/shop-web:${{ github.sha }} . &amp;&amp; docker push registry/shop-web:${{ github.sha }}</pre>
+<table>
+  <thead><tr><th>Hosting option</th><th>When</th><th>Watch out</th></tr></thead>
+  <tbody>
+    <tr><td>NGINX container (above)</td><td>Default for Kubernetes / Docker Compose; frontend and backend deploy independently.</td><td>Keep <code>try_files … /index.html</code>; set security headers (CSP, X-Frame-Options).</td></tr>
+    <tr><td>Spring Boot serves the bundle</td><td>Small team, one artifact, one port. Copy <code>dist/*/browser</code> into <code>src/main/resources/static</code> (frontend-maven-plugin or a CI copy step).</td><td>Add a forward controller: unknown non-<code>/api</code> paths → <code>forward:/index.html</code>. Frontend release = backend release.</td></tr>
+    <tr><td>S3 + CloudFront / CDN</td><td>Public apps, global users, cheapest at scale.</td><td>Custom error response 404 → <code>/index.html</code> 200; invalidate <code>index.html</code> on deploy.</td></tr>
+    <tr><td>SSR server (<code>@angular/ssr</code>, Node)</td><td>SEO / first-paint matters (public pages).</td><td>It is now a Node service you must run and scale; <code>fetch</code> on the server needs absolute API URLs.</td></tr>
+  </tbody>
+</table>
+<table class="compare">
+  <thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+  <tbody>
+    <tr><td>Secrets in <code>environment.ts</code></td><td>API keys baked into a public JS bundle.</td><td>The browser is public. Only non-secret config goes to the client; secrets stay in Spring.</td></tr>
+    <tr><td>One build per environment</td><td>dev/stage/prod images differ; "it passed in stage".</td><td>Build once, configure at runtime (<code>config.json</code> mounted by Kubernetes ConfigMap).</td></tr>
+    <tr><td>Caching <code>index.html</code></td><td>CDN caches it a day → users load old <code>index.html</code> pointing at deleted chunks.</td><td><code>no-store</code> on <code>index.html</code>; immutable on hashed assets.</td></tr>
+    <tr><td><code>npm install</code> in CI</td><td>Different dependency tree than the lockfile; slow.</td><td><code>npm ci</code>; commit <code>package-lock.json</code>; pin Node via <code>.nvmrc</code> / <code>engines</code>.</td></tr>
+    <tr><td>Source maps in prod by accident</td><td>Full TypeScript readable in DevTools.</td><td><code>sourceMap: { hidden: true }</code> and upload maps to your error tracker only.</td></tr>
+    <tr><td>Running <code>ng serve</code> in a container as "prod"</td><td>Dev server, no optimisation, memory hungry.</td><td>Always <code>ng build</code> + a static server.</td></tr>
+    <tr><td>No security headers</td><td>Default NGINX, inline-script-friendly.</td><td>Add CSP (Angular is CSP-friendly with <code>ngCspNonce</code>), <code>X-Content-Type-Options</code>, <code>Referrer-Policy</code>, HSTS at the edge.</td></tr>
+  </tbody>
+</table>
+<div class="tricky">
+  <div class="q">Q. The app works at <code>/</code> but every deep link such as <code>/orders/42</code> gives a blank page in production and the console shows <code>main-XYZ.js</code> loaded as <code>text/html</code>. What is wrong?</div>
+  <details><summary>Reveal hint</summary><div class="hint">Two linked mistakes. (1) The server falls back to <code>index.html</code> for <em>every</em> path, including missing JS files, so a wrong asset path returns HTML with status 200 → "Unexpected token &lt;". (2) The assets are requested relative to <code>/orders/</code> because <code>&lt;base href&gt;</code> is wrong or missing. Fix: keep <code>&lt;base href="/"&gt;</code> in <code>index.html</code> (or <code>--base-href /app/</code> when deployed under a sub-path), and make the fallback apply only to non-file paths (<code>try_files $uri $uri/ /index.html</code> with a separate <code>=404</code> rule for static extensions).</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+<!-- ============================= 11 ============================= -->
+<h2 id="s11">11. Legacy AngularJS (1.x) decoder, migration, troubleshooting, quick reference</h2>
+<p><strong>AngularJS</strong> (2010–2021, reached end of life in January 2022) and <strong>Angular</strong> (2016–today) share a name and nothing else. You will still meet 1.x in old intranet apps. This table lets you read it and find the modern equivalent.</p>
+<table>
+  <thead><tr><th>AngularJS 1.x (what you see in old code)</th><th>What it did</th><th>Modern Angular equivalent</th></tr></thead>
+  <tbody>
+    <tr><td><code>angular.module('app', ['ngRoute'])</code></td><td>Registers an app module and its dependencies.</td><td><code>bootstrapApplication(AppComponent, appConfig)</code>; no modules.</td></tr>
+    <tr><td><code>ng-app="app"</code> on <code>&lt;html&gt;</code></td><td>Auto-bootstraps on page load.</td><td><code>main.ts</code> bootstrap; <code>&lt;app-root&gt;</code> in <code>index.html</code>.</td></tr>
+    <tr><td><code>.controller('OrdersCtrl', function($scope, $http) {…})</code></td><td>Controller puts data/functions on <code>$scope</code>; template reads them.</td><td>A component class; template reads class fields/signals. No <code>$scope</code>.</td></tr>
+    <tr><td><code>$scope.orders = …</code>, <code>$scope.$watch</code>, <code>$scope.$apply()</code>, <code>$digest</code></td><td>Dirty-checking loop: after each event every watcher is re-evaluated until stable (the "digest cycle"; max 10 passes).</td><td>Signals / OnPush / zoneless. No digest, no <code>$apply</code>.</td></tr>
+    <tr><td><code>ng-repeat="o in orders track by o.id"</code></td><td>Loop.</td><td><code>@for (o of orders(); track o.id)</code></td></tr>
+    <tr><td><code>ng-if</code>, <code>ng-show</code>/<code>ng-hide</code>, <code>ng-switch</code>, <code>ng-class</code></td><td>Conditionals and classes.</td><td><code>@if</code>, <code>[hidden]</code>/<code>[class.x]</code>, <code>@switch</code>, <code>[class]</code>.</td></tr>
+    <tr><td><code>ng-model="o.qty"</code></td><td>Two-way binding to <code>$scope</code>.</td><td><code>[(ngModel)]</code> (template forms) or <code>formControlName</code> (reactive).</td></tr>
+    <tr><td><code>ng-click="ship(o)"</code>, <code>ng-submit</code>, <code>ng-change</code></td><td>Event handlers.</td><td><code>(click)="ship(o)"</code>, <code>(ngSubmit)</code>, <code>(change)</code>/<code>valueChanges</code>.</td></tr>
+    <tr><td><code>ng-bind="o.name"</code> / <code>{{ o.name }}</code> + <code>ng-cloak</code></td><td>Text binding; cloak hides raw <code>{{ }}</code> before compile.</td><td><code>{{ o.name }}</code>; no flash because templates are compiled ahead of time.</td></tr>
+    <tr><td><code>.service(...)</code>, <code>.factory(...)</code>, <code>.provider(...)</code>, <code>.value</code>, <code>.constant</code></td><td>Five ways to register an injectable.</td><td><code>@Injectable</code> class or <code>InjectionToken</code>. One way.</td></tr>
+    <tr><td><code>$http.get(url).then(res =&gt; res.data)</code></td><td>Promise-based HTTP; body under <code>.data</code>.</td><td><code>HttpClient.get&lt;T&gt;()</code> → Observable of the body.</td></tr>
+    <tr><td><code>$q.defer()</code>, <code>$q.all</code>, <code>$timeout</code>, <code>$interval</code></td><td>Promise helpers that also trigger a digest.</td><td>Native Promise/RxJS; signals trigger rendering.</td></tr>
+    <tr><td><code>.directive('myWidget', () =&gt; ({ restrict: 'E', scope: { item: '=' }, link, templateUrl }))</code></td><td>Custom element with isolate scope (<code>=</code> two-way, <code>@</code> string, <code>&amp;</code> callback).</td><td>A component with <code>input()</code> / <code>output()</code>. Attribute directives remain directives.</td></tr>
+    <tr><td><code>.component('orderCard', { bindings: { order: '&lt;', onShip: '&amp;' }, controller, template })</code> (1.5+)</td><td>Component-ish directive with one-way <code>&lt;</code> binding — the migration stepping stone.</td><td>Direct 1:1 with a standalone component.</td></tr>
+    <tr><td><code>.filter('inr', …)</code> · <code>{{ x | inr }}</code></td><td>Template transform.</td><td>Pipe.</td></tr>
+    <tr><td><code>$routeProvider.when('/orders/:id', {…})</code> / ui-router <code>$stateProvider</code></td><td>Routing.</td><td><code>Routes</code> array + <code>provideRouter</code>.</td></tr>
+    <tr><td><code>$rootScope.$broadcast('event')</code> / <code>$on</code></td><td>Global event bus.</td><td>Shared service with a signal or Subject. No global bus.</td></tr>
+    <tr><td><code>$injector</code>, <code>$compile</code>, <code>$parse</code>, <code>$sce.trustAsHtml</code></td><td>Runtime compiler and sanitiser.</td><td>AOT compile at build; <code>DomSanitizer</code> (rarely needed).</td></tr>
+    <tr><td><code>bower.json</code>, <code>grunt</code>/<code>gulp</code>, script tags in order</td><td>Build tooling of the era.</td><td><code>npm</code> + Angular CLI (esbuild).</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Migration path (1.x → modern)</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>1. Refactor 1.x to <code>.component()</code> + one-way bindings + ES modules + TypeScript</td><td>Removes <code>$scope</code> soup first; already a big quality win on the old stack.</td></tr>
+    <tr><td>2. Hybrid with <code>@angular/upgrade</code> (<code>UpgradeModule</code>, <code>downgradeComponent</code>)</td><td>Both frameworks run on one page; migrate component by component. Costs two bundles and two change-detection systems meanwhile — keep the window short.</td></tr>
+    <tr><td>3. Or strangler pattern by route</td><td>New routes in a new Angular app behind the same NGINX; old 1.x app shrinks until deleted. Simpler than hybrid when features are route-separable.</td></tr>
+    <tr><td>4. Never "big-bang rewrite in secret"</td><td>Six months with no release is the classic failure. Ship each migrated route.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Error / symptom</th><th>Usual cause → fix</th></tr></thead>
+  <tbody>
+    <tr><td><code>NG0303: Can't bind to 'x' since it isn't a known property</code> · <code>'app-x' is not a known element</code></td><td>Child component/directive not in this component's <code>imports</code> (or <code>FormsModule</code> missing for <code>ngModel</code>).</td></tr>
+    <tr><td><code>NG0201 / NullInjectorError: No provider for X</code></td><td>Missing <code>provideHttpClient()</code>/<code>provideRouter()</code>; interface used as token; service provided in a lazy scope you are outside of.</td></tr>
+    <tr><td><code>NG0203: inject() must be called from an injection context</code></td><td><code>inject()</code> in a callback/timer. Move to a field initialiser or <code>runInInjectionContext</code>.</td></tr>
+    <tr><td><code>NG0100: ExpressionChangedAfterItHasBeenChecked</code></td><td>State mutated during rendering (in a getter, child setting parent state in <code>ngOnInit</code>). Model it as a signal; set it before render or in an effect.</td></tr>
+    <tr><td><code>NG0600: Writing to signals is not allowed in a computed or an effect</code></td><td>Derive with <code>computed</code>; move writes out of the effect.</td></tr>
+    <tr><td><code>NG0950: Input is required but no value is available yet</code></td><td>Read a required input in the constructor. Read it in <code>ngOnInit</code>, a <code>computed</code>, or the template.</td></tr>
+    <tr><td><code>NG0955 / NG0956: track expression resulted in duplicated / recreated keys</code></td><td><code>track</code> returns non-unique or changing values. Track a stable id.</td></tr>
+    <tr><td><code>NG8002: Can't bind to 'formGroup'</code></td><td>Import <code>ReactiveFormsModule</code>.</td></tr>
+    <tr><td>Blank page, console <code>Unexpected token '&lt;'</code></td><td>Server returned <code>index.html</code> for a JS file: bad <code>base href</code> or over-broad fallback (Section 10).</td></tr>
+    <tr><td>HTTP status 0 / "CORS error"</td><td>Preflight blocked or server down. Fix CORS on Spring; use the dev proxy (Section 6).</td></tr>
+    <tr><td>View does not update after data changes</td><td>Mutation instead of a new reference; signal set outside tracking; missing subscribe. Sections 2–3.</td></tr>
+    <tr><td><code>ChunkLoadError</code> after deploy</td><td>Stale <code>index.html</code>; reload on <code>NavigationError</code>; <code>no-store</code> on index (Sections 5, 10).</td></tr>
+    <tr><td>Memory grows while navigating</td><td>Manual subscriptions never ended (<code>interval</code>, websockets, <code>valueChanges</code>). <code>takeUntilDestroyed()</code>.</td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Quick reference</th><th>Snippet</th></tr></thead>
+  <tbody>
+    <tr><td>New component</td><td><code>@Component({ selector, imports: [], changeDetection: OnPush, template })</code> · <code>input()</code> / <code>input.required()</code> / <code>output()</code> / <code>model()</code> / <code>viewChild()</code></td></tr>
+    <tr><td>Reactivity</td><td><code>signal(v)</code> · <code>.set()</code> / <code>.update()</code> · <code>computed(() =&gt; …)</code> · <code>effect(() =&gt; …)</code> · <code>linkedSignal</code> · <code>toSignal</code> / <code>toObservable</code> · <code>resource</code> / <code>httpResource</code></td></tr>
+    <tr><td>Template</td><td><code>{{ }}</code> · <code>[prop]</code> · <code>(event)</code> · <code>[(model)]</code> · <code>@if/@else</code> · <code>@for … track</code> · <code>@switch</code> · <code>@defer</code> · <code>@let</code> · <code>| pipe</code> · <code>#ref</code> · <code>&lt;ng-content&gt;</code></td></tr>
+    <tr><td>DI</td><td><code>@Injectable({ providedIn: 'root' })</code> · <code>inject(X)</code> · <code>InjectionToken</code> · <code>useValue/useClass/useFactory/useExisting</code> · route/component <code>providers</code></td></tr>
+    <tr><td>Router</td><td><code>provideRouter(routes, withComponentInputBinding())</code> · <code>loadChildren</code> / <code>loadComponent</code> · <code>canMatch</code> / <code>canActivate</code> / <code>canDeactivate</code> · <code>resolve</code> · <code>routerLink</code> · <code>router.navigate</code></td></tr>
+    <tr><td>HTTP</td><td><code>provideHttpClient(withInterceptors([…]))</code> · <code>http.get&lt;T&gt;(url, { params })</code> · <code>HttpInterceptorFn</code> · <code>req.clone({ setHeaders })</code> · <code>catchError</code> / <code>retry</code> / <code>switchMap</code> / <code>takeUntilDestroyed</code></td></tr>
+    <tr><td>Forms</td><td><code>inject(NonNullableFormBuilder).group({…})</code> · <code>Validators.*</code> · <code>formControlName</code> · <code>markAllAsTouched()</code> · <code>getRawValue()</code> · <code>setErrors({ server })</code></td></tr>
+    <tr><td>Test</td><td><code>TestBed.configureTestingModule({ imports, providers })</code> · <code>fixture.componentRef.setInput</code> · <code>await fixture.whenStable()</code> · <code>HttpTestingController.expectOne().flush()</code></td></tr>
+    <tr><td>CLI</td><td><code>ng serve --proxy-config proxy.conf.json</code> · <code>ng g c|s|guard|interceptor</code> · <code>ng build</code> · <code>ng test --watch=false</code> · <code>ng update</code> · <code>ng g @angular/core:control-flow|signals</code></td></tr>
+  </tbody>
+</table>
+<div class="tips"><strong>Seven rules that cover 90% of Angular code review.</strong> (1) Standalone components, <code>OnPush</code>, no NgModules. (2) State in signals; derive with <code>computed</code>; never mutate in place. (3) <code>inject()</code> fields, services for shared state, components for views. (4) Lazy routes per feature; route params as inputs. (5) No manual <code>subscribe</code> without <code>takeUntilDestroyed</code>; prefer <code>toSignal</code>/<code>httpResource</code>/<code>async</code>. (6) Typed reactive forms; validate on the server too. (7) Build once, configure at runtime, serve <code>index.html</code> fallback, cache hashed assets forever.</div>
+<div class="tricky">
+  <div class="q">Q. Interviewer: "Explain change detection in Angular — then and now — in two minutes."</div>
+  <details><summary>Reveal hint</summary><div class="hint"><strong>Then (AngularJS):</strong> dirty checking — after any event the digest loop re-evaluates every <code>$watch</code> until nothing changes; slow with thousands of bindings. <strong>Angular with zone.js:</strong> zone.js monkey-patches browser async APIs so Angular knows "something happened", then walks the component tree top-down comparing bound values; <code>OnPush</code> skips subtrees whose inputs (by reference) and events have not changed. <strong>Now (signals, zoneless):</strong> templates read signals, so Angular knows exactly which components depend on which state; a <code>set()</code> marks only those for re-render and the scheduler batches the work — no zone.js, no tree walk, no guessing. Mention the migration path: adopt <code>OnPush</code> + signals today, then flip <code>provideZonelessChangeDetection()</code>.</div></details>
+</div>
+<a class="back-top" href="#top">↑ Back to top</a>
+
+</div><!-- /.wrap -->
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Build the Table of Contents and the slide-in menu from every <h2 id> ----
+  var heads = Array.prototype.slice.call(document.querySelectorAll(".wrap h2[id]"));
+  var toc = document.getElementById("toc");
+  var menuLinks = document.getElementById("menuLinks");
+  heads.forEach(function (h) {
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    toc.appendChild(a);
+
+    var m = document.createElement("a");
+    m.href = "#" + h.id;
+    m.textContent = h.textContent;
+    m.addEventListener("click", closeMenu);
+    menuLinks.appendChild(m);
+  });
+
+  // ---- Theme toggle (light default, saved to localStorage) ----
+  var root = document.documentElement;
+  var themeBtn = document.getElementById("themeToggle");
+  function applyTheme(t) {
+    root.setAttribute("data-theme", t);
+    themeBtn.textContent = (t === "dark") ? "\u2600\uFE0F" : "\uD83C\uDF19";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("angular-theme"); } catch (e) {}
+  applyTheme(saved === "dark" ? "dark" : "light");
+  themeBtn.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("angular-theme", next); } catch (e) {}
+  });
+
+  // ---- Hamburger menu open / close, kept in sync everywhere ----
+  var menu = document.getElementById("menu");
+  var overlay = document.getElementById("overlay");
+  var burger = document.getElementById("hamburger");
+  function openMenu() { menu.classList.add("open"); overlay.classList.add("open"); burger.textContent = "\u2715"; }
+  function closeMenu() { menu.classList.remove("open"); overlay.classList.remove("open"); burger.textContent = "\u2630"; }
+  function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+  burger.addEventListener("click", toggleMenu);
+  overlay.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+
+  // ---- Left / Right arrow keys jump between sections (with wrap-around) ----
+  function currentIndex() {
+    var idx = 0, best = Infinity;
+    for (var i = 0; i < heads.length; i++) {
+      var top = Math.abs(heads[i].getBoundingClientRect().top - 76);
+      if (top < best) { best = top; idx = i; }
+    }
+    return idx;
+  }
+  function goTo(i) {
+    var n = heads.length;
+    var t = ((i % n) + n) % n;
+    var h = heads[t];
+    h.scrollIntoView({ behavior: "smooth", block: "start" });
+    h.classList.remove("flash");
+    void h.offsetWidth;      // restart the highlight animation
+    h.classList.add("flash");
+  }
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(currentIndex() + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentIndex() - 1); }
+  });
+})();
+</script>
+</body>
+</html>
