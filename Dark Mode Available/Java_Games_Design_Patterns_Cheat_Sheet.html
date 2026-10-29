@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Java Games Design Patterns — 15 Patterns Cheat Sheet (Hints, Tips, Tricks)</title>
+<style>
+/* ---------- theme variables ---------- */
+html[data-theme="light"]{
+  --page:#e9eef3; --sheet:#ffffff; --text:#1e2a38; --muted:#5b6b7c;
+  --bar:#f1f4f8; --border:#d5dde6; --shadow:rgba(20,40,70,.18);
+  --code-bg:#f6f8fb; --code-text:#1e2a38; --code-border:#d9e1ea;
+  --kw:#0b5fcc; --typ:#0a7c6a; --str:#b3261e; --num:#a05a00; --cmt:#6b7a8a; --ann:#7a3eb1;
+  --wrong-bg:#fdecec; --wrong-txt:#8a1c1c; --right-bg:#e8f6ea; --right-txt:#1b5e20;
+  --tips-bg:#fff8e1; --tips-border:#e0b43a; --tricky-bg:#eef3ff; --tricky-border:#4f7bd9;
+  --trick-bg:#f3e9ff; --trick-border:#9b5de5;
+  --link:#0b5fcc; --flash:#fff3b0; --btn-bg:#ffffff; --btn-txt:#1e2a38; --menu-bg:#ffffff;
+  --th-bg:#e4ebf3;
+}
+html[data-theme="dark"]{
+  --page:#0f1520; --sheet:#182233; --text:#e6edf5; --muted:#a3b1c2;
+  --bar:#212d40; --border:#324257; --shadow:rgba(0,0,0,.55);
+  --code-bg:#0e1626; --code-text:#e6edf5; --code-border:#2b3a50;
+  --kw:#7cb7ff; --typ:#5fd3bc; --str:#ff8a80; --num:#ffc266; --cmt:#8b9bb0; --ann:#c79bff;
+  --wrong-bg:#3a1f22; --wrong-txt:#ffb4ab; --right-bg:#1d3a26; --right-txt:#a9e4b4;
+  --tips-bg:#3a3014; --tips-border:#d4a93a; --tricky-bg:#1c2a46; --tricky-border:#6f9bff;
+  --trick-bg:#2c2040; --trick-border:#b58cff;
+  --link:#7cb7ff; --flash:#4a4a1a; --btn-bg:#212d40; --btn-txt:#e6edf5; --menu-bg:#182233;
+  --th-bg:#263547;
+}
+
+/* ---------- page + sheet ---------- */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--page);color:var(--text);font:14px/1.5 Calibri,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:1180px;margin:28px auto 60px;background:var(--sheet);border-radius:14px;
+  box-shadow:0 10px 30px var(--shadow);padding:34px 44px 40px;position:relative}
+h1{margin:0 0 6px;font-size:30px;border-bottom:5px solid #2f6fed;padding-bottom:8px;display:flex;flex-wrap:wrap;align-items:baseline;gap:14px}
+h1 .sub{font-size:15px;font-weight:normal;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--border);background:var(--bar)}
+.pill.w{background:var(--wrong-bg);color:var(--wrong-txt);border-color:transparent}
+.pill.r{background:var(--right-bg);color:var(--right-txt);border-color:transparent}
+.pill.t{background:var(--tips-bg);border-color:var(--tips-border)}
+.pill.k{background:var(--trick-bg);border-color:var(--trick-border)}
+.pill.q{background:var(--tricky-bg);border-color:var(--tricky-border)}
+
+/* ---------- section bars ---------- */
+h2{--acc:#2f6fed;margin:34px 0 14px;padding:9px 14px;background:var(--bar);border-left:7px solid var(--acc);
+  border-radius:0 8px 8px 0;font-size:20px;scroll-margin-top:70px;transition:background .3s}
+h2 .n{display:inline-block;min-width:30px;height:30px;line-height:30px;text-align:center;border-radius:8px;
+  background:var(--acc);color:#fff;font-size:14px;margin-right:10px}
+h2.flash{background:var(--flash)}
+h3{margin:22px 0 8px;font-size:16px;color:var(--text);border-bottom:2px dotted var(--border);padding-bottom:4px}
+h4{margin:14px 0 6px;font-size:14px}
+p{margin:8px 0}
+.lead{font-size:15px;color:var(--muted)}
+a{color:var(--link)}
+.top{text-align:right;font-size:12px;margin:14px 0 0}
+.top a{text-decoration:none;opacity:.8}
+code{font-family:Consolas,"Courier New",monospace;font-size:.92em;background:var(--code-bg);border:1px solid var(--code-border);border-radius:4px;padding:0 4px}
+
+/* ---------- toc ---------- */
+.toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin:14px 0 6px}
+.toc a{display:block;padding:8px 10px 8px 12px;border-radius:7px;background:var(--bar);text-decoration:none;color:var(--text);
+  border-left:5px solid var(--acc,#2f6fed);font-size:13px}
+.toc a:hover{filter:brightness(.95)}
+.toc a b{color:var(--acc,#2f6fed);margin-right:6px}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;margin:10px 0 14px;font-size:13px;page-break-inside:avoid}
+th,td{border:1px solid var(--border);padding:7px 9px;vertical-align:top;text-align:left}
+th{background:var(--th-bg)}
+tr:nth-child(even) td{background:color-mix(in srgb,var(--bar) 55%,transparent)}
+table.compare td:nth-child(2){background:var(--wrong-bg);color:var(--wrong-txt)}
+table.compare td:nth-child(3){background:var(--right-bg);color:var(--right-txt)}
+table.compare th:nth-child(2){background:var(--wrong-bg);color:var(--wrong-txt)}
+table.compare th:nth-child(3){background:var(--right-bg);color:var(--right-txt)}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;color:#fff;margin-right:3px;white-space:nowrap}
+.tag.c{background:#e07b00}.tag.s{background:#0a7c6a}.tag.b{background:#2f6fed}
+.pri-h{color:#c62828;font-weight:bold}.pri-m{color:#e07b00;font-weight:bold}.pri-l{color:#b58a00;font-weight:bold}
+
+/* ---------- callout boxes ---------- */
+.tips,.tricky,.trick,.warn{border-radius:10px;padding:11px 14px;margin:12px 0;page-break-inside:avoid}
+.tips{background:var(--tips-bg);border:2px dashed var(--tips-border)}
+.trick{background:var(--trick-bg);border:2px solid var(--trick-border)}
+.tricky{background:var(--tricky-bg);border:2px solid var(--tricky-border)}
+.warn{background:var(--wrong-bg);color:var(--wrong-txt);border:2px solid transparent}
+.tips b:first-child,.trick b:first-child,.tricky b:first-child{display:inline-block;margin-bottom:3px}
+details{margin-top:6px}
+summary{cursor:pointer;font-weight:bold;color:var(--link)}
+details[open] summary{margin-bottom:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:860px){.grid2,.grid3{grid-template-columns:1fr}.wrap{padding:24px 18px}}
+.card{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--sheet);page-break-inside:avoid}
+.card h4{margin-top:0}
+.oneliner{font-size:17px;text-align:center;padding:12px;margin:12px 0;border-radius:10px;background:var(--bar);font-weight:bold}
+.arrow{font-family:Consolas,monospace;white-space:pre;line-height:1.45}
+
+/* ---------- code ---------- */
+pre{background:var(--code-bg);color:var(--code-text);border:1px solid var(--code-border);border-left:5px solid var(--kw);
+  border-radius:8px;padding:11px 14px;overflow:auto;font:12.5px/1.5 Consolas,"Courier New",monospace;margin:10px 0;page-break-inside:avoid}
+pre code{background:none;border:0;padding:0;font-size:inherit}
+.kw{color:var(--kw);font-weight:bold}.typ{color:var(--typ)}.str{color:var(--str)}.num{color:var(--num)}
+.cmt{color:var(--cmt);font-style:italic}.ann{color:var(--ann)}
+
+/* ---------- fixed controls ---------- */
+.ham,.theme{position:fixed;top:14px;z-index:60;width:44px;height:44px;border-radius:10px;border:1px solid var(--border);
+  background:var(--btn-bg);color:var(--btn-txt);cursor:pointer;box-shadow:0 4px 12px var(--shadow);display:flex;align-items:center;justify-content:center}
+.ham{left:14px;flex-direction:column;gap:5px}
+.theme{right:14px;font-size:20px}
+.ham span{display:block;width:22px;height:3px;background:var(--btn-txt);border-radius:2px;transition:transform .25s,opacity .25s}
+body.menu-open .ham span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+body.menu-open .ham span:nth-child(2){opacity:0}
+body.menu-open .ham span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+.menu{position:fixed;top:0;left:0;bottom:0;width:320px;max-width:85vw;background:var(--menu-bg);color:var(--text);z-index:55;
+  transform:translateX(-100%);transition:transform .25s;box-shadow:4px 0 20px var(--shadow);padding:70px 14px 20px;overflow-y:auto}
+body.menu-open .menu{transform:translateX(0)}
+.menu a{display:block;padding:8px 10px;border-radius:7px;text-decoration:none;color:var(--text);border-left:4px solid var(--acc,#2f6fed);margin-bottom:5px;background:var(--bar);font-size:13px}
+.menu .mh{font-size:12px;color:var(--muted);margin:0 0 10px 4px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;opacity:0;pointer-events:none;transition:opacity .25s}
+body.menu-open .overlay{opacity:1;pointer-events:auto}
+.keyhint{position:fixed;bottom:12px;right:14px;font-size:11px;color:var(--muted);background:var(--btn-bg);border:1px solid var(--border);border-radius:8px;padding:4px 9px;z-index:40}
+
+/* ---------- print ---------- */
+@page{size:A3;margin:12mm}
+@media print{
+  body{background:#fff}
+  .wrap{box-shadow:none;margin:0;max-width:none;padding:0;border-radius:0}
+  .ham,.theme,.menu,.overlay,.keyhint,.top{display:none!important}
+  h2{break-after:avoid}
+  table,.tips,.tricky,.trick,.card,pre{break-inside:avoid}
+  details summary{display:none}
+  details>*{display:block}
+}
+</style>
+</head>
+<body>
+<a id="top"></a>
+
+<button class="ham" id="hamBtn" aria-label="Open menu" title="Menu"><span></span><span></span><span></span></button>
+<button class="theme" id="themeBtn" aria-label="Switch light or dark" title="Light / dark">🌙</button>
+<nav class="menu" id="menu" aria-label="All sections"><p class="mh">Jump to a section</p><div id="menuList"></div></nav>
+<div class="overlay" id="overlay"></div>
+<div class="keyhint">← / → keys jump between sections</div>
+
+<div class="wrap">
+<h1>Java Games Design Patterns <span class="sub">15 patterns from the book, with hints, tips, tricks and a quiz</span></h1>
+<p class="lead">Based on <i>Java Games Design Patterns: Learning Programming Design Patterns through Games</i> (Yang Hu). The book teaches each pattern with a small plane-shooter game. This sheet keeps the game examples, adds plain-word explanations, short Java code, "wrong vs right" tables, memory tricks and a self-test. Made for Java / Spring Boot interview prep.</p>
+
+<div class="legend">
+  <span class="pill w">Wrong / trap</span>
+  <span class="pill r">Right / best practice</span>
+  <span class="pill t">💡 Tip</span>
+  <span class="pill k">🎯 Trick to remember</span>
+  <span class="pill q">❓ Reveal-hint question</span>
+  <span class="pill"><span class="tag c">C</span>Creational</span>
+  <span class="pill"><span class="tag s">S</span>Structural</span>
+  <span class="pill"><span class="tag b">B</span>Behavioral</span>
+</div>
+
+<h3 style="margin-top:6px">Contents</h3>
+<div class="toc" id="toc"></div>
+
+<div class="tips"><b>💡 How to use this sheet</b><br>
+Read section 1 and 2 first (the map). Then read the pattern sections (4 to 7). Section 8 clears up the look-alike pairs that interviewers love. End with the quiz in section 12. Press the <b>Left / Right arrow keys</b> to move section by section. Click any "Reveal hint" to check yourself. The page prints on A3 with all hints open.</div>
+
+<!-- ============ 1. OVERVIEW ============ -->
+<h2 id="s1" style="--acc:#2f6fed"><span class="n">1</span>The 15 patterns at a glance</h2>
+<p>One row per pattern. Column "Game example" is what the book actually builds. Column "One-line hook" is a short phrase to help you remember the idea fast.</p>
+<table>
+<thead><tr><th>#</th><th>Pattern</th><th>Type</th><th>Core idea (plain words)</th><th>Problem it fixes</th><th>Game example in the book</th><th>One-line hook</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><b>Template Method</b></td><td><span class="tag b">B</span></td><td>Parent class writes the full recipe; child classes fill in some steps</td><td>Reuse one algorithm but allow small changes</td><td><code>Sprite</code> gives <code>draw()</code> and <code>move()</code>; <code>BluePlane</code> inherits them</td><td>"Same recipe, your own steps"</td></tr>
+<tr><td>2</td><td><b>Singleton</b></td><td><span class="tag c">C</span></td><td>Only one object of the class, reachable from anywhere</td><td>Stop many copies of a shared helper</td><td><code>ImageUtil</code> loads plane images</td><td>"There can be only one"</td></tr>
+<tr><td>3</td><td><b>Flyweight</b></td><td><span class="tag s">S</span></td><td>Share heavy data between many small objects</td><td>Stop duplicate copies of big objects</td><td><code>ImageCache</code> shares plane / bullet images</td><td>"Load once, share many"</td></tr>
+<tr><td>4</td><td><b>Builder</b></td><td><span class="tag c">C</span></td><td>Build a complex object step by step, then call <code>build()</code></td><td>Constructors with too many parameters</td><td><code>SelectDialog</code> is set up by a builder</td><td>"Set, set, set, build"</td></tr>
+<tr><td>5</td><td><b>Command</b></td><td><span class="tag b">B</span></td><td>Turn an action into an object</td><td>Sender should not know how the action runs</td><td>Buttons use <code>ActionListener</code> to hold the click action</td><td>"The request is an object"</td></tr>
+<tr><td>6</td><td><b>Factory</b></td><td><span class="tag c">C</span></td><td>Ask a factory for an object; it picks the real class</td><td>Client tied to concrete classes with <code>new</code></td><td><code>SpriteFactory</code> makes <code>BluePlane</code> or <code>RedPlane</code></td><td>"Factory chooses"</td></tr>
+<tr><td>7</td><td><b>Strategy</b></td><td><span class="tag b">B</span></td><td>Swap one algorithm for another at run time</td><td>Change behavior without changing the caller</td><td><code>BluePlane</code> can load different bullet types</td><td>"Plug in a different brain"</td></tr>
+<tr><td>8</td><td><b>Bridge</b></td><td><span class="tag s">S</span></td><td>Keep two independent axes apart; join them by a reference</td><td>Two things vary at once → class explosion</td><td>Planes and bullets vary on their own</td><td>"Two axes, one link"</td></tr>
+<tr><td>9</td><td><b>Iterator</b></td><td><span class="tag b">B</span></td><td>Walk through a collection without knowing how it is stored</td><td>Caller tied to the list's inner shape</td><td>Loop over bullets to draw / move them</td><td>"hasNext / next"</td></tr>
+<tr><td>10</td><td><b>Decorator</b></td><td><span class="tag s">S</span></td><td>Wrap an object to add extras at run time</td><td>Too many subclasses for every combo</td><td>Plane / bullets wrapped with extra movement</td><td>"Wrap to add"</td></tr>
+<tr><td>11</td><td><b>Composite</b></td><td><span class="tag s">S</span></td><td>Tree of parts; treat one item and a group the same way</td><td>Code must special-case "leaf" vs "group"</td><td>Menu and menu-item tree</td><td>"Leaf and branch look alike"</td></tr>
+<tr><td>12</td><td><b>Chain of Responsibility</b></td><td><span class="tag b">B</span></td><td>Pass a request down a line of handlers until one takes it</td><td>Sender should not know who handles it</td><td>Enemy spawning goes through stages: 2 planes → 4 → boss</td><td>"Pass it on"</td></tr>
+<tr><td>13</td><td><b>Observer</b></td><td><span class="tag b">B</span></td><td>When one thing changes, tell all who signed up</td><td>One event, many listeners</td><td>Collision updates score and life observers</td><td>"Subscribe and get told"</td></tr>
+<tr><td>14</td><td><b>Mediator</b></td><td><span class="tag b">B</span></td><td>Objects talk through one middle-man, not to each other</td><td>Everyone knows everyone → a web of links</td><td>Game media / explosion coordination</td><td>"Talk to the hub"</td></tr>
+<tr><td>15</td><td><b>State</b></td><td><span class="tag b">B</span></td><td>Behavior changes when the object's state changes</td><td>Big <code>if (state == ...)</code> blocks</td><td>Scrolling / background state management</td><td>"What do I do in this state?"</td></tr>
+</tbody></table>
+
+<div class="tips"><b>💡 Tip — how the book is built</b><br>
+Early patterns get two chapters each: a "Principle" chapter (small example) and a "Game" chapter (used in the shooter). Later patterns (Chain, Observer, State) only have a game chapter. So if a later pattern feels thin, that is the book, not you. Fill the gap with the plain-word notes in sections 6 and 7 here.</div>
+
+<div class="trick"><b>🎯 Trick — count them by type</b><br>
+3 Creational (Singleton, Factory, Builder) + 4 Structural (Flyweight, Bridge, Decorator, Composite) + 8 Behavioral (the rest) = 15. If an interviewer asks "which type is X?", remember: <b>creating = C, arranging = S, talking / acting = B</b>.</div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 2. THREE FAMILIES ============ -->
+<h2 id="s2" style="--acc:#0a7c6a"><span class="n">2</span>The three families (your mental map)</h2>
+<p>Do not learn 15 separate things. Learn 3 families, then place each pattern inside one.</p>
+<div class="grid3">
+  <div class="card"><h4><span class="tag c">C</span>Creational — "Who makes the object, and how?"</h4>
+    <ul><li><b>Singleton</b> — how many? (one)</li><li><b>Factory</b> — which class? (factory picks)</li><li><b>Builder</b> — how to assemble? (step by step)</li></ul>
+    <p class="lead">Smell to look for: <code>new ConcreteThing(...)</code> spread all over the code.</p></div>
+  <div class="card"><h4><span class="tag s">S</span>Structural — "How do objects fit together?"</h4>
+    <ul><li><b>Flyweight</b> — share heavy parts</li><li><b>Bridge</b> — split two axes</li><li><b>Decorator</b> — wrap to add</li><li><b>Composite</b> — build a tree</li></ul>
+    <p class="lead">Smell to look for: class names that glue two ideas together, like <code>BluePlaneRedBullet</code>.</p></div>
+  <div class="card"><h4><span class="tag b">B</span>Behavioral — "How do objects act and talk?"</h4>
+    <ul><li><b>Template Method, Strategy, State</b> — vary behavior</li><li><b>Command</b> — action as object</li><li><b>Iterator</b> — walk a collection</li><li><b>Chain, Observer, Mediator</b> — who talks to whom</li></ul>
+    <p class="lead">Smell to look for: long <code>if / else</code> or <code>switch</code> on a type or a state.</p></div>
+</div>
+
+<table class="compare">
+<thead><tr><th>Topic</th><th>Wrong way to learn</th><th>Right way to learn</th></tr></thead>
+<tbody>
+<tr><td>Order of study</td><td>Memorize 15 definitions in book order</td><td>Learn the 3 families first, then one pattern at a time inside each family</td></tr>
+<tr><td>UML</td><td>Draw every class diagram by heart</td><td>Know the 2–3 key classes and the one line that joins them (e.g. "Plane holds a Bullet")</td></tr>
+<tr><td>Examples</td><td>Only the game example</td><td>Game example + one backend example (section 10) so you can answer in a Spring interview</td></tr>
+</tbody></table>
+
+<div class="tricky"><b>❓ Quick check</b><br>Which family does <b>Template Method</b> belong to, and why is it not Structural even though it uses inheritance?
+<details><summary>Reveal hint</summary>Behavioral. It is about <i>what the algorithm does</i> and which steps vary, not about how objects are arranged. Inheritance is just the tool it uses.</details></div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 3. PROBLEM FIRST ============ -->
+<h2 id="s3" style="--acc:#9b5de5"><span class="n">3</span>Problem-first thinking (the real skill)</h2>
+<p>The best takeaway from the book: start with the <b>problem</b>, not with the pattern name. Ask the questions below in order and the pattern falls out on its own.</p>
+<div class="grid2">
+<div class="card"><h4>Wrong order</h4><pre class="arrow">Pattern name
+   ↓
+memorize definition
+   ↓
+memorize UML
+   ↓
+write code</pre></div>
+<div class="card"><h4>Right order</h4><pre class="arrow">PROBLEM
+   ↓
+What is changing?
+   ↓
+What is coupled (stuck together)?
+   ↓
+What should be kept apart?
+   ↓
+Which pattern gives that split?
+   ↓
+What does it cost me?</pre></div>
+</div>
+
+<h3>Problem → pattern lookup</h3>
+<table>
+<thead><tr><th>The problem I have</th><th>Think about</th><th>Ask yourself</th></tr></thead>
+<tbody>
+<tr><td>Reuse one algorithm but change a few steps</td><td><b>Template Method</b></td><td>"Is the big picture fixed while some steps vary?"</td></tr>
+<tr><td>Control how objects are made</td><td><b>Singleton, Factory, Builder</b></td><td>"Who should create this, and how hard is creation?"</td></tr>
+<tr><td>Cut memory / duplicate data</td><td><b>Flyweight</b></td><td>"Do many objects carry the same heavy data?"</td></tr>
+<tr><td>Change behavior at run time</td><td><b>Strategy, State, Decorator</b></td><td>"Is the behavior swappable, state-driven, or an add-on?"</td></tr>
+<tr><td>Separate an action from running it</td><td><b>Command</b></td><td>"Can this request be an object?"</td></tr>
+<tr><td>Two things vary independently</td><td><b>Bridge</b></td><td>"Do both sides need to grow on their own?"</td></tr>
+<tr><td>Walk through items</td><td><b>Iterator</b></td><td>"Can I loop without knowing the inner storage?"</td></tr>
+<tr><td>Tree-shaped data</td><td><b>Composite</b></td><td>"Do objects contain objects of the same kind?"</td></tr>
+<tr><td>Many possible handlers for one request</td><td><b>Chain of Responsibility</b></td><td>"Which object should handle this?"</td></tr>
+<tr><td>Tell many objects about one event</td><td><b>Observer</b></td><td>"Who needs to know this happened?"</td></tr>
+<tr><td>Many objects talking to each other</td><td><b>Mediator</b></td><td>"Are objects tightly tied because they talk directly?"</td></tr>
+</tbody></table>
+
+<h3>Worked examples of the flow</h3>
+<div class="grid2">
+<div class="card"><pre class="arrow">Many ways to work out a price
+          ↓
+Pricing rule changes on its own
+          ↓
+Wrap each rule in a class
+          ↓
+       STRATEGY</pre></div>
+<div class="card"><pre class="arrow">Many concrete classes
+          ↓
+Caller should not pick with "new"
+          ↓
+Put creation in one place
+          ↓
+       FACTORY</pre></div>
+<div class="card"><pre class="arrow">One event
+          ↓
+Many parts need to hear it
+          ↓
+One-to-many link
+          ↓
+       OBSERVER</pre></div>
+<div class="card"><pre class="arrow">Two axes of change
+          ↓
+Subclasses would explode
+          ↓
+Split the two axes, join by a field
+          ↓
+       BRIDGE</pre></div>
+</div>
+
+<div class="tips"><b>💡 Interview tip — say the problem first</b><br>
+When asked "explain Strategy", do not start with "Strategy is a behavioral pattern that…". Start with: "I had a big <code>switch</code> on payment type. Each branch was an algorithm that changed on its own. I pulled each one into a class behind one interface and let the caller pick one. That is Strategy." Problem, then pattern, then cost. Interviewers remember stories, not definitions.</div>
+
+<div class="trick"><b>🎯 Trick — the three "W" questions</b><br>
+<b>What</b> changes? → <b>Who</b> is stuck to whom? → <b>Where</b> do I cut? Every pattern is just a place to cut.</div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 4. CREATIONAL ============ -->
+<h2 id="s4" style="--acc:#e07b00"><span class="n">4</span><span class="tag c">C</span>Creational patterns: Singleton, Factory, Builder</h2>
+<div class="oneliner">Factory <u>chooses</u>. Builder <u>assembles</u>. Singleton <u>restricts</u>.</div>
+
+<h3>4.1 Singleton — "there can be only one"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> make sure a class has one object only, and give one global way to reach it.</p>
+<p><b>Book example:</b> <code>ImageUtil</code> with a private constructor and a static access point. Every part of the game loads plane images through it.</p>
+<p><b>How it works:</b> the constructor is <code>private</code>, so nobody outside can write <code>new ImageUtil()</code>. A static method hands out the single object.</p>
+<p><b>Use when:</b> there truly is one shared thing (a config, a cache, a connection pool).</p>
+<p><b>Benefit:</b> one place to control the shared resource.</p>
+<p><b>Caution:</b> it is hidden global state. It makes tests hard and hides who depends on what. Do not use it just because "it is handy to reach".</p>
+</div>
+<pre><code><span class="kw">public final class</span> <span class="typ">ImageUtil</span> {
+    <span class="cmt">// 1. the one and only object, made once</span>
+    <span class="kw">private static final</span> <span class="typ">ImageUtil</span> INSTANCE = <span class="kw">new</span> <span class="typ">ImageUtil</span>();
+
+    <span class="cmt">// 2. nobody else can call new</span>
+    <span class="kw">private</span> <span class="typ">ImageUtil</span>() {}
+
+    <span class="cmt">// 3. the global door</span>
+    <span class="kw">public static</span> <span class="typ">ImageUtil</span> get() { <span class="kw">return</span> INSTANCE; }
+
+    <span class="kw">public</span> <span class="typ">BufferedImage</span> loadImage(<span class="typ">String</span> path) {
+        <span class="kw">return</span> <span class="typ">ImageIO</span>.read(getClass().getResource(path));
+    }
+}
+<span class="cmt">// use:  ImageUtil.get().loadImage("/img/blue_plane.png");</span></code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• The eager <code>static final</code> form above is thread-safe for free; the JVM loads the class once.<br>
+• Need lazy creation? Use an <code>enum</code> with one constant, or the "holder class" idiom. Avoid the hand-written double-checked lock unless you also write <code>volatile</code>.<br>
+• In Spring you almost never write a Singleton by hand: every <code>@Component</code> bean is a singleton <i>by scope</i>. Say this in interviews — it shows you know the framework does it for you.</div>
+<div class="warn"><b>Trap:</b> a Singleton that holds mutable state (counters, lists) becomes a shared bug across threads. Keep it stateless or guard the state.</div>
+
+<h3>4.2 Factory — "the factory chooses the class"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> move object creation into one place; the caller asks for a type by name or by rule and gets back the right concrete class.</p>
+<p><b>Book example:</b> <code>SpriteFactory</code> returns <code>BluePlane</code> or <code>RedPlane</code> based on what the player picked.</p>
+<p><b>Key classes:</b> <code>SpriteFactory</code>, <code>Sprite</code> (parent), <code>BluePlane</code>, <code>RedPlane</code>.</p>
+<p><b>Use when:</b> the concrete type depends on config, user choice or run-time data.</p>
+<p><b>Benefit:</b> the caller only knows the parent type <code>Sprite</code>. Add a new plane → change the factory, not every caller.</p>
+<p><b>Caution:</b> a factory with 40 <code>case</code> branches is itself a smell. Use a <code>Map</code> of suppliers or let Spring pick the bean.</p>
+</div>
+<pre><code><span class="kw">public class</span> <span class="typ">SpriteFactory</span> {
+    <span class="kw">public static</span> <span class="typ">Sprite</span> create(<span class="typ">String</span> kind) {
+        <span class="kw">switch</span> (kind) {
+            <span class="kw">case</span> <span class="str">"blue"</span>: <span class="kw">return new</span> <span class="typ">BluePlane</span>();
+            <span class="kw">case</span> <span class="str">"red"</span>:  <span class="kw">return new</span> <span class="typ">RedPlane</span>();
+            <span class="kw">default</span>: <span class="kw">throw new</span> <span class="typ">IllegalArgumentException</span>(kind);
+        }
+    }
+}
+<span class="cmt">// caller never writes "new BluePlane()":</span>
+<span class="typ">Sprite</span> player = <span class="typ">SpriteFactory</span>.create(choice);
+player.draw(g);
+
+<span class="cmt">// cleaner for many types: a map of suppliers</span>
+<span class="typ">Map</span>&lt;<span class="typ">String</span>, <span class="typ">Supplier</span>&lt;<span class="typ">Sprite</span>&gt;&gt; reg = <span class="typ">Map</span>.of(
+    <span class="str">"blue"</span>, <span class="typ">BluePlane</span>::<span class="kw">new</span>, <span class="str">"red"</span>, <span class="typ">RedPlane</span>::<span class="kw">new</span>);</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• The book uses a <b>simple factory</b> (one static method). Interviewers may also ask about <b>Factory Method</b> (a subclass overrides the creating method) and <b>Abstract Factory</b> (a factory that makes a whole family of related objects). Know the three names.<br>
+• Spring tie-in: <code>BeanFactory</code> / <code>ApplicationContext</code> is a factory; <code>@Bean</code> methods are factory methods.</div>
+
+<h3>4.3 Builder — "set, set, set, build"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> split the steps of building a complex object from the object itself; collect parts one by one, then produce the final object.</p>
+<p><b>Book example:</b> a builder sets the title and the buttons of a <code>SelectDialog</code>, then creates it.</p>
+<p><b>Key classes:</b> <code>Builder</code>, <code>SelectDialog</code>, <code>Button</code>.</p>
+<p><b>Use when:</b> a constructor would need many parameters, many of them optional, or when the same object has several valid set-ups.</p>
+<p><b>Benefit:</b> readable, step-by-step construction; the result can be immutable.</p>
+<p><b>Caution:</b> extra class for a simple object. If the object has 2 fields, just use a constructor.</p>
+</div>
+<pre><code><span class="kw">public class</span> <span class="typ">SelectDialog</span> {
+    <span class="kw">private final</span> <span class="typ">String</span> title;
+    <span class="kw">private final</span> <span class="typ">List</span>&lt;<span class="typ">Button</span>&gt; buttons;
+
+    <span class="kw">private</span> <span class="typ">SelectDialog</span>(<span class="typ">Builder</span> b) {
+        <span class="kw">this</span>.title = b.title;  <span class="kw">this</span>.buttons = <span class="typ">List</span>.copyOf(b.buttons);
+    }
+
+    <span class="kw">public static class</span> <span class="typ">Builder</span> {
+        <span class="kw">private</span> <span class="typ">String</span> title = <span class="str">"Select"</span>;
+        <span class="kw">private final</span> <span class="typ">List</span>&lt;<span class="typ">Button</span>&gt; buttons = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+        <span class="kw">public</span> <span class="typ">Builder</span> title(<span class="typ">String</span> t) { title = t; <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="typ">Builder</span> button(<span class="typ">Button</span> b) { buttons.add(b); <span class="kw">return this</span>; }
+        <span class="kw">public</span> <span class="typ">SelectDialog</span> build() { <span class="kw">return new</span> <span class="typ">SelectDialog</span>(<span class="kw">this</span>); }
+    }
+}
+<span class="typ">SelectDialog</span> d = <span class="kw">new</span> <span class="typ">SelectDialog</span>.<span class="typ">Builder</span>()
+        .title(<span class="str">"Pick your plane"</span>)
+        .button(<span class="kw">new</span> <span class="typ">BluePlaneButton</span>())
+        .button(<span class="kw">new</span> <span class="typ">RedPlaneButton</span>())
+        .build();</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• Returning <code>this</code> from each setter gives the fluent chain. That is the part interviewers want to see.<br>
+• Real-world Java builders: <code>StringBuilder</code>, <code>Stream.Builder</code>, <code>HttpRequest.newBuilder()</code>, Lombok's <code>@Builder</code>, <code>UriComponentsBuilder</code> in Spring.<br>
+• Validate inside <code>build()</code> (for example "at least one button"). That is the one place where the whole object is known.</div>
+
+<h3>4.4 Side by side</h3>
+<table>
+<thead><tr><th></th><th>Factory</th><th>Builder</th><th>Singleton</th></tr></thead>
+<tbody>
+<tr><td>Main worry</td><td><b>Which</b> object?</td><td><b>How</b> to put it together?</td><td><b>How many</b> objects?</td></tr>
+<tr><td>Question</td><td>"Which concrete class do I need?"</td><td>"How do I build this complex thing?"</td><td>"Should there be only one?"</td></tr>
+<tr><td>Book example</td><td><code>SpriteFactory.create("blue")</code></td><td><code>new Builder()...build()</code> → <code>SelectDialog</code></td><td><code>ImageUtil</code></td></tr>
+<tr><td>Mechanism</td><td>Hand creation to another class</td><td>Step-by-step set-up</td><td>Private constructor + static door</td></tr>
+<tr><td>Typical use</td><td>Pick an implementation</td><td>Many optional settings</td><td>Shared resource / service</td></tr>
+</tbody></table>
+
+<div class="tricky"><b>❓ Question</b><br>A class needs 9 constructor arguments, 6 of them optional. Factory or Builder?
+<details><summary>Reveal hint</summary>Builder. Factory is about <i>which class</i>; Builder is about <i>how many settings</i>. Optional arguments are the Builder's home ground. Bonus: a Factory can <i>use</i> a Builder inside.</details></div>
+<div class="tricky"><b>❓ Question</b><br>Why do people say Singleton is an "anti-pattern" in Spring code?
+<details><summary>Reveal hint</summary>Spring already gives singleton scope to beans and injects them, so a hand-made <code>getInstance()</code> hides the dependency, blocks mocking in tests, and couples callers to the class. Let the container own the one instance.</details></div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 5. STRUCTURAL ============ -->
+<h2 id="s5" style="--acc:#0a7c6a"><span class="n">5</span><span class="tag s">S</span>Structural patterns: Flyweight, Bridge, Decorator, Composite</h2>
+<div class="oneliner">Flyweight <u>shares</u>. Bridge <u>splits</u>. Decorator <u>wraps</u>. Composite <u>nests</u>.</div>
+
+<h3>5.1 Flyweight — "load once, share many"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> many small objects share one copy of heavy data instead of each holding its own.</p>
+<p><b>Book example:</b> <code>ImageCache</code> keeps a <code>Map&lt;String, BufferedImage&gt;</code>. Fifty bullets on screen all point to the same bullet image.</p>
+<p><b>How it works:</b> ask the cache by key; if the image is there, reuse it; if not, load it once and store it.</p>
+<p><b>Use when:</b> many objects would copy the same large, unchanging data.</p>
+<p><b>Benefit:</b> far less memory and load time.</p>
+<p><b>Caution:</b> keep <b>shared</b> state (the image) apart from <b>per-object</b> state (x, y, speed). Never let one bullet change the shared image.</p>
+</div>
+<pre><code><span class="kw">public class</span> <span class="typ">ImageCache</span> {
+    <span class="kw">private final</span> <span class="typ">Map</span>&lt;<span class="typ">String</span>, <span class="typ">BufferedImage</span>&gt; cache = <span class="kw">new</span> <span class="typ">HashMap</span>&lt;&gt;();
+
+    <span class="kw">public</span> <span class="typ">BufferedImage</span> get(<span class="typ">String</span> key) {
+        <span class="cmt">// load only the first time; share after that</span>
+        <span class="kw">return</span> cache.computeIfAbsent(key,
+                k -&gt; <span class="typ">ImageUtil</span>.get().loadImage(<span class="str">"/img/"</span> + k + <span class="str">".png"</span>));
+    }
+}
+<span class="cmt">// each bullet keeps only its own x, y; the picture is shared</span>
+<span class="kw">class</span> <span class="typ">Bullet</span> {
+    <span class="kw">int</span> x, y;                         <span class="cmt">// per-object (extrinsic)</span>
+    <span class="typ">BufferedImage</span> img = cache.get(<span class="str">"bullet"</span>); <span class="cmt">// shared (intrinsic)</span>
+}</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• Interview words: <b>intrinsic</b> = shared, never changes; <b>extrinsic</b> = per object, passed in. Say these two words and you have answered the Flyweight question.<br>
+• Java does Flyweight for you in <code>Integer.valueOf(-128..127)</code>, <code>String</code> interning, and <code>Boolean.TRUE</code>.<br>
+• Flyweight and Singleton both reduce objects, but Flyweight has <i>many</i> shared objects (one per key); Singleton has exactly one.</div>
+
+<h3>5.2 Bridge — "two axes, one link"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> keep an abstraction (Plane) and its implementation (Bullet) in two separate class trees, joined by a field, so each tree grows on its own.</p>
+<p><b>Book example:</b> <code>BluePlane</code> can fire <code>BlueBullet</code> or <code>RedBullet</code>; so can <code>RedPlane</code>. Two planes × two bullets, but only 4 classes, not 4 combo classes.</p>
+<p><b>Use when:</b> you spot two independent reasons to change.</p>
+<p><b>Benefit:</b> stops subclass explosion (N × M classes becomes N + M).</p>
+<p><b>Caution:</b> more layers than a simple case needs.</p>
+</div>
+<div>
+<pre class="arrow">Without Bridge (4 glued classes):
+  BluePlaneBlueBullet   BluePlaneRedBullet
+  RedPlaneBlueBullet    RedPlaneRedBullet
+
+With Bridge (2 + 2, joined by a field):
+  Plane ──────── has-a ──────── Bullet
+   │                              │
+   ├─ BluePlane                   ├─ BlueBullet
+   └─ RedPlane                    └─ RedBullet</pre>
+<pre><code><span class="kw">abstract class</span> <span class="typ">Plane</span> {
+    <span class="kw">protected</span> <span class="typ">Bullet</span> bullet;          <span class="cmt">// the bridge</span>
+    <span class="kw">void</span> load(<span class="typ">Bullet</span> b) { bullet = b; }
+    <span class="kw">void</span> fire() { bullet.shoot(x, y); }
+}
+<span class="kw">interface</span> <span class="typ">Bullet</span> { <span class="kw">void</span> shoot(<span class="kw">int</span> x, <span class="kw">int</span> y); }
+<span class="typ">Plane</span> p = <span class="kw">new</span> <span class="typ">RedPlane</span>();  p.load(<span class="kw">new</span> <span class="typ">BlueBullet</span>());</code></pre>
+</div>
+</div>
+<div class="trick"><b>🎯 Trick — spot a Bridge by the class name</b><br>If you ever want to name a class <code>SomethingWithSomethingElse</code>, stop. That "With" is a Bridge waiting to happen. Make two trees and hold a reference.</div>
+
+<h3>5.3 Decorator — "wrap to add"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> add new behavior to one object at run time by wrapping it in another object with the same interface.</p>
+<p><b>Book example:</b> a plane is wrapped by <code>PlaneProps</code>; selected bullets are wrapped to get extra movement.</p>
+<p><b>Key classes:</b> <code>Sprite</code> (shared interface), the real plane, and the wrapper(s) that also implement <code>Sprite</code> and hold a <code>Sprite</code> inside.</p>
+<p><b>Use when:</b> you need many combos of optional features.</p>
+<p><b>Benefit:</b> no subclass for every combo; stack wrappers in any order.</p>
+<p><b>Caution:</b> five nested wrappers are hard to debug; identity checks (<code>==</code>) break because the wrapper is a different object.</p>
+</div>
+<div>
+<pre class="arrow">Inheritance explodes:
+  BluePlane+Shield   BluePlane+Speed   BluePlane+Weapon
+  BluePlane+Shield+Speed   BluePlane+Shield+Weapon ...
+
+Decorator stacks:
+  BluePlane → ShieldDecorator → SpeedDecorator → WeaponDecorator</pre>
+<pre><code><span class="kw">abstract class</span> <span class="typ">SpriteDecorator</span> <span class="kw">extends</span> <span class="typ">Sprite</span> {
+    <span class="kw">protected final</span> <span class="typ">Sprite</span> inner;        <span class="cmt">// the wrapped one</span>
+    <span class="typ">SpriteDecorator</span>(<span class="typ">Sprite</span> s) { inner = s; }
+    <span class="kw">public void</span> draw(<span class="typ">Graphics</span> g) { inner.draw(g); }
+    <span class="kw">public void</span> move() { inner.move(); }
+}
+<span class="kw">class</span> <span class="typ">ShieldDecorator</span> <span class="kw">extends</span> <span class="typ">SpriteDecorator</span> {
+    <span class="typ">ShieldDecorator</span>(<span class="typ">Sprite</span> s) { <span class="kw">super</span>(s); }
+    <span class="ann">@Override</span> <span class="kw">public void</span> draw(<span class="typ">Graphics</span> g) {
+        <span class="kw">super</span>.draw(g);
+        g.drawOval(x - <span class="num">4</span>, y - <span class="num">4</span>, w + <span class="num">8</span>, h + <span class="num">8</span>);   <span class="cmt">// the extra</span>
+    }
+}
+<span class="typ">Sprite</span> p = <span class="kw">new</span> <span class="typ">SpeedDecorator</span>(<span class="kw">new</span> <span class="typ">ShieldDecorator</span>(<span class="kw">new</span> <span class="typ">BluePlane</span>()));</code></pre>
+</div>
+</div>
+<div class="oneliner" style="font-size:15px">Inheritance changes what a class <u>is</u>. Decoration adds what an object <u>can do</u>.</div>
+<div class="tips"><b>💡 Tips</b><br>
+• Java I/O is the classic: <code>new BufferedReader(new InputStreamReader(new FileInputStream(f)))</code>. Each layer adds one ability.<br>
+• Spring: <code>@Transactional</code>, <code>@Cacheable</code> and <code>HandlerInterceptor</code> wrap your bean with a proxy — that is Decorator at framework scale.<br>
+• Decorator keeps the <b>same interface</b> as the thing it wraps. If the interface changes, it is an Adapter, not a Decorator.</div>
+
+<h3>5.4 Composite — "leaf and branch look alike"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> build a tree where a single item and a group of items share one interface, so the caller treats them the same.</p>
+<p><b>Book example:</b> a <code>Menu</code> holds <code>MenuItem</code>s and sub-menus. Drawing the menu draws every child, no matter how deep.</p>
+<p><b>Key classes:</b> component interface, <code>MenuItem</code> (leaf), <code>Menu</code> (composite, has a list of components).</p>
+<p><b>Use when:</b> data is a tree: menus, scene graphs, folders, org charts, categories.</p>
+<p><b>Benefit:</b> one <code>draw()</code> call at the root does the whole tree; no <code>if (isGroup)</code> checks.</p>
+<p><b>Caution:</b> a too-wide component interface forces leaves to carry methods like <code>add()</code> that make no sense for them.</p>
+</div>
+<pre><code><span class="kw">interface</span> <span class="typ">MenuComponent</span> { <span class="kw">void</span> draw(<span class="typ">Graphics</span> g); }
+
+<span class="kw">class</span> <span class="typ">MenuItem</span> <span class="kw">implements</span> <span class="typ">MenuComponent</span> {        <span class="cmt">// leaf</span>
+    <span class="kw">public void</span> draw(<span class="typ">Graphics</span> g) { g.drawString(label, x, y); }
+}
+<span class="kw">class</span> <span class="typ">Menu</span> <span class="kw">implements</span> <span class="typ">MenuComponent</span> {            <span class="cmt">// branch</span>
+    <span class="kw">private final</span> <span class="typ">List</span>&lt;<span class="typ">MenuComponent</span>&gt; children = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+    <span class="kw">void</span> add(<span class="typ">MenuComponent</span> c) { children.add(c); }
+    <span class="kw">public void</span> draw(<span class="typ">Graphics</span> g) {
+        <span class="kw">for</span> (<span class="typ">MenuComponent</span> c : children) c.draw(g);  <span class="cmt">// same call, leaf or menu</span>
+    }
+}</code></pre>
+</div>
+<div class="tips"><b>💡 Tip</b><br>Recursion is the engine of Composite. Whenever a method on the branch just loops and calls the same method on its children, you are looking at Composite. Swing's <code>JComponent</code> tree and the DOM are real examples.</div>
+
+<div class="tricky"><b>❓ Question</b><br>Decorator and Composite both hold a reference to the same interface they implement. What is the difference?
+<details><summary>Reveal hint</summary>Decorator holds <b>one</b> inner object and <b>adds</b> behavior around it. Composite holds <b>many</b> children and <b>forwards</b> the call to all of them. One = wrap; many = tree.</details></div>
+<div class="tricky"><b>❓ Question</b><br>Bridge and Strategy both use "has-a" a field with an interface type. How do you tell them apart in an interview?
+<details><summary>Reveal hint</summary>Bridge is about <b>structure</b>: two class trees that both grow (Plane tree and Bullet tree), decided at design time. Strategy is about <b>behavior</b>: one algorithm slot that the caller swaps at run time. Bridge = two hierarchies; Strategy = one hierarchy of algorithms.</details></div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 6. BEHAVIORAL A ============ -->
+<h2 id="s6" style="--acc:#2f6fed"><span class="n">6</span><span class="tag b">B</span>Behavioral patterns I: Template Method, Strategy, State, Command</h2>
+<div class="oneliner">Template <u>fixes the recipe</u>. Strategy <u>swaps the brain</u>. State <u>changes with mood</u>. Command <u>boxes the action</u>.</div>
+
+<h3>6.1 Template Method — "same recipe, your own steps"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> the parent class writes the full algorithm once; it calls some steps that child classes fill in or override.</p>
+<p><b>Book example:</b> <code>Sprite</code> owns <code>draw()</code> and <code>move()</code>. <code>BluePlane</code> gets both for free and changes only what differs (its image, its speed).</p>
+<p><b>Use when:</b> several classes do "the same thing" with small differences in the middle.</p>
+<p><b>Benefit:</b> no copy-paste of the algorithm; the order of steps is fixed in one place.</p>
+<p><b>Caution:</b> it depends on inheritance. Deep trees get rigid, and a child cannot change the order of steps.</p>
+</div>
+<pre><code><span class="kw">abstract class</span> <span class="typ">Sprite</span> {
+    <span class="kw">protected int</span> x, y;
+    <span class="cmt">// the template: fixed order, calls the hooks</span>
+    <span class="kw">public final void</span> update(<span class="typ">Graphics</span> g) {
+        move();
+        <span class="kw">if</span> (isAlive()) draw(g);
+    }
+    <span class="kw">protected void</span> move() { y -= speed(); }          <span class="cmt">// default step</span>
+    <span class="kw">protected void</span> draw(<span class="typ">Graphics</span> g) { g.drawImage(image(), x, y, <span class="kw">null</span>); }
+    <span class="kw">protected boolean</span> isAlive() { <span class="kw">return</span> y &gt; -<span class="num">50</span>; }
+    <span class="kw">protected abstract</span> <span class="typ">BufferedImage</span> image();   <span class="cmt">// child must fill</span>
+    <span class="kw">protected abstract int</span> speed();
+}
+<span class="kw">class</span> <span class="typ">BluePlane</span> <span class="kw">extends</span> <span class="typ">Sprite</span> {
+    <span class="kw">protected</span> <span class="typ">BufferedImage</span> image() { <span class="kw">return</span> cache.get(<span class="str">"blue"</span>); }
+    <span class="kw">protected int</span> speed() { <span class="kw">return</span> <span class="num">6</span>; }
+}</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• Make the template method <code>final</code> so children cannot break the order. Make the step methods <code>protected</code>.<br>
+• A step with a default body that children <i>may</i> override is called a <b>hook</b>. <code>isAlive()</code> above is a hook.<br>
+• Spring is full of this: <code>JdbcTemplate</code>, <code>RestTemplate</code>, <code>AbstractController</code>, <code>WebSecurityConfigurerAdapter</code> (old). The "Template" in the name is literal.</div>
+
+<h3>6.2 Strategy — "plug in a different brain"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> put each algorithm in its own class behind one interface; the caller holds one and can swap it at run time.</p>
+<p><b>Book example:</b> <code>BluePlane</code> can load <code>BlueBullet</code>, <code>RedBullet</code> or <code>MissileBullet</code>. The plane does not care how the bullet flies.</p>
+<p><b>Use when:</b> the behavior must change without touching the object that uses it; big <code>if / switch</code> on a "type".</p>
+<p><b>Benefit:</b> run-time choice, no conditionals, easy to test each strategy alone.</p>
+<p><b>Caution:</b> ten tiny classes for ten trivial lines can be heavier than one <code>switch</code>. Use lambdas for simple ones.</p>
+</div>
+<pre><code><span class="kw">interface</span> <span class="typ">ShootStrategy</span> { <span class="kw">void</span> shoot(<span class="typ">Plane</span> p, <span class="typ">List</span>&lt;<span class="typ">Bullet</span>&gt; out); }
+
+<span class="kw">class</span> <span class="typ">SingleShot</span>  <span class="kw">implements</span> <span class="typ">ShootStrategy</span> { <span class="cmt">/* one bullet */</span> }
+<span class="kw">class</span> <span class="typ">MissileShot</span> <span class="kw">implements</span> <span class="typ">ShootStrategy</span> { <span class="cmt">/* homing */</span> }
+
+<span class="kw">class</span> <span class="typ">BluePlane</span> <span class="kw">extends</span> <span class="typ">Sprite</span> {
+    <span class="kw">private</span> <span class="typ">ShootStrategy</span> strategy = <span class="kw">new</span> <span class="typ">SingleShot</span>();
+    <span class="kw">void</span> setStrategy(<span class="typ">ShootStrategy</span> s) { strategy = s; } <span class="cmt">// swap any time</span>
+    <span class="kw">void</span> fire(<span class="typ">List</span>&lt;<span class="typ">Bullet</span>&gt; out) { strategy.shoot(<span class="kw">this</span>, out); }
+}
+<span class="cmt">// power-up picked → plane.setStrategy(new MissileShot());</span>
+<span class="cmt">// tiny strategy as a lambda:</span>
+plane.setStrategy((p, out) -&gt; out.add(<span class="kw">new</span> <span class="typ">BlueBullet</span>(p.x, p.y)));</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• The single most asked pattern in Java interviews. Have a backend story ready: payment type, discount rule, auth method, file parser.<br>
+• Spring trick: inject <code>Map&lt;String, PaymentStrategy&gt;</code> — Spring fills the map with every bean of that type, keyed by bean name. No factory needed.<br>
+• <code>Comparator</code> passed to <code>sort()</code> is Strategy in the JDK.</div>
+
+<h3>6.3 State — "what do I do in this state?"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> one class per state; the object delegates to its current state object, and the state objects decide the next state.</p>
+<p><b>Book example:</b> the background / scrolling layer (<code>TiledLayer</code>) draws and moves differently depending on its current state.</p>
+<p><b>Use when:</b> behavior changes a lot with the object's lifecycle; <code>if (state == A) ... else if (state == B)</code> repeated in many methods.</p>
+<p><b>Benefit:</b> each state is explicit and small; adding a state = adding a class.</p>
+<p><b>Caution:</b> many states + many transitions = many classes. For simple cases an <code>enum</code> with methods is enough.</p>
+</div>
+<pre><code><span class="kw">interface</span> <span class="typ">EnemyState</span> { <span class="kw">void</span> update(<span class="typ">Enemy</span> e); }
+
+<span class="kw">class</span> <span class="typ">Idle</span> <span class="kw">implements</span> <span class="typ">EnemyState</span> {
+    <span class="kw">public void</span> update(<span class="typ">Enemy</span> e) {
+        <span class="kw">if</span> (e.seesPlayer()) e.setState(<span class="kw">new</span> <span class="typ">Chasing</span>());   <span class="cmt">// state picks next state</span>
+    }
+}
+<span class="kw">class</span> <span class="typ">Chasing</span> <span class="kw">implements</span> <span class="typ">EnemyState</span> {
+    <span class="kw">public void</span> update(<span class="typ">Enemy</span> e) {
+        e.moveToward(e.player());
+        <span class="kw">if</span> (e.inRange()) e.setState(<span class="kw">new</span> <span class="typ">Attacking</span>());
+    }
+}
+<span class="kw">class</span> <span class="typ">Enemy</span> {
+    <span class="kw">private</span> <span class="typ">EnemyState</span> state = <span class="kw">new</span> <span class="typ">Idle</span>();
+    <span class="kw">void</span> setState(<span class="typ">EnemyState</span> s) { state = s; }
+    <span class="kw">void</span> update() { state.update(<span class="kw">this</span>); }   <span class="cmt">// no if/else here</span>
+}</code></pre>
+</div>
+<div class="trick"><b>🎯 Trick — Strategy vs State in one breath</b><br>
+Same shape of code (interface + field + delegate). The difference is <b>who changes the field</b>. In Strategy the <b>caller</b> picks ("use missiles now"). In State the <b>state itself</b> moves to the next state ("I see the player, so I become Chasing"). Caller picks = Strategy. Self-driven = State.</div>
+
+<h3>6.4 Command — "the request is an object"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> wrap an action in an object with one method (<code>execute()</code>). The sender just calls it; the object knows what to do.</p>
+<p><b>Book example:</b> each button has an <code>ActionListener</code>. Clicking <code>BluePlaneButton</code> runs its <code>actionPerformed()</code>; the button itself does not know what "select blue plane" means.</p>
+<p><b>Use when:</b> UI actions, undo / redo, job queues, keyboard remapping, anything you need to store, log or delay.</p>
+<p><b>Benefit:</b> sender and receiver are fully apart; commands can be queued, logged, undone.</p>
+<p><b>Caution:</b> lots of small command classes. Lambdas solve most of that in modern Java.</p>
+</div>
+<pre><code><span class="kw">interface</span> <span class="typ">Command</span> { <span class="kw">void</span> execute(); }
+
+<span class="kw">class</span> <span class="typ">SelectPlaneCommand</span> <span class="kw">implements</span> <span class="typ">Command</span> {
+    <span class="kw">private final</span> <span class="typ">Game</span> game; <span class="kw">private final</span> <span class="typ">String</span> kind;
+    <span class="typ">SelectPlaneCommand</span>(<span class="typ">Game</span> g, <span class="typ">String</span> k) { game = g; kind = k; }
+    <span class="kw">public void</span> execute() { game.setPlayer(<span class="typ">SpriteFactory</span>.create(kind)); }
+}
+<span class="cmt">// the button is the "invoker": it only knows execute()</span>
+blueButton.addActionListener(e -&gt; cmd.execute());
+
+<span class="cmt">// commands can wait in a queue, or be undone later</span>
+<span class="typ">Deque</span>&lt;<span class="typ">Command</span>&gt; history = <span class="kw">new</span> <span class="typ">ArrayDeque</span>&lt;&gt;();
+history.push(cmd); cmd.execute();</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• Four roles to name in an interview: <b>Command</b> (the object), <b>Receiver</b> (who does the real work, <code>Game</code>), <b>Invoker</b> (who calls <code>execute()</code>, the button), <b>Client</b> (who wires them).<br>
+• Add <code>undo()</code> next to <code>execute()</code> and keep a stack — that is how editors do undo / redo.<br>
+• <code>Runnable</code> is the JDK's Command. A thread pool is an invoker for Runnables.</div>
+
+<div class="tricky"><b>❓ Question</b><br>Both Strategy and Command hold "a piece of behavior" behind an interface. What is the difference?
+<details><summary>Reveal hint</summary>Strategy answers "<b>how</b> do I do this one job?" — many ways to do the same job, the caller picks one. Command answers "<b>what</b> should happen?" — each command is a different job, and the point is to store / queue / undo it. Strategy = alternative algorithms; Command = packaged request.</details></div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 7. BEHAVIORAL B ============ -->
+<h2 id="s7" style="--acc:#c62828"><span class="n">7</span><span class="tag b">B</span>Behavioral patterns II: Iterator, Chain of Responsibility, Observer, Mediator</h2>
+<div class="oneliner">Iterator <u>walks</u>. Chain <u>passes it on</u>. Observer <u>broadcasts</u>. Mediator <u>sits in the middle</u>.</div>
+
+<h3>7.1 Iterator — "hasNext / next"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> give a way to walk through a collection one item at a time without showing how the collection is stored.</p>
+<p><b>Book example:</b> an <code>Iterator</code> / <code>IteratorImpl</code> over the bullet list; the game loop calls <code>hasNext()</code> and <code>next()</code> to draw and move every bullet.</p>
+<p><b>Use when:</b> callers need to loop but should not depend on <code>ArrayList</code> vs array vs tree.</p>
+<p><b>Benefit:</b> the collection can change its storage with no change to callers; several loops can run at once with their own cursors.</p>
+<p><b>Caution:</b> Java already gives <code>Iterable</code> / <code>Iterator</code>. Writing your own is rarely needed — know the idea, use the JDK's.</p>
+</div>
+<pre><code><span class="kw">class</span> <span class="typ">BulletList</span> <span class="kw">implements</span> <span class="typ">Iterable</span>&lt;<span class="typ">Bullet</span>&gt; {
+    <span class="kw">private final</span> <span class="typ">List</span>&lt;<span class="typ">Bullet</span>&gt; items = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">public</span> <span class="typ">Iterator</span>&lt;<span class="typ">Bullet</span>&gt; iterator() {
+        <span class="kw">return new</span> <span class="typ">Iterator</span>&lt;&gt;() {
+            <span class="kw">int</span> i = <span class="num">0</span>;
+            <span class="kw">public boolean</span> hasNext() { <span class="kw">return</span> i &lt; items.size(); }
+            <span class="kw">public</span> <span class="typ">Bullet</span> next() { <span class="kw">return</span> items.get(i++); }
+        };
+    }
+}
+<span class="cmt">// caller does not know it is an ArrayList:</span>
+<span class="kw">for</span> (<span class="typ">Bullet</span> b : bullets) { b.move(); b.draw(g); }</code></pre>
+</div>
+<div class="warn"><b>Trap:</b> removing from a list while looping with for-each throws <code>ConcurrentModificationException</code>. Use <code>iterator.remove()</code> or <code>removeIf()</code> — this comes up when bullets leave the screen.</div>
+
+<h3>7.2 Chain of Responsibility — "pass it on"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> link handlers in a line. A request enters at the front; each handler either deals with it or passes it to the next.</p>
+<p><b>Book example:</b> enemy spawning moves through stages — first 2 planes, then 4, then boss planes. Each stage is a handler; when its condition is met it acts, otherwise the next stage gets a turn.</p>
+<p><b>Use when:</b> several objects might handle a request and the sender should not know which; processing happens in steps.</p>
+<p><b>Benefit:</b> add, remove or reorder handlers without touching the sender.</p>
+<p><b>Caution:</b> a request may fall off the end with nobody handling it. Always decide what happens at the tail.</p>
+</div>
+<pre><code><span class="kw">abstract class</span> <span class="typ">SpawnStage</span> {
+    <span class="kw">private</span> <span class="typ">SpawnStage</span> next;
+    <span class="typ">SpawnStage</span> then(<span class="typ">SpawnStage</span> n) { next = n; <span class="kw">return</span> n; }
+
+    <span class="kw">void</span> handle(<span class="typ">GameContext</span> ctx) {
+        <span class="kw">if</span> (canHandle(ctx)) spawn(ctx);
+        <span class="kw">else if</span> (next != <span class="kw">null</span>) next.handle(ctx);     <span class="cmt">// pass it on</span>
+    }
+    <span class="kw">abstract boolean</span> canHandle(<span class="typ">GameContext</span> c);
+    <span class="kw">abstract void</span> spawn(<span class="typ">GameContext</span> c);
+}
+<span class="kw">class</span> <span class="typ">TwoPlanes</span>  <span class="kw">extends</span> <span class="typ">SpawnStage</span> { <span class="cmt">/* score &lt; 100 */</span> }
+<span class="kw">class</span> <span class="typ">FourPlanes</span> <span class="kw">extends</span> <span class="typ">SpawnStage</span> { <span class="cmt">/* score &lt; 300 */</span> }
+<span class="kw">class</span> <span class="typ">Boss</span>       <span class="kw">extends</span> <span class="typ">SpawnStage</span> { <span class="cmt">/* otherwise  */</span> }
+
+<span class="typ">SpawnStage</span> chain = <span class="kw">new</span> <span class="typ">TwoPlanes</span>();
+chain.then(<span class="kw">new</span> <span class="typ">FourPlanes</span>()).then(<span class="kw">new</span> <span class="typ">Boss</span>());
+chain.handle(ctx);</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• Two flavors: <b>stop at first handler</b> (classic) or <b>every handler runs</b> (pipeline / filter chain). Servlet <code>Filter</code>, Spring Security's filter chain, and <code>HandlerInterceptor</code> are the pipeline flavor.<br>
+• Interview line: "Chain is a Linked List of handlers where each node decides to act or forward."<br>
+• Keep handlers stateless so the chain can be shared across threads.</div>
+
+<h3>7.3 Observer — "subscribe and get told"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> one object (the subject) keeps a list of listeners and calls them all when something happens.</p>
+<p><b>Book example:</b> <code>BluePlane</code> is the subject. <code>PlaneScore</code> and <code>PlaneLife</code> are observers. Enemy destroyed → score goes up; collision → life goes down. The plane does not know what the observers do with the news.</p>
+<p><b>Key classes:</b> <code>Observer</code>, <code>ObserverData</code>, <code>NotifyType</code>, <code>PlaneLife</code>, <code>PlaneScore</code>.</p>
+<p><b>Use when:</b> one event, many reactions; you want to add a reaction without touching the source.</p>
+<p><b>Benefit:</b> loose coupling, easy to add listeners.</p>
+<p><b>Caution:</b> many listeners firing listeners makes the flow hard to trace; forgotten listeners cause memory leaks.</p>
+</div>
+<pre><code><span class="kw">enum</span> <span class="typ">NotifyType</span> { ENEMY_DOWN, HIT }
+<span class="kw">interface</span> <span class="typ">Observer</span> { <span class="kw">void</span> onNotify(<span class="typ">NotifyType</span> t, <span class="typ">ObserverData</span> d); }
+
+<span class="kw">class</span> <span class="typ">BluePlane</span> <span class="kw">extends</span> <span class="typ">Sprite</span> {
+    <span class="kw">private final</span> <span class="typ">List</span>&lt;<span class="typ">Observer</span>&gt; observers = <span class="kw">new</span> <span class="typ">ArrayList</span>&lt;&gt;();
+    <span class="kw">void</span> addObserver(<span class="typ">Observer</span> o) { observers.add(o); }
+    <span class="kw">void</span> notifyAll(<span class="typ">NotifyType</span> t, <span class="typ">ObserverData</span> d) {
+        <span class="kw">for</span> (<span class="typ">Observer</span> o : observers) o.onNotify(t, d);   <span class="cmt">// broadcast</span>
+    }
+    <span class="kw">void</span> onEnemyDestroyed(<span class="typ">Enemy</span> e) { notifyAll(<span class="typ">NotifyType</span>.ENEMY_DOWN, <span class="kw">new</span> <span class="typ">ObserverData</span>(e.points)); }
+}
+<span class="kw">class</span> <span class="typ">PlaneScore</span> <span class="kw">implements</span> <span class="typ">Observer</span> {
+    <span class="kw">int</span> score;
+    <span class="kw">public void</span> onNotify(<span class="typ">NotifyType</span> t, <span class="typ">ObserverData</span> d) {
+        <span class="kw">if</span> (t == <span class="typ">NotifyType</span>.ENEMY_DOWN) score += d.value;
+    }
+}</code></pre>
+</div>
+<div class="tips"><b>💡 Tips</b><br>
+• Spring: <code>ApplicationEventPublisher.publishEvent()</code> + <code>@EventListener</code>. Add <code>@Async</code> or <code>@TransactionalEventListener</code> to show depth.<br>
+• <b>Push</b> (send the data) vs <b>pull</b> (send "something changed", observer asks). The book pushes an <code>ObserverData</code>.<br>
+• Observer is the parent idea behind pub/sub, event buses, Kafka consumers and reactive streams.</div>
+
+<h3>7.4 Mediator — "talk to the hub"</h3>
+<div class="grid2">
+<div>
+<p><b>Intent:</b> objects stop talking to each other directly; they talk to one mediator, which decides who does what.</p>
+<p><b>Book example:</b> the game's <code>Media</code> / <code>Bom</code> (explosion) system. Plane, enemy and bullet report to the mediator; it plays the sound, shows the explosion and updates the right objects.</p>
+<p><b>Use when:</b> many objects have tangled many-to-many links.</p>
+<p><b>Benefit:</b> N×N links become N links to one hub.</p>
+<p><b>Caution:</b> the hub can swell into a "god object" that knows everything. Split it when it grows.</p>
+</div>
+<pre><code><span class="kw">class</span> <span class="typ">GameMediator</span> {
+    <span class="kw">private final</span> <span class="typ">Sound</span> sound; <span class="kw">private final</span> <span class="typ">List</span>&lt;<span class="typ">Explosion</span>&gt; booms;
+    <span class="kw">private final</span> <span class="typ">PlaneScore</span> score;
+
+    <span class="cmt">// every object reports here instead of to each other</span>
+    <span class="kw">void</span> bulletHitEnemy(<span class="typ">Bullet</span> b, <span class="typ">Enemy</span> e) {
+        b.destroy();
+        e.destroy();
+        booms.add(<span class="kw">new</span> <span class="typ">Explosion</span>(e.x, e.y));
+        sound.play(<span class="str">"boom"</span>);
+        score.add(e.points);
+    }
+}
+<span class="cmt">// Bullet does not know Enemy, Explosion, Sound or Score:</span>
+<span class="kw">if</span> (bullet.touches(enemy)) mediator.bulletHitEnemy(bullet, enemy);</code></pre>
+</div>
+
+<h3>7.5 Observer vs Mediator vs Chain — the talking patterns</h3>
+<table>
+<thead><tr><th>Pattern</th><th>Shape of the talk</th><th>Core question</th><th>Picture</th></tr></thead>
+<tbody>
+<tr><td><b>Observer</b></td><td>One → many (fan out)</td><td>"Who should be told?"</td><td><pre class="arrow" style="margin:0;border:0;background:none;padding:0">BluePlane ──notify──▶ PlaneScore
+                   └──▶ PlaneLife</pre></td></tr>
+<tr><td><b>Mediator</b></td><td>Many ↔ hub ↔ many</td><td>"Who coordinates these objects?"</td><td><pre class="arrow" style="margin:0;border:0;background:none;padding:0">Plane ─┐
+Enemy ─┼─▶ Mediator ─▶ Explosion, Sound, Score
+Bullet ┘</pre></td></tr>
+<tr><td><b>Chain</b></td><td>One → handler → handler → …</td><td>"Who should handle this?"</td><td><pre class="arrow" style="margin:0;border:0;background:none;padding:0">Request ─▶ Stage1 ─▶ Stage2 ─▶ Stage3 (handles)</pre></td></tr>
+</tbody></table>
+<div class="trick"><b>🎯 Trick</b><br>Observer: sender does not care <i>who</i> listens. Mediator: sender does not care <i>how</i> others react, only the hub does. Chain: sender does not care <i>which one</i> handles. Three kinds of "I don't care".</div>
+
+<div class="tricky"><b>❓ Question</b><br>A Spring <code>@Service</code> calls five other services after an order is placed. Observer or Mediator?
+<details><summary>Reveal hint</summary>If the service just announces "order placed" and the five react on their own → <b>Observer</b> (publish an event). If the service must order the steps and pass results between them → <b>Mediator</b> (or a Facade / orchestrator). Ask: does the sender need to know the outcome? No → Observer. Yes → Mediator.</details></div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 8. LOOK-ALIKES ============ -->
+<h2 id="s8" style="--acc:#9b5de5"><span class="n">8</span>Look-alike pairs interviewers love</h2>
+<p>These pairs share code shape, so people mix them up. The table gives the one question that splits each pair.</p>
+
+<h3>8.1 Strategy vs State</h3>
+<table>
+<thead><tr><th></th><th>Strategy</th><th>State</th></tr></thead>
+<tbody>
+<tr><td>What changes</td><td><b>Which algorithm</b> is used</td><td><b>How the object acts</b> because its state moved</td></tr>
+<tr><td>Who changes it</td><td>The caller picks one</td><td>The state (or the object) moves itself to the next state</td></tr>
+<tr><td>Do the parts know each other?</td><td>No — strategies are independent</td><td>Yes — a state knows which state comes next</td></tr>
+<tr><td>Book example</td><td>Different bullet types</td><td>Background / scrolling states</td></tr>
+<tr><td>The splitting question</td><td>"Which way should I do it?"</td><td>"What should I do <i>now</i>?"</td></tr>
+</tbody></table>
+<div class="grid2">
+<div class="card"><h4>This shape says Strategy</h4><pre class="arrow">Weapon
+ ├── NormalShot
+ ├── MissileShot
+ └── LaserShot      (player picks)</pre></div>
+<div class="card"><h4>This shape says State</h4><pre class="arrow">Enemy
+ ├── Idle
+ ├── Chasing
+ ├── Attacking
+ └── Dead           (moves on its own)</pre></div>
+</div>
+
+<h3>8.2 Decorator vs Inheritance</h3>
+<table class="compare">
+<thead><tr><th>Topic</th><th>Inheritance (wrong for combos)</th><th>Decorator (right for combos)</th></tr></thead>
+<tbody>
+<tr><td>Adding Shield, Speed, Weapon to a plane</td><td>7 subclasses for 3 features; 15 for 4; grows as 2ⁿ</td><td>3 wrapper classes; stack them in any mix at run time</td></tr>
+<tr><td>When is the extra decided?</td><td>Compile time, fixed forever</td><td>Run time, can be added or removed</td></tr>
+<tr><td>Core idea</td><td>Changes what the class <b>is</b></td><td>Adds what the object <b>can do</b></td></tr>
+<tr><td>Tell-tale name</td><td><code>ShieldedFastBluePlane</code></td><td><code>new ShieldDecorator(new SpeedDecorator(plane))</code></td></tr>
+</tbody></table>
+
+<h3>8.3 Bridge vs Strategy</h3>
+<table>
+<thead><tr><th></th><th>Bridge</th><th>Strategy</th></tr></thead>
+<tbody>
+<tr><td>Kind of pattern</td><td>Structural — about <b>shape</b></td><td>Behavioral — about <b>behavior</b></td></tr>
+<tr><td>What it separates</td><td>Abstraction tree from implementation tree</td><td>One algorithm from the object that uses it</td></tr>
+<tr><td>How many things vary</td><td>Two, independently</td><td>One</td></tr>
+<tr><td>Book example</td><td>Planes × Bullets</td><td>Bullet behavior</td></tr>
+<tr><td>Main win</td><td>Stops N×M class explosion</td><td>Run-time swap, no conditionals</td></tr>
+</tbody></table>
+<div class="tips"><b>💡 Tip</b><br>In code the two look identical (a field with an interface type). Decide by <b>intent</b>: if you drew two class trees that both grow, say Bridge. If you drew one object with a slot for "the way to do X", say Strategy. In an interview, say which one <i>and why</i>; the "why" is the mark.</div>
+
+<h3>8.4 Factory vs Builder vs Singleton</h3>
+<div class="oneliner">Factory chooses. Builder assembles. Singleton restricts.</div>
+<p>Full table in <a href="#s4">section 4.4</a>. Short form: Factory = <i>which</i>, Builder = <i>how</i>, Singleton = <i>how many</i>.</p>
+
+<h3>8.5 Decorator vs Proxy vs Adapter (not in the book, but asked next to it)</h3>
+<table>
+<thead><tr><th>Pattern</th><th>Same interface as the wrapped thing?</th><th>Purpose</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>Decorator</td><td>Yes</td><td><b>Add</b> behavior</td><td><code>BufferedReader</code></td></tr>
+<tr><td>Proxy</td><td>Yes</td><td><b>Control</b> access (lazy load, security, remote)</td><td>Spring AOP proxy, Hibernate lazy entity</td></tr>
+<tr><td>Adapter</td><td><b>No</b> — changes the interface</td><td><b>Convert</b> one interface to another</td><td><code>Arrays.asList()</code>, <code>InputStreamReader</code></td></tr>
+</tbody></table>
+
+<div class="tricky"><b>❓ Question</b><br><code>@Transactional</code> on a Spring bean: Decorator or Proxy?
+<details><summary>Reveal hint</summary>Technically a <b>Proxy</b> (the container creates it, and it controls access by opening and closing the transaction around the call). Many people call it Decorator because it adds behavior. Safe answer: "a proxy that decorates the call with transaction handling" — shows you know both.</details></div>
+<div class="tricky"><b>❓ Question</b><br>An order goes <code>NEW → PAID → SHIPPED → DELIVERED</code> and each step allows different actions. Strategy or State?
+<details><summary>Reveal hint</summary>State. The allowed behavior depends on where the order <i>is</i> in its life, and each state decides the next one. Strategy would be, for example, choosing between three shipping-cost formulas.</details></div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 9. WRONG VS RIGHT ============ -->
+<h2 id="s9" style="--acc:#c62828"><span class="n">9</span>Common mistakes: wrong vs right</h2>
+<table class="compare">
+<thead><tr><th>Topic</th><th>Wrong</th><th>Right</th></tr></thead>
+<tbody>
+<tr><td>Singleton</td><td>Making a class a Singleton because it is "easy to reach"</td><td>Only when there must be exactly one; in Spring, let bean scope do it</td></tr>
+<tr><td>Singleton + threads</td><td>Lazy <code>if (instance == null) instance = new …</code> with no lock</td><td>Eager <code>static final</code>, an <code>enum</code>, or the holder idiom</td></tr>
+<tr><td>Factory</td><td>A 40-branch <code>switch</code> that every new type must edit</td><td>A <code>Map&lt;String, Supplier&gt;</code>, or Spring beans keyed by name</td></tr>
+<tr><td>Builder</td><td>Builder for a 2-field class</td><td>Builder only when there are many optional fields or several valid set-ups</td></tr>
+<tr><td>Builder validation</td><td>Letting <code>build()</code> return a half-set object</td><td>Check required fields inside <code>build()</code> and throw early</td></tr>
+<tr><td>Flyweight</td><td>Letting one object change the shared data</td><td>Shared (intrinsic) data is immutable; per-object data stays outside</td></tr>
+<tr><td>Decorator</td><td>Wrapper changes the method names</td><td>Wrapper keeps the exact same interface; if the interface changes it is an Adapter</td></tr>
+<tr><td>Composite</td><td><code>add()</code> / <code>remove()</code> on the leaf interface, throwing for leaves</td><td>Keep the shared interface small (<code>draw()</code>); put child methods only on the branch</td></tr>
+<tr><td>Template Method</td><td>Children override the template and reorder steps</td><td>Template method is <code>final</code>; children override only the step hooks</td></tr>
+<tr><td>Strategy</td><td>Ten classes for ten one-line rules</td><td>Lambdas or an <code>enum</code> with a method for simple rules; classes for real ones</td></tr>
+<tr><td>State</td><td><code>if (state == A)</code> repeated inside 8 methods</td><td>One class per state; the object delegates to the current state</td></tr>
+<tr><td>Command</td><td>Command class that also does the heavy work itself</td><td>Command calls a Receiver; it only knows <i>what</i>, the receiver knows <i>how</i></td></tr>
+<tr><td>Iterator</td><td>Hand-rolled iterator for an <code>ArrayList</code></td><td>Implement <code>Iterable</code> and reuse the JDK; use <code>removeIf()</code> while looping</td></tr>
+<tr><td>Chain</td><td>No handler at the end — request silently lost</td><td>Explicit default / tail handler, or throw when nothing handled it</td></tr>
+<tr><td>Observer</td><td>Subject never removes listeners (memory leak); observers do heavy work in the callback</td><td>Unsubscribe on dispose; keep callbacks quick, go async if slow</td></tr>
+<tr><td>Mediator</td><td>One hub class with 3,000 lines that knows every object</td><td>Split by feature; the hub routes, it does not do everything</td></tr>
+<tr><td>Explaining in interviews</td><td>"X is a creational pattern that…" (definition first)</td><td>Problem → what varies → the cut → the pattern → its cost</td></tr>
+</tbody></table>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 10. SPRING MAPPING ============ -->
+<h2 id="s10" style="--acc:#0a7c6a"><span class="n">10</span>Game pattern → Java / Spring Boot backend</h2>
+<p>The book teaches with planes and bullets, but the same problems show up in every backend. Use this table to turn each game story into a work story.</p>
+<table>
+<thead><tr><th>Pattern</th><th>In the game</th><th>In a Spring Boot backend</th><th>Where you already see it in the JDK / Spring</th></tr></thead>
+<tbody>
+<tr><td>Template Method</td><td>Shared <code>Sprite</code> behavior</td><td>Common service flow with a few custom steps (validate → process → audit)</td><td><code>JdbcTemplate</code>, <code>RestTemplate</code>, <code>AbstractList</code></td></tr>
+<tr><td>Singleton</td><td><code>ImageUtil</code></td><td>Shared stateless config or infrastructure bean</td><td>Every default-scope <code>@Bean</code>; <code>Runtime.getRuntime()</code></td></tr>
+<tr><td>Flyweight</td><td>Shared images</td><td>Cache of immutable lookup objects, shared enums / constants</td><td><code>Integer.valueOf</code>, <code>String</code> pool, <code>@Cacheable</code> results</td></tr>
+<tr><td>Builder</td><td><code>SelectDialog</code></td><td>Complex DTO / request / config objects</td><td><code>StringBuilder</code>, <code>HttpRequest.newBuilder()</code>, Lombok <code>@Builder</code>, <code>WebClient.builder()</code></td></tr>
+<tr><td>Command</td><td>Button action</td><td>Jobs, queued tasks, CQRS commands, undoable operations</td><td><code>Runnable</code>, <code>Callable</code>, Spring Batch tasklets</td></tr>
+<tr><td>Factory</td><td><code>SpriteFactory</code></td><td>Pick payment / parser / notification implementation at run time</td><td><code>BeanFactory</code>, <code>@Bean</code> methods, <code>LoggerFactory</code></td></tr>
+<tr><td>Strategy</td><td>Bullet types</td><td>Pricing, auth, routing, discount or tax algorithms</td><td><code>Comparator</code>, <code>PasswordEncoder</code>, <code>Map&lt;String, Strategy&gt;</code> injection</td></tr>
+<tr><td>Bridge</td><td>Plane × bullet</td><td>Service abstraction separate from infrastructure (storage: S3 vs disk; message: Kafka vs SQS)</td><td>JDBC API vs drivers; <code>Logger</code> API vs binding (SLF4J)</td></tr>
+<tr><td>Iterator</td><td>Bullet list</td><td>Walking results, paging, stream processing</td><td><code>Iterable</code>, <code>Stream</code>, <code>ResultSet</code>, Spring Data <code>Page</code></td></tr>
+<tr><td>Decorator</td><td>Extra plane / bullet movement</td><td>Cross-cutting wrappers: logging, retry, metrics, caching around a service</td><td>Java I/O streams, <code>Collections.unmodifiableList</code>, AOP proxies</td></tr>
+<tr><td>Composite</td><td>Menu tree</td><td>Org trees, product categories, permission trees, nested rules</td><td>Swing containers, Spring Security's <code>AccessDecisionManager</code> voters, <code>CompositeHealthContributor</code></td></tr>
+<tr><td>Chain of Responsibility</td><td>Spawning stages</td><td>Validation chains, filters, middleware, approval steps</td><td>Servlet <code>Filter</code>, Spring Security filter chain, <code>HandlerInterceptor</code></td></tr>
+<tr><td>Observer</td><td>Score / life update</td><td>Domain events, app events, pub/sub</td><td><code>ApplicationEventPublisher</code> + <code>@EventListener</code>, Kafka listeners</td></tr>
+<tr><td>Mediator</td><td>Media / explosion hub</td><td>Orchestrator between many tightly linked services; saga coordinator</td><td>Message broker, <code>DispatcherServlet</code> (front controller / mediator)</td></tr>
+<tr><td>State</td><td>Background states</td><td>Order / payment / workflow lifecycle, state machines</td><td>Spring Statemachine, <code>Thread.State</code>, <code>enum</code> with behavior</td></tr>
+</tbody></table>
+<div class="tips"><b>💡 Interview tip — pair each pattern with one Spring class</b><br>Saying "Template Method, like <code>JdbcTemplate</code>" or "Chain, like the Spring Security filter chain" proves you have seen the pattern in real code, not just in a book. Pick one anchor per pattern and memorize that pairing.</div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 11. PRIORITY ============ -->
+<h2 id="s11" style="--acc:#e07b00"><span class="n">11</span>Study priority for Java / Spring Boot interviews</h2>
+<p>Do not give all 15 the same time. Spend most of it on the top row.</p>
+<table>
+<thead><tr><th>Priority</th><th>Patterns</th><th>Why</th><th>Must be able to…</th></tr></thead>
+<tbody>
+<tr><td class="pri-h">🔴 Very high</td><td><b>Strategy</b></td><td>The usual answer to "replace a big <code>if / else</code> or <code>switch</code>"</td><td>Write it from scratch in 2 minutes, with a Spring <code>Map</code> injection twist</td></tr>
+<tr><td class="pri-h">🔴 Very high</td><td><b>Factory</b></td><td>Everywhere in frameworks and app wiring</td><td>Name simple factory / factory method / abstract factory and give one example each</td></tr>
+<tr><td class="pri-h">🔴 Very high</td><td><b>Builder</b></td><td>Modern Java APIs use it constantly</td><td>Write a fluent builder with validation in <code>build()</code></td></tr>
+<tr><td class="pri-h">🔴 Very high</td><td><b>Observer</b></td><td>Base of event-driven design</td><td>Explain Spring events, push vs pull, async listeners</td></tr>
+<tr><td class="pri-h">🔴 Very high</td><td><b>Decorator</b></td><td>Composition over inheritance; how AOP works</td><td>Explain Java I/O streams and <code>@Transactional</code> proxies</td></tr>
+<tr><td class="pri-h">🔴 Very high</td><td><b>Template Method</b></td><td>How frameworks give you extension points</td><td>Point to <code>JdbcTemplate</code>; explain hooks and <code>final</code> template</td></tr>
+<tr><td class="pri-h">🔴 Very high</td><td><b>Chain of Responsibility</b></td><td>Filters, middleware, pipelines</td><td>Draw the Spring Security filter chain; stop-at-first vs run-all</td></tr>
+<tr><td class="pri-m">🟠 High</td><td><b>Singleton</b></td><td>Lifecycle and global state questions; often asked as "why not?"</td><td>Thread-safe forms; why Spring beans make hand-written ones rare</td></tr>
+<tr><td class="pri-m">🟠 High</td><td><b>Command</b></td><td>Request / action modeling, queues, undo</td><td>Name the four roles; show undo with a stack</td></tr>
+<tr><td class="pri-m">🟠 High</td><td><b>State</b></td><td>Workflow and state-machine questions</td><td>Tell it from Strategy; model an order lifecycle</td></tr>
+<tr><td class="pri-m">🟠 High</td><td><b>Composite</b></td><td>Tree-shaped data</td><td>Recursive <code>draw()</code>; keep the leaf interface small</td></tr>
+<tr><td class="pri-l">🟡 Medium</td><td><b>Bridge</b></td><td>Architecture-level; rarely coded by hand</td><td>Tell it from Strategy by intent; JDBC example</td></tr>
+<tr><td class="pri-l">🟡 Medium</td><td><b>Flyweight</b></td><td>Memory-heavy systems</td><td>Intrinsic vs extrinsic; <code>Integer.valueOf</code></td></tr>
+<tr><td class="pri-l">🟡 Medium</td><td><b>Iterator</b></td><td>JDK already provides it</td><td>Implement <code>Iterable</code>; avoid <code>ConcurrentModificationException</code></td></tr>
+<tr><td class="pri-l">🟡 Medium</td><td><b>Mediator</b></td><td>When service chatter gets tangled</td><td>Tell it from Observer; god-object risk</td></tr>
+</tbody></table>
+
+<h3>A 5-day plan</h3>
+<table>
+<thead><tr><th>Day</th><th>Learn</th><th>Do</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Sections 2 and 3 (families, problem-first)</td><td>Say the three families out loud with 3 patterns each</td></tr>
+<tr><td>2</td><td>Strategy, Factory, Builder</td><td>Code each from memory; add a Spring example to each</td></tr>
+<tr><td>3</td><td>Observer, Decorator, Template Method, Chain</td><td>Code Observer and Decorator; find each in Spring source</td></tr>
+<tr><td>4</td><td>Singleton, Command, State, Composite</td><td>Do the look-alike tables in section 8 from memory</td></tr>
+<tr><td>5</td><td>Bridge, Flyweight, Iterator, Mediator + quiz</td><td>Take the quiz in section 12 without peeking; redo the ones you miss</td></tr>
+</tbody></table>
+
+<h3>One-line memory hooks (all 15)</h3>
+<div class="grid3">
+<div class="card"><h4><span class="tag c">C</span>Creational</h4><ul><li><b>Singleton</b> — there can be only one</li><li><b>Factory</b> — factory chooses</li><li><b>Builder</b> — set, set, set, build</li></ul></div>
+<div class="card"><h4><span class="tag s">S</span>Structural</h4><ul><li><b>Flyweight</b> — load once, share many</li><li><b>Bridge</b> — two axes, one link</li><li><b>Decorator</b> — wrap to add</li><li><b>Composite</b> — leaf and branch look alike</li></ul></div>
+<div class="card"><h4><span class="tag b">B</span>Behavioral</h4><ul><li><b>Template Method</b> — same recipe, your steps</li><li><b>Strategy</b> — plug in a different brain</li><li><b>State</b> — what do I do now?</li><li><b>Command</b> — the request is an object</li><li><b>Iterator</b> — hasNext / next</li><li><b>Chain</b> — pass it on</li><li><b>Observer</b> — subscribe and get told</li><li><b>Mediator</b> — talk to the hub</li></ul></div>
+</div>
+<div class="trick"><b>🎯 Trick — the "I don't care" test</b><br>Most behavioral patterns are about what the sender does <b>not</b> need to know. Strategy: not <i>how</i>. Command: not <i>what runs</i>. Observer: not <i>who listens</i>. Chain: not <i>which handler</i>. Mediator: not <i>how others react</i>. Name the thing the sender stops caring about and you have named the pattern.</div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ 12. QUIZ ============ -->
+<h2 id="s12" style="--acc:#4f7bd9"><span class="n">12</span>Self-test: name the pattern</h2>
+<p>Read the situation, say the pattern and <i>why</i>, then reveal. Aim for 10 of 12 before you call yourself ready.</p>
+
+<div class="grid2">
+<div class="tricky"><b>❓ 1.</b> Fifty bullets on screen each hold their own copy of the same 40 KB image. Memory is climbing.
+<details><summary>Reveal hint</summary><b>Flyweight.</b> Put the image in an <code>ImageCache</code> keyed by name; bullets keep only x and y.</details></div>
+
+<div class="tricky"><b>❓ 2.</b> You have <code>BluePlaneBlueBullet</code>, <code>BluePlaneRedBullet</code>, <code>RedPlaneBlueBullet</code>… and a third bullet is coming.
+<details><summary>Reveal hint</summary><b>Bridge.</b> Two trees (Plane, Bullet) joined by a field. 3 planes × 3 bullets stays 6 classes, not 9.</details></div>
+
+<div class="tricky"><b>❓ 3.</b> A payment service has <code>switch (type) { case CARD… case UPI… case WALLET… }</code> and each branch is 80 lines.
+<details><summary>Reveal hint</summary><b>Strategy.</b> One <code>PaymentStrategy</code> interface, one class per type, pick by key. In Spring inject <code>Map&lt;String, PaymentStrategy&gt;</code>.</details></div>
+
+<div class="tricky"><b>❓ 4.</b> When an enemy dies, the score panel, the life bar, the sound system and an achievement tracker must all react. You will add more later.
+<details><summary>Reveal hint</summary><b>Observer.</b> The plane publishes <code>ENEMY_DOWN</code>; each part subscribes. Adding a fifth reaction touches nothing in the plane.</details></div>
+
+<div class="tricky"><b>❓ 5.</b> You want to add "shield", "speed boost" and "double fire" to a plane in any mix, during the game.
+<details><summary>Reveal hint</summary><b>Decorator.</b> Three wrappers that implement <code>Sprite</code> and hold a <code>Sprite</code>. Stack them at run time.</details></div>
+
+<div class="tricky"><b>❓ 6.</b> An HTTP request must pass auth, then rate-limit, then validation; any of them may reject it.
+<details><summary>Reveal hint</summary><b>Chain of Responsibility.</b> Each check is a handler that either rejects or calls the next. Spring Security's filter chain is exactly this.</details></div>
+
+<div class="tricky"><b>❓ 7.</b> Every report job does: open connection → run query → map rows → close. Only "run query" and "map rows" differ.
+<details><summary>Reveal hint</summary><b>Template Method.</b> Parent owns the <code>final</code> flow; children override the two steps. This is <code>JdbcTemplate</code>.</details></div>
+
+<div class="tricky"><b>❓ 8.</b> An enemy is Idle, then Chasing when it sees you, then Attacking in range, then Dead. Each phase moves and draws differently.
+<details><summary>Reveal hint</summary><b>State.</b> One class per phase; each phase decides the next. Not Strategy, because the enemy switches on its own.</details></div>
+
+<div class="tricky"><b>❓ 9.</b> You need a "Settings" screen that has sections, which have sub-sections, which have items. "Draw" must work on any of them.
+<details><summary>Reveal hint</summary><b>Composite.</b> One <code>MenuComponent</code> interface; <code>Menu</code> holds children and forwards <code>draw()</code>; <code>MenuItem</code> is the leaf.</details></div>
+
+<div class="tricky"><b>❓ 10.</b> Users want undo for the last 20 edits, and edits should also be replayable from a log.
+<details><summary>Reveal hint</summary><b>Command.</b> Each edit is an object with <code>execute()</code> and <code>undo()</code>; keep them on a stack and in the log.</details></div>
+
+<div class="tricky"><b>❓ 11.</b> Plane, Enemy, Bullet, Sound and Explosion all call each other directly. Changing one breaks three others.
+<details><summary>Reveal hint</summary><b>Mediator.</b> They report to a <code>GameMediator</code>; it decides who does what. N×N links become N.</details></div>
+
+<div class="tricky"><b>❓ 12.</b> An <code>EmailRequest</code> has to, cc, bcc, subject, body, attachments, priority and reply-to; most are optional.
+<details><summary>Reveal hint</summary><b>Builder.</b> Fluent setters, validate in <code>build()</code>, produce an immutable request.</details></div>
+</div>
+
+<h3>Harder "why" questions</h3>
+<div class="tricky"><b>❓ A.</b> Interviewer: "Strategy and State have identical UML. So are they the same pattern?"
+<details><summary>Reveal hint</summary>No. Same structure, different <b>intent</b> and different <b>owner of the switch</b>. Strategy: caller picks an interchangeable algorithm; strategies do not know each other. State: the object's phase picks its behavior and each state knows its neighbors. Patterns are defined by the problem they solve, not by their class diagram.</details></div>
+<div class="tricky"><b>❓ B.</b> "Why is a Singleton bad for unit tests, and how does Spring avoid the problem?"
+<details><summary>Reveal hint</summary>A static <code>getInstance()</code> cannot be swapped for a mock, and state leaks between tests. Spring keeps one instance per container but <b>injects</b> it, so a test can inject a fake. One instance is fine; a hidden global door is the problem.</details></div>
+<div class="tricky"><b>❓ C.</b> "The book's Chain example (2 planes → 4 planes → boss) could be a plain <code>if / else if</code>. Why use a pattern?"
+<details><summary>Reveal hint</summary>With 3 fixed stages, <code>if / else</code> is fine — say so; that shows judgment. The chain pays off when stages are added, reordered or configured at run time (levels loaded from a file), or when each stage is big enough to deserve its own class and tests.</details></div>
+<div class="tricky"><b>❓ D.</b> "Name one trade-off for each of Observer, Decorator and Mediator."
+<details><summary>Reveal hint</summary>Observer: hard-to-trace flow and listener leaks. Decorator: deep wrapper stacks are hard to debug; identity (<code>==</code>) breaks. Mediator: the hub can become a god object. Always end a pattern answer with its cost.</details></div>
+<p class="top"><a href="#top">↑ back to top</a></p>
+
+<!-- ============ FOOTER ============ -->
+<div class="tips" style="margin-top:34px"><b>💡 The one idea to carry away</b><br>
+Do not learn patterns as <i>name → definition → UML → code</i>. Learn them as <i>problem → what changes → what is stuck together → where to cut → which pattern → what it costs</i>. That habit is worth more than all 15 definitions.</div>
+<p class="lead" style="font-size:12px;margin-top:18px">Source: <i>Java Games Design Patterns: Learning Programming Design Patterns through Games</i> (Yang Hu). The book's later chapters (Chain, Observer, State) are game-only chapters without a separate "Principle" chapter; this sheet keeps what the book shows and adds plain-word notes, Spring mappings and quiz items for study. Code samples are short teaching versions, not copies from the book.</p>
+</div><!-- /wrap -->
+
+<script>
+(function(){
+  var html=document.documentElement;
+  /* ---------- theme (light default, saved) ---------- */
+  var btn=document.getElementById('themeBtn');
+  function setTheme(t){html.setAttribute('data-theme',t);btn.textContent=t==='dark'?'☀️':'🌙';try{localStorage.setItem('jgdp-theme',t)}catch(e){}}
+  var saved=null;try{saved=localStorage.getItem('jgdp-theme')}catch(e){}
+  setTheme(saved==='dark'?'dark':'light');
+  btn.addEventListener('click',function(){setTheme(html.getAttribute('data-theme')==='dark'?'light':'dark')});
+
+  /* ---------- sections, toc, menu ---------- */
+  var secs=Array.prototype.slice.call(document.querySelectorAll('h2[id]'));
+  var toc=document.getElementById('toc'),menuList=document.getElementById('menuList');
+  secs.forEach(function(h){
+    var acc=h.style.getPropertyValue('--acc')||'#2f6fed';
+    var num=h.querySelector('.n')?h.querySelector('.n').textContent:'';
+    var title=h.textContent.replace(num,'').replace(/^[CSB]\s*/,'').trim();
+    var a=document.createElement('a');a.href='#'+h.id;a.style.setProperty('--acc',acc);
+    a.innerHTML='<b>'+num+'</b>'+title;toc.appendChild(a);
+    var m=a.cloneNode(true);m.addEventListener('click',closeMenu);menuList.appendChild(m);
+  });
+
+  /* ---------- hamburger ---------- */
+  var ham=document.getElementById('hamBtn'),overlay=document.getElementById('overlay');
+  function openMenu(){document.body.classList.add('menu-open');ham.setAttribute('aria-label','Close menu')}
+  function closeMenu(){document.body.classList.remove('menu-open');ham.setAttribute('aria-label','Open menu')}
+  ham.addEventListener('click',function(){document.body.classList.contains('menu-open')?closeMenu():openMenu()});
+  overlay.addEventListener('click',closeMenu);
+
+  /* ---------- arrow keys between sections ---------- */
+  function currentIndex(){
+    var y=window.scrollY+80,idx=0;
+    for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top+window.scrollY<=y)idx=i;}
+    return idx;
+  }
+  function flash(h){h.classList.add('flash');setTimeout(function(){h.classList.remove('flash')},900)}
+  function goTo(i){var h=secs[(i+secs.length)%secs.length];h.scrollIntoView({behavior:'smooth',block:'start'});flash(h);}
+  document.addEventListener('keydown',function(e){
+    var tag=(e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea'||e.target.isContentEditable)return;
+    if(e.key==='Escape'){closeMenu();return;}
+    if(e.key==='ArrowRight'){e.preventDefault();goTo(currentIndex()+1);}
+    else if(e.key==='ArrowLeft'){e.preventDefault();goTo(currentIndex()-1);}
+  });
+  /* flash on toc / menu / anchor jumps */
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a[href^="#s"]');if(!a)return;
+    var h=document.getElementById(a.getAttribute('href').slice(1));if(h&&h.tagName==='H2')flash(h);
+  });
+
+  /* ---------- print: open every hint ---------- */
+  var opened=[];
+  window.addEventListener('beforeprint',function(){opened=[];document.querySelectorAll('details:not([open])').forEach(function(d){d.setAttribute('open','');opened.push(d)})});
+  window.addEventListener('afterprint',function(){opened.forEach(function(d){d.removeAttribute('open')});opened=[]});
+})();
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="https://shakti4640.github.io/lets-do-it-properly/index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">🏠</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+</body>
+</html>
