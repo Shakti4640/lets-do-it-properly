@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside LLM Inference — Easy Animated Walkthrough (v2)</title>
+  <link rel="icon" type="image/png" href="../images/favicon.png">
+<script>document.documentElement.dataset.theme=localStorage.getItem('llm-theme')||'light';</script>
+<style>
+html[data-theme="light"]{
+  --bg:#f4f7fa;--bg2:#e9eff6;--panel:#ffffff;--panel2:#eef3f8;--line:#d3dce8;
+  --text:#14213d;--muted:#4b5b76;
+  --cyan:#0e8fa3;--green:#1f9d6a;--orange:#d97b11;--purple:#6b4fd8;--red:#d6453f;--yellow:#8a6d00;
+  --headbg:rgba(244,247,250,.92);--canvas1:#ffffff;--canvas2:#f3f7fb;
+  --cellbg:#e6f3f8;--cellline:#9ccfdd;--tokenbg:#e2f6fa;
+  --callbg:#fff6e8;--calltext:#3d3426;
+  --shortbg:#e8f7ef;--shortline:#1f9d6a;
+  --mistbg:#fdeeee;--mistline:#d6453f;
+  --exbg:#f0edff;--exline:#6b4fd8;
+  --codebg:#f6f8fb;--codeline:#d3dce8;--codetext:#1d2b44;
+  --kw:#8b2fc9;--str:#1a7f37;--num:#b45309;--cmt:#6b7a90;--fn:#0b6fa8;
+  --mathbg:#eef3f8;--mathtext:#14213d;
+  --layerbg:#efeaff;--cachebg:#e6f3f8;--track:#dde5ef;
+  --navbg:#ffffff;--navactive:#e2f6fa;--navactiveline:#9ccfdd;
+  --btnbg:#ffffff;--btnline:#c5d0df;--btnprimary:#dff4f7;--btnprimaryline:#7fc6d2;
+  --progress:#dde5ef;--shadow:0 10px 30px rgba(20,33,61,.10);
+  --menubg:#ffffff;--overlay:rgba(20,33,61,.45);--detailsbg:#f6f8fb;
+  --glow:rgba(14,143,163,.35);
+}
+html[data-theme="dark"]{
+  --bg:#0b1020;--bg2:#172643;--panel:#121b2e;--panel2:#18243a;--line:#2b3b56;
+  --text:#e8eef8;--muted:#9eafc7;
+  --cyan:#55d6e8;--green:#76e0ad;--orange:#ffbd70;--purple:#b99cff;--red:#ff8585;--yellow:#e7df85;
+  --headbg:rgba(11,16,32,.88);--canvas1:#111c30;--canvas2:#0e1728;
+  --cellbg:#1c3850;--cellline:#39627b;--tokenbg:#153344;
+  --callbg:#211f27;--calltext:#d9dce6;
+  --shortbg:#102a22;--shortline:#76e0ad;
+  --mistbg:#2a1a1e;--mistline:#ff8585;
+  --exbg:#1d1a33;--exline:#b99cff;
+  --codebg:#080e19;--codeline:#293a55;--codetext:#c9d6e8;
+  --kw:#c792ea;--str:#9ae6b4;--num:#ffbd70;--cmt:#7f8fa8;--fn:#82cfff;
+  --mathbg:#101a2b;--mathtext:#dce8ff;
+  --layerbg:#28233e;--cachebg:#143143;--track:#26364e;
+  --navbg:#101a2b;--navactive:#1a3447;--navactiveline:#356a7b;
+  --btnbg:#18243a;--btnline:#405473;--btnprimary:#16404b;--btnprimaryline:#287b88;
+  --progress:#26354c;--shadow:0 10px 30px rgba(0,0,0,.45);
+  --menubg:#101a2b;--overlay:rgba(0,0,0,.6);--detailsbg:#111c2e;
+  --glow:rgba(85,214,232,.45);
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 15% 0%,var(--bg2) 0%,var(--bg) 55%);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Arial,sans-serif;transition:background .3s,color .3s}
+
+/* fixed controls: hamburger (top-left) and theme toggle (top-right) */
+.fab{position:fixed;top:12px;z-index:60;width:44px;height:44px;border-radius:12px;background:var(--btnbg);border:1px solid var(--btnline);box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);font-size:20px;padding:0}
+.fab:hover{border-color:var(--cyan);color:var(--cyan)}
+#hamburger{left:12px}
+#themeToggle{right:12px}
+#hamburger .bars{display:flex;flex-direction:column;gap:5px;width:20px}
+#hamburger .bars span{display:block;height:2.5px;background:currentColor;border-radius:2px;transition:transform .25s,opacity .25s}
+#hamburger.open .bars span:nth-child(1){transform:translateY(7.5px) rotate(45deg)}
+#hamburger.open .bars span:nth-child(2){opacity:0}
+#hamburger.open .bars span:nth-child(3){transform:translateY(-7.5px) rotate(-45deg)}
+#menu{position:fixed;top:0;left:0;height:100vh;width:300px;max-width:85vw;background:var(--menubg);border-right:1px solid var(--line);box-shadow:var(--shadow);z-index:55;transform:translateX(-100%);transition:transform .28s;overflow:auto;padding:68px 14px 20px}
+#menu.open{transform:none}
+#menu h4{margin:0 0 8px 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan)}
+#menu button{display:block;width:100%;text-align:left;margin:3px 0;padding:9px 10px;font-size:13px;border:1px solid transparent;background:transparent;color:var(--muted);border-radius:9px;cursor:pointer}
+#menu button:hover,#menu button.active{background:var(--navactive);border-color:var(--navactiveline);color:var(--cyan)}
+#overlay{position:fixed;inset:0;background:var(--overlay);z-index:50;opacity:0;pointer-events:none;transition:opacity .28s}
+#overlay.open{opacity:1;pointer-events:auto}
+
+header{padding:22px 70px 18px;border-bottom:1px solid var(--line);background:var(--headbg);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px)}
+.eyebrow{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+h1{font-size:clamp(24px,4vw,40px);line-height:1.12;margin:7px 0}
+.sub{color:var(--muted);max-width:1000px}
+.toprow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+button{background:var(--btnbg);color:var(--text);border:1px solid var(--btnline);border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer}
+button:hover{border-color:var(--cyan);color:var(--cyan)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--btnprimary);border-color:var(--btnprimaryline)}
+.progress{height:7px;background:var(--progress);border-radius:20px;overflow:hidden;flex:1;min-width:160px}
+.progress span{display:block;height:100%;width:5%;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .35s}
+#counter{color:var(--muted);font-variant-numeric:tabular-nums}
+.hint{color:var(--muted);font-size:12px}
+main{max-width:1450px;margin:auto;padding:28px clamp(14px,3vw,42px) 70px}
+.layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:22px}
+nav{align-self:start;position:sticky;top:200px;background:var(--navbg);border:1px solid var(--line);border-radius:16px;padding:12px;max-height:calc(100vh - 220px);overflow:auto;box-shadow:var(--shadow)}
+nav button{display:block;width:100%;text-align:left;margin:4px 0;padding:8px 10px;font-size:13px;border-color:transparent;background:transparent;color:var(--muted)}
+nav button.active{background:var(--navactive);border-color:var(--navactiveline);color:var(--cyan)}
+
+section.scene{display:none;animation:appear .45s ease;border-radius:18px}
+section.scene.active{display:block}
+section.scene.landed{animation:land .9s ease}
+@keyframes appear{from{opacity:.25;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes land{0%{box-shadow:0 0 0 0 var(--glow)}50%{box-shadow:0 0 0 8px var(--glow)}100%{box-shadow:0 0 0 0 transparent}}
+.scenehead{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:14px}
+h2{font-size:clamp(22px,3vw,31px);margin:0 0 5px}
+h3{margin:14px 0 6px;font-size:17px}
+.kicker{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.lead{color:var(--muted);max-width:900px;margin:0}
+.badge{white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--yellow);font-size:12px;background:var(--panel)}
+.inshort{border-left:4px solid var(--shortline);background:var(--shortbg);padding:11px 15px;border-radius:0 10px 10px 0;margin:0 0 16px}
+.inshort b{color:var(--green)}
+.canvas{background:linear-gradient(145deg,var(--canvas1),var(--canvas2));border:1px solid var(--line);border-radius:18px;padding:22px;min-height:200px;overflow:hidden;position:relative;box-shadow:var(--shadow)}
+.caption{margin:12px 2px 0;color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:15px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:15px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px}
+.card h3{margin:0 0 7px;font-size:16px}
+.card p{margin:5px 0;color:var(--muted)}
+.card.c-cyan{border-top:4px solid var(--cyan)}.card.c-green{border-top:4px solid var(--green)}.card.c-orange{border-top:4px solid var(--orange)}.card.c-purple{border-top:4px solid var(--purple)}.card.c-red{border-top:4px solid var(--red)}
+.flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:18px 0}
+.node{min-width:135px;max-width:220px;text-align:center;padding:15px 13px;border-radius:13px;background:var(--panel2);border:2px solid var(--line);font-weight:750;position:relative}
+.node small{display:block;color:var(--muted);font-weight:500;margin-top:5px}
+.node.cyan{border-color:var(--cyan)}.node.green{border-color:var(--green)}.node.orange{border-color:var(--orange)}.node.purple{border-color:var(--purple)}.node.red{border-color:var(--red)}
+.arrow{font-size:25px;color:var(--cyan);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.35;transform:translateX(4px)}}
+.tokenrow{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:20px 0}
+.token{padding:13px 20px;border:1px solid var(--cyan);border-radius:9px;background:var(--tokenbg);font-weight:800;animation:pop .5s both}
+.token:nth-child(2){animation-delay:.2s}.token:nth-child(3){animation-delay:.4s}.token:nth-child(4){animation-delay:.6s}
+.token.ok{border-color:var(--green)}.token.bad{border-color:var(--red);text-decoration:line-through;opacity:.7}
+@keyframes pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+.vector{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin:15px auto}
+.cell{background:var(--cellbg);border:1px solid var(--cellline);border-radius:6px;padding:8px 12px;font:13px ui-monospace,Consolas,monospace;min-width:58px;text-align:center}
+.pill{display:inline-block;padding:3px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--yellow);font-size:12px;margin:2px}
+.callout{border-left:3px solid var(--orange);background:var(--callbg);padding:13px 16px;border-radius:0 10px 10px 0;margin-top:14px;color:var(--calltext)}
+.example{border-left:4px solid var(--exline);background:var(--exbg);padding:13px 16px;border-radius:0 10px 10px 0;margin-top:15px}
+.example h3{margin:0 0 6px;color:var(--purple)}
+.example p{margin:5px 0}
+.mistake{border-left:4px solid var(--mistline);background:var(--mistbg);padding:12px 16px;border-radius:0 10px 10px 0;margin-top:15px}
+.mistake b{color:var(--red)}
+.code{background:var(--codebg);border:1px solid var(--codeline);border-radius:10px;padding:13px 16px;color:var(--codetext);font:13px/1.65 ui-monospace,Consolas,monospace;overflow:auto;white-space:pre;margin-top:12px}
+.code .kw{color:var(--kw);font-weight:700}.code .str{color:var(--str)}.code .num{color:var(--num)}.code .cmt{color:var(--cmt);font-style:italic}.code .fn{color:var(--fn)}
+.layers{display:flex;gap:7px;align-items:center;justify-content:center;flex-wrap:wrap;margin:18px 0}
+.layer{border:1px solid var(--purple);background:var(--layerbg);padding:12px 16px;border-radius:9px;animation:glow 2s infinite}
+.layer:nth-child(2n){animation-delay:.4s}
+@keyframes glow{50%{box-shadow:0 0 15px var(--glow)}}
+.cache{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:18px 0}
+.cache div{border:1px solid var(--cyan);background:var(--cachebg);border-radius:9px;padding:14px 5px;text-align:center}
+.cache b{display:block}.cache small{color:var(--muted)}
+.barline{display:grid;grid-template-columns:110px 1fr 60px;align-items:center;gap:10px;margin:12px 0}
+.track{height:16px;background:var(--track);border-radius:20px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:20px;animation:grow 1.1s ease both;transform-origin:left}
+.fill.warm{background:linear-gradient(90deg,var(--orange),var(--red))}
+@keyframes grow{from{width:0}}
+.math{font:17px Georgia,serif;text-align:center;background:var(--mathbg);padding:14px;border-radius:10px;color:var(--mathtext);margin:12px 0;border:1px solid var(--line)}
+details{background:var(--detailsbg);border:1px solid var(--line);border-radius:10px;padding:12px 15px;margin-top:12px}
+summary{cursor:pointer;color:var(--cyan);font-weight:700}
+table.gloss{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+table.gloss th,table.gloss td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.gloss th{background:var(--panel2)}
+table.gloss td:first-child{font-weight:700;white-space:nowrap}
+footer{color:var(--muted);text-align:center;padding:25px;border-top:1px solid var(--line)}
+@media(max-width:850px){header{padding:20px 62px 16px}.layout{grid-template-columns:1fr}nav{position:static;display:flex;overflow:auto;max-height:none;gap:5px}nav button{min-width:180px}.grid2,.grid3{grid-template-columns:1fr}.cache{grid-template-columns:repeat(3,1fr)}.scenehead{display:block}.badge{display:inline-block;margin-top:10px}}
+</style>
+</head>
+<body>
+<button id="hamburger" class="fab" aria-label="Open chapter menu" title="Chapter menu"><span class="bars"><span></span><span></span><span></span></span></button>
+<button id="themeToggle" class="fab" aria-label="Switch light or dark mode" title="Light / dark">🌙</button>
+<div id="overlay"></div>
+<aside id="menu" aria-label="Chapter menu"><h4>Chapters</h4></aside>
+
+<header>
+ <div class="eyebrow">Interactive walkthrough · easy words, deeper detail · v2</div>
+ <h1>Inside LLM Inference</h1>
+ <div class="sub">How a model file turns into the next word on your screen. We go from loading the weights, to tokens, attention, the KV cache, picking a token, and finally serving many users fast. Every chapter has a plain summary, a worked example with real numbers, and a common mistake to avoid.</div>
+ <div class="toprow">
+  <button id="prev">← Previous</button><button class="primary" id="play">▶ Auto play</button><button id="next">Next →</button>
+  <div class="progress"><span id="progress"></span></div><span id="counter">01 / 20</span>
+ </div>
+ <div class="hint" style="margin-top:8px">Tip: use the ← and → keys to move between chapters. The ☰ menu (top-left) lists all chapters. The 🌙 / ☀ button (top-right) switches dark and light mode.</div>
+</header>
+<main>
+<div class="layout">
+<nav id="nav"></nav>
+<div id="scenes">
+<section class="scene active" data-title="Big picture">
+ <div class="scenehead"><div><div class="kicker">00 · Big picture</div><h2>Inference is one loop that runs again and again</h2><p class="lead">A trained model is a big file full of numbers. The runtime loads those numbers, reads your prompt, and then guesses the next word piece. Then it does it again. And again.</p></div><span class="badge">The whole journey</span></div>
+ <div class="inshort"><b>In short:</b> Load the model → read the prompt → guess one token → add it to the text → guess again, until a stop sign appears.</div>
+ <div class="canvas">
+  <div class="flow">
+   <div class="node cyan">Model file<small>numbers + settings + word list</small></div><span class="arrow">→</span>
+   <div class="node purple">Runtime setup<small>read · plan · reserve memory</small></div><span class="arrow">→</span>
+   <div class="node green">Prompt step (prefill)<small>text → IDs → run all at once</small></div><span class="arrow">→</span>
+   <div class="node orange">Generation loop (decode)<small>one token per step</small></div>
+  </div>
+  <div class="flow"><div class="node">CPU / GPU / NPU<small>the chip that does the math</small></div><span class="arrow">↔</span><div class="node">Memory<small>weights · working data · KV cache</small></div></div>
+  <div class="callout"><b>Training vs inference.</b> Training changes the model's numbers. Inference does not change anything. It only reads the numbers and uses them to compute an answer.</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-green"><h3>Prefill phase</h3><p>The whole prompt is processed in one go. All prompt tokens travel through the model together, so this part is fast per token.</p><p>The model also saves "notes" (called keys and values) about every prompt token. The next phase reuses these notes.</p></div>
+  <div class="card c-orange"><h3>Decode phase</h3><p>One new token per step. Each step reads the saved notes, so old tokens are never computed again.</p><p>This phase is slower per token, because the chip has to read all the model weights from memory for just one small input.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>You type <b>"The sky is"</b>. That is 3 tokens. Prefill handles all 3 together in one pass.</p><p>Decode then runs: step 1 → "blue", step 2 → ".", step 3 → a stop token. Total work: 1 prefill pass + 3 decode passes.</p></div>
+ <div class="mistake"><b>Common mistake:</b> thinking the model "writes the whole answer in its head" and then prints it. It does not. Each token is chosen only after the one before it exists.</div>
+</section>
+
+<section class="scene" data-title="Model file and loading">
+ <div class="scenehead"><div><div class="kicker">01 · Startup</div><h2>What is inside a model file</h2><p class="lead">Before any math can start, the runtime must know the shape of the model: how many layers, how long each vector is, and how big the word list is.</p></div><span class="badge">Reading &amp; loading</span></div>
+ <div class="inshort"><b>In short:</b> A model file = settings + weights + tokenizer. The runtime reads the settings first, so it knows where to cut the big block of numbers into separate tensors (grids of numbers).</div>
+ <div class="canvas">
+  <div class="grid2" style="margin-top:0">
+   <div class="card c-cyan"><h3>Settings (config)</h3><p><span class="pill">n_layers</span><span class="pill">dim</span><span class="pill">n_heads</span><span class="pill">n_kv_heads</span><span class="pill">hidden_dim</span><span class="pill">vocab_size</span><span class="pill">seq_len</span></p><p>Each number sets the size of a tensor. If one number is wrong, every byte position after it is also wrong, and the math produces garbage.</p></div>
+   <div class="card c-purple"><h3>Weights (the learned numbers)</h3><p>The embedding table, the norm scales, the attention matrices (Q, K, V, O), the feed-forward matrices, and the output matrix.</p><p>These are read-only during inference.</p></div>
+   <div class="card c-green"><h3>Tokenizer</h3><p>The list of word pieces, their ID numbers, the merge rules, and the special tokens like "start" and "stop".</p></div>
+   <div class="card c-orange"><h3>Runtime state</h3><p>Working vectors, attention scores, logits (raw output scores), sampling buffers, and the KV cache. This part changes on every step.</p></div>
+  </div>
+  <div class="callout">A simple C implementation keeps three structs: <b>Config</b> (the settings), <b>TransformerWeights</b> (read-only numbers) and <b>RunState</b> (the changing scratch space). Keeping "fixed data" and "changing data" apart makes the code much easier to reason about.</div>
+ </div>
+ <div class="math">address of one number = start of tensor + (index × bytes per number)</div>
+ <p class="caption">In low-level C code, the programmer computes these addresses by hand. The compiler does not check that an address really points at the tensor you meant. A wrong offset gives wrong numbers, not an error.</p>
+ <div class="example"><h3>Worked example: Llama-2 7B</h3><p>Settings: 32 layers · dim 4096 · 32 heads · hidden_dim 11008 · vocab 32000.</p><p>Parameter count ≈ 6.7 billion numbers. Stored in 16-bit (2 bytes each) that is ≈ <b>13.5 GB</b>. Stored in 4-bit it is ≈ <b>3.5–4 GB</b>.</p></div>
+ <div class="mistake"><b>Common mistake:</b> reading "7B" as "7 GB". It means 7 billion numbers. The size in bytes depends on how many bits each number uses.</div>
+</section>
+
+<section class="scene" data-title="Memory mapping">
+ <div class="scenehead"><div><div class="kicker">02 · Where the weights live</div><h2>Memory mapping: use the file where it sits</h2><p class="lead">Copying 13 GB into RAM takes time. Memory mapping (mmap) is a trick where the program asks the operating system to make the file look like normal memory.</p></div><span class="badge">mmap idea</span></div>
+ <div class="inshort"><b>In short:</b> No big copy at start. The OS loads each small page of the file only when the program first touches it.</div>
+ <div class="canvas">
+  <div class="flow">
+   <div class="node orange">Model file on disk<small>tensor bytes in order</small></div><span class="arrow">→</span>
+   <div class="node cyan">Address range in the program<small>pages backed by the file</small></div><span class="arrow">→</span>
+   <div class="node green">CPU reads a tensor<small>page fault → OS loads that 4 KB page</small></div>
+  </div>
+  <div class="grid2" style="margin-top:0">
+   <div class="card c-orange"><h3>Plain read and copy</h3><p><code>read()</code> copies bytes into a buffer you own. Two copies may exist at once: the OS page cache and your buffer. Startup waits until the whole copy is done.</p></div>
+   <div class="card c-green"><h3>Memory-mapped file</h3><p>No copy up front. The OS page cache is the only copy. Startup is almost instant. The first use of each page pays a small cost (a page fault).</p></div>
+  </div>
+  <div class="callout">mmap does not make the model free. Every page you touch still needs real RAM. If RAM runs short, the OS throws pages out and loads them again later. That is slow and makes the model stutter.</div>
+ </div>
+ <details><summary>Why 64-bit offsets matter</summary><p>A 13 GB file has byte positions bigger than 4,294,967,295, which is the largest 32-bit number. If the code uses 32-bit offsets, the number wraps around and points to the wrong place. Offsets and pointer math must use 64-bit types.</p></details>
+ <div class="example"><h3>Worked example</h3><p>A 13.5 GB file with 4 KB pages has about <b>3.3 million pages</b>. The first forward pass touches every weight, so every page is loaded once. After that, pages stay in RAM for as long as there is room.</p></div>
+ <div class="mistake"><b>Common mistake:</b> looking at the process memory (RSS) right after mmap and thinking the model is tiny. RSS only counts pages touched so far. Run one forward pass, then measure.</div>
+</section>
+
+<section class="scene" data-title="Tokenization">
+ <div class="scenehead"><div><div class="kicker">03 · Input</div><h2>Text becomes a list of numbers</h2><p class="lead">The model never sees letters. A tokenizer cuts the text into pieces from a fixed list (the vocabulary) and gives each piece an ID number.</p></div><span class="badge">BPE example</span></div>
+ <div class="inshort"><b>In short:</b> Text → pieces → IDs. The pieces are not always whole words. Common words are one piece; rare words are split into parts.</div>
+ <div class="canvas">
+  <div class="math">"unhappiness" → ["un", "happ", "iness"] → [417, 8921, 304]</div>
+  <div class="tokenrow"><span class="token">un</span><span class="token">happ</span><span class="token">iness</span></div>
+  <div class="flow"><div class="node cyan">Text bytes<small>UTF-8 input</small></div><span class="arrow">→</span><div class="node purple">Vocabulary lookup<small>pieces + IDs</small></div><span class="arrow">→</span><div class="node green">Token ID list<small>array of integers</small></div></div>
+  <div class="callout"><b>BPE (byte pair encoding) in one line:</b> start from single characters, keep joining the two neighbours that appeared together most often in training data, stop when no join rule applies. The join rules are stored in the tokenizer file.</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-purple"><h3>Special tokens</h3><p>Start-of-text, end-of-text, end-of-turn, and chat role markers like "user" and "assistant". They have IDs but no visible text. The model learns to stop when it produces the end token.</p></div>
+  <div class="card c-cyan"><h3>Byte fallback</h3><p>Text the vocabulary does not know (rare symbols, emoji, other scripts) is split into raw bytes. Each byte has its own token, so nothing is ever "unknown".</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>For English, one token is about 4 characters, or about ¾ of a word. A 1,000-word prompt is about <b>1,300 tokens</b>.</p><p>Code, numbers and non-English text often cost 2–3× more tokens for the same amount of text.</p></div>
+ <div class="mistake"><b>Common mistake:</b> counting words to estimate cost or context use. Count tokens. Also, two models with different tokenizers give different counts for the same text.</div>
+</section>
+<section class="scene" data-title="Embedding and position">
+ <div class="scenehead"><div><div class="kicker">04 · Vectors</div><h2>Each ID becomes a long list of numbers</h2><p class="lead">An embedding is a lookup. Row number 417 of a big table is the vector for token 417. After that, position information is mixed in so the model knows word order.</p></div><span class="badge">Embedding + RoPE</span></div>
+ <div class="inshort"><b>In short:</b> Token ID → one row of the embedding table → a vector of <i>dim</i> numbers. Position is added by rotating pairs of numbers.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node cyan">Token ID 417</div><span class="arrow">→</span><div class="node purple">Embedding table<small>vocab_size rows × dim columns</small></div><span class="arrow">→</span><div class="node green">Vector x<small>dim numbers (e.g. 4096)</small></div></div>
+  <div class="vector"><span class="cell">0.12</span><span class="cell">−0.48</span><span class="cell">0.07</span><span class="cell">0.91</span><span class="cell">…</span><span class="cell">−0.22</span></div>
+  <div class="callout">The vector is not a dictionary meaning. It is a set of learned numbers. The later layers reshape it based on the words around it, so "bank" near "river" ends up different from "bank" near "money".</div>
+  <h3>RoPE: rotary position embedding</h3>
+  <p class="lead">RoPE rotates pairs of numbers inside Q and K by an angle that depends on the token's position. Some pairs turn fast, some turn slow, like the hands of a clock.</p>
+  <div class="math">[x₁, x₂] → [x₁ cos θ − x₂ sin θ, x₁ sin θ + x₂ cos θ]</div>
+  <p class="caption">When a rotated Q meets a rotated K in the dot product, the angle between them equals the distance between their positions. So attention can "feel" how far apart two tokens are, without a separate position number.</p>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>dim 4096 and vocab 32000 → the table has 32000 × 4096 = <b>131 million numbers</b> ≈ 262 MB in 16-bit.</p><p>Looking up one token is just reading one row: 4096 × 2 bytes = 8 KB. Very cheap.</p></div>
+ <div class="mistake"><b>Common mistake:</b> thinking position is "one extra number added at the end". It is spread across many dimensions by rotation. That is why it survives the dot product and why models can be stretched to longer contexts by changing the rotation speed.</div>
+</section>
+
+<section class="scene" data-title="Transformer layer">
+ <div class="scenehead"><div><div class="kicker">05 · The repeated block</div><h2>One layer: normalize → attention → add → normalize → MLP → add</h2><p class="lead">A transformer layer makes two small edits to the running vector. It never replaces the vector. It adds to it. The stack of layers repeats this 32, 80 or more times.</p></div><span class="badge">Pre-norm block</span></div>
+ <div class="inshort"><b>In short:</b> Keep what you had, add what you learned. The vector that flows through all layers is called the <b>residual stream</b>.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node">Input x</div><span class="arrow">→</span><div class="node cyan">RMSNorm</div><span class="arrow">→</span><div class="node purple">Self-attention</div><span class="arrow">→</span><div class="node green">Add back x</div></div>
+  <div class="flow"><div class="node">Result</div><span class="arrow">→</span><div class="node cyan">RMSNorm</div><span class="arrow">→</span><div class="node orange">SwiGLU MLP</div><span class="arrow">→</span><div class="node green">Add back result</div></div>
+  <div class="layers"><span class="layer">Layer 1</span><span class="arrow">→</span><span class="layer">Layer 2</span><span class="arrow">→</span><span class="layer">Layer 3</span><span class="arrow">→</span><span class="layer">… layer N</span></div>
+  <div class="callout">Without the "add back" step, a deep model would lose the input signal after a few layers. With it, each layer only has to learn a small correction.</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-cyan"><h3>RMSNorm</h3><p>Divide the vector by its root-mean-square size (a kind of average length), then multiply each slot by a learned scale. A tiny epsilon (about 1e-5) stops division by zero.</p><p>This keeps numbers in a safe range so the next matrix multiply does not blow up.</p></div>
+  <div class="card c-orange"><h3>SwiGLU MLP</h3><p>Two matrices project the vector up to a wider size (a "gate" and an "up" path). The gate goes through a SiLU curve and is multiplied with the up path. A third matrix projects back down.</p><p>This is where most of the model's parameters live.</p></div>
+ </div>
+ <div class="example"><h3>Worked example: where the 7B parameters are</h3><p>Per layer, attention matrices ≈ 4 × 4096² = <b>67 million</b>. MLP matrices ≈ 3 × 4096 × 11008 = <b>135 million</b>. So the MLP is two thirds of each layer.</p><p>32 layers × 202 million ≈ 6.5 billion, plus the embedding and output tables ≈ 6.7 billion total.</p></div>
+ <div class="mistake"><b>Common mistake:</b> assuming attention is the heavy part. For a short context, the MLP does more math and holds more weights. Attention only becomes the biggest cost at very long context, because its work grows with the number of tokens.</div>
+</section>
+
+<section class="scene" data-title="Attention: Q, K, V">
+ <div class="scenehead"><div><div class="kicker">06 · Self-attention</div><h2>Three views of the same vector</h2><p class="lead">The same normalized vector is multiplied by three different matrices. The results have three jobs: Q asks a question, K says "here is what I have", V holds the content to pass on.</p></div><span class="badge">Query / Key / Value</span></div>
+ <div class="inshort"><b>In short:</b> Compare Q with every K to decide how much to look at each token. Then collect a mix of their V vectors.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node cyan">Normalized x</div><span class="arrow">→</span><div class="node purple">Three matrix multiplies<small>W<sub>Q</sub>, W<sub>K</sub>, W<sub>V</sub></small></div><span class="arrow">→</span><div class="node green">Q, K, V vectors</div></div>
+  <div class="grid2" style="margin-top:0">
+   <div class="card c-purple"><h3 style="color:var(--purple)">Query (Q)</h3><p>What the current token is looking for in earlier tokens.</p><div class="math">Q = X W<sub>Q</sub></div></div>
+   <div class="card c-cyan"><h3 style="color:var(--cyan)">Key (K)</h3><p>What each earlier token offers for matching against a query.</p><div class="math">K = X W<sub>K</sub></div></div>
+   <div class="card c-green"><h3 style="color:var(--green)">Value (V)</h3><p>The content that gets blended in when a token is attended to.</p><div class="math">V = X W<sub>V</sub></div></div>
+   <div class="card c-orange"><h3>Library analogy</h3><p>Q is your question. K is the label on each book. V is what is written inside. You compare your question with every label, then read a mix of the best-matching books.</p></div>
+  </div>
+  <div class="callout">Q and K only decide <b>how much</b> to look. V decides <b>what you get</b>. A high score does not copy the token; it blends that token's V vector into the result.</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-purple"><h3>Many heads</h3><p>The dim is split into heads. Each head has its own small Q, K, V matrices and finds its own pattern (one head may track grammar, another may track names). The outputs are joined back together and passed through one more matrix, W<sub>O</sub>.</p></div>
+  <div class="card c-cyan"><h3>Shapes</h3><p>dim 4096 with 32 heads → each head is 128 numbers wide. W<sub>Q</sub> is 4096 × 4096. With grouped-query attention and 8 KV heads, W<sub>K</sub> and W<sub>V</sub> shrink to 4096 × 1024 each (4× smaller).</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>Sentence: "The cat sat on the mat because <b>it</b> was tired." For the token "it", one head's Q matches the K of "cat" far more than the K of "mat". So the output for "it" carries mostly the V of "cat". The model has, in effect, resolved what "it" refers to.</p></div>
+ <div class="mistake"><b>Common mistake:</b> thinking different heads see different tokens. All heads see all tokens. They just use different Q, K, V matrices, so they notice different things.</div>
+</section>
+
+<section class="scene" data-title="Attention math">
+ <div class="scenehead"><div><div class="kicker">07 · The calculation</div><h2>Score → softmax → weighted sum</h2><p class="lead">Each query is compared with every allowed key. Softmax turns the scores into weights that add up to one. Those weights blend the value vectors.</p></div><span class="badge">Scaled dot-product attention</span></div>
+ <div class="inshort"><b>In short:</b> Attention = softmax( Q·Kᵀ / √d<sub>k</sub> + mask ) · V. Four small steps, done for every head in every layer.</div>
+ <div class="canvas">
+  <div class="math">Attention(Q,K,V) = softmax(QKᵀ / √d<sub>k</sub> + mask) V</div>
+  <div class="grid2" style="margin-top:0">
+   <div class="card c-cyan"><h3>1 · Scores</h3><p>Dot product of the query with each key. A bigger dot product means "more alike". Dividing by √d<sub>k</sub> (square root of the head width) keeps the numbers from growing too large as heads get wider.</p></div>
+   <div class="card c-purple"><h3>2 · Softmax</h3><p>Subtract the largest score (for numeric safety), take e to the power of each score, then divide by the sum. Result: positive weights that add up to 1.</p></div>
+   <div class="card c-red"><h3>3 · Causal mask</h3><p>When generating, a token may not look at tokens that come after it. Future positions get a score of minus infinity, so their weight becomes 0.</p></div>
+   <div class="card c-green"><h3>4 · Weighted sum</h3><p>Multiply each weight by its V vector and add them up. That sum is this head's output for this token.</p></div>
+  </div>
+  <h3>Example attention weights for the token "is" in "The sky is"</h3>
+  <div class="barline"><span>"The"</span><div class="track"><div class="fill" style="width:10%"></div></div><b>0.10</b></div>
+  <div class="barline"><span>"sky"</span><div class="track"><div class="fill" style="width:65%"></div></div><b>0.65</b></div>
+  <div class="barline"><span>"is"</span><div class="track"><div class="fill" style="width:25%"></div></div><b>0.25</b></div>
+  <p class="caption">Made-up numbers for teaching. Real weights depend on the model, the layer, the head and the full context.</p>
+ </div>
+ <div class="example"><h3>Worked example: softmax by hand</h3><p>Scores for one query: [2.0, 4.0, 3.0]. Subtract the max (4.0) → [−2, 0, −1].</p><p>e<sup>x</sup> → [0.135, 1.000, 0.368]. Sum = 1.503. Divide → <b>[0.09, 0.67, 0.24]</b>.</p><p>Output = 0.09·V₁ + 0.67·V₂ + 0.24·V₃.</p></div>
+ <div class="mistake"><b>Common mistake:</b> forgetting the mask. Without it, position 2 could peek at position 5 during training, learn to cheat, and then fail at real generation where the future does not exist yet.</div>
+</section>
+
+<section class="scene" data-title="KV cache and GQA">
+ <div class="scenehead"><div><div class="kicker">08 · Decode speed-up</div><h2>KV cache: save the keys and values, do not redo them</h2><p class="lead">While generating token by token, the K and V vectors of all earlier tokens are kept in memory. The new token only needs to compute its own K and V and then look at the saved ones.</p></div><span class="badge">Memory vs compute</span></div>
+ <div class="inshort"><b>In short:</b> Without the cache, step 100 would recompute K and V for 99 old tokens. With the cache, it computes them for 1 token and reads the other 99.</div>
+ <div class="canvas">
+  <div class="cache"><div><b>t = 0</b><small>K₀ · V₀</small></div><div><b>t = 1</b><small>K₁ · V₁</small></div><div><b>t = 2</b><small>K₂ · V₂</small></div><div><b>t = 3</b><small>K₃ · V₃</small></div><div><b>t = 4</b><small>K₄ · V₄</small></div><div style="border-color:var(--orange)"><b>t = 5</b><small>new K₅ · V₅</small></div></div>
+  <div class="flow"><div class="node cyan">Current token</div><span class="arrow">→</span><div class="node purple">Compute Q₅, K₅, V₅</div><span class="arrow">→</span><div class="node green">Append K₅ / V₅ to the cache</div><span class="arrow">→</span><div class="node orange">Attend over positions 0…5</div></div>
+  <div class="callout">The cache saves the <b>projection</b> work (X · W<sub>K</sub>, X · W<sub>V</sub>). The attention compare still runs against every cached key, so each step still grows a little with context length.</div>
+  <div class="math">KV bytes per token = 2 × layers × (kv_heads × head_dim) × bytes per number</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-purple"><h3>Grouped-query attention (GQA)</h3><p>Several query heads share one K/V head. For example 32 query heads share 8 KV heads. The cache gets 4× smaller, and quality stays almost the same.</p></div>
+  <div class="card c-orange"><h3>The trade-off</h3><p>Longer context and more users at the same time both grow the cache. On a busy server, the KV cache often decides how many users fit on one GPU.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p><b>Llama-2 7B</b> (32 layers, 32 KV heads × 128 = 4096 wide, 16-bit): per token = 2 × 32 × 4096 × 2 bytes = <b>512 KB</b>. A 4,096-token context = <b>2 GB</b>. Ten such users = 20 GB, more than the weights.</p><p><b>Llama-3 8B</b> uses GQA with 8 KV heads: 128 KB per token → 0.5 GB for the same context.</p></div>
+ <div class="mistake"><b>Common mistake:</b> sizing GPU memory for the weights only. With many users, the KV cache can take more memory than the model itself.</div>
+</section>
+<section class="scene" data-title="Logits and sampling">
+ <div class="scenehead"><div><div class="kicker">09 · Picking a token</div><h2>Logits are scores; sampling picks one token</h2><p class="lead">The final vector is multiplied by the output matrix. That gives one raw score (a logit) for every token in the vocabulary. A sampling rule turns those scores into one chosen token.</p></div><span class="badge">Logits → probabilities → choice</span></div>
+ <div class="inshort"><b>In short:</b> 32,000 scores → softmax (with temperature) → probabilities → pick one. Temperature, top-k and top-p control how adventurous the pick is.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node green">Final vector</div><span class="arrow">→</span><div class="node purple">Output matrix<small>dim × vocab_size</small></div><span class="arrow">→</span><div class="node cyan">Logits<small>one score per token</small></div><span class="arrow">→</span><div class="node orange">Sampler<small>pick one ID</small></div></div>
+  <div class="math">p(tokenᵢ) = softmax(logitᵢ / temperature)</div>
+  <div class="barline"><span>"blue"</span><div class="track"><div class="fill" style="width:57%"></div></div><b>57%</b></div>
+  <div class="barline"><span>"clear"</span><div class="track"><div class="fill" style="width:21%"></div></div><b>21%</b></div>
+  <div class="barline"><span>"falling"</span><div class="track"><div class="fill" style="width:10%"></div></div><b>10%</b></div>
+  <div class="barline"><span>everything else</span><div class="track"><div class="fill" style="width:12%"></div></div><b>12%</b></div>
+ </div>
+ <div class="grid2">
+  <div class="card c-orange"><h3>Temperature</h3><p>Divide the logits by T before softmax. Low T (0.2) makes the top choice even more likely. High T (1.5) flattens the curve and makes rare tokens more likely. T = 0 means "always take the top one" (greedy).</p></div>
+  <div class="card c-cyan"><h3>Top-k</h3><p>Keep only the k most likely tokens (say k = 40), set the rest to zero, re-normalize, then sample. Simple and cheap.</p></div>
+  <div class="card c-purple"><h3>Top-p (nucleus)</h3><p>Sort tokens by probability. Keep the smallest set whose probabilities add up to p (say 0.9). Sample inside that set. The set is small when the model is sure and large when it is unsure.</p></div>
+  <div class="card c-red"><h3>Repetition penalty</h3><p>Lower the logits of tokens that already appeared, so the model does not loop on the same phrase. Too strong a penalty makes text odd, because common words like "the" get punished too.</p></div>
+ </div>
+ <div class="example"><h3>Worked example: temperature</h3><p>Logits [3.0, 2.0, 1.0].</p><p>T = 1 → probabilities <b>[0.67, 0.24, 0.09]</b>.<br>T = 0.5 → logits become [6, 4, 2] → <b>[0.87, 0.12, 0.02]</b> (sharper).<br>T = 2 → logits become [1.5, 1.0, 0.5] → <b>[0.51, 0.31, 0.19]</b> (flatter).</p></div>
+ <div class="mistake"><b>Common mistake:</b> setting temperature 0 and expecting a different answer each run. Greedy picks the same top token every time, apart from tiny floating-point differences between hardware.</div>
+</section>
+
+<section class="scene" data-title="Generation loop">
+ <div class="scenehead"><div><div class="kicker">10 · The loop</div><h2>One token per pass, until a stop sign</h2><p class="lead">The chosen token is added to the text. Its ID becomes the input for the next pass. The KV cache is carried along, so each pass only does new work.</p></div><span class="badge">Autoregressive loop</span></div>
+ <div class="inshort"><b>In short:</b> forward → sample → append → forward → … Stop at an end token, a length limit, or a stop word set by the app.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node cyan">Prompt IDs</div><span class="arrow">→</span><div class="node purple">Prefill: all prompt positions at once</div><span class="arrow">→</span><div class="node green">First new token</div></div>
+  <div class="layers"><span class="layer">Prompt</span><span class="arrow">→</span><span class="layer">+ "blue"</span><span class="arrow">→</span><span class="layer">+ "."</span><span class="arrow">→</span><span class="layer">+ &lt;stop&gt;</span></div>
+  <div class="flow"><div class="node orange">Append chosen token</div><span class="arrow">↻</span><div class="node cyan">Decode the next one using the cache</div></div>
+  <div class="callout">Each new token is chosen using <b>all</b> earlier text, prompt and answer together. That is why the model can stay on topic, and also why a mistake early in the answer tends to steer what comes next.</div>
+  <div class="code"><span class="kw">while</span> <span class="kw">not</span> finished:
+    logits = model.<span class="fn">forward</span>(next_token, position, kv_cache)   <span class="cmt"># one pass, reuses the cache</span>
+    next_token = <span class="fn">sample</span>(logits, temperature=<span class="num">0.7</span>, top_p=<span class="num">0.9</span>)
+    output.<span class="fn">append</span>(next_token)
+    position += <span class="num">1</span>
+    finished = next_token == EOS <span class="kw">or</span> <span class="fn">len</span>(output) &gt;= max_tokens</div>
+ </div>
+ <div class="example"><h3>Worked example: how long does a reply take?</h3><p>A 200-token reply needs 200 forward passes. If one decode pass takes 25 ms, the reply takes about <b>5 seconds</b>.</p><p>This barely changes with prompt length, because the prompt was handled once in prefill and is now cached.</p></div>
+ <div class="mistake"><b>Common mistake:</b> thinking a long prompt makes every output token much slower. It mostly affects the first token (prefill time) and the KV memory used. Per-token decode time grows only a little with context.</div>
+</section>
+
+<section class="scene" data-title="Engine optimizations">
+ <div class="scenehead"><div><div class="kicker">11 · Runtime engineering</div><h2>What an inference engine does beyond "load and run"</h2><p class="lead">An inference engine (vLLM, TensorRT-LLM, llama.cpp, ONNX Runtime) rewrites the math graph, plans memory, picks the fastest kernel for your chip, and schedules work across requests.</p></div><span class="badge">Performance stack</span></div>
+ <div class="inshort"><b>In short:</b> The model says <i>what</i> to compute. The engine decides <i>how</i>: fewer memory trips, smaller numbers, better-packed work.</div>
+ <div class="canvas">
+  <div class="grid2" style="margin-top:0">
+   <div class="card c-cyan"><h3>Graph optimization</h3><p>Join small operations into one (fusion), remove work whose result never changes (constant folding), and reorder data layouts. Each fused step saves a write and a read of the whole activation vector.</p></div>
+   <div class="card c-green"><h3>Quantization</h3><p>Store weights with fewer bits (8-bit, 4-bit). Less memory, less bandwidth, faster decode. Covered in detail in chapter 15.</p></div>
+   <div class="card c-orange"><h3>Memory planning</h3><p>Reserve buffers once at start, reuse the same scratch memory in every layer, and manage KV blocks. This avoids slow memory allocation during generation.</p></div>
+   <div class="card c-purple"><h3>Kernel choice</h3><p>A kernel is a small program for one operation (a matrix multiply, a softmax). The engine picks the best one for your GPU, CPU or NPU, often from vendor libraries like cuBLAS or oneDNN.</p></div>
+   <div class="card c-red"><h3>Paged KV cache</h3><p>Store the cache in fixed-size blocks instead of one big slab per user. Blocks are handed out as a conversation grows, like pages in an operating system. Almost no wasted memory.</p></div>
+   <div class="card c-cyan"><h3>Continuous batching</h3><p>Let a new request join the batch as soon as another one finishes, instead of waiting for the whole batch. Covered in chapter 16.</p></div>
+  </div>
+ </div>
+ <div class="example"><h3>Worked example: why fusion matters</h3><p>Fusing "RMSNorm + matrix multiply" saves one write and one read of a 4096-number vector per layer. That is 16 KB × 2 per layer, × 32 layers, × every token, × every user. On a memory-bound workload, these small savings add up to real speed.</p></div>
+ <div class="mistake"><b>Common mistake:</b> running a raw PyTorch forward loop in production and blaming the GPU. A good engine is often 5–20× faster on the same hardware for a busy server.</div>
+</section>
+
+<section class="scene" data-title="Hardware and serving">
+ <div class="scenehead"><div><div class="kicker">12 · Deployment</div><h2>From one kernel to a serving system</h2><p class="lead">The runtime runs math on hardware. The serving layer sits above it: it queues requests, groups them into batches, hands out cache memory, and streams tokens back to users.</p></div><span class="badge">End to end</span></div>
+ <div class="inshort"><b>In short:</b> A fast single-request engine is not enough. Serving many users well is about scheduling, memory, and tail latency.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node cyan">Client request<small>prompt + settings</small></div><span class="arrow">→</span><div class="node purple">Scheduler<small>queue · batch · admit</small></div><span class="arrow">→</span><div class="node orange">Inference runtime<small>graph + kernels + cache</small></div></div>
+  <div class="flow"><div class="node green">CPU</div><div class="node green">GPU</div><div class="node green">NPU</div><div class="node green">Accelerator memory (HBM)</div></div>
+  <div class="flow"><div class="node">Token stream<small>IDs as they appear</small></div><span class="arrow">→</span><div class="node">Detokenizer<small>IDs → text</small></div><span class="arrow">→</span><div class="node cyan">Streamed reply</div></div>
+  <div class="callout">Streaming matters for how fast the system <b>feels</b>. Users see the first word after prefill, long before the last word is ready.</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-cyan"><h3>Latency numbers</h3><p><b>TTFT</b> (time to first token): how long until the first word appears. Mostly prefill.<br><b>TPOT</b> (time per output token): the pause between words. Mostly decode.<br><b>P99</b>: the slowest 1% of requests. Users remember these.</p></div>
+  <div class="card c-green"><h3>Throughput numbers</h3><p>Requests per second, input tokens per second, output tokens per second, and how many users fit at once (limited by KV memory). GPU utilization tells you if the chip is actually busy.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>TTFT 300 ms + 200 output tokens × 25 ms = <b>5.3 seconds</b> end to end. The user sees text start at 0.3 s and finish at 5.3 s. If you cut TPOT to 15 ms by batching better and quantizing, the same reply takes 3.3 s.</p></div>
+ <div class="mistake"><b>Common mistake:</b> reporting only average latency. A system with a 2 s average but a 30 s P99 feels broken to one user in a hundred, which is many users per day.</div>
+</section>
+
+<section class="scene" data-title="Prefill vs decode (new)">
+ <div class="scenehead"><div><div class="kicker">13 · Two very different jobs</div><h2>Prefill is math-heavy; decode is memory-heavy</h2><p class="lead">Prefill multiplies a big block of tokens by the weights at once. Decode multiplies a single token by the weights, over and over. The chip is busy in the first case and mostly waiting in the second.</p></div><span class="badge">Compute-bound vs memory-bound</span></div>
+ <div class="inshort"><b>In short:</b> Decode speed is set by how fast the GPU can <i>read</i> the weights, not by how fast it can multiply. Batching many users fixes this by reading once and using many times.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node green">Prefill<small>1,000 tokens × weights, one pass</small></div><span class="arrow">→</span><div class="node">GPU math units busy<small>compute-bound</small></div></div>
+  <div class="flow"><div class="node orange">Decode<small>1 token × weights, repeat 200×</small></div><span class="arrow">→</span><div class="node">GPU waits on memory<small>memory-bound</small></div></div>
+  <h3>Time per step is set by whichever is slower</h3>
+  <div class="barline"><span>Math needed</span><div class="track"><div class="fill" style="width:12%"></div></div><b>small</b></div>
+  <div class="barline"><span>Bytes to read</span><div class="track"><div class="fill warm" style="width:92%"></div></div><b>13.5 GB</b></div>
+  <p class="caption">Decode for one user: tiny math, huge read. Time ≈ bytes ÷ memory bandwidth.</p>
+ </div>
+ <div class="grid2">
+  <div class="card c-green"><h3>Prefill</h3><p>All prompt tokens go through each layer together. Cost grows with prompt length. Long prompts are often split into chunks so they do not block other users' decode steps.</p></div>
+  <div class="card c-orange"><h3>Decode</h3><p>Every weight is read from memory for one tiny input. Doubling the GPU's math speed changes almost nothing. Doubling memory bandwidth nearly doubles speed.</p></div>
+  <div class="card c-purple"><h3>Disaggregated serving</h3><p>Some systems run prefill on one set of GPUs and decode on another, then ship the KV cache across. Each set is tuned for its own kind of work.</p></div>
+  <div class="card c-cyan"><h3>Roofline idea</h3><p>Arithmetic intensity = math operations per byte read. Below the chip's balance point you are memory-bound; above it you are compute-bound. Decode for one user sits far below.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>7B model in 16-bit = 13.5 GB of weights. An A100 moves about 2 TB/s. Reading the weights once takes 13.5 ÷ 2000 ≈ <b>6.7 ms</b>. That is the floor for one decode step, however fast the math units are.</p><p>With 32 users in one batch, the weights are still read once per step. Now you get 32 tokens for roughly the same time → almost 32× more tokens per second.</p></div>
+ <div class="mistake"><b>Common mistake:</b> choosing a GPU by its TFLOPS number for a single-user chat app. For decode, memory bandwidth (and memory size) is what matters.</div>
+</section>
+<section class="scene" data-title="FlashAttention (new)">
+ <div class="scenehead"><div><div class="kicker">14 · Memory traffic</div><h2>FlashAttention: never write the big score table</h2><p class="lead">Moving data is slower than doing math. Plain attention writes an n × n table of scores to GPU memory, reads it back for softmax, and reads it again to multiply with V. FlashAttention does the same math in small tiles that stay on the chip.</p></div><span class="badge">Exact, just reordered</span></div>
+ <div class="inshort"><b>In short:</b> Same answer, 2–4× faster, and memory grows with n instead of n². The trick is a running softmax that can be computed piece by piece.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node red">Plain attention<small>write n×n scores → read → softmax → write → read → × V</small></div><span class="arrow">vs</span><div class="node green">FlashAttention<small>load a tile of K, V into fast on-chip memory → update running result → next tile</small></div></div>
+  <div class="grid2" style="margin-top:0">
+   <div class="card c-cyan"><h3>Two kinds of memory on a GPU</h3><p><b>HBM</b> (main GPU memory): big, 40–80 GB, about 2–3 TB/s.<br><b>SRAM</b> (on-chip): tiny, a few MB in total, about 10× faster. FlashAttention keeps the working tile in SRAM.</p></div>
+   <div class="card c-purple"><h3>Online softmax</h3><p>Softmax needs the maximum and the sum over all scores. FlashAttention keeps a running max and a running sum. When a new tile arrives with a bigger max, it rescales what it already has. Nothing is lost.</p></div>
+  </div>
+  <div class="math">m<sub>new</sub> = max(m<sub>old</sub>, m<sub>tile</sub>) &nbsp;&nbsp; l<sub>new</sub> = l<sub>old</sub>·e<sup>(m<sub>old</sub> − m<sub>new</sub>)</sup> + Σ e<sup>(s − m<sub>new</sub>)</sup></div>
+  <p class="caption">m is the running maximum, l is the running sum. The output vector is rescaled with the same factor, so the final result is identical to doing softmax over everything at once.</p>
+ </div>
+ <div class="grid2">
+  <div class="card c-green"><h3>Why it is exact</h3><p>No approximation. Only the order of operations changes. Results match plain attention up to normal floating-point rounding.</p></div>
+  <div class="card c-orange"><h3>Decode-time version</h3><p>During decode there is only one query but thousands of cached keys. "Flash-decoding" splits the keys across many GPU blocks, computes partial results in parallel, then merges them with the same rescaling rule.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>8,192 tokens, 32 heads, 16-bit. The score table for one layer is 32 × 8192² × 2 bytes = <b>4.3 GB</b>. Writing and reading it twice per layer, 32 layers deep, is the whole slow-down. FlashAttention never creates this table at all.</p></div>
+ <div class="mistake"><b>Common mistake:</b> thinking FlashAttention is a shortcut that trades accuracy for speed. It is not an approximation. Sparse attention and sliding-window attention are approximations; FlashAttention is just a smarter order of the same arithmetic.</div>
+</section>
+
+<section class="scene" data-title="Quantization formats (new)">
+ <div class="scenehead"><div><div class="kicker">15 · Smaller numbers</div><h2>Quantization: store each weight with fewer bits</h2><p class="lead">A 16-bit number has 65,536 possible values. A 4-bit number has 16. Quantization maps each small group of weights onto a short grid, and stores one scale (and often one offset) per group to map back.</p></div><span class="badge">FP16 → INT8 → INT4</span></div>
+ <div class="inshort"><b>In short:</b> Fewer bits = less memory and faster decode (less to read). Done well, quality drops only a little. Done badly, the model gets noticeably dumber.</div>
+ <div class="canvas">
+  <div class="math">weight ≈ scale × (q − zero_point) &nbsp;&nbsp; where q is a small integer, e.g. 0…15</div>
+  <div class="grid2" style="margin-top:0">
+   <div class="card c-cyan"><h3>FP16 / BF16 (2 bytes)</h3><p>The normal training precision. The baseline for quality. 7B model ≈ 13.5 GB.</p></div>
+   <div class="card c-green"><h3>FP8 (1 byte)</h3><p>A floating-point format with 8 bits. Needs recent GPUs (Hopper, Blackwell). Close to lossless for most models, and the math units run FP8 natively, so it speeds up prefill too.</p></div>
+   <div class="card c-orange"><h3>INT8 (1 byte)</h3><p>Integers with one scale per row or per group. About half the memory. Very safe for quality.</p></div>
+   <div class="card c-purple"><h3>INT4 (½ byte)</h3><p>Integers 0–15 with a scale and zero point per group of 32–128 weights. About a quarter of the memory. Quality is good for larger models, weaker for small ones.</p></div>
+  </div>
+ </div>
+ <div class="grid3">
+  <div class="card c-cyan"><h3>GGUF (llama.cpp)</h3><p>A file format with many block schemes, written like <b>Q4_K_M</b> or <b>Q8_0</b>. Built for CPUs and small GPUs. Mixed precision inside: important tensors keep more bits.</p></div>
+  <div class="card c-purple"><h3>GPTQ</h3><p>Uses a few hundred sample inputs (calibration data) and second-order information to choose the best rounding for each weight, one column at a time. Mostly 4-bit, GPU-focused.</p></div>
+  <div class="card c-green"><h3>AWQ</h3><p>Finds the ~1% of weight channels that matter most (the ones hit by large activations), scales them up before rounding so they keep precision, then scales back. Fast and simple to apply.</p></div>
+ </div>
+ <div class="grid2">
+  <div class="card c-orange"><h3>Weight-only vs weight + activation</h3><p>Weight-only (GPTQ, AWQ, GGUF) shrinks memory and speeds up decode; math still runs in 16-bit after de-quantizing. Quantizing activations too (SmoothQuant, FP8) lets the math units run in low precision, which also speeds up prefill.</p></div>
+  <div class="card c-red"><h3>Where it hurts</h3><p>Outlier weights, very small models (under 3B), and tasks that need exact recall (long numbers, code) lose the most. Always test on your own prompts.</p></div>
+ </div>
+ <div class="example"><h3>Worked example: 7B model</h3><p>FP16: 13.5 GB → INT8: 6.7 GB → Q4 (with scales): about <b>3.8 GB</b>. Because decode is memory-bound, decode speed rises roughly in line with the smaller read: about 3× faster at 4-bit on the same GPU.</p><p>A 4-bit 7B model fits on an 8 GB laptop GPU with room for a few thousand tokens of KV cache.</p></div>
+ <div class="mistake"><b>Common mistake:</b> comparing quantization methods by file size alone. Two 4-bit files can differ a lot in quality. Measure perplexity or task accuracy on your own data before you choose.</div>
+</section>
+
+<section class="scene" data-title="Batching math (new)">
+ <div class="scenehead"><div><div class="kicker">16 · Many users at once</div><h2>Batching: read the weights once, serve many users</h2><p class="lead">Decode for one user reads all the weights for one tiny input. If 32 users are at the decode step together, the same read now produces 32 tokens. This is the single biggest throughput win in serving.</p></div><span class="badge">Throughput vs latency</span></div>
+ <div class="inshort"><b>In short:</b> Bigger batch → far more tokens per second for the whole server, with only a small slow-down per user. Continuous batching keeps the batch full all the time.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node orange">1 request<small>read 13.5 GB → 1 token</small></div><span class="arrow">vs</span><div class="node green">32 requests<small>read 13.5 GB once → 32 tokens</small></div></div>
+  <h3>Tokens per second as batch grows (illustrative, 7B on one A100)</h3>
+  <div class="barline"><span>batch 1</span><div class="track"><div class="fill" style="width:3%"></div></div><b>150</b></div>
+  <div class="barline"><span>batch 8</span><div class="track"><div class="fill" style="width:16%"></div></div><b>1,100</b></div>
+  <div class="barline"><span>batch 32</span><div class="track"><div class="fill" style="width:51%"></div></div><b>3,600</b></div>
+  <div class="barline"><span>batch 128</span><div class="track"><div class="fill" style="width:100%"></div></div><b>7,000</b></div>
+  <p class="caption">The curve flattens when the GPU becomes compute-bound or the KV cache runs out of memory. Then the only way up is more GPUs.</p>
+ </div>
+ <div class="grid2">
+  <div class="card c-red"><h3>Static batching (old way)</h3><p>Wait for N requests, run them together, and release them all when the longest one is done. Short replies sit idle waiting for long ones. GPU slots go empty.</p></div>
+  <div class="card c-green"><h3>Continuous batching</h3><p>At every decode step, finished sequences leave and waiting requests join. The batch is always as full as memory allows. This alone gives several times more throughput.</p></div>
+  <div class="card c-purple"><h3>Paged KV cache</h3><p>KV memory is handed out in fixed blocks (for example 16 tokens each). No big up-front reservation per user, almost zero waste, and blocks can be freed the moment a request ends.</p></div>
+  <div class="card c-cyan"><h3>Prefix caching</h3><p>Many requests share the same system prompt. Its KV blocks are computed once and shared by all of them. Prefill for those tokens becomes free.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>Batch 1: step time ≈ 6.7 ms (weights read). Throughput ≈ 150 tokens/s.</p><p>Batch 32: weights still read once; extra math is small; step time ≈ 9 ms. Throughput ≈ 32 ÷ 0.009 ≈ <b>3,500 tokens/s</b>. Each user waits 2.3 ms longer per token; the server does 23× more work.</p></div>
+ <div class="mistake"><b>Common mistake:</b> judging a serving stack by single-user speed. The point of batching is tokens per second per GPU dollar. Test it under load.</div>
+</section>
+
+<section class="scene" data-title="Speculative decoding (new)">
+ <div class="scenehead"><div><div class="kicker">17 · Guess, then check</div><h2>Speculative decoding: a small model drafts, the big model checks</h2><p class="lead">A small fast "draft" model guesses the next few tokens. The big model then checks all of them in one single pass. Correct guesses are kept. The first wrong guess is replaced by the big model's own choice.</p></div><span class="badge">Free speed, same output</span></div>
+ <div class="inshort"><b>In short:</b> Because decode is memory-bound, checking 4 tokens costs about the same as producing 1. If most guesses are right, you get 2–3 tokens per big-model pass.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node cyan">Draft model (small)<small>proposes 4 tokens quickly</small></div><span class="arrow">→</span><div class="node purple">Big model<small>checks all 4 in one pass</small></div><span class="arrow">→</span><div class="node green">Keep the correct prefix<small>fix the first wrong one</small></div></div>
+  <div class="tokenrow"><span class="token ok">The</span><span class="token ok">sky</span><span class="token ok">is</span><span class="token bad">green</span></div>
+  <p class="caption" style="text-align:center">Three guesses accepted. The fourth is rejected and replaced by the big model's token ("blue"). Four tokens of progress for one big-model pass.</p>
+  <div class="callout">The check is done with a rule called rejection sampling. It compares the draft model's probabilities with the big model's. The final text has exactly the same probability distribution as the big model alone. Speed changes; quality does not.</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-cyan"><h3>Why it is almost free</h3><p>The big model reads its weights once per pass anyway. Processing 4 tokens instead of 1 adds a little math but no extra memory traffic. On a memory-bound step, that is nearly free.</p></div>
+  <div class="card c-green"><h3>Acceptance rate</h3><p>Predictable text (code, boilerplate, lists) is accepted 70–90% of the time. Creative or unusual text is accepted less, so the speed-up is smaller there.</p></div>
+  <div class="card c-purple"><h3>Variants</h3><p><b>Medusa / EAGLE</b>: extra small heads on the big model itself make the draft, so no second model is needed.<br><b>N-gram lookup</b>: reuse text already in the prompt as the draft. Great for editing and summarizing tasks.</p></div>
+  <div class="card c-orange"><h3>Costs</h3><p>The draft model needs memory and its own KV cache. Under heavy batching, the big model is already busy, so the gain shrinks. Best for low-latency, single-user or low-batch settings.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>Draft 4 tokens per round; 75% of them are accepted on average. Expected progress ≈ 3 tokens per big-model pass instead of 1. After paying for the draft model's time, the end-to-end speed-up is about <b>2–2.5×</b>.</p></div>
+ <div class="mistake"><b>Common mistake:</b> thinking the small model "writes part of the answer" and quality drops. Every token is either accepted by the big model's own probability or replaced by its own sample. The output is statistically identical.</div>
+</section>
+<section class="scene" data-title="Mixture of Experts (new)">
+ <div class="scenehead"><div><div class="kicker">18 · Sparse models</div><h2>Mixture of Experts: many small MLPs, only a few used per token</h2><p class="lead">In an MoE layer, the single big MLP is replaced by several smaller MLPs called experts. A tiny router network looks at each token and picks the top 2 experts for it. Only those 2 run.</p></div><span class="badge">Big memory, small math</span></div>
+ <div class="inshort"><b>In short:</b> You store all the experts, but each token only pays for two of them. More knowledge for the same compute, at the price of more memory.</div>
+ <div class="canvas">
+  <div class="flow"><div class="node cyan">Token vector</div><span class="arrow">→</span><div class="node purple">Router<small>softmax over 8 experts</small></div><span class="arrow">→</span><div class="node green">Expert 3 + Expert 7<small>top-2 chosen</small></div><span class="arrow">→</span><div class="node orange">Weighted sum<small>0.6 × E₃ + 0.4 × E₇</small></div></div>
+  <h3>Router scores for one token (illustrative)</h3>
+  <div class="barline"><span>Expert 3</span><div class="track"><div class="fill" style="width:60%"></div></div><b>0.60</b></div>
+  <div class="barline"><span>Expert 7</span><div class="track"><div class="fill" style="width:40%"></div></div><b>0.40</b></div>
+  <div class="barline"><span>Others (6)</span><div class="track"><div class="fill" style="width:5%"></div></div><b>skip</b></div>
+  <div class="callout">Attention layers are shared by all tokens as usual. Only the MLP part is split into experts. The next token may go to completely different experts.</div>
+ </div>
+ <div class="grid2">
+  <div class="card c-green"><h3>Sparse compute</h3><p>Mixtral 8×7B has about 47 billion parameters in total but uses about 13 billion per token. So it runs at roughly the speed of a 13B dense model while knowing more.</p></div>
+  <div class="card c-red"><h3>Memory cost</h3><p>All 8 experts must sit in GPU memory even though each token touches 2. The memory bill is for 47B, the compute bill for 13B.</p></div>
+  <div class="card c-purple"><h3>Load balance</h3><p>Training adds a small penalty if some experts get all the work. At serving time, tokens in a batch are grouped by expert so each expert's matrix is read once per step.</p></div>
+  <div class="card c-cyan"><h3>Routing is per token</h3><p>The same word can go to different experts in a different sentence. Routing is learned, not hand-designed.</p></div>
+ </div>
+ <div class="example"><h3>Worked example</h3><p>8 experts, top-2. Per token: attention + 2 of 8 MLPs. Weights to store: all 8. In a batch of 64 tokens, each expert gets about 16 tokens, so every expert's weights are read once and used 16 times. That keeps MoE efficient under load.</p></div>
+ <div class="mistake"><b>Common mistake:</b> picturing experts as topic experts, one for maths, one for law, one for code. They are not. Routing happens per token based on vector patterns, and the split is usually not readable by humans.</div>
+</section>
+
+<section class="scene" data-title="Recap and glossary">
+ <div class="scenehead"><div><div class="kicker">19 · Recap</div><h2>The whole path on one page</h2><p class="lead">Here is the full journey again, plus a plain-words glossary of every term used in this walkthrough.</p></div><span class="badge">Cheat sheet</span></div>
+ <div class="inshort"><b>In short:</b> File → tokens → vectors → N layers of (attention + MLP) → logits → one token → repeat. Speed comes from caching, batching, smaller numbers, and smarter kernels.</div>
+ <div class="canvas">
+  <div class="flow">
+   <div class="node cyan">Load<small>mmap weights</small></div><span class="arrow">→</span>
+   <div class="node purple">Tokenize<small>text → IDs</small></div><span class="arrow">→</span>
+   <div class="node green">Embed + RoPE<small>IDs → vectors</small></div><span class="arrow">→</span>
+   <div class="node orange">N layers<small>attention + MLP</small></div><span class="arrow">→</span>
+   <div class="node red">Logits → sample<small>pick a token</small></div><span class="arrow">↻</span>
+   <div class="node">Append, reuse KV cache</div>
+  </div>
+  <div class="grid3" style="margin-top:6px">
+   <div class="card c-cyan"><h3>Memory wins</h3><p>KV cache · GQA · paged blocks · prefix sharing · quantization</p></div>
+   <div class="card c-green"><h3>Compute wins</h3><p>FlashAttention · kernel fusion · FP8 math · MoE sparsity</p></div>
+   <div class="card c-orange"><h3>Scheduling wins</h3><p>Continuous batching · chunked prefill · speculative decoding · disaggregated serving</p></div>
+  </div>
+ </div>
+ <h3>Glossary</h3>
+ <table class="gloss">
+  <tr><th>Term</th><th>Plain meaning</th></tr>
+  <tr><td>Token</td><td>A piece of text (part of a word, a word, or a symbol) with its own ID number.</td></tr>
+  <tr><td>Embedding</td><td>The learned vector that stands for one token. Looked up from a table.</td></tr>
+  <tr><td>Residual stream</td><td>The vector that flows through all layers. Each layer adds to it instead of replacing it.</td></tr>
+  <tr><td>Attention</td><td>A way for each token to look at earlier tokens and pull in what is useful.</td></tr>
+  <tr><td>Q / K / V</td><td>Query (what I look for), Key (what I offer), Value (what I pass on).</td></tr>
+  <tr><td>Softmax</td><td>Turns a list of scores into positive weights that add up to 1.</td></tr>
+  <tr><td>KV cache</td><td>Saved K and V vectors of past tokens, so they are not recomputed each step.</td></tr>
+  <tr><td>GQA</td><td>Grouped-query attention: several query heads share one K/V head. Smaller cache.</td></tr>
+  <tr><td>Logits</td><td>Raw scores, one per vocabulary token, before softmax.</td></tr>
+  <tr><td>Temperature / top-k / top-p</td><td>Dials that control how random the token choice is.</td></tr>
+  <tr><td>Prefill</td><td>Processing the whole prompt at once. Compute-heavy.</td></tr>
+  <tr><td>Decode</td><td>Producing one token per step. Memory-heavy.</td></tr>
+  <tr><td>TTFT / TPOT</td><td>Time to first token / time per output token.</td></tr>
+  <tr><td>Memory-bound</td><td>Speed limited by how fast data can be read, not by math speed.</td></tr>
+  <tr><td>Quantization</td><td>Storing weights with fewer bits to save memory and bandwidth.</td></tr>
+  <tr><td>Kernel</td><td>A small GPU/CPU program for one operation, such as a matrix multiply.</td></tr>
+  <tr><td>Batching</td><td>Running many requests in one step so the weights are read once for all of them.</td></tr>
+  <tr><td>Paged KV cache</td><td>Giving out cache memory in small fixed blocks, like OS memory pages.</td></tr>
+  <tr><td>Speculative decoding</td><td>A small model guesses several tokens; the big model checks them in one pass.</td></tr>
+  <tr><td>MoE</td><td>Mixture of Experts: many small MLPs, a router picks a few per token.</td></tr>
+ </table>
+ <div class="mistake"><b>Last reminder:</b> every number in these examples is rounded for teaching. Real values depend on the exact model, precision, hardware and software version. Measure on your own setup.</div>
+</section>
+</div>
+</div>
+</main>
+<footer>Self-contained HTML · v2 (easy words, worked examples, 7 new chapters) · Use Previous / Next, the ← → keys, the chapter list, the ☰ menu, or Auto play · All example numbers are rounded for teaching.</footer>
+<script>
+/* ---------- chapters, side list and hamburger menu ---------- */
+const scenes=[...document.querySelectorAll('.scene')];
+const nav=document.getElementById('nav');
+const menu=document.getElementById('menu');
+const hamburger=document.getElementById('hamburger');
+const overlay=document.getElementById('overlay');
+let current=0,timer=null;
+
+scenes.forEach((s,i)=>{
+  const label=String(i+1).padStart(2,'0')+'  '+s.dataset.title;
+  const b=document.createElement('button');b.textContent=label;b.onclick=()=>show(i);nav.appendChild(b);
+  const m=document.createElement('button');m.textContent=label;m.onclick=()=>{show(i);closeMenu()};menu.appendChild(m);
+});
+
+function show(i,highlight){
+  current=Math.max(0,Math.min(scenes.length-1,i));
+  scenes.forEach((s,n)=>{s.classList.toggle('active',n===current);s.classList.remove('landed')});
+  [...nav.children].forEach((b,n)=>b.classList.toggle('active',n===current));
+  [...menu.querySelectorAll('button')].forEach((b,n)=>b.classList.toggle('active',n===current));
+  document.getElementById('progress').style.width=((current+1)/scenes.length*100)+'%';
+  document.getElementById('counter').textContent=String(current+1).padStart(2,'0')+' / '+String(scenes.length).padStart(2,'0');
+  document.getElementById('prev').disabled=current===0;
+  document.getElementById('next').disabled=current===scenes.length-1;
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(highlight){const s=scenes[current];requestAnimationFrame(()=>s.classList.add('landed'));}
+}
+/* arrow keys wrap around: left from the first goes to the last, right from the last goes to the first */
+function step(d){show((current+d+scenes.length)%scenes.length,true)}
+
+document.getElementById('prev').onclick=()=>show(current-1);
+document.getElementById('next').onclick=()=>show(current+1);
+
+/* ---------- auto play ---------- */
+const playBtn=document.getElementById('play');
+function stopPlay(){if(timer){clearInterval(timer);timer=null}playBtn.textContent='▶ Auto play'}
+playBtn.onclick=()=>{
+  if(timer){stopPlay();return}
+  if(current===scenes.length-1)show(0);
+  playBtn.textContent='Ⅱ Pause';
+  timer=setInterval(()=>{if(current===scenes.length-1)stopPlay();else show(current+1)},9000);
+};
+
+/* ---------- keyboard: do not steal keys while typing ---------- */
+document.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+  if(e.key==='ArrowRight'){e.preventDefault();step(1)}
+  else if(e.key==='ArrowLeft'){e.preventDefault();step(-1)}
+  else if(e.key==='Escape'){closeMenu()}
+});
+
+/* ---------- hamburger menu open / close, kept in sync ---------- */
+function openMenu(){menu.classList.add('open');overlay.classList.add('open');hamburger.classList.add('open');hamburger.setAttribute('aria-label','Close chapter menu')}
+function closeMenu(){menu.classList.remove('open');overlay.classList.remove('open');hamburger.classList.remove('open');hamburger.setAttribute('aria-label','Open chapter menu')}
+hamburger.onclick=()=>menu.classList.contains('open')?closeMenu():openMenu();
+overlay.onclick=closeMenu;
+
+/* ---------- light / dark toggle, remembered in localStorage ---------- */
+const themeBtn=document.getElementById('themeToggle');
+function applyTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem('llm-theme',t);themeBtn.textContent=t==='dark'?'☀':'🌙';themeBtn.title=t==='dark'?'Switch to light mode':'Switch to dark mode'}
+applyTheme(localStorage.getItem('llm-theme')||'light');
+themeBtn.onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+
+show(0);
+</script>
+
+<!-- KIRO_HOME_BUTTON_START -->
+<style id="kiro-home-button-style">
+  .kiro-home-btn{
+    position:fixed;
+    right:18px;
+    bottom:84px;
+    width:52px;height:52px;
+    border-radius:50%;
+    background:#6c5ce7;
+    color:#ffffff;
+    display:flex;align-items:center;justify-content:center;
+    text-decoration:none;
+    font-size:24px;line-height:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.15);
+    border:2px solid rgba(255,255,255,.85);
+    z-index:99998;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .kiro-home-btn:hover{transform:translateY(-2px) scale(1.05);background:#5a4ad1;box-shadow:0 10px 24px rgba(0,0,0,.3);}
+  .kiro-home-btn:active{transform:scale(.95);}
+  .kiro-home-btn:focus-visible{outline:3px solid #ffd166;outline-offset:3px;}
+  @media print{.kiro-home-btn{display:none!important;}}
+</style>
+<a class="kiro-home-btn" href="../index.html" title="Back to Index" aria-label="Back to Index">
+  <span aria-hidden="true">&#x1F3E0;</span>
+</a>
+<!-- KIRO_HOME_BUTTON_END -->
+ 
+</body>
+</html>
