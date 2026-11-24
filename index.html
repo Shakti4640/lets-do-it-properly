@@ -67,26 +67,24 @@
   }
   .topbar-inner{
     position: relative;
-    width: max-content;
-    min-width: 100%;
+    width: 100%;
+    min-width: 0;
     max-width: none;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 0;
     padding: 0 18px;
     min-height: 58px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
   }
-  .topbar-inner::-webkit-scrollbar{ display: none; }
   .brand{
     display: flex;
     align-items: center;
     gap: 11px;
     flex: 0 0 auto;
     white-space: nowrap;
+    padding-right: 16px;
   }
   .brand h1{
     margin: 0;
@@ -105,13 +103,27 @@
     font-weight: 700;
     backdrop-filter: blur(4px);
   }
+  /* Only the tabs region scrolls horizontally. The brand remains fixed. */
+  .tabs-scroll{
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+  }
+  .tabs-scroll::-webkit-scrollbar{ display: none; }
+
   .tabs{
-    flex: 0 0 auto;
     display: flex;
+    width: max-content;
+    min-width: max-content;
     justify-content: flex-start;
     gap: 2px;
-    margin-left: 8px;
-    padding-left: 8px;
+    margin: 0;
+    padding: 0 18px 0 8px;
     overflow: visible;
   }
   .tab-btn{
@@ -157,9 +169,11 @@
     border-color: transparent;
   }
   @media (max-width: 760px){
-    .topbar-inner{ gap: 12px; }
+    .topbar-inner{ padding: 0 10px; }
+    .brand{ gap: 8px; padding-right: 10px; }
     .brand p, .brand .badge{ display: none; }
-    .tabs{ justify-content: flex-start; }
+    .tabs-scroll{ flex: 1 1 auto; }
+    .tabs{ padding-right: 24px; }
   }
 
   main{
@@ -404,6 +418,7 @@
         <h1>Let's learn it properly</h1>
         <span class="badge" id="countBadge">guides</span>
       </div>
+      <div class="tabs-scroll">
       <nav class="tabs" role="tablist" aria-label="Guide categories">
         <button class="tab-btn active" role="tab" id="tab-challenge" data-tab="challenge" aria-controls="panel-challenge" aria-selected="true"><span class="tab-ico" aria-hidden="true">&#x1F3C6;</span><span data-tab-label>Challenge</span> <span class="tab-count"></span></button>
         <button class="tab-btn" role="tab" id="tab-basics" data-tab="basics" aria-controls="panel-basics" aria-selected="false" tabindex="-1"><span class="tab-ico" aria-hidden="true">&#x1F4DA;</span><span data-tab-label>Basics</span> <span class="tab-count"></span></button>
@@ -415,6 +430,7 @@
         <button class="tab-btn" role="tab" id="tab-advanced" data-tab="advanced" aria-controls="panel-advanced" aria-selected="false" tabindex="-1"><span class="tab-ico" aria-hidden="true">&#x1F680;</span><span data-tab-label>Advanced</span> <span class="tab-count"></span></button>
         <button class="tab-btn" role="tab" id="tab-devops" data-tab="devops" aria-controls="panel-devops" aria-selected="false" tabindex="-1"><span class="tab-ico" aria-hidden="true">&#x1F6E0;&#xFE0F;</span><span data-tab-label>DevOps</span> <span class="tab-count"></span></button>
       </nav>
+      </div>
     </div>
   </div>
 
@@ -1119,6 +1135,16 @@
       b.setAttribute('aria-selected', on ? 'true' : 'false');
       b.tabIndex = on ? 0 : -1;
     });
+
+    // Keep the selected tab visible inside the horizontal scroller.
+    var activeButton = tabButtons[index];
+    if(activeButton){
+      activeButton.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
 
     panels.forEach(function(p){
       var on = (p.id === 'panel-' + tab);
